@@ -151,6 +151,29 @@ class MFAEnrollStepTest {
     }
 
     @Test
+    void shouldNotEnrollWhenStepUpFalse() {
+        mockContextRequest();
+        mockAuthUser(false);
+        mockStepUp(false);
+        when(client.getFactors()).thenReturn(Set.of(FACTOR_ID));
+        when(client.getMfaSettings()).thenReturn(mfa);
+        when(enroll.isActive()).thenReturn(true);
+        when(enroll.getType()).thenReturn(MfaEnrollType.CONDITIONAL);
+        when(mfa.getEnroll()).thenReturn(enroll);
+        when(factorManager.getFactor(FACTOR_ID)).thenReturn(factor);
+        when(factor.getFactorType()).thenReturn(FactorType.SMS);
+
+        when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
+        when(routingContext.session()).thenReturn(session);
+
+        mockEnrollmentRuleSatisfied(true);
+
+        mfaEnrollStep.execute(routingContext, flow);
+
+        verifyStop();
+    }
+
+    @Test
     void shouldNotEnrollWhenTypeIsUnknown() {
         mockAuthUser(false);
         when(client.getFactors()).thenReturn(Set.of(FACTOR_ID));
@@ -538,7 +561,6 @@ class MFAEnrollStepTest {
         given(authenticatedUser.getDelegate()).willReturn(delegateUser);
         io.gravitee.am.model.User mockUSer = mock(io.gravitee.am.model.User.class);
         given(delegateUser.getUser()).willReturn(mockUSer);
-
         when(session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY)).thenReturn(strongAuth);
     }
 
@@ -573,7 +595,6 @@ class MFAEnrollStepTest {
     }
 
     private void mockStepUp(boolean stepUp) {
-        mockContextRequest();
         var rule = "step-up-rule";
         var stepUpSettings = new StepUpAuthenticationSettings();
         stepUpSettings.setActive(true);

@@ -39,11 +39,14 @@ import java.util.Objects;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import java.util.Set;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MfaUtils {
 
     public static boolean isUserStronglyAuth(Session session) {

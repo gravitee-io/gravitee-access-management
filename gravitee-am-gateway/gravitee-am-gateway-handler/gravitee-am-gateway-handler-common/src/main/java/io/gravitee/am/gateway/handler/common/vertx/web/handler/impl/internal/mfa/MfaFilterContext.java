@@ -17,7 +17,7 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
 import static io.gravitee.am.common.factor.FactorType.RECOVERY_CODE;
-import static io.gravitee.am.common.utils.ConstantKeys.AUTH_COMPLETED;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS;
 import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;
@@ -125,7 +125,7 @@ public class MfaFilterContext {
     }
 
     public boolean isValidSession() {
-        return Boolean.TRUE.equals(session.get(AUTH_COMPLETED));
+        return Boolean.TRUE.equals(session.get(MFA_CHALLENGE_COMPLETED_KEY));
     }
     private boolean isNotRecoveryCodeType(String factorId) {
         var factor = factorManager.getFactor(factorId);
