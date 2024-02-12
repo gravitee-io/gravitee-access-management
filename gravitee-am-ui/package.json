@@ -47,7 +47,7 @@
     "asciidoctor": "2.2.6",
     "asciidoctor-highlight.js": "0.3.0",
     "bcryptjs": "2.4.3",
-    "codemirror": "5.65.14",
+    "codemirror": "5.65.16",
     "codemirror-asciidoc": "1.0.4",
     "core-js": "2.6.12",
     "eslint": "8.8.0",
