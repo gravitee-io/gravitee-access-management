@@ -95,7 +95,6 @@ public class StandaloneConfiguration {
     }
 
     @Bean
-    @Qualifier("managementObjectMapper")
     public ObjectMapper objectMapper() {
         return new ObjectMapper();
     }

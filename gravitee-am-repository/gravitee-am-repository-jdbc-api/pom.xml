@@ -29,12 +29,6 @@
     <artifactId>gravitee-am-repository-jdbc-api</artifactId>
     <name>Gravitee IO - Access Management - Repository JDBC API</name>
 
-    <properties>
-        <reactor-adapter.version>3.5.1</reactor-adapter.version>
-        <reactor-core.version>3.5.8</reactor-core.version>
-        <spring-data-r2dbc.version>3.0.8</spring-data-r2dbc.version>
-    </properties>
-
     <dependencies>
 
         <!-- Gravitee dependencies -->

@@ -32,13 +32,6 @@
     <name>Gravitee IO - Access Management - Reporter JDBC</name>
 
     <properties>
-        <reactor-adapter.version>3.5.1</reactor-adapter.version>
-        <reactor-core.version>3.5.8</reactor-core.version>
-
-        <jdbc-mssql.version>7.4.1.jre8</jdbc-mssql.version>
-        <jdbc-mysql.version>8.0.29</jdbc-mysql.version>
-        <jdbc-mariadb.version>2.4.0</jdbc-mariadb.version>
-
         <skip-reporters-tests>true</skip-reporters-tests>
     </properties>
 
