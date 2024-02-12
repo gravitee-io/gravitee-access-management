@@ -58,7 +58,7 @@ public class RegisterProcessHandler extends UserRequestHandler {
 
         // create the user
         MultiMap params = context.request().formAttributes();
-        User user = convert(params);
+        User user = convert(params, client);
         MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request());
         // register the user
         register(client, user, getAuthenticatedUser(context), queryParams, h -> {

@@ -54,7 +54,7 @@ public class PasswordPolicyRequestParseHandler extends UserRequestHandler {
         Optional<PasswordSettings> passwordSettings = PasswordSettings.getInstance(client, this.domain);
 
         try {
-            User user = getUser(context);
+            User user = getUser(context, client);
             passwordService.validate(password, passwordSettings.orElse(null), user);
             context.next();
         } catch (InvalidPasswordException e) {
@@ -63,7 +63,7 @@ public class PasswordPolicyRequestParseHandler extends UserRequestHandler {
         }
     }
 
-    private User getUser(RoutingContext context) {
+    private User getUser(RoutingContext context, Client client) {
         //User is connected
         User user = context.get(ConstantKeys.USER_CONTEXT_KEY);
         if (user != null) {
@@ -71,7 +71,7 @@ public class PasswordPolicyRequestParseHandler extends UserRequestHandler {
         }
         //We use contact information from the form
         MultiMap params = context.request().formAttributes();
-        return convert(params);
+        return convert(params, client);
     }
 
     private void warningRedirection(RoutingContext context, MultiMap queryParams, String warningMsgKey) {
