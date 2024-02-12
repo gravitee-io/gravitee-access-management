@@ -118,8 +118,8 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
             // and thus are transmitted via the HTTP POST method to the Client.
             // Prepare context to render post form.
             final MultiMap queryParams = RequestUtils.cleanParams(response.params());
-            logger.info("RequestUtils.getCleanedQueryParams");
-            logger.info("queryParams.size {}", queryParams.size());
+            logger.debug("RequestUtils.getCleanedQueryParams");
+            logger.debug("queryParams.size {}", queryParams.size());
             if (response instanceof HybridResponse) {
                 HybridResponse hybridResponse = (HybridResponse) response;
                 queryParams.add("code", hybridResponse.getCode());
