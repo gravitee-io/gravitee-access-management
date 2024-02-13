@@ -97,7 +97,7 @@
         <mongodb-driver-reactivestreams.version>4.3.0</mongodb-driver-reactivestreams.version>
         <embed.mongo.version>4.7.1</embed.mongo.version>
         <json-patch.version>1.9</json-patch.version>
-        <guava.version>32.1.2-jre</guava.version>
+        <guava.version>32.1.3-jre</guava.version>
         <zxing.version>3.4.1</zxing.version>
         <commons-codec.version>1.15</commons-codec.version>
         <commons-lang.version>2.6</commons-lang.version>
