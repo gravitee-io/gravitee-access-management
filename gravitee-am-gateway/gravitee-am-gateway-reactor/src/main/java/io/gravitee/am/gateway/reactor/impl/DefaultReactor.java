@@ -79,6 +79,10 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
         securityDomainHandlerRegistry.clear();
     }
 
+    public boolean isStarted() {
+        return lifecycle.started();
+    }
+
     @Override
     public void onEvent(Event<DomainEvent, Domain> event) {
         gatewayMetricProvider.incrementDomainEvt();
