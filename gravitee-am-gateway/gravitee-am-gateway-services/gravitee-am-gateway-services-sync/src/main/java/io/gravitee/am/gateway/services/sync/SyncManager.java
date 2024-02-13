@@ -19,6 +19,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.gateway.reactor.SecurityDomainManager;
+import io.gravitee.am.gateway.reactor.impl.DefaultReactor;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
@@ -94,6 +95,10 @@ public class SyncManager implements InitializingBean {
     private Node node;
 
     @Autowired
+    @Lazy
+    private DefaultReactor defaultReactor;
+
+    @Autowired
     private GatewayMetricProvider gatewayMetricProvider;
 
     private Optional<List<String>> shardingTags;
@@ -140,6 +145,11 @@ public class SyncManager implements InitializingBean {
     }
 
     public void refresh() {
+        if (!defaultReactor.isStarted()) {
+            logger.info("No domain listener, rescheduling initial synchronization process");
+            return;
+        }
+
         logger.debug("Refreshing sync state...");
         long nextLastRefreshAt = System.currentTimeMillis();
 
