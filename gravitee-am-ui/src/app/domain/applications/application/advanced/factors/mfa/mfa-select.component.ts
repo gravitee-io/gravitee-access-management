@@ -13,70 +13,78 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import { ActivatedRoute } from '@angular/router';
+
+import { DialogResult, FactorsSelectDialogComponent } from './factors-select-dialog/factors-select-dialog.component';
+import { MfaIconsResolver } from './mfa-icons-resolver';
+
+import { MfaFactor } from '../model';
 
 @Component({
   selector: 'mfa-select',
   templateUrl: './mfa-select.component.html',
   styleUrls: ['./mfa-select.component.scss'],
 })
-export class MfaSelectComponent {
-  @Input() factors: any[];
-  @Input() applicationFactors: any[];
+export class MfaSelectComponent implements OnChanges {
+  @Input() factors: MfaFactor[];
   @Input() editMode: boolean;
-  @Output() settingsChange = new EventEmitter<any>();
+  @Output() settingsChange = new EventEmitter<MfaFactor[]>();
 
-  private factorTypes: any = {
-    OTP: 'TOTP',
-    SMS: 'SMS',
-    EMAIL: 'EMAIL',
-    CALL: 'CALL',
-    HTTP: 'HTTP',
-    RECOVERY_CODE: 'Recovery Code',
-    FIDO2: 'FIDO2',
-  };
+  expanded = false;
 
-  private factorIcons: any = {
-    OTP: 'mobile_friendly',
-    SMS: 'sms',
-    EMAIL: 'email',
-    CALL: 'call',
-    HTTP: 'http',
-    RECOVERY_CODE: 'autorenew',
-    FIDO2: 'fingerprint',
-  };
+  iconResolver = new MfaIconsResolver();
+  selectedFactors: MfaFactor[];
+  constructor(public dialog: MatDialog, private route: ActivatedRoute) {}
 
-  getFactorTypeIcon(type: any): string {
-    const factorType = type.toUpperCase();
-    if (this.factorIcons[factorType]) {
-      return this.factorIcons[factorType];
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.factors) {
+      this.selectedFactors = this.factors ? this.factors.filter((f) => f.selected) : [];
     }
-    return 'donut_large';
   }
 
-  displayFactorType(type: any): string {
-    const factorType = type.toUpperCase();
-    if (this.factorTypes[factorType]) {
-      return this.factorTypes[factorType];
-    }
-    return 'Custom';
+  anyFactorSelected(): boolean {
+    return this.selectedFactorsCount() > 0;
   }
 
-  hasFactors(): boolean {
-    return this.factors && this.factors.length > 0;
+  selectedFactorsCount() {
+    return this.factors ? this.factors.filter((f) => f.selected).length : 0;
   }
 
-  isFactorSelected(factorId: string): boolean {
-    return this.applicationFactors?.includes(factorId);
-  }
-
-  selectFactor($event: any, factorId: string): void {
+  setFactorDefault($event: any, factorId: string): void {
     if (this.editMode) {
-      this.settingsChange.emit({ checked: $event.checked, factorId: factorId });
+      // this.selectedFactorIds.forEach(factor => factor.default = (factor.id === factorId))
+      // this.settingsChange.emit(this.factors);
     }
   }
 
-  // addSelectionRule(id: string): void {
-  //   return;
-  // }
+  removeSelectedFactor($event: any, factorId: string): void {
+    this.factors.filter((obj) => obj.id === factorId).forEach((factor) => (factor.selected = false));
+    this.selectedFactors = this.factors ? this.factors.filter((f) => f.selected) : [];
+    this.settingsChange.next(this.factors);
+  }
+
+  openFactorSelectionDialog(event: Event) {
+    event.preventDefault();
+    const domainName = this.route.snapshot.data['domain']?.hrid;
+    const environment = this.route.snapshot.data['domain']?.referenceId;
+    const dialogRef = this.dialog.open(FactorsSelectDialogComponent, {
+      data: {
+        factors: this.factors,
+        domainName: domainName,
+        environment: environment,
+      },
+      width: '35%',
+    });
+    dialogRef.afterClosed().subscribe((result: DialogResult) => {
+      if (result && result.changed) {
+        this.settingsChange.next(result.factors);
+      }
+    });
+  }
+
+  expand(expanded: boolean) {
+    this.expanded = expanded;
+  }
 }

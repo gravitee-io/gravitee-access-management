@@ -15,8 +15,9 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { map } from 'rxjs/operators';
 
-import { Challenge, Enroll, RememberDevice, StepUpAuth } from './model';
+import { Challenge, Enroll, MfaFactor, RememberDevice, StepUpAuth } from './model';
 
 import { ApplicationService } from '../../../../../services/application.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
@@ -32,7 +33,7 @@ export class ApplicationFactorsComponent implements OnInit {
   private domainId: string;
 
   application: any;
-  factors: any[];
+  factors: MfaFactor[];
   deviceIdentifiers: any[];
   mfa: any;
 
@@ -53,6 +54,7 @@ export class ApplicationFactorsComponent implements OnInit {
       geoVelocityAssessment: { enabled: false },
     };
   }
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -94,7 +96,10 @@ export class ApplicationFactorsComponent implements OnInit {
     this.application.settings.riskAssessment =
       this.application.settings.riskAssessment || ApplicationFactorsComponent.getDefaultRiskAssessment();
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
-    this.factorService.findByDomain(this.domainId).subscribe((response) => (this.factors = [...response]));
+    this.factorService
+      .findByDomain(this.domainId)
+      .pipe(map((factors) => factors.map((f) => Object.assign(f, { selected: this.application.factors.includes(f.id) }))))
+      .subscribe((response) => (this.factors = [...response]));
   }
 
   patch(): void {
@@ -129,13 +134,9 @@ export class ApplicationFactorsComponent implements OnInit {
     });
   }
 
-  selectFactor(selectFactorEvent: any): void {
-    if (selectFactorEvent.checked) {
-      this.application.factors = this.application.factors || [];
-      this.application.factors.push(selectFactorEvent.factorId);
-    } else {
-      this.application.factors.splice(this.application.factors.indexOf(selectFactorEvent.factorId), 1);
-    }
+  selectFactor(selectedFactors: MfaFactor[]): void {
+    this.factors = [...selectedFactors];
+    this.application.factors = this.factors.filter((factor) => factor.selected).map((factor) => factor.id);
     this.formChanged = true;
   }
 

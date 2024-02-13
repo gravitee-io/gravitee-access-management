@@ -24,19 +24,31 @@
       </mat-chip-list>
     </div>
     <div class="mfa-title">
-      <h5>MFA</h5>
-      <small>Multi-factor Authentication adds an additional factor to the login process in order to grant user access.</small>
+      <h5 matBadgeHidden="{{ selectedFactorsCount() == 0 }}"
+          matBadge="{{ selectedFactorsCount() }}"
+          matBadgeOverlap="false"
+          matBadgePosition="after">
+        Factors
+      </h5>
+      <small>Select factors to enrol and challenge users during login. Use selection rules to customize factor
+        configuration.</small>
     </div>
+    <mat-icon *ngIf="expanded && selectedFactorsCount() > 0" (click)="expand(false)">expand_more</mat-icon>
+    <mat-icon *ngIf="!expanded && selectedFactorsCount() > 0" (click)="expand(true)">expand_less</mat-icon>
+  </div>
+  <div fxLayout="row" style="margin-top: 20px">
+    <button mat-raised-button color="primary" [disabled]="!editMode" (click)="openFactorSelectionDialog($event)">Select factors</button>
   </div>
   <div fxLayout="column">
-    <div *ngIf="hasFactors()">
-      <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="40" [rowHeight]="50" [rows]="factors">
+    <div *ngIf="selectedFactorsCount() > 0 && this.expanded">
+      <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="40" [rowHeight]="50"
+                     [rows]="selectedFactors">
         <ngx-datatable-column name="Factors" [flexGrow]="1">
           <ng-template let-row="row" ngx-datatable-cell-template>
             {{ row.name }}
           </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column name="Selection Rule" [flexGrow]="1">
+        <ngx-datatable-column name="Selection Rule" [flexGrow]="1" [sortable]="false">
           <ng-template let-row="row" ngx-datatable-cell-template>
             <!--            <span (click)="addSelectionRule(row.id)" class="wrapper" style="cursor: pointer">-->
             <!--              <span-->
@@ -52,28 +64,31 @@
         <ngx-datatable-column name="Type" [flexGrow]="1">
           <ng-template let-row="row" ngx-datatable-cell-template>
             <span class="factor-cell-title">
-              <mat-icon>{{ getFactorTypeIcon(row.factorType) }}</mat-icon>
-              <small class="factor-type">{{ displayFactorType(row.factorType) }}</small>
+              <mat-icon>{{ iconResolver.getFactorTypeIcon(row.factorType) }}</mat-icon>
+              <small class="factor-type">{{ iconResolver.displayFactorType(row.factorType) }}</small>
             </span>
           </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column name="Status" [flexGrow]="1">
+        <ngx-datatable-column name="Default" [flexGrow]="1" [sortable]="false">
           <ng-template let-row="row" ngx-datatable-cell-template>
-            <mat-slide-toggle (change)="selectFactor($event, row.id)" [checked]="isFactorSelected(row.id)" [disabled]="!editMode">
-            </mat-slide-toggle>
+            <mat-radio-button (change)="setFactorDefault($event, row.id)"
+                              [checked]="row.default"
+                              [disabled]="!editMode">
+            </mat-radio-button>
           </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column name="Default" [flexGrow]="1">
+        <ngx-datatable-column [flexGrow]="1" [sortable]="false">
           <ng-template let-row="row" ngx-datatable-cell-template>
-            <mat-radio-button (change)="selectFactor($event, row.id)" [checked]="isFactorSelected(row.id)" [disabled]="!editMode">
-            </mat-radio-button>
+            <mat-icon (click)="removeSelectedFactor($event, row.id)">close</mat-icon>
           </ng-template>
         </ngx-datatable-column>
       </ngx-datatable>
     </div>
 
-    <div *ngIf="!hasFactors()" style="font-size: 14px; text-align: center">
-      <p>No multi-factor authentication has been set up.</p>
+    <div *ngIf="!anyFactorSelected()" class="no-factor-selected-box">
+      <mat-icon color="accent">add_alert</mat-icon>
+      <h5>No factors selected</h5>
+      <small>Select factors from your library</small>
     </div>
   </div>
 </div>

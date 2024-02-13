@@ -21,7 +21,6 @@
       <form (keydown.enter)="(false)" (ngSubmit)="patch()">
         <mfa-select
           [factors]="factors"
-          [applicationFactors]="application.factors"
           [editMode]="editMode"
           (settingsChange)="selectFactor($event)"
         ></mfa-select>

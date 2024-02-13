@@ -54,3 +54,10 @@ export interface StepUpAuth {
   stepUpAuthenticationRule: string;
   active: boolean;
 }
+
+export interface MfaFactor {
+  id: string;
+  name: string;
+  factorType: string;
+  selected: boolean;
+}
