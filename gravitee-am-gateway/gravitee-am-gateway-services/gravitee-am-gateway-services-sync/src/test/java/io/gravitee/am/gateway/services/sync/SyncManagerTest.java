@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.services.sync;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.gateway.reactor.SecurityDomainManager;
+import io.gravitee.am.gateway.reactor.impl.DefaultReactor;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
@@ -25,14 +26,11 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.repository.management.api.DomainRepository;
-import io.gravitee.am.repository.management.api.EnvironmentRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
-import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.node.api.Node;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,13 +39,22 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.env.Environment;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.UUID;
 
 import static io.gravitee.node.api.Node.META_ENVIRONMENTS;
 import static io.gravitee.node.api.Node.META_ORGANIZATIONS;
 import static java.util.Arrays.asList;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -83,10 +90,27 @@ public class SyncManagerTest {
     @Mock
     private GatewayMetricProvider gatewayMetricProvider;
 
+    @Mock
+    private DefaultReactor defaultReactor;
+
     @Before
     public void before() throws Exception {
         lenient().when(node.metadata()).thenReturn(Map.of(META_ORGANIZATIONS, new HashSet<>(), META_ENVIRONMENTS, new HashSet<>()));
         syncManager.afterPropertiesSet();
+        when(defaultReactor.isStarted()).thenReturn(true);
+    }
+
+    @Test
+    public void init_test_ignore_sync_if_reactor_not_ready() {
+        reset(defaultReactor);
+        when(defaultReactor.isStarted()).thenReturn(false);
+
+        syncManager.refresh();
+
+        verify(domainRepository, never()).findAll();
+        verify(securityDomainManager, never()).deploy(any(Domain.class));
+        verify(securityDomainManager, never()).update(any(Domain.class));
+        verify(securityDomainManager, never()).undeploy(any(String.class));
     }
 
     @Test
