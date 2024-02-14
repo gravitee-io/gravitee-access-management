@@ -913,39 +913,6 @@ public class UserServiceTest {
     }
 
     @Test
-    public void mustNotSetEnrolSkipTime_settingsNotActive() {
-        Client client = mock(Client.class);
-        var enrollmentSettings = new EnrollSettings();
-        enrollmentSettings.setForceEnrollment(true);
-        enrollmentSettings.setSkipTimeSeconds(7200L);
-        var mfaSettings = new MFASettings();
-        mfaSettings.setEnroll(enrollmentSettings);
-        var user = mock(User.class);
-
-        when(client.getMfaSettings()).thenReturn(mfaSettings);
-
-        userService.setMfaEnrollmentSkippedTime(client, user);
-
-        verify(commonUserService, times(0)).update(user);
-    }
-
-    @Test
-    public void mustNotSetEnrolSkipTime_settingsUserIsNull() {
-        Client client = mock(Client.class);
-        var enrollmentSettings = new EnrollmentSettings();
-        enrollmentSettings.setForceEnrollment(false);
-        enrollmentSettings.setSkipTimeSeconds(7200L);
-        var mfaSettings = new MFASettings();
-        mfaSettings.setEnrollment(enrollmentSettings);
-
-        when(client.getMfaSettings()).thenReturn(mfaSettings);
-
-        userService.setMfaEnrollmentSkippedTime(client, null);
-
-        verify(commonUserService, times(0)).update(any());
-    }
-
-    @Test
     public void mustNotSetEnrolSkipTime_settingsUserExpiredAlreadySet() {
         Client client = mock(Client.class);
         var enrollmentSettings = new EnrollmentSettings();

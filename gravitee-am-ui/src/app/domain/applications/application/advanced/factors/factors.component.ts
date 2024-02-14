@@ -111,7 +111,15 @@ export class ApplicationFactorsComponent implements OnInit {
             forceEnrollment: this.enroll.forceEnrollment,
             skipTimeSeconds: this.enroll.skipTimeSeconds,
           },
-          enroll: this.enroll,
+          enroll: {
+            active: this.enroll.active,
+            enrollmentRule: this.enroll.enrollmentRule,
+            enrollmentSkipActive: this.enroll.enrollmentSkipActive,
+            enrollmentSkipRule: this.enroll.enrollmentSkipRule,
+            forceEnrollment: this.enroll.forceEnrollment,
+            skipTimeSeconds: this.enroll.skipTimeSeconds,
+            type: this.enroll.type,
+          },
           challenge: {
             active: this.challenge.active,
             challengeRule: this.challenge.challengeRule,
@@ -151,7 +159,7 @@ export class ApplicationFactorsComponent implements OnInit {
     this.enroll = {
       ...enroll,
       enrollmentRule: (enroll.enrollmentRule || '').slice(),
-      // skipEnrollmentRule: (options.enrollmentRule || '').slice(),
+      enrollmentSkipRule: (enroll.enrollmentSkipRule || '').slice(),
     };
     this.formChanged = true;
   }

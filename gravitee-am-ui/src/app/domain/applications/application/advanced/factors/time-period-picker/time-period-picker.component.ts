@@ -28,16 +28,17 @@ export class TimePeriodPickerComponent implements OnInit {
 
   @Input() defaultTimeSec: number;
   @Input() title: string;
-  @Output() settingsChange: EventEmitter<any> = new EventEmitter<any>();
+  @Output() settingsChange = new EventEmitter<number>();
 
   constructor(private timeConverterService: TimeConverterService) {}
 
   ngOnInit(): void {
-    const time = this.defaultTimeSec ? this.defaultTimeSec : 36000; // Default 10h
+    const time = this.defaultTimeSec ? this.defaultTimeSec : 36000;
     this.humanTime = {
       skipTime: this.timeConverterService.getTime(time),
       skipUnit: this.timeConverterService.getUnitTime(time),
     };
+    this.settingsChange.emit(this.humanTimeToSeconds());
   }
 
   displaySkipTime() {

@@ -17,6 +17,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 
 import { ExpressionInfoDialog } from '../../expression-info-dialog/expression-info-dialog.component';
+import { Enroll } from '../../model';
 
 @Component({
   selector: 'mfa-conditional',
@@ -24,12 +25,8 @@ import { ExpressionInfoDialog } from '../../expression-info-dialog/expression-in
   styleUrls: ['./mfa-conditional.component.scss'],
 })
 export class MfaConditionalComponent {
-  @Input() enrollmentRule: string;
-  @Input() skipEnrollmentRule: string;
-  @Output() settingsChange: EventEmitter<any> = new EventEmitter<any>();
-
-  skipTimeSeconds: any;
-  skipConditional = false;
+  @Input() enrollment: Enroll;
+  @Output() settingsChange = new EventEmitter<Enroll>();
 
   constructor(private dialog: MatDialog) {}
 
@@ -40,30 +37,24 @@ export class MfaConditionalComponent {
 
   updateRule($event: any): void {
     if ($event.target) {
-      this.enrollmentRule = $event.target.value;
+      this.enrollment.enrollmentRule = $event.target.value;
       this.update();
     }
   }
   updateSkipRule($event: any): void {
     if ($event.target) {
-      this.skipEnrollmentRule = $event.target.value;
+      this.enrollment.enrollmentSkipRule = $event.target.value;
       this.update();
     }
   }
   switchSkipConditional(): void {
-    this.skipConditional = !this.skipConditional;
+    this.enrollment.enrollmentSkipActive = !this.enrollment.enrollmentSkipActive;
   }
-  onSettingChange($event: any): void {
-    if ($event.target) {
-      this.skipTimeSeconds = $event.target.value;
-      this.update();
-    }
+  onSettingChange(skipTimeSeconds: number): void {
+    this.enrollment.skipTimeSeconds = skipTimeSeconds;
+    this.update();
   }
   private update(): void {
-    this.settingsChange.emit({
-      enrollmentRule: this.enrollmentRule,
-      skipEnrollmentRule: this.skipEnrollmentRule,
-      skipTimeSeconds: this.skipTimeSeconds,
-    });
+    this.settingsChange.emit(this.enrollment);
   }
 }

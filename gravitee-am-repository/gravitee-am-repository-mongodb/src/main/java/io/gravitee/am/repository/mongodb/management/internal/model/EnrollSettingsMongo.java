@@ -32,6 +32,8 @@ public class EnrollSettingsMongo {
     private Boolean forceEnrollment;
     private Long skipTimeSeconds;
     private String enrollmentRule;
+    private Boolean enrollmentSkipActive;
+    private String enrollmentSkipRule;
     private String type;
 
     public static EnrollSettingsMongo convert(EnrollSettings enrollment) {
@@ -41,6 +43,8 @@ public class EnrollSettingsMongo {
             enrollmentMongo.setForceEnrollment(settings.getForceEnrollment());
             enrollmentMongo.setSkipTimeSeconds(settings.getSkipTimeSeconds());
             enrollmentMongo.setEnrollmentRule(settings.getEnrollmentRule());
+            enrollmentMongo.setEnrollmentSkipActive(settings.isEnrollmentSkipActive());
+            enrollmentMongo.setEnrollmentSkipRule(settings.getEnrollmentSkipRule());
             enrollmentMongo.setType(settings.getType() != null ? settings.getType().name() : null);
             return enrollmentMongo;
         }).orElse(new EnrollSettingsMongo());
@@ -52,6 +56,8 @@ public class EnrollSettingsMongo {
         enrollmentSettings.setForceEnrollment(getForceEnrollment());
         enrollmentSettings.setSkipTimeSeconds(getSkipTimeSeconds());
         enrollmentSettings.setEnrollmentRule(getEnrollmentRule());
+        enrollmentSettings.setEnrollmentSkipActive(TRUE.equals(getEnrollmentSkipActive()));
+        enrollmentSettings.setEnrollmentSkipRule(getEnrollmentSkipRule());
         enrollmentSettings.setType(getType() != null ? MfaEnrollType.valueOf(getType()) : null);
         return enrollmentSettings;
     }

@@ -17,6 +17,7 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
 import static io.gravitee.am.common.factor.FactorType.RECOVERY_CODE;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_CAN_BE_SKIPPED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS;
 import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
@@ -38,6 +39,7 @@ import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSetting
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
 import java.util.Date;
 import java.util.Map;
 import static java.util.Objects.isNull;
@@ -64,10 +66,12 @@ public class MfaFilterContext {
         this.endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
         this.factorManager = factorManager;
     }
+
     public boolean isEnrollSkipped() {
         final EnrollSettings enrollSettings = MfaUtils.getEnrollSettings(client);
-        final Boolean forceEnrollment = Optional.ofNullable(enrollSettings.getForceEnrollment()).orElse(false);
-        if (FALSE.equals(forceEnrollment) && nonNull(endUser.getMfaEnrollmentSkippedAt())) {
+        final boolean forceEnrollment = Optional.ofNullable(enrollSettings.getForceEnrollment()).orElse(false);
+        final boolean canSkip = FALSE.equals(forceEnrollment) || TRUE.equals(session.get(MFA_CAN_BE_SKIPPED_KEY));
+        if (canSkip && nonNull(endUser.getMfaEnrollmentSkippedAt())) {
             Date now = new Date();
             long skipTime = ofNullable(enrollSettings.getSkipTimeSeconds()).orElse(DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS) * 1000L;
             return endUser.getMfaEnrollmentSkippedAt().getTime() + skipTime > now.getTime();
@@ -125,7 +129,7 @@ public class MfaFilterContext {
     }
 
     public boolean isChallengeOnceCompleted() {
-        return Boolean.TRUE.equals(session.get(MFA_CHALLENGE_COMPLETED_KEY));
+        return TRUE.equals(session.get(MFA_CHALLENGE_COMPLETED_KEY));
     }
     private boolean isNotRecoveryCodeType(String factorId) {
         var factor = factorManager.getFactor(factorId);

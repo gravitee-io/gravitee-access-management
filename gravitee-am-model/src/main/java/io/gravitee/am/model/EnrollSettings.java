@@ -30,6 +30,8 @@ public class EnrollSettings {
     private boolean active;
     private Boolean forceEnrollment;
     private String enrollmentRule;
+    private boolean enrollmentSkipActive;
+    private String enrollmentSkipRule;
     private Long skipTimeSeconds;
     private MfaEnrollType type;
 
@@ -38,6 +40,8 @@ public class EnrollSettings {
         this.skipTimeSeconds = enroll.skipTimeSeconds;
         this.active = enroll.active;
         this.enrollmentRule = enroll.enrollmentRule;
+        this.enrollmentSkipActive = enroll.enrollmentSkipActive;
+        this.enrollmentSkipRule = enroll.enrollmentSkipRule;
         this.type = enroll.type;
     }
 }
