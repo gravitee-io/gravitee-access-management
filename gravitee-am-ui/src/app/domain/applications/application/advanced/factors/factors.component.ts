@@ -101,7 +101,11 @@ export class ApplicationFactorsComponent implements OnInit {
       .pipe(
         map((factors) =>
           factors.map((f) => {
-            return { ...f, selected: this.application.factors.includes(f.id) };
+            return {
+              ...f,
+              selected: this.application.factors.includes(f.id),
+              isDefault: false,
+            };
           }),
         ),
       )
@@ -140,8 +144,8 @@ export class ApplicationFactorsComponent implements OnInit {
     });
   }
 
-  selectFactor(selectedFactors: MfaFactor[]): void {
-    this.factors = [...selectedFactors];
+  updateFactors(updatedFactors: MfaFactor[]): void {
+    this.factors = [...updatedFactors];
     this.application.factors = this.factors.filter((factor) => factor.selected).map((factor) => factor.id);
     this.formChanged = true;
   }

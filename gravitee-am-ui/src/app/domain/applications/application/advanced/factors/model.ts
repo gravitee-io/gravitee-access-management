@@ -60,4 +60,5 @@ export interface MfaFactor {
   name: string;
   factorType: string;
   selected: boolean;
+  isDefault: boolean;
 }

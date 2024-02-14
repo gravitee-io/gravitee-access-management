@@ -37,6 +37,7 @@ export class MfaSelectComponent implements OnChanges {
   expanded = false;
 
   selectedFactors: MfaFactor[];
+
   constructor(public dialog: MatDialog, private route: ActivatedRoute) {}
 
   ngOnChanges(changes: SimpleChanges) {
@@ -55,8 +56,8 @@ export class MfaSelectComponent implements OnChanges {
 
   setFactorDefault($event: any, factorId: string): void {
     if (this.editMode) {
-      // this.selectedFactorIds.forEach(factor => factor.default = (factor.id === factorId))
-      // this.settingsChange.emit(this.factors);
+      this.factors.forEach((factor) => (factor.isDefault = factor.id === factorId));
+      this.settingsChange.emit(this.factors);
     }
   }
 
