@@ -131,7 +131,7 @@
         <gravitee-notifier-email.version>1.5.0</gravitee-notifier-email.version>
         <gravitee-notifier-slack.version>1.3.0</gravitee-notifier-slack.version>
         <gravitee-alert-api.version>1.8.0</gravitee-alert-api.version>
-        <gravitee-notifier-api.version>1.4.1</gravitee-notifier-api.version>
+        <gravitee-notifier-api.version>1.4.3</gravitee-notifier-api.version>
         <gravitee-risk-assessment-api.version>2.0.0</gravitee-risk-assessment-api.version>
         <gravitee-secretprovider-kubernetes.version>1.0.0-alpha.4</gravitee-secretprovider-kubernetes.version>
 
