@@ -24,7 +24,7 @@
       </mat-chip-list>
     </div>
     <div class="mfa-title">
-      <h5 matBadgeHidden="{{ selectedFactorsCount() == 0 }}"
+      <h5 matBadgeHidden="{{ !anyFactorSelected() }}"
           matBadge="{{ selectedFactorsCount() }}"
           matBadgeOverlap="false"
           matBadgePosition="after">
