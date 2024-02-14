@@ -198,7 +198,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
 
         // if user has skipped the enrollment process, continue
-        if (!acceptEnrollment) {
+        if (!acceptEnrollment && canSkipMfa(client, routingContext)) {
             final User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
             // set the last skipped time
             // and update the session
