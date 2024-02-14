@@ -40,9 +40,12 @@ export class MfaSelectComponent implements OnChanges {
 
   constructor(public dialog: MatDialog, private route: ActivatedRoute) {}
 
-  ngOnChanges(changes: SimpleChanges) {
+  ngOnChanges(changes: SimpleChanges): void {
     if (changes.factors) {
       this.selectedFactors = this.factors ? this.factors.filter((f) => f.selected) : [];
+      if (this.selectedFactors.length > 0 && this.selectedFactors.filter((f) => f.isDefault).length == 0) {
+        this.setFactorDefault(changes, this.selectedFactors[0].id);
+      }
     }
   }
 
@@ -50,21 +53,22 @@ export class MfaSelectComponent implements OnChanges {
     return this.selectedFactorsCount() > 0;
   }
 
-  selectedFactorsCount() {
-    return this.factors ? this.factors.filter((f) => f.selected).length : 0;
+  selectedFactorsCount(): number {
+    return this.selectedFactors ? this.selectedFactors.length : 0;
   }
 
   setFactorDefault($event: any, factorId: string): void {
     if (this.editMode) {
-      this.factors.forEach((factor) => (factor.isDefault = factor.id === factorId));
+      let factors = [...this.factors];
+      factors.forEach((factor) => (factor.isDefault = factor.id === factorId));
       this.settingsChange.emit(this.factors);
     }
   }
 
   removeSelectedFactor($event: any, factorId: string): void {
-    this.factors.filter((obj) => obj.id === factorId).forEach((factor) => (factor.selected = false));
-    this.selectedFactors = this.factors ? this.factors.filter((f) => f.selected) : [];
-    this.settingsChange.next(this.factors);
+    let factors = [...this.factors];
+    factors.filter((mfa) => mfa.id === factorId).forEach((factor) => (factor.selected = false));
+    this.settingsChange.next(factors);
   }
 
   openFactorSelectionDialog(event: Event): void {
@@ -73,7 +77,7 @@ export class MfaSelectComponent implements OnChanges {
     const environment = this.route.snapshot.data['domain']?.referenceId;
     const dialogRef = this.dialog.open(FactorsSelectDialogComponent, {
       data: {
-        factors: this.factors,
+        factors: [...this.factors],
         domainName: domainName,
         environment: environment,
       },

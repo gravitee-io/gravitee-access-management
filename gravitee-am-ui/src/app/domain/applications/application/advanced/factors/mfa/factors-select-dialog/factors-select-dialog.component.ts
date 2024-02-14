@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
 import { MfaFactor } from '../../model';
@@ -35,14 +35,16 @@ export interface DialogResult {
   templateUrl: './factors-select-dialog.component.html',
   styleUrls: ['./factors-select-dialog.component.scss'],
 })
-export class FactorsSelectDialogComponent {
+export class FactorsSelectDialogComponent implements OnInit {
   iconResolver = new MfaIconsResolver();
   factors: MfaFactor[];
   model: any;
 
-  constructor(public dialogRef: MatDialogRef<FactorsSelectDialogComponent>, @Inject(MAT_DIALOG_DATA) public data: DialogData) {
-    this.factors = data.factors;
-    this.model = data.factors.reduce((model, factor) => {
+  constructor(public dialogRef: MatDialogRef<FactorsSelectDialogComponent>, @Inject(MAT_DIALOG_DATA) public data: DialogData) {}
+
+  ngOnInit() {
+    this.factors = this.data.factors;
+    this.model = this.data.factors.reduce((model, factor) => {
       model[factor.id] = factor.selected;
       return model;
     }, {});
@@ -51,7 +53,7 @@ export class FactorsSelectDialogComponent {
   confirmSelection(): void {
     this.factors.forEach((factor) => (factor.selected = this.model[factor.id]));
     const result = {
-      factors: this.factors,
+      factors: [...this.factors],
       changed: true,
     } as DialogResult;
     this.dialogRef.close(result);
