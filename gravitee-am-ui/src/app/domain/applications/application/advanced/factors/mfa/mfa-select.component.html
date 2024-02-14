@@ -33,8 +33,8 @@
       <small>Select factors to enrol and challenge users during login. Use selection rules to customize factor
         configuration.</small>
     </div>
-    <mat-icon *ngIf="expanded && selectedFactorsCount() > 0" (click)="expand(false)">expand_more</mat-icon>
-    <mat-icon *ngIf="!expanded && selectedFactorsCount() > 0" (click)="expand(true)">expand_less</mat-icon>
+    <mat-icon *ngIf="expanded && anyFactorSelected()" (click)="expand(false)">expand_more</mat-icon>
+    <mat-icon *ngIf="!expanded && anyFactorSelected()" (click)="expand(true)">expand_less</mat-icon>
   </div>
   <div fxLayout="row" style="margin-top: 20px">
     <button mat-raised-button color="primary" [disabled]="!editMode" (click)="openFactorSelectionDialog($event)">Select factors</button>

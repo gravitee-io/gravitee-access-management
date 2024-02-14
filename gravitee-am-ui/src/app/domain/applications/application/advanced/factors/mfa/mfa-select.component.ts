@@ -84,7 +84,7 @@ export class MfaSelectComponent implements OnChanges {
       width: '35%',
     });
     dialogRef.afterClosed().subscribe((result: DialogResult) => {
-      if (result && result.changed) {
+      if (result?.changed) {
         this.settingsChange.next(result.factors);
       }
     });
