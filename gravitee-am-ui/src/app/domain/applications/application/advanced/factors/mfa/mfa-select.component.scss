@@ -9,6 +9,16 @@
 
   .mfa-title {
     width: 95%;
+
+    h5 {
+      display: inline-block;
+
+      .mat-badge-content {
+        background-color: #c0b8d2;
+        top: 0;
+        right: -35px;
+      }
+    }
   }
 
   .mfa-chip {
@@ -31,4 +41,8 @@
   .factor-type {
     margin-left: 5px;
   }
+}
+
+.no-factor-selected-box {
+  text-align: center;
 }
