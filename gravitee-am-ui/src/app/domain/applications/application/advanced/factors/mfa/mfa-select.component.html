@@ -40,7 +40,7 @@
     <button mat-raised-button color="primary" [disabled]="!editMode" (click)="openFactorSelectionDialog($event)">Select factors</button>
   </div>
   <div fxLayout="column">
-    <div *ngIf="selectedFactorsCount() > 0 && this.expanded">
+    <div *ngIf="this.expanded && anyFactorSelected()">
       <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="40" [rowHeight]="50"
                      [rows]="selectedFactors">
         <ngx-datatable-column name="Factors" [flexGrow]="1">
