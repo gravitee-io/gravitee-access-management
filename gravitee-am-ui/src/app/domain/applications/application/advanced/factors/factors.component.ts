@@ -98,7 +98,13 @@ export class ApplicationFactorsComponent implements OnInit {
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
     this.factorService
       .findByDomain(this.domainId)
-      .pipe(map((factors) => factors.map((f) => Object.assign(f, { selected: this.application.factors.includes(f.id) }))))
+      .pipe(
+        map((factors) =>
+          factors.map((f) => {
+            return { ...f, selected: this.application.factors.includes(f.id) };
+          }),
+        ),
+      )
       .subscribe((response) => (this.factors = [...response]));
   }
 

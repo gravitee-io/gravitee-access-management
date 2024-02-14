@@ -42,13 +42,13 @@ export class FactorsSelectDialogComponent {
 
   constructor(public dialogRef: MatDialogRef<FactorsSelectDialogComponent>, @Inject(MAT_DIALOG_DATA) public data: DialogData) {
     this.factors = data.factors;
-    this.model = data.factors.reduce((map, obj) => {
-      map[obj.id] = obj.selected;
-      return map;
+    this.model = data.factors.reduce((model, factor) => {
+      model[factor.id] = factor.selected;
+      return model;
     }, {});
   }
 
-  confirmSelection() {
+  confirmSelection(): void {
     this.factors.forEach((factor) => (factor.selected = this.model[factor.id]));
     const result = {
       factors: this.factors,
@@ -57,7 +57,7 @@ export class FactorsSelectDialogComponent {
     this.dialogRef.close(result);
   }
 
-  cancel() {
+  cancel(): void {
     this.dialogRef.close();
   }
 
@@ -65,5 +65,13 @@ export class FactorsSelectDialogComponent {
     event.preventDefault();
     const url = `/environments/${this.data.environment}/domains/${this.data.domainName}/settings/factors`;
     window.open(url, '_blank');
+  }
+
+  getFactorIconType(type: any): string {
+    return this.iconResolver.getFactorTypeIcon(type);
+  }
+
+  getDisplayFactorType(type: any): string {
+    return this.iconResolver.getDisplayFactorType(type);
   }
 }

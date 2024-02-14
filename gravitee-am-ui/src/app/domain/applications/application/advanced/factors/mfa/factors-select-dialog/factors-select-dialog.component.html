@@ -16,7 +16,7 @@
 
 -->
 
-<div class="">
+<div>
   <h5>Add Factors</h5>
   <p><small>Select factors from your library.</small></p>
   <button mat-raised-button (click)="goToMfaFactorSettingsPage($event)">
@@ -37,8 +37,8 @@
       <ngx-datatable-column name="Type" [flexGrow]="2">
         <ng-template let-row="row" ngx-datatable-cell-template>
             <span class="factor-cell-title">
-              <mat-icon>{{ iconResolver.getFactorTypeIcon(row.factorType) }}</mat-icon>
-              <small class="factor-type">{{ iconResolver.displayFactorType(row.factorType) }}</small>
+              <mat-icon>{{ getFactorIconType(row.factorType) }}</mat-icon>
+              <small class="factor-type">{{ getDisplayFactorType(row.factorType) }}</small>
             </span>
         </ng-template>
       </ngx-datatable-column>

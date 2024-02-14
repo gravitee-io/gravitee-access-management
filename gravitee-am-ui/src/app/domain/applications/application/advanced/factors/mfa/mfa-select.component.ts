@@ -28,13 +28,14 @@ import { MfaFactor } from '../model';
   styleUrls: ['./mfa-select.component.scss'],
 })
 export class MfaSelectComponent implements OnChanges {
+  private iconResolver = new MfaIconsResolver();
+
   @Input() factors: MfaFactor[];
   @Input() editMode: boolean;
   @Output() settingsChange = new EventEmitter<MfaFactor[]>();
 
   expanded = false;
 
-  iconResolver = new MfaIconsResolver();
   selectedFactors: MfaFactor[];
   constructor(public dialog: MatDialog, private route: ActivatedRoute) {}
 
@@ -65,7 +66,7 @@ export class MfaSelectComponent implements OnChanges {
     this.settingsChange.next(this.factors);
   }
 
-  openFactorSelectionDialog(event: Event) {
+  openFactorSelectionDialog(event: Event): void {
     event.preventDefault();
     const domainName = this.route.snapshot.data['domain']?.hrid;
     const environment = this.route.snapshot.data['domain']?.referenceId;
@@ -84,7 +85,15 @@ export class MfaSelectComponent implements OnChanges {
     });
   }
 
-  expand(expanded: boolean) {
+  getFactorIconType(type: any): string {
+    return this.iconResolver.getFactorTypeIcon(type);
+  }
+
+  getDisplayFactorType(type: any): string {
+    return this.iconResolver.getDisplayFactorType(type);
+  }
+
+  expand(expanded: boolean): void {
     this.expanded = expanded;
   }
 }

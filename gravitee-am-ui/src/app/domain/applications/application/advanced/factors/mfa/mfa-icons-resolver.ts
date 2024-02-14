@@ -27,7 +27,7 @@ export class MfaIconsResolver {
     return 'donut_large';
   }
 
-  public displayFactorType(type: any): string {
+  public getDisplayFactorType(type: any): string {
     const factorType = type.toUpperCase();
     if (this.factorTypes[factorType]) {
       return this.factorTypes[factorType];
