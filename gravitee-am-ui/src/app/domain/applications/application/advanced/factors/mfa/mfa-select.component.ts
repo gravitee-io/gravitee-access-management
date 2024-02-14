@@ -18,7 +18,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
 
 import { DialogResult, FactorsSelectDialogComponent } from './factors-select-dialog/factors-select-dialog.component';
-import { MfaIconsResolver } from './mfa-icons-resolver';
+import { getDisplayFactorType, getFactorTypeIcon } from './mfa-select-icon';
 
 import { MfaFactor } from '../model';
 
@@ -28,8 +28,6 @@ import { MfaFactor } from '../model';
   styleUrls: ['./mfa-select.component.scss'],
 })
 export class MfaSelectComponent implements OnChanges {
-  private iconResolver = new MfaIconsResolver();
-
   @Input() factors: MfaFactor[];
   @Input() editMode: boolean;
   @Output() settingsChange = new EventEmitter<MfaFactor[]>();
@@ -91,11 +89,11 @@ export class MfaSelectComponent implements OnChanges {
   }
 
   getFactorIconType(type: any): string {
-    return this.iconResolver.getFactorTypeIcon(type);
+    return getFactorTypeIcon(type);
   }
 
   getDisplayFactorType(type: any): string {
-    return this.iconResolver.getDisplayFactorType(type);
+    return getDisplayFactorType(type);
   }
 
   expand(expanded: boolean): void {

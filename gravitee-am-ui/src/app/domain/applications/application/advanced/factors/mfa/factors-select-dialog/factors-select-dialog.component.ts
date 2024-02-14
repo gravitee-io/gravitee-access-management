@@ -17,7 +17,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
 import { MfaFactor } from '../../model';
-import { MfaIconsResolver } from '../mfa-icons-resolver';
+import { getDisplayFactorType, getFactorTypeIcon } from '../mfa-select-icon';
 
 export interface DialogData {
   factors: MfaFactor[];
@@ -36,7 +36,6 @@ export interface DialogResult {
   styleUrls: ['./factors-select-dialog.component.scss'],
 })
 export class FactorsSelectDialogComponent implements OnInit {
-  iconResolver = new MfaIconsResolver();
   factors: MfaFactor[];
   model: any;
 
@@ -70,10 +69,10 @@ export class FactorsSelectDialogComponent implements OnInit {
   }
 
   getFactorIconType(type: any): string {
-    return this.iconResolver.getFactorTypeIcon(type);
+    return getFactorTypeIcon(type);
   }
 
   getDisplayFactorType(type: any): string {
-    return this.iconResolver.getDisplayFactorType(type);
+    return getDisplayFactorType(type);
   }
 }
