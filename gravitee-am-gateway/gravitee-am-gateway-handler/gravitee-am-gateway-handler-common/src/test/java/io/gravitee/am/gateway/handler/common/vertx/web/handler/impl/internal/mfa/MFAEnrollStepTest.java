@@ -151,7 +151,7 @@ class MFAEnrollStepTest {
     }
 
     @Test
-    void shouldNotEnrollWhenStepUpFalse() {
+    void shouldNotEnrollWhenStepUpFalseAndConditionalSatisfied() {
         mockContextRequest();
         mockAuthUser(false);
         mockStepUp(false);
@@ -166,7 +166,7 @@ class MFAEnrollStepTest {
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(routingContext.session()).thenReturn(session);
 
-        mockEnrollmentRuleSatisfied(true);
+        mockConditionalEnrollmentRuleSatisfied(true);
 
         mfaEnrollStep.execute(routingContext, flow);
 
@@ -245,7 +245,7 @@ class MFAEnrollStepTest {
         when(routingContext.session()).thenReturn(session);
 
 
-        mockEnrollmentRuleSatisfied(true);
+        mockConditionalEnrollmentRuleSatisfied(true);
 
         mfaEnrollStep.execute(routingContext, flow);
 
@@ -520,7 +520,85 @@ class MFAEnrollStepTest {
         verifyContinueWithoutEnrollment();
     }
 
-    private void mockEnrollmentRuleSatisfied(boolean isSatisfied) {
+    @Test
+    void shouldEnrollWhenConditionalNotSatisfiedUserHasNoFactorButCanNotSkipped() {
+        mockContextRequest();
+        mockAuthUser(false);
+        when(client.getFactors()).thenReturn(Set.of(FACTOR_ID));
+        when(client.getMfaSettings()).thenReturn(mfa);
+        when(mfa.getEnroll()).thenReturn(enroll);
+        when(enroll.isActive()).thenReturn(true);
+        when(enroll.getType()).thenReturn(MfaEnrollType.CONDITIONAL);
+        when(factor.getFactorType()).thenReturn(FactorType.SMS);
+        when(factorManager.getFactor(FACTOR_ID)).thenReturn(factor);
+
+        when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
+        when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(null);
+
+        mockConditionalEnrollmentRuleSatisfied(false);
+        mockEnrollmentCanSkipRuleSatisfied(false);
+
+        mfaEnrollStep.execute(routingContext, flow);
+
+        verifyEnrollment();
+    }
+
+    @Test
+    void shouldEnrollWhenConditionalNotSatisfiedUserHasNoFactorButCanButNotSkipped() {
+        mockContextRequest();
+        mockAuthUser(false);
+        when(client.getFactors()).thenReturn(Set.of(FACTOR_ID));
+        when(client.getMfaSettings()).thenReturn(mfa);
+        when(mfa.getEnroll()).thenReturn(enroll);
+        when(enroll.isActive()).thenReturn(true);
+        when(enroll.getType()).thenReturn(MfaEnrollType.CONDITIONAL);
+        when(factor.getFactorType()).thenReturn(FactorType.SMS);
+        when(factorManager.getFactor(FACTOR_ID)).thenReturn(factor);
+
+        when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
+        when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(null);
+
+        mockConditionalEnrollmentRuleSatisfied(false);
+        mockEnrollmentCanSkipRuleSatisfied(true);
+
+        mfaEnrollStep.execute(routingContext, flow);
+
+        verifyEnrollment();
+    }
+
+    @Test
+    void shouldNotEnrollWhenConditionalNotSatisfiedUserHasNoFactorButUserCanAndSkipped() {
+        mockContextRequest();
+        var userMock = mockAuthUser(false);
+        when(client.getFactors()).thenReturn(Set.of(FACTOR_ID));
+        when(client.getMfaSettings()).thenReturn(mfa);
+        when(mfa.getEnroll()).thenReturn(enroll);
+        when(enroll.isActive()).thenReturn(true);
+        when(enroll.getSkipTimeSeconds()).thenReturn(1000L);
+        when(enroll.getType()).thenReturn(MfaEnrollType.CONDITIONAL);
+        when(factor.getFactorType()).thenReturn(FactorType.SMS);
+        when(factorManager.getFactor(FACTOR_ID)).thenReturn(factor);
+
+        when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
+        when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(null);
+        when(userMock.getMfaEnrollmentSkippedAt()).thenReturn(new Date());
+
+        mockConditionalEnrollmentRuleSatisfied(false);
+        mockEnrollmentCanSkipRuleSatisfied(true);
+
+        mfaEnrollStep.execute(routingContext, flow);
+
+        verifyContinueWithoutEnrollment();
+    }
+
+    private void mockEnrollmentCanSkipRuleSatisfied(boolean isSatisfied) {
+        var rule = "enrollment-can-skip-rule";
+        when(enroll.isEnrollmentSkipActive()).thenReturn(true);
+        when(enroll.getEnrollmentSkipRule()).thenReturn(rule);
+        when(ruleEngine.evaluate(eq(rule), any(), any(), any())).thenReturn(isSatisfied);
+    }
+
+    private void mockConditionalEnrollmentRuleSatisfied(boolean isSatisfied) {
         var rule = "enrollment-rule";
         when(enroll.getEnrollmentRule()).thenReturn(rule);
         when(ruleEngine.evaluate(eq(rule), any(), any(), any())).thenReturn(isSatisfied);
@@ -554,7 +632,7 @@ class MFAEnrollStepTest {
         when(session.get(any())).thenReturn(null);
     }
 
-    private void mockAuthUser(boolean strongAuth) {
+    private io.gravitee.am.model.User mockAuthUser(boolean strongAuth) {
         io.vertx.rxjava3.ext.auth.User authenticatedUser = mock(io.vertx.rxjava3.ext.auth.User.class);
         when(routingContext.user()).thenReturn(authenticatedUser);
         User delegateUser = mock(User.class);
@@ -562,6 +640,7 @@ class MFAEnrollStepTest {
         io.gravitee.am.model.User mockUSer = mock(io.gravitee.am.model.User.class);
         given(delegateUser.getUser()).willReturn(mockUSer);
         when(session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY)).thenReturn(strongAuth);
+        return mockUSer;
     }
 
     private void mockAuthUserWithSkipTime() {

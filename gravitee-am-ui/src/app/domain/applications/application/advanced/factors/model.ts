@@ -29,7 +29,8 @@ export interface Enroll {
   forceEnrollment: boolean;
   skipTimeSeconds: number;
   enrollmentRule: string;
-  // skipEnrollmentRule: string;
+  enrollmentSkipActive: boolean;
+  enrollmentSkipRule: string;
   type: string;
 }
 

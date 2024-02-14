@@ -33,6 +33,8 @@ public class PatchEnrollSettings {
     private Optional<Boolean> forceEnrollment;
     private Optional<Long> skipTimeSeconds;
     private Optional<String> enrollmentRule;
+    private Optional<Boolean> enrollmentSkipActive;
+    private Optional<String> enrollmentSkipRule;
     private Optional<MfaEnrollType> type;
     public EnrollSettings patch(EnrollSettings _toPatch) {
         EnrollSettings toPatch = _toPatch == null ? new EnrollSettings() : new EnrollSettings(_toPatch);
@@ -42,6 +44,8 @@ public class PatchEnrollSettings {
         SetterUtils.safeSet(toPatch::setSkipTimeSeconds, skipTimeSeconds);
         SetterUtils.safeSet(toPatch::setActive, getActive());
         SetterUtils.safeSet(toPatch::setEnrollmentRule, getEnrollmentRule());
+        SetterUtils.safeSet(toPatch::setEnrollmentSkipActive, getEnrollmentSkipActive());
+        SetterUtils.safeSet(toPatch::setEnrollmentSkipRule, getEnrollmentSkipRule());
         SetterUtils.safeSet(toPatch::setType, getType());
         return toPatch;
     }

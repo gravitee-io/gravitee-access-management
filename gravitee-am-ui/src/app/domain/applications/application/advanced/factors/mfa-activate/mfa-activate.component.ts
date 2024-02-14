@@ -75,8 +75,10 @@ export class MfaActivateComponent implements OnInit {
     this.enrollment.skipTimeSeconds = skipTime;
     this.update();
   }
-  onConditionalChange(conditional: any): void {
-    this.enrollment.enrollmentRule = conditional.enrollmentRule;
+  onConditionalChange(enrollment: Enroll): void {
+    this.enrollment.enrollmentSkipActive = enrollment.enrollmentSkipActive;
+    this.enrollment.enrollmentRule = enrollment.enrollmentRule;
+    this.enrollment.skipTimeSeconds = enrollment.skipTimeSeconds;
     this.update();
   }
 
@@ -93,14 +95,15 @@ export class MfaActivateComponent implements OnInit {
   }
 
   private update(): void {
-    const update = {
+    this.settingsChange.emit({
       active: this.enrollment.active,
       forceEnrollment: this.currentMode !== MfaActivateComponent.modeOptions.OPTIONAL,
       skipTimeSeconds: this.enrollment.skipTimeSeconds,
       enrollmentRule: this.currentMode === MfaActivateComponent.modeOptions.CONDITIONAL ? this.enrollment.enrollmentRule : '',
-      // skipEnrollmentRule: this.currentMode === MfaActivateComponent.modeOptions.CONDITIONAL ? this.enrollment.skipEnrollmentRule : '',
+      enrollmentSkipActive:
+        this.currentMode === MfaActivateComponent.modeOptions.CONDITIONAL ? this.enrollment.enrollmentSkipActive : false,
+      enrollmentSkipRule: this.currentMode === MfaActivateComponent.modeOptions.CONDITIONAL ? this.enrollment.enrollmentSkipRule : '',
       type: this.currentMode.value,
-    };
-    this.settingsChange.emit(update);
+    });
   }
 }

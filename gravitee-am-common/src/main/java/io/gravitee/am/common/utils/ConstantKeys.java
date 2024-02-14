@@ -76,7 +76,7 @@ public interface ConstantKeys {
 
     // MFA keys.
     String MFA_STOP = "mfaStop";
-    String MFA_SKIPPED_KEY = "mfaEnrollmentSkipped";
+    String MFA_CAN_BE_SKIPPED_KEY = "mfaEnrollmentCanBeSkipped";
     String MFA_ENROLLMENT_COMPLETED_KEY = "mfaEnrollmentCompleted";
     String MFA_CHALLENGE_COMPLETED_KEY = "mfaChallengeCompleted";
     String STRONG_AUTH_COMPLETED_KEY = "strongAuthCompleted";

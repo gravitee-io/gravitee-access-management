@@ -65,10 +65,9 @@
 
       <mfa-conditional
         *ngIf="this.currentMode === modeOptions.CONDITIONAL"
-        [enrollmentRule]="this.enrollment.enrollmentRule"
+        [enrollment]="this.enrollment"
         (settingsChange)="onConditionalChange($event)"
       >
-        <!--        [skipEnrollmentRule]="this.enrollment.skipEnrollmentRule"-->
       </mfa-conditional>
     </div>
   </div>

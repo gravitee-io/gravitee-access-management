@@ -26,19 +26,20 @@ import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.Factor;
+import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Session;
-import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
@@ -46,6 +47,7 @@ import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import io.vertx.rxjava3.ext.web.handler.SessionHandler;
 import io.vertx.rxjava3.ext.web.sstore.LocalSessionStore;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
+import static java.util.Optional.ofNullable;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -674,5 +676,147 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                     assertTrue(location.contains("/authorize"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldEnrollWhenUserCannotSkip() throws Exception {
+        final var USER_FACTOR_ID = UUID.randomUUID().toString();
+        final var ENROLL_FACTOR_ID = UUID.randomUUID().toString();
+        final var EMAIL_ADDR = "fake@acme.com";
+        final var USER_ACCEPT_ENROLL = false;
+
+        Factor emailFactor = new Factor();
+        emailFactor.setId(ENROLL_FACTOR_ID);
+        emailFactor.setFactorType(FactorType.EMAIL);
+
+        Factor smsFactor = new Factor();
+        smsFactor.setId(USER_FACTOR_ID);
+        smsFactor.setFactorType(FactorType.SMS);
+
+        FactorProvider provider = mock(FactorProvider.class);
+        when(provider.checkSecurityFactor(any())).thenReturn(true);
+
+        when(factorManager.getFactor(ENROLL_FACTOR_ID)).thenReturn(emailFactor);
+        when(factorManager.get(ENROLL_FACTOR_ID)).thenReturn(provider);
+
+        when(factorManager.getFactor(USER_FACTOR_ID)).thenReturn(smsFactor);
+        when(factorManager.get(USER_FACTOR_ID)).thenReturn(provider);
+
+        router.route(HttpMethod.POST, REQUEST_PATH)
+                .handler(ctx -> {
+                    User user = new User();
+                    user.setId("userId");
+                    EnrolledFactor enrolledFactor = new EnrolledFactor();
+                    EnrolledFactorSecurity enrolledFactorSecurity = new EnrolledFactorSecurity();
+                    enrolledFactor.setFactorId(USER_FACTOR_ID);
+                    enrolledFactor.setStatus(FactorStatus.ACTIVATED);
+                    enrolledFactor.setSecurity(enrolledFactorSecurity);
+                    user.setFactors(Collections.singletonList(enrolledFactor));
+
+                    Client client = new Client();
+                    client.setFactors(Set.of(ENROLL_FACTOR_ID, USER_FACTOR_ID));
+
+                    var mfa = new MFASettings();
+                    var enroll = new EnrollSettings();
+                    enroll.setForceEnrollment(true);
+                    mfa.setEnroll(enroll);
+                    client.setMfaSettings(mfa);
+
+                    ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+                    ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+
+                    ctx.session().put(ConstantKeys.MFA_FORCE_ENROLLMENT, true);
+                    ctx.session().put(ConstantKeys.MFA_CAN_BE_SKIPPED_KEY, false);
+
+                    ctx.next();
+                })
+                .handler(new MFAEnrollEndpoint(factorManager, engine, userService, domain, applicationContext))
+                .failureHandler(new ErrorHandler(RootProvider.PATH_ERROR));
+
+        testRequest(
+                HttpMethod.POST,
+                REQUEST_PATH,
+                req -> {
+                    Buffer buffer = Buffer.buffer();
+                    buffer
+                            .appendString("factorId=" + ENROLL_FACTOR_ID)
+                            .appendString("&")
+                            .appendString(ConstantKeys.USER_MFA_ENROLLMENT + "=" + USER_ACCEPT_ENROLL)
+                            .appendString("&")
+                            .appendString(ConstantKeys.MFA_ENROLLMENT_SHARED_SECRET + "=" + UUID.randomUUID())
+                            .appendString("&")
+                            .appendString(ConstantKeys.MFA_ENROLLMENT_EMAIL + "=" + EMAIL_ADDR);
+                    req.headers().set("content-length", String.valueOf(buffer.length()));
+                    req.headers().set("content-type", "application/x-www-form-urlencoded");
+                    req.write(buffer);
+                },
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.contains("/authorize"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+
+        verify(userService, never()).setMfaEnrollmentSkippedTime(any(), any());
+    }
+
+    @Test
+    public void shouldEnrollSkipWhenUserSkipped() throws Exception {
+        final var USER_FACTOR_ID = UUID.randomUUID().toString();
+        final var ENROLL_FACTOR_ID = UUID.randomUUID().toString();
+        final var EMAIL_ADDR = "fake@acme.com";
+        final var USER_ACCEPT_ENROLL = false;
+
+        when(userService.setMfaEnrollmentSkippedTime(any(), any())).thenReturn(Completable.complete());
+
+        router.route(HttpMethod.POST, REQUEST_PATH)
+                .handler(ctx -> {
+                    User user = new User();
+                    user.setId("userId");
+                    EnrolledFactor enrolledFactor = new EnrolledFactor();
+                    EnrolledFactorSecurity enrolledFactorSecurity = new EnrolledFactorSecurity();
+                    enrolledFactor.setFactorId(USER_FACTOR_ID);
+                    enrolledFactor.setStatus(FactorStatus.ACTIVATED);
+                    enrolledFactor.setSecurity(enrolledFactorSecurity);
+                    user.setFactors(Collections.singletonList(enrolledFactor));
+
+                    Client client = new Client();
+                    client.setFactors(Set.of(ENROLL_FACTOR_ID, USER_FACTOR_ID));
+                    ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+                    ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+
+                    ctx.session().put(ConstantKeys.MFA_FORCE_ENROLLMENT, true);
+                    ctx.session().put(ConstantKeys.MFA_CAN_BE_SKIPPED_KEY, true);
+
+                    ctx.next();
+                })
+                .handler(new MFAEnrollEndpoint(factorManager, engine, userService, domain, applicationContext))
+                .failureHandler(new ErrorHandler(RootProvider.PATH_ERROR));
+
+        testRequest(
+                HttpMethod.POST,
+                REQUEST_PATH,
+                req -> {
+                    Buffer buffer = Buffer.buffer();
+                    buffer
+                            .appendString("factorId=" + ENROLL_FACTOR_ID)
+                            .appendString("&")
+                            .appendString(ConstantKeys.USER_MFA_ENROLLMENT + "=" + USER_ACCEPT_ENROLL)
+                            .appendString("&")
+                            .appendString(ConstantKeys.MFA_ENROLLMENT_SHARED_SECRET + "=" + UUID.randomUUID())
+                            .appendString("&")
+                            .appendString(ConstantKeys.MFA_ENROLLMENT_EMAIL + "=" + EMAIL_ADDR);
+                    req.headers().set("content-length", String.valueOf(buffer.length()));
+                    req.headers().set("content-type", "application/x-www-form-urlencoded");
+                    req.write(buffer);
+                },
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.contains("/authorize"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+
+        verify(userService, times(1)).setMfaEnrollmentSkippedTime(any(), any());
     }
 }

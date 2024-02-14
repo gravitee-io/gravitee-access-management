@@ -143,7 +143,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                     routingContext.put("emailAddress", endUser.getEmail());
                 }
 
-                routingContext.put(ConstantKeys.MFA_FORCE_ENROLLMENT, isForceMfaActive(client));
+                routingContext.put(ConstantKeys.MFA_FORCE_ENROLLMENT, !canSkipMfa(client, routingContext));
                 routingContext.put(ConstantKeys.ACTION_KEY, action);
                 // render the mfa enroll page
                 this.renderPage(routingContext, generateData(routingContext, domain, client), client, logger, "Unable to render MFA enroll page");
@@ -179,9 +179,12 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                 .collect(Collectors.toList());
     }
 
-    private boolean isForceMfaActive(Client client) {
-        final EnrollSettings enrollmentSettings = ofNullable(client.getMfaSettings()).orElse(new MFASettings()).getEnroll();
-        return ofNullable(enrollmentSettings).map(EnrollSettings::getForceEnrollment).orElse(false);
+    private boolean canSkipMfa(Client client, RoutingContext routingContext) {
+        var forceEnrollment = ofNullable(client.getMfaSettings())
+                .map(MFASettings::getEnroll)
+                .map(EnrollSettings::getForceEnrollment).orElse(false);
+        var canConditionalSkip = Boolean.TRUE.equals(routingContext.session().get(ConstantKeys.MFA_CAN_BE_SKIPPED_KEY));
+        return !forceEnrollment || canConditionalSkip;
     }
 
     private void saveEnrollment(RoutingContext routingContext) {
@@ -195,7 +198,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
 
         // if user has skipped the enrollment process, continue
-        if (!acceptEnrollment) {
+        if (!acceptEnrollment && canSkipMfa(client, routingContext)) {
             final User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
             // set the last skipped time
             // and update the session
