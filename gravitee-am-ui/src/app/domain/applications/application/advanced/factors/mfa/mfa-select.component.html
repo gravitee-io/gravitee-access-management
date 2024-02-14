@@ -24,14 +24,15 @@
       </mat-chip-list>
     </div>
     <div class="mfa-title">
-      <h5 matBadgeHidden="{{ !anyFactorSelected() }}"
-          matBadge="{{ selectedFactorsCount() }}"
-          matBadgeOverlap="false"
-          matBadgePosition="after">
+      <h5
+        matBadgeHidden="{{ !anyFactorSelected() }}"
+        matBadge="{{ selectedFactorsCount() }}"
+        matBadgeOverlap="false"
+        matBadgePosition="after"
+      >
         Factors
       </h5>
-      <small>Select factors to enrol and challenge users during login. Use selection rules to customize factor
-        configuration.</small>
+      <small>Select factors to enrol and challenge users during login. Use selection rules to customize factor configuration.</small>
     </div>
     <mat-icon *ngIf="expanded && anyFactorSelected()" (click)="expand(false)">expand_more</mat-icon>
     <mat-icon *ngIf="!expanded && anyFactorSelected()" (click)="expand(true)">expand_less</mat-icon>
@@ -41,8 +42,14 @@
   </div>
   <div fxLayout="column">
     <div *ngIf="this.expanded && anyFactorSelected()">
-      <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="40" [rowHeight]="50"
-                     [rows]="selectedFactors">
+      <ngx-datatable
+        class="material"
+        [columnMode]="'flex'"
+        [headerHeight]="40"
+        [footerHeight]="40"
+        [rowHeight]="50"
+        [rows]="selectedFactors"
+      >
         <ngx-datatable-column name="Factors" [flexGrow]="1">
           <ng-template let-row="row" ngx-datatable-cell-template>
             {{ row.name }}
@@ -71,9 +78,7 @@
         </ngx-datatable-column>
         <ngx-datatable-column name="Default" [flexGrow]="1" [sortable]="false">
           <ng-template let-row="row" ngx-datatable-cell-template>
-            <mat-radio-button (change)="setFactorDefault($event, row.id)"
-                              [checked]="row.isDefault"
-                              [disabled]="!editMode">
+            <mat-radio-button (change)="setFactorDefault($event, row.id)" [checked]="row.isDefault" [disabled]="!editMode">
             </mat-radio-button>
           </ng-template>
         </ngx-datatable-column>

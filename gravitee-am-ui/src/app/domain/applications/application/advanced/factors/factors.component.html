@@ -19,11 +19,7 @@
   <div>
     <div fxFlex="70">
       <form (keydown.enter)="(false)" (ngSubmit)="patch()">
-        <mfa-select
-          [factors]="factors"
-          [editMode]="editMode"
-          (settingsChange)="updateFactors($event)"
-        ></mfa-select>
+        <mfa-select [factors]="factors" [editMode]="editMode" (settingsChange)="updateFactors($event)"></mfa-select>
 
         <mfa-activate
           *ngIf="hasFactors() && hasSelectedFactors()"
