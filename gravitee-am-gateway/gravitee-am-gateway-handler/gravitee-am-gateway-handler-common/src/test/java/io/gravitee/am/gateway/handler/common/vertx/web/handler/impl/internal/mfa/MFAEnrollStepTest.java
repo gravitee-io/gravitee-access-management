@@ -521,7 +521,7 @@ class MFAEnrollStepTest {
     }
 
     @Test
-    void shouldEnrollWheConditionalNotSatisfiedUserHasNoFactorButCanNotSkipped() {
+    void shouldEnrollWhenConditionalNotSatisfiedUserHasNoFactorButCanNotSkipped() {
         mockContextRequest();
         mockAuthUser(false);
         when(client.getFactors()).thenReturn(Set.of(FACTOR_ID));
