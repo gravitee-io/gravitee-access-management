@@ -41,7 +41,7 @@ export class MfaSelectComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.factors) {
       this.selectedFactors = this.factors ? this.factors.filter((f) => f.selected) : [];
-      if (this.selectedFactors.length > 0 && this.selectedFactors.filter((f) => f.isDefault).length == 0) {
+      if (this.selectedFactors.length > 0 && this.selectedFactors.filter((f) => f.isDefault).length === 0) {
         this.setFactorDefault(changes, this.selectedFactors[0].id);
       }
     }
@@ -57,14 +57,14 @@ export class MfaSelectComponent implements OnChanges {
 
   setFactorDefault($event: any, factorId: string): void {
     if (this.editMode) {
-      let factors = [...this.factors];
+      const factors = [...this.factors];
       factors.forEach((factor) => (factor.isDefault = factor.id === factorId));
       this.settingsChange.emit(this.factors);
     }
   }
 
   removeSelectedFactor($event: any, factorId: string): void {
-    let factors = [...this.factors];
+    const factors = [...this.factors];
     factors.filter((mfa) => mfa.id === factorId).forEach((factor) => (factor.selected = false));
     this.settingsChange.next(factors);
   }
