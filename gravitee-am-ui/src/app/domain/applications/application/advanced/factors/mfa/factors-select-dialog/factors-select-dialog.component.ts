@@ -21,13 +21,14 @@ import { getDisplayFactorType, getFactorTypeIcon } from '../mfa-select-icon';
 
 export interface DialogData {
   factors: MfaFactor[];
-  domainName: string;
-  environment: string;
+  currentUrl: string;
+  domainUrl: string;
 }
 
 export interface DialogResult {
   changed: boolean;
   factors: MfaFactor[];
+  firstSelection: boolean;
 }
 
 @Component({
@@ -54,8 +55,13 @@ export class FactorsSelectDialogComponent implements OnInit {
     const result = {
       factors: [...this.factors],
       changed: true,
+      firstSelection: this.data.factors.length === 0 && this.factors.length > 0,
     } as DialogResult;
     this.dialogRef.close(result);
+  }
+
+  anyFactorExists(): boolean {
+    return this.factors?.length > 0;
   }
 
   cancel(): void {
@@ -64,8 +70,9 @@ export class FactorsSelectDialogComponent implements OnInit {
 
   goToMfaFactorSettingsPage(event: any) {
     event.preventDefault();
-    const url = `/environments/${this.data.environment}/domains/${this.data.domainName}/settings/factors`;
-    window.open(url, '_blank');
+    const domainUrlIndex = this.data.currentUrl.indexOf(this.data.domainUrl);
+    const basePath = this.data.currentUrl.slice(0, domainUrlIndex);
+    window.open(`${basePath}${this.data.domainUrl}/settings/factors`, '_blank');
   }
 
   getFactorIconType(type: any): string {

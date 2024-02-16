@@ -15,7 +15,7 @@
  */
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { DialogResult, FactorsSelectDialogComponent } from './factors-select-dialog/factors-select-dialog.component';
 import { getDisplayFactorType, getFactorTypeIcon } from './mfa-select-icon';
@@ -32,11 +32,11 @@ export class MfaSelectComponent implements OnChanges {
   @Input() editMode: boolean;
   @Output() settingsChange = new EventEmitter<MfaFactor[]>();
 
-  expanded = false;
+  expanded = true;
 
   selectedFactors: MfaFactor[];
 
-  constructor(public dialog: MatDialog, private route: ActivatedRoute) {}
+  constructor(public dialog: MatDialog, private route: ActivatedRoute, private router: Router) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.factors) {
@@ -76,14 +76,17 @@ export class MfaSelectComponent implements OnChanges {
     const dialogRef = this.dialog.open(FactorsSelectDialogComponent, {
       data: {
         factors: [...this.factors],
-        domainName: domainName,
-        environment: environment,
+        domainUrl: `/environments/${environment}/domains/${domainName}`.toLowerCase(),
+        currentUrl: this.router.url.toLowerCase(),
       },
       width: '35%',
     });
     dialogRef.afterClosed().subscribe((result: DialogResult) => {
       if (result?.changed) {
         this.settingsChange.next(result.factors);
+        if (result.firstSelection) {
+          this.expanded = true;
+        }
       }
     });
   }

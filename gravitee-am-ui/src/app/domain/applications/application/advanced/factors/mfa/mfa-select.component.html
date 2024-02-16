@@ -38,7 +38,7 @@
     <mat-icon *ngIf="!expanded && anyFactorSelected()" (click)="expand(true)">expand_less</mat-icon>
   </div>
   <div fxLayout="row" style="margin-top: 20px">
-    <button mat-raised-button color="primary" [disabled]="!editMode" (click)="openFactorSelectionDialog($event)">Select factors</button>
+    <button mat-raised-button color="primary" [disabled]="!editMode" (click)="openFactorSelectionDialog($event)">Select Factors</button>
   </div>
   <div fxLayout="column">
     <div *ngIf="this.expanded && anyFactorSelected()">
@@ -91,7 +91,7 @@
     </div>
 
     <div *ngIf="!anyFactorSelected()" class="no-factor-selected-box">
-      <mat-icon color="accent">add_alert</mat-icon>
+      <mat-icon class="bell-icon">notifications_none</mat-icon>
       <h5>No factors selected</h5>
       <small>Select factors from your library</small>
     </div>
