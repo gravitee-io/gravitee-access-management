@@ -58,6 +58,10 @@ export class FactorsSelectDialogComponent implements OnInit {
     this.dialogRef.close(result);
   }
 
+  anyFactorExists(): boolean {
+    return this.factors?.length > 0;
+  }
+
   cancel(): void {
     this.dialogRef.close();
   }
