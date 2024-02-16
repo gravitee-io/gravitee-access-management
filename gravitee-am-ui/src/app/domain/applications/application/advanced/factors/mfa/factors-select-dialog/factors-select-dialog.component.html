@@ -52,7 +52,9 @@
     </ngx-datatable>
   </div>
   <div fxLayout="row" class="action-button-container" style="margin-top: 20px">
-    <button mat-raised-button color="primary" (click)="confirmSelection()" [disabled]="!anyFactorExists()">Add Selected</button>
+    <button mat-raised-button color="primary" (click)="confirmSelection()" [disabled]="!anyFactorExists() || noneFactorSelected()">
+      Add Selected
+    </button>
     <button mat-raised-button (click)="cancel()">Cancel</button>
   </div>
 </div>

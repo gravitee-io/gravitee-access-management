@@ -64,6 +64,10 @@ export class FactorsSelectDialogComponent implements OnInit {
     return this.factors?.length > 0;
   }
 
+  noneFactorSelected(): boolean {
+    return this.factors.map((factor) => this.model[factor.id]).filter((selected) => selected).length === 0;
+  }
+
   cancel(): void {
     this.dialogRef.close();
   }
