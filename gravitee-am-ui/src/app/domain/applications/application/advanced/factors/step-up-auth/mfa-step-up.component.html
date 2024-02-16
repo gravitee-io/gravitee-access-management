@@ -24,7 +24,7 @@
       </mat-chip-list>
     </div>
     <div class="mfa-title">
-      <h5>Step up authentication</h5>
+      <h5>Step-Up Authentication</h5>
       <small>
         Additional authentication may be required when accessing highly sensitive resources. The MFA challenge section will appear after
         sign-in if specific conditions are met.
@@ -43,7 +43,7 @@
     <mat-form-field appearance="outline" floatLabel="always">
       <input
         matInput
-        placeholder="Step up authentication rule"
+        placeholder="Enter step-up rules using Gravitee Expression Language"
         name="mfaStepUpRule"
         [(ngModel)]="stepUpAuth.stepUpAuthenticationRule"
         (keyup)="updateRule($event)"
