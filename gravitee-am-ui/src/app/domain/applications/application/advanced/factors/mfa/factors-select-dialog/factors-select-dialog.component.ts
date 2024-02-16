@@ -28,6 +28,7 @@ export interface DialogData {
 export interface DialogResult {
   changed: boolean;
   factors: MfaFactor[];
+  firstSelection: boolean;
 }
 
 @Component({
@@ -54,6 +55,7 @@ export class FactorsSelectDialogComponent implements OnInit {
     const result = {
       factors: [...this.factors],
       changed: true,
+      firstSelection: this.data.factors.length === 0 && this.factors.length > 0,
     } as DialogResult;
     this.dialogRef.close(result);
   }

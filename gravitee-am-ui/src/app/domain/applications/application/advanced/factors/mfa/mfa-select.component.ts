@@ -32,7 +32,7 @@ export class MfaSelectComponent implements OnChanges {
   @Input() editMode: boolean;
   @Output() settingsChange = new EventEmitter<MfaFactor[]>();
 
-  expanded = false;
+  expanded = true;
 
   selectedFactors: MfaFactor[];
 
@@ -84,6 +84,9 @@ export class MfaSelectComponent implements OnChanges {
     dialogRef.afterClosed().subscribe((result: DialogResult) => {
       if (result?.changed) {
         this.settingsChange.next(result.factors);
+        if (result.firstSelection) {
+          this.expanded = true;
+        }
       }
     });
   }
