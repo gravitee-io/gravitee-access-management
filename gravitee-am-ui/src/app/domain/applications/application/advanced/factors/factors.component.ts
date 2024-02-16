@@ -103,7 +103,7 @@ export class ApplicationFactorsComponent implements OnInit {
           factors.map((f) => {
             return {
               ...f,
-              selected: this.application.factors.includes(f.id),
+              selected: this.application.factors?.includes(f.id),
               isDefault: false,
             };
           }),
