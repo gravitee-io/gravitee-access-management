@@ -36,7 +36,7 @@ export interface DialogResult {
   templateUrl: './factors-select-dialog.component.html',
   styleUrls: ['./factors-select-dialog.component.scss'],
 })
-export class FactorsSelectDialogComponent implements OnInit, AfterViewChecked {
+export class FactorsSelectDialogComponent implements OnInit {
   factors: MfaFactor[];
   model: any;
 
@@ -48,12 +48,6 @@ export class FactorsSelectDialogComponent implements OnInit, AfterViewChecked {
       model[factor.id] = factor.selected;
       return model;
     }, {});
-  }
-
-  ngAfterViewChecked(): void {
-    // https://github.com/swimlane/ngx-datatable/issues/1266
-    // ngx-datatable within matDialog doesn't resize to fit the full width
-    window.dispatchEvent(new Event('resize'));
   }
 
   confirmSelection(): void {
