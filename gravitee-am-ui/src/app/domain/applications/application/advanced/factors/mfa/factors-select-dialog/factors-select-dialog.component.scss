@@ -2,6 +2,11 @@
   display: none;
 }
 
+.material {
+  min-height: 290px;
+  overflow-y: auto;
+}
+
 .action-button-container {
   button {
     margin-right: 10px;
