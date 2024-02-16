@@ -21,8 +21,8 @@ import { getDisplayFactorType, getFactorTypeIcon } from '../mfa-select-icon';
 
 export interface DialogData {
   factors: MfaFactor[];
-  domainName: string;
-  environment: string;
+  currentUrl: string;
+  domainUrl: string;
 }
 
 export interface DialogResult {
@@ -70,8 +70,9 @@ export class FactorsSelectDialogComponent implements OnInit {
 
   goToMfaFactorSettingsPage(event: any) {
     event.preventDefault();
-    const url = `/environments/${this.data.environment}/domains/${this.data.domainName}/settings/factors`;
-    window.open(url, '_blank');
+    const domainUrlIndex = this.data.currentUrl.indexOf(this.data.domainUrl);
+    const basePath = this.data.currentUrl.slice(0, domainUrlIndex);
+    window.open(`${basePath}${this.data.domainUrl}/settings/factors`, '_blank');
   }
 
   getFactorIconType(type: any): string {
