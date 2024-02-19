@@ -99,7 +99,7 @@
         <!-- Bouncy Castle -->
         <dependency>
             <groupId>org.bouncycastle</groupId>
-            <artifactId>bcpkix-jdk15on</artifactId>
+            <artifactId>bcpkix-jdk18on</artifactId>
         </dependency>
 
         <!-- Spring dependencies -->
