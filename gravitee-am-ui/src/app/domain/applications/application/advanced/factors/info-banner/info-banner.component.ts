@@ -38,9 +38,4 @@ export class InfoBannerComponent {
   closeInfo(): void {
     this.showInfo = false;
   }
-
-  goToLink(event: any, url: string): void {
-    event.preventDefault();
-    window.open(url, '_blank');
-  }
 }
