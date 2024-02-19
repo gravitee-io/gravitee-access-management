@@ -21,8 +21,7 @@ import { getDisplayFactorType, getFactorTypeIcon } from '../mfa-select-icon';
 
 export interface DialogData {
   factors: MfaFactor[];
-  currentUrl: string;
-  domainUrl: string;
+  mfsSettingsLink: string;
 }
 
 export interface DialogResult {
@@ -39,10 +38,12 @@ export interface DialogResult {
 export class FactorsSelectDialogComponent implements OnInit {
   factors: MfaFactor[];
   model: Map<string, boolean>;
+  mfaSettingsLink: string;
 
   constructor(public dialogRef: MatDialogRef<FactorsSelectDialogComponent>, @Inject(MAT_DIALOG_DATA) public data: DialogData) {}
 
   ngOnInit() {
+    this.mfaSettingsLink = this.data.mfsSettingsLink;
     this.factors = this.data.factors;
     const selectedFactors = this.data.factors.map((factor): [string, boolean] => [factor.id, factor.selected]);
     this.model = new Map<string, boolean>(selectedFactors);
@@ -70,15 +71,8 @@ export class FactorsSelectDialogComponent implements OnInit {
     return this.factors.map((factor) => this.model.get(factor.id)).filter((selected) => selected).length === 0;
   }
 
-  cancel(): void {
+  closeDialog(): void {
     this.dialogRef.close();
-  }
-
-  goToMfaFactorSettingsPage(event: any) {
-    event.preventDefault();
-    const domainUrlIndex = this.data.currentUrl.indexOf(this.data.domainUrl);
-    const basePath = this.data.currentUrl.slice(0, domainUrlIndex);
-    window.open(`${basePath}${this.data.domainUrl}/settings/factors`, '_blank');
   }
 
   getFactorIconType(type: any): string {

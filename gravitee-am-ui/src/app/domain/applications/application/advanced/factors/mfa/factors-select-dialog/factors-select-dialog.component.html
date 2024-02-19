@@ -19,7 +19,7 @@
 <div>
   <h5>Add Factors</h5>
   <p><small>Select factors from your library.</small></p>
-  <button mat-raised-button (click)="goToMfaFactorSettingsPage($event)">Add/ Edit MFA Factors</button>
+  <button mat-raised-button [routerLink]="mfaSettingsLink" (click)="closeDialog()">Add/ Edit MFA Factors</button>
   <div fxLayout="column">
     <ngx-datatable
       class="material"
@@ -55,6 +55,6 @@
     <button mat-raised-button color="primary" (click)="confirmSelection()" [disabled]="!anyFactorExists() || noneFactorSelected()">
       Add Selected
     </button>
-    <button mat-raised-button (click)="cancel()">Cancel</button>
+    <button mat-raised-button (click)="closeDialog()">Cancel</button>
   </div>
 </div>
