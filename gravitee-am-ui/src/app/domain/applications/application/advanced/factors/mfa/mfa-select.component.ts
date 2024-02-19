@@ -15,7 +15,7 @@
  */
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
 import { DialogResult, FactorsSelectDialogComponent } from './factors-select-dialog/factors-select-dialog.component';
 import { getDisplayFactorType, getFactorTypeIcon } from './mfa-select-icon';
@@ -36,7 +36,7 @@ export class MfaSelectComponent implements OnChanges {
 
   selectedFactors: MfaFactor[];
 
-  constructor(public dialog: MatDialog, private route: ActivatedRoute, private router: Router) {}
+  constructor(public dialog: MatDialog, private route: ActivatedRoute) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.factors) {

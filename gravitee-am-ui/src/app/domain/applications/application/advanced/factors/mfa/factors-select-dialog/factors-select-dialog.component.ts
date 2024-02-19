@@ -15,6 +15,7 @@
  */
 import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { Router } from '@angular/router';
 
 import { MfaFactor } from '../../model';
 import { getDisplayFactorType, getFactorTypeIcon } from '../mfa-select-icon';
@@ -40,7 +41,11 @@ export class FactorsSelectDialogComponent implements OnInit {
   model: Map<string, boolean>;
   mfaSettingsLink: string;
 
-  constructor(public dialogRef: MatDialogRef<FactorsSelectDialogComponent>, @Inject(MAT_DIALOG_DATA) public data: DialogData) {}
+  constructor(
+    public dialogRef: MatDialogRef<FactorsSelectDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: DialogData,
+    private router: Router,
+  ) {}
 
   ngOnInit() {
     this.mfaSettingsLink = this.data.mfsSettingsLink;
@@ -73,6 +78,11 @@ export class FactorsSelectDialogComponent implements OnInit {
 
   closeDialog(): void {
     this.dialogRef.close();
+  }
+
+  gotoMfaSettings(): void {
+    this.closeDialog();
+    this.router.navigate([this.mfaSettingsLink]);
   }
 
   getFactorIconType(type: any): string {
