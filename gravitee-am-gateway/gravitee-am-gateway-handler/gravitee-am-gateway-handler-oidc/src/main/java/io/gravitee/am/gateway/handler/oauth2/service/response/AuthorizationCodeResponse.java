@@ -57,11 +57,11 @@ public class AuthorizationCodeResponse extends AuthorizationResponse {
     }
 
     @Override
-    public MultiMap params() {
+    public MultiMap params(boolean encodeState) {
         MultiMap result = MultiMap.caseInsensitiveMultiMap();
         result.add(Parameters.CODE, getCode());
         if (getState() != null) {
-            result.add(Parameters.STATE, getURLEncodedState());
+            result.add(Parameters.STATE, encodeState ? getURLEncodedState() : getState());
         }
         return result;
     }

@@ -52,11 +52,11 @@ public class IDTokenResponse extends AuthorizationResponse {
     }
 
     @Override
-    public MultiMap params() {
+    public MultiMap params(boolean encodeState) {
         MultiMap result = MultiMap.caseInsensitiveMultiMap();
         result.add(ResponseType.ID_TOKEN, getIdToken());
         if (getState() != null) {
-            result.add(Parameters.STATE, getURLEncodedState());
+            result.add(Parameters.STATE, encodeState ? getURLEncodedState() : getState());
         }
         return result;
     }
