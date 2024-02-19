@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
 import io.gravitee.am.common.utils.ConstantKeys;
-import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_CAN_BE_SKIPPED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
@@ -54,6 +53,7 @@ public class MFAEnrollStep extends MFAStep {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final MfaFilterContext context = new MfaFilterContext(routingContext, client, factorManager);
         if (hasFactors(client, factorManager)) {
+            context.setDefaultFactorWhenApplied(ruleEngine);
             if (stepUpRequired(context, client, ruleEngine)) {
                 required(routingContext, flow, context);
             } else if (isEnrollActive(client)) {
@@ -148,7 +148,7 @@ public class MFAEnrollStep extends MFAStep {
     }
 
     public boolean canUserSkip(Client client, MfaFilterContext context) {
-        var enrollRule = ofNullable(client.getMfaSettings()).map(MFASettings::getEnroll).orElse(new EnrollSettings());
-        return enrollRule.isEnrollmentSkipActive() && evaluateRule(enrollRule.getEnrollmentSkipRule(), context, ruleEngine);
+        var enroll = ofNullable(client.getMfaSettings()).map(MFASettings::getEnroll).orElse(new EnrollSettings());
+        return enroll.isEnrollmentSkipActive() && evaluateRule(enroll.getEnrollmentSkipRule(), context, ruleEngine);
     }
 }

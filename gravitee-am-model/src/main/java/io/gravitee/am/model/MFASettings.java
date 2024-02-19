@@ -31,6 +31,7 @@ import lombok.Setter;
 public class MFASettings {
 
     private String loginRule;
+    private FactorSettings factor;
     //deprecated since 4.3. use stepUpAuthentication instead
     @Deprecated
     private String stepUpAuthenticationRule;
@@ -45,6 +46,7 @@ public class MFASettings {
 
     public MFASettings(MFASettings other) {
         this.loginRule = other.loginRule;
+        this.factor = other.factor;
         this.stepUpAuthenticationRule = other.stepUpAuthenticationRule;
         this.adaptiveAuthenticationRule = other.adaptiveAuthenticationRule;
         this.rememberDevice = ofNullable(other.rememberDevice)

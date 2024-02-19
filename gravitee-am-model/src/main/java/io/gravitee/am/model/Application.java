@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.model;
 
-import io.gravitee.am.model.application.ApplicationFactorSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
@@ -76,11 +75,6 @@ public class Application implements Resource, PasswordSettingsAware {
     @Deprecated
     private Set<String> factors;
     /**
-     * Introduced in 4.3
-     * Factors used for authentication
-     */
-    private Set<ApplicationFactorSettings> factorSettings;
-    /**
      * Certificate use to sign the tokens
      */
     private String certificate;
@@ -131,7 +125,6 @@ public class Application implements Resource, PasswordSettingsAware {
         this.updatedAt = other.updatedAt;
         this.secretSettings = other.secretSettings;
         this.secrets = other.getSecrets().stream().map(ClientSecret::new).collect(Collectors.toList());
-        this.factorSettings = other.factorSettings;
     }
 
     public String getId() {
@@ -254,14 +247,6 @@ public class Application implements Resource, PasswordSettingsAware {
         this.secretSettings = secretSettings;
     }
 
-    public Set<ApplicationFactorSettings> getFactorSettings() {
-        return factorSettings;
-    }
-
-    public void setFactorSettings(Set<ApplicationFactorSettings> factorSettings) {
-        this.factorSettings = factorSettings;
-    }
-
     public List<ClientSecret> getSecrets() {
         if (secrets == null) {
             this.secrets = new ArrayList<>();
@@ -282,6 +267,7 @@ public class Application implements Resource, PasswordSettingsAware {
         client.setCertificate(this.certificate);
         client.setIdentityProviders(this.identityProviders);
         client.setFactors(this.factors);
+        Optional.ofNullable(settings).map(ApplicationSettings::getMfa).map(MFASettings::getFactor).ifPresent(client::setFactorSettings);
         client.setMetadata(this.metadata);
         client.setCreatedAt(this.createdAt);
         client.setUpdatedAt(this.updatedAt);

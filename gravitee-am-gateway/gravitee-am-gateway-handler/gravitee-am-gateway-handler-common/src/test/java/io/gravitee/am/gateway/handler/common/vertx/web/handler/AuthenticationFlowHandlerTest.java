@@ -38,9 +38,11 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.Aut
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFAChallengeStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFAEnrollStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFARecoveryCodeStep;
+import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.Factor;
+import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.MfaChallengeType;
 import io.gravitee.am.model.MfaEnrollType;
@@ -61,6 +63,7 @@ import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSetting
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -81,6 +84,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class AuthenticationFlowHandlerTest extends RxWebTestBase {
 
+    private static final String FACTOR_RECOVERY_CODE_ID = "factor-recovery-code";
+    private static final String FACTOR_ID = "factor-id";
+    private final SpELRuleEngine ruleEngine = new SpELRuleEngine();
     @Mock
     private JWTService jwtService;
     @Mock
@@ -89,7 +95,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     private UserService userService;
     @Mock
     private FactorManager factorManager;
-    private SpELRuleEngine ruleEngine = new SpELRuleEngine();
 
     @Override
     public void setUp() throws Exception {
@@ -131,7 +136,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             ChallengeSettings challengeSettings = createChallengeSettings(false, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             client.setMfaSettings(mfaSettings);
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
+
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
@@ -158,7 +164,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
+
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             mfaSettings.setAdaptiveAuthenticationRule("{context.attributes['geoip']['country_iso_code'] == 'FR'");
             client.setMfaSettings(mfaSettings);
@@ -188,7 +195,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             mfaSettings.setAdaptiveAuthenticationRule("{context.attributes['geoip']['country_iso_code'] == 'FR'");
             client.setMfaSettings(mfaSettings);
@@ -218,7 +225,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             mfaSettings.setAdaptiveAuthenticationRule("{context.attributes['geoip']['country_iso_code'] == 'FR'");
             client.setMfaSettings(mfaSettings);
@@ -226,7 +233,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
 
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(PENDING_ACTIVATION);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(List.of(enrolledFactor));
@@ -253,7 +260,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             mfaSettings.setAdaptiveAuthenticationRule("{context.attributes['geoip']['country_iso_code'] == 'FR'");
             client.setMfaSettings(mfaSettings);
@@ -261,12 +268,12 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
 
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(PENDING_ACTIVATION);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(List.of(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(ENROLLED_FACTOR_ID_KEY, "factor-1");
+            rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
             rc.next();
         });
 
@@ -286,7 +293,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             EnrollSettings enrollSettings = createEnrollSettings(false, false, MfaEnrollType.REQUIRED, 0, "");
             ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
@@ -321,10 +328,10 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             client.setMfaSettings(mfaSettings);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            rc.session().put(ENROLLED_FACTOR_ID_KEY, "factor-1");
+            rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
             // set user
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             rc.getDelegate().setUser(new User(endUser));
@@ -350,12 +357,12 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             client.setMfaSettings(mfaSettings);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
@@ -379,11 +386,11 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
@@ -403,7 +410,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
             MFASettings mfaSettings = new MFASettings();
@@ -414,7 +421,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
@@ -438,7 +445,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
@@ -448,7 +455,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(PENDING_ACTIVATION);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
@@ -476,7 +483,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
@@ -486,13 +493,13 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(PENDING_ACTIVATION);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
-            rc.session().put(ENROLLED_FACTOR_ID_KEY, "factor-1");
+            rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
             rc.next();
         });
 
@@ -515,7 +522,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
-            client.setFactors(Set.of("factor-recovery-code", "factor-id"));
+            setFactorsWithRecoveryCode(client);
+
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
@@ -526,12 +534,12 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
 
             // set user
             EnrolledFactor enrolledRecovery = new EnrolledFactor();
-            enrolledRecovery.setFactorId("factor-recovery-code");
+            enrolledRecovery.setFactorId(FACTOR_RECOVERY_CODE_ID);
             enrolledRecovery.setStatus(ACTIVATED);
 
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-id");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(PENDING_ACTIVATION);
 
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
@@ -560,7 +568,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
-            client.setFactors(Set.of("factor-recovery-code", "factor-id"));
+            setFactorsWithRecoveryCode(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
 
@@ -577,7 +585,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
 
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-id");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(PENDING_ACTIVATION);
 
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
@@ -599,6 +607,32 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
                 HttpStatusCode.FOUND_302, "Found", null);
     }
 
+    private static void setFactorsWithRecoveryCode(Client client) {
+        var factorId1 = "factor-id";
+        client.setFactors(Set.of("default-factor", "factor-recovery-code", factorId1));
+
+        var factorSettings = new FactorSettings();
+        var factor1 = new ApplicationFactorSettings();
+        factor1.setId("default-factor");
+        factor1.setSelectionRule("factor1-selection-rule");
+
+        var factor2 = new ApplicationFactorSettings();
+        factor2.setId(factorId1);
+        factor2.setSelectionRule("");
+
+        var factor3 = new ApplicationFactorSettings();
+        factor3.setId("factor-recovery-code");
+        factor3.setSelectionRule("");
+
+        var factorList = new ArrayList<ApplicationFactorSettings>();
+        factorList.add(factor1);
+        factorList.add(factor2);
+        factorList.add(factor3);
+        factorSettings.setApplicationFactors(factorList);
+
+        client.setFactorSettings(factorSettings);
+    }
+
     @Test
     public void shouldRedirectToChallenge_user_device_known_and_step_up_active_strongly_auth() throws Exception {
         router.route().order(-1).handler(rc -> {
@@ -607,7 +641,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
 
@@ -623,7 +657,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
@@ -652,7 +686,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 
             var stepUpAuthenticationRule = "{true}";
@@ -668,7 +702,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
@@ -697,7 +731,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 
             var stepUpAuthenticationRule = "{true}";
@@ -713,7 +747,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
@@ -734,11 +768,11 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
@@ -761,7 +795,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 
             var stepUpAuthenticationRule = "{#request.params['scope'][0] == 'write'}";
@@ -773,7 +807,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
@@ -801,14 +835,14 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "US").getMap());
             client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
@@ -836,7 +870,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
             rememberDevice.setActive(true);
@@ -854,7 +888,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
@@ -882,7 +916,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
             rememberDevice.setActive(true);
@@ -900,7 +934,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
@@ -923,7 +957,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
             rememberDevice.setActive(true);
@@ -932,7 +966,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
@@ -957,7 +991,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             client.setRiskAssessment(
                     new RiskAssessmentSettings().setEnabled(true).setDeviceAssessment(
@@ -976,7 +1010,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
@@ -997,7 +1031,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             client.setRiskAssessment(
                     new RiskAssessmentSettings()
@@ -1010,7 +1044,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
@@ -1037,7 +1071,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 
             var stepUpAuthenticationRule = "{#request.params['scope'][0].contains('write')}";
@@ -1049,7 +1083,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
@@ -1077,14 +1111,14 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "US").getMap());
             client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
@@ -1112,14 +1146,14 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "US").getMap());
             client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
@@ -1147,16 +1181,16 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             client.setMfaSettings(mfaSettings);
-            rc.session().put(ENROLLED_FACTOR_ID_KEY, "factor-1");
+            rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
 
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(PENDING_ACTIVATION);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
@@ -1181,17 +1215,17 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
             mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             client.setMfaSettings(mfaSettings);
-            rc.session().put(ENROLLED_FACTOR_ID_KEY, "factor-1");
+            rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
 
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
@@ -1214,16 +1248,16 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             client.setMfaSettings(mfaSettings);
-            rc.session().put(ENROLLED_FACTOR_ID_KEY, "factor-1");
+            rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
             rc.session().put(ALTERNATIVE_FACTOR_ID_KEY, "factor-2");
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(ACTIVATED);
 
             EnrolledFactor enrolledFactor2 = new EnrolledFactor();
@@ -1253,7 +1287,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
 
@@ -1266,7 +1300,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
@@ -1285,7 +1319,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
-            client.setFactors(Collections.singleton("factor-1"));
+            setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
             mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
@@ -1293,7 +1327,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(ACTIVATED);
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
@@ -1320,10 +1354,10 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             recoveryFactor.setId("factor-2");
             when(factorManager.getFactor("factor-2")).thenReturn(recoveryFactor);
 
-            client.setFactors(Set.of("factor-1", "factor-2"));
+            client.setFactors(Set.of(FACTOR_ID, "factor-2"));
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(ACTIVATED);
             EnrolledFactor factorRecovery = new EnrolledFactor();
             factorRecovery.setFactorId("factor-2");
@@ -1354,11 +1388,11 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             Client client = new Client();
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 
-            client.setFactors(Set.of("factor-1", "factor-2"));
+            client.setFactors(Set.of(FACTOR_ID, "factor-2"));
 
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
-            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setFactorId(FACTOR_ID);
             enrolledFactor.setStatus(ACTIVATED);
 
             EnrolledFactor factorRecovery = new EnrolledFactor();
@@ -1379,11 +1413,27 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
                 HttpStatusCode.OK_200, "OK");
     }
 
+    private static void setFactors(Client client) {
+        client.setFactors(Collections.singleton(FACTOR_ID));
+        var factorSettings = new FactorSettings();
+
+        var factor1 = new ApplicationFactorSettings();
+        factor1.setId("default-factor");
+        factor1.setSelectionRule("");
+        var factor2 = new ApplicationFactorSettings();
+        factor2.setId(FACTOR_ID);
+        factor2.setSelectionRule("");
+        var factorList = new ArrayList<ApplicationFactorSettings>();
+        factorList.add(factor1);
+        factorList.add(factor2);
+        factorSettings.setApplicationFactors(factorList);
+
+        client.setFactorSettings(factorSettings);
+    }
     private MFASettings createMFASettings(EnrollSettings enrollSettings, ChallengeSettings challengeSettings) {
         final MFASettings mfaSettings = new MFASettings();
         mfaSettings.setEnroll(enrollSettings);
         mfaSettings.setChallenge(challengeSettings);
-
         return mfaSettings;
     }
 
@@ -1392,7 +1442,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         settings.setActive(active);
         settings.setType(type);
         settings.setChallengeRule(challengeRule);
-
         return settings;
     }
 
@@ -1403,7 +1452,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         settings.setType(type);
         settings.setSkipTimeSeconds(skipTime);
         settings.setEnrollmentRule(enrollmentRule);
-
         return settings;
     }
 }

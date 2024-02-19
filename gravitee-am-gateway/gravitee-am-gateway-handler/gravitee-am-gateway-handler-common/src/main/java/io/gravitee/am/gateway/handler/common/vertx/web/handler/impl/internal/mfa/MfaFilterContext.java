@@ -23,14 +23,18 @@ import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_ENROLLMENT_SKIP_T
 import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.evaluateRule;
 import io.gravitee.am.gateway.handler.context.EvaluableExecutionContext;
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.model.EnrollSettings;
+import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
 import io.gravitee.am.model.oidc.Client;
@@ -41,11 +45,14 @@ import io.vertx.rxjava3.ext.web.Session;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.Optional;
 import static java.util.Optional.ofNullable;
+import java.util.stream.Collectors;
+import static org.springframework.util.StringUtils.hasText;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -113,11 +120,12 @@ public class MfaFilterContext {
         if (isNull(endUser.getFactors()) || endUser.getFactors().isEmpty()) {
             return false;
         }
+        var applicationFactors = client.getFactorSettings().getApplicationFactors().stream().map(ApplicationFactorSettings::getId).collect(Collectors.toSet());
         return endUser.getFactors().stream()
-                .filter(ef -> ACTIVATED.equals(ef.getStatus()))
+                .filter(factor -> ACTIVATED.equals(factor.getStatus()))
                 .map(EnrolledFactor::getFactorId)
                 .filter(this::isNotRecoveryCodeType)
-                .anyMatch(client.getFactors()::contains);
+                .anyMatch(applicationFactors::contains);
     }
 
     public boolean isDeviceRiskAssessmentEnabled() {
@@ -131,6 +139,29 @@ public class MfaFilterContext {
     public boolean isChallengeOnceCompleted() {
         return TRUE.equals(session.get(MFA_CHALLENGE_COMPLETED_KEY));
     }
+
+
+    public void setDefaultFactorWhenApplied(RuleEngine ruleEngine) {
+        String enrollingFactorId = session.get(ENROLLED_FACTOR_ID_KEY);
+        FactorSettings factorSettings = client.getFactorSettings();
+        if (nonNull(enrollingFactorId) && nonNull(factorSettings) && !matchFactorRule(enrollingFactorId, factorSettings, ruleEngine)) {
+            session.put(ENROLLED_FACTOR_ID_KEY, getDefaultFactorId());
+        }
+    }
+
+    public boolean matchFactorRule(String factorId, FactorSettings factorSettings, RuleEngine ruleEngine) {
+        var appFactor = ofNullable(factorSettings.getApplicationFactors()).flatMap(factors -> factors.stream().filter(f -> f.getId().equals(factorId)).findFirst());
+        return appFactor.isPresent() && (factorSettings.getDefaultFactorId().equals(factorId) || isMatchFactorRule(ruleEngine, appFactor.get().getSelectionRule()));
+    }
+
+    public boolean isMatchFactorRule(RuleEngine ruleEngine, String selectionRule) {
+        return !hasText(selectionRule) || TRUE.equals(evaluateRule(selectionRule, this, ruleEngine));
+    }
+
+    private String getDefaultFactorId() {
+        return client.getFactorSettings().getDefaultFactorId();
+    }
+
     private boolean isNotRecoveryCodeType(String factorId) {
         var factor = factorManager.getFactor(factorId);
         return nonNull(factor) && !RECOVERY_CODE.equals(factor.getFactorType());

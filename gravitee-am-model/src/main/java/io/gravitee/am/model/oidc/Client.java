@@ -22,7 +22,7 @@ import io.gravitee.am.common.oidc.ApplicationType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.model.application.ApplicationFactorSettings;
+import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
@@ -189,7 +189,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
     @Deprecated
     private Set<String> factors;
 
-    private Set<ApplicationFactorSettings> factorSettings;
+    private FactorSettings factorSettings;
 
     private boolean enhanceScopesWithUserPermissions;
 
@@ -307,7 +307,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.updatedAt = other.updatedAt;
         this.identityProviders = other.identityProviders != null ? new TreeSet<>(other.identityProviders) : null;
         this.factors = other.factors != null ? new HashSet<>(other.factors) : null;
-        this.factorSettings = other.factorSettings != null ? new HashSet<>(other.factorSettings) : null;
+        this.factorSettings = other.factorSettings;
         this.certificate = other.certificate;
         this.enhanceScopesWithUserPermissions = other.enhanceScopesWithUserPermissions;
         this.scopeSettings = other.scopeSettings != null ? new ArrayList<>(other.scopeSettings) : null;
@@ -732,11 +732,11 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.factors = factors;
     }
 
-    public Set<ApplicationFactorSettings> getFactorSettings() {
+    public FactorSettings getFactorSettings() {
         return factorSettings;
     }
 
-    public void setFactorSettings(Set<ApplicationFactorSettings> factorSettings) {
+    public void setFactorSettings(FactorSettings factorSettings) {
         this.factorSettings = factorSettings;
     }
 
@@ -1115,11 +1115,11 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         clone.setAutoApproveScopes(this.getAutoApproveScopes() != null ? new ArrayList<>(this.getAutoApproveScopes()) : null);
         clone.setIdentityProviders(this.getIdentityProviders() != null ? new TreeSet<>(this.getIdentityProviders()) : null);
         clone.setFactors(this.getFactors() != null ? new HashSet<>(this.getFactors()) : null);
+        clone.setFactorSettings(this.getFactorSettings());
         clone.setJwks(this.getJwks() != null ? this.getJwks().clone() : null);
         Optional.ofNullable(this.passwordSettings).ifPresent(ps -> clone.setPasswordSettings(new PasswordSettings(ps)));
         clone.setSecretSettings(this.getSecretSettings() != null ? new ArrayList<>(this.getSecretSettings()) : new ArrayList<>());
         clone.setClientSecrets(this.getClientSecrets() != null ? this.getClientSecrets().stream().map(ClientSecret::new).collect(Collectors.toList()) : new ArrayList<>());
-        clone.setFactorSettings(this.getFactorSettings() != null ? new HashSet<>(this.getFactorSettings()) : null);
         return clone;
     }
 }

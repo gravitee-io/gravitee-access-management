@@ -23,11 +23,15 @@ import io.gravitee.am.factor.api.Enrollment;
 import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MfaFilterContext;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
+import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.EnrollSettings;
+import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
@@ -49,6 +53,8 @@ import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
+import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -77,16 +83,20 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
     private final Domain domain;
     private final ApplicationContext applicationContext;
 
+    private final RuleEngine ruleEngine;
+
     public MFAEnrollEndpoint(FactorManager factorManager,
                              TemplateEngine engine,
                              UserService userService,
                              Domain domain,
-                             ApplicationContext applicationContext) {
+                             ApplicationContext applicationContext,
+                             RuleEngine ruleEngine) {
         super(engine);
         this.factorManager = factorManager;
         this.userService = userService;
         this.domain = domain;
         this.applicationContext = applicationContext;
+        this.ruleEngine = ruleEngine;
     }
 
     @Override
@@ -131,7 +141,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                 }
 
                 // put factors in context
-                routingContext.put("factors", factorsToRender(h.result(), routingContext.session()));
+                routingContext.put("factors", factorsToRender(h.result(), routingContext.session(), client, routingContext));
 
                 if (endUser.getPhoneNumbers() != null && !endUser.getPhoneNumbers().isEmpty()) {
                     routingContext.put("phoneNumber", endUser.getPhoneNumbers().stream()
@@ -161,13 +171,15 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
      * @param session current session
      * @return list of Factor object
      */
-    private List<Factor> factorsToRender(List<Factor> factors, Session session) {
+    private List<Factor> factorsToRender(List<Factor> factors, Session session, Client client, RoutingContext context) {
         // if an alternative factor ID has been set, only display this one
         final String alternativeFactorId = session.get(ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY);
+        var mfaContext = new MfaFilterContext(context, client, factorManager);
+        var applicationFactors = ofNullable(client.getFactorSettings()).orElseGet(FactorSettings::new);
         if (alternativeFactorId != null && !alternativeFactorId.isEmpty()) {
             // check if this alternative factor still exists
             Optional<Factor> optionalFactor = factors.stream()
-                    .filter(factor -> alternativeFactorId.equals(factor.getId()))
+                    .filter(factor -> alternativeFactorId.equals(factor.getId()) && mfaContext.matchFactorRule(factor.getId(), applicationFactors, ruleEngine))
                     .findFirst();
             if (optionalFactor.isPresent()) {
                 return List.of(optionalFactor.get());
@@ -175,8 +187,8 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         }
         // else return all factors except the RECOVERY CODE one
         return factors.stream()
-                .filter(factor -> !factor.factorType.equals(FactorType.RECOVERY_CODE.getType()))
-                .collect(Collectors.toList());
+                .filter(factor -> !factor.factorType.equals(FactorType.RECOVERY_CODE.getType()) && mfaContext.matchFactorRule(factor.getId(), applicationFactors, ruleEngine))
+                .toList();
     }
 
     private boolean canSkipMfa(Client client, RoutingContext routingContext) {
@@ -191,32 +203,32 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         MultiMap params = routingContext.request().formAttributes();
         final boolean acceptEnrollment = Boolean.parseBoolean(params.get(ConstantKeys.USER_MFA_ENROLLMENT));
         final String factorId = params.get(ConstantKeys.MFA_ENROLLMENT_FACTOR_ID);
-        final String sharedSecret = params.get(ConstantKeys.MFA_ENROLLMENT_SHARED_SECRET);
-        final String phoneNumber = params.get(ConstantKeys.MFA_ENROLLMENT_PHONE);
-        final String extensionPhoneNumber = params.get(ConstantKeys.MFA_ENROLLMENT_EXTENSION_PHONE_NUMBER);
-        final String emailAddress = params.get(ConstantKeys.MFA_ENROLLMENT_EMAIL);
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
 
+        if (!isSkipped(routingContext, acceptEnrollment, client)) {
+            getValidFactor(routingContext, factorId, client).ifPresent(optFactor -> manageEnrolledFactors(routingContext, optFactor, params));
+        }
+    }
+    private boolean isSkipped(RoutingContext routingContext, boolean acceptEnrollment, Client client) {
         // if user has skipped the enrollment process, continue
         if (!acceptEnrollment && canSkipMfa(client, routingContext)) {
             final User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
             // set the last skipped time
             // and update the session
-            userService.setMfaEnrollmentSkippedTime(client, endUser)
-                    .subscribe(() -> {
-                        // as the user has skipped the MFA enroll page
-                        // that means the user has also skipped the MFA challenge page
-                        routingContext.session().put(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY, true);
-                        routingContext.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
-                        redirectToAuthorize(routingContext);
-                    });
-            return;
+            userService.setMfaEnrollmentSkippedTime(client, endUser).blockingSubscribe();
+            routingContext.session().put(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY, true);
+            routingContext.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
+            redirectToAuthorize(routingContext);
+            return true;
         }
+        return false;
+    }
 
+    private Optional<Map.Entry<io.gravitee.am.model.Factor, FactorProvider>> getValidFactor(RoutingContext routingContext, String factorId, Client client) {
         if (factorId == null) {
             logger.warn("No factor id in form - did you forget to include factor id value ?");
             routingContext.fail(400);
-            return;
+            return Optional.empty();
         }
 
         final Map<io.gravitee.am.model.Factor, FactorProvider> factors = getFactors(client);
@@ -224,27 +236,33 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         if (optFactor.isEmpty()) {
             logger.warn("Factor not found - did you send a valid factor id ?");
             routingContext.fail(400);
-            return;
+            return Optional.empty();
         }
 
         if (routingContext.user() == null) {
             logger.warn("User must be authenticated to enroll MFA challenge.");
             routingContext.fail(401);
-            return;
+            return Optional.empty();
         }
 
         final var endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
         if (userAlreadyHasFactor(endUser, client, routingContext.session())){
             logger.warn("User already has active factor, enrollment of factor '{}' rejected", factorId);
             routingContext.fail(new InvalidRequestException("factor already enrolled"));
-            return;
+            return Optional.empty();
         }
+        return optFactor;
+    }
 
-        // manage enrolled factors
-        FactorProvider provider = optFactor.get().getValue();
-        if (provider.checkSecurityFactor(getSecurityFactor(params, optFactor.get().getKey()))) {
+    private void manageEnrolledFactors(RoutingContext routingContext, Map.Entry<io.gravitee.am.model.Factor, FactorProvider> optFactor, MultiMap params) {
+        final String sharedSecret = params.get(ConstantKeys.MFA_ENROLLMENT_SHARED_SECRET);
+        final String phoneNumber = params.get(ConstantKeys.MFA_ENROLLMENT_PHONE);
+        final String extensionPhoneNumber = params.get(ConstantKeys.MFA_ENROLLMENT_EXTENSION_PHONE_NUMBER);
+        final String emailAddress = params.get(ConstantKeys.MFA_ENROLLMENT_EMAIL);
+        FactorProvider provider = optFactor.getValue();
+        if (provider.checkSecurityFactor(getSecurityFactor(params, optFactor.getKey()))) {
             // save enrolled factor for the current user and continue
-            routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, factorId);
+            routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, optFactor.getKey().getId());
             if (sharedSecret != null) {
                 routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY, sharedSecret);
             }
@@ -299,6 +317,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
             case EMAIL:
                 enrolledFactor.setChannel(new EnrolledFactorChannel(Type.EMAIL, params.get("email")));
                 break;
+            default:
         }
         // set shared secret
         final String sharedSecret = params.get("sharedSecret");
@@ -344,6 +363,8 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
     }
 
+    @Getter
+    @Setter
     private static class Factor {
         private String id;
         private String name;
@@ -355,38 +376,6 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
             this.name = factor.getName();
             this.factorType = factor.getFactorType().getType();
             this.enrollment = enrollment;
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public void setId(String id) {
-            this.id = id;
-        }
-
-        public String getFactorType() {
-            return factorType;
-        }
-
-        public void setFactorType(String factorType) {
-            this.factorType = factorType;
-        }
-
-        public Enrollment getEnrollment() {
-            return enrollment;
-        }
-
-        public void setEnrollment(Enrollment enrollment) {
-            this.enrollment = enrollment;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
         }
     }
 }
