@@ -79,7 +79,7 @@ export class MfaSelectComponent implements OnChanges {
         domainUrl: `/environments/${environment}/domains/${domainName}`.toLowerCase(),
         currentUrl: this.router.url.toLowerCase(),
       },
-      width: '35%',
+      width: '540px',
     });
     dialogRef.afterClosed().subscribe((result: DialogResult) => {
       if (result?.changed) {
