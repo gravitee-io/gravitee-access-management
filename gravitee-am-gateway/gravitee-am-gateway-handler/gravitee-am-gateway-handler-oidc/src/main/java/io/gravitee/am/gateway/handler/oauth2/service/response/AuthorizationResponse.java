@@ -57,7 +57,20 @@ public abstract class AuthorizationResponse implements Serializable {
     }
 
     public abstract String buildRedirectUri();
-    public abstract MultiMap params();
+
+    /**
+     * @return list of parameters to send back to the callback URL.
+     * @param encodeState false value should be used only when response_mode is set to form_post.
+     * @return
+     */
+    public abstract MultiMap params(boolean encodeState);
+
+    /**
+     * @return list of parameters to send back to the callback URL. The state need to be URL encoded.
+     */
+    public final MultiMap params() {
+        return this.params(true);
+    }
 
     protected String getURLEncodedState() {
         return UriBuilder.encodeURIComponent(getState());

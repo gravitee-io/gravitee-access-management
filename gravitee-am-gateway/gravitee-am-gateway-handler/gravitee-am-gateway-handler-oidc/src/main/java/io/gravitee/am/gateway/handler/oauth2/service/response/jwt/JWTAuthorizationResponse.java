@@ -164,7 +164,7 @@ public abstract class JWTAuthorizationResponse<T extends AuthorizationResponse> 
     }
 
     @Override
-    public MultiMap params() {
+    public MultiMap params(boolean encodeState) {
         MultiMap result = MultiMap.caseInsensitiveMultiMap();
         result.add(RESPONSE, token);
         return result;
