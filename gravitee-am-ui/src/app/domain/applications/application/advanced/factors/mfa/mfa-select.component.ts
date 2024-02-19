@@ -15,7 +15,7 @@
  */
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
 import { DialogResult, FactorsSelectDialogComponent } from './factors-select-dialog/factors-select-dialog.component';
 import { getDisplayFactorType, getFactorTypeIcon } from './mfa-select-icon';
@@ -36,7 +36,7 @@ export class MfaSelectComponent implements OnChanges {
 
   selectedFactors: MfaFactor[];
 
-  constructor(public dialog: MatDialog, private route: ActivatedRoute, private router: Router) {}
+  constructor(public dialog: MatDialog, private route: ActivatedRoute) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.factors) {
@@ -71,13 +71,11 @@ export class MfaSelectComponent implements OnChanges {
 
   openFactorSelectionDialog(event: Event): void {
     event.preventDefault();
-    const domainName = this.route.snapshot.data['domain']?.hrid;
-    const environment = this.route.snapshot.data['domain']?.referenceId;
+
     const dialogRef = this.dialog.open(FactorsSelectDialogComponent, {
       data: {
         factors: [...this.factors],
-        domainUrl: `/environments/${environment}/domains/${domainName}`.toLowerCase(),
-        currentUrl: this.router.url.toLowerCase(),
+        mfsSettingsLink: this.getDomainMfaSettingsLink(),
       },
       width: '540px',
     });
@@ -89,6 +87,12 @@ export class MfaSelectComponent implements OnChanges {
         }
       }
     });
+  }
+
+  private getDomainMfaSettingsLink(): string {
+    const domainName = this.route.snapshot.data['domain']?.hrid;
+    const environment = this.route.snapshot.data['domain']?.referenceId;
+    return `/environments/${environment}/domains/${domainName}/settings/factors`.toLowerCase();
   }
 
   getFactorIconType(type: any): string {
