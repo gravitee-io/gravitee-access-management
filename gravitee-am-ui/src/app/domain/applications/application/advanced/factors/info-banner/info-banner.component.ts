@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import { Component, Input } from '@angular/core';
+import { Router } from '@angular/router';
 @Component({
   selector: 'info-banner',
   templateUrl: './info-banner.component.html',
@@ -27,6 +28,8 @@ export class InfoBannerComponent {
 
   showInfo = true;
 
+  constructor(private router: Router) {}
+
   getColors(): string {
     if (this.type === 'warning') {
       return `background-color: #FFECE5; border: 3px solid #BF3F0E; color: #BF3F0E;`;
@@ -39,8 +42,8 @@ export class InfoBannerComponent {
     this.showInfo = false;
   }
 
-  goToLink(event: any, url: string): void {
-    event.preventDefault();
-    window.open(url, '_blank');
+  gotoLink($event: Event): void {
+    $event.preventDefault();
+    this.router.navigate([this.link]);
   }
 }
