@@ -44,8 +44,8 @@ export class FactorsSelectDialogComponent implements OnInit {
 
   ngOnInit() {
     this.factors = this.data.factors;
-    this.model = new Map<string, boolean>();
-    this.data.factors.forEach((factor) => this.model.set(factor.id, factor.selected));
+    const selectedFactors = this.data.factors.map((factor): [string, boolean] => [factor.id, factor.selected]);
+    this.model = new Map<string, boolean>(selectedFactors);
   }
 
   confirmSelection(): void {
