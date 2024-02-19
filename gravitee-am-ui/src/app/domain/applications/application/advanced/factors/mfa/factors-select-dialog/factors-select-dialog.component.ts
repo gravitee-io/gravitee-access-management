@@ -38,20 +38,18 @@ export interface DialogResult {
 })
 export class FactorsSelectDialogComponent implements OnInit {
   factors: MfaFactor[];
-  model: any;
+  model: Map<string, boolean>;
 
   constructor(public dialogRef: MatDialogRef<FactorsSelectDialogComponent>, @Inject(MAT_DIALOG_DATA) public data: DialogData) {}
 
   ngOnInit() {
     this.factors = this.data.factors;
-    this.model = this.data.factors.reduce((model, factor) => {
-      model[factor.id] = factor.selected;
-      return model;
-    }, {});
+    this.model = new Map<string, boolean>();
+    this.data.factors.forEach((factor) => this.model.set(factor.id, factor.selected));
   }
 
   confirmSelection(): void {
-    this.factors.forEach((factor) => (factor.selected = this.model[factor.id]));
+    this.factors.forEach((factor) => (factor.selected = this.model.get(factor.id)));
     const result = {
       factors: [...this.factors],
       changed: true,
@@ -60,12 +58,16 @@ export class FactorsSelectDialogComponent implements OnInit {
     this.dialogRef.close(result);
   }
 
+  select(rowId: string, checked: boolean): void {
+    this.model.set(rowId, checked);
+  }
+
   anyFactorExists(): boolean {
     return this.factors?.length > 0;
   }
 
   noneFactorSelected(): boolean {
-    return this.factors.map((factor) => this.model[factor.id]).filter((selected) => selected).length === 0;
+    return this.factors.map((factor) => this.model.get(factor.id)).filter((selected) => selected).length === 0;
   }
 
   cancel(): void {
