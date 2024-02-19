@@ -60,7 +60,7 @@ public class ImplicitResponse extends AuthorizationResponse {
     }
 
     @Override
-    public MultiMap params() {
+    public MultiMap params(boolean encodeState) {
         MultiMap result = MultiMap.caseInsensitiveMultiMap();
         Token accessToken = getAccessToken();
         result.add(Token.ACCESS_TOKEN, accessToken.getValue());
@@ -70,7 +70,7 @@ public class ImplicitResponse extends AuthorizationResponse {
             result.add(Token.SCOPE, accessToken.getScope());
         }
         if (getState() != null) {
-            result.add(Parameters.STATE, getURLEncodedState());
+            result.add(Parameters.STATE, encodeState ? getURLEncodedState() : getState());
         }
         // additional information
         if (accessToken.getAdditionalInformation() != null) {
