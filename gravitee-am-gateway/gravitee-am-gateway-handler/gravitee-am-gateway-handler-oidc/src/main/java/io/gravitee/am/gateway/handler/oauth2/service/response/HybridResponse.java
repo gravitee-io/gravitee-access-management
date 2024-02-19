@@ -76,11 +76,11 @@ public class HybridResponse extends ImplicitResponse {
 
 
     @Override
-    public MultiMap params() {
+    public MultiMap params(boolean encodeState) {
         MultiMap result = MultiMap.caseInsensitiveMultiMap();
         result.add(Parameters.CODE, getCode());
         if (getState() != null) {
-            result.add(Parameters.STATE, getURLEncodedState());
+            result.add(Parameters.STATE, encodeState ? getURLEncodedState() : getState());
         }
         if (getIdToken() != null) {
             result.add(ResponseType.ID_TOKEN, getIdToken());
