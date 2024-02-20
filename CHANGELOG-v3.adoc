@@ -1,5 +1,24 @@
 # Change Log
 
+==  - 3.21.18 (2024-02-20)
+
+== What's new !
+
+
+
+=== Gateway
+
+* Unable to finalize SAML authentication using HTTP-POST binding https://github.com/gravitee-io/issues/issues/9485[#9485]
+
+=== Console
+
+* Missing read password policy role https://github.com/gravitee-io/issues/issues/8924[#8924]
+
+=== Other
+
+* SAML 2.0 Identity Provider requires AM dependency update https://github.com/gravitee-io/issues/issues/9515[#9515]
+
+
 ==  - 3.20.20 (2024-02-19)
 
 == What's new !
