@@ -152,11 +152,11 @@ public class MfaFilterContext {
             return true;
         } else {
             var appFactor = appFactors.stream().filter(f -> f.getId().equals(factorId)).findFirst();
-            return appFactor.isPresent() && isMatchFactorRule(ruleEngine, appFactor.get().getSelectionRule());
+            return appFactor.isPresent() && isMatchFactorRule(appFactor.get().getSelectionRule());
         }
     }
 
-    public boolean isMatchFactorRule(RuleEngine ruleEngine, String selectionRule) {
+    private boolean isMatchFactorRule(String selectionRule) {
         return !hasText(selectionRule) || TRUE.equals(evaluateRule(selectionRule, this, ruleEngine));
     }
 
