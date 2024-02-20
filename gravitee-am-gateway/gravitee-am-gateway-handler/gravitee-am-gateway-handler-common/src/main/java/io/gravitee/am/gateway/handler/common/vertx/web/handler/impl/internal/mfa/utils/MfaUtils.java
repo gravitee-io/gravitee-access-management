@@ -30,6 +30,7 @@ import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.MfaEnrollType;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.StepUpAuthenticationSettings;
 import io.gravitee.am.model.ApplicationFactorSettings;
@@ -141,5 +142,11 @@ public class MfaUtils {
         return !context.isUserStronglyAuth()
                 && stepUpSettings.getActive()
                 && evaluateRule(stepUpSettings.getStepUpAuthenticationRule(), context, ruleEngine);
+    }
+
+    public static boolean isCanSkip(Client client, RoutingContext routingContext) {
+        var enrollSettings = MfaUtils.getEnrollSettings(client);
+        return (enrollSettings.getForceEnrollment() != null && !enrollSettings.getForceEnrollment())
+                || (MfaEnrollType.CONDITIONAL.equals(enrollSettings.getType()) && Boolean.TRUE.equals(routingContext.session().get(ConstantKeys.MFA_CAN_BE_CONDITIONAL_SKIPPED_KEY)));
     }
 }

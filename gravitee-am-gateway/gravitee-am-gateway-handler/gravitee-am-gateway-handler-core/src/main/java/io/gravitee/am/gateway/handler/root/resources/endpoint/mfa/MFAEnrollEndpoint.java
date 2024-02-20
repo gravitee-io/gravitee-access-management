@@ -26,13 +26,11 @@ import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MfaFilterContext;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.FactorSettings;
-import io.gravitee.am.model.MFASettings;
-import io.gravitee.am.model.MfaEnrollType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
@@ -153,7 +151,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                     routingContext.put("emailAddress", endUser.getEmail());
                 }
 
-                routingContext.put(ConstantKeys.MFA_FORCE_ENROLLMENT, !canSkipMfa(client, routingContext));
+                routingContext.put(ConstantKeys.MFA_FORCE_ENROLLMENT, !MfaUtils.isCanSkip(client, routingContext));
                 routingContext.put(ConstantKeys.ACTION_KEY, action);
                 // render the mfa enroll page
                 this.renderPage(routingContext, generateData(routingContext, domain, client), client, logger, "Unable to render MFA enroll page");
@@ -191,27 +189,18 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                 .toList();
     }
 
-    private boolean canSkipMfa(Client client, RoutingContext routingContext) {
-        var enrollSettings = ofNullable(client.getMfaSettings())
-                .map(MFASettings::getEnroll)
-                .orElse(new EnrollSettings());
-        return (enrollSettings.getForceEnrollment() != null && !enrollSettings.getForceEnrollment())
-                || (MfaEnrollType.CONDITIONAL.equals(enrollSettings.getType()) && Boolean.TRUE.equals(routingContext.session().get(ConstantKeys.MFA_CAN_BE_CONDITIONAL_SKIPPED_KEY)));
-    }
-
     private void saveEnrollment(RoutingContext routingContext) {
         MultiMap params = routingContext.request().formAttributes();
         final boolean acceptEnrollment = Boolean.parseBoolean(params.get(ConstantKeys.USER_MFA_ENROLLMENT));
         final String factorId = params.get(ConstantKeys.MFA_ENROLLMENT_FACTOR_ID);
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-
         if (!isSkipped(routingContext, acceptEnrollment, client)) {
             getValidFactor(routingContext, factorId, client).ifPresent(optFactor -> manageEnrolledFactors(routingContext, optFactor, params));
         }
     }
     private boolean isSkipped(RoutingContext routingContext, boolean acceptEnrollment, Client client) {
         // if user has skipped the enrollment process, continue
-        if (!acceptEnrollment && canSkipMfa(client, routingContext)) {
+        if (!acceptEnrollment && MfaUtils.isCanSkip(client, routingContext)) {
             final User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
             // set the last skipped time
             // and update the session

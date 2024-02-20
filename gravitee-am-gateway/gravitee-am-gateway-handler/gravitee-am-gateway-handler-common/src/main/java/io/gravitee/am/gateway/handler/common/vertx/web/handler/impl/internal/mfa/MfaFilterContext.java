@@ -17,7 +17,6 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
 import static io.gravitee.am.common.factor.FactorType.RECOVERY_CODE;
-import io.gravitee.am.common.utils.ConstantKeys;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS;
 import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
@@ -30,9 +29,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.evaluateRule;
 import io.gravitee.am.gateway.handler.context.EvaluableExecutionContext;
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
-import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.FactorSettings;
-import io.gravitee.am.model.MfaEnrollType;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.ApplicationFactorSettings;
@@ -74,12 +71,10 @@ public class MfaFilterContext {
     }
 
     public boolean isEnrollSkipped() {
-        final EnrollSettings enrollSettings = MfaUtils.getEnrollSettings(client);
-        final boolean canSkip = (enrollSettings.getForceEnrollment() != null && !enrollSettings.getForceEnrollment())
-                || (MfaEnrollType.CONDITIONAL.equals(enrollSettings.getType()) && Boolean.TRUE.equals(routingContext.session().get(ConstantKeys.MFA_CAN_BE_CONDITIONAL_SKIPPED_KEY)));
+        final boolean canSkip = MfaUtils.isCanSkip(client, routingContext);
         if (canSkip && nonNull(endUser.getMfaEnrollmentSkippedAt())) {
             Date now = new Date();
-            long skipTime = ofNullable(enrollSettings.getSkipTimeSeconds()).orElse(DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS) * 1000L;
+            long skipTime = ofNullable(MfaUtils.getEnrollSettings(client).getSkipTimeSeconds()).orElse(DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS) * 1000L;
             return endUser.getMfaEnrollmentSkippedAt().getTime() + skipTime > now.getTime();
         }
         return false;
