@@ -204,6 +204,7 @@ describe('MFA', () => {
   describe('TOTP authentication', () => {
     let totpUser;
     let sharedSecret;
+    //
     it('should login using authenticator code', async () => {
       const clientId = totpApp.settings.oauth.clientId;
       totpUser = await buildCreateAndTestUser(domain.id, accessToken, 1);
@@ -228,6 +229,7 @@ describe('MFA', () => {
       const successfulVerification = await verifyFactor(authorize2, totpToken, totpFactor);
       await logoutUser(openIdConfiguration.end_session_endpoint, successfulVerification);
     });
+    //
     it('should issue challenge when factor already enrolled', async () => {
       const clientId = totpApp.settings.oauth.clientId;
 
@@ -584,6 +586,15 @@ const createMfaApp = async (domain, accessToken, factors: Array<number>) => {
             ],
           },
           mfa: {
+            factor: {
+              defaultFactorId: factors[0],
+              applicationFactors: factors.map((i) => {
+                return {
+                  id: i,
+                  selectionRule: ''
+                } as any
+              })
+            },
             enroll: {
               active: true,
               forceEnrollment: true,

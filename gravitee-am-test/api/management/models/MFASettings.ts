@@ -37,6 +37,7 @@ import {
     StepUpAuthenticationSettingsFromJSON,
     StepUpAuthenticationSettingsToJSON,
 } from './StepUpAuthenticationSettings';
+import { FactorSettings, FactorSettingsFromJSON, FactorSettingsFromJSONTyped } from './FactorSettings';
 
 /**
  *
@@ -50,6 +51,8 @@ export interface MFASettings {
      * @memberof MFASettings
      */
     loginRule?: string;
+
+    factor: FactorSettings;
     /**
      *
      * @type {string}
@@ -103,8 +106,8 @@ export function MFASettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean
         return json;
     }
     return {
-
         'loginRule': !exists(json, 'loginRule') ? undefined : json['loginRule'],
+        'factor': !exists(json, 'factors') ? undefined : FactorSettingsFromJSON(json['factors']),
         'stepUpAuthenticationRule': !exists(json, 'stepUpAuthenticationRule') ? undefined : json['stepUpAuthenticationRule'],
         'stepUpAuthentication': !exists(json, 'stepUpAuthentication') ? undefined : StepUpAuthenticationSettingsFromJSON(json['stepUpAuthentication']),
         'adaptiveAuthenticationRule': !exists(json, 'adaptiveAuthenticationRule') ? undefined : json['adaptiveAuthenticationRule'],
@@ -120,8 +123,8 @@ export function MFASettingsToJSON(value?: MFASettings | null): any {
         return value;
     }
     return {
-
         'loginRule': value.loginRule,
+        'factor': value.factor,
         'stepUpAuthenticationRule': value.stepUpAuthenticationRule,
         'stepUpAuthentication': StepUpAuthenticationSettingsToJSON(value.stepUpAuthentication),
         'adaptiveAuthenticationRule': value.adaptiveAuthenticationRule,

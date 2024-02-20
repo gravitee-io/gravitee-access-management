@@ -170,6 +170,15 @@ const createMfaApp = async (domain, accessToken, factors: Array<number>, enrollA
                         ],
                     },
                     mfa: {
+                        factor: {
+                            defaultFactorId: factors[0],
+                            applicationFactors: factors.map((i) => {
+                                return {
+                                    id: i,
+                                    selectionRule: ''
+                                } as any
+                            })
+                        },
                         enroll: {
                             active: enrollActive,
                             forceEnrollment: true,
