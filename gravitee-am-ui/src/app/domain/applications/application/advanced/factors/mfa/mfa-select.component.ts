@@ -21,6 +21,7 @@ import { DialogResult, FactorsSelectDialogComponent } from './factors-select-dia
 import { getDisplayFactorType, getFactorTypeIcon } from './mfa-select-icon';
 
 import { MfaFactor } from '../model';
+import { SelectionRuleDialog, SelectionRuleDialogResult } from '../selection-rule-dialog/selection-rule-dialog.component';
 
 @Component({
   selector: 'mfa-select',
@@ -42,7 +43,7 @@ export class MfaSelectComponent implements OnChanges {
     if (changes.factors) {
       this.selectedFactors = this.factors ? this.factors.filter((f) => f.selected) : [];
       if (this.selectedFactors.length > 0 && this.selectedFactors.filter((f) => f.isDefault).length === 0) {
-        this.setFactorDefault(changes, this.selectedFactors[0].id);
+        this.setFactorDefault(this.selectedFactors[0].id);
       }
     }
   }
@@ -55,18 +56,16 @@ export class MfaSelectComponent implements OnChanges {
     return this.selectedFactors ? this.selectedFactors.length : 0;
   }
 
-  setFactorDefault($event: any, factorId: string): void {
+  setFactorDefault(factorId: string): void {
     if (this.editMode) {
-      const factors = [...this.factors];
-      factors.forEach((factor) => (factor.isDefault = factor.id === factorId));
-      this.settingsChange.emit(this.factors);
+      this.factors.forEach((factor) => (factor.isDefault = factor.id === factorId));
+      this.update();
     }
   }
 
   removeSelectedFactor($event: any, factorId: string): void {
-    const factors = [...this.factors];
-    factors.filter((mfa) => mfa.id === factorId).forEach((factor) => (factor.selected = false));
-    this.settingsChange.next(factors);
+    this.factors.filter((mfa) => mfa.id === factorId).forEach((factor) => (factor.selected = false));
+    this.update();
   }
 
   openFactorSelectionDialog(event: Event): void {
@@ -81,10 +80,11 @@ export class MfaSelectComponent implements OnChanges {
     });
     dialogRef.afterClosed().subscribe((result: DialogResult) => {
       if (result?.changed) {
-        this.settingsChange.next(result.factors);
+        this.factors = result.factors;
         if (result.firstSelection) {
           this.expanded = true;
         }
+        this.update();
       }
     });
   }
@@ -105,5 +105,21 @@ export class MfaSelectComponent implements OnChanges {
 
   expand(expanded: boolean): void {
     this.expanded = expanded;
+  }
+
+  addSelectionRule(id: string): void {
+    this.dialog
+      .open(SelectionRuleDialog, { data: {} })
+      .afterClosed()
+      .subscribe((result: SelectionRuleDialogResult) => {
+        if (result?.selectionRule) {
+          this.factors.filter((f) => f.id === id)[0].selectionRule = result.selectionRule;
+          this.update();
+        }
+      });
+  }
+
+  private update() {
+    this.settingsChange.next(this.factors);
   }
 }

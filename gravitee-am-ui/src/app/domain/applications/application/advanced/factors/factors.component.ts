@@ -113,11 +113,23 @@ export class ApplicationFactorsComponent implements OnInit {
   }
 
   patch(): void {
+    const factorsApp = this.factors
+      .filter((i) => i.selected)
+      .map((i) => {
+        return {
+          id: i.id,
+          selectionRule: i.selectionRule,
+        } as any;
+      });
     const data = {
       factors: this.application.factors,
       settings: {
         riskAssessment: this.challenge.riskAssessment,
         mfa: {
+          factor: {
+            defaultFactorId: this.factors.filter((i) => i.isDefault)[0]?.id,
+            applicationFactors: factorsApp,
+          },
           stepUpAuthenticationRule: this.stepUpAuth.active ? this.stepUpAuth.stepUpAuthenticationRule : '',
           stepUpAuthentication: this.stepUpAuth,
           adaptiveAuthenticationRule: this.challenge.adaptiveMfaRule,
@@ -127,7 +139,7 @@ export class ApplicationFactorsComponent implements OnInit {
             skipTimeSeconds: this.enroll.skipTimeSeconds,
           },
           enroll: {
-            active: this.enroll.active,
+            active: factorsApp.length > 0 ? this.enroll.active : false,
             enrollmentRule: this.enroll.enrollmentRule,
             enrollmentSkipActive: this.enroll.enrollmentSkipActive,
             enrollmentSkipRule: this.enroll.enrollmentSkipRule,
@@ -136,7 +148,7 @@ export class ApplicationFactorsComponent implements OnInit {
             type: this.enroll.type,
           },
           challenge: {
-            active: this.challenge.active,
+            active: factorsApp.length > 0 ? this.challenge.active : false,
             challengeRule: this.challenge.challengeRule,
             type: this.challenge.type,
           },

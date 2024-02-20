@@ -32,6 +32,7 @@ import lombok.Setter;
 @Setter
 public class PatchMFASettings {
     private Optional<String> loginRule;
+    private Optional<PatchFactorSettings> factor;
     private Optional<String> stepUpAuthenticationRule;
     private Optional<PatchStepUpAuthentication> stepUpAuthentication;
     private Optional<String> adaptiveAuthenticationRule;
@@ -43,6 +44,11 @@ public class PatchMFASettings {
     public MFASettings patch(MFASettings _toPatch) {
         MFASettings toPatch = _toPatch == null ? new MFASettings() : new MFASettings(_toPatch);
         SetterUtils.safeSet(toPatch::setLoginRule, this.getLoginRule());
+
+        if (nonNull(this.getFactor()) && this.getFactor().isPresent()) {
+            toPatch.setFactor(this.getFactor().get().patch(toPatch.getFactor()));
+        }
+
         SetterUtils.safeSet(toPatch::setStepUpAuthenticationRule, this.getStepUpAuthenticationRule());
         SetterUtils.safeSet(toPatch::setAdaptiveAuthenticationRule, this.getAdaptiveAuthenticationRule());
 

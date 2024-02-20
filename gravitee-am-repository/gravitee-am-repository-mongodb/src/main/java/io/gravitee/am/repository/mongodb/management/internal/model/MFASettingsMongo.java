@@ -17,6 +17,7 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.EnrollSettings;
+import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.EnrollmentSettings;
@@ -39,6 +40,7 @@ import lombok.Setter;
 public class MFASettingsMongo {
 
     private String loginRule;
+    private FactorMongoSettings factor;
     private String stepUpAuthenticationRule;
     private StepUpAuthenticationMongoSettings stepUpAuthentication;
     private String adaptiveAuthenticationRule;
@@ -50,6 +52,7 @@ public class MFASettingsMongo {
     public MFASettings convert() {
         MFASettings mfaSettings = new MFASettings();
         mfaSettings.setLoginRule(getLoginRule());
+        mfaSettings.setFactor(ofNullable(getFactor()).orElse(new FactorMongoSettings()).convert());
         mfaSettings.setStepUpAuthenticationRule(getStepUpAuthenticationRule());
         mfaSettings.setStepUpAuthentication(ofNullable(getStepUpAuthentication()).orElse(new StepUpAuthenticationMongoSettings()).convert());
         mfaSettings.setAdaptiveAuthenticationRule(getAdaptiveAuthenticationRule());
@@ -64,6 +67,7 @@ public class MFASettingsMongo {
         return ofNullable(mfaSettings).filter(Objects::nonNull).map(settings -> {
             MFASettingsMongo mfaSettingsMongo = new MFASettingsMongo();
             mfaSettingsMongo.setLoginRule(settings.getLoginRule());
+            mfaSettingsMongo.setFactor(FactorMongoSettings.convert(ofNullable(mfaSettings.getFactor()).orElse(new FactorSettings())));
             mfaSettingsMongo.setStepUpAuthenticationRule(settings.getStepUpAuthenticationRule());
             mfaSettingsMongo.setStepUpAuthentication(StepUpAuthenticationMongoSettings.convert(ofNullable(mfaSettings.getStepUpAuthentication()).orElse(new StepUpAuthenticationSettings())));
             mfaSettingsMongo.setAdaptiveAuthenticationRule(settings.getAdaptiveAuthenticationRule());

@@ -28,17 +28,21 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MfaFilterContext;
 import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.EnrollSettings;
+import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.MfaEnrollType;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.StepUpAuthenticationSettings;
+import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 import static java.lang.Boolean.TRUE;
+import java.util.List;
 import java.util.Objects;
-import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -115,8 +119,9 @@ public class MfaUtils {
     }
 
     public static boolean hasFactors(Client client, FactorManager factorManager) {
-        final Set<String> factors = client.getFactors();
-        return nonNull(factors) && !factors.isEmpty() && notOnlyRecoveryCodeFactors(factors, factorManager);
+        var factors = ofNullable(client.getFactorSettings()).map(FactorSettings::getApplicationFactors).orElse(List.of())
+                .stream().map(ApplicationFactorSettings::getId).collect(Collectors.toSet());
+        return !factors.isEmpty() && notOnlyRecoveryCodeFactors(factors, factorManager);
     }
 
     private static boolean notOnlyRecoveryCodeFactors(Set<String> factors, FactorManager factorManager) {
@@ -137,5 +142,11 @@ public class MfaUtils {
         return !context.isUserStronglyAuth()
                 && stepUpSettings.getActive()
                 && evaluateRule(stepUpSettings.getStepUpAuthenticationRule(), context, ruleEngine);
+    }
+
+    public static boolean isCanSkip(Client client, RoutingContext routingContext) {
+        var enrollSettings = MfaUtils.getEnrollSettings(client);
+        return (enrollSettings.getForceEnrollment() != null && !enrollSettings.getForceEnrollment())
+                || (MfaEnrollType.CONDITIONAL.equals(enrollSettings.getType()) && Boolean.TRUE.equals(routingContext.session().get(ConstantKeys.MFA_CAN_BE_CONDITIONAL_SKIPPED_KEY)));
     }
 }

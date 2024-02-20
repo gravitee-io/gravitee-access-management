@@ -399,7 +399,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     }
 
                     final AccountSettings accountSettings = toPatch.getSettings().getAccount();
-                    if (!accountSettingsValidator.validate(accountSettings)) {
+                    if (Boolean.FALSE.equals(accountSettingsValidator.validate(accountSettings))) {
                         return Single.error(new InvalidParameterException("Unexpected forgot password field"));
                     }
                     return update0(domain, existingApplication, toPatch, principal);

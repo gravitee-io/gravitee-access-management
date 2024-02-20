@@ -59,6 +59,7 @@ export interface StepUpAuth {
 export interface MfaFactor {
   id: string;
   name: string;
+  selectionRule: string;
   factorType: string;
   selected: boolean;
   isDefault: boolean;

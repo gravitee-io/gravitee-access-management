@@ -16,8 +16,7 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
 import io.gravitee.am.common.utils.ConstantKeys;
-import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.MFA_CAN_BE_SKIPPED_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_CAN_BE_CONDITIONAL_SKIPPED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
@@ -52,8 +51,9 @@ public class MFAEnrollStep extends MFAStep {
     @Override
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        final MfaFilterContext context = new MfaFilterContext(routingContext, client, factorManager);
+        final MfaFilterContext context = new MfaFilterContext(routingContext, client, factorManager, ruleEngine);
         if (hasFactors(client, factorManager)) {
+            context.setDefaultFactorWhenApplied();
             if (stepUpRequired(context, client, ruleEngine)) {
                 required(routingContext, flow, context);
             } else if (isEnrollActive(client)) {
@@ -86,7 +86,7 @@ public class MFAEnrollStep extends MFAStep {
         } else if (userHasFactor(context)) {
             continueFlow(routingContext, flow);
         } else if (canUserSkip(client, context)) {
-            routingContext.session().put(MFA_CAN_BE_SKIPPED_KEY, true);
+            routingContext.session().put(MFA_CAN_BE_CONDITIONAL_SKIPPED_KEY, true);
             if (context.isEnrollSkipped()) {
                 stopMfaFlow(routingContext, flow);
             } else {
@@ -148,7 +148,7 @@ public class MFAEnrollStep extends MFAStep {
     }
 
     public boolean canUserSkip(Client client, MfaFilterContext context) {
-        var enrollRule = ofNullable(client.getMfaSettings()).map(MFASettings::getEnroll).orElse(new EnrollSettings());
-        return enrollRule.isEnrollmentSkipActive() && evaluateRule(enrollRule.getEnrollmentSkipRule(), context, ruleEngine);
+        var enroll = ofNullable(client.getMfaSettings()).map(MFASettings::getEnroll).orElse(new EnrollSettings());
+        return enroll.isEnrollmentSkipActive() && evaluateRule(enroll.getEnrollmentSkipRule(), context, ruleEngine);
     }
 }
