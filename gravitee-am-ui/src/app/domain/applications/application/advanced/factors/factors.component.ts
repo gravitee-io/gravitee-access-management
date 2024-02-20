@@ -118,7 +118,7 @@ export class ApplicationFactorsComponent implements OnInit {
       .map((i) => {
         return {
           id: i.id,
-          selectionRule: '',
+          selectionRule: i.selectionRule,
         } as any;
       });
     const data = {

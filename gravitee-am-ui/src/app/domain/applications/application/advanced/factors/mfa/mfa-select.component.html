@@ -57,15 +57,15 @@
         </ngx-datatable-column>
         <ngx-datatable-column name="Selection Rule" [flexGrow]="1" [sortable]="false">
           <ng-template let-row="row" ngx-datatable-cell-template>
-            <!--            <span (click)="addSelectionRule(row.id)" class="wrapper" style="cursor: pointer">-->
-            <!--              <span-->
-            <!--                [matTooltip]="row.selectionRule ? 'Selection rule' : 'New selection rule'"-->
-            <!--                [style]="row.selectionRule ? 'color: green' : 'color: grey'"-->
-            <!--                class="mat-icon notranslate material-icons mat-icon-no-color"-->
-            <!--              >-->
-            <!--                {{ row.selectionRule ? 'playlist_add_check' : 'playlist_add_plus' }}-->
-            <!--              </span>-->
-            <!--            </span>-->
+            <span (click)="addSelectionRule(row.id)" class="wrapper" style="cursor: pointer">
+              <span
+                [matTooltip]="row.selectionRule ? 'Selection rule' : 'New selection rule'"
+                [style]="row.selectionRule ? 'color: green' : 'color: grey'"
+                class="mat-icon notranslate material-icons mat-icon-no-color"
+              >
+                {{ row.selectionRule ? 'playlist_add_check' : 'playlist_add_plus' }}
+              </span>
+            </span>
           </ng-template>
         </ngx-datatable-column>
         <ngx-datatable-column name="Type" [flexGrow]="1">
@@ -78,8 +78,7 @@
         </ngx-datatable-column>
         <ngx-datatable-column name="Default" [flexGrow]="1" [sortable]="false">
           <ng-template let-row="row" ngx-datatable-cell-template>
-            <mat-radio-button (change)="setFactorDefault($event, row.id)" [checked]="row.isDefault" [disabled]="!editMode">
-            </mat-radio-button>
+            <mat-radio-button (change)="setFactorDefault(row.id)" [checked]="row.isDefault" [disabled]="!editMode"> </mat-radio-button>
           </ng-template>
         </ngx-datatable-column>
         <ngx-datatable-column [flexGrow]="1" [sortable]="false">

@@ -28,11 +28,11 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MfaFilterContext;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
-import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.MfaEnrollType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
@@ -192,11 +192,11 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
     }
 
     private boolean canSkipMfa(Client client, RoutingContext routingContext) {
-        var forceEnrollment = ofNullable(client.getMfaSettings())
+        var enrollSettings = ofNullable(client.getMfaSettings())
                 .map(MFASettings::getEnroll)
-                .map(EnrollSettings::getForceEnrollment).orElse(false);
-        var canConditionalSkip = Boolean.TRUE.equals(routingContext.session().get(ConstantKeys.MFA_CAN_BE_SKIPPED_KEY));
-        return !forceEnrollment || canConditionalSkip;
+                .orElse(new EnrollSettings());
+        return (enrollSettings.getForceEnrollment() != null && !enrollSettings.getForceEnrollment())
+                || (MfaEnrollType.CONDITIONAL.equals(enrollSettings.getType()) && Boolean.TRUE.equals(routingContext.session().get(ConstantKeys.MFA_CAN_BE_CONDITIONAL_SKIPPED_KEY)));
     }
 
     private void saveEnrollment(RoutingContext routingContext) {

@@ -84,6 +84,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class AuthenticationFlowHandlerTest extends RxWebTestBase {
 
+
+    private static final String DEFAULT_FACTOR_ID = "default-factor";
     private static final String FACTOR_RECOVERY_CODE_ID = "factor-recovery-code";
     private static final String FACTOR_ID = "factor-id";
     private final SpELRuleEngine ruleEngine = new SpELRuleEngine();
@@ -605,32 +607,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
                     assertTrue(location.endsWith("/mfa/challenge"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
-    }
-
-    private static void setFactorsWithRecoveryCode(Client client) {
-        var factorId1 = "factor-id";
-        client.setFactors(Set.of("default-factor", "factor-recovery-code", factorId1));
-
-        var factorSettings = new FactorSettings();
-        var factor1 = new ApplicationFactorSettings();
-        factor1.setId("default-factor");
-        factor1.setSelectionRule("factor1-selection-rule");
-
-        var factor2 = new ApplicationFactorSettings();
-        factor2.setId(factorId1);
-        factor2.setSelectionRule("");
-
-        var factor3 = new ApplicationFactorSettings();
-        factor3.setId("factor-recovery-code");
-        factor3.setSelectionRule("");
-
-        var factorList = new ArrayList<ApplicationFactorSettings>();
-        factorList.add(factor1);
-        factorList.add(factor2);
-        factorList.add(factor3);
-        factorSettings.setApplicationFactors(factorList);
-
-        client.setFactorSettings(factorSettings);
     }
 
     @Test
@@ -1413,10 +1389,11 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
                 HttpStatusCode.OK_200, "OK");
     }
 
-    private static void setFactors(Client client) {
+    private void setFactors(Client client) {
         client.setFactors(Collections.singleton(FACTOR_ID));
-        var factorSettings = new FactorSettings();
 
+        var factorSettings = new FactorSettings();
+        factorSettings.setDefaultFactorId(DEFAULT_FACTOR_ID);
         var factor1 = new ApplicationFactorSettings();
         factor1.setId("default-factor");
         factor1.setSelectionRule("");
@@ -1430,6 +1407,34 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
 
         client.setFactorSettings(factorSettings);
     }
+
+    private  void setFactorsWithRecoveryCode(Client client) {
+        var factorId1 = "factor-id";
+        client.setFactors(Set.of("default-factor", "factor-recovery-code", factorId1));
+
+        var factorSettings = new FactorSettings();
+        factorSettings.setDefaultFactorId(DEFAULT_FACTOR_ID);
+        var factor1 = new ApplicationFactorSettings();
+        factor1.setId("default-factor");
+        factor1.setSelectionRule("factor1-selection-rule");
+
+        var factor2 = new ApplicationFactorSettings();
+        factor2.setId(factorId1);
+        factor2.setSelectionRule("");
+
+        var factor3 = new ApplicationFactorSettings();
+        factor3.setId("factor-recovery-code");
+        factor3.setSelectionRule("");
+
+        var factorList = new ArrayList<ApplicationFactorSettings>();
+        factorList.add(factor1);
+        factorList.add(factor2);
+        factorList.add(factor3);
+        factorSettings.setApplicationFactors(factorList);
+
+        client.setFactorSettings(factorSettings);
+    }
+
     private MFASettings createMFASettings(EnrollSettings enrollSettings, ChallengeSettings challengeSettings) {
         final MFASettings mfaSettings = new MFASettings();
         mfaSettings.setEnroll(enrollSettings);

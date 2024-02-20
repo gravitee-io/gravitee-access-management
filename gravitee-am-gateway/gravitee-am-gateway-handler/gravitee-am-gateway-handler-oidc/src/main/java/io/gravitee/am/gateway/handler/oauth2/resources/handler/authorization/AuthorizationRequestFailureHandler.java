@@ -283,7 +283,7 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
             context.session().remove(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY);
             context.session().remove(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY);
             context.session().remove(ConstantKeys.USER_LOGIN_COMPLETED_KEY);
-            context.session().remove(ConstantKeys.MFA_CAN_BE_SKIPPED_KEY);
+            context.session().remove(ConstantKeys.MFA_CAN_BE_CONDITIONAL_SKIPPED_KEY);
         }
     }
 

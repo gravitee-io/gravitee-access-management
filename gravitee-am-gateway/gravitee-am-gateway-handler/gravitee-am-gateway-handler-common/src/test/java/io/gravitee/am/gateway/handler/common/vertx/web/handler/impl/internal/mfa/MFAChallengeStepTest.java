@@ -122,7 +122,7 @@ class MFAChallengeStepTest {
     }
 
     @Test
-    void shouldNotChallengeWhenStepUpFalse() {
+    void shouldContinueWhenStepUpFalse() {
         mockStepUp(false);
         mockAuthUser(false);
         when(client.getMfaSettings()).thenReturn(mfa);
@@ -139,22 +139,22 @@ class MFAChallengeStepTest {
 
         mfaChallengeStep.execute(routingContext, flow);
 
-        verifyContinueWithoutChallenge();
+        verifyContinue();
     }
 
     @Test
-    void shouldNotChallengeWhenMfaStop() {
+    void shouldContinueWhenMfaStop() {
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(routingContext.user()).thenReturn(io.vertx.rxjava3.ext.auth.User.newInstance(authUser));
         when(session.get(MFA_STOP)).thenReturn(true);
 
         mfaChallengeStep.execute(routingContext, flow);
 
-        verifyContinueWithoutChallenge();
+        verifyContinue();
     }
 
     @Test
-    void shouldNotChallengeWhenTypeIsUnknown() {
+    void shouldThrowErrorWhenTypeIsUnknown() {
         mockAuthUser(false);
         when(client.getMfaSettings()).thenReturn(mfa);
         when(challenge.isActive()).thenReturn(true);
@@ -200,7 +200,7 @@ class MFAChallengeStepTest {
     }
 
     @Test
-    void shouldNotChallengeWhenRequiredAndValidAuthAndDevice() {
+    void shouldContinueWhenRequiredAndValidAuthAndDevice() {
         mockAuthUser(false);
         when(client.getMfaSettings()).thenReturn(mfa);
         when(challenge.isActive()).thenReturn(true);
@@ -220,11 +220,11 @@ class MFAChallengeStepTest {
 
         mfaChallengeStep.execute(routingContext, flow);
 
-        verifyContinueWithoutChallenge();
+        verifyContinue();
     }
 
     @Test
-    void shouldNotChallengeWhenConditionalRuleTrue() {
+    void shouldContinueWhenConditionalRuleTrue() {
         mockContextRequest();
         mockAuthUser(false);
         when(client.getMfaSettings()).thenReturn(mfa);
@@ -241,7 +241,7 @@ class MFAChallengeStepTest {
 
         mfaChallengeStep.execute(routingContext, flow);
 
-        verifyContinueWithoutChallenge();
+        verifyContinue();
     }
 
     @Test
@@ -327,7 +327,7 @@ class MFAChallengeStepTest {
     }
 
     @Test
-    void shouldNotChallengeWhenRiskBasedRuleFalse() {
+    void shouldContinueWhenRiskBasedRuleFalse() {
         mockContextRequest();
         mockAuthUser(false);
         when(client.getMfaSettings()).thenReturn(mfa);
@@ -343,11 +343,11 @@ class MFAChallengeStepTest {
 
         mfaChallengeStep.execute(routingContext, flow);
 
-        verifyContinueWithoutChallenge();
+        verifyContinue();
     }
 
     @Test
-    void shouldNotChallengeWhenChallengeIsDisabled() {
+    void shouldContinueWhenChallengeIsDisabled() {
         mockAuthUser(false);
         when(client.getMfaSettings()).thenReturn(mfa);
         when(mfa.getChallenge()).thenReturn(challenge);
@@ -359,7 +359,7 @@ class MFAChallengeStepTest {
 
         mfaChallengeStep.execute(routingContext, flow);
 
-        verifyContinueWithoutChallenge();
+        verifyContinue();
     }
 
     @Test
@@ -383,7 +383,7 @@ class MFAChallengeStepTest {
         verify(flow, times(0)).doNext(routingContext);
     }
 
-    private void verifyContinueWithoutChallenge() {
+    private void verifyContinue() {
         verify(flow, times(1)).doNext(routingContext);
         verify(flow, times(0)).exit(mfaChallengeStep);
     }
