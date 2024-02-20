@@ -172,12 +172,12 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
     private List<Factor> factorsToRender(List<Factor> factors, Session session, Client client, RoutingContext context) {
         // if an alternative factor ID has been set, only display this one
         final String alternativeFactorId = session.get(ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY);
-        var mfaContext = new MfaFilterContext(context, client, factorManager);
+        var mfaContext = new MfaFilterContext(context, client, factorManager, ruleEngine);
         var applicationFactors = ofNullable(client.getFactorSettings()).orElseGet(FactorSettings::new);
         if (alternativeFactorId != null && !alternativeFactorId.isEmpty()) {
             // check if this alternative factor still exists
             Optional<Factor> optionalFactor = factors.stream()
-                    .filter(factor -> alternativeFactorId.equals(factor.getId()) && mfaContext.matchFactorRule(factor.getId(), applicationFactors, ruleEngine))
+                    .filter(factor -> alternativeFactorId.equals(factor.getId()) && mfaContext.matchFactorRule(factor.getId(), applicationFactors))
                     .findFirst();
             if (optionalFactor.isPresent()) {
                 return List.of(optionalFactor.get());
@@ -185,7 +185,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         }
         // else return all factors except the RECOVERY CODE one
         return factors.stream()
-                .filter(factor -> !factor.factorType.equals(FactorType.RECOVERY_CODE.getType()) && mfaContext.matchFactorRule(factor.getId(), applicationFactors, ruleEngine))
+                .filter(factor -> !factor.factorType.equals(FactorType.RECOVERY_CODE.getType()) && mfaContext.matchFactorRule(factor.getId(), applicationFactors))
                 .toList();
     }
 
@@ -204,14 +204,19 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
             final User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
             // set the last skipped time
             // and update the session
-            userService.setMfaEnrollmentSkippedTime(client, endUser).blockingSubscribe();
-            routingContext.session().put(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY, true);
-            routingContext.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
-            redirectToAuthorize(routingContext);
+            userService.setMfaEnrollmentSkippedTime(client, endUser)
+                    .subscribe(() -> {
+                        // as the user has skipped the MFA enroll page
+                        // that means the user has also skipped the MFA challenge page
+                        routingContext.session().put(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY, true);
+                        routingContext.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
+                        redirectToAuthorize(routingContext);
+                    });
             return true;
         }
         return false;
     }
+
 
     private Optional<Map.Entry<io.gravitee.am.model.Factor, FactorProvider>> getValidFactor(RoutingContext routingContext, String factorId, Client client) {
         if (factorId == null) {

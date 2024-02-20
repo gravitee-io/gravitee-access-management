@@ -51,9 +51,9 @@ public class MFAEnrollStep extends MFAStep {
     @Override
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        final MfaFilterContext context = new MfaFilterContext(routingContext, client, factorManager);
+        final MfaFilterContext context = new MfaFilterContext(routingContext, client, factorManager, ruleEngine);
         if (hasFactors(client, factorManager)) {
-            context.setDefaultFactorWhenApplied(ruleEngine);
+            context.setDefaultFactorWhenApplied();
             if (stepUpRequired(context, client, ruleEngine)) {
                 required(routingContext, flow, context);
             } else if (isEnrollActive(client)) {

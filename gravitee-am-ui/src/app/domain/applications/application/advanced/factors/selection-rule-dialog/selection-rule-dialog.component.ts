@@ -20,7 +20,7 @@ export interface SelectionRuleDialogResult {
   selectionRule: string;
 }
 @Component({
-  selector: 'selection-rule-dialog',
+  selector: 'factor-selection-rule-dialog',
   templateUrl: './selection-rule-dialog.component.html',
 })
 export class SelectionRuleDialog {

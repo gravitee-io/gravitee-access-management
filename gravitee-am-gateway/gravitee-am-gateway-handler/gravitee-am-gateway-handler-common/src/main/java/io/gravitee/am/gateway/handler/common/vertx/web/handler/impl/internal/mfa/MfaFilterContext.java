@@ -42,6 +42,7 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 import static java.lang.Boolean.TRUE;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -61,13 +62,15 @@ public class MfaFilterContext {
     private final Session session;
     private final User endUser;
     private final FactorManager factorManager;
+    private final RuleEngine ruleEngine;
 
-    public MfaFilterContext(RoutingContext routingContext, Client client, FactorManager factorManager) {
+    public MfaFilterContext(RoutingContext routingContext, Client client, FactorManager factorManager, RuleEngine ruleEngine) {
         this.routingContext = routingContext;
         this.client = client;
         this.session = routingContext.session();
         this.endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
         this.factorManager = factorManager;
+        this.ruleEngine = ruleEngine;
     }
 
     public boolean isEnrollSkipped() {
@@ -123,7 +126,7 @@ public class MfaFilterContext {
     }
 
     public boolean isDeviceRiskAssessmentEnabled() {
-        return Optional.ofNullable(client.getRiskAssessment())
+        return ofNullable(client.getRiskAssessment())
                 .filter(RiskAssessmentSettings::isEnabled)
                 .map(RiskAssessmentSettings::getDeviceAssessment)
                 .map(AssessmentSettings::isEnabled)
@@ -135,17 +138,22 @@ public class MfaFilterContext {
     }
 
 
-    public void setDefaultFactorWhenApplied(RuleEngine ruleEngine) {
+    public void setDefaultFactorWhenApplied() {
         String enrollingFactorId = session.get(ENROLLED_FACTOR_ID_KEY);
         FactorSettings factorSettings = client.getFactorSettings();
-        if (nonNull(enrollingFactorId) && nonNull(factorSettings) && !matchFactorRule(enrollingFactorId, factorSettings, ruleEngine)) {
+        if (nonNull(enrollingFactorId) && nonNull(factorSettings) && !matchFactorRule(enrollingFactorId, factorSettings)) {
             session.put(ENROLLED_FACTOR_ID_KEY, getDefaultFactorId());
         }
     }
 
-    public boolean matchFactorRule(String factorId, FactorSettings factorSettings, RuleEngine ruleEngine) {
-        var appFactor = ofNullable(factorSettings.getApplicationFactors()).flatMap(factors -> factors.stream().filter(f -> f.getId().equals(factorId)).findFirst());
-        return appFactor.isPresent() && (factorSettings.getDefaultFactorId().equals(factorId) || isMatchFactorRule(ruleEngine, appFactor.get().getSelectionRule()));
+    public boolean matchFactorRule(String factorId, FactorSettings factorSettings) {
+        var appFactors = factorSettings.getApplicationFactors();
+        if (appFactors.size() == 1 && factorId.equals(factorSettings.getDefaultFactorId())) {
+            return true;
+        } else {
+            var appFactor = appFactors.stream().filter(f -> f.getId().equals(factorId)).findFirst();
+            return appFactor.isPresent() && isMatchFactorRule(ruleEngine, appFactor.get().getSelectionRule());
+        }
     }
 
     public boolean isMatchFactorRule(RuleEngine ruleEngine, String selectionRule) {

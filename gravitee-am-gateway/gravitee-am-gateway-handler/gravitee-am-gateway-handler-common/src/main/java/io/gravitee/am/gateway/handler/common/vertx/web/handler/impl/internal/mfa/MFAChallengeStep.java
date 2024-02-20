@@ -44,7 +44,7 @@ public class MFAChallengeStep extends MFAStep {
     @Override
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        final MfaFilterContext context = new MfaFilterContext(routingContext, client, factorManager);
+        final MfaFilterContext context = new MfaFilterContext(routingContext, client, factorManager, ruleEngine);
         if (!isMfaFlowStopped(routingContext)) {
             if (stepUpRequired(context, client, ruleEngine) || context.isEndUserEnrolling()) {
                 challenge(routingContext, flow);
