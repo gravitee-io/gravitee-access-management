@@ -42,7 +42,7 @@
           <mat-divider></mat-divider>
         </div>
         <div>
-          <codemirror #editor [value]="condition" [config]="config"></codemirror>
+          <ngx-codemirror #editor [ngModel]="condition" [options]="config"></ngx-codemirror>
         </div>
       </div>
     </form>

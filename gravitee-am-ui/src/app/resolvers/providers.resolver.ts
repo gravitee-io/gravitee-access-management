@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { ProviderService } from '../services/provider.service';
 import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
-export class ProvidersResolver implements Resolve<any> {
+export class ProvidersResolver {
   constructor(private providerService: ProviderService, private organizationService: OrganizationService) {}
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {

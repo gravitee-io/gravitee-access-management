@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Resolve, ActivatedRouteSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { DashboardService } from '../services/dashboard.service';
 import { ApplicationService } from '../services/application.service';
 
 @Injectable()
-export class ApplicationsResolver implements Resolve<any> {
+export class ApplicationsResolver {
   private default_page = 0;
   private default_size = 50;
 

@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Resolve } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { DomainService } from '../services/domain.service';
 import { EnvironmentService } from '../services/environment.service';
 
 @Injectable()
-export class DomainsResolver implements Resolve<any> {
+export class DomainsResolver {
   constructor(private domainService: DomainService, private environmentService: EnvironmentService) {}
 
   resolve(): Observable<any> {

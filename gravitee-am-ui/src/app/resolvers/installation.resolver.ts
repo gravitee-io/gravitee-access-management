@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Resolve } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { InstallationService } from '../services/installation.service';
 
 @Injectable()
-export class InstallationResolver implements Resolve<any> {
+export class InstallationResolver {
   constructor(private installationService: InstallationService) {}
 
   resolve(): Observable<any> {

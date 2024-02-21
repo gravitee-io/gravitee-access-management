@@ -40,7 +40,7 @@
           <ng-template let-row="row" let-expanded="expanded" ngx-datatable-row-detail-template>
             <div style="padding-left: 35px; max-width: 95%">
               <div style="margin-bottom: 20px"><strong>Details</strong></div>
-              <codemirror [value]="identityDetails(row)" [config]="config"></codemirror>
+              <ngx-codemirror [ngModel]="identityDetails(row)" [options]="config"></ngx-codemirror>
             </div>
           </ng-template>
         </ngx-datatable-row-detail>

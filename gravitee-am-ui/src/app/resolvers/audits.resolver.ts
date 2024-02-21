@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { AuditService } from '../services/audit.service';
 import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
-export class AuditsResolver implements Resolve<any> {
+export class AuditsResolver {
   private default_page = 0;
   private default_size = 10;
 

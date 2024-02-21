@@ -49,7 +49,6 @@ export class EmailComponent implements OnInit, AfterViewInit {
   formChanged = false;
   config: any = { lineNumbers: true, readOnly: true };
   defaultExpirationSeconds: number;
-  @ViewChild('editor', { static: true }) editor: any;
   @ViewChild('preview', { static: true }) preview: ElementRef;
   @ViewChild('emailForm', { static: true }) public emailForm: NgForm;
   @Input() createMode: boolean;
@@ -196,7 +195,7 @@ export class EmailComponent implements OnInit, AfterViewInit {
   }
 
   private enableCodeMirror(): void {
-    this.editor.instance.setOption('readOnly', !this.email.enabled);
+    this.config.readOnly = !this.email.enabled;
   }
 
   getHumanTime(defaultExpirationSeconds: number) {

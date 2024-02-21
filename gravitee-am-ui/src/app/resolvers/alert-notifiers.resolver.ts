@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { AlertService } from '../services/alert.service';
 
 @Injectable()
-export class AlertNotifiersResolver implements Resolve<any> {
+export class AlertNotifiersResolver {
   constructor(private alertService: AlertService) {}
 
   resolve(route: ActivatedRouteSnapshot): Observable<any[]> | Promise<any[]> | any[] {

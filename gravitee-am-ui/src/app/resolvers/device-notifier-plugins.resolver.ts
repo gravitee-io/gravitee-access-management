@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Resolve } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
-export class DeviceNotifierPluginsResolver implements Resolve<any> {
+export class DeviceNotifierPluginsResolver {
   constructor(private organizationService: OrganizationService) {}
 
   resolve(): Observable<any> {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnDestroy } from '@angular/core';
-import { ActivatedRoute, NavigationEnd, Router, RouterEvent } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 
@@ -33,7 +33,7 @@ export class ApplicationOAuth2Component implements OnDestroy {
     { href: 'tokens', label: 'Tokens', icon: 'swap_horiz' },
   ];
   constructor(private router: Router, private route: ActivatedRoute, private authService: AuthService) {
-    this.subscription = this.router.events.pipe(filter((event: RouterEvent) => event instanceof NavigationEnd)).subscribe((next) => {
+    this.subscription = this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((next: NavigationEnd) => {
       if (next.url.endsWith('oauth2')) {
         this.loadPermissions();
       }

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { DeviceNotifiersService } from '../services/device-notifiers.service';
 
 @Injectable()
-export class DeviceNotifiersResolver implements Resolve<any> {
+export class DeviceNotifiersResolver {
   constructor(private notifierService: DeviceNotifiersService) {}
 
   resolve(route: ActivatedRouteSnapshot): Observable<any> {

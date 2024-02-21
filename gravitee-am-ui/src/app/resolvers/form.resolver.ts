@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { FormService } from '../services/form.service';
 import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
-export class FormResolver implements Resolve<any> {
+export class FormResolver {
   constructor(private formService: FormService, private organizationService: OrganizationService) {}
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {

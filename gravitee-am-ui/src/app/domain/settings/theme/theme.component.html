@@ -75,7 +75,12 @@
             <mat-expansion-panel-header>
               <mat-panel-title> Custom CSS </mat-panel-title>
             </mat-expansion-panel-header>
-            <codemirror class="custom-css" [(ngModel)]="theme.css" [config]="config" (ngModelChange)="onThemeChange()"></codemirror>
+            <ngx-codemirror
+              class="custom-css"
+              [(ngModel)]="theme.css"
+              [options]="config"
+              (ngModelChange)="onThemeChange()"
+            ></ngx-codemirror>
           </mat-expansion-panel>
         </mat-accordion>
         <div fxFlex class="theme-reset-action">
@@ -126,12 +131,12 @@
           <div class="gv-form-section" [ngClass]="!isFormEnabled() ? 'disabled' : ''">
             <mat-tab-group color="accent">
               <mat-tab label="Html">
-                <codemirror
+                <ngx-codemirror
                   class="preview"
                   [(ngModel)]="selectedTemplateContent"
-                  [config]="config"
-                  (change)="onModelTemplateChange()"
-                ></codemirror>
+                  [options]="config"
+                  (ngModelChange)="onModelTemplateChange()"
+                ></ngx-codemirror>
               </mat-tab>
               <mat-tab label="Help & Tips">
                 <div style="padding: 20px">
