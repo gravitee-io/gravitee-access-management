@@ -42,7 +42,7 @@ public class ChallengeSettingsMongo {
     }
     public ChallengeSettings convert() {
         var challengeSettings = new ChallengeSettings();
-        challengeSettings.setActive(getActive());
+        challengeSettings.setActive(Boolean.TRUE.equals(getActive()));
         challengeSettings.setChallengeRule(getChallengeRule());
         challengeSettings.setType(getType() != null ? MfaChallengeType.valueOf(getType()) : null);
         return challengeSettings;

@@ -27,7 +27,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
 
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.SYSTEM_CERTIFICATE_UPGRADER;
 
@@ -75,12 +74,6 @@ public class SystemCertificateUpgrader extends SystemTaskUpgrader {
     @Override
     protected IllegalStateException getIllegalStateException() {
         return new IllegalStateException(UPGRADE_NOT_SUCCESSFUL_ERROR_MESSAGE);
-    }
-
-    private Single<SystemTask> updateSystemTask(SystemTask task, SystemTaskStatus status, String operationId) {
-        task.setUpdatedAt(new Date());
-        task.setStatus(status.name());
-        return systemTaskRepository.updateIf(task, operationId);
     }
 
     private Single<Boolean> flagSystemCertificates(SystemTask task) {

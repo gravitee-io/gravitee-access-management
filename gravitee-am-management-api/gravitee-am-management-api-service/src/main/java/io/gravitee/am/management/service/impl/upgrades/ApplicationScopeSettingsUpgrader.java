@@ -28,7 +28,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.APPLICATION_SCOPE_SETTINGS_UPGRADER;
@@ -73,12 +72,6 @@ public class ApplicationScopeSettingsUpgrader extends SystemTaskUpgrader {
     @Override
     protected IllegalStateException getIllegalStateException() {
         return new IllegalStateException(UPGRADE_NOT_SUCCESSFUL_ERROR_MESSAGE);
-    }
-
-    private Single<SystemTask> updateSystemTask(SystemTask task, SystemTaskStatus status, String operationId) {
-        task.setUpdatedAt(new Date());
-        task.setStatus(status.name());
-        return systemTaskRepository.updateIf(task, operationId);
     }
 
     private Single<Boolean> migrateScopeSettings(SystemTask task) {
