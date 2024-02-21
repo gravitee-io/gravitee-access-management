@@ -462,6 +462,44 @@ class MFAEnrollStepTest {
     }
 
     @Test
+    void shouldContinueWhenEnrollDisabledButChallengeEnabledAndConditionalRuleNotSatisfiedAndEnrolled() {
+        mockAuthUserWithEnrolledFactors();
+        when(enroll.isActive()).thenReturn(false);
+        when(challenge.isActive()).thenReturn(true);
+        when(challenge.getType()).thenReturn(MfaChallengeType.CONDITIONAL);
+        when(mfa.getChallenge()).thenReturn(challenge);
+        when(mfa.getEnroll()).thenReturn(enroll);
+        when(client.getMfaSettings()).thenReturn(mfa);
+        when(factor.getFactorType()).thenReturn(FactorType.SMS);
+        when(factorManager.getFactor(DEFAULT_FACTOR.getId())).thenReturn(factor);
+
+        mockChallengeRuleSatisfied(false);
+
+        mfaEnrollStep.execute(routingContext, flow);
+
+        verifyContinue();
+    }
+
+    @Test
+    void shouldEnrollWhenEnrollDisabledButChallengeEnabledAndConditionalRuleNotSatisfiedAndNotEnrolled() {
+        mockAuthUser(false);
+        when(enroll.isActive()).thenReturn(false);
+        when(challenge.isActive()).thenReturn(true);
+        when(challenge.getType()).thenReturn(MfaChallengeType.CONDITIONAL);
+        when(mfa.getChallenge()).thenReturn(challenge);
+        when(mfa.getEnroll()).thenReturn(enroll);
+        when(client.getMfaSettings()).thenReturn(mfa);
+        when(factor.getFactorType()).thenReturn(FactorType.SMS);
+        when(factorManager.getFactor(DEFAULT_FACTOR.getId())).thenReturn(factor);
+
+        mockChallengeRuleSatisfied(false);
+
+        mfaEnrollStep.execute(routingContext, flow);
+
+        verifyEnrollment();
+    }
+
+    @Test
     void shouldContinueWhenRequiredAndUserHasFactorEnrolled() {
         mockAuthUserWithEnrolledFactors();
         when(client.getMfaSettings()).thenReturn(mfa);

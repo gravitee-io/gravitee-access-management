@@ -114,7 +114,7 @@ public class MFAEnrollStep extends MFAStep {
             if (challengeConditionSatisfied(client, context, ruleEngine)) {
                 stop(routingContext, flow);
             } else {
-                enrollment(routingContext, flow);
+                required(routingContext, flow, context);
             }
         } else {
             required(routingContext, flow, context);
