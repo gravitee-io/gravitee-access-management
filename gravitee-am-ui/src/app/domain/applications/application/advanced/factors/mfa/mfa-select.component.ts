@@ -116,7 +116,7 @@ export class MfaSelectComponent implements OnChanges {
       })
       .afterClosed()
       .subscribe((result: SelectionRuleDialogResult) => {
-        if (result?.selectionRule) {
+        if (result?.selectionRule != null) {
           this.factors.filter((f) => f.id === factor.id)[0].selectionRule = result.selectionRule;
           this.update();
         }
