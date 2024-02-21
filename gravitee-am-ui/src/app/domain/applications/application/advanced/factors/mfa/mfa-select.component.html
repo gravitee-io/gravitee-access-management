@@ -57,7 +57,7 @@
         </ngx-datatable-column>
         <ngx-datatable-column name="Selection Rule" [flexGrow]="1" [sortable]="false">
           <ng-template let-row="row" ngx-datatable-cell-template>
-            <span (click)="addSelectionRule(row.id)" class="wrapper" style="cursor: pointer">
+            <span (click)="addSelectionRule(row)" class="wrapper" style="cursor: pointer">
               <span
                 [matTooltip]="row.selectionRule ? 'Selection rule' : 'New selection rule'"
                 [style]="row.selectionRule ? 'color: green' : 'color: grey'"

@@ -100,11 +100,12 @@ export class ApplicationFactorsComponent implements OnInit {
       .findByDomain(this.domainId)
       .pipe(
         map((factors) =>
-          factors.map((f) => {
+          factors.map((f: any) => {
             return {
               ...f,
-              selected: this.application.factors?.includes(f.id),
-              isDefault: false,
+              selectionRule: this.mfa.factor.applicationFactors.filter((af: MfaFactor) => af.id === f.id)[0]?.selectionRule,
+              selected: this.mfa.factor.applicationFactors.filter((af: MfaFactor) => af.id === f.id).length > 0,
+              isDefault: this.mfa.factor.defaultFactorId === f.id,
             };
           }),
         ),
