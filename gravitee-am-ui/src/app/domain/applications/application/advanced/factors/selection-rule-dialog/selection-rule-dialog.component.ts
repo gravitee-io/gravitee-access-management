@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
 export interface SelectionRuleDialogResult {
@@ -23,10 +23,13 @@ export interface SelectionRuleDialogResult {
   selector: 'factor-selection-rule-dialog',
   templateUrl: './selection-rule-dialog.component.html',
 })
-export class SelectionRuleDialog {
+export class SelectionRuleDialog implements OnInit {
   selectionRule: string;
   constructor(public dialogRef: MatDialogRef<SelectionRuleDialog>, @Inject(MAT_DIALOG_DATA) public data: any) {}
 
+  ngOnInit(): void {
+    this.selectionRule = this.data.selectionRule;
+  }
   save(): void {
     this.dialogRef.close({
       selectionRule: this.selectionRule,
