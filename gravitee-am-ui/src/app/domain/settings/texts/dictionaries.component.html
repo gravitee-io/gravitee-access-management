@@ -125,12 +125,12 @@
           </mat-tab>
           <mat-tab label="Edit in file" data-testid="editInFileTab">
             <div>
-              <codemirror
+              <ngx-codemirror
                 *ngIf="displayCodeMirror"
                 [(ngModel)]="formContent"
-                [config]="codeMirrorConfig"
-                (change)="onContentChanges($event)"
-              ></codemirror>
+                [options]="codeMirrorConfig"
+                (ngModelChange)="onContentChanges($event)"
+              ></ngx-codemirror>
               <div *hasPermission="['domain_i18n_dictionary_create']" fxLayout="row wrap" fxLayoutGap="10px" style="margin: 10px 0 10px 0">
                 <input type="file" accept=".json" class="file-input" hidden="true" (change)="onFileSelected($event)" #fileUpload />
                 <button

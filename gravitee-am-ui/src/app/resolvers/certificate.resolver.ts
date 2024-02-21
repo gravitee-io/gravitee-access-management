@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Resolve, ActivatedRouteSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { CertificateService } from '../services/certificate.service';
 
 @Injectable()
-export class CertificateResolver implements Resolve<any> {
+export class CertificateResolver {
   constructor(private certificateService: CertificateService) {}
 
   resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {

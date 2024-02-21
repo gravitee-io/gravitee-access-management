@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Resolve } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { EntrypointService } from '../services/entrypoint.service';
 
 @Injectable()
-export class EntrypointsResolver implements Resolve<any> {
+export class EntrypointsResolver {
   constructor(private entrypointService: EntrypointService) {}
 
   resolve(): Observable<any> {

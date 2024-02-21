@@ -131,7 +131,7 @@
               <span *ngIf="row.accessPoint.ipAddress"><strong>IP: </strong> {{ row.accessPoint.ipAddress }}</span>
               <span *ngIf="row.accessPoint.userAgent"><strong>User agent: </strong> {{ row.accessPoint.userAgent }}</span>
             </p>
-            <codemirror [value]="auditDetails(row)" [config]="config"></codemirror>
+            <ngx-codemirror [ngModel]="auditDetails(row)" [options]="config"></ngx-codemirror>
           </div>
         </ng-template>
       </ngx-datatable-row-detail>

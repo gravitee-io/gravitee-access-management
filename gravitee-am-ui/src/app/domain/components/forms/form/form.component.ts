@@ -46,7 +46,6 @@ export class FormComponent implements OnInit, AfterViewInit {
   formFound = false;
   formChanged = false;
   config: any = { lineNumbers: true, readOnly: true };
-  @ViewChild('editor', { static: true }) editor: any;
   @ViewChild('preview', { static: true }) preview: ElementRef;
   @Input() createMode: boolean;
   @Input() editMode: boolean;
@@ -183,7 +182,7 @@ export class FormComponent implements OnInit, AfterViewInit {
   }
 
   private enableCodeMirror(): void {
-    this.editor.instance.setOption('readOnly', !this.form.enabled);
+    this.config.readOnly = !this.form.enabled;
   }
 }
 

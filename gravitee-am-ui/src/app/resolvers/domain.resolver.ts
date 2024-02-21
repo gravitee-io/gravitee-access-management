@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { Observable } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
@@ -22,7 +22,7 @@ import { DomainService } from '../services/domain.service';
 import { NavbarService } from '../components/navbar/navbar.service';
 
 @Injectable()
-export class DomainResolver implements Resolve<any> {
+export class DomainResolver {
   constructor(private domainService: DomainService, private navbarService: NavbarService) {}
 
   resolve(route: ActivatedRouteSnapshot): Observable<any> {

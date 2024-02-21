@@ -69,7 +69,7 @@
           <mat-divider></mat-divider>
         </div>
         <div>
-          <codemirror [value]="auditDetails()" [config]="config"></codemirror>
+          <ngx-codemirror [ngModel]="auditDetails()" [options]="config"></ngx-codemirror>
         </div>
       </div>
     </form>
