@@ -67,10 +67,11 @@
             <mat-icon matListItemIcon>domain</mat-icon>
             <span matListItemTitle>
               <span class="domains_list__item__name">{{ domain.name }}</span>
-              <span *ngIf="!domain.enabled" class="gio-badge-warning"
-                ><mat-icon class="gio-left" svgIcon="gio:alert-circle"></mat-icon>Domain disabled</span
-              >
             </span>
+
+            <span *ngIf="!domain.enabled" matListItemMeta class="gio-badge-warning">
+              <mat-icon class="gio-left" svgIcon="gio:alert-circle"></mat-icon>Domain disabled</span
+            >
           </a>
         </mat-list>
       </div>

@@ -6,6 +6,7 @@ mat-card.domain-banner {
   left: 0;
   display: flex;
   max-width: 600px;
+  flex-direction: row;
   align-items: center;
   padding: 12px;
   margin-right: auto;
@@ -15,7 +16,7 @@ mat-card.domain-banner {
   text-align: center;
 
   .domain-banner-text {
-    margin: 3px 0 0 20px;
+    padding-left: 12px;
 
     span {
       cursor: pointer;
