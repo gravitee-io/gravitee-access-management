@@ -67,6 +67,11 @@
             <input th:if="${factor.factorType.type == 'FIDO2'}" type="hidden" id="webAuthnLoginPath" th:value="${webAuthnLoginPath}"/>
             <input th:if="${factor.factorType.type == 'FIDO2'}" type="hidden" id="userName" th:value="${userName}"/>
 
+            <div class="checkbox" th:if="${rememberDeviceIsActive && rememberDeviceConsentTimeSeconds != null && deviceId != null && !deviceAlreadyExists && !mfaChallengeCanBeSkipped}">
+                <input type="checkbox" id="rememberDeviceConsent" name="rememberDeviceConsent">
+                <span><span th:text="#{mfa_challenge.remember.device}"/> [[${rememberDeviceConsentTimeSeconds >= 2629746 ? (rememberDeviceConsentTimeSeconds / 2629746) + " month(s)" : (rememberDeviceConsentTimeSeconds >= 86400 ? (rememberDeviceConsentTimeSeconds / 86400) + " day(s)" : (rememberDeviceConsentTimeSeconds >= 3600 ? (rememberDeviceConsentTimeSeconds / 3600) + " hour(s)" : (rememberDeviceConsentTimeSeconds >= 60 ? (rememberDeviceConsentTimeSeconds / 60) + " minute(s)" : (rememberDeviceConsentTimeSeconds + " second(s)"))))}]]</span>
+            </div>
+
             <div>
                 <button type="submit" id="verify" class="button primary" th:text="#{mfa_challenge.button.submit}"></button>
             </div>

@@ -55,73 +55,73 @@ public class MFAEnrollStep extends MFAStep {
         if (hasFactors(client, factorManager)) {
             context.setDefaultFactorWhenApplied();
             if (stepUpRequired(context, client, ruleEngine)) {
-                required(routingContext, flow, context);
+                required(flow, context);
             } else if (isEnrollActive(client)) {
                 switch (getEnrollSettings(client).getType()) {
-                    case OPTIONAL -> optional(routingContext, flow, context);
-                    case REQUIRED -> required(routingContext, flow, context);
-                    case CONDITIONAL -> conditional(routingContext, flow, client, context);
+                    case OPTIONAL -> optional(flow, context);
+                    case REQUIRED -> required(flow, context);
+                    case CONDITIONAL -> conditional(flow, client, context);
                 }
             } else if (isChallengeActive(client)) {
-                enrollIfChallengeRequires(routingContext, flow, client, context);
+                enrollIfChallengeRequires(flow, client, context);
             } else {
-                stop(routingContext, flow);
+                stop(context, flow);
             }
         } else {
-            stop(routingContext, flow);
+            stop(context, flow);
         }
     }
 
-    private void required(RoutingContext routingContext, AuthenticationFlowChain flow, MfaFilterContext context) {
+    private void required(AuthenticationFlowChain flow, MfaFilterContext context) {
         if (userHasFactor(context)) {
-            continueFlow(routingContext, flow);
+            continueFlow(context, flow);
         } else {
-            enrollment(routingContext, flow);
+            enrollment(context, flow);
         }
     }
 
-    private void conditional(RoutingContext routingContext, AuthenticationFlowChain flow, Client client, MfaFilterContext context) {
+    private void conditional(AuthenticationFlowChain flow, Client client, MfaFilterContext context) {
         if (enrollConditionSatisfied(client, context)) {
-            stop(routingContext, flow);
+            stop(context, flow);
         } else if (userHasFactor(context)) {
-            continueFlow(routingContext, flow);
+            continueFlow(context, flow);
         } else if (canUserSkip(client, context)) {
-            routingContext.session().put(MFA_ENROLL_CONDITIONAL_SKIPPED_KEY, true);
+            context.session().put(MFA_ENROLL_CONDITIONAL_SKIPPED_KEY, true);
             if (context.isEnrollSkipped()) {
-                stopMfaFlow(routingContext, flow);
+                stopMfaFlow(context, flow);
             } else {
-                enrollment(routingContext, flow);
+                enrollment(context, flow);
             }
         } else {
-            enrollment(routingContext, flow);
+            enrollment(context, flow);
         }
     }
 
-    private void optional(RoutingContext routingContext, AuthenticationFlowChain flow, MfaFilterContext context) {
+    private void optional(AuthenticationFlowChain flow, MfaFilterContext context) {
         if (context.isEnrollSkipped()) {
-            stop(routingContext, flow);
+            stop(context, flow);
         } else {
             if (userHasFactor(context)) {
-                continueFlow(routingContext, flow);
+                continueFlow(context, flow);
             } else {
-                enrollment(routingContext, flow);
+                enrollment(context, flow);
             }
         }
     }
 
-    private void enrollIfChallengeRequires(RoutingContext routingContext, AuthenticationFlowChain flow, Client client, MfaFilterContext context) {
+    private void enrollIfChallengeRequires(AuthenticationFlowChain flow, Client client, MfaFilterContext context) {
         if (MfaChallengeType.CONDITIONAL.equals(getChallengeSettings(client).getType())) {
             if (challengeConditionSatisfied(client, context, ruleEngine)) {
-                stop(routingContext, flow);
+                stop(context, flow);
             } else {
-                required(routingContext, flow, context);
+                required(flow, context);
             }
         } else {
-            required(routingContext, flow, context);
+            required(flow, context);
         }
     }
 
-    private void enrollment(RoutingContext routingContext, AuthenticationFlowChain flow) {
+    private void enrollment(MfaFilterContext routingContext, AuthenticationFlowChain flow) {
         executeFlowStep(routingContext, flow, this);
     }
 
@@ -137,12 +137,12 @@ public class MFAEnrollStep extends MFAStep {
         return context.isEndUserEnrolling() || context.userHasMatchingActivatedFactors();
     }
 
-    private static void continueFlow(RoutingContext routingContext, AuthenticationFlowChain flow) {
+    private static void continueFlow(MfaFilterContext routingContext, AuthenticationFlowChain flow) {
         routingContext.session().put(MFA_ENROLLMENT_COMPLETED_KEY, true);
         continueMfaFlow(routingContext, flow);
     }
 
-    private static void stop(RoutingContext routingContext, AuthenticationFlowChain flow) {
+    private static void stop(MfaFilterContext routingContext, AuthenticationFlowChain flow) {
         routingContext.session().put(MFA_ENROLLMENT_COMPLETED_KEY, true);
         stopMfaFlow(routingContext, flow);
     }

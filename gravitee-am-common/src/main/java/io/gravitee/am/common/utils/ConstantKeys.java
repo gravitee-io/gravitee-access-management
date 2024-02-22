@@ -155,6 +155,7 @@ public interface ConstantKeys {
 
     //remember device
     String DEVICE_ALREADY_EXISTS_KEY = "deviceAlreadyExists";
+    String REMEMBER_DEVICE_SKIP_UNTIL = "deviceSkipUntil";
     String REMEMBER_DEVICE_CONSENT_TIME_SECONDS = "rememberDeviceConsentTimeSeconds";
     long DEFAULT_REMEMBER_DEVICE_CONSENT_TIME = 10 * 60 * 60; // 10 hours
     String REMEMBER_DEVICE_IS_ACTIVE = "rememberDeviceIsActive";

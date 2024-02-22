@@ -20,6 +20,7 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_CONDITIONAL_SKIPPED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_STOP;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
@@ -30,6 +31,7 @@ import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.MfaChallengeType;
 import io.gravitee.am.model.MfaEnrollType;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.StepUpAuthenticationSettings;
@@ -99,22 +101,22 @@ public class MfaUtils {
         return getChallengeSettings(client).isActive();
     }
 
-    public static void stopMfaFlow(RoutingContext routingContext, AuthenticationFlowChain flow) {
+    public static void stopMfaFlow(MfaFilterContext routingContext, AuthenticationFlowChain flow) {
         routingContext.session().put(MFA_STOP, true);
-        flow.doNext(routingContext);
+        flow.doNext(routingContext.routingContext());
     }
 
-    public static void executeFlowStep(RoutingContext routingContext, AuthenticationFlowChain flow, MFAStep mFAStep) {
+    public static void executeFlowStep(MfaFilterContext routingContext, AuthenticationFlowChain flow, MFAStep mFAStep) {
         routingContext.session().put(MFA_STOP, false);
         flow.exit(mFAStep);
     }
 
-    public static void continueMfaFlow(RoutingContext routingContext, AuthenticationFlowChain flow) {
+    public static void continueMfaFlow(MfaFilterContext routingContext, AuthenticationFlowChain flow) {
         routingContext.session().put(MFA_STOP, false);
-        flow.doNext(routingContext);
+        flow.doNext(routingContext.routingContext());
     }
 
-    public static boolean isMfaFlowStopped(RoutingContext context) {
+    public static boolean isMfaFlowStopped(MfaFilterContext context) {
         return ofNullable((Boolean) context.session().get(MFA_STOP)).orElse(false);
     }
 
@@ -144,9 +146,15 @@ public class MfaUtils {
                 && evaluateRule(stepUpSettings.getStepUpAuthenticationRule(), context, ruleEngine);
     }
 
-    public static boolean isCanSkip(Client client, RoutingContext routingContext) {
+    public static boolean isCanSkip(RoutingContext routingContext, Client client) {
         var enrollSettings = MfaUtils.getEnrollSettings(client);
         return (enrollSettings.getForceEnrollment() != null && !enrollSettings.getForceEnrollment())
                 || (MfaEnrollType.CONDITIONAL.equals(enrollSettings.getType()) && Boolean.TRUE.equals(routingContext.session().get(ConstantKeys.MFA_ENROLL_CONDITIONAL_SKIPPED_KEY)));
+    }
+
+    public static boolean isSkipRememberDevice(RoutingContext routingContext, Client client) {
+        return MfaUtils.getChallengeSettings(client).getType().equals(MfaChallengeType.CONDITIONAL)
+                && MfaUtils.getRememberDeviceSettings(client).isSkipRememberDevice()
+                && TRUE.equals(routingContext.session().get(MFA_CHALLENGE_CONDITIONAL_SKIPPED_KEY));
     }
 }

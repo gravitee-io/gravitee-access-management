@@ -18,7 +18,9 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.common.utils.ConstantKeys;
+import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_REMEMBER_DEVICE_CONSENT_TIME;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_CONDITIONAL_SKIPPED_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.REMEMBER_DEVICE_SKIP_UNTIL;
 import io.gravitee.am.common.utils.MovingFactorUtils;
 import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
@@ -33,7 +35,6 @@ import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.MFASettings;
-import io.gravitee.am.model.MfaChallengeType;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.Template;
@@ -73,8 +74,8 @@ import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
-import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
+import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -128,6 +129,10 @@ import static java.util.Optional.ofNullable;
 public class MFAChallengeEndpoint extends MFAEndpoint {
 
     private static final Logger logger = LoggerFactory.getLogger(MFAChallengeEndpoint.class);
+
+    private static final String REMEMBER_DEVICE_CONSENT = "rememberDeviceConsent";
+    public static final String REMEMBER_DEVICE_CONSENT_ON = "on";
+
     private final FactorManager factorManager;
     private final UserService userService;
     private final ApplicationContext applicationContext;
@@ -217,9 +222,14 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
             routingContext.put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
             routingContext.put(ConstantKeys.ERROR_CODE_PARAM_KEY, errorCode);
 
+            //Include deviceId, so we can show/hide the "save my device" checkbox
             var deviceId = routingContext.session().get(ConstantKeys.DEVICE_ID);
             if (deviceId != null) {
                 routingContext.put(ConstantKeys.DEVICE_ID, deviceId);
+            }
+            var challengeConditionalSkip = routingContext.session().get(MFA_CHALLENGE_CONDITIONAL_SKIPPED_KEY);
+            if (challengeConditionalSkip != null) {
+                routingContext.put(MFA_CHALLENGE_CONDITIONAL_SKIPPED_KEY, deviceId);
             }
             if (enableAlternateMFAOptions(client, endUser)) {
                 routingContext.put(MFA_ALTERNATIVES_ENABLE_KEY, true);
@@ -404,17 +414,16 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         final String returnURL = getReturnUrl(routingContext, queryParams);
         //Register device if the device is active
         var rememberDeviceSettings = getRememberDeviceSettings(client);
-        if (rememberDeviceSettings.isActive() && !isSkipRememberDevice(routingContext, client)) {
+        boolean rememberDeviceConsent = REMEMBER_DEVICE_CONSENT_ON.equalsIgnoreCase(routingContext.request().getParam(REMEMBER_DEVICE_CONSENT));
+        if (rememberDeviceSettings.isActive() && !rememberDeviceConsent) {
+            var skipTimeSec = rememberDeviceSettings.getExpirationTimeSeconds() != null ? rememberDeviceSettings.getExpirationTimeSeconds() : DEFAULT_REMEMBER_DEVICE_CONSENT_TIME;
+            routingContext.session().put(REMEMBER_DEVICE_SKIP_UNTIL, Instant.now().plusSeconds(skipTimeSec));
+            doRedirect(routingContext.request().response(), returnURL);
+        } else if (rememberDeviceSettings.isActive() && !MfaUtils.isSkipRememberDevice(routingContext, client)) {
             saveDeviceAndRedirect(routingContext, client, user.getId(), rememberDeviceSettings, returnURL);
         } else {
             doRedirect(routingContext.request().response(), returnURL);
         }
-    }
-
-    private boolean isSkipRememberDevice(RoutingContext routingContext, Client client) {
-        return MfaUtils.getChallengeSettings(client).getType().equals(MfaChallengeType.CONDITIONAL)
-                && MfaUtils.getRememberDeviceSettings(client).isSkipRememberDevice()
-                && TRUE.equals(routingContext.session().get(MFA_CHALLENGE_CONDITIONAL_SKIPPED_KEY));
     }
 
     private void verify(FactorProvider factorProvider, FactorContext factorContext, Optional<VerifyAttempt> verifyAttempt,
@@ -579,6 +588,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                         factorSecurity.ifPresent(enrolledFactor::setSecurity);
                     }
                     break;
+                default:
             }
 
             // if the factor provider uses a moving factor security mechanism,
