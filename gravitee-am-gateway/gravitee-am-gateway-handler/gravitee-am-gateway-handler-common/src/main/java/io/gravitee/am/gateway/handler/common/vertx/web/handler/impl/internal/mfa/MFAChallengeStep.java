@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mf
 
 import io.gravitee.am.common.utils.ConstantKeys;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_CONDITIONAL_SKIPPED_KEY;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
@@ -63,7 +64,7 @@ public class MFAChallengeStep extends MFAStep {
     }
 
     private void required(RoutingContext routingContext, AuthenticationFlowChain flow, MfaFilterContext context) {
-        if (context.isChallengeOnceCompleted() && isRememberDeviceOrSkipped(context)) {
+        if (context.isChallengeOnceCompleted() && isRememberDevice(context)) {
             continueFlow(routingContext, flow);
         } else {
             challenge(routingContext, flow);
@@ -71,18 +72,19 @@ public class MFAChallengeStep extends MFAStep {
     }
 
     private void conditional(RoutingContext routingContext, AuthenticationFlowChain flow, Client client, MfaFilterContext context) {
-        if (context.isChallengeOnceCompleted() || challengeConditionSatisfied(client, context, ruleEngine)) {
+        if (challengeConditionSatisfied(client, context, ruleEngine)) {
+            routingContext.session().put(MFA_CHALLENGE_CONDITIONAL_SKIPPED_KEY, true);
             continueFlow(routingContext, flow);
         } else {
-            challenge(routingContext, flow);
+            required(routingContext, flow, context);
         }
     }
 
     private void riskBased(RoutingContext routingContext, AuthenticationFlowChain flow, Client client, MfaFilterContext context) {
-        if (context.isChallengeOnceCompleted() || isSafe(client, context)) {
+        if (isSafe(client, context)) {
             continueFlow(routingContext, flow);
         } else {
-            challenge(routingContext, flow);
+            required(routingContext, flow, context);
         }
     }
 
@@ -94,9 +96,8 @@ public class MFAChallengeStep extends MFAStep {
         return !evaluateRule(getAdaptiveMfaStepUpRule(client), context, ruleEngine);
     }
 
-    private boolean isRememberDeviceOrSkipped(MfaFilterContext context) {
-        return !context.isDeviceRiskAssessmentEnabled()
-                && (!context.getRememberDeviceSettings().isActive() || (context.deviceAlreadyExists() || context.getRememberDeviceSettings().isSkipRememberDevice()));
+    private boolean isRememberDevice(MfaFilterContext context) {
+        return !context.isDeviceRiskAssessmentEnabled() && (!context.getRememberDeviceSettings().isActive() || context.deviceAlreadyExists());
     }
 
     private static void continueFlow(RoutingContext routingContext, AuthenticationFlowChain flow) {

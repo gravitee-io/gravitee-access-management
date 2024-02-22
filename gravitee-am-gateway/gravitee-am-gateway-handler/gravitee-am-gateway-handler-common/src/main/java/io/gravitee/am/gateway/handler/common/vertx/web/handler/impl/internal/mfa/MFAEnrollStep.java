@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
 import io.gravitee.am.common.utils.ConstantKeys;
-import static io.gravitee.am.common.utils.ConstantKeys.MFA_CAN_BE_CONDITIONAL_SKIPPED_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLL_CONDITIONAL_SKIPPED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
@@ -86,7 +86,7 @@ public class MFAEnrollStep extends MFAStep {
         } else if (userHasFactor(context)) {
             continueFlow(routingContext, flow);
         } else if (canUserSkip(client, context)) {
-            routingContext.session().put(MFA_CAN_BE_CONDITIONAL_SKIPPED_KEY, true);
+            routingContext.session().put(MFA_ENROLL_CONDITIONAL_SKIPPED_KEY, true);
             if (context.isEnrollSkipped()) {
                 stopMfaFlow(routingContext, flow);
             } else {

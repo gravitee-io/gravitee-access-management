@@ -147,6 +147,6 @@ public class MfaUtils {
     public static boolean isCanSkip(Client client, RoutingContext routingContext) {
         var enrollSettings = MfaUtils.getEnrollSettings(client);
         return (enrollSettings.getForceEnrollment() != null && !enrollSettings.getForceEnrollment())
-                || (MfaEnrollType.CONDITIONAL.equals(enrollSettings.getType()) && Boolean.TRUE.equals(routingContext.session().get(ConstantKeys.MFA_CAN_BE_CONDITIONAL_SKIPPED_KEY)));
+                || (MfaEnrollType.CONDITIONAL.equals(enrollSettings.getType()) && Boolean.TRUE.equals(routingContext.session().get(ConstantKeys.MFA_ENROLL_CONDITIONAL_SKIPPED_KEY)));
     }
 }

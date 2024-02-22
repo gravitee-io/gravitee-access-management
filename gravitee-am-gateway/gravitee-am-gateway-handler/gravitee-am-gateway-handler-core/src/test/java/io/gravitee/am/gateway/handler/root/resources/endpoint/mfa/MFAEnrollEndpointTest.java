@@ -748,7 +748,7 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 
                     ctx.session().put(ConstantKeys.MFA_FORCE_ENROLLMENT, true);
-                    ctx.session().put(ConstantKeys.MFA_CAN_BE_CONDITIONAL_SKIPPED_KEY, false);
+                    ctx.session().put(ConstantKeys.MFA_ENROLL_CONDITIONAL_SKIPPED_KEY, false);
 
                     ctx.next();
                 })
@@ -817,7 +817,7 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 
                     ctx.session().put(ConstantKeys.MFA_FORCE_ENROLLMENT, true);
-                    ctx.session().put(ConstantKeys.MFA_CAN_BE_CONDITIONAL_SKIPPED_KEY, true);
+                    ctx.session().put(ConstantKeys.MFA_ENROLL_CONDITIONAL_SKIPPED_KEY, true);
 
                     ctx.next();
                 })

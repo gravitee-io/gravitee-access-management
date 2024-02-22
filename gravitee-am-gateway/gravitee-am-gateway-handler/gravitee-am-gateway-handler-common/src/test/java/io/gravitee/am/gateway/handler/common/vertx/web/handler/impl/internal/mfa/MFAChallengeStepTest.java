@@ -285,9 +285,28 @@ class MFAChallengeStepTest {
         verifyChallenge();
     }
 
+    @Test
+    void shouldChallengeWhenRiskBasedRuleFalse() {
+        mockContextRequest();
+        mockAuthUser(false);
+        when(client.getMfaSettings()).thenReturn(mfa);
+        when(mfa.getChallenge()).thenReturn(challenge);
+        when(challenge.isActive()).thenReturn(true);
+        when(challenge.getType()).thenReturn(MfaChallengeType.RISK_BASED);
+
+        when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
+        when(routingContext.session()).thenReturn(session);
+        when(session.get(MFA_STOP)).thenReturn(false);
+
+        mockRiskBasedSatisfied(false);
+
+        mfaChallengeStep.execute(routingContext, flow);
+
+        verifyContinue();
+    }
 
     @Test
-    void shouldChallengeWhenRiskBasedRuleTrueAndNoAuth() {
+    void shouldChallengeWhenRiskBasedRuleTrueNoAuth() {
         mockContextRequest();
         mockAuthUser(false);
         when(client.getMfaSettings()).thenReturn(mfa);
@@ -307,7 +326,7 @@ class MFAChallengeStepTest {
     }
 
     @Test
-    void shouldChallengeWhenRiskBasedRuleTrueAndAuth() {
+    void shouldContinueWhenRiskBasedRuleTrueAndAuth() {
         mockContextRequest();
         mockAuthUser(false);
         when(client.getMfaSettings()).thenReturn(mfa);
@@ -317,13 +336,14 @@ class MFAChallengeStepTest {
         when(routingContext.session()).thenReturn(session);
 
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
+        when(session.get(MFA_CHALLENGE_COMPLETED_KEY)).thenReturn(true);
         when(session.get(MFA_STOP)).thenReturn(false);
 
         mockRiskBasedSatisfied(true);
 
         mfaChallengeStep.execute(routingContext, flow);
 
-        verifyChallenge();
+        verifyContinue();
     }
 
     @Test
@@ -337,6 +357,7 @@ class MFAChallengeStepTest {
         when(routingContext.session()).thenReturn(session);
 
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
+        when(session.get(MFA_CHALLENGE_COMPLETED_KEY)).thenReturn(true);
         when(session.get(MFA_STOP)).thenReturn(false);
 
         mockRiskBasedSatisfied(false);
