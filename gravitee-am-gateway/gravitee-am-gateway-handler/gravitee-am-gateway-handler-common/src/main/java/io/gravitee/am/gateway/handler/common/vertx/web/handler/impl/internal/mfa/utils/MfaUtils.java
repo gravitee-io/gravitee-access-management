@@ -119,8 +119,11 @@ public class MfaUtils {
     }
 
     public static boolean hasFactors(Client client, FactorManager factorManager) {
-        var factors = ofNullable(client.getFactorSettings()).map(FactorSettings::getApplicationFactors).orElse(List.of())
-                .stream().map(ApplicationFactorSettings::getId).collect(Collectors.toSet());
+        var factors = ofNullable(client.getFactorSettings())
+                .map(FactorSettings::getApplicationFactors)
+                .orElse(List.of())
+                .stream()
+                .map(ApplicationFactorSettings::getId).collect(Collectors.toSet());
         return !factors.isEmpty() && notOnlyRecoveryCodeFactors(factors, factorManager);
     }
 
