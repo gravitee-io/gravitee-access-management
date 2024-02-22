@@ -101,11 +101,13 @@ export class ApplicationFactorsComponent implements OnInit {
       .pipe(
         map((factors) =>
           factors.map((f: any) => {
+            const appFactor = this.mfa.factor?.applicationFactors?.filter((mf: MfaFactor) => mf.id === f.id)?.[0];
+            const defaultId = this.mfa.factor?.defaultFactorId ? this.mfa.factor.defaultFactorId : factors[0]?.id;
             return {
               ...f,
-              selectionRule: this.mfa.factor.applicationFactors.filter((af: MfaFactor) => af.id === f.id)[0]?.selectionRule,
-              selected: this.mfa.factor.applicationFactors.filter((af: MfaFactor) => af.id === f.id).length > 0,
-              isDefault: this.mfa.factor.defaultFactorId === f.id,
+              selectionRule: appFactor?.selectionRule,
+              selected: appFactor !== undefined,
+              isDefault: defaultId === f.id,
             };
           }),
         ),
