@@ -119,7 +119,7 @@ export class MfaRememberDeviceComponent implements OnInit, OnChanges {
   }
 
   private update(): void {
-    if (this.hasDeviceIdentifierPlugins()) {
+    if (this.hasDeviceIdentifierPlugins() && this.humanTime?.expirationTime && this.humanTime?.expirationUnit) {
       this.settingsChange.emit({
         active: this.active,
         skipRememberDevice: this.skipRememberDevice,
