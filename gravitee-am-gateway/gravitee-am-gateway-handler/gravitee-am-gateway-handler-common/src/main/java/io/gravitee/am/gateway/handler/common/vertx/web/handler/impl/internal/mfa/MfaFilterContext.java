@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,12 +21,14 @@ import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_K
 import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS;
 import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;
+
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
+
 import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
+
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.evaluateRule;
 import io.gravitee.am.gateway.handler.context.EvaluableExecutionContext;
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.model.FactorSettings;
@@ -34,19 +36,29 @@ import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
+
 import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
+
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.risk.assessment.api.assessment.settings.AssessmentSettings;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
+import org.jsoup.internal.StringUtil;
+
+import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
+
 import java.util.Date;
 import java.util.Map;
+
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
+
+import java.util.Optional;
 import java.util.stream.Collectors;
+
 import static org.springframework.util.StringUtils.hasText;
 
 /**
@@ -142,30 +154,39 @@ public class MfaFilterContext {
     }
 
 
-    public void setDefaultFactorWhenApplied() {
+    public boolean checkSelectedFactor() {
         String enrollingFactorId = session.get(ENROLLED_FACTOR_ID_KEY);
-        FactorSettings factorSettings = client.getFactorSettings();
-        if (nonNull(enrollingFactorId) && nonNull(factorSettings) && !matchFactorRule(enrollingFactorId, factorSettings)) {
-            session.put(ENROLLED_FACTOR_ID_KEY, getDefaultFactorId());
-        }
+        return client.getFactorSettings().getDefaultFactorId().equals(enrollingFactorId) ||
+                evaluateFactorRuleByFactorId(enrollingFactorId);
     }
 
-    public boolean matchFactorRule(String factorId, FactorSettings factorSettings) {
+    public boolean isFactorSelected() {
+        return !StringUtil.isBlank(session.get(ENROLLED_FACTOR_ID_KEY));
+    }
+
+    public boolean evaluateFactorRuleByFactorId(String factorId) {
+        FactorSettings factorSettings = client.getFactorSettings();
         var appFactors = factorSettings.getApplicationFactors();
         if (appFactors.size() == 1 && factorId.equals(factorSettings.getDefaultFactorId())) {
             return true;
         } else {
-            var appFactor = appFactors.stream().filter(f -> f.getId().equals(factorId)).findFirst();
-            return appFactor.isPresent() && isMatchFactorRule(appFactor.get().getSelectionRule());
+            return appFactors.stream()
+                    .filter(f -> f.getId().equals(factorId))
+                    .map(factor -> evaluateRule(factor.getSelectionRule()))
+                    .findFirst()
+                    .orElse(FALSE);
         }
     }
 
-    private boolean isMatchFactorRule(String selectionRule) {
-        return !hasText(selectionRule) || TRUE.equals(evaluateRule(selectionRule, this, ruleEngine));
+    public boolean isDefaultFactor(String factorId) {
+        FactorSettings factorSettings = client.getFactorSettings();
+        return Optional.ofNullable(factorSettings)
+                .map(settings -> settings.getDefaultFactorId().equals(factorId))
+                .orElse(FALSE);
     }
 
-    private String getDefaultFactorId() {
-        return client.getFactorSettings().getDefaultFactorId();
+    private boolean evaluateRule(String selectionRule) {
+        return !hasText(selectionRule) || TRUE.equals(MfaUtils.evaluateRule(selectionRule, this, ruleEngine));
     }
 
     private boolean isNotRecoveryCodeType(String factorId) {

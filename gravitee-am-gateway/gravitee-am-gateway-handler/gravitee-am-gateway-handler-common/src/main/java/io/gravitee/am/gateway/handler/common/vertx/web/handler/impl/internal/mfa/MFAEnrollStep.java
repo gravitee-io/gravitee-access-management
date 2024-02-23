@@ -16,11 +16,12 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
 import io.gravitee.am.common.utils.ConstantKeys;
-import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLL_CONDITIONAL_SKIPPED_KEY;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
+
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.challengeConditionSatisfied;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.continueMfaFlow;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.evaluateRule;
@@ -37,6 +38,8 @@ import io.gravitee.am.model.MfaChallengeType;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import org.apache.commons.lang3.StringUtils;
+
 import static java.util.Optional.ofNullable;
 
 public class MFAEnrollStep extends MFAStep {
@@ -53,19 +56,22 @@ public class MFAEnrollStep extends MFAStep {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final MfaFilterContext context = new MfaFilterContext(routingContext, client, factorManager, ruleEngine);
         if (hasFactors(client, factorManager)) {
-            context.setDefaultFactorWhenApplied();
-            if (stepUpRequired(context, client, ruleEngine)) {
-                required(flow, context);
-            } else if (isEnrollActive(client)) {
-                switch (getEnrollSettings(client).getType()) {
-                    case OPTIONAL -> optional(flow, context);
-                    case REQUIRED -> required(flow, context);
-                    case CONDITIONAL -> conditional(flow, client, context);
-                }
-            } else if (isChallengeActive(client)) {
-                enrollIfChallengeRequires(flow, client, context);
+            if(context.isFactorSelected() && !context.checkSelectedFactor()) {
+                enrollment(context, flow);
             } else {
-                stop(context, flow);
+                if (stepUpRequired(context, client, ruleEngine)) {
+                    required(flow, context);
+                } else if (isEnrollActive(client)) {
+                    switch (getEnrollSettings(client).getType()) {
+                        case OPTIONAL -> optional(flow, context);
+                        case REQUIRED -> required(flow, context);
+                        case CONDITIONAL -> conditional(flow, client, context);
+                    }
+                } else if (isChallengeActive(client)) {
+                    enrollIfChallengeRequires(flow, client, context);
+                } else {
+                    stop(context, flow);
+                } 
             }
         } else {
             stop(context, flow);
