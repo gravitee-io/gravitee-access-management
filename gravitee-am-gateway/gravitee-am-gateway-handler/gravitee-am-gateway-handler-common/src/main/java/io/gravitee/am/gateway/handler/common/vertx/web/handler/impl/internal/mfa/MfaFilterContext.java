@@ -164,7 +164,7 @@ public class MfaFilterContext {
     }
 
     public boolean evaluateFactorRuleByFactorId(String factorId) {
-        FactorSettings factorSettings = client.getFactorSettings();
+        FactorSettings factorSettings = Optional.ofNullable(client.getFactorSettings()).orElseGet(FactorSettings::new);
         var appFactors = factorSettings.getApplicationFactors();
         if (appFactors.size() == 1 && factorId.equals(factorSettings.getDefaultFactorId())) {
             return true;
