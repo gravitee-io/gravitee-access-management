@@ -175,7 +175,6 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
             // check if this alternative factor still exists
             Optional<Factor> optionalFactor = factors.stream()
                     .filter(factor -> alternativeFactorId.equals(factor.getId()))
-                    .filter(factor -> mfaContext.evaluateFactorRuleByFactorId(factor.getId()))
                     .findFirst();
             if (optionalFactor.isPresent()) {
                 return List.of(optionalFactor.get());
