@@ -173,7 +173,7 @@ public class MfaFilterContext {
                     .filter(f -> f.getId().equals(factorId))
                     .map(factor -> evaluateRule(factor.getSelectionRule()))
                     .findFirst()
-                    .orElse(FALSE);
+                    .orElse(false);
         }
     }
 
@@ -181,7 +181,7 @@ public class MfaFilterContext {
         FactorSettings factorSettings = client.getFactorSettings();
         return Optional.ofNullable(factorSettings)
                 .map(settings -> settings.getDefaultFactorId().equals(factorId))
-                .orElse(FALSE);
+                .orElse(false);
     }
 
     private boolean evaluateRule(String selectionRule) {
