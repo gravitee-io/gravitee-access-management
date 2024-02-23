@@ -48,6 +48,7 @@ import org.jsoup.internal.StringUtil;
 import static java.lang.Boolean.TRUE;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import static java.util.Objects.isNull;
@@ -154,8 +155,24 @@ public class MfaFilterContext {
 
     public boolean checkSelectedFactor() {
         String enrollingFactorId = session.get(ENROLLED_FACTOR_ID_KEY);
-        return client.getFactorSettings().getDefaultFactorId().equals(enrollingFactorId) ||
-                evaluateFactorRuleByFactorId(enrollingFactorId);
+        List<ApplicationFactorSettings> applicableFactors = getApplicableFactors();
+        return applicableFactors.stream().anyMatch(factor -> factor.getId().equals(enrollingFactorId));
+    }
+
+    private List<ApplicationFactorSettings> getApplicableFactors(){
+        FactorSettings factorSettings = Optional.ofNullable(client.getFactorSettings()).orElseGet(FactorSettings::new);
+        List<ApplicationFactorSettings> passedRule = factorSettings.getApplicationFactors()
+                .stream()
+                .filter(factor -> evaluateFactorRule(factor.getSelectionRule()))
+                .toList();
+        if(passedRule.isEmpty()){
+            return factorSettings.getApplicationFactors()
+                    .stream()
+                    .filter(factor -> factor.getId().equals(factorSettings.getDefaultFactorId()))
+                    .toList();
+        } else {
+            return passedRule;
+        }
     }
 
     public boolean isFactorSelected() {
