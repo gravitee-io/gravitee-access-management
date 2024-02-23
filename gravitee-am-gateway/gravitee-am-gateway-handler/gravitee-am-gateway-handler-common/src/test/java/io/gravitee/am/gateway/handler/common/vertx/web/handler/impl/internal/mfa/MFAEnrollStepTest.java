@@ -59,12 +59,15 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /**
  * @author Ashraful HASAN (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class MFAEnrollStepTest {
     private static final String FACTOR_ID = "any-factor-id";
 
@@ -230,7 +233,7 @@ class MFAEnrollStepTest {
         verify(session, never()).put(ENROLLED_FACTOR_ID_KEY, DEFAULT_FACTOR.getId());
     }
     @Test
-    void shouldContinueToChallengeWithDefaultWhenFactorDoesNotMatchRule() {
+    void shouldGoBackToEnrollmentWhenSelectedFactorDoesNotMatchRule() {
         mockAuthUser(false);
 
         var appFactor = new ApplicationFactorSettings();
@@ -255,9 +258,7 @@ class MFAEnrollStepTest {
         mockFactorRuleSatisfied(selectionRule, false);
 
         mfaEnrollStep.execute(routingContext, flow);
-
-        verifyContinue();
-        verify(session, times(1)).put(ENROLLED_FACTOR_ID_KEY, DEFAULT_FACTOR.getId());
+        verifyEnrollment();
     }
 
 
