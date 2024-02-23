@@ -183,8 +183,8 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         }
         // else return all factors except the RECOVERY CODE one
         List<Factor> evaluatedFactors = factors.stream()
-                .filter(factor -> mfaContext.evaluateFactorRuleByFactorId(factor.getId()))
                 .filter(factor -> !factor.factorType.equals(FactorType.RECOVERY_CODE.getType()))
+                .filter(factor -> mfaContext.evaluateFactorRuleByFactorId(factor.getId()))
                 .toList();
 
         if (evaluatedFactors.isEmpty()) {
