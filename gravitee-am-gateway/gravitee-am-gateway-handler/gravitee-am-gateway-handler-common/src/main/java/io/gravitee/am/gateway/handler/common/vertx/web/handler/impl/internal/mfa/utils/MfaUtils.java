@@ -26,14 +26,7 @@ import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFAStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MfaFilterContext;
-import io.gravitee.am.model.ChallengeSettings;
-import io.gravitee.am.model.EnrollSettings;
-import io.gravitee.am.model.FactorSettings;
-import io.gravitee.am.model.MFASettings;
-import io.gravitee.am.model.MfaEnrollType;
-import io.gravitee.am.model.RememberDeviceSettings;
-import io.gravitee.am.model.StepUpAuthenticationSettings;
-import io.gravitee.am.model.ApplicationFactorSettings;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
@@ -123,13 +116,14 @@ public class MfaUtils {
                 .map(FactorSettings::getApplicationFactors)
                 .orElse(List.of())
                 .stream()
-                .map(ApplicationFactorSettings::getId).collect(Collectors.toSet());
+                .map(ApplicationFactorSettings::getId)
+                .collect(Collectors.toSet());
         return !factors.isEmpty() && notOnlyRecoveryCodeFactors(factors, factorManager);
     }
 
-    private static boolean notOnlyRecoveryCodeFactors(Set<String> factors, FactorManager factorManager) {
-        return factors.stream().anyMatch(factorId ->
-                !factorManager.getFactor(factorId).getFactorType().equals(FactorType.RECOVERY_CODE));
+    private static boolean notOnlyRecoveryCodeFactors(Set<String> factorIds, FactorManager factorManager) {
+        List<Factor> factors = factorIds.stream().map(factorManager::getFactor).toList();
+        return factors.stream().anyMatch(factor -> !factor.getFactorType().equals(FactorType.RECOVERY_CODE));
     }
 
     public static boolean evaluateRule(String rule, MfaFilterContext context, RuleEngine ruleEngine) {

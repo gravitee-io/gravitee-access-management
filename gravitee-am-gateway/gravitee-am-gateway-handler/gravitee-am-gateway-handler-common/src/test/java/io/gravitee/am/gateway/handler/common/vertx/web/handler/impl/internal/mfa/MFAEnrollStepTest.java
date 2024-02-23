@@ -25,16 +25,7 @@ import io.gravitee.am.gateway.handler.common.ruleengine.SpELRuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.RedirectHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
-import io.gravitee.am.model.ApplicationFactorSettings;
-import io.gravitee.am.model.ChallengeSettings;
-import io.gravitee.am.model.EnrollSettings;
-import io.gravitee.am.model.EnrollmentSettings;
-import io.gravitee.am.model.Factor;
-import io.gravitee.am.model.FactorSettings;
-import io.gravitee.am.model.MFASettings;
-import io.gravitee.am.model.MfaChallengeType;
-import io.gravitee.am.model.MfaEnrollType;
-import io.gravitee.am.model.StepUpAuthenticationSettings;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
@@ -43,31 +34,27 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
-import java.util.Date;
-import java.util.List;
-import static org.junit.Assert.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Date;
+import java.util.List;
+
+import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import org.mockito.Mock;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Ashraful HASAN (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
 class MFAEnrollStepTest {
     private static final String FACTOR_ID = "any-factor-id";
 
@@ -232,28 +219,24 @@ class MFAEnrollStepTest {
         verifyContinue();
         verify(session, never()).put(ENROLLED_FACTOR_ID_KEY, DEFAULT_FACTOR.getId());
     }
+
     @Test
     void shouldGoBackToEnrollmentWhenSelectedFactorDoesNotMatchRule() {
-        mockAuthUser(false);
+        mockAuthUser();
 
         var appFactor = new ApplicationFactorSettings();
         var selectionRule = "factor-rule-not-match";
         appFactor.setSelectionRule(selectionRule);
         appFactor.setId(FACTOR_ID);
 
-        factorSettings = new FactorSettings();
         factorSettings.setDefaultFactorId(DEFAULT_FACTOR.getId());
-        factorSettings.setApplicationFactors(List.of(appFactor));
-        when(client.getFactorSettings()).thenReturn(factorSettings);
+        factorSettings.setApplicationFactors(List.of(DEFAULT_FACTOR, appFactor));
 
-        when(enroll.isActive()).thenReturn(true);
-        when(enroll.getType()).thenReturn(MfaEnrollType.REQUIRED);
-        when(mfa.getEnroll()).thenReturn(enroll);
-        when(client.getMfaSettings()).thenReturn(mfa);
         when(factor.getFactorType()).thenReturn(FactorType.SMS);
 
         when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(FACTOR_ID);
         when(factorManager.getFactor(FACTOR_ID)).thenReturn(factor);
+        when(factorManager.getFactor(DEFAULT_FACTOR.getId())).thenReturn(factor);
 
         mockFactorRuleSatisfied(selectionRule, false);
 
@@ -646,6 +629,11 @@ class MFAEnrollStepTest {
 
     private void mockAuthUser(boolean isStepUpRequired) {
         mockStepUp(isStepUpRequired);
+        mockAuthUser();
+    }
+
+    private void mockAuthUser() {
+        mockContextRequest();
         io.vertx.rxjava3.ext.auth.User authenticatedUser = mock(io.vertx.rxjava3.ext.auth.User.class);
         when(routingContext.user()).thenReturn(authenticatedUser);
         User delegateUser = mock(User.class);
@@ -655,6 +643,7 @@ class MFAEnrollStepTest {
     }
 
     private void mockAuthUserWithSkipTime() {
+        mockContextRequest();
         mockStepUp(false);
         io.vertx.rxjava3.ext.auth.User authenticatedUser = mock(io.vertx.rxjava3.ext.auth.User.class);
         when(routingContext.user()).thenReturn(authenticatedUser);
@@ -666,6 +655,7 @@ class MFAEnrollStepTest {
     }
 
     private void mockAuthUserWithEnrolledFactors() {
+        mockContextRequest();
         mockStepUp(false);
         io.vertx.rxjava3.ext.auth.User authenticatedUser = mock(io.vertx.rxjava3.ext.auth.User.class);
         when(routingContext.user()).thenReturn(authenticatedUser);
@@ -691,7 +681,6 @@ class MFAEnrollStepTest {
     }
 
     private void mockStepUp(boolean stepUp) {
-        mockContextRequest();
         var rule = "step-up-rule";
         var stepUpSettings = new StepUpAuthenticationSettings();
         stepUpSettings.setActive(true);
