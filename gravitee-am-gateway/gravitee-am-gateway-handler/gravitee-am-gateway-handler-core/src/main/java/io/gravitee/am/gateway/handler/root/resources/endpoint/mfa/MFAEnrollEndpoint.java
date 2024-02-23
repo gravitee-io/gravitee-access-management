@@ -187,7 +187,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                 .filter(factor -> !factor.factorType.equals(FactorType.RECOVERY_CODE.getType()))
                 .toList();
 
-        if(evaluatedFactors.isEmpty()){
+        if (evaluatedFactors.isEmpty()) {
             return factors.stream()
                     .filter(factor -> mfaContext.isDefaultFactor(factor.getId()))
                     .collect(Collectors.toList());
@@ -205,6 +205,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
             getValidFactor(routingContext, factorId, client).ifPresent(optFactor -> manageEnrolledFactors(routingContext, optFactor, params));
         }
     }
+
     private boolean isSkipped(RoutingContext routingContext, boolean acceptEnrollment, Client client) {
         // if user has skipped the enrollment process, continue
         if (!acceptEnrollment && MfaUtils.isCanSkip(routingContext, client)) {
@@ -247,7 +248,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         }
 
         final var endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
-        if (userAlreadyHasFactor(endUser, client, routingContext.session())){
+        if (userAlreadyHasFactor(endUser, client, routingContext.session())) {
             logger.warn("User already has active factor, enrollment of factor '{}' rejected", factorId);
             routingContext.fail(new InvalidRequestException("factor already enrolled"));
             return Optional.empty();

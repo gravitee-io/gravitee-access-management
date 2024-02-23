@@ -45,7 +45,6 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 import org.jsoup.internal.StringUtil;
 
-import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 
 import java.util.Date;
@@ -171,7 +170,7 @@ public class MfaFilterContext {
         } else {
             return appFactors.stream()
                     .filter(f -> f.getId().equals(factorId))
-                    .map(factor -> evaluateRule(factor.getSelectionRule()))
+                    .map(factor -> evaluateFactorRule(factor.getSelectionRule()))
                     .findFirst()
                     .orElse(false);
         }
@@ -184,7 +183,7 @@ public class MfaFilterContext {
                 .orElse(false);
     }
 
-    private boolean evaluateRule(String selectionRule) {
+    private boolean evaluateFactorRule(String selectionRule) {
         return !hasText(selectionRule) || TRUE.equals(MfaUtils.evaluateRule(selectionRule, this, ruleEngine));
     }
 

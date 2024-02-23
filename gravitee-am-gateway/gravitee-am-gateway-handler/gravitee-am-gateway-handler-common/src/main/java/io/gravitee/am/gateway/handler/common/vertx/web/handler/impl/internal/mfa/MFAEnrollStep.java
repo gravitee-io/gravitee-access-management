@@ -32,6 +32,7 @@ import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.inter
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.isChallengeActive;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.stepUpRequired;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.stopMfaFlow;
+
 import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.MfaChallengeType;
@@ -71,7 +72,7 @@ public class MFAEnrollStep extends MFAStep {
                     enrollIfChallengeRequires(flow, client, context);
                 } else {
                     stop(context, flow);
-                } 
+                }
             }
         } else {
             stop(context, flow);
