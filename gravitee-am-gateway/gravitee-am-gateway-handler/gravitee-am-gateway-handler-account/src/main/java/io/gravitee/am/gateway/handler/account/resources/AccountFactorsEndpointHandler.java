@@ -32,7 +32,9 @@ import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Factor;
+import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
@@ -592,13 +594,13 @@ public class AccountFactorsEndpointHandler {
     }
 
     private Factor getClientRecoveryCodeFactor(Client client) {
-        for (String factorId : client.getFactors()) {
-            Factor factor = factorManager.getFactor(factorId);
-            if (isRecoveryCodeFactor(factor)) {
-                return factor;
-            }
-        }
-        return null;
+        return Optional.ofNullable(client.getFactorSettings())
+                .map(FactorSettings::getApplicationFactors)
+                .flatMap(appFactorSettings -> appFactorSettings.stream()
+                        .map(settings -> factorManager.getFactor(settings.getId()))
+                        .filter(this::isRecoveryCodeFactor)
+                        .findFirst())
+                .orElse(null);
     }
 
     private void findFactor(String factorId, Handler<AsyncResult<Factor>> handler) {

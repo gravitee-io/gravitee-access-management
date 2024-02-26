@@ -21,11 +21,14 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
+import io.gravitee.am.model.ApplicationFactorSettings;
+import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import org.springframework.util.CollectionUtils;
 
 import java.util.Objects;
 import java.util.Set;
@@ -49,7 +52,7 @@ public class MFARecoveryCodeStep extends MFAStep {
         final User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
 
-        if (client.getFactors() == null || client.getFactors().isEmpty()) {
+        if (client.getFactorSettings() == null || CollectionUtils.isEmpty(client.getFactorSettings().getApplicationFactors())) {
             flow.doNext(routingContext);
             return;
         }
@@ -59,7 +62,7 @@ public class MFARecoveryCodeStep extends MFAStep {
             return;
         }
 
-        if (hasActiveRecoveryCode(endUser) || recoveryFactorDisabled(client.getFactors())) {
+        if (hasActiveRecoveryCode(endUser) || recoveryFactorDisabled(client.getFactorSettings())) {
             flow.doNext(routingContext);
             return;
         }
@@ -84,8 +87,10 @@ public class MFARecoveryCodeStep extends MFAStep {
                 .anyMatch(ftr -> FactorStatus.ACTIVATED.equals(ftr.getStatus()));
     }
 
-    private boolean recoveryFactorDisabled(Set<String> factors) {
-        return factors.stream()
+    private boolean recoveryFactorDisabled(FactorSettings factorSettings) {
+        return factorSettings.getApplicationFactors()
+                .stream()
+                .map(ApplicationFactorSettings::getId)
                 .map(factorManager::getFactor)
                 .filter(Objects::nonNull)
                 .noneMatch(factor -> factor.is(FactorType.RECOVERY_CODE));

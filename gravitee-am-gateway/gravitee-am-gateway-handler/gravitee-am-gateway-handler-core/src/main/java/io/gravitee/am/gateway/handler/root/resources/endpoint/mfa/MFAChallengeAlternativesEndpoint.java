@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
@@ -138,7 +139,7 @@ public class MFAChallengeAlternativesEndpoint extends MFAEndpoint {
     }
 
     private List<Factor> getEnabledFactors(Client client, io.gravitee.am.model.User endUser ){
-        final Set<String> clientFactorIds = client.getFactors();
+        final Set<String> clientFactorIds = hasApplicationFactorSettings(client) ? client.getFactorSettings().getApplicationFactors().stream().map(ApplicationFactorSettings::getId).collect(Collectors.toUnmodifiableSet()) : Set.of();
         return endUser.getFactors()
                 .stream()
                 .filter(enrolledFactor -> factorManager.get(enrolledFactor.getFactorId()) != null)

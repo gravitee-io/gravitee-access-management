@@ -17,8 +17,10 @@ package io.gravitee.am.gateway.handler.common.factor;
 
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.factor.impl.FactorManagerImpl;
+import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
+import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.plugins.factor.core.FactorPluginManager;
 import io.gravitee.am.service.FactorService;
@@ -30,6 +32,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.assertFalse;
@@ -72,7 +75,11 @@ public class FactorManagerTest {
     @Test
     public void shouldProvideActiveFactor() {
         Client client = new Client();
-        client.setFactors(Set.of(FACTOR_ID));
+        ApplicationFactorSettings applicationFactorSettings = new ApplicationFactorSettings();
+        applicationFactorSettings.setId(FACTOR_ID);
+        FactorSettings factorSettings = new FactorSettings();
+        factorSettings.setApplicationFactors(List.of(applicationFactorSettings));
+        client.setFactorSettings(factorSettings);
 
         assertTrue(factorMng.getClientFactor(client, FACTOR_ID).isPresent());
     }
@@ -80,7 +87,11 @@ public class FactorManagerTest {
     @Test
     public void shouldNotProvideActiveFactor() {
         Client client = new Client();
-        client.setFactors(Set.of(FACTOR_ID));
+        ApplicationFactorSettings applicationFactorSettings = new ApplicationFactorSettings();
+        applicationFactorSettings.setId(FACTOR_ID);
+        FactorSettings factorSettings = new FactorSettings();
+        factorSettings.setApplicationFactors(List.of(applicationFactorSettings));
+        client.setFactorSettings(factorSettings);
 
         assertFalse(factorMng.getClientFactor(client, "inactive-factor").isPresent());
     }
