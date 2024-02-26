@@ -26,8 +26,10 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
+import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
@@ -211,13 +213,18 @@ public class MFARecoveryCodeEndpoint extends AbstractEndpoint implements Handler
     }
 
     private Optional<Factor> getClientRecoveryFactor(Client client) throws TechnicalException {
-        return Optional.ofNullable(client.getFactors().stream()
-                .filter(f -> factorManager.get(f) != null)
-                .map(factorManager::getFactor)
-                .filter(f -> f.is(FactorType.RECOVERY_CODE))
-                .findFirst().orElseThrow(() ->
+        return Optional.ofNullable(client.getFactorSettings())
+                .map(FactorSettings::getApplicationFactors)
+                .map(appFactorSettings ->
+                        appFactorSettings.stream()
+                                .map(ApplicationFactorSettings::getId)
+                                .filter(f -> factorManager.get(f) != null)
+                                .map(factorManager::getFactor)
+                                .filter(f -> f.is(FactorType.RECOVERY_CODE))
+                                .findFirst())
+                .orElseThrow(() ->
                     new TechnicalException("Client does not have recovery code factor which should not happen.")
-                ));
+                );
     }
 
     private void renderRecoveryCodePage(RoutingContext routingContext, Client client, List<String> codes){

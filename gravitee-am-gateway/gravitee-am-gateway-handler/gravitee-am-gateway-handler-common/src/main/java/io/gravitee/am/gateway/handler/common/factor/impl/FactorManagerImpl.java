@@ -19,6 +19,7 @@ import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.FactorEvent;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.ReferenceType;
@@ -161,12 +162,14 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
 
     @Override
     public Optional<Factor> getClientFactor(Client client, String factorId) {
-        if (client == null || CollectionUtils.isEmpty(client.getFactors())) {
+        if (client == null || client.getFactorSettings() == null || CollectionUtils.isEmpty(client.getFactorSettings().getApplicationFactors())) {
             return Optional.empty();
         }
 
-        return client.getFactors()
+        return client.getFactorSettings()
+                .getApplicationFactors()
                 .stream()
+                .map(ApplicationFactorSettings::getId)
                 .filter(id -> id.equals(factorId))
                 .map(this::getFactor)
                 .findFirst();

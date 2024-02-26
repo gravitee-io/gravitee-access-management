@@ -29,6 +29,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
+import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
@@ -342,15 +343,19 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
     }
 
     private Map<io.gravitee.am.model.Factor, FactorProvider> getFactors(Client client) {
-        return client.getFactors()
+        return client.getFactorSettings()
+                .getApplicationFactors()
                 .stream()
+                .map(ApplicationFactorSettings::getId)
                 .filter(f -> factorManager.get(f) != null)
                 .collect(Collectors.toMap(factorManager::getFactor, factorManager::get));
     }
 
     private Set<String> getRecoveryFactorIds(Client client) {
-        return client.getFactors()
+        return client.getFactorSettings()
+                .getApplicationFactors()
                 .stream()
+                .map(ApplicationFactorSettings::getId)
                 .filter(f -> factorManager.getFactor(f) != null && FactorType.RECOVERY_CODE.equals(factorManager.getFactor(f).getFactorType()))
                 .collect(Collectors.toSet());
     }

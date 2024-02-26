@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequ
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
@@ -517,9 +518,15 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
 
         // get the primary enrolled factor
         // if there is no primary, select the first created
-        List<EnrolledFactor> enrolledFactors = endUser.getFactors()
+        final var factors = hasApplicationFactorSettings(client) ? client.getFactorSettings()
+                .getApplicationFactors()
                 .stream()
-                .filter(enrolledFactor -> client.getFactors().contains(enrolledFactor.getFactorId()))
+                .map(ApplicationFactorSettings::getId)
+                .collect(Collectors.toSet()) : Set.of();
+
+        final var enrolledFactors = endUser.getFactors()
+                .stream()
+                .filter(enrolledFactor -> factors.contains(enrolledFactor.getFactorId()))
                 .sorted(Comparator.comparing(EnrolledFactor::getCreatedAt))
                 .collect(Collectors.toList());
 
@@ -737,7 +744,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         if (endUser.getFactors() == null || endUser.getFactors().size() <= 1) {
             return false;
         }
-        if (client.getFactors() == null || client.getFactors().size() <= 1) {
+        if (client.getFactorSettings() == null || client.getFactorSettings().getApplicationFactors() == null || client.getFactorSettings().getApplicationFactors().size() <= 1) {
             return false;
         }
         final Set<String> clientFactorIds = client.getFactors();

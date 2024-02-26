@@ -20,20 +20,39 @@ import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.common.oidc.ApplicationType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
-import io.gravitee.am.model.*;
-import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.ApplicationFactorSettings;
+import io.gravitee.am.model.CookieSettings;
+import io.gravitee.am.model.FactorSettings;
+import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.PasswordSettingsAware;
+import io.gravitee.am.model.Resource;
+import io.gravitee.am.model.TokenClaim;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
-
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
+
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
+
+import static org.springframework.util.CollectionUtils.isEmpty;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -724,10 +743,25 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.updatedAt = updatedAt;
     }
 
+    /**
+     * Use getFactorSettings instead
+     * This method remains only for backward compatibility as it maybe use in some policy flows
+     * @return
+     */
+    @Deprecated
     public Set<String> getFactors() {
+        if (factorSettings != null && !isEmpty(factorSettings.getApplicationFactors())) {
+            return factorSettings.getApplicationFactors().stream().map(ApplicationFactorSettings::getId).collect(Collectors.toUnmodifiableSet());
+        }
         return factors;
     }
 
+    /**
+     * Use setFactorSettings instead
+     * This method remains only for backward compatibility
+     * @param factors
+     */
+    @Deprecated
     public void setFactors(Set<String> factors) {
         this.factors = factors;
     }
@@ -1114,7 +1148,6 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         clone.setScopeSettings(this.scopeSettings != null ? new ArrayList<>(this.getScopeSettings()) : null);
         clone.setAutoApproveScopes(this.getAutoApproveScopes() != null ? new ArrayList<>(this.getAutoApproveScopes()) : null);
         clone.setIdentityProviders(this.getIdentityProviders() != null ? new TreeSet<>(this.getIdentityProviders()) : null);
-        clone.setFactors(this.getFactors() != null ? new HashSet<>(this.getFactors()) : null);
         clone.setFactorSettings(this.getFactorSettings());
         clone.setJwks(this.getJwks() != null ? this.getJwks().clone() : null);
         Optional.ofNullable(this.passwordSettings).ifPresent(ps -> clone.setPasswordSettings(new PasswordSettings(ps)));

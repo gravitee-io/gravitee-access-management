@@ -45,6 +45,7 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.CollectionUtils;
 
 import java.util.Date;
 import java.util.Objects;
@@ -188,11 +189,13 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
     }
 
     private Optional<Factor> getClientFido2Factor(Client client) {
-        Set<String> factors = client.getFactors();
-        if (factors == null || factors.isEmpty()) {
+        if (client.getFactorSettings() == null || CollectionUtils.isEmpty(client.getFactorSettings().getApplicationFactors())) {
             return Optional.empty();
         }
-        return client.getFactors().stream()
+        return client.getFactorSettings()
+                .getApplicationFactors()
+                .stream()
+                .map(ApplicationFactorSettings::getId)
                 .filter(f -> factorManager.get(f) != null)
                 .map(factorManager::getFactor)
                 .filter(f -> f.is(FactorType.FIDO2))

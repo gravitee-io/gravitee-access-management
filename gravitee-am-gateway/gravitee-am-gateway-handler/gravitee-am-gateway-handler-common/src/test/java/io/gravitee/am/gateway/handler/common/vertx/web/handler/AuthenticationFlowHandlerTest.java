@@ -1329,7 +1329,16 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             recoveryFactor.setId("factor-2");
             when(factorManager.getFactor("factor-2")).thenReturn(recoveryFactor);
 
-            client.setFactors(Set.of(FACTOR_ID, "factor-2"));
+            var factorSettings = new FactorSettings();
+            var factor = new ApplicationFactorSettings();
+            factor.setId(FACTOR_ID);
+            factor.setSelectionRule("");
+            var factor2 = new ApplicationFactorSettings();
+            factor2.setId("factor-2");
+            factor2.setSelectionRule("");
+            factorSettings.setApplicationFactors(List.of(factor, factor2));
+            client.setFactorSettings(factorSettings);
+
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
             enrolledFactor.setFactorId(FACTOR_ID);
@@ -1363,7 +1372,15 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             Client client = new Client();
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 
-            client.setFactors(Set.of(FACTOR_ID, "factor-2"));
+            var factorSettings = new FactorSettings();
+            var factor = new ApplicationFactorSettings();
+            factor.setId(FACTOR_ID);
+            factor.setSelectionRule("");
+            var factor2 = new ApplicationFactorSettings();
+            factor2.setId("factor-2");
+            factor2.setSelectionRule("");
+            factorSettings.setApplicationFactors(List.of(factor, factor2));
+            client.setFactorSettings(factorSettings);
 
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
@@ -1408,9 +1425,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     }
 
     private  void setFactorsWithRecoveryCode(Client client) {
-        var factorId1 = "factor-id";
-        client.setFactors(Set.of("default-factor", "factor-recovery-code", factorId1));
-
         var factorSettings = new FactorSettings();
         factorSettings.setDefaultFactorId(DEFAULT_FACTOR_ID);
         var factor1 = new ApplicationFactorSettings();
@@ -1418,7 +1432,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         factor1.setSelectionRule("factor1-selection-rule");
 
         var factor2 = new ApplicationFactorSettings();
-        factor2.setId(factorId1);
+        factor2.setId("factor-id");
         factor2.setSelectionRule("");
 
         var factor3 = new ApplicationFactorSettings();
