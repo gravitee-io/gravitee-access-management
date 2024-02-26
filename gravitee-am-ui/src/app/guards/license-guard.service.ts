@@ -31,7 +31,7 @@ export class LicenseGuard {
     if (licenseOptions === undefined) {
       return of(false);
     }
-    return this.gioLicenseService.isMissingFeature$(licenseOptions);
+    return this.gioLicenseService.isMissingFeature$(licenseOptions.feature);
   }
 
   getLicenseOptions(route: ActivatedRouteSnapshot | Route): LicenseOptions {
