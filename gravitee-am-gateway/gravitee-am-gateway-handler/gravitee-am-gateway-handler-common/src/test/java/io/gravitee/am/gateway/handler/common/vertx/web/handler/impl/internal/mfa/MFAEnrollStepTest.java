@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mf
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
 import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.MFA_CAN_BE_CONDITIONAL_SKIPPED_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLL_CONDITIONAL_SKIPPED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_STOP;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.SpELRuleEngine;
@@ -314,7 +314,6 @@ class MFAEnrollStepTest {
         when(mfa.getEnroll()).thenReturn(enroll);
         when(client.getMfaSettings()).thenReturn(mfa);
         when(enroll.isActive()).thenReturn(true);
-        when(enroll.getForceEnrollment()).thenReturn(false);
         when(enroll.getSkipTimeSeconds()).thenReturn(1000L);
         when(enroll.getType()).thenReturn(MfaEnrollType.OPTIONAL);
         when(factor.getFactorType()).thenReturn(FactorType.SMS);
@@ -331,7 +330,6 @@ class MFAEnrollStepTest {
         when(client.getMfaSettings()).thenReturn(mfa);
         when(enroll.isActive()).thenReturn(true);
         when(enroll.getType()).thenReturn(MfaEnrollType.OPTIONAL);
-        when(enroll.getForceEnrollment()).thenReturn(false);
         when(mfa.getEnroll()).thenReturn(enroll);
         when(factor.getFactorType()).thenReturn(FactorType.SMS);
         when(factorManager.getFactor(DEFAULT_FACTOR.getId())).thenReturn(factor);
@@ -588,10 +586,8 @@ class MFAEnrollStepTest {
         when(enroll.isActive()).thenReturn(true);
         when(enroll.getSkipTimeSeconds()).thenReturn(1000L);
         when(enroll.getType()).thenReturn(MfaEnrollType.CONDITIONAL);
-        when(enroll.getForceEnrollment()).thenReturn(true);
         when(factor.getFactorType()).thenReturn(FactorType.SMS);
         when(factorManager.getFactor(DEFAULT_FACTOR.getId())).thenReturn(factor);
-        when(session.get(MFA_CAN_BE_CONDITIONAL_SKIPPED_KEY)).thenReturn(true);
 
         mockConditionalEnrollmentRuleSatisfied(false);
         mockEnrollmentCanSkipRuleSatisfied(true);
@@ -599,7 +595,7 @@ class MFAEnrollStepTest {
         mfaEnrollStep.execute(routingContext, flow);
 
         verifyStop();
-        verify(session).put(MFA_CAN_BE_CONDITIONAL_SKIPPED_KEY, true);
+        verify(session).put(MFA_ENROLL_CONDITIONAL_SKIPPED_KEY, true);
     }
 
     private void mockEnrollmentCanSkipRuleSatisfied(boolean isSatisfied) {

@@ -45,61 +45,64 @@ public class MFAChallengeStep extends MFAStep {
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final MfaFilterContext context = new MfaFilterContext(routingContext, client, factorManager, ruleEngine);
-        if (!isMfaFlowStopped(routingContext)) {
+        if (!isMfaFlowStopped(context)) {
             if (stepUpRequired(context, client, ruleEngine) || context.isEndUserEnrolling()) {
-                challenge(routingContext, flow);
+                challenge(context, flow);
             } else if (isChallengeActive(client)) {
                 switch (getChallengeSettings(client).getType()) {
-                    case REQUIRED -> required(routingContext, flow, context);
-                    case CONDITIONAL -> conditional(routingContext, flow, client, context);
-                    case RISK_BASED -> riskBased(routingContext, flow, client, context);
+                    case REQUIRED -> required(context, flow);
+                    case CONDITIONAL -> conditional(context, flow, client);
+                    case RISK_BASED -> riskBased(context, flow, client);
                 }
             } else {
-                continueFlow(routingContext, flow);
+                continueFlow(context, flow);
             }
         } else {
-            continueFlow(routingContext, flow);
+            continueFlow(context, flow);
         }
     }
 
-    private void required(RoutingContext routingContext, AuthenticationFlowChain flow, MfaFilterContext context) {
-        if (context.isChallengeOnceCompleted() && isRememberDeviceOrSkipped(context)) {
-            continueFlow(routingContext, flow);
+    private void required(MfaFilterContext context, AuthenticationFlowChain flow) {
+        if (context.isChallengeOnceCompleted() || isRememberDevice(context)) {
+            continueFlow(context, flow);
         } else {
-            challenge(routingContext, flow);
+            challenge(context, flow);
         }
     }
 
-    private void conditional(RoutingContext routingContext, AuthenticationFlowChain flow, Client client, MfaFilterContext context) {
-        if (context.isChallengeOnceCompleted() || challengeConditionSatisfied(client, context, ruleEngine)) {
-            continueFlow(routingContext, flow);
+    private void conditional(MfaFilterContext context, AuthenticationFlowChain flow, Client client) {
+        if (challengeConditionSatisfied(client, context, ruleEngine)) {
+            continueFlow(context, flow);
+        } else if (context.getRememberDeviceSettings().isSkipChallengeWhenRememberDevice()) {
+            required(context, flow);
+        } else if (context.isChallengeOnceCompleted()) {
+            continueFlow(context, flow);
         } else {
-            challenge(routingContext, flow);
+            challenge(context, flow);
         }
     }
 
-    private void riskBased(RoutingContext routingContext, AuthenticationFlowChain flow, Client client, MfaFilterContext context) {
-        if (context.isChallengeOnceCompleted() || isSafe(client, context)) {
-            continueFlow(routingContext, flow);
+    private void riskBased(MfaFilterContext context, AuthenticationFlowChain flow, Client client) {
+        if (context.isChallengeOnceCompleted() || isSafe(context, client)) {
+            continueFlow(context, flow);
         } else {
-            challenge(routingContext, flow);
+            challenge(context, flow);
         }
     }
 
-    private void challenge(RoutingContext routingContext, AuthenticationFlowChain flow) {
+    private void challenge(MfaFilterContext routingContext, AuthenticationFlowChain flow) {
         executeFlowStep(routingContext, flow, this);
     }
 
-    private boolean isSafe(Client client, MfaFilterContext context) {
-        return !evaluateRule(getAdaptiveMfaStepUpRule(client), context, ruleEngine);
+    private boolean isSafe(MfaFilterContext context, Client client) {
+        return evaluateRule(getAdaptiveMfaStepUpRule(client), context, ruleEngine);
     }
 
-    private boolean isRememberDeviceOrSkipped(MfaFilterContext context) {
-        return !context.isDeviceRiskAssessmentEnabled()
-                && (!context.getRememberDeviceSettings().isActive() || (context.deviceAlreadyExists() || context.getRememberDeviceSettings().isSkipRememberDevice()));
+    private boolean isRememberDevice(MfaFilterContext context) {
+        return !context.isDeviceRiskAssessmentEnabled() && context.getRememberDeviceSettings().isActive() && context.deviceAlreadyExists();
     }
 
-    private static void continueFlow(RoutingContext routingContext, AuthenticationFlowChain flow) {
+    private static void continueFlow(MfaFilterContext routingContext, AuthenticationFlowChain flow) {
         routingContext.session().put(MFA_CHALLENGE_COMPLETED_KEY, true);
         continueMfaFlow(routingContext, flow);
     }

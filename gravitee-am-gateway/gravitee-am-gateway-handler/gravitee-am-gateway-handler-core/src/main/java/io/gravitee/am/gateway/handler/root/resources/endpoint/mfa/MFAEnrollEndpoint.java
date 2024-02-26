@@ -151,7 +151,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                     routingContext.put("emailAddress", endUser.getEmail());
                 }
 
-                routingContext.put(ConstantKeys.MFA_FORCE_ENROLLMENT, !MfaUtils.isCanSkip(client, routingContext));
+                routingContext.put(ConstantKeys.MFA_FORCE_ENROLLMENT, !MfaUtils.isCanSkip(routingContext, client));
                 routingContext.put(ConstantKeys.ACTION_KEY, action);
                 // render the mfa enroll page
                 this.renderPage(routingContext, generateData(routingContext, domain, client), client, logger, "Unable to render MFA enroll page");
@@ -200,7 +200,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
     }
     private boolean isSkipped(RoutingContext routingContext, boolean acceptEnrollment, Client client) {
         // if user has skipped the enrollment process, continue
-        if (!acceptEnrollment && MfaUtils.isCanSkip(client, routingContext)) {
+        if (!acceptEnrollment && MfaUtils.isCanSkip(routingContext, client)) {
             final User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
             // set the last skipped time
             // and update the session

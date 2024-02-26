@@ -70,6 +70,7 @@ import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
+import static java.lang.Boolean.TRUE;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -290,11 +291,10 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                 .subscribe(verifyAttempt -> verify(factorProvider, factorCtx, verifyAttempt,
                                 verifyHandler(routingContext, client, endUser, factor, code, factorId, factorProvider, enrolledFactor, factorCtx)),
                         error -> {
-                            if (error instanceof MFAValidationAttemptException) {
-
+                            if (error instanceof MFAValidationAttemptException e) {
                                 auditService.report(AuditBuilder.builder(VerifyAttemptAuditBuilder.class)
                                         .type(EventType.MFA_VERIFICATION_LIMIT_EXCEED)
-                                        .verifyAttempt(((MFAValidationAttemptException) error).getVerifyAttempt())
+                                        .verifyAttempt(e.getVerifyAttempt())
                                         .ipAddress(routingContext)
                                         .userAgent(routingContext)
                                         .client(client)
@@ -529,7 +529,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
 
         return enrolledFactors
                 .stream()
-                .filter(e -> Boolean.TRUE.equals(e.isPrimary()))
+                .filter(e -> TRUE.equals(e.isPrimary()))
                 .map(enrolledFactor -> factorManager.getFactor(enrolledFactor.getFactorId()))
                 .findFirst()
                 .orElse(factorManager.getFactor(enrolledFactors.get(0).getFactorId()));
@@ -575,6 +575,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                         factorSecurity.ifPresent(enrolledFactor::setSecurity);
                     }
                     break;
+                default:
             }
 
             // if the factor provider uses a moving factor security mechanism,
@@ -656,7 +657,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
             doRedirect(routingContext.response(), redirectUrl);
         } else {
             this.deviceService.deviceExists(domain, client.getClientId(), userId, rememberDeviceId, deviceId).flatMapMaybe(isEmpty -> {
-                if (!isEmpty) {
+                if (Boolean.FALSE.equals(isEmpty)) {
                     routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
                     return Maybe.empty();
                 }

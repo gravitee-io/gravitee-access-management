@@ -42,11 +42,9 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 import static java.lang.Boolean.TRUE;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
-import java.util.Optional;
 import static java.util.Optional.ofNullable;
 import java.util.stream.Collectors;
 import static org.springframework.util.StringUtils.hasText;
@@ -74,8 +72,7 @@ public class MfaFilterContext {
     }
 
     public boolean isEnrollSkipped() {
-        final boolean canSkip = MfaUtils.isCanSkip(client, routingContext);
-        if (canSkip && nonNull(endUser.getMfaEnrollmentSkippedAt())) {
+        if (nonNull(endUser.getMfaEnrollmentSkippedAt())) {
             Date now = new Date();
             long skipTime = ofNullable(MfaUtils.getEnrollSettings(client).getSkipTimeSeconds()).orElse(DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS) * 1000L;
             return endUser.getMfaEnrollmentSkippedAt().getTime() + skipTime > now.getTime();
@@ -93,6 +90,13 @@ public class MfaFilterContext {
 
     public boolean deviceAlreadyExists() {
         return MfaUtils.deviceAlreadyExists(session);
+    }
+    public RoutingContext routingContext() {
+        return routingContext;
+    }
+
+    public Session session() {
+        return session;
     }
 
     public Object getLoginAttempt() {

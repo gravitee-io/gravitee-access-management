@@ -64,7 +64,7 @@ public class MfaUtils {
     }
 
     public static String getAdaptiveMfaStepUpRule(Client client) {
-        return ofNullable(client.getMfaSettings()).orElse(new MFASettings()).getAdaptiveAuthenticationRule();
+        return ofNullable(client.getMfaSettings()).map(MFASettings::getChallenge).map(ChallengeSettings::getChallengeRule).orElse("");
     }
 
     public static RememberDeviceSettings getRememberDeviceSettings(Client client) {
@@ -99,22 +99,22 @@ public class MfaUtils {
         return getChallengeSettings(client).isActive();
     }
 
-    public static void stopMfaFlow(RoutingContext routingContext, AuthenticationFlowChain flow) {
+    public static void stopMfaFlow(MfaFilterContext routingContext, AuthenticationFlowChain flow) {
         routingContext.session().put(MFA_STOP, true);
-        flow.doNext(routingContext);
+        flow.doNext(routingContext.routingContext());
     }
 
-    public static void executeFlowStep(RoutingContext routingContext, AuthenticationFlowChain flow, MFAStep mFAStep) {
+    public static void executeFlowStep(MfaFilterContext routingContext, AuthenticationFlowChain flow, MFAStep mFAStep) {
         routingContext.session().put(MFA_STOP, false);
         flow.exit(mFAStep);
     }
 
-    public static void continueMfaFlow(RoutingContext routingContext, AuthenticationFlowChain flow) {
+    public static void continueMfaFlow(MfaFilterContext routingContext, AuthenticationFlowChain flow) {
         routingContext.session().put(MFA_STOP, false);
-        flow.doNext(routingContext);
+        flow.doNext(routingContext.routingContext());
     }
 
-    public static boolean isMfaFlowStopped(RoutingContext context) {
+    public static boolean isMfaFlowStopped(MfaFilterContext context) {
         return ofNullable((Boolean) context.session().get(MFA_STOP)).orElse(false);
     }
 
@@ -144,9 +144,9 @@ public class MfaUtils {
                 && evaluateRule(stepUpSettings.getStepUpAuthenticationRule(), context, ruleEngine);
     }
 
-    public static boolean isCanSkip(Client client, RoutingContext routingContext) {
+    public static boolean isCanSkip(RoutingContext routingContext, Client client) {
         var enrollSettings = MfaUtils.getEnrollSettings(client);
         return (enrollSettings.getForceEnrollment() != null && !enrollSettings.getForceEnrollment())
-                || (MfaEnrollType.CONDITIONAL.equals(enrollSettings.getType()) && Boolean.TRUE.equals(routingContext.session().get(ConstantKeys.MFA_CAN_BE_CONDITIONAL_SKIPPED_KEY)));
+                || (MfaEnrollType.CONDITIONAL.equals(enrollSettings.getType()) && Boolean.TRUE.equals(routingContext.session().get(ConstantKeys.MFA_ENROLL_CONDITIONAL_SKIPPED_KEY)));
     }
 }
