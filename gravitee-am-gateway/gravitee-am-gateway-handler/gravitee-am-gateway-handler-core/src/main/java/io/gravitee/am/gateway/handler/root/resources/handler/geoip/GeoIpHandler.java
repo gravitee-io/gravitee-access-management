@@ -17,6 +17,7 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.geoip;
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.UserActivityService;
@@ -57,7 +58,8 @@ public class GeoIpHandler implements Handler<RoutingContext> {
     public void handle(RoutingContext routingContext) {
         final Optional<Client> client = ofNullable(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY));
         var adaptiveRule = client.map(Client::getMfaSettings)
-                .map(MFASettings::getAdaptiveAuthenticationRule)
+                .map(MFASettings::getChallenge)
+                .map(ChallengeSettings::getChallengeRule)
                 .orElse("");
         if ((!adaptiveRule.isEmpty() || userActivityService.canSaveUserActivity()) && isNull(routingContext.data().get(GEOIP_KEY))) {
             var ip = RequestUtils.remoteAddress(routingContext.request());

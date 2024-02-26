@@ -20,6 +20,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.MockHttpServerRequest;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.AsyncErrorCollector;
+import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.UserActivityService;
@@ -98,7 +99,9 @@ public class GeoIpHandlerTest {
     @Test
     public void mustNotPerformGeoIp_dataAlreadyExist() {
         data.put(GEOIP_KEY, new JsonObject());
-        client.getMfaSettings().setAdaptiveAuthenticationRule("{#object = 'value'}");
+        final var challengeSettings = new ChallengeSettings();
+        challengeSettings.setChallengeRule("{#object = 'value'}");
+        client.getMfaSettings().setChallenge(challengeSettings);
         geoIpHandler.handle(routingContext);
         verify(routingContext, times(1)).next();
         verify(routingContext, times(1)).data();
@@ -106,8 +109,9 @@ public class GeoIpHandlerTest {
 
     @Test
     public void mustNotPerformGeoIp_noIp() {
-        client.getMfaSettings().setAdaptiveAuthenticationRule("{#object = 'value'}");
-
+        final var challengeSettings = new ChallengeSettings();
+        challengeSettings.setChallengeRule("{#object = 'value'}");
+        client.getMfaSettings().setChallenge(challengeSettings);
         geoIpHandler.handle(routingContext);
         verify(routingContext, times(1)).next();
         verify(routingContext, times(1)).data();
@@ -115,7 +119,9 @@ public class GeoIpHandlerTest {
 
     @Test
     public void mustPerformGeoIp_ipIsThere() {
-        client.getMfaSettings().setAdaptiveAuthenticationRule("{#object = 'value'}");
+        final var challengeSettings = new ChallengeSettings();
+        challengeSettings.setChallengeRule("{#object = 'value'}");
+        client.getMfaSettings().setChallenge(challengeSettings);
         request.getDelegate().headers().add(HttpHeaders.X_FORWARDED_FOR, "55.55.55.55");
         geoIpHandler.handle(routingContext);
         verify(eventBus, times(1)).request(
