@@ -163,14 +163,13 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             String rule = "{context.attributes['geoip']['country_iso_code'] == 'FR'";
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, rule);
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.CONDITIONAL, rule);
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
+            client.setMfaSettings(mfaSettings);
             setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            mfaSettings.setAdaptiveAuthenticationRule(rule);
-            client.setMfaSettings(mfaSettings);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "US").getMap());
             // set user
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
@@ -200,7 +199,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             Client client = new Client();
             setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            mfaSettings.setAdaptiveAuthenticationRule(rule);
             client.setMfaSettings(mfaSettings);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             // set user
@@ -231,7 +229,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             Client client = new Client();
             setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            mfaSettings.setAdaptiveAuthenticationRule(rule);
             client.setMfaSettings(mfaSettings);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
 
@@ -267,7 +264,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             Client client = new Client();
             setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            mfaSettings.setAdaptiveAuthenticationRule(rule);
             client.setMfaSettings(mfaSettings);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
 
@@ -812,7 +808,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             Client client = new Client();
             setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            mfaSettings.setAdaptiveAuthenticationRule(challengeRule);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "US").getMap());
             client.setMfaSettings(mfaSettings);
             // set user
@@ -859,7 +854,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             stepUpAuthentication.setStepUpAuthenticationRule(stepUpAuthenticationRule);
             mfaSettings.setStepUpAuthentication(stepUpAuthentication);
 
-            mfaSettings.setAdaptiveAuthenticationRule(challengeRule);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             client.setMfaSettings(mfaSettings);
             // set user
@@ -900,7 +894,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             stepUpAuthentication.setStepUpAuthenticationRule(stepUpAuthenticationRule);
             mfaSettings.setStepUpAuthentication(stepUpAuthentication);
 
-            mfaSettings.setAdaptiveAuthenticationRule(rule);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             client.setMfaSettings(mfaSettings);
             // set user
@@ -970,7 +963,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
                     )
             );
             MFASettings mfaSettings = new MFASettings();
-            mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['risk_assessment'].devices.assessment.name() == 'SAFE'}");
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
             rememberDevice.setActive(true);
             mfaSettings.setRememberDevice(rememberDevice);
@@ -1085,7 +1077,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             Client client = new Client();
             setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            mfaSettings.setAdaptiveAuthenticationRule(challengeRule);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "US").getMap());
             client.setMfaSettings(mfaSettings);
             // set user
@@ -1121,7 +1112,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             Client client = new Client();
             setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            mfaSettings.setAdaptiveAuthenticationRule(challenge);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "US").getMap());
             client.setMfaSettings(mfaSettings);
             // set user
@@ -1157,7 +1147,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             Client client = new Client();
             setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            mfaSettings.setAdaptiveAuthenticationRule(rule);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             client.setMfaSettings(mfaSettings);
             rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
@@ -1192,7 +1181,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
-            mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             client.setMfaSettings(mfaSettings);
             rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
@@ -1225,7 +1213,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             Client client = new Client();
             setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            mfaSettings.setAdaptiveAuthenticationRule(rule);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             client.setMfaSettings(mfaSettings);
             rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
@@ -1297,7 +1284,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
-            mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             client.setMfaSettings(mfaSettings);
             // set user

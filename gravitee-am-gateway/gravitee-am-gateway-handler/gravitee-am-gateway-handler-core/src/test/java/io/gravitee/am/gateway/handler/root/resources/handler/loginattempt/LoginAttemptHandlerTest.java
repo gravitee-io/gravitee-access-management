@@ -19,6 +19,7 @@ package io.gravitee.am.gateway.handler.root.resources.handler.loginattempt;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
+import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.LoginAttempt;
@@ -109,8 +110,9 @@ public class LoginAttemptHandlerTest {
         spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
         spyRoutingContext.putParam(USERNAME_PARAM_KEY, "username");
 
-        final MFASettings mfaSettings = new MFASettings();
-        mfaSettings.setAdaptiveAuthenticationRule("{#variable == true}");
+        final var mfaSettings = new MFASettings();
+        final var challengeSettings = new ChallengeSettings();
+        challengeSettings.setChallengeRule("{#variable == true}");
         client.setMfaSettings(mfaSettings);
 
         loginAttemptHandler.handle(spyRoutingContext);
@@ -121,8 +123,9 @@ public class LoginAttemptHandlerTest {
     public void mustDoNextNoLoginAttemptApplied_noUsername() {
         spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 
-        final MFASettings mfaSettings = new MFASettings();
-        mfaSettings.setAdaptiveAuthenticationRule("{#variable == true}");
+        final var mfaSettings = new MFASettings();
+        final var challengeSettings = new ChallengeSettings();
+        challengeSettings.setChallengeRule("{#variable == true}");
         client.setMfaSettings(mfaSettings);
 
         loginAttemptHandler.handle(spyRoutingContext);
@@ -134,8 +137,9 @@ public class LoginAttemptHandlerTest {
         spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
         spyRoutingContext.putParam(USERNAME_PARAM_KEY, "username");
 
-        final MFASettings mfaSettings = new MFASettings();
-        mfaSettings.setAdaptiveAuthenticationRule("{#variable == true}");
+        final var mfaSettings = new MFASettings();
+        final var challengeSettings = new ChallengeSettings();
+        challengeSettings.setChallengeRule("{#variable == true}");
         client.setMfaSettings(mfaSettings);
 
         loginAttemptHandler.handle(spyRoutingContext);

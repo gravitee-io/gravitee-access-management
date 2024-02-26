@@ -165,7 +165,8 @@ export class MfaChallengeComponent implements OnInit {
     const isRiskBased = this.currentMode === MfaChallengeComponent.modeOptions.RISK_BASED;
     this.riskAssessment = this.getRiskAssessment(this.assessments, isRiskBased);
     if (isRiskBased) {
-      this.adaptiveMfaRule = this.computeRiskAssessmentRule(this.riskAssessment);
+      this.challenge.challengeRule = this.computeRiskAssessmentRule(this.riskAssessment);
+      this.adaptiveMfaRule = this.challenge.challengeRule;
     } else if (this.currentMode === MfaChallengeComponent.modeOptions.CONDITIONAL) {
       this.adaptiveMfaRule = this.challenge.challengeRule;
     } else {
