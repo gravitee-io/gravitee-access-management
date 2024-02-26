@@ -30,7 +30,6 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
@@ -65,7 +64,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
-import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 
 /**
@@ -173,20 +171,28 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         // if an alternative factor ID has been set, only display this one
         final String alternativeFactorId = session.get(ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY);
         var mfaContext = new MfaFilterContext(context, client, factorManager, ruleEngine);
-        var applicationFactors = ofNullable(client.getFactorSettings()).orElseGet(FactorSettings::new);
         if (alternativeFactorId != null && !alternativeFactorId.isEmpty()) {
             // check if this alternative factor still exists
             Optional<Factor> optionalFactor = factors.stream()
-                    .filter(factor -> alternativeFactorId.equals(factor.getId()) && mfaContext.matchFactorRule(factor.getId(), applicationFactors))
+                    .filter(factor -> alternativeFactorId.equals(factor.getId()))
                     .findFirst();
             if (optionalFactor.isPresent()) {
                 return List.of(optionalFactor.get());
             }
         }
         // else return all factors except the RECOVERY CODE one
-        return factors.stream()
-                .filter(factor -> !factor.factorType.equals(FactorType.RECOVERY_CODE.getType()) && mfaContext.matchFactorRule(factor.getId(), applicationFactors))
+        List<Factor> evaluatedFactors = factors.stream()
+                .filter(factor -> !factor.factorType.equals(FactorType.RECOVERY_CODE.getType()))
+                .filter(factor -> mfaContext.evaluateFactorRuleByFactorId(factor.getId()))
                 .toList();
+
+        if (evaluatedFactors.isEmpty()) {
+            return factors.stream()
+                    .filter(factor -> mfaContext.isDefaultFactor(factor.getId()))
+                    .collect(Collectors.toList());
+        } else {
+            return evaluatedFactors;
+        }
     }
 
     private void saveEnrollment(RoutingContext routingContext) {
@@ -198,6 +204,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
             getValidFactor(routingContext, factorId, client).ifPresent(optFactor -> manageEnrolledFactors(routingContext, optFactor, params));
         }
     }
+
     private boolean isSkipped(RoutingContext routingContext, boolean acceptEnrollment, Client client) {
         // if user has skipped the enrollment process, continue
         if (!acceptEnrollment && MfaUtils.isCanSkip(routingContext, client)) {
@@ -240,7 +247,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         }
 
         final var endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
-        if (userAlreadyHasFactor(endUser, client, routingContext.session())){
+        if (userAlreadyHasFactor(endUser, client, routingContext.session())) {
             logger.warn("User already has active factor, enrollment of factor '{}' rejected", factorId);
             routingContext.fail(new InvalidRequestException("factor already enrolled"));
             return Optional.empty();
