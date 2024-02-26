@@ -38,6 +38,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Date;
@@ -235,8 +236,8 @@ class MFAEnrollStepTest {
         when(factor.getFactorType()).thenReturn(FactorType.SMS);
 
         when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(FACTOR_ID);
-        when(factorManager.getFactor(FACTOR_ID)).thenReturn(factor);
-        when(factorManager.getFactor(DEFAULT_FACTOR.getId())).thenReturn(factor);
+        lenient().when(factorManager.getFactor(FACTOR_ID)).thenReturn(factor);
+        lenient().when(factorManager.getFactor(DEFAULT_FACTOR.getId())).thenReturn(factor);
 
         mockFactorRuleSatisfied(selectionRule, false);
 

@@ -159,13 +159,13 @@ public class MfaFilterContext {
         return applicableFactors.stream().anyMatch(factor -> factor.getId().equals(enrollingFactorId));
     }
 
-    private List<ApplicationFactorSettings> getApplicableFactors(){
+    private List<ApplicationFactorSettings> getApplicableFactors() {
         FactorSettings factorSettings = Optional.ofNullable(client.getFactorSettings()).orElseGet(FactorSettings::new);
         List<ApplicationFactorSettings> passedRule = factorSettings.getApplicationFactors()
                 .stream()
                 .filter(factor -> evaluateFactorRule(factor.getSelectionRule()))
                 .toList();
-        if(passedRule.isEmpty()){
+        if (passedRule.isEmpty()) {
             return factorSettings.getApplicationFactors()
                     .stream()
                     .filter(factor -> factor.getId().equals(factorSettings.getDefaultFactorId()))

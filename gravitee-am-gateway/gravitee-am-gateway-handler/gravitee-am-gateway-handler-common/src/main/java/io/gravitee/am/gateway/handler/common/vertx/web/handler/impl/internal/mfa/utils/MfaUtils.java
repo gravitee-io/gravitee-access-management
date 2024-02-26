@@ -122,8 +122,8 @@ public class MfaUtils {
     }
 
     private static boolean notOnlyRecoveryCodeFactors(Set<String> factorIds, FactorManager factorManager) {
-        List<Factor> factors = factorIds.stream().map(factorManager::getFactor).toList();
-        return factors.stream().anyMatch(factor -> !factor.getFactorType().equals(FactorType.RECOVERY_CODE));
+        return factorIds.stream().anyMatch(factorId ->
+                !factorManager.getFactor(factorId).getFactorType().equals(FactorType.RECOVERY_CODE));
     }
 
     public static boolean evaluateRule(String rule, MfaFilterContext context, RuleEngine ruleEngine) {
