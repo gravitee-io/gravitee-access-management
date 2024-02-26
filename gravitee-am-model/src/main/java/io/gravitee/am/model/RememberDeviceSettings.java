@@ -39,7 +39,7 @@ public class RememberDeviceSettings {
         return active;
     }
 
-    public boolean isSkipRememberDevice() {
+    public boolean isSkipChallengeWhenRememberDevice() {
         return skipRememberDevice;
     }
 

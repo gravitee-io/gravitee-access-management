@@ -161,15 +161,15 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAEnrollmentPage_adaptiveMFA() throws Exception {
         router.route().order(-1).handler(rc -> {
+            String rule = "{context.attributes['geoip']['country_iso_code'] == 'FR'";
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, rule);
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             setFactors(client);
-
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            mfaSettings.setAdaptiveAuthenticationRule("{context.attributes['geoip']['country_iso_code'] == 'FR'");
+            mfaSettings.setAdaptiveAuthenticationRule(rule);
             client.setMfaSettings(mfaSettings);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "US").getMap());
             // set user
@@ -192,14 +192,15 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAEnrollmentPage_adaptiveMFA_no_enroll() throws Exception {
         router.route().order(-1).handler(rc -> {
+            String rule = "{context.attributes['geoip']['country_iso_code'] == 'FR'";
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, rule);
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            mfaSettings.setAdaptiveAuthenticationRule("{context.attributes['geoip']['country_iso_code'] == 'FR'");
+            mfaSettings.setAdaptiveAuthenticationRule(rule);
             client.setMfaSettings(mfaSettings);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             // set user
@@ -222,14 +223,15 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldNoRedirectToMFAChallengePage_adaptiveMFA_no_active_enroll_and_endUser_not_enrolled() throws Exception {
         router.route().order(-1).handler(rc -> {
+            String rule = "{context.attributes['geoip']['country_iso_code'] == 'FR'";
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, rule);
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            mfaSettings.setAdaptiveAuthenticationRule("{context.attributes['geoip']['country_iso_code'] == 'FR'");
+            mfaSettings.setAdaptiveAuthenticationRule(rule);
             client.setMfaSettings(mfaSettings);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
 
@@ -257,14 +259,15 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_no_active_enroll_and_endUser_is_enrolling() throws Exception {
         router.route().order(-1).handler(rc -> {
+            String rule = "{context.attributes['geoip']['country_iso_code'] == 'FR'";
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, rule);
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            mfaSettings.setAdaptiveAuthenticationRule("{context.attributes['geoip']['country_iso_code'] == 'FR'");
+            mfaSettings.setAdaptiveAuthenticationRule(rule);
             client.setMfaSettings(mfaSettings);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
 
@@ -643,14 +646,9 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         });
 
         testRequest(
-                HttpMethod.GET, "/login?scope=write",
-                null,
-                resp -> {
-                    String location = resp.headers().get("location");
-                    assertNotNull(location);
-                    assertTrue(location.endsWith("/mfa/challenge?scope=write"));
-                },
-                HttpStatusCode.FOUND_302, "Found", null);
+                HttpMethod.GET,
+                "/login",
+                HttpStatusCode.OK_200, "OK");
     }
 
 
@@ -806,14 +804,15 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA() throws Exception {
         router.route().order(-1).handler(rc -> {
+            String challengeRule = "{#context.attributes['geoip']['country_iso_code'] == 'FR'}";
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.RISK_BASED, challengeRule);
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
+            mfaSettings.setAdaptiveAuthenticationRule(challengeRule);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "US").getMap());
             client.setMfaSettings(mfaSettings);
             // set user
@@ -841,8 +840,9 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_with_step_up_true_strong_auth_true() throws Exception {
         router.route().order(-1).handler(rc -> {
+            String challengeRule = "{#context.attributes['geoip']['country_iso_code'] == 'FR'}";
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.RISK_BASED, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.RISK_BASED, challengeRule);
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -859,7 +859,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             stepUpAuthentication.setStepUpAuthenticationRule(stepUpAuthenticationRule);
             mfaSettings.setStepUpAuthentication(stepUpAuthentication);
 
-            mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
+            mfaSettings.setAdaptiveAuthenticationRule(challengeRule);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             client.setMfaSettings(mfaSettings);
             // set user
@@ -874,21 +874,16 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         });
 
         testRequest(
-                HttpMethod.GET, "/login?scope=write",
-                null,
-                resp -> {
-                    String location = resp.headers().get("location");
-                    assertNotNull(location);
-                    assertTrue(location.endsWith("/mfa/challenge?scope=write"));
-                },
-                HttpStatusCode.FOUND_302, "Found", null);
+                HttpMethod.GET, "/login?scope=read",
+                HttpStatusCode.OK_200, "OK");
     }
 
     @Test
     public void shouldContinue_adaptiveMFA_with_step_up_false_strong_auth_true_device_known() throws Exception {
         router.route().order(-1).handler(rc -> {
+            String rule = "{#context.attributes['geoip']['country_iso_code'] == 'FR'}";
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.RISK_BASED, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.RISK_BASED, rule);
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -905,7 +900,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             stepUpAuthentication.setStepUpAuthenticationRule(stepUpAuthenticationRule);
             mfaSettings.setStepUpAuthentication(stepUpAuthentication);
 
-            mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
+            mfaSettings.setAdaptiveAuthenticationRule(rule);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             client.setMfaSettings(mfaSettings);
             // set user
@@ -1082,14 +1077,15 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_2() throws Exception {
         router.route().order(-1).handler(rc -> {
+            String challengeRule = "{#context.attributes['geoip']['country_iso_code'] == 'FR'}";
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.RISK_BASED, challengeRule);
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
+            mfaSettings.setAdaptiveAuthenticationRule(challengeRule);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "US").getMap());
             client.setMfaSettings(mfaSettings);
             // set user
@@ -1117,14 +1113,15 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_2_user_auth() throws Exception {
         router.route().order(-1).handler(rc -> {
+            String challenge = "{#context.attributes['geoip']['country_iso_code'] == 'FR'}";
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.RISK_BASED, challenge);
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
+            mfaSettings.setAdaptiveAuthenticationRule(challenge);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "US").getMap());
             client.setMfaSettings(mfaSettings);
             // set user
@@ -1152,14 +1149,15 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_3_factor_is_pending() throws Exception {
         router.route().order(-1).handler(rc -> {
+            String rule = "{#context.attributes['geoip']['country_iso_code'] == 'FR'}";
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, rule);
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
+            mfaSettings.setAdaptiveAuthenticationRule(rule);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             client.setMfaSettings(mfaSettings);
             rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
@@ -1219,14 +1217,15 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_3_alternate_factor_id() throws Exception {
         router.route().order(-1).handler(rc -> {
+            String rule = "{#context.attributes['geoip']['country_iso_code'] == 'FR'}";
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, rule);
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
             setFactors(client);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
+            mfaSettings.setAdaptiveAuthenticationRule(rule);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             client.setMfaSettings(mfaSettings);
             rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);

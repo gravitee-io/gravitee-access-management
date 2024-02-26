@@ -314,7 +314,6 @@ class MFAEnrollStepTest {
         when(mfa.getEnroll()).thenReturn(enroll);
         when(client.getMfaSettings()).thenReturn(mfa);
         when(enroll.isActive()).thenReturn(true);
-        when(enroll.getForceEnrollment()).thenReturn(false);
         when(enroll.getSkipTimeSeconds()).thenReturn(1000L);
         when(enroll.getType()).thenReturn(MfaEnrollType.OPTIONAL);
         when(factor.getFactorType()).thenReturn(FactorType.SMS);
@@ -331,7 +330,6 @@ class MFAEnrollStepTest {
         when(client.getMfaSettings()).thenReturn(mfa);
         when(enroll.isActive()).thenReturn(true);
         when(enroll.getType()).thenReturn(MfaEnrollType.OPTIONAL);
-        when(enroll.getForceEnrollment()).thenReturn(false);
         when(mfa.getEnroll()).thenReturn(enroll);
         when(factor.getFactorType()).thenReturn(FactorType.SMS);
         when(factorManager.getFactor(DEFAULT_FACTOR.getId())).thenReturn(factor);
@@ -588,10 +586,8 @@ class MFAEnrollStepTest {
         when(enroll.isActive()).thenReturn(true);
         when(enroll.getSkipTimeSeconds()).thenReturn(1000L);
         when(enroll.getType()).thenReturn(MfaEnrollType.CONDITIONAL);
-        when(enroll.getForceEnrollment()).thenReturn(true);
         when(factor.getFactorType()).thenReturn(FactorType.SMS);
         when(factorManager.getFactor(DEFAULT_FACTOR.getId())).thenReturn(factor);
-        when(session.get(MFA_ENROLL_CONDITIONAL_SKIPPED_KEY)).thenReturn(true);
 
         mockConditionalEnrollmentRuleSatisfied(false);
         mockEnrollmentCanSkipRuleSatisfied(true);

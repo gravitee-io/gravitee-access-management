@@ -84,7 +84,7 @@ public class RememberDeviceSettingsMongo {
     public static RememberDeviceSettingsMongo convert(RememberDeviceSettings rememberDevice) {
         var rememberDeviceSettingsMongo = new RememberDeviceSettingsMongo();
         rememberDeviceSettingsMongo.setActive(TRUE.equals(rememberDevice.isActive()));
-        rememberDeviceSettingsMongo.setSkipRememberDevice(TRUE.equals(rememberDevice.isSkipRememberDevice()));
+        rememberDeviceSettingsMongo.setSkipRememberDevice(TRUE.equals(rememberDevice.isSkipChallengeWhenRememberDevice()));
         rememberDeviceSettingsMongo.setDeviceIdentifierId(rememberDevice.getDeviceIdentifierId());
         rememberDeviceSettingsMongo.setExpirationTimeSeconds(rememberDevice.getExpirationTimeSeconds());
         return rememberDeviceSettingsMongo;

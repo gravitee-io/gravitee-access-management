@@ -72,8 +72,7 @@ public class MfaFilterContext {
     }
 
     public boolean isEnrollSkipped() {
-        final boolean canSkip = MfaUtils.isCanSkip(routingContext, client);
-        if (canSkip && nonNull(endUser.getMfaEnrollmentSkippedAt())) {
+        if (nonNull(endUser.getMfaEnrollmentSkippedAt())) {
             Date now = new Date();
             long skipTime = ofNullable(MfaUtils.getEnrollSettings(client).getSkipTimeSeconds()).orElse(DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS) * 1000L;
             return endUser.getMfaEnrollmentSkippedAt().getTime() + skipTime > now.getTime();

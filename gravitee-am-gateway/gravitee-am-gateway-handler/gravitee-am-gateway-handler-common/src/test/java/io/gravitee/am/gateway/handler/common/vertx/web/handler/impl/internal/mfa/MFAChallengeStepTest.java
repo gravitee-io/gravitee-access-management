@@ -200,7 +200,26 @@ class MFAChallengeStepTest {
     }
 
     @Test
-    void shouldContinueWhenRequiredAndValidAuthAndDevice() {
+    void shouldContinueWhenRequiredAndValidAuth() {
+        mockAuthUser(false);
+        when(client.getMfaSettings()).thenReturn(mfa);
+        when(challenge.isActive()).thenReturn(true);
+        when(challenge.getType()).thenReturn(MfaChallengeType.REQUIRED);
+        when(mfa.getChallenge()).thenReturn(challenge);
+
+        when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
+        when(session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY)).thenReturn(true);
+        when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(null);
+        when(session.get(MFA_CHALLENGE_COMPLETED_KEY)).thenReturn(true);
+        when(session.get(MFA_STOP)).thenReturn(false);
+
+        mfaChallengeStep.execute(routingContext, flow);
+
+        verifyContinue();
+    }
+
+    @Test
+    void shouldContinueWhenRequiredAndRememberedDevice() {
         mockAuthUser(false);
         when(client.getMfaSettings()).thenReturn(mfa);
         when(challenge.isActive()).thenReturn(true);
@@ -214,7 +233,7 @@ class MFAChallengeStepTest {
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY)).thenReturn(true);
         when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(null);
-        when(session.get(MFA_CHALLENGE_COMPLETED_KEY)).thenReturn(true);
+        when(session.get(MFA_CHALLENGE_COMPLETED_KEY)).thenReturn(false);
         when(session.get(DEVICE_ALREADY_EXISTS_KEY)).thenReturn(true);
         when(session.get(MFA_STOP)).thenReturn(false);
 
@@ -302,11 +321,11 @@ class MFAChallengeStepTest {
 
         mfaChallengeStep.execute(routingContext, flow);
 
-        verifyContinue();
+        verifyChallenge();
     }
 
     @Test
-    void shouldChallengeWhenRiskBasedRuleTrueNoAuth() {
+    void shouldContinueWhenRiskBasedRuleTrueNoAuth() {
         mockContextRequest();
         mockAuthUser(false);
         when(client.getMfaSettings()).thenReturn(mfa);
@@ -322,12 +341,11 @@ class MFAChallengeStepTest {
 
         mfaChallengeStep.execute(routingContext, flow);
 
-        verifyChallenge();
+        verifyContinue();
     }
 
     @Test
     void shouldContinueWhenRiskBasedRuleTrueAndAuth() {
-        mockContextRequest();
         mockAuthUser(false);
         when(client.getMfaSettings()).thenReturn(mfa);
         when(mfa.getChallenge()).thenReturn(challenge);
@@ -338,8 +356,7 @@ class MFAChallengeStepTest {
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(session.get(MFA_CHALLENGE_COMPLETED_KEY)).thenReturn(true);
         when(session.get(MFA_STOP)).thenReturn(false);
-
-        mockRiskBasedSatisfied(true);
+        when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(null);
 
         mfaChallengeStep.execute(routingContext, flow);
 
@@ -349,7 +366,7 @@ class MFAChallengeStepTest {
     @Test
     void shouldContinueWhenRiskBasedRuleFalse() {
         mockContextRequest();
-        mockAuthUser(false);
+        mockAuthUser(true);
         when(client.getMfaSettings()).thenReturn(mfa);
         when(mfa.getChallenge()).thenReturn(challenge);
         when(challenge.isActive()).thenReturn(true);
@@ -357,14 +374,15 @@ class MFAChallengeStepTest {
         when(routingContext.session()).thenReturn(session);
 
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
-        when(session.get(MFA_CHALLENGE_COMPLETED_KEY)).thenReturn(true);
+        when(session.get(MFA_CHALLENGE_COMPLETED_KEY)).thenReturn(false);
         when(session.get(MFA_STOP)).thenReturn(false);
+        when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(null);
 
         mockRiskBasedSatisfied(false);
 
         mfaChallengeStep.execute(routingContext, flow);
 
-        verifyContinue();
+        verifyChallenge();
     }
 
     @Test
@@ -435,7 +453,7 @@ class MFAChallengeStepTest {
 
     private void mockRiskBasedSatisfied(boolean isSatisfied) {
         var rule = "rule-risk-based";
-        when(mfa.getAdaptiveAuthenticationRule()).thenReturn(rule);
+        when(challenge.getChallengeRule()).thenReturn(rule);
         when(ruleEngine.evaluate(eq(rule), any(), any(), any())).thenReturn(isSatisfied);
     }
 

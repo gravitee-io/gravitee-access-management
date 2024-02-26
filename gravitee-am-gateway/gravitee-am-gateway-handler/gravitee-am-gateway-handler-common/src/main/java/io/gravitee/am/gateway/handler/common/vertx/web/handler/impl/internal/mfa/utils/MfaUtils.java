@@ -20,7 +20,6 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_CONDITIONAL_SKIPPED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_STOP;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
@@ -31,7 +30,6 @@ import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.MFASettings;
-import io.gravitee.am.model.MfaChallengeType;
 import io.gravitee.am.model.MfaEnrollType;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.StepUpAuthenticationSettings;
@@ -66,7 +64,7 @@ public class MfaUtils {
     }
 
     public static String getAdaptiveMfaStepUpRule(Client client) {
-        return ofNullable(client.getMfaSettings()).orElse(new MFASettings()).getAdaptiveAuthenticationRule();
+        return ofNullable(client.getMfaSettings()).map(MFASettings::getChallenge).map(ChallengeSettings::getChallengeRule).orElse("");
     }
 
     public static RememberDeviceSettings getRememberDeviceSettings(Client client) {
@@ -150,11 +148,5 @@ public class MfaUtils {
         var enrollSettings = MfaUtils.getEnrollSettings(client);
         return (enrollSettings.getForceEnrollment() != null && !enrollSettings.getForceEnrollment())
                 || (MfaEnrollType.CONDITIONAL.equals(enrollSettings.getType()) && Boolean.TRUE.equals(routingContext.session().get(ConstantKeys.MFA_ENROLL_CONDITIONAL_SKIPPED_KEY)));
-    }
-
-    public static boolean isSkipRememberDevice(RoutingContext routingContext, Client client) {
-        return MfaUtils.getChallengeSettings(client).getType().equals(MfaChallengeType.CONDITIONAL)
-                && MfaUtils.getRememberDeviceSettings(client).isSkipRememberDevice()
-                && TRUE.equals(routingContext.session().get(MFA_CHALLENGE_CONDITIONAL_SKIPPED_KEY));
     }
 }

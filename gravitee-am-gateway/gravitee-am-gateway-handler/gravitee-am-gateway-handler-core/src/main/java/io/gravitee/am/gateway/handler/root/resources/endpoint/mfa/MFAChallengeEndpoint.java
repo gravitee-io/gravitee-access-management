@@ -18,9 +18,6 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.common.utils.ConstantKeys;
-import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_REMEMBER_DEVICE_CONSENT_TIME;
-import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_CONDITIONAL_SKIPPED_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.REMEMBER_DEVICE_SKIP_UNTIL;
 import io.gravitee.am.common.utils.MovingFactorUtils;
 import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
@@ -28,7 +25,6 @@ import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Credential;
@@ -75,7 +71,6 @@ import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import static java.lang.Boolean.TRUE;
-import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -226,10 +221,6 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
             var deviceId = routingContext.session().get(ConstantKeys.DEVICE_ID);
             if (deviceId != null) {
                 routingContext.put(ConstantKeys.DEVICE_ID, deviceId);
-            }
-            var challengeConditionalSkip = routingContext.session().get(MFA_CHALLENGE_CONDITIONAL_SKIPPED_KEY);
-            if (challengeConditionalSkip != null) {
-                routingContext.put(MFA_CHALLENGE_CONDITIONAL_SKIPPED_KEY, deviceId);
             }
             if (enableAlternateMFAOptions(client, endUser)) {
                 routingContext.put(MFA_ALTERNATIVES_ENABLE_KEY, true);
@@ -415,11 +406,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         //Register device if the device is active
         var rememberDeviceSettings = getRememberDeviceSettings(client);
         boolean rememberDeviceConsent = REMEMBER_DEVICE_CONSENT_ON.equalsIgnoreCase(routingContext.request().getParam(REMEMBER_DEVICE_CONSENT));
-        if (rememberDeviceSettings.isActive() && !rememberDeviceConsent) {
-            var skipTimeSec = rememberDeviceSettings.getExpirationTimeSeconds() != null ? rememberDeviceSettings.getExpirationTimeSeconds() : DEFAULT_REMEMBER_DEVICE_CONSENT_TIME;
-            routingContext.session().put(REMEMBER_DEVICE_SKIP_UNTIL, Instant.now().plusSeconds(skipTimeSec));
-            doRedirect(routingContext.request().response(), returnURL);
-        } else if (rememberDeviceSettings.isActive() && !MfaUtils.isSkipRememberDevice(routingContext, client)) {
+        if (rememberDeviceSettings.isActive() && rememberDeviceConsent) {
             saveDeviceAndRedirect(routingContext, client, user.getId(), rememberDeviceSettings, returnURL);
         } else {
             doRedirect(routingContext.request().response(), returnURL);
@@ -670,7 +657,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
             doRedirect(routingContext.response(), redirectUrl);
         } else {
             this.deviceService.deviceExists(domain, client.getClientId(), userId, rememberDeviceId, deviceId).flatMapMaybe(isEmpty -> {
-                if (!isEmpty) {
+                if (Boolean.FALSE.equals(isEmpty)) {
                     routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
                     return Maybe.empty();
                 }
