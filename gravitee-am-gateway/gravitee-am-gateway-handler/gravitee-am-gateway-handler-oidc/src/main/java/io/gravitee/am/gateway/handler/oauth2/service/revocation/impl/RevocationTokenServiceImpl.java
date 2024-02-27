@@ -144,7 +144,7 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
 
                     return tokenService.deleteAccessToken(accessToken.getValue())
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                                            .token(TokenTypeHint.ACCESS_TOKEN, accessToken.getValue())
+                                            .accessToken(accessToken.getValue())
                                             .tokenActor(client)
                                             .revoked()));
                 });
@@ -162,7 +162,7 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                     }
                     return tokenService.deleteRefreshToken(refreshToken.getValue())
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                                            .token(TokenTypeHint.REFRESH_TOKEN, refreshToken.getValue())
+                                            .refreshToken(refreshToken.getValue())
                                             .tokenActor(client)
                                             .revoked()));
                 });
