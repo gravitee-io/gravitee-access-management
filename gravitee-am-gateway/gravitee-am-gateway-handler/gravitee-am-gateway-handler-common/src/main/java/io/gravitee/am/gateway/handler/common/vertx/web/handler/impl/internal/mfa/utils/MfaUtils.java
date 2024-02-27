@@ -30,6 +30,8 @@ import io.gravitee.am.model.*;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
+
+import static io.gravitee.am.model.MfaEnrollType.CONDITIONAL;
 import static java.lang.Boolean.TRUE;
 import java.util.List;
 import java.util.Objects;
@@ -143,7 +145,9 @@ public class MfaUtils {
 
     public static boolean isCanSkip(RoutingContext routingContext, Client client) {
         var enrollSettings = MfaUtils.getEnrollSettings(client);
-        return (enrollSettings.getForceEnrollment() != null && !enrollSettings.getForceEnrollment())
-                || (MfaEnrollType.CONDITIONAL.equals(enrollSettings.getType()) && Boolean.TRUE.equals(routingContext.session().get(ConstantKeys.MFA_ENROLL_CONDITIONAL_SKIPPED_KEY)));
+        boolean enrollmentActive = enrollSettings.isActive();
+        boolean isNotForcedEnrollment = enrollSettings.getForceEnrollment() != null && !enrollSettings.getForceEnrollment();
+        boolean isConditionalAndSkipped = CONDITIONAL.equals(enrollSettings.getType()) && TRUE.equals(routingContext.session().get(ConstantKeys.MFA_ENROLL_CONDITIONAL_SKIPPED_KEY));
+        return enrollmentActive && (isNotForcedEnrollment || isConditionalAndSkipped);
     }
 }
