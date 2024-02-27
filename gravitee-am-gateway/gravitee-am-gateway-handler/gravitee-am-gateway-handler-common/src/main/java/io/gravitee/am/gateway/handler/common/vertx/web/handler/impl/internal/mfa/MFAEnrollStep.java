@@ -129,7 +129,7 @@ public class MFAEnrollStep extends MFAStep {
     }
 
     private boolean userHasFactor(MfaFilterContext context) {
-        return context.isUserEnrolling() || context.userHasMatchingActivatedFactors();
+        return context.isUserSelectedEnrollFactor() || context.userHasMatchingActivatedFactors();
     }
 
     private static void continueFlow(MfaFilterContext routingContext, AuthenticationFlowChain flow) {

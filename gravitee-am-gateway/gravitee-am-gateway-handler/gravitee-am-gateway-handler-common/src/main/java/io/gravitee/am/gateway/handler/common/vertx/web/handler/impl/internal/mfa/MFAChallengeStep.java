@@ -46,7 +46,7 @@ public class MFAChallengeStep extends MFAStep {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final MfaFilterContext context = new MfaFilterContext(routingContext, client, factorManager, ruleEngine);
         if (!isMfaFlowStopped(context)) {
-            if (context.isUserEnrolling()) {
+            if (context.isUserSelectedEnrollFactor()) {
                 challenge(context, flow);
             } else if (!context.isChallengeCompleted() && stepUpRequired(context, client, ruleEngine)) {
                 challenge(context, flow);
