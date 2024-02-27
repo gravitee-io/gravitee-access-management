@@ -68,7 +68,7 @@ class ClientTokenAuditBuilderTest {
 
     @Test
     void tokenShouldBuildNoTokenId() {
-        var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).token(TokenTypeHint.REFRESH_TOKEN, (String) null).build(objectMapper);
+        var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).refreshToken((String) null).build(objectMapper);
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
         assertEquals(TOKEN_CREATED, audit.getType());
         assertNull(audit.getOutcome().getMessage());
@@ -76,7 +76,7 @@ class ClientTokenAuditBuilderTest {
 
     @Test
     void tokenShouldBuildNoUser() {
-        var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).token(TokenTypeHint.REFRESH_TOKEN, (User) null).build(objectMapper);
+        var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).idTokenFor((User) null).build(objectMapper);
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
         assertEquals(TOKEN_CREATED, audit.getType());
         assertNull(audit.getOutcome().getMessage());
@@ -101,20 +101,18 @@ class ClientTokenAuditBuilderTest {
     @Test
     void shouldBuildToken() {
         var tokenId = "token-id";
-        var tokenType = TokenTypeHint.REFRESH_TOKEN;
-        var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).token(tokenType, tokenId).build(objectMapper);
-        assertEquals("[{\"op\":\"add\",\"path\":\"/token-id\",\"value\":{\"tokenId\":\"" + tokenId + "\",\"tokenType\":\"" + tokenType + "\"}}]", audit.getOutcome().getMessage());
+        var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).refreshToken(tokenId).build(objectMapper);
+        assertEquals("[{\"op\":\"add\",\"path\":\"/"+TokenTypeHint.REFRESH_TOKEN.name()+"\",\"value\":\""+tokenId+"\"}]", audit.getOutcome().getMessage());
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
         assertEquals(TOKEN_CREATED, audit.getType());
     }
 
     @Test
     void shouldBuildIdToken() {
-        var tokenType = TokenTypeHint.ID_TOKEN;
         var user = new User();
         user.setId("user-id-1");
-        var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).token(tokenType, user).build(objectMapper);
-        assertEquals("[{\"op\":\"add\",\"path\":\"/user-id-1\",\"value\":{\"tokenType\":\"" + tokenType + "\",\"userId\":\"user-id-1\"}}]", audit.getOutcome().getMessage());
+        var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).idTokenFor(user).build(objectMapper);
+        assertEquals("[{\"op\":\"add\",\"path\":\"/"+TokenTypeHint.ID_TOKEN.name()+"\",\"value\":\"Delivered for sub 'user-id-1'\"}]", audit.getOutcome().getMessage());
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
         assertEquals(TOKEN_CREATED, audit.getType());
     }
@@ -126,8 +124,8 @@ class ClientTokenAuditBuilderTest {
         var refreshTokenId = "token-id";
         var refreshTokenType = TokenTypeHint.REFRESH_TOKEN;
         var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                .token(accessTokenType, accessTokenId)
-                .token(refreshTokenType, refreshTokenId)
+                .accessToken(accessTokenId)
+                .refreshToken(refreshTokenId)
                 .build(objectMapper);
         assertTrue(audit.getOutcome().getMessage().contains(accessTokenId));
         assertTrue(audit.getOutcome().getMessage().contains(accessTokenType.name()));

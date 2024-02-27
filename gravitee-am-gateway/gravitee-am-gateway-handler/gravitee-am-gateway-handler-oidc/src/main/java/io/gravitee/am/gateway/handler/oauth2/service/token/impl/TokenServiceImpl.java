@@ -67,6 +67,7 @@ import java.util.Set;
 
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.REFRESH_TOKEN;
+import static org.springframework.util.ObjectUtils.isEmpty;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -152,10 +153,19 @@ public class TokenServiceImpl implements TokenService {
                             .flatMap(accessToken1 -> tokenEnhancer.enhance(accessToken1, oAuth2Request, client, endUser, executionContext))
                             .flatMap(enhancedToken -> storeTokens(accessToken, refreshToken, oAuth2Request).toSingle(() -> enhancedToken))
                             .doOnSuccess(enhancedToken -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                                    .token(TokenTypeHint.ACCESS_TOKEN, accessToken.getJti())
-                                    .token(TokenTypeHint.REFRESH_TOKEN, refreshToken != null ? refreshToken.getJti() : null)
-                                    .token(TokenTypeHint.ID_TOKEN, enhancedToken.getAdditionalInformation().getOrDefault("id_token", null) != null ? endUser : null)
+                                    .accessToken(accessToken.getJti())
+                                    .refreshToken(refreshToken != null ? refreshToken.getJti() : null)
+                                    .idTokenFor(enhancedToken.getAdditionalInformation().getOrDefault("id_token", null) != null ? endUser : null)
                                     .tokenActor(client)
+                                    .withParams(() -> {
+                                        var params = new HashMap<String, Object>();
+                                        params.put(io.gravitee.am.common.oauth2.Parameters.GRANT_TYPE, oAuth2Request.getGrantType());
+                                        params.put(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE, oAuth2Request.getResponseType());
+                                        if (!isEmpty(oAuth2Request.getScopes())) {
+                                            params.put(io.gravitee.am.common.oauth2.Parameters.SCOPE, String.join(" ", oAuth2Request.getScopes()));
+                                        }
+                                        return params;
+                                    })
                                     .tokenTarget(endUser)));
                 })
                 .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).tokenTarget(endUser).throwable(error)));
@@ -195,7 +205,7 @@ public class TokenServiceImpl implements TokenService {
                             .andThen(Single.just(refreshToken1));
                 })
                 .doOnEvent((token, error) -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                                .token(TokenTypeHint.REFRESH_TOKEN, token != null ? token.getValue() : null)
+                                .refreshToken(token != null ? token.getValue() : null)
                                 .tokenActor(client)
                                 .revoked("Refresh token used to generate new token")
                                 .throwable(error)));

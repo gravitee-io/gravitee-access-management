@@ -23,16 +23,24 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.service.reporter.builder.gateway.GatewayAuditBuilder;
+import org.jsoup.internal.StringUtil;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Supplier;
 
 import static io.gravitee.am.common.audit.EventType.TOKEN_CREATED;
 import static io.gravitee.am.common.audit.EventType.TOKEN_REVOKED;
+import static java.lang.String.format;
+import static java.util.Objects.isNull;
+import static org.springframework.util.CollectionUtils.isEmpty;
 
 public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAuditBuilder> {
     private static final String ADDITIONAL_INFO = "additionalInfo";
-    private final Map<String, Map<String, String>> tokenNewValue;
+    private static final String REVOKE_MSG_KEY = "revokedMessage";
+    private final Map<String, Object> tokenNewValue;
 
     public ClientTokenAuditBuilder() {
         super();
@@ -48,34 +56,29 @@ public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAudi
     public ClientTokenAuditBuilder revoked(String message) {
         type(TOKEN_REVOKED);
         if (message != null) {
-            var additionalInfo = tokenNewValue.get(ADDITIONAL_INFO) != null ? tokenNewValue.get(ADDITIONAL_INFO) : new HashMap<String, String>();
-            additionalInfo.put("revokedMessage", message);
-            tokenNewValue.put(ADDITIONAL_INFO, additionalInfo);
+            tokenNewValue.put(REVOKE_MSG_KEY, message);
         }
         return this;
     }
 
-    public ClientTokenAuditBuilder token(TokenTypeHint tokenTypeHint, String tokenId) {
+    public ClientTokenAuditBuilder accessToken(String tokenId) {
         if (tokenId != null) {
-            var entry = new HashMap<String, String>();
-            entry.put("tokenId", tokenId);
-            if (tokenTypeHint != null) {
-                entry.put("tokenType", tokenTypeHint.name());
-            }
-            tokenNewValue.put(tokenId, entry);
+            tokenNewValue.put(TokenTypeHint.ACCESS_TOKEN.name(), tokenId);
         }
         return this;
     }
 
-    public ClientTokenAuditBuilder token(TokenTypeHint tokenTypeHint, User user) {
+    public ClientTokenAuditBuilder refreshToken(String tokenId) {
+        if (tokenId != null) {
+            tokenNewValue.put(TokenTypeHint.REFRESH_TOKEN.name(), tokenId);
+        }
+        return this;
+    }
+
+    public ClientTokenAuditBuilder idTokenFor(User user) {
         if (user != null && user.getId() != null) {
-            var entry = new HashMap<String, String>();
             var userId = user.getId();
-            entry.put("userId", userId);
-            if (tokenTypeHint != null) {
-                entry.put("tokenType", tokenTypeHint.name());
-            }
-            tokenNewValue.put(userId, entry);
+            tokenNewValue.put(TokenTypeHint.ID_TOKEN.name(), format("Delivered for sub '%s'", userId));
         }
         return this;
     }
@@ -105,6 +108,15 @@ public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAudi
             if (ReferenceType.DOMAIN.equals(user.getReferenceType())) {
                 super.domain(user.getReferenceId());
             }
+        }
+        return this;
+    }
+
+
+    public ClientTokenAuditBuilder withParams(Supplier<Map<String, Object>> supplier) {
+        final var params = supplier.get();
+        if (!isEmpty(params)) {
+            this.tokenNewValue.putAll(params);
         }
         return this;
     }
