@@ -66,7 +66,6 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -197,7 +196,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
                 .handler(routingContext -> {
                     Client client = new Client();
                     client.setFactors(Collections.singleton("factorId"));
-                    routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, "factorId");
+                    routingContext.session().put(ConstantKeys.SELECTED_ENROLL_FACTOR_ID_KEY, "factorId");
                     routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_PHONE_NUMBER, "9999999");
                     routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_EXTENSION_PHONE_NUMBER, "1234");
                     routingContext.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new User())));

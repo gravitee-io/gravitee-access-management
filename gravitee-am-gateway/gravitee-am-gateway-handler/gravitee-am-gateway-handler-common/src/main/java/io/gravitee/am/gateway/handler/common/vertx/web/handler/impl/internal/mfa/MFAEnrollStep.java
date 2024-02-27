@@ -49,9 +49,8 @@ public class MFAEnrollStep extends MFAStep {
         if (hasFactors(client, factorManager)) {
             if (context.isFactorSelected() && !context.checkSelectedFactor()) {
                 enrollment(context, flow);
-            } else {
-                if (stepUpRequired(context, client, ruleEngine)) {
-                    required(flow, context);
+            } else if (!userHasFactor(context) && stepUpRequired(context, client, ruleEngine)) {
+                    enrollment(context, flow);
                 } else if (isEnrollActive(client)) {
                     switch (getEnrollSettings(client).getType()) {
                         case OPTIONAL -> optional(flow, context);
@@ -63,7 +62,6 @@ public class MFAEnrollStep extends MFAStep {
                 } else {
                     stop(context, flow);
                 }
-            }
         } else {
             stop(context, flow);
         }
@@ -131,7 +129,7 @@ public class MFAEnrollStep extends MFAStep {
     }
 
     private boolean userHasFactor(MfaFilterContext context) {
-        return context.isEndUserEnrolling() || context.userHasMatchingActivatedFactors();
+        return context.isUserSelectedEnrollFactor() || context.userHasMatchingActivatedFactors();
     }
 
     private static void continueFlow(MfaFilterContext routingContext, AuthenticationFlowChain flow) {

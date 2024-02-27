@@ -21,7 +21,7 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import static io.gravitee.am.common.utils.ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.SELECTED_ENROLL_FACTOR_ID_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.RISK_ASSESSMENT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.STRONG_AUTH_COMPLETED_KEY;
@@ -274,7 +274,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(List.of(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
+            rc.session().put(SELECTED_ENROLL_FACTOR_ID_KEY, FACTOR_ID);
             rc.next();
         });
 
@@ -332,7 +332,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             setFactors(client);
             client.setMfaSettings(mfaSettings);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
+            rc.session().put(SELECTED_ENROLL_FACTOR_ID_KEY, FACTOR_ID);
             // set user
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             rc.getDelegate().setUser(new User(endUser));
@@ -500,7 +500,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
-            rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
+            rc.session().put(SELECTED_ENROLL_FACTOR_ID_KEY, FACTOR_ID);
             rc.next();
         });
 
@@ -593,7 +593,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             endUser.setFactors(List.of(enrolledRecovery, enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, false);
-            rc.session().put(ENROLLED_FACTOR_ID_KEY, "factor-id");
+            rc.session().put(SELECTED_ENROLL_FACTOR_ID_KEY, "factor-id");
             rc.next();
         });
 
@@ -678,7 +678,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, false);
-            rc.session().put(MFA_CHALLENGE_COMPLETED_KEY, true);
+            rc.session().put(MFA_CHALLENGE_COMPLETED_KEY, false);
             rc.next();
         });
 
@@ -1149,7 +1149,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             client.setMfaSettings(mfaSettings);
-            rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
+            rc.session().put(SELECTED_ENROLL_FACTOR_ID_KEY, FACTOR_ID);
 
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
@@ -1183,7 +1183,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = new MFASettings();
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             client.setMfaSettings(mfaSettings);
-            rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
+            rc.session().put(SELECTED_ENROLL_FACTOR_ID_KEY, FACTOR_ID);
 
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
@@ -1215,7 +1215,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             client.setMfaSettings(mfaSettings);
-            rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
+            rc.session().put(SELECTED_ENROLL_FACTOR_ID_KEY, FACTOR_ID);
             rc.session().put(ALTERNATIVE_FACTOR_ID_KEY, "factor-2");
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();

@@ -46,7 +46,9 @@ public class MFAChallengeStep extends MFAStep {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final MfaFilterContext context = new MfaFilterContext(routingContext, client, factorManager, ruleEngine);
         if (!isMfaFlowStopped(context)) {
-            if (stepUpRequired(context, client, ruleEngine) || context.isEndUserEnrolling()) {
+            if (context.isUserSelectedEnrollFactor()) {
+                challenge(context, flow);
+            } else if (!context.isChallengeCompleted() && stepUpRequired(context, client, ruleEngine)) {
                 challenge(context, flow);
             } else if (isChallengeActive(client)) {
                 switch (getChallengeSettings(client).getType()) {
@@ -63,7 +65,7 @@ public class MFAChallengeStep extends MFAStep {
     }
 
     private void required(MfaFilterContext context, AuthenticationFlowChain flow) {
-        if (context.isChallengeOnceCompleted() || isRememberDevice(context)) {
+        if (context.isUserStronglyAuth() || isRememberDevice(context)) {
             continueFlow(context, flow);
         } else {
             challenge(context, flow);
@@ -75,7 +77,7 @@ public class MFAChallengeStep extends MFAStep {
             continueFlow(context, flow);
         } else if (context.getRememberDeviceSettings().isSkipChallengeWhenRememberDevice()) {
             required(context, flow);
-        } else if (context.isChallengeOnceCompleted()) {
+        } else if (context.isUserStronglyAuth()) {
             continueFlow(context, flow);
         } else {
             challenge(context, flow);
@@ -83,7 +85,7 @@ public class MFAChallengeStep extends MFAStep {
     }
 
     private void riskBased(MfaFilterContext context, AuthenticationFlowChain flow, Client client) {
-        if (context.isChallengeOnceCompleted() || isSafe(context, client)) {
+        if (context.isUserStronglyAuth() || isSafe(context, client)) {
             continueFlow(context, flow);
         } else {
             challenge(context, flow);

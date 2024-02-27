@@ -35,7 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thymeleaf.util.StringUtils;
 
-import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.SELECTED_ENROLL_FACTOR_ID_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_AUTH_ACTION_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_AUTH_ACTION_VALUE_REGISTER;
 
@@ -207,7 +207,7 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
                                 session.put(PASSWORDLESS_AUTH_ACTION_KEY, PASSWORDLESS_AUTH_ACTION_VALUE_REGISTER);
                                 ctx.put(PASSWORDLESS_AUTH_ACTION_KEY, PASSWORDLESS_AUTH_ACTION_VALUE_REGISTER);
                                 if (isEnrollingFido2Factor(ctx)) {
-                                    enrollFido2Factor(ctx, authenticatedUser, createEnrolledFactor(session.get(ENROLLED_FACTOR_ID_KEY), credentialId));
+                                    enrollFido2Factor(ctx, authenticatedUser, createEnrolledFactor(session.get(SELECTED_ENROLL_FACTOR_ID_KEY), credentialId));
                                 } else {
                                     manageFido2FactorEnrollment(ctx, client, credentialId, authenticatedUser);
                                 }

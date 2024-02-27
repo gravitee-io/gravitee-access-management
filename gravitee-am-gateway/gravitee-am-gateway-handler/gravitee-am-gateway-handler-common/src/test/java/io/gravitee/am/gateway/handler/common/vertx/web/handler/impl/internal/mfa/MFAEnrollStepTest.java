@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mf
 
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
-import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.SELECTED_ENROLL_FACTOR_ID_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLL_CONDITIONAL_SKIPPED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_STOP;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
@@ -38,13 +38,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Date;
 import java.util.List;
 
-import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -125,8 +123,7 @@ class MFAEnrollStepTest {
     @Test
     void shouldStopMfaWhenNoFactor() {
         when(routingContext.user()).thenReturn(io.vertx.rxjava3.ext.auth.User.newInstance(authUser));
-        when(factor.getFactorType()).thenReturn(FactorType.SMS);
-        when(factorManager.getFactor(DEFAULT_FACTOR.getId())).thenReturn(factor);
+        when(client.getFactorSettings()).thenReturn(null);
 
         mfaEnrollStep.execute(routingContext, flow);
 
@@ -135,7 +132,8 @@ class MFAEnrollStepTest {
 
     @Test
     void shouldEnrollWhenStepUp() {
-        mockAuthUser(true);
+        mockStepUp(true);
+        mockAuthUser();
         when(client.getMfaSettings()).thenReturn(mfa);
         when(factor.getFactorType()).thenReturn(FactorType.SMS);
         when(factorManager.getFactor(DEFAULT_FACTOR.getId())).thenReturn(factor);
@@ -147,7 +145,8 @@ class MFAEnrollStepTest {
 
     @Test
     void shouldStopMfaWhenStepUpFalseAndConditionalSatisfied() {
-        mockAuthUser(false);
+        mockStepUp(false);
+        mockAuthUser();
         when(client.getMfaSettings()).thenReturn(mfa);
         when(enroll.isActive()).thenReturn(true);
         when(enroll.getType()).thenReturn(MfaEnrollType.CONDITIONAL);
@@ -164,7 +163,7 @@ class MFAEnrollStepTest {
 
     @Test
     void shouldThrowErrorWhenTypeIsUnknown() {
-        mockAuthUser(false);
+        mockAuthUser();
         when(enroll.isActive()).thenReturn(true);
         when(enroll.getType()).thenReturn(null);
         when(mfa.getEnroll()).thenReturn(enroll);
@@ -177,7 +176,7 @@ class MFAEnrollStepTest {
 
     @Test
     void shouldEnrollWhenRequiredAndUserNoFactorEnrolled() {
-        mockAuthUser(false);
+        mockAuthUser();
         when(enroll.isActive()).thenReturn(true);
         when(enroll.getType()).thenReturn(MfaEnrollType.REQUIRED);
         when(mfa.getEnroll()).thenReturn(enroll);
@@ -192,7 +191,8 @@ class MFAEnrollStepTest {
 
     @Test
     void shouldContinueToChallengeWhenFactorMatchRule() {
-        mockAuthUser(false);
+        mockContextRequest();
+        mockAuthUser();
 
         var appFactor = new ApplicationFactorSettings();
         var selectionRule = "factor-rule-not-match";
@@ -210,7 +210,7 @@ class MFAEnrollStepTest {
         when(client.getMfaSettings()).thenReturn(mfa);
         when(factor.getFactorType()).thenReturn(FactorType.SMS);
 
-        when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(FACTOR_ID);
+        when(session.get(SELECTED_ENROLL_FACTOR_ID_KEY)).thenReturn(FACTOR_ID);
         when(factorManager.getFactor(FACTOR_ID)).thenReturn(factor);
 
         mockFactorRuleSatisfied(selectionRule, true);
@@ -218,11 +218,12 @@ class MFAEnrollStepTest {
         mfaEnrollStep.execute(routingContext, flow);
 
         verifyContinue();
-        verify(session, never()).put(ENROLLED_FACTOR_ID_KEY, DEFAULT_FACTOR.getId());
+        verify(session, never()).put(SELECTED_ENROLL_FACTOR_ID_KEY, DEFAULT_FACTOR.getId());
     }
 
     @Test
     void shouldGoBackToEnrollmentWhenSelectedFactorDoesNotMatchRule() {
+        mockContextRequest();
         mockAuthUser();
 
         var appFactor = new ApplicationFactorSettings();
@@ -235,7 +236,7 @@ class MFAEnrollStepTest {
 
         when(factor.getFactorType()).thenReturn(FactorType.SMS);
 
-        when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(FACTOR_ID);
+        when(session.get(SELECTED_ENROLL_FACTOR_ID_KEY)).thenReturn(FACTOR_ID);
         lenient().when(factorManager.getFactor(FACTOR_ID)).thenReturn(factor);
         lenient().when(factorManager.getFactor(DEFAULT_FACTOR.getId())).thenReturn(factor);
 
@@ -248,7 +249,7 @@ class MFAEnrollStepTest {
 
     @Test
     void shouldEnrollWhenConditionalAndUserNoFactorEnrolled() {
-        mockAuthUser(false);
+        mockAuthUser();
         when(enroll.isActive()).thenReturn(true);
         when(enroll.getType()).thenReturn(MfaEnrollType.CONDITIONAL);
         when(mfa.getEnroll()).thenReturn(enroll);
@@ -263,7 +264,8 @@ class MFAEnrollStepTest {
 
     @Test
     void shouldStopMfaWhenConditionalRuleSatisfied() {
-        mockAuthUser(false);
+        mockStepUp(false);
+        mockAuthUser();
         when(client.getMfaSettings()).thenReturn(mfa);
         when(enroll.isActive()).thenReturn(true);
         when(enroll.getType()).thenReturn(MfaEnrollType.CONDITIONAL);
@@ -280,7 +282,7 @@ class MFAEnrollStepTest {
 
     @Test
     void shouldEnrollWhenOptionalAndUserNoFactorEnrolled() {
-        mockAuthUser(false);
+        mockAuthUser();
         when(mfa.getEnroll()).thenReturn(enroll);
         when(client.getMfaSettings()).thenReturn(mfa);
         when(enroll.isActive()).thenReturn(true);
@@ -295,6 +297,7 @@ class MFAEnrollStepTest {
 
     @Test
     void shouldStopMfaWhenOptionalUserCanSkipAndSkipped() {
+        mockStepUp(false);
         mockAuthUserWithSkipTime();
         when(mfa.getEnroll()).thenReturn(enroll);
         when(client.getMfaSettings()).thenReturn(mfa);
@@ -311,7 +314,7 @@ class MFAEnrollStepTest {
 
     @Test
     void shouldEnrollWhenOptionalUserCanSkipAndNotSkipped() {
-        mockAuthUser(false);
+        mockAuthUser();
         when(client.getMfaSettings()).thenReturn(mfa);
         when(enroll.isActive()).thenReturn(true);
         when(enroll.getType()).thenReturn(MfaEnrollType.OPTIONAL);
@@ -341,7 +344,7 @@ class MFAEnrollStepTest {
 
     @Test
     void shouldStopMfaWhenEnrollAndChallengeDisabled() {
-        mockAuthUser(false);
+        mockAuthUser();
         when(enroll.isActive()).thenReturn(false);
         when(challenge.isActive()).thenReturn(false);
         when(mfa.getChallenge()).thenReturn(challenge);
@@ -357,7 +360,7 @@ class MFAEnrollStepTest {
 
     @Test
     void shouldEnrollWhenEnrollDisabledButChallengeEnabled() {
-        mockAuthUser(false);
+        mockAuthUser();
         when(enroll.isActive()).thenReturn(false);
         when(challenge.isActive()).thenReturn(true);
         when(mfa.getChallenge()).thenReturn(challenge);
@@ -373,7 +376,7 @@ class MFAEnrollStepTest {
 
     @Test
     void shouldEnrollWhenEnrollDisabledButChallengeEnabledAndNotConditionalNotEnrolled() {
-        mockAuthUser(false);
+        mockAuthUser();
         when(enroll.isActive()).thenReturn(false);
         when(challenge.isActive()).thenReturn(true);
         when(challenge.getType()).thenReturn(MfaChallengeType.REQUIRED);
@@ -408,7 +411,8 @@ class MFAEnrollStepTest {
 
     @Test
     void shouldStopMfaWhenEnrollDisabledButChallengeEnabledAndConditionalRuleSatisfied() {
-        mockAuthUser(false);
+        mockStepUp(false);
+        mockAuthUser();
         when(enroll.isActive()).thenReturn(false);
         when(challenge.isActive()).thenReturn(true);
         when(challenge.getType()).thenReturn(MfaChallengeType.CONDITIONAL);
@@ -427,7 +431,8 @@ class MFAEnrollStepTest {
 
     @Test
     void shouldEnrollWhenEnrollDisabledButChallengeEnabledAndConditionalRuleNotSatisfied() {
-        mockAuthUser(false);
+        mockStepUp(false);
+        mockAuthUser();
         when(enroll.isActive()).thenReturn(false);
         when(challenge.isActive()).thenReturn(true);
         when(challenge.getType()).thenReturn(MfaChallengeType.CONDITIONAL);
@@ -446,6 +451,7 @@ class MFAEnrollStepTest {
 
     @Test
     void shouldContinueWhenEnrollDisabledButChallengeEnabledAndConditionalRuleNotSatisfiedAndEnrolled() {
+        mockContextRequest();
         mockAuthUserWithEnrolledFactors();
         when(enroll.isActive()).thenReturn(false);
         when(challenge.isActive()).thenReturn(true);
@@ -465,7 +471,8 @@ class MFAEnrollStepTest {
 
     @Test
     void shouldEnrollWhenEnrollDisabledButChallengeEnabledAndConditionalRuleNotSatisfiedAndNotEnrolled() {
-        mockAuthUser(false);
+        mockStepUp(false);
+        mockAuthUser();
         when(enroll.isActive()).thenReturn(false);
         when(challenge.isActive()).thenReturn(true);
         when(challenge.getType()).thenReturn(MfaChallengeType.CONDITIONAL);
@@ -529,7 +536,8 @@ class MFAEnrollStepTest {
 
     @Test
     void shouldEnrollWhenConditionalNotSatisfiedUserHasNoFactorButCanNotSkipped() {
-        mockAuthUser(false);
+        mockStepUp(false);
+        mockAuthUser();
         when(client.getMfaSettings()).thenReturn(mfa);
         when(mfa.getEnroll()).thenReturn(enroll);
         when(enroll.isActive()).thenReturn(true);
@@ -547,7 +555,8 @@ class MFAEnrollStepTest {
 
     @Test
     void shouldEnrollWhenConditionalNotSatisfiedUserHasNoFactorButCanButNotSkipped() {
-        mockAuthUser(false);
+        mockStepUp(false);
+        mockAuthUser();
         when(client.getMfaSettings()).thenReturn(mfa);
         when(mfa.getEnroll()).thenReturn(enroll);
         when(enroll.isActive()).thenReturn(true);
@@ -565,6 +574,7 @@ class MFAEnrollStepTest {
 
     @Test
     void shouldStopMfaWhenConditionalNotSatisfiedUserHasNoFactorButUserCanAndSkipped() {
+        mockStepUp(false);
         mockAuthUserWithSkipTime();
         when(client.getMfaSettings()).thenReturn(mfa);
         when(mfa.getEnroll()).thenReturn(enroll);
@@ -628,13 +638,7 @@ class MFAEnrollStepTest {
         when(session.get(any())).thenReturn(null);
     }
 
-    private void mockAuthUser(boolean isStepUpRequired) {
-        mockStepUp(isStepUpRequired);
-        mockAuthUser();
-    }
-
     private void mockAuthUser() {
-        mockContextRequest();
         io.vertx.rxjava3.ext.auth.User authenticatedUser = mock(io.vertx.rxjava3.ext.auth.User.class);
         when(routingContext.user()).thenReturn(authenticatedUser);
         User delegateUser = mock(User.class);
@@ -644,8 +648,6 @@ class MFAEnrollStepTest {
     }
 
     private void mockAuthUserWithSkipTime() {
-        mockContextRequest();
-        mockStepUp(false);
         io.vertx.rxjava3.ext.auth.User authenticatedUser = mock(io.vertx.rxjava3.ext.auth.User.class);
         when(routingContext.user()).thenReturn(authenticatedUser);
         User delegateUser = mock(User.class);
@@ -656,8 +658,6 @@ class MFAEnrollStepTest {
     }
 
     private void mockAuthUserWithEnrolledFactors() {
-        mockContextRequest();
-        mockStepUp(false);
         io.vertx.rxjava3.ext.auth.User authenticatedUser = mock(io.vertx.rxjava3.ext.auth.User.class);
         when(routingContext.user()).thenReturn(authenticatedUser);
         User delegateUser = mock(User.class);
@@ -682,6 +682,7 @@ class MFAEnrollStepTest {
     }
 
     private void mockStepUp(boolean stepUp) {
+        mockContextRequest();
         var rule = "step-up-rule";
         var stepUpSettings = new StepUpAuthenticationSettings();
         stepUpSettings.setActive(true);

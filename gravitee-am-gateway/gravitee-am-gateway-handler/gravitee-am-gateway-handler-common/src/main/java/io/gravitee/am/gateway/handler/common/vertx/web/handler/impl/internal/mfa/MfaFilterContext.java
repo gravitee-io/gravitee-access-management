@@ -16,9 +16,9 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
 import static io.gravitee.am.common.factor.FactorType.RECOVERY_CODE;
+import static io.gravitee.am.common.utils.ConstantKeys.SELECTED_ENROLL_FACTOR_ID_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS;
-import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;
 
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
@@ -114,8 +114,8 @@ public class MfaFilterContext {
         return session.get(LOGIN_ATTEMPT_KEY);
     }
 
-    public boolean isEndUserEnrolling() {
-        return nonNull(session.get(ENROLLED_FACTOR_ID_KEY));
+    public boolean isUserSelectedEnrollFactor() {
+        return nonNull(session.get(SELECTED_ENROLL_FACTOR_ID_KEY));
     }
 
     public Map<String, Object> getEvaluableContext() {
@@ -148,13 +148,13 @@ public class MfaFilterContext {
                 .orElse(false);
     }
 
-    public boolean isChallengeOnceCompleted() {
+    public boolean isChallengeCompleted() {
         return TRUE.equals(session.get(MFA_CHALLENGE_COMPLETED_KEY));
     }
 
 
     public boolean checkSelectedFactor() {
-        String enrollingFactorId = session.get(ENROLLED_FACTOR_ID_KEY);
+        String enrollingFactorId = session.get(SELECTED_ENROLL_FACTOR_ID_KEY);
         List<ApplicationFactorSettings> applicableFactors = getApplicableFactors();
         return applicableFactors.stream().anyMatch(factor -> factor.getId().equals(enrollingFactorId));
     }
@@ -176,7 +176,7 @@ public class MfaFilterContext {
     }
 
     public boolean isFactorSelected() {
-        return !StringUtil.isBlank(session.get(ENROLLED_FACTOR_ID_KEY));
+        return !StringUtil.isBlank(session.get(SELECTED_ENROLL_FACTOR_ID_KEY));
     }
 
     public boolean evaluateFactorRuleByFactorId(String factorId) {

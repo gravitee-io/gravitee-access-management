@@ -36,7 +36,7 @@ public class RoutingContextHelper {
             Arrays.asList(
                     RISK_ASSESSMENT_KEY,
                     MFA_ENROLLMENT_COMPLETED_KEY,
-                    ENROLLED_FACTOR_ID_KEY,
+                    SELECTED_ENROLL_FACTOR_ID_KEY,
                     MFA_CHALLENGE_COMPLETED_KEY,
                     STRONG_AUTH_COMPLETED_KEY,
                     WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY,
