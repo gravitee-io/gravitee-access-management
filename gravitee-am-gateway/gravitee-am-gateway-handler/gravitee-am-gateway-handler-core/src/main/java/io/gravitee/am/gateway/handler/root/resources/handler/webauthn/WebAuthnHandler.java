@@ -166,7 +166,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
     }
 
     protected boolean isEnrollingFido2Factor(RoutingContext ctx) {
-        final String factorId = ctx.session().get(ENROLLED_FACTOR_ID_KEY);
+        final String factorId = ctx.session().get(ENROLLING_FACTOR_ID_KEY);
         if (factorId == null) {
             return false;
         }

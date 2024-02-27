@@ -32,7 +32,7 @@ import io.vertx.rxjava3.ext.web.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ENROLLING_FACTOR_ID_KEY;
 
 /**
  * The callback route to verify attestations and assertions. Usually this route is <pre>/webauthn/response</pre>
@@ -133,7 +133,7 @@ public class WebAuthnResponseHandler extends WebAuthnHandler {
                                             return;
                                         }
                                         if (isEnrollingFido2Factor(ctx)) {
-                                            enrollFido2Factor(ctx, authenticatedUser, createEnrolledFactor(session.get(ENROLLED_FACTOR_ID_KEY), credentialId));
+                                            enrollFido2Factor(ctx, authenticatedUser, createEnrolledFactor(session.get(ENROLLING_FACTOR_ID_KEY), credentialId));
                                         } else {
                                             manageFido2FactorEnrollment(ctx, client, credentialId, authenticatedUser);
                                         }

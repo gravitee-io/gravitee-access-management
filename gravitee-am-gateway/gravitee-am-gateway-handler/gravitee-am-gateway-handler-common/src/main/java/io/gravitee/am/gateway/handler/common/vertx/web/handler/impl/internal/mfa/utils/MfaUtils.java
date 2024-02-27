@@ -138,9 +138,7 @@ public class MfaUtils {
 
     public static boolean stepUpRequired(MfaFilterContext context, Client client, RuleEngine ruleEngine) {
         var stepUpSettings = getMfaStepUp(client);
-        return !context.isUserStronglyAuth()
-                && stepUpSettings.getActive()
-                && evaluateRule(stepUpSettings.getStepUpAuthenticationRule(), context, ruleEngine);
+        return stepUpSettings.getActive() && evaluateRule(stepUpSettings.getStepUpAuthenticationRule(), context, ruleEngine);
     }
 
     public static boolean isCanSkip(RoutingContext routingContext, Client client) {

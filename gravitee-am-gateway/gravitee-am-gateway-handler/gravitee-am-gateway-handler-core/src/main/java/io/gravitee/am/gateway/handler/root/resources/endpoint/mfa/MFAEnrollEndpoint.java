@@ -206,7 +206,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
     }
 
     private boolean isSkipped(RoutingContext routingContext, boolean acceptEnrollment, Client client) {
-        // if user has skipped the enrollment process, continue
+        // if user has skipped the enrollment procenroless, continue
         if (!acceptEnrollment && MfaUtils.isCanSkip(routingContext, client)) {
             final User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
             // set the last skipped time
@@ -263,7 +263,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         FactorProvider provider = optFactor.getValue();
         if (provider.checkSecurityFactor(getSecurityFactor(params, optFactor.getKey()))) {
             // save enrolled factor for the current user and continue
-            routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, optFactor.getKey().getId());
+            routingContext.session().put(ConstantKeys.ENROLLING_FACTOR_ID_KEY, optFactor.getKey().getId());
             if (sharedSecret != null) {
                 routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY, sharedSecret);
             }
