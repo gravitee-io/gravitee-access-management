@@ -68,7 +68,7 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
             params = MultiMap.caseInsensitiveMultiMap().addAll(request.parameters().toSingleValueMap());
         }
         if (host != null) {
-            authority = HostAndPortImpl.parseHostAndPort(host, -1);
+            authority = HostAndPortImpl.parseAuthority(host, -1);
         }
     }
 
