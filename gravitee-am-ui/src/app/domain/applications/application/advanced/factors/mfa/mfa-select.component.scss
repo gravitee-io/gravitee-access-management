@@ -11,9 +11,9 @@
       display: inline-block;
 
       .mat-badge-content {
-        background-color: #c0b8d2;
         top: 0;
         right: -35px;
+        background-color: #c0b8d2;
       }
     }
   }
@@ -36,9 +36,9 @@
   text-align: center;
 
   .bell-icon {
-    color: rgb(30, 102, 112);
     padding: 15px;
-    background: rgba(30, 202, 211, 0.54);
     border-radius: 50px;
+    background: rgb(30 202 211 / 54%);
+    color: rgb(30 102 112);
   }
 }

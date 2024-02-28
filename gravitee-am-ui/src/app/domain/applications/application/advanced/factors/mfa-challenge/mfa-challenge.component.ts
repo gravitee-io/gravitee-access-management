@@ -18,7 +18,7 @@ import { GioLicenseService } from '@gravitee/ui-particles-angular';
 import { MatDialog } from '@angular/material/dialog';
 
 import { AmFeature } from '../../../../../../components/gio-license/gio-license-data';
-import { ExpressionInfoDialog } from '../expression-info-dialog/expression-info-dialog.component';
+import { ExpressionInfoDialogComponent } from '../expression-info-dialog/expression-info-dialog.component';
 import { Challenge, ModeOption } from '../model';
 
 @Component({
@@ -78,7 +78,7 @@ export class MfaChallengeComponent implements OnInit {
 
   openInfoDialog($event: any): void {
     $event.preventDefault();
-    this.dialog.open(ExpressionInfoDialog, {
+    this.dialog.open(ExpressionInfoDialogComponent, {
       width: '700px',
       data: {
         info: MfaChallengeComponent.EXPRESSION_INFO,
@@ -156,7 +156,7 @@ export class MfaChallengeComponent implements OnInit {
   private initModes(): void {
     this.modes = Object.keys(MfaChallengeComponent.modeOptions).map((key) => {
       const option = MfaChallengeComponent.modeOptions[key];
-      option.isMissingFeature$ = this.licenseService.isMissingFeature$(option.licenseOptions);
+      option.isMissingFeature$ = this.licenseService.isMissingFeature$(option.licenseOptions.feature);
       return option;
     });
   }

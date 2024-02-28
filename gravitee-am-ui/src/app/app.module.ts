@@ -436,9 +436,9 @@ import { LicenseGuard } from './guards/license-guard.service';
 import { ApplicationClientSecretDialogModule } from './domain/applications/client-secret/application-client-secret-dialog.module';
 import { MfaChallengeComponent } from './domain/applications/application/advanced/factors/mfa-challenge/mfa-challenge.component';
 import { InfoBannerComponent } from './domain/applications/application/advanced/factors/info-banner/info-banner.component';
-import { ExpressionInfoDialog } from './domain/applications/application/advanced/factors/expression-info-dialog/expression-info-dialog.component';
+import { ExpressionInfoDialogComponent } from './domain/applications/application/advanced/factors/expression-info-dialog/expression-info-dialog.component';
 import { FactorsSelectDialogComponent } from './domain/applications/application/advanced/factors/mfa/factors-select-dialog/factors-select-dialog.component';
-import { SelectionRuleDialog } from './domain/applications/application/advanced/factors/selection-rule-dialog/selection-rule-dialog.component';
+import { SelectionRuleDialogComponent } from './domain/applications/application/advanced/factors/selection-rule-dialog/selection-rule-dialog.component';
 
 @NgModule({
   declarations: [
@@ -673,8 +673,8 @@ import { SelectionRuleDialog } from './domain/applications/application/advanced/
     BotDetectionCreationStep2Component,
     BotDetectionComponent,
     BotDetectionFormComponent,
-    ExpressionInfoDialog,
-    SelectionRuleDialog,
+    ExpressionInfoDialogComponent,
+    SelectionRuleDialogComponent,
     GvFormControlDirective,
     IdpSelectionInfoDialogComponent,
     MfaSelectComponent,

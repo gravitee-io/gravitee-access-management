@@ -1,7 +1,7 @@
 .mfa-section-title {
   display: flex;
-  flex-direction: row;
   width: 100%;
+  flex-direction: row;
 
   .mfa-title {
     width: 95%;
@@ -9,12 +9,13 @@
 
   .mfa-chip {
     margin-right: 10px;
+
     mat-chip-list {
       mat-chip {
+        border: thin solid rgb(0 0 0 / 20%);
+        background-color: transparent;
         font-size: 11px;
         opacity: 1;
-        background-color: transparent;
-        border: thin solid rgba(0, 0, 0, 0.2);
       }
     }
   }
@@ -27,50 +28,50 @@
 }
 
 .options {
-  gap: 8px;
   padding: 5px 0 0 44px;
+  gap: 8px;
 }
 
 .options-title {
-  color: #606274;
   padding: 0 0 0 44px;
+  color: #606274;
 }
 
 .description {
+  padding: 20px;
   border: 1px solid #313133;
   border-radius: 4px;
-  padding: 20px;
-  gap: 4px;
   background: #f7f8fd;
+  gap: 4px;
 }
 
 .link {
+  width: 275px;
   color: #19424f;
-  font-weight: 400;
   font-family: 'Golos UI', sans-serif;
   font-size: 12px;
-  width: 275px;
+  font-weight: 400;
 }
 
 .risk-based-options-titles {
-  font-family: 'Golos UI', 'Roboto', 'Helvetica Neue', sans-serif;
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing: 0.4px;
   align-content: center;
+  font-family: 'Golos UI', Roboto, 'Helvetica Neue', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
 }
 
 .risk-based-group {
+  padding: 4px;
   border: 1px solid #d3d5dc;
   border-radius: 4px;
-  padding: 4px;
-  gap: 4px;
   color: #d3d5dc;
+  gap: 4px;
 }
 
 .mat-button-toggle-checked {
   background-color: #6c59bd;
-  color: #ffffff;
+  color: #fff;
 }
 
 .close-info {
@@ -87,21 +88,21 @@
 }
 
 .show-info {
-  background-color: #e7e2fb;
-  border: 3px solid #51438e;
   padding: 12px 12px 12px 16px;
+  border: 3px solid #51438e;
   border-radius: 8px;
-  gap: 16px;
   margin-bottom: 10px;
+  background-color: #e7e2fb;
+  gap: 16px;
 }
 
 .more-info-button {
-  padding: 3px 18px 3px 18px;
-  gap: 8px;
+  padding: 3px 18px;
+  font-family: 'Golos UI', Roboto, 'Helvetica Neue', sans-serif;
   font-size: 14px;
   font-weight: 700;
+  gap: 8px;
   letter-spacing: 0.4px;
-  font-family: 'Golos UI', 'Roboto', 'Helvetica Neue', sans-serif;
 }
 
 .config-section {

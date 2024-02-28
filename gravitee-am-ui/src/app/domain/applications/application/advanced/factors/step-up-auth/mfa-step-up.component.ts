@@ -16,7 +16,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 
-import { ExpressionInfoDialog } from '../expression-info-dialog/expression-info-dialog.component';
+import { ExpressionInfoDialogComponent } from '../expression-info-dialog/expression-info-dialog.component';
 import { StepUpAuth } from '../model';
 
 @Component({
@@ -38,7 +38,7 @@ export class MfaStepUpComponent {
 
   openInfoDialog($event: any): void {
     $event.preventDefault();
-    this.dialog.open(ExpressionInfoDialog, {
+    this.dialog.open(ExpressionInfoDialogComponent, {
       width: '700px',
       data: {
         info: `{#request.params['scope'][0] == 'write'}

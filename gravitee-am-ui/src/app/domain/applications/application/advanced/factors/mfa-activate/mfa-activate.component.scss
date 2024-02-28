@@ -54,22 +54,23 @@ blockquote {
   flex-direction: column;
   padding: 10px 0 0 44px;
 }
+
 .options {
-  gap: 8px;
   padding: 5px 0 0 44px;
+  gap: 8px;
 }
 
 .options-title {
-  color: #606274;
   padding: 0 0 0 44px;
+  color: #606274;
 }
 
 .description {
+  padding: 20px;
   border: 1px solid #313133;
   border-radius: 4px;
-  padding: 20px;
-  gap: 4px;
   background: #f7f8fd;
+  gap: 4px;
 }
 
 .config-section {

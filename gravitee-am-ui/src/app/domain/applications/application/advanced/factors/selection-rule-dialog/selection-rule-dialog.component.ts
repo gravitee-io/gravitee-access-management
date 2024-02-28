@@ -23,9 +23,9 @@ export interface SelectionRuleDialogResult {
   selector: 'factor-selection-rule-dialog',
   templateUrl: './selection-rule-dialog.component.html',
 })
-export class SelectionRuleDialog implements OnInit {
+export class SelectionRuleDialogComponent implements OnInit {
   selectionRule: string;
-  constructor(public dialogRef: MatDialogRef<SelectionRuleDialog>, @Inject(MAT_DIALOG_DATA) public data: any) {}
+  constructor(public dialogRef: MatDialogRef<SelectionRuleDialogComponent>, @Inject(MAT_DIALOG_DATA) public data: any) {}
 
   ngOnInit(): void {
     this.selectionRule = this.data.selectionRule;

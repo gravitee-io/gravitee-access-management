@@ -17,11 +17,11 @@ import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
 
+import { MfaFactor } from '../model';
+import { SelectionRuleDialogComponent, SelectionRuleDialogResult } from '../selection-rule-dialog/selection-rule-dialog.component';
+
 import { DialogResult, FactorsSelectDialogComponent } from './factors-select-dialog/factors-select-dialog.component';
 import { getDisplayFactorType, getFactorTypeIcon } from './mfa-select-icon';
-
-import { MfaFactor } from '../model';
-import { SelectionRuleDialog, SelectionRuleDialogResult } from '../selection-rule-dialog/selection-rule-dialog.component';
 
 @Component({
   selector: 'mfa-select',
@@ -109,7 +109,7 @@ export class MfaSelectComponent implements OnChanges {
 
   addSelectionRule(factor: MfaFactor): void {
     this.dialog
-      .open(SelectionRuleDialog, {
+      .open(SelectionRuleDialogComponent, {
         data: {
           selectionRule: factor.selectionRule,
         },

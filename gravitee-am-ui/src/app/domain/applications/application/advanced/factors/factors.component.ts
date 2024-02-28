@@ -17,12 +17,12 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs/operators';
 
-import { Challenge, Enroll, MfaFactor, RememberDevice, StepUpAuth } from './model';
-
 import { ApplicationService } from '../../../../../services/application.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { FactorService } from '../../../../../services/factor.service';
 import { AuthService } from '../../../../../services/auth.service';
+
+import { Challenge, Enroll, MfaFactor, RememberDevice, StepUpAuth } from './model';
 
 @Component({
   selector: 'app-application-factors',
