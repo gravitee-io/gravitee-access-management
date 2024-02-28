@@ -50,18 +50,20 @@ public class MFAEnrollStep extends MFAStep {
             if (context.isFactorSelected() && !context.checkSelectedFactor()) {
                 enrollment(context, flow);
             } else if (!userHasFactor(context) && stepUpRequired(context, client, ruleEngine)) {
-                    enrollment(context, flow);
-                } else if (isEnrollActive(client)) {
-                    switch (getEnrollSettings(client).getType()) {
-                        case OPTIONAL -> optional(flow, context);
-                        case REQUIRED -> required(flow, context);
-                        case CONDITIONAL -> conditional(flow, client, context);
-                    }
-                } else if (isChallengeActive(client)) {
-                    enrollIfChallengeRequires(flow, client, context);
-                } else {
-                    stop(context, flow);
+                enrollment(context, flow);
+            } else if (isEnrollActive(client)) {
+                switch (getEnrollSettings(client).getType()) {
+                    case OPTIONAL -> optional(flow, context);
+                    case REQUIRED -> required(flow, context);
+                    case CONDITIONAL -> conditional(flow, client, context);
                 }
+            } else if (stepUpRequired(context, client, ruleEngine)) {
+                continueFlow(context, flow);
+            } else if (isChallengeActive(client)) {
+                enrollIfChallengeRequires(flow, client, context);
+            } else {
+                stop(context, flow);
+            }
         } else {
             stop(context, flow);
         }
