@@ -620,7 +620,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
 
-            var stepUpAuthenticationRule = "{#request.params['scope'][0] == 'write'}";
+            var stepUpAuthenticationRule = "{true}";
             var stepUpAuthentication = new StepUpAuthenticationSettings();
             stepUpAuthentication.setActive(true);
             stepUpAuthentication.setStepUpAuthenticationRule(stepUpAuthenticationRule);
@@ -642,9 +642,14 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         });
 
         testRequest(
-                HttpMethod.GET,
-                "/login",
-                HttpStatusCode.OK_200, "OK");
+                HttpMethod.GET, "/login?scope=write",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/mfa/challenge?scope=write"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
     }
 
 
@@ -691,6 +696,45 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
                     assertTrue(location.endsWith("/mfa/challenge"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+
+    @Test
+    public void shouldContinue_user_device_known_and_step_up_active_but_not_match() throws Exception {
+        router.route().order(-1).handler(rc -> {
+            EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, "");
+            MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
+            Client client = new Client();
+            setFactors(client);
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+
+            var stepUpAuthenticationRule = "{false}";
+            var stepUpAuthentication = new StepUpAuthenticationSettings();
+            stepUpAuthentication.setActive(true);
+            stepUpAuthentication.setStepUpAuthenticationRule(stepUpAuthenticationRule);
+            mfaSettings.setStepUpAuthentication(stepUpAuthentication);
+
+            final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
+            rememberDevice.setActive(true);
+            mfaSettings.setRememberDevice(rememberDevice);
+            rc.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
+            client.setMfaSettings(mfaSettings);
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId(FACTOR_ID);
+            enrolledFactor.setStatus(ACTIVATED);
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            endUser.setFactors(Collections.singletonList(enrolledFactor));
+            rc.getDelegate().setUser(new User(endUser));
+            rc.session().put(STRONG_AUTH_COMPLETED_KEY, false);
+            rc.session().put(MFA_CHALLENGE_COMPLETED_KEY, false);
+            rc.next();
+        });
+
+        testRequest(
+                HttpMethod.GET,
+                "/login",
+                HttpStatusCode.OK_200, "OK");
     }
 
     @Test
