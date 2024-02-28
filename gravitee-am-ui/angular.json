@@ -100,18 +100,18 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "gravitee-am-ui:build"
+            "buildTarget": "gravitee-am-ui:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "gravitee-am-ui:build:production"
+              "buildTarget": "gravitee-am-ui:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "gravitee-am-ui:build"
+            "buildTarget": "gravitee-am-ui:build"
           }
         },
         "test": {
