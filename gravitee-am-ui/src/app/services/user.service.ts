@@ -26,7 +26,10 @@ import { OrganizationService } from './organization.service';
 export class UserService {
   private usersURL = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient, private organizationService: OrganizationService) {}
+  constructor(
+    private http: HttpClient,
+    private organizationService: OrganizationService,
+  ) {}
 
   findByDomain(domainId, page, size): Observable<any> {
     return this.http.get<any>(this.usersURL + domainId + '/users?page=' + page + '&size=' + size);

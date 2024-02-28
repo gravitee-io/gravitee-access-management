@@ -25,7 +25,10 @@ export class ApplicationsResolver {
   private default_page = 0;
   private default_size = 50;
 
-  constructor(private applicationService: ApplicationService, private dashboardService: DashboardService) {}
+  constructor(
+    private applicationService: ApplicationService,
+    private dashboardService: DashboardService,
+  ) {}
 
   resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
     const domain = route.parent.data['domain'];

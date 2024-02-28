@@ -28,7 +28,11 @@ export class EmailsComponent implements OnInit {
   @Input() emails: any[];
   private viewPermission: string;
 
-  constructor(private router: Router, private route: ActivatedRoute, private authService: AuthService) {}
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.appId = this.route.snapshot.params['appId'];

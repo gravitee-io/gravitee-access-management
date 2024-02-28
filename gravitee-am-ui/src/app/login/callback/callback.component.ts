@@ -26,7 +26,11 @@ import { SnackbarService } from '../../services/snackbar.service';
   template: ``,
 })
 export class LoginCallbackComponent implements OnInit {
-  constructor(private router: Router, private authService: AuthService, private snackbarService: SnackbarService) {}
+  constructor(
+    private router: Router,
+    private authService: AuthService,
+    private snackbarService: SnackbarService,
+  ) {}
 
   ngOnInit() {
     this.authService

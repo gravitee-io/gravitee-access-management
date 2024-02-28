@@ -22,7 +22,10 @@ import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
 export class UserRolesResolver {
-  constructor(private userService: UserService, private organizationService: OrganizationService) {}
+  constructor(
+    private userService: UserService,
+    private organizationService: OrganizationService,
+  ) {}
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
     const userId = route.paramMap.get('userId');

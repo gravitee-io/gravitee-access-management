@@ -25,7 +25,10 @@ export class GroupsResolver {
   private default_page = 0;
   private default_size = 100;
 
-  constructor(private groupService: GroupService, private organizationService: OrganizationService) {}
+  constructor(
+    private groupService: GroupService,
+    private organizationService: OrganizationService,
+  ) {}
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
     if (state.url.startsWith('/settings')) {

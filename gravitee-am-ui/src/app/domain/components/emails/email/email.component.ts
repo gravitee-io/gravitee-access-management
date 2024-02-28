@@ -208,5 +208,8 @@ export class EmailComponent implements OnInit, AfterViewInit {
   templateUrl: './dialog/email-info.component.html',
 })
 export class EmailInfoDialogComponent {
-  constructor(public dialogRef: MatDialogRef<EmailInfoDialogComponent>, @Inject(MAT_DIALOG_DATA) public data: DialogData) {}
+  constructor(
+    public dialogRef: MatDialogRef<EmailInfoDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: DialogData,
+  ) {}
 }

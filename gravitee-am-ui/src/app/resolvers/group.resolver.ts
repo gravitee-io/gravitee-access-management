@@ -22,7 +22,10 @@ import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
 export class GroupResolver {
-  constructor(private groupService: GroupService, private organizationService: OrganizationService) {}
+  constructor(
+    private groupService: GroupService,
+    private organizationService: OrganizationService,
+  ) {}
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
     const groupId = route.paramMap.get('groupId');

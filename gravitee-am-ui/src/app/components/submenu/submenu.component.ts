@@ -39,7 +39,10 @@ export class SubmenuComponent implements OnInit, OnDestroy {
   subMenuItems: any;
   subscription: Subscription;
 
-  constructor(private router: Router, private navigationService: NavigationService) {}
+  constructor(
+    private router: Router,
+    private navigationService: NavigationService,
+  ) {}
 
   ngOnInit(): void {
     this.subscription = this.navigationService.level2MenuItemsObs$.subscribe(

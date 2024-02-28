@@ -25,7 +25,10 @@ export class AuditsResolver {
   private default_page = 0;
   private default_size = 10;
 
-  constructor(private auditService: AuditService, private organizationService: OrganizationService) {}
+  constructor(
+    private auditService: AuditService,
+    private organizationService: OrganizationService,
+  ) {}
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
     if (state.url.startsWith('/settings')) {

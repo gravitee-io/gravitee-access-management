@@ -46,7 +46,10 @@ export class MaterialCertificateComponent implements OnInit {
   certificates: any;
   controlValue: any;
 
-  constructor(private jsf: JsonSchemaFormService, private route: ActivatedRoute) {}
+  constructor(
+    private jsf: JsonSchemaFormService,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit() {
     this.certificates = this.route.snapshot.data['certificates'];

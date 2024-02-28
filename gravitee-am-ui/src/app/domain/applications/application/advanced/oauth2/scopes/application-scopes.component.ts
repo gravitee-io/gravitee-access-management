@@ -214,8 +214,8 @@ export class ApplicationScopesComponent implements OnInit {
           ? humanizeDate[1]
           : humanizeDate[1] + 's'
         : humanizeDate[2].endsWith('s')
-        ? humanizeDate[2]
-        : humanizeDate[2] + 's';
+          ? humanizeDate[2]
+          : humanizeDate[2] + 's';
     return humanizeDateUnit;
   }
 }
@@ -235,7 +235,10 @@ export class AddScopeComponent {
   separatorKeysCodes: number[] = [ENTER, COMMA];
   private applicationScopes: string[] = [];
 
-  constructor(@Inject(MAT_DIALOG_DATA) public data: any, public dialogRef: MatDialogRef<AddScopeComponent>) {
+  constructor(
+    @Inject(MAT_DIALOG_DATA) public data: any,
+    public dialogRef: MatDialogRef<AddScopeComponent>,
+  ) {
     this.applicationScopes = data.applicationScopes || [];
     this.filteredScopes = this.loadFilteredScopes();
     this.scopeCtrl.valueChanges.subscribe((searchTerm) => {

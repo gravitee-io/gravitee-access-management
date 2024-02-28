@@ -23,7 +23,10 @@ import { AuthService } from '../../services/auth.service';
   template: ``,
 })
 export class LogoutCallbackComponent implements OnInit {
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+  ) {}
 
   ngOnInit() {
     this.authService.logout().subscribe(() => this.router.navigate(['/login']));

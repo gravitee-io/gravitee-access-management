@@ -29,7 +29,10 @@ export class ApplicationResourcesComponent implements OnInit {
   resources: any[];
   page: any = {};
 
-  constructor(private route: ActivatedRoute, private applicationService: ApplicationService) {
+  constructor(
+    private route: ActivatedRoute,
+    private applicationService: ApplicationService,
+  ) {
     this.page.pageNumber = 0;
     this.page.size = 10;
   }

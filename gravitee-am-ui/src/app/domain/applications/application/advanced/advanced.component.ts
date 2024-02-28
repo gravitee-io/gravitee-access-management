@@ -28,7 +28,11 @@ import { AuthService } from '../../../../services/auth.service';
 export class ApplicationAdvancedComponent implements OnDestroy {
   private subscription: Subscription;
 
-  constructor(private router: Router, private route: ActivatedRoute, private authService: AuthService) {
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    private authService: AuthService,
+  ) {
     this.subscription = this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((next: NavigationEnd) => {
       if (next.url.endsWith('settings')) {
         this.loadPermissions();

@@ -33,7 +33,10 @@ interface AuditsResponse {
 export class AuditService {
   private auditsURL = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient, private organizationService: OrganizationService) {}
+  constructor(
+    private http: HttpClient,
+    private organizationService: OrganizationService,
+  ) {}
 
   get(domainId: string, auditId: string): Observable<any> {
     return this.http.get(`${this.auditsURL + domainId}/audits/${auditId}`);

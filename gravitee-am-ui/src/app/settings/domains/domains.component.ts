@@ -31,7 +31,10 @@ export class DomainsComponent implements OnInit {
   version = AppConfig.settings.version;
   domains = [];
 
-  constructor(private route: ActivatedRoute, private domainService: DomainService) {
+  constructor(
+    private route: ActivatedRoute,
+    private domainService: DomainService,
+  ) {
     this.page.pageNumber = 0;
     this.page.size = 10;
   }

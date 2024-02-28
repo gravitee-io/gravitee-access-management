@@ -33,7 +33,11 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
   domainWhitelistPattern = '';
   private certificates: any[];
 
-  constructor(private organizationService: OrganizationService, private snackbarService: SnackbarService, private route: ActivatedRoute) {}
+  constructor(
+    private organizationService: OrganizationService,
+    private snackbarService: SnackbarService,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit() {
     this.certificates = this.route.snapshot.data['certificates'];

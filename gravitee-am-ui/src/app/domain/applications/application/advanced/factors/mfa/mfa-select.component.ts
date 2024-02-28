@@ -37,7 +37,10 @@ export class MfaSelectComponent implements OnChanges {
 
   selectedFactors: MfaFactor[];
 
-  constructor(public dialog: MatDialog, private route: ActivatedRoute) {}
+  constructor(
+    public dialog: MatDialog,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.factors) {

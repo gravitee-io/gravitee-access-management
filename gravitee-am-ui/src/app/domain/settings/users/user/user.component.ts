@@ -32,7 +32,10 @@ export class UserComponent implements OnInit {
   user: any;
   navLinks: NavLink[] = [];
 
-  constructor(private route: ActivatedRoute, private router: Router) {}
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;

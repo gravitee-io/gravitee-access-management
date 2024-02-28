@@ -28,7 +28,10 @@ export class TabNavbarComponent implements OnInit, OnDestroy {
   subMenuItems: any;
   subscription: Subscription;
 
-  constructor(private router: Router, private navigationService: NavigationService) {}
+  constructor(
+    private router: Router,
+    private navigationService: NavigationService,
+  ) {}
 
   ngOnInit(): void {
     this.subscription = this.navigationService.level3MenuItemsObs$.subscribe((items) => (this.subMenuItems = items));

@@ -28,7 +28,10 @@ export class DomainService {
   private domainUpdatedSource = new Subject<any>();
   domainUpdated$ = this.domainUpdatedSource.asObservable();
 
-  constructor(private http: HttpClient, private authService: AuthService) {}
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService,
+  ) {}
 
   findByEnvironment(page, size): Observable<any> {
     return this.http.get<any>(this.domainsURL + '?page=' + page + '&size=' + size);

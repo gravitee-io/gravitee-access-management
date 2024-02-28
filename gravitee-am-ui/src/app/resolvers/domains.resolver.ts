@@ -21,7 +21,10 @@ import { EnvironmentService } from '../services/environment.service';
 
 @Injectable()
 export class DomainsResolver {
-  constructor(private domainService: DomainService, private environmentService: EnvironmentService) {}
+  constructor(
+    private domainService: DomainService,
+    private environmentService: EnvironmentService,
+  ) {}
 
   resolve(): Observable<any> {
     if (!this.environmentService.getCurrentEnvironment()) {

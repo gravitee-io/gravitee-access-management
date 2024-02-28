@@ -175,7 +175,10 @@ export class CertitificatePublicKeyDialogComponent {
   public certificateKeys: any[] = [];
   public error: boolean;
 
-  constructor(public dialogRef: MatDialogRef<CertitificatePublicKeyDialogComponent>, private snackbarService: SnackbarService) {}
+  constructor(
+    public dialogRef: MatDialogRef<CertitificatePublicKeyDialogComponent>,
+    private snackbarService: SnackbarService,
+  ) {}
 
   valueCopied(message) {
     this.snackbarService.open(message);

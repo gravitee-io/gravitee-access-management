@@ -26,7 +26,10 @@ import { AuthService } from './auth.service';
 export class ApplicationService {
   private appsURL = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient, private authService: AuthService) {}
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService,
+  ) {}
 
   findByDomain(domainId, page, size): Observable<any> {
     return this.http.get<any>(this.appsURL + domainId + '/applications?page=' + page + '&size=' + size);

@@ -32,7 +32,11 @@ export class ApplicationOAuth2Component implements OnDestroy {
     { href: 'scopes', label: 'Scopes', icon: 'transform' },
     { href: 'tokens', label: 'Tokens', icon: 'swap_horiz' },
   ];
-  constructor(private router: Router, private route: ActivatedRoute, private authService: AuthService) {
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    private authService: AuthService,
+  ) {
     this.subscription = this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((next: NavigationEnd) => {
       if (next.url.endsWith('oauth2')) {
         this.loadPermissions();

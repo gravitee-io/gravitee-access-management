@@ -27,7 +27,10 @@ export class AuditsSettingsComponent implements OnInit {
   reporters: any[];
   domainId: string;
 
-  constructor(private route: ActivatedRoute, private authService: AuthService) {}
+  constructor(
+    private route: ActivatedRoute,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.reporters = this.route.snapshot.data['reporters'];
