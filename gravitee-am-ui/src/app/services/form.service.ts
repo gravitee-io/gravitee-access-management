@@ -25,7 +25,10 @@ import { OrganizationService } from './organization.service';
 export class FormService {
   private formsUrl = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient, private organizationService: OrganizationService) {}
+  constructor(
+    private http: HttpClient,
+    private organizationService: OrganizationService,
+  ) {}
 
   get(domainId, appId, formTemplate): Observable<any> {
     return this.http.get<any>(this.formsUrl + domainId + (appId ? '/applications/' + appId : '') + '/forms?template=' + formTemplate);

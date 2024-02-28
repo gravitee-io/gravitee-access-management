@@ -33,7 +33,10 @@ export class ExpressionInfoDialogComponent {
 {#context.attributes['geoip']['lat'] == -122.3032}
 {#context.attributes['login_attempts'] < 3}
 `;
-  constructor(public dialogRef: MatDialogRef<ExpressionInfoDialogComponent>, @Inject(MAT_DIALOG_DATA) public data: any) {}
+  constructor(
+    public dialogRef: MatDialogRef<ExpressionInfoDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any,
+  ) {}
 
   getInfo(): string {
     return this.data?.info ? this.data.info : this.DEFAULT_INFO;

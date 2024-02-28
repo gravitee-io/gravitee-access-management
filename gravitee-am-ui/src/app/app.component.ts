@@ -27,7 +27,11 @@ import { AuthService } from './services/auth.service';
 export class AppComponent implements OnInit {
   reducedMode = false;
 
-  constructor(public router: Router, private authService: AuthService, private sidenavService: SidenavService) {}
+  constructor(
+    public router: Router,
+    private authService: AuthService,
+    private sidenavService: SidenavService,
+  ) {}
 
   ngOnInit() {
     this.authService.notifyObservable$.subscribe((response) => {

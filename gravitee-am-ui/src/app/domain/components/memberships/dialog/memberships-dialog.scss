@@ -3,7 +3,9 @@ mat-toolbar {
   align-items: center;
   padding: 10px;
   background: white;
-  box-shadow: 0 2px 2px rgb(0 0 0 / 24%), 0 0 2px rgb(0 0 0 / 12%);
+  box-shadow:
+    0 2px 2px rgb(0 0 0 / 24%),
+    0 0 2px rgb(0 0 0 / 12%);
 }
 
 .mat-mdc-dialog-content {

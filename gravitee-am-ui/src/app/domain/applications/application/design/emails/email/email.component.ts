@@ -32,7 +32,10 @@ export class ApplicationEmailComponent implements OnInit {
   editMode: boolean;
   deleteMode: boolean;
 
-  constructor(private route: ActivatedRoute, private authService: AuthService) {}
+  constructor(
+    private route: ActivatedRoute,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;

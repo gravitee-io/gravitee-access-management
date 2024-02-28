@@ -34,8 +34,8 @@ export class TimeConverterService {
           ? humanizeDate[1]
           : humanizeDate[1] + 's'
         : humanizeDate[2].endsWith('s')
-        ? humanizeDate[2]
-        : humanizeDate[2] + 's';
+          ? humanizeDate[2]
+          : humanizeDate[2] + 's';
     }
     return 'seconds';
   }

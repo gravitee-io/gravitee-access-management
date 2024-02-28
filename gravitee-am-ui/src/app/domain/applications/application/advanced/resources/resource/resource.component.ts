@@ -27,7 +27,10 @@ export class ApplicationResourceComponent implements OnInit {
   resource: any;
   policies: any[];
 
-  constructor(private route: ActivatedRoute, private applicationService: ApplicationService) {}
+  constructor(
+    private route: ActivatedRoute,
+    private applicationService: ApplicationService,
+  ) {}
 
   ngOnInit(): void {
     this.resource = this.route.snapshot.data['resource'];

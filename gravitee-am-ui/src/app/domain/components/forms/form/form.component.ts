@@ -191,5 +191,8 @@ export class FormComponent implements OnInit, AfterViewInit {
   templateUrl: './dialog/form-info.component.html',
 })
 export class FormInfoDialogComponent {
-  constructor(public dialogRef: MatDialogRef<FormInfoDialogComponent>, @Inject(MAT_DIALOG_DATA) public data: DialogData) {}
+  constructor(
+    public dialogRef: MatDialogRef<FormInfoDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: DialogData,
+  ) {}
 }

@@ -34,7 +34,10 @@ export class FactorCreationStep2Component implements OnInit {
   private resourcePlugins: any[];
   private resources: any[];
 
-  constructor(private organizationService: OrganizationService, private route: ActivatedRoute) {}
+  constructor(
+    private organizationService: OrganizationService,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit() {
     this.factorPlugins = this.route.snapshot.data['factorPlugins'];

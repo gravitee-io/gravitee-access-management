@@ -92,19 +92,19 @@
                 row.enabled && !accountLocked(row)
                   ? 'user-enabled'
                   : !row.enabled
-                  ? 'user-disabled'
-                  : accountLocked(row)
-                  ? 'user-locked'
-                  : ''
+                    ? 'user-disabled'
+                    : accountLocked(row)
+                      ? 'user-locked'
+                      : ''
               "
               [matTooltip]="
                 row.enabled && !accountLocked(row)
                   ? 'User enabled'
                   : !row.enabled
-                  ? 'User disabled'
-                  : accountLocked(row)
-                  ? 'User locked'
-                  : ''
+                    ? 'User disabled'
+                    : accountLocked(row)
+                      ? 'User locked'
+                      : ''
               "
             >
               <app-user-avatar [user]="row" [width]="'40'"></app-user-avatar>

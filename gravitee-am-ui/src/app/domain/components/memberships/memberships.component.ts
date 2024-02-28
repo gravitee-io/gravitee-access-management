@@ -49,7 +49,11 @@ export class MembershipsComponent implements OnInit, OnChanges {
   filteredGroups: any[];
   displayReset = false;
 
-  constructor(private organizationService: OrganizationService, private dialogService: DialogService, private authService: AuthService) {
+  constructor(
+    private organizationService: OrganizationService,
+    private dialogService: DialogService,
+    private authService: AuthService,
+  ) {
     this.userCtrl.valueChanges
       .pipe(
         filter((searchTerm) => searchTerm && typeof searchTerm === 'string'),

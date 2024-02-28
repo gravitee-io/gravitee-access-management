@@ -324,7 +324,7 @@
           <mat-list-item *ngIf="accountLocked(user)">
             <mat-icon mat-list-icon>blocked</mat-icon>
             <h4 matLine>Account blocked</h4>
-            <p matLine>Until : {{ user.accountLockedUntil | date : 'medium' }}</p>
+            <p matLine>Until : {{ user.accountLockedUntil | date: 'medium' }}</p>
           </mat-list-item>
         </mat-list>
       </div>

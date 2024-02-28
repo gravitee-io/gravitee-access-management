@@ -43,7 +43,10 @@ export class MfaRememberDeviceComponent implements OnInit, OnChanges {
   domainName: string;
   environment: string;
 
-  constructor(private timeConverterService: TimeConverterService, private route: ActivatedRoute) {}
+  constructor(
+    private timeConverterService: TimeConverterService,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit(): void {
     this.active = this.rememberDevice ? this.rememberDevice.active : false;

@@ -31,7 +31,10 @@ export class BotDetectionCreationStep2Component implements OnInit {
   configuration: any;
   botDetectionSchema: any = {};
 
-  constructor(private organizationService: OrganizationService, private route: ActivatedRoute) {}
+  constructor(
+    private organizationService: OrganizationService,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit() {
     this.organizationService.botDetectionsSchema(this.botDetection.type).subscribe((data) => {

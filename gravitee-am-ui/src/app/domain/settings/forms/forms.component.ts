@@ -27,7 +27,11 @@ export class DomainSettingsFormsComponent implements OnInit {
   forms: any[];
   domain: any;
 
-  constructor(private route: ActivatedRoute, private router: Router, private formTemplateFactoryService: FormTemplateFactoryService) {}
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private formTemplateFactoryService: FormTemplateFactoryService,
+  ) {}
 
   ngOnInit() {
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {

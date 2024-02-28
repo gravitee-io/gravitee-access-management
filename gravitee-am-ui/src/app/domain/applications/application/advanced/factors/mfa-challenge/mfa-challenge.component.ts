@@ -67,7 +67,10 @@ export class MfaChallengeComponent implements OnInit {
   adaptiveMfaRule: string;
   assessments: any;
 
-  constructor(private licenseService: GioLicenseService, private dialog: MatDialog) {}
+  constructor(
+    private licenseService: GioLicenseService,
+    private dialog: MatDialog,
+  ) {}
 
   ngOnInit(): void {
     this.initModes();

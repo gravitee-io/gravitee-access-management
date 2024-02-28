@@ -22,7 +22,10 @@ import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
 export class ProviderResolver {
-  constructor(private providerService: ProviderService, private organizationService: OrganizationService) {}
+  constructor(
+    private providerService: ProviderService,
+    private organizationService: OrganizationService,
+  ) {}
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
     const providerId = route.paramMap.get('providerId');

@@ -31,7 +31,10 @@ export class DeviceNotifierCreationStep2Component implements OnInit {
   configuration: any;
   deviceNotifierSchema: any = {};
 
-  constructor(private organizationService: OrganizationService, private route: ActivatedRoute) {}
+  constructor(
+    private organizationService: OrganizationService,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit() {
     this.organizationService.deviceNotifierSchema(this.deviceNotifier.type).subscribe((data) => {

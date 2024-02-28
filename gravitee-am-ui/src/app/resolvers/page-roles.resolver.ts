@@ -22,7 +22,10 @@ import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
 export class PageRolesResolver {
-  constructor(private roleService: RoleService, private organizationService: OrganizationService) {}
+  constructor(
+    private roleService: RoleService,
+    private organizationService: OrganizationService,
+  ) {}
 
   resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
     const domainId = route.parent.data['domain'].id;

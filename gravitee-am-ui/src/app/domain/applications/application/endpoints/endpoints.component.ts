@@ -31,7 +31,11 @@ export class ApplicationEndpointsComponent implements OnInit {
   private domain: any;
   @ViewChild('copyText', { read: ElementRef }) copyText: ElementRef;
 
-  constructor(private route: ActivatedRoute, private snackbarService: SnackbarService, private entrypointService: EntrypointService) {}
+  constructor(
+    private route: ActivatedRoute,
+    private snackbarService: SnackbarService,
+    private entrypointService: EntrypointService,
+  ) {}
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];

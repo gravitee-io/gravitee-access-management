@@ -18,7 +18,11 @@ export type UTMSource = 'oss_am';
 export type UTMCampaign = 'oss_am_to_ee_am';
 
 export class UTM {
-  constructor(private readonly source: UTMSource, private readonly medium: string, private readonly campaign: UTMCampaign) {}
+  constructor(
+    private readonly source: UTMSource,
+    private readonly medium: string,
+    private readonly campaign: UTMCampaign,
+  ) {}
 
   public buildURL(): string {
     return `https://gravitee.io/self-hosted-trial?utm_source=${this.source}&utm_medium=${this.medium}&utm_campaign=${this.campaign}`;

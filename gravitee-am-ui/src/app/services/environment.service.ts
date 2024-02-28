@@ -32,7 +32,10 @@ export class EnvironmentService {
   public currentEnvironmentObs$ = this.currentEnvironmentSubject.asObservable();
   private allEnvironments: any[];
 
-  constructor(private http: HttpClient, private authService: AuthService) {}
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService,
+  ) {}
 
   getAllEnvironments(): Observable<any[]> {
     if (this.allEnvironments) {

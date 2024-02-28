@@ -30,7 +30,10 @@ export class ProviderCreationStep1Component implements OnInit {
   filter: string;
   filteredIdentities: IdentityProvider[];
 
-  constructor(private organizationService: OrganizationService, private route: ActivatedRoute) {}
+  constructor(
+    private organizationService: OrganizationService,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit() {
     this.filter = '';

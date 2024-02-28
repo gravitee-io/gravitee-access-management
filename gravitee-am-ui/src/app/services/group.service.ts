@@ -25,7 +25,10 @@ import { OrganizationService } from './organization.service';
 export class GroupService {
   private groupsURL = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient, private organizationService: OrganizationService) {}
+  constructor(
+    private http: HttpClient,
+    private organizationService: OrganizationService,
+  ) {}
 
   findByDomain(domainId, page, size): Observable<any> {
     return this.http.get<any>(this.groupsURL + domainId + '/groups?page=' + page + '&size=' + size);

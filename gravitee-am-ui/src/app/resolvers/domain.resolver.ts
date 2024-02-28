@@ -23,7 +23,10 @@ import { NavbarService } from '../components/navbar/navbar.service';
 
 @Injectable()
 export class DomainResolver {
-  constructor(private domainService: DomainService, private navbarService: NavbarService) {}
+  constructor(
+    private domainService: DomainService,
+    private navbarService: NavbarService,
+  ) {}
 
   resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domainHrid = route.paramMap.get('domainId');

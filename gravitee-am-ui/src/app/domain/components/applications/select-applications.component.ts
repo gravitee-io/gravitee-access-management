@@ -35,7 +35,10 @@ export class SelectApplicationsComponent implements OnInit {
   // eslint-disable-next-line @angular-eslint/no-output-on-prefix
   @Output() onRemoveApp = new EventEmitter<any>();
 
-  constructor(private route: ActivatedRoute, private applicationService: ApplicationService) {}
+  constructor(
+    private route: ActivatedRoute,
+    private applicationService: ApplicationService,
+  ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;

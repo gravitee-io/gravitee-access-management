@@ -74,7 +74,11 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     { id: 'years', name: 'YEARS' },
   ];
 
-  constructor(private route: ActivatedRoute, private providerService: ProviderService, private botDetectionService: BotDetectionService) {}
+  constructor(
+    private route: ActivatedRoute,
+    private providerService: ProviderService,
+    private botDetectionService: BotDetectionService,
+  ) {}
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -377,8 +381,8 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
           ? humanizeDate[1]
           : humanizeDate[1] + 's'
         : humanizeDate[2].endsWith('s')
-        ? humanizeDate[2]
-        : humanizeDate[2] + 's';
+          ? humanizeDate[2]
+          : humanizeDate[2] + 's';
     return { time, unit };
   }
 

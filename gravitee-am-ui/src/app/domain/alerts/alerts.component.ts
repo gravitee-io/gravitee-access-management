@@ -26,7 +26,11 @@ import { AuthService } from '../../services/auth.service';
 export class DomainAlertsComponent implements OnInit {
   alertStatus: any;
 
-  constructor(private router: Router, private route: ActivatedRoute, private authService: AuthService) {}
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.alertStatus = this.route.snapshot.data.alertStatus;

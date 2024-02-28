@@ -27,7 +27,10 @@ export class DomainSettingsEmailsComponent implements OnInit {
   domain: any;
   private emailTemplateFactoryService: EmailTemplateFactoryService;
 
-  constructor(private route: ActivatedRoute, emailTemplateFactoryService: EmailTemplateFactoryService) {
+  constructor(
+    private route: ActivatedRoute,
+    emailTemplateFactoryService: EmailTemplateFactoryService,
+  ) {
     this.emailTemplateFactoryService = emailTemplateFactoryService;
   }
 

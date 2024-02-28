@@ -30,7 +30,11 @@ export class DomainSettingsFormComponent implements OnInit {
   editMode: boolean;
   deleteMode: boolean;
 
-  constructor(private route: ActivatedRoute, private router: Router, private authService: AuthService) {}
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.rawTemplate = this.route.snapshot.queryParams['template'];

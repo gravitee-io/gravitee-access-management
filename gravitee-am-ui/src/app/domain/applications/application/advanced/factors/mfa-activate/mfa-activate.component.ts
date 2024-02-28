@@ -51,7 +51,10 @@ export class MfaActivateComponent implements OnInit, AfterViewInit {
 
   currentMode: any;
   modes: any[];
-  constructor(private licenseService: GioLicenseService, private cdr: ChangeDetectorRef) {}
+  constructor(
+    private licenseService: GioLicenseService,
+    private cdr: ChangeDetectorRef,
+  ) {}
 
   ngOnInit(): void {
     this.initModes();

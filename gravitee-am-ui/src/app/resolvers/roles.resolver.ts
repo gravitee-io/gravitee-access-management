@@ -22,7 +22,10 @@ import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
 export class RolesResolver {
-  constructor(private roleService: RoleService, private organizationService: OrganizationService) {}
+  constructor(
+    private roleService: RoleService,
+    private organizationService: OrganizationService,
+  ) {}
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
     if (state.url.startsWith('/settings/providers')) {

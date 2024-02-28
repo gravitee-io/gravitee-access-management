@@ -27,7 +27,10 @@ export class ApplicationFormsComponent implements OnInit {
   domain: any;
   application: any;
 
-  constructor(private route: ActivatedRoute, private formTemplateFactoryService: FormTemplateFactoryService) {}
+  constructor(
+    private route: ActivatedRoute,
+    private formTemplateFactoryService: FormTemplateFactoryService,
+  ) {}
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];

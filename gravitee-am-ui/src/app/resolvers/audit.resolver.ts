@@ -22,7 +22,10 @@ import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
 export class AuditResolver {
-  constructor(private auditService: AuditService, private organizationService: OrganizationService) {}
+  constructor(
+    private auditService: AuditService,
+    private organizationService: OrganizationService,
+  ) {}
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
     const auditId = route.paramMap.get('auditId');

@@ -46,7 +46,11 @@ export class NavigationService implements OnDestroy {
 
   subscription: Subscription;
 
-  constructor(private router: Router, private authGuard: AuthGuard, private licenseGuard: LicenseGuard) {
+  constructor(
+    private router: Router,
+    private authGuard: AuthGuard,
+    private licenseGuard: LicenseGuard,
+  ) {
     const navigationEnd$ = this.router.events.pipe(filter((ev) => ev instanceof NavigationEnd));
 
     this.subscription = this.router.events
