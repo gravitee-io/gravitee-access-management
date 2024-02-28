@@ -156,7 +156,7 @@ export class MfaChallengeComponent implements OnInit {
   private initModes(): void {
     this.modes = Object.keys(MfaChallengeComponent.modeOptions).map((key) => {
       const option = MfaChallengeComponent.modeOptions[key];
-      option.isMissingFeature$ = this.licenseService.isMissingFeature$(option.licenseOptions.feature);
+      option.isMissingFeature$ = this.licenseService.isMissingFeature$(option.licenseOptions?.feature);
       return option;
     });
   }

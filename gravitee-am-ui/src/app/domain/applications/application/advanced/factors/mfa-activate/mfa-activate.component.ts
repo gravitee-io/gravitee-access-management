@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ChangeDetectorRef, AfterViewInit } from '@angular/core';
 import { GioLicenseService } from '@gravitee/ui-particles-angular';
 
 import { Enroll, ModeOption } from '../model';
@@ -23,7 +23,7 @@ import { Enroll, ModeOption } from '../model';
   templateUrl: './mfa-activate.component.html',
   styleUrls: ['./mfa-activate.component.scss'],
 })
-export class MfaActivateComponent implements OnInit {
+export class MfaActivateComponent implements OnInit, AfterViewInit {
   private static modeOptions: Record<string, ModeOption> = {
     OPTIONAL: {
       label: 'Optional',
@@ -51,7 +51,7 @@ export class MfaActivateComponent implements OnInit {
 
   currentMode: any;
   modes: any[];
-  constructor(private licenseService: GioLicenseService) {}
+  constructor(private licenseService: GioLicenseService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.initModes();
@@ -89,9 +89,12 @@ export class MfaActivateComponent implements OnInit {
   private initModes(): void {
     this.modes = Object.keys(MfaActivateComponent.modeOptions).map((key) => {
       const option = MfaActivateComponent.modeOptions[key];
-      option.isMissingFeature$ = this.licenseService.isMissingFeature$(option.licenseOptions.feature);
+      option.isMissingFeature$ = this.licenseService.isMissingFeature$(option.licenseOptions?.feature);
       return option;
     });
+  }
+  ngAfterViewInit(): void {
+    this.cdr.detectChanges();
   }
 
   private update(): void {
