@@ -359,6 +359,21 @@ class MFAEnrollStepTest {
     }
 
     @Test
+    void shouldContinueWhenEnrollDisabledUserHasEnrolledStepUpEnabled() {
+        mockStepUp(true);
+        mockAuthUserWithEnrolledFactors();
+        when(enroll.isActive()).thenReturn(false);
+        when(mfa.getEnroll()).thenReturn(enroll);
+        when(client.getMfaSettings()).thenReturn(mfa);
+        when(factor.getFactorType()).thenReturn(FactorType.SMS);
+        when(factorManager.getFactor(DEFAULT_FACTOR.getId())).thenReturn(factor);
+
+        mfaEnrollStep.execute(routingContext, flow);
+
+        verifyContinue();
+    }
+
+    @Test
     void shouldEnrollWhenEnrollDisabledButChallengeEnabled() {
         mockAuthUser();
         when(enroll.isActive()).thenReturn(false);
