@@ -1,39 +1,43 @@
 h1 {
-  margin-bottom: 0px;
+  margin-bottom: 0;
 }
 
 .scopes-search {
   text-align: center;
+
   mat-form-field {
     width: 70%;
   }
+
   mat-icon {
-    vertical-align: middle;
     padding-bottom: 4px;
+    vertical-align: middle;
   }
 }
 
 p {
-  font-size: smaller;
   margin: 5px 0;
+  font-size: smaller;
 }
 
 ngx-datatable {
   .scope-header {
-    margin: 5px;
     align-items: center;
+    margin: 5px;
+
     .scope-icon {
       margin: 0 12px 0 0;
     }
+
     .scope-information {
       h3 {
+        margin: 0;
         font-size: 14px;
         font-weight: normal;
-        margin: 0;
       }
 
       small {
-        color: rgba(0, 0, 0, 0.54);
+        color: rgb(0 0 0 / 54%);
       }
     }
   }
@@ -42,10 +46,5 @@ ngx-datatable {
 :host {
   ::ng-deep.scope-name-cell {
     padding: 0 !important;
-  }
-  ::ng-deep.mat-chip-list-wrapper .mat-standard-chip,
-  .mat-chip-list-wrapper input.mat-input-element {
-    margin: 2px 0px 0px 10px;
-    min-height: 24px;
   }
 }

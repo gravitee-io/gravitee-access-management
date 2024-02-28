@@ -76,6 +76,7 @@ export class ProviderRolesComponent implements OnInit {
 
         mapperRoles.forEach((role) => {
           // no mapping for this role
+          // eslint-disable-next-line no-prototype-builtins
           if (!this.providerRoleMapper.hasOwnProperty(role)) {
             if (mapper.user) {
               this.providerRoleMapper[role] = [mapper.user];
@@ -153,7 +154,7 @@ export class ProviderRolesComponent implements OnInit {
   selector: 'create-role-mapper',
   templateUrl: './create/create.component.html',
 })
-export class CreateRoleMapperComponent {
+export class CreateRoleMapperComponent implements OnInit {
   @ViewChild('userRoleForm', { static: true }) form: NgForm;
   spelGrammar: any;
   rule: string;

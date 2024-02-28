@@ -22,15 +22,7 @@
         You have configured <b>{{ factors.length }}</b> multi-factor authentication method(s).
       </div>
     </div>
-    <ngx-datatable
-      *ngIf="!isEmpty"
-      class="material"
-      [columnMode]="'flex'"
-      [headerHeight]="40"
-      [footerHeight]="40"
-      [rowHeight]="50"
-      [rows]="factors"
-    >
+    <ngx-datatable *ngIf="!isEmpty" class="material" [columnMode]="'flex'" [headerHeight]="40" [rowHeight]="50" [rows]="factors">
       <ngx-datatable-column name="Factors" [flexGrow]="4" [cellClass]="'factor-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="factor-header" fxLayout="row">
@@ -52,7 +44,7 @@
       <ngx-datatable-column [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
-            <button *ngIf="canRevoke" mat-icon-button (click)="remove($event, row)">
+            <button *ngIf="canRevoke" mat-button (click)="remove($event, row)">
               <mat-icon style="color: #f44336" matTooltip="Remove multi-factor auth">highlight_off</mat-icon>
             </button>
           </div>

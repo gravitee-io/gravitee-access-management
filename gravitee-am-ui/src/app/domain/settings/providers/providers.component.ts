@@ -28,7 +28,7 @@ import { OrganizationService } from '../../../services/organization.service';
   styleUrls: ['./providers.component.scss'],
 })
 export class DomainSettingsProvidersComponent implements OnInit {
-  private providers: any[];
+  providers: any[];
   private identities: any[];
   private organizationContext = false;
   domainId: string;

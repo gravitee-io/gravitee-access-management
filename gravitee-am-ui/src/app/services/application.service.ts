@@ -18,9 +18,9 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { AuthService } from './auth.service';
-
 import { AppConfig } from '../../config/app.config';
+
+import { AuthService } from './auth.service';
 
 @Injectable()
 export class ApplicationService {

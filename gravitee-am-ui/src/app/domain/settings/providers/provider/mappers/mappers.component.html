@@ -23,7 +23,7 @@
       [columnMode]="'flex'"
       class="material"
       [headerHeight]="40"
-      [footerHeight]="40"
+      [footerHeight]="50"
       [rowHeight]="55"
       [rows]="mappers"
     >
@@ -63,7 +63,7 @@
       <ngx-datatable-column name="Actions" [flexGrow]="1">
         <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions" *hasPermission="['domain_identity_provider_update']">
-            <button mat-icon-button (click)="delete(row.key, $event)"><mat-icon>delete</mat-icon></button>
+            <button mat-button (click)="delete(row.key, $event)"><mat-icon>delete</mat-icon></button>
           </div>
         </ng-template>
       </ngx-datatable-column>

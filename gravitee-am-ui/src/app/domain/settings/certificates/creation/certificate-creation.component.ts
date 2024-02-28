@@ -50,7 +50,7 @@ export class CertificateCreationComponent implements OnInit, AfterViewChecked {
         this.snackbarService.open('The certificate ' + data.name + ' has been successfully created.');
         this.router.navigate(['..', data.id], { relativeTo: this.route });
       },
-      (_) => {
+      (_: unknown) => {
         this.certificate = { ...this.certificate, name: '', configuration: null };
       },
     );

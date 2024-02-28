@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { GroupService } from '../services/group.service';
 import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
-export class GroupsResolver implements Resolve<any> {
+export class GroupsResolver {
   private default_page = 0;
   private default_size = 100;
 

@@ -2,13 +2,15 @@
   h1 {
     font-weight: 400;
   }
+
   .form-delete-zone {
+    padding: 20px;
+    border: 1px solid #e2e5e7;
+    border-radius: 2px;
+    margin-top: 20px;
     color: #f44336;
     font-size: 75%;
-    margin-top: 20px;
-    padding: 20px;
-    border-radius: 2px;
-    border: 1px solid #e2e5e7;
+
     .form-delete-button {
       margin-top: 20px;
     }
@@ -16,11 +18,11 @@
 }
 
 .hint {
-  color: rgba(0, 0, 0, 0.38);
+  color: rgb(0 0 0 / 38%);
 }
 
 h4.disabled {
-  color: rgba(0, 0, 0, 0.38);
+  color: rgb(0 0 0 / 38%);
 }
 
 .preview {

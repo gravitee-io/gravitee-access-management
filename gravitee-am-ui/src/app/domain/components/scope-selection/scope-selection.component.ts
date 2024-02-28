@@ -35,6 +35,7 @@ export interface Scope {
   styleUrls: ['./scope-selection.component.scss'],
 })
 export class ScopeSelectionComponent implements OnInit, AfterViewInit {
+  // eslint-disable-next-line @angular-eslint/no-output-on-prefix
   @Output() onScopeSelection = new EventEmitter();
   @Input() initialSelectedScopes: string[];
   @Input() readonly: boolean;

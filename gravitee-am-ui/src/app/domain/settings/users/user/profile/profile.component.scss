@@ -1,12 +1,14 @@
 a.gv-accent-link {
-  font-size: 75%;
   cursor: pointer;
+  font-size: 75%;
 }
+
 .gv-page-description-content {
   p {
+    color: rgb(0 0 0 / 38%);
     font-size: 12px !important;
-    color: rgba(0, 0, 0, 0.38);
   }
+
   mat-icon {
     color: grey;
   }

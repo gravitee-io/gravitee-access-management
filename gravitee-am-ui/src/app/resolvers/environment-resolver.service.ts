@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
 import { EnvironmentService } from '../services/environment.service';
 
 @Injectable()
-export class EnvironmentResolver implements Resolve<any> {
+export class EnvironmentResolver {
   constructor(private environmentService: EnvironmentService) {}
 
   resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {

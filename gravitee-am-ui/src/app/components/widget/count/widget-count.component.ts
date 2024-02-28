@@ -23,7 +23,7 @@ import { Chart } from '../widget.model';
   styleUrls: ['./widget-count.component.scss'],
 })
 export class WidgetCountComponent implements OnChanges {
-  @Input('chart') chart: Chart;
+  @Input() chart: Chart;
   value: number;
 
   ngOnChanges(changes: SimpleChanges): void {

@@ -15,21 +15,21 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { DictionaryDialog } from './dictionary-dialog.component';
+import { DictionaryDialogComponent } from './dictionary-dialog.component';
 
 describe('ConfirmComponent', () => {
-  let component: DictionaryDialog;
-  let fixture: ComponentFixture<DictionaryDialog>;
+  let component: DictionaryDialogComponent;
+  let fixture: ComponentFixture<DictionaryDialogComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [DictionaryDialog],
+      declarations: [DictionaryDialogComponent],
       teardown: { destroyAfterEach: false },
     }).compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(DictionaryDialog);
+    fixture = TestBed.createComponent(DictionaryDialogComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

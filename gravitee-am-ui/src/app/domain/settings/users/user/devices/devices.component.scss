@@ -6,8 +6,9 @@
   }
 
   ::ng-deep.row-disabled {
-    background: #f1f1f1;
     border: 1px solid #fafafa;
+    background: #f1f1f1;
+
     datatable-body-cell {
       color: grey !important;
       font-size: 85% !important;

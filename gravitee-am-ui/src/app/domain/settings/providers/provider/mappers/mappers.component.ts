@@ -83,6 +83,7 @@ export class ProviderMappersComponent implements OnInit {
   setMappers(mappers) {
     this.mappers = [];
     for (const k in mappers) {
+      // eslint-disable-next-line no-prototype-builtins
       if (mappers.hasOwnProperty(k)) {
         this.mappers.push({
           key: k,
@@ -172,7 +173,7 @@ export class ProviderMappersComponent implements OnInit {
   selector: 'create-mapper',
   templateUrl: './create/create.component.html',
 })
-export class CreateMapperComponent {
+export class CreateMapperComponent implements OnInit {
   spelGrammar: any;
   rule: string;
 

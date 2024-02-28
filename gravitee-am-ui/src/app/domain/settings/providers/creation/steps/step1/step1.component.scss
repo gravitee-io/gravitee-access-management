@@ -1,29 +1,26 @@
+@use '@angular/material' as mat;
+
 mat-card {
-  margin-top: 10px;
-  box-shadow: 0 0 0 1px var(--gv-theme-neutral-color, #f5f5f5), 0 1px 3px var(--gv-theme-neutral-color-dark, #bfbfbf);
-  transition: transform 0.3s;
-  box-sizing: border-box;
-  border: 2px transparent solid;
-  justify-content: center;
-  align-content: center;
+  @include mat.elevation-transition;
+
   display: flex;
+  box-sizing: border-box;
+  margin-top: 10px;
+  place-content: center center;
 }
 
-mat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 20px -10px var(--gv-theme-neutral-color-dark, #bfbfbf);
+mat-card:hover,
+mat-card.selected {
+  @include mat.elevation(8);
+
   cursor: pointer;
 }
 
-mat-card.selected {
-  border-color: #5a7684;
-}
-
 mat-card-content {
-  text-align: center;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  text-align: center;
 }
 
 :host ::ng-deep mat-card-content i {
@@ -36,6 +33,6 @@ mat-card-content {
 
 .cards-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
   grid-gap: 1rem;
+  grid-template-columns: repeat(3, 1fr);
 }

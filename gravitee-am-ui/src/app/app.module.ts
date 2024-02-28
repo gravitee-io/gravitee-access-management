@@ -56,7 +56,6 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { CodemirrorModule } from 'ng2-codemirror';
 import { MaterialDesignFrameworkModule } from '@ajsf/material';
 import { HighchartsChartModule } from 'highcharts-angular';
 import { ClipboardModule } from 'ngx-clipboard';
@@ -64,6 +63,7 @@ import { map, mergeMap } from 'rxjs/operators';
 import {
   GioLicenseExpirationNotificationModule,
   GioLicenseModule,
+  GioMatConfigModule,
   GioMenuModule,
   GioSafePipeModule,
   GioSaveBarModule,
@@ -72,6 +72,9 @@ import {
   GioTopBarMenuModule,
   GioTopBarModule,
 } from '@gravitee/ui-particles-angular';
+import { CodemirrorModule } from '@ctrl/ngx-codemirror';
+
+import { AppConfig } from '../config/app.config';
 
 import { CertificateCreationStep2Component } from './domain/settings/certificates/creation/steps/step2/step2.component';
 import { ExtensionGrantResolver } from './resolvers/extension-grant.resolver';
@@ -81,7 +84,6 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { HomeComponent } from './home/home.component';
 import { DisplayableItemPipe, SidenavComponent } from './components/sidenav/sidenav.component';
-import { SidenavSettingsComponent } from './components/sidenav-settings/sidenav-settings.component';
 import { SubmenuComponent, SubmenuItemsComponent } from './components/submenu/submenu.component';
 import { LoginComponent } from './login/login.component';
 import { LoginCallbackComponent } from './login/callback/callback.component';
@@ -121,7 +123,10 @@ import { ClientRegistrationAllowedScopeComponent } from './domain/settings/openi
 import { ClientRegistrationTemplatesComponent } from './domain/settings/openid/client-registration/templates/templates.component';
 import { DomainSettingsRolesComponent } from './domain/settings/roles/roles.component';
 import { DomainSettingsScopesComponent } from './domain/settings/scopes/scopes.component';
-import { CertitificatePublicKeyDialog, DomainSettingsCertificatesComponent } from './domain/settings/certificates/certificates.component';
+import {
+  CertitificatePublicKeyDialogComponent,
+  DomainSettingsCertificatesComponent,
+} from './domain/settings/certificates/certificates.component';
 import { DomainSettingsProvidersComponent } from './domain/settings/providers/providers.component';
 import { DomainSettingsExtensionGrantsComponent } from './domain/settings/extension-grants/extension-grants.component';
 import { DomainSettingsFormsComponent } from './domain/settings/forms/forms.component';
@@ -131,7 +136,7 @@ import { DomainSettingsEmailsComponent } from './domain/settings/emails/emails.c
 import { DomainSettingsEmailComponent } from './domain/settings/emails/email/email.component';
 import { DomainSettingsAccountComponent } from './domain/settings/account/account.component';
 import { DomainSettingsSelfServiceAccountComponent } from './domain/settings/self-service-account/self-service-account.component';
-import { DomainMembershipsDialog, DomainSettingsMembershipsComponent } from './domain/settings/memberships/memberships.component';
+import { DomainMembershipsDialogComponent, DomainSettingsMembershipsComponent } from './domain/settings/memberships/memberships.component';
 import { DomainSettingsFactorsComponent } from './domain/settings/factors/factors.component';
 import { DomainSettingsResourcesComponent } from './domain/settings/resources/resources.component';
 import { DomainSettingsWebAuthnComponent } from './domain/settings/webauthn/webauthn.component';
@@ -168,7 +173,7 @@ import { SettingsComponent } from './settings/settings.component';
 import { HumanDatePipe } from './pipes/human-date.pipe';
 import { MapToIterablePipe } from './pipes/map-to-iterable.pipe';
 import { DummyComponent } from './components/dummy/dummy.component';
-import { UsersComponent, UsersSearchInfoDialog } from './domain/settings/users/users.component';
+import { UsersComponent, UsersSearchInfoDialogComponent } from './domain/settings/users/users.component';
 import { UserComponent } from './domain/settings/users/user/user.component';
 import { UserCreationComponent } from './domain/settings/users/creation/user-creation.component';
 import { UserClaimComponent } from './domain/settings/users/creation/user-claim.component';
@@ -198,7 +203,7 @@ import { ManagementComponent } from './settings/management/management.component'
 import { ManagementGeneralComponent } from './settings/management/general/general.component';
 import { SettingsMembershipsComponent } from './settings/memberships/memberships.component';
 import { FormsComponent } from './domain/components/forms/forms.component';
-import { FormComponent, FormInfoDialog } from './domain/components/forms/form/form.component';
+import { FormComponent, FormInfoDialogComponent } from './domain/components/forms/form/form.component';
 import { FormService } from './services/form.service';
 import { FormResolver } from './resolvers/form.resolver';
 import { GroupsComponent } from './domain/settings/groups/groups.component';
@@ -212,9 +217,9 @@ import { GroupResolver } from './resolvers/group.resolver';
 import { GroupMembersResolver } from './resolvers/group-members.resolver';
 import { AddGroupRolesComponent, GroupRolesComponent } from './domain/settings/groups/group/roles/roles.component';
 import { GroupRolesResolver } from './resolvers/group-roles.resolver';
-import { IdpSelectionInfoDialog, ScimComponent } from './domain/settings/scim/scim.component';
+import { IdpSelectionInfoDialogComponent, ScimComponent } from './domain/settings/scim/scim.component';
 import { EmailsComponent } from './domain/components/emails/emails.component';
-import { EmailComponent, EmailInfoDialog } from './domain/components/emails/email/email.component';
+import { EmailComponent, EmailInfoDialogComponent } from './domain/components/emails/email/email.component';
 import { EmailService } from './services/email.service';
 import { EmailResolver } from './resolvers/email.resolver';
 import { SelectApplicationsComponent } from './domain/components/applications/select-applications.component';
@@ -278,7 +283,7 @@ import {
 } from './domain/applications/application/advanced/oauth2/scopes/application-scopes.component';
 import {
   ApplicationTokensComponent,
-  ClaimsInfoDialog,
+  ClaimsInfoDialogComponent,
   CreateClaimComponent,
 } from './domain/applications/application/advanced/oauth2/tokens/application-tokens.component';
 import { ApplicationGrantFlowsComponent } from './domain/applications/application/advanced/oauth2/grantFlows/application-grant-flows.component';
@@ -286,7 +291,7 @@ import { ApplicationCertificatesComponent } from './domain/applications/applicat
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
 import {
   ApplicationMembershipsComponent,
-  ApplicationMembershipsDialog,
+  ApplicationMembershipsDialogComponent,
 } from './domain/applications/application/advanced/memberships/memberships.component';
 import { ApplicationFactorsComponent } from './domain/applications/application/advanced/factors/factors.component';
 import { ManagementRolesComponent } from './settings/management/roles/roles.component';
@@ -418,7 +423,7 @@ import { MfaConditionalComponent } from './domain/applications/application/advan
 import { MfaRiskBasedComponent } from './domain/applications/application/advanced/factors/mfa-challenge/risk-based/mfa-risk-based.component';
 import { AssessmentComponent } from './domain/applications/application/advanced/factors/mfa-challenge/risk-based/assessment/assessment.component';
 import { DomainSettingsDictionariesComponent } from './domain/settings/texts/dictionaries.component';
-import { DictionaryDialog } from './components/dialog/dictionary/dictionary-dialog.component';
+import { DictionaryDialogComponent } from './components/dialog/dictionary/dictionary-dialog.component';
 import { DictionariesResolver } from './resolvers/dictionaries.resolver';
 import { I18nDictionaryService } from './services/dictionary.service';
 import { DomainSettingsThemeComponent } from './domain/settings/theme/theme.component';
@@ -435,14 +440,11 @@ import { ExpressionInfoDialog } from './domain/applications/application/advanced
 import { FactorsSelectDialogComponent } from './domain/applications/application/advanced/factors/mfa/factors-select-dialog/factors-select-dialog.component';
 import { SelectionRuleDialog } from './domain/applications/application/advanced/factors/selection-rule-dialog/selection-rule-dialog.component';
 
-import { AppConfig } from '../config/app.config';
-
 @NgModule({
   declarations: [
     AppComponent,
     HomeComponent,
     SidenavComponent,
-    SidenavSettingsComponent,
     SubmenuComponent,
     SubmenuItemsComponent,
     LoginComponent,
@@ -480,7 +482,7 @@ import { AppConfig } from '../config/app.config';
     DomainSettingsDeviceIdentifiersComponent,
     DomainSettingsThemeComponent,
     ConfirmComponent,
-    DictionaryDialog,
+    DictionaryDialogComponent,
     EmptystateComponent,
     DomainCreationComponent,
     ProviderCreationComponent,
@@ -502,7 +504,7 @@ import { AppConfig } from '../config/app.config';
     CertificateCreationStep1Component,
     CertificateCreationStep2Component,
     CertificateFormComponent,
-    CertitificatePublicKeyDialog,
+    CertitificatePublicKeyDialogComponent,
     RoleCreationComponent,
     RoleComponent,
     CreateRoleMapperComponent,
@@ -557,7 +559,7 @@ import { AppConfig } from '../config/app.config';
     SettingsMembershipsComponent,
     FormsComponent,
     FormComponent,
-    FormInfoDialog,
+    FormInfoDialogComponent,
     GroupsComponent,
     GroupCreationComponent,
     GroupComponent,
@@ -569,7 +571,7 @@ import { AppConfig } from '../config/app.config';
     ScimComponent,
     EmailsComponent,
     EmailComponent,
-    EmailInfoDialog,
+    EmailInfoDialogComponent,
     SelectApplicationsComponent,
     AuditsComponent,
     AuditComponent,
@@ -584,7 +586,7 @@ import { AppConfig } from '../config/app.config';
     EntrypointComponent,
     AccountSettingsComponent,
     ScopeSelectionComponent,
-    ClaimsInfoDialog,
+    ClaimsInfoDialogComponent,
     RoleSelectionComponent,
     ApplicationsComponent,
     ApplicationAnalyticsComponent,
@@ -636,8 +638,8 @@ import { AppConfig } from '../config/app.config';
     WidgetDataTableComponent,
     WidgetCountComponent,
     LoaderComponent,
-    DomainMembershipsDialog,
-    ApplicationMembershipsDialog,
+    DomainMembershipsDialogComponent,
+    ApplicationMembershipsDialogComponent,
     UserAvatarComponent,
     NotFoundComponent,
     UmaComponent,
@@ -653,7 +655,7 @@ import { AppConfig } from '../config/app.config';
     DeviceNotifierCreationStep2Component,
     CookieSettingsComponent,
     LoginSettingsComponent,
-    UsersSearchInfoDialog,
+    UsersSearchInfoDialogComponent,
     NewsletterComponent,
     UserHistoryComponent,
     EnvironmentComponent,
@@ -674,7 +676,7 @@ import { AppConfig } from '../config/app.config';
     ExpressionInfoDialog,
     SelectionRuleDialog,
     GvFormControlDirective,
-    IdpSelectionInfoDialog,
+    IdpSelectionInfoDialogComponent,
     MfaSelectComponent,
     MfaRememberDeviceComponent,
     MfaStepUpComponent,
@@ -695,6 +697,7 @@ import { AppConfig } from '../config/app.config';
     ReactiveFormsModule,
     HttpClientModule,
     AppRoutingModule,
+
     MatAutocompleteModule,
     MatButtonModule,
     MatButtonToggleModule,
@@ -727,13 +730,9 @@ import { AppConfig } from '../config/app.config';
     MatTooltipModule,
     MatStepperModule,
     MatBadgeModule,
-    DragDropModule,
-    FlexLayoutModule,
-    NgxDatatableModule,
     MaterialDesignFrameworkModule,
-    CodemirrorModule,
-    ClipboardModule,
-    HighchartsChartModule,
+
+    GioMatConfigModule,
     GioMenuModule,
     GioTopBarModule,
     GioTopBarLinkModule,
@@ -742,8 +741,15 @@ import { AppConfig } from '../config/app.config';
     GioLicenseModule,
     GioSafePipeModule,
     GioSaveBarModule,
-    ApplicationClientSecretDialogModule,
     GioLicenseExpirationNotificationModule,
+
+    DragDropModule,
+    FlexLayoutModule,
+    NgxDatatableModule,
+    CodemirrorModule,
+    ClipboardModule,
+    HighchartsChartModule,
+    ApplicationClientSecretDialogModule,
   ],
   providers: [
     DomainService,

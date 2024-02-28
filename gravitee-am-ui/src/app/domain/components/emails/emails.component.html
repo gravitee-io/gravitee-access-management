@@ -20,7 +20,6 @@
     class="material"
     [columnMode]="'flex'"
     [headerHeight]="40"
-    [footerHeight]="40"
     [rowHeight]="50"
     [rows]="emails"
     [sorts]="[{ prop: 'enabled', dir: 'desc' }]"
@@ -49,7 +48,7 @@
             }}' email template customisation"
             >block</mat-icon
           >
-          <a *ngIf="row.enabled && canView()" mat-icon-button [routerLink]="['email']" [queryParams]="{ template: row.template }"
+          <a *ngIf="row.enabled && canView()" mat-button [routerLink]="['email']" [queryParams]="{ template: row.template }"
             ><mat-icon matTooltip="Edit email template">edit</mat-icon></a
           >
           <mat-icon *ngIf="row.enabled && !canView()" matTooltip="You don't have required permission">block</mat-icon>

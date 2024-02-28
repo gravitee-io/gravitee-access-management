@@ -19,7 +19,7 @@
   <p class="gv-plugin-creation-description">Choose your cryptographic algorithms to sign the data (JWT tokens).</p>
 
   <div fxLayout="row wrap" fxLayoutGap="10px">
-    <mat-card *ngFor="let certificate of certificates" fxFlex="30">
+    <mat-card appearance="outlined" *ngFor="let certificate of certificates" fxFlex="30">
       <mat-card-header fxLayoutAlign="end end" fxLayout="row">
         <mat-radio-group [(ngModel)]="selectedCertificateTypeId" (ngModelChange)="selectCertificateType()">
           <mat-radio-button [value]="certificate.id"></mat-radio-button>

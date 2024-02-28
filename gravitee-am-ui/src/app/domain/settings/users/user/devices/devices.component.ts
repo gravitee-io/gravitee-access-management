@@ -16,6 +16,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, switchMap, tap } from 'rxjs/operators';
+import { SortType } from '@swimlane/ngx-datatable';
 
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { DialogService } from '../../../../../services/dialog.service';
@@ -34,6 +35,7 @@ export class UserDevicesComponent implements OnInit {
   canDelete: boolean;
   devices: any[];
   deviceIdentifiers: any[];
+  sortType = SortType.multi;
 
   constructor(
     private route: ActivatedRoute,

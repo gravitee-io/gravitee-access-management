@@ -16,9 +16,9 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
-import { AnalyticsService } from './analytics.service';
-
 import { AppConfig } from '../../config/app.config';
+
+import { AnalyticsService } from './analytics.service';
 
 describe('AnalyticsService', () => {
   let httpTestingController: HttpTestingController;

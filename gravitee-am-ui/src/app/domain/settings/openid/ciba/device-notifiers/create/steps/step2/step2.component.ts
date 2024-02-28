@@ -24,9 +24,9 @@ import { OrganizationService } from '../../../../../../../../services/organizati
   styleUrls: ['./step2.component.scss'],
 })
 export class DeviceNotifierCreationStep2Component implements OnInit {
-  @Input('deviceNotifier') deviceNotifier: any;
-  @Input('configurationIsValid') configurationIsValid: boolean;
-  @Output('configurationIsValidChange') configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Input() deviceNotifier: any;
+  @Input() configurationIsValid: boolean;
+  @Output() configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
   formChanged = false;
   configuration: any;
   deviceNotifierSchema: any = {};

@@ -18,7 +18,7 @@
 <div fxLayout="column">
   <p class="gv-plugin-creation-description">Choose device identifier mechanism.</p>
   <div fxLayout="row wrap" fxLayoutGap="10px">
-    <mat-card *ngFor="let deviceIdentifier of deviceIdentifiers" fxFlex="30">
+    <mat-card appearance="outlined" *ngFor="let deviceIdentifier of deviceIdentifiers" fxFlex="30">
       <mat-card-header fxLayoutAlign="end end" fxLayout="row">
         <mat-radio-group [(ngModel)]="selectedDeviceIdentifierTypeId" (ngModelChange)="selectType()">
           <mat-radio-button [value]="deviceIdentifier.id"></mat-radio-button>

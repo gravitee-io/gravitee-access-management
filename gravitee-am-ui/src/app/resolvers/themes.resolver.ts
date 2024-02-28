@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { ThemeService } from '../services/theme.service';
 
 @Injectable()
-export class ThemesResolver implements Resolve<any> {
+export class ThemesResolver {
   constructor(private themeService: ThemeService) {}
 
   resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {

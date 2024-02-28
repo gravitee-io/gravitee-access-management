@@ -41,4 +41,6 @@ public class GraviteeLicense {
     private Set<String> features = Set.of();
 
     private Date expiresAt;
+
+    private boolean isExpired;
 }

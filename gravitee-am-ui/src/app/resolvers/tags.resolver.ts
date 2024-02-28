@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Resolve } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { TagService } from '../services/tag.service';
 
 @Injectable()
-export class TagsResolver implements Resolve<any> {
+export class TagsResolver {
   constructor(private tagService: TagService) {}
 
   resolve(): Observable<any> {

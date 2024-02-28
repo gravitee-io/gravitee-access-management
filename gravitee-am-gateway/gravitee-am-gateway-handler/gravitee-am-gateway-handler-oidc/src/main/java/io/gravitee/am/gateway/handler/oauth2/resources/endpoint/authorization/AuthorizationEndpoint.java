@@ -115,7 +115,7 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
             // In form_post mode, Authorization Response parameters are encoded as HTML form values that are auto-submitted in the User Agent,
             // and thus are transmitted via the HTTP POST method to the Client.
             // Prepare context to render post form.
-            final MultiMap queryParams = RequestUtils.cleanParams(response.params());
+            final MultiMap queryParams = RequestUtils.cleanParams(response.params(false));
             context.put(ACTION_KEY, request.getRedirectUri());
             context.put(FORM_PARAMETERS, queryParams.remove(ACTION_KEY));
 

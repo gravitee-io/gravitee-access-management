@@ -22,6 +22,7 @@ import { ActivatedRoute } from '@angular/router';
   styleUrls: ['./login-settings.component.scss'],
 })
 export class LoginSettingsComponent implements OnInit, OnChanges {
+  // eslint-disable-next-line @angular-eslint/no-output-on-prefix
   @Output() onSavedLoginSettings = new EventEmitter<any>();
   @Input() loginSettings: any;
   @Input() inheritMode = false;

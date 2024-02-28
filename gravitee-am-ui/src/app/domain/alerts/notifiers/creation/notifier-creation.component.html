@@ -39,7 +39,7 @@
           <small>Alert notifier configuration</small>
         </ng-template>
         <alert-notifier-creation-step2
-          *ngIf="stepper.selectedIndex == 1"
+          *ngIf="stepper.selectedIndex === 1"
           [alertNotifier]="alertNotifier"
           [(configurationIsValid)]="configurationIsValid"
         ></alert-notifier-creation-step2>

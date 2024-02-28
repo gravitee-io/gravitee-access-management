@@ -16,6 +16,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, filter, switchMap, tap } from 'rxjs/operators';
+import { toString } from 'lodash';
 
 import { AuthService } from '../../services/auth.service';
 import { SnackbarService } from '../../services/snackbar.service';
@@ -41,8 +42,8 @@ export class LoginCallbackComponent implements OnInit {
             this.router.navigate(['/']);
           }
         }),
-        catchError((error) => {
-          this.snackbarService.open(error.replace(/%20/g, ' '));
+        catchError((error: unknown) => {
+          this.snackbarService.open(toString(error).replace(/%20/g, ' '));
           return this.router.navigate(['/logout']);
         }),
       )

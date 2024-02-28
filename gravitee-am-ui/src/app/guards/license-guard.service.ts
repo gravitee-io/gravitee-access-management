@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivate, Route } from '@angular/router';
+import { ActivatedRouteSnapshot, Route } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { GioLicenseService, LicenseOptions } from '@gravitee/ui-particles-angular';
 import { map } from 'rxjs/operators';
 
 @Injectable()
-export class LicenseGuard implements CanActivate {
+export class LicenseGuard {
   constructor(private gioLicenseService: GioLicenseService) {}
   canActivate(route: ActivatedRouteSnapshot): Observable<boolean> {
     return this.isMissingFeature$(route).pipe(map((isMissingFeature) => !isMissingFeature));
@@ -31,7 +31,7 @@ export class LicenseGuard implements CanActivate {
     if (licenseOptions === undefined) {
       return of(false);
     }
-    return this.gioLicenseService.isMissingFeature$(licenseOptions);
+    return this.gioLicenseService.isMissingFeature$(licenseOptions.feature);
   }
 
   getLicenseOptions(route: ActivatedRouteSnapshot | Route): LicenseOptions {

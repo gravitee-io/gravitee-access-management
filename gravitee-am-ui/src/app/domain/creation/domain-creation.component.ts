@@ -15,6 +15,7 @@
  */
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { get } from 'lodash';
 
 import { DomainService } from '../../services/domain.service';
 import { SnackbarService } from '../../services/snackbar.service';
@@ -49,9 +50,9 @@ export class DomainCreationComponent implements OnInit {
         this.snackbarService.open('Domain ' + data.name + ' created');
         this.router.navigate(['..', data.hrid], { relativeTo: this.route });
       },
-      (error) => {
+      (error: unknown) => {
         this.createDomainBtn.nativeElement.loading = false;
-        this.snackbarService.openFromComponent('Errors', [error.error.message]);
+        this.snackbarService.openFromComponent('Errors', [get(error, 'error.message')]);
       },
     );
   }

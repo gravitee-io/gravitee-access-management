@@ -18,9 +18,9 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import * as bcrypt from 'bcryptjs';
 
-import { OrganizationService } from './organization.service';
-
 import { AppConfig } from '../../config/app.config';
+
+import { OrganizationService } from './organization.service';
 
 @Injectable()
 export class ProviderService {

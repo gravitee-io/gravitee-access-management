@@ -43,6 +43,7 @@ import io.reactivex.rxjava3.functions.Function;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -66,7 +67,7 @@ public class AlertTriggerManager extends AbstractService<CertificateManager> {
     private final ResolvePropertyCommandHandler resolvePropertyCommandHandler;
     private final AlertNotificationCommandHandler alertNotificationCommandHandler;
 
-    public AlertTriggerManager(TriggerProvider triggerProvider, AlertTriggerService alertTriggerService, AlertNotifierService alertNotifierService, DomainService domainService, EventManager eventManager, Environment environment, ResolvePropertyCommandHandler resolvePropertyCommandHandler, AlertNotificationCommandHandler alertNotificationCommandHandler) {
+    public AlertTriggerManager(TriggerProvider triggerProvider, AlertTriggerService alertTriggerService, AlertNotifierService alertNotifierService, DomainService domainService, @Qualifier("commonEventManager") EventManager eventManager, Environment environment, ResolvePropertyCommandHandler resolvePropertyCommandHandler, AlertNotificationCommandHandler alertNotificationCommandHandler) {
         this.triggerProvider = triggerProvider;
         this.alertTriggerService = alertTriggerService;
         this.alertNotifierService = alertNotifierService;

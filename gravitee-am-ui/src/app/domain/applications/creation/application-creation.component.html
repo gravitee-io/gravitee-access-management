@@ -38,7 +38,7 @@
           <h5>Settings</h5>
           <small>Application configuration</small>
         </ng-template>
-        <application-creation-step2 *ngIf="stepper.selectedIndex == 1" [application]="application"></application-creation-step2>
+        <application-creation-step2 *ngIf="stepper.selectedIndex === 1" [application]="application"></application-creation-step2>
         <div class="stepper-button-zone">
           <button mat-raised-button matStepperPrevious type="button">Back</button>
           <span fxFlex></span>

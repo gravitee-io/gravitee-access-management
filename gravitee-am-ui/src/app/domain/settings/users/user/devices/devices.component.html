@@ -21,9 +21,9 @@
       *ngIf="devices.length > 0"
       class="material"
       [columnMode]="'flex'"
-      [sortType]="'multi'"
+      [sortType]="sortType"
       [headerHeight]="40"
-      [footerHeight]="40"
+      [footerHeight]="50"
       [rowHeight]="50"
       [rows]="devices"
     >
@@ -60,7 +60,7 @@
       <ngx-datatable-column *ngIf="canDelete" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
-            <button mat-icon-button (click)="remove($event, row)">
+            <button mat-button (click)="remove($event, row)">
               <mat-icon style="color: #f44336" matTooltip="Remove device">highlight_off</mat-icon>
             </button>
           </div>
@@ -68,7 +68,7 @@
       </ngx-datatable-column>
     </ngx-datatable>
     <app-emptystate
-      *ngIf="devices.length == 0"
+      *ngIf="devices.length === 0"
       [message]="'No device registered'"
       [subMessage]="'No data to display'"
       [icon]="'devices'"

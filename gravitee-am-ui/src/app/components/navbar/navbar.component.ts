@@ -18,8 +18,6 @@ import { Router } from '@angular/router';
 import { interval, Subject } from 'rxjs';
 import { switchMap, takeUntil, tap } from 'rxjs/operators';
 
-import { NavbarService } from './navbar.service';
-
 import { UserNotificationsService } from '../../services/user-notifications.service';
 import { AuthService } from '../../services/auth.service';
 import { DomainService } from '../../services/domain.service';
@@ -27,6 +25,8 @@ import { SnackbarService } from '../../services/snackbar.service';
 import { SidenavService } from '../sidenav/sidenav.service';
 import { EnvironmentService } from '../../services/environment.service';
 import { AppConfig } from '../../../config/app.config';
+
+import { NavbarService } from './navbar.service';
 
 @Component({
   selector: 'gv-navbar',

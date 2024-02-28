@@ -1,5 +1,14 @@
-:host ::ng-deep {
-  .ngx-datatable.material .datatable-footer {
-    display: none;
-  }
+.table__edit__input {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: content-box;
+  padding: 0;
+  border: none;
+  margin: 0;
+  background: rgb(0 0 0 / 0%);
+  color: currentcolor;
+  font: inherit;
+  outline: none;
+  text-align: inherit;
+  vertical-align: bottom;
 }

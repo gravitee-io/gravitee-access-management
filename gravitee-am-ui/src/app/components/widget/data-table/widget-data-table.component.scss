@@ -6,8 +6,9 @@ ngx-datatable {
   a {
     text-decoration: none;
   }
+
   .ngx-datatable.material .datatable-footer .datatable-pager {
-    ul li:not(:last-child):after {
+    ul li:not(:last-child)::after {
       content: none;
     }
   }

@@ -66,15 +66,15 @@
 
             <mat-form-field appearance="outline" floatLabel="always">
               <mat-label>Allow-Origin</mat-label>
-              <mat-chip-list #origins aria-label="allowedOrigin" [disabled]="!isCorsSettingsEnabled()">
-                <mat-chip
+              <mat-chip-grid #origins aria-label="allowedOrigin" [disabled]="!isCorsSettingsEnabled()">
+                <mat-chip-row
                   *ngFor="let dwPattern of domain.corsSettings.allowedOrigins"
                   [removable]="true"
                   (removed)="removeOrigin(dwPattern)"
                 >
                   {{ dwPattern }}
                   <mat-icon matChipRemove>cancel</mat-icon>
-                </mat-chip>
+                </mat-chip-row>
                 <input
                   matInput
                   type="text"
@@ -83,9 +83,9 @@
                   [matChipInputFor]="origins"
                   (keydown.enter)="addOrigin($event)"
                   [value]="originValue || ''"
-                  (input)="originValue = $event.target.value"
+                  (input)="originValue = $any($event.target).value"
                 />
-              </mat-chip-list>
+              </mat-chip-grid>
               <mat-hint
                 >The origin parameter specifies a URI that may access the resource. Scheme, domain and port are part of the same-origin
                 definition. If you want to allow all origins, you can enter *. Regular Expressions are also supported.
@@ -112,15 +112,15 @@
 
             <mat-form-field appearance="outline" floatLabel="always">
               <mat-label>Allow-Headers</mat-label>
-              <mat-chip-list #headers aria-label="allowedHeaders" [disabled]="!isCorsSettingsEnabled()">
-                <mat-chip
+              <mat-chip-grid #headers aria-label="allowedHeaders" [disabled]="!isCorsSettingsEnabled()">
+                <mat-chip-row
                   *ngFor="let dwPattern of domain.corsSettings.allowedHeaders"
                   [removable]="true"
                   (removed)="removeHeader(dwPattern)"
                 >
                   {{ dwPattern }}
                   <mat-icon matChipRemove>cancel</mat-icon>
-                </mat-chip>
+                </mat-chip-row>
                 <input
                   matInput
                   type="text"
@@ -129,9 +129,9 @@
                   [matChipInputFor]="headers"
                   (keydown.enter)="addHeader($event)"
                   [value]="headerValue || ''"
-                  (input)="headerValue = $event.target.value"
+                  (input)="headerValue = $any($event.target).value"
                 />
-              </mat-chip-list>
+              </mat-chip-grid>
               <mat-hint
                 >The headers allowed in your requests. Typically, your request header will include ‘Access-Control-Request-Headers’, which
                 relies on CORS configuration to allow its values.
@@ -171,13 +171,13 @@
         <div class="gv-form-section" *ngIf="domain.vhostMode">
           <div class="entrypoints-actions">
             <span>Virtual hosts</span>
-            <button (click)="addVhost(); $event.preventDefault()" mat-icon-button *hasPermission="['domain_settings_update']">
+            <button (click)="addVhost(); $event.preventDefault()" mat-button *hasPermission="['domain_settings_update']">
               <mat-icon>add_circle_outline</mat-icon>
             </button>
           </div>
           <ng-container *ngFor="let vhost of domain.vhosts; let i = index">
-            <div fxLayout="row" style="padding-bottom: 40px">
-              <button (click)="remove(vhost); $event.preventDefault()" mat-icon-button *hasPermission="['domain_settings_update']">
+            <div fxLayout="row" style="padding-bottom: 40px" fxLayoutAlign="center start">
+              <button (click)="remove(vhost); $event.preventDefault()" mat-button *hasPermission="['domain_settings_update']">
                 <mat-icon>remove_circle_outline</mat-icon>
               </button>
               <mat-form-field appearance="outline" floatLabel="always" class="form-field">

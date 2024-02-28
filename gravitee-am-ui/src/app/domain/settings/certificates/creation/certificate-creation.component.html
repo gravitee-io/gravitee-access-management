@@ -39,7 +39,7 @@
           <small>Certificate configuration</small>
         </ng-template>
         <certificate-creation-step2
-          *ngIf="stepper.selectedIndex == 1"
+          *ngIf="stepper.selectedIndex === 1"
           [certificate]="certificate"
           [(configurationIsValid)]="configurationIsValid"
         ></certificate-creation-step2>

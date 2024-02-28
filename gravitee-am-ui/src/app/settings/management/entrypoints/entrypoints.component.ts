@@ -28,7 +28,7 @@ import { AuthService } from '../../../services/auth.service';
   styleUrls: ['./entrypoints.component.scss'],
 })
 export class EntrypointsComponent implements OnInit {
-  private entrypoints: any[];
+  public entrypoints: any[];
 
   constructor(
     private entrypointService: EntrypointService,

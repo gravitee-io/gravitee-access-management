@@ -26,12 +26,14 @@
       <span class="user-username">{{ user.username }}</span>
     </div>
   </div>
-  <nav mat-tab-nav-bar color="accent">
+  <nav mat-tab-nav-bar color="accent" [tabPanel]="tabPanel">
     <a mat-tab-link *ngFor="let link of navLinks" [routerLink]="link.href" routerLinkActive #rla="routerLinkActive" [active]="rla.isActive">
       {{ link.label }}
     </a>
   </nav>
-  <div class="user-content">
-    <router-outlet></router-outlet>
-  </div>
+  <mat-tab-nav-panel #tabPanel>
+    <div class="user-content">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-tab-nav-panel>
 </div>

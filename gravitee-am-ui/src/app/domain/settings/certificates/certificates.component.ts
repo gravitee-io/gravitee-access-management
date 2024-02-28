@@ -131,7 +131,7 @@ export class DomainSettingsCertificatesComponent implements OnInit {
   }
 
   openPublicKeyInfo(publicKeys, error) {
-    const dialogRef = this.dialog.open(CertitificatePublicKeyDialog, { width: '700px' });
+    const dialogRef = this.dialog.open(CertitificatePublicKeyDialogComponent, { width: '700px' });
     dialogRef.componentInstance.title = 'Public certificate key';
     dialogRef.componentInstance.certificateKeys = publicKeys;
     dialogRef.componentInstance.error = error;
@@ -170,12 +170,12 @@ export class DomainSettingsCertificatesComponent implements OnInit {
   templateUrl: './dialog/public-key.component.html',
   styleUrls: ['./dialog/public-key.component.scss'],
 })
-export class CertitificatePublicKeyDialog {
+export class CertitificatePublicKeyDialogComponent {
   public title: string;
   public certificateKeys: any[] = [];
   public error: boolean;
 
-  constructor(public dialogRef: MatDialogRef<CertitificatePublicKeyDialog>, private snackbarService: SnackbarService) {}
+  constructor(public dialogRef: MatDialogRef<CertitificatePublicKeyDialogComponent>, private snackbarService: SnackbarService) {}
 
   valueCopied(message) {
     this.snackbarService.open(message);

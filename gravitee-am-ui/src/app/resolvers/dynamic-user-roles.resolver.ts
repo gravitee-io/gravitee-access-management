@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { UserService } from '../services/user.service';
 
 @Injectable()
-export class DynamicUserRolesResolver implements Resolve<any> {
+export class DynamicUserRolesResolver {
   constructor(private userService: UserService) {}
 
   resolve(route: ActivatedRouteSnapshot): Observable<any> {

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Resolve, ActivatedRouteSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { ExtensionGrantService } from '../services/extension-grant.service';
 
 @Injectable()
-export class ExtensionGrantResolver implements Resolve<any> {
+export class ExtensionGrantResolver {
   constructor(private extensionGrantService: ExtensionGrantService) {}
 
   resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {

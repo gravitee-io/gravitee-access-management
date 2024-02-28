@@ -1,31 +1,30 @@
 ngx-datatable {
   .role-header {
-    margin: 5px;
     align-items: center;
+    margin: 5px;
+
     .role-icon {
       margin: 0 12px 0 0;
     }
+
     .role-information {
       h3 {
+        margin: 0;
         font-size: 14px;
         font-weight: normal;
-        margin: 0;
       }
+
       small {
-        color: rgba(0, 0, 0, 0.54);
+        color: rgb(0 0 0 / 54%);
       }
     }
   }
 }
 
 :host ::ng-deep {
-  .mat-chip-list-wrapper .mat-standard-chip,
-  .mat-chip-list-wrapper input.mat-input-element {
-    margin: 2px 0px 0px 10px;
-    min-height: 24px;
-  }
   .role-name-cell {
     padding: 0 !important;
+
     a {
       text-decoration: none;
     }

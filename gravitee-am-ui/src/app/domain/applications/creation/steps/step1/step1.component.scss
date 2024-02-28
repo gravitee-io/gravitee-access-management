@@ -1,31 +1,45 @@
+@use '@angular/material' as mat;
+@use '@gravitee/ui-particles-angular' as gio;
+
 .application-creation-step1-container {
   small {
-    color: rgba(0, 0, 0, 0.87);
+    color: rgb(0 0 0 / 87%);
   }
+
   .application-creation-step1-content {
     margin-top: 10px;
 
     mat-card {
-      margin: 10px;
-      box-shadow: none;
       min-height: 280px;
-      &:not(.selected) {
-        border: 1px solid rgba(0, 0, 0, 0.12);
+      margin: 10px;
+
+      &.selected,
+      i.selected {
+        border: 1px solid mat.get-color-from-palette(gio.$mat-primary-palette, 'default');
       }
+
+      &:not(.selected) {
+        border: 1px solid rgb(0 0 0 / 12%);
+      }
+
       &:hover {
         cursor: pointer;
       }
+
       mat-card-content {
-        text-align: center;
         margin-top: 10px;
+        text-align: center;
+
         i {
-          font-size: 42px;
           padding: 20px;
+          border-radius: 50%;
+          font-size: 42px;
+
           &:not(.selected) {
             border: 1px solid #e5e5e5;
           }
-          border-radius: 50%;
         }
+
         p {
           color: #999;
           font-size: 0.875rem;

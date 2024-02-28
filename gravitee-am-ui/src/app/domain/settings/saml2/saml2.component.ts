@@ -62,7 +62,7 @@ export class Saml2Component implements OnInit {
       this.publicKeys(this.domainSamlSettings.certificate);
     }
 
-    this.isMissingSaml2Feature$ = this.licenseService.isMissingFeature$(this.saml2LicenseOptions);
+    this.isMissingSaml2Feature$ = this.licenseService.isMissingFeature$(this.saml2LicenseOptions.feature);
   }
 
   save() {

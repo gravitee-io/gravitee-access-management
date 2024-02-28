@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { BehaviorSubject, Subscription } from 'rxjs';
@@ -25,8 +25,10 @@ import { map } from 'lodash';
   templateUrl: './role-selection.component.html',
   styleUrls: ['./role-selection.component.scss'],
 })
-export class RoleSelectionComponent implements OnInit {
+export class RoleSelectionComponent implements OnInit, OnDestroy {
+  // eslint-disable-next-line @angular-eslint/no-output-on-prefix
   @Output() onRoleSelection = new EventEmitter();
+  // eslint-disable-next-line @angular-eslint/no-input-rename
   @Input('roles') domainRoles: any[] = [];
   @Input() initialSelectedRoles: any[];
   @ViewChild('roleInput', { static: true }) roleInput: ElementRef<HTMLInputElement>;

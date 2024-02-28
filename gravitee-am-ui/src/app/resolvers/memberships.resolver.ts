@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
@@ -23,7 +23,7 @@ import { ApplicationService } from '../services/application.service';
 import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
-export class MembershipsResolver implements Resolve<any> {
+export class MembershipsResolver {
   constructor(
     private organizationService: OrganizationService,
     private domainService: DomainService,
@@ -33,7 +33,7 @@ export class MembershipsResolver implements Resolve<any> {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
     if (state.url.startsWith('/settings')) {
       return this.organizationService.members().pipe(
-        catchError((__) => {
+        catchError((__: unknown) => {
           return of({});
         }),
       );

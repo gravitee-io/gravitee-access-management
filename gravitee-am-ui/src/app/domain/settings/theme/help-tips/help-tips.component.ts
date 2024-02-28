@@ -21,7 +21,7 @@ import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/cor
   styleUrls: ['./help-tips.component.scss'],
 })
 export class HelpTipsThemeComponent implements OnInit, OnChanges {
-  @Input('template') template: string;
+  @Input() template: string;
   data: any = {};
 
   ngOnInit() {

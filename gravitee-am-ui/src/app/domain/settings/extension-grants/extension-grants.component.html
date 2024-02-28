@@ -18,7 +18,7 @@
 <div class="gv-page-container">
   <h1 *ngIf="!isEmpty">Extension grants</h1>
   <div *ngIf="!isEmpty">
-    <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="40" [rowHeight]="50" [rows]="extensionGrants">
+    <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="50" [rowHeight]="50" [rows]="extensionGrants">
       <ngx-datatable-column name="Extension grants" [flexGrow]="4" [cellClass]="'extension-grant-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="extension-grant-header" fxLayout="row">
@@ -39,10 +39,10 @@
       >
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
-            <a mat-icon-button [routerLink]="[row.id]" *hasPermission="['domain_extension_grant_read']"
+            <a mat-button [routerLink]="[row.id]" *hasPermission="['domain_extension_grant_read']"
               ><mat-icon matTooltip="Settings">settings</mat-icon></a
             >
-            <button *hasPermission="['domain_extension_grant_delete']" mat-icon-button (click)="delete(row.id, $event)">
+            <button *hasPermission="['domain_extension_grant_delete']" mat-button (click)="delete(row.id, $event)">
               <mat-icon matTooltip="Delete">delete</mat-icon>
             </button>
           </div>

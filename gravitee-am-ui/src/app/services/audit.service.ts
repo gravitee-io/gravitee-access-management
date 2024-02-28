@@ -18,10 +18,10 @@ import { HttpClient } from '@angular/common/http';
 import moment from 'moment';
 import { Observable } from 'rxjs';
 
-import { OrganizationService } from './organization.service';
-
 import { AppConfig } from '../../config/app.config';
 import { toHttpParams } from '../utils/http-utils';
+
+import { OrganizationService } from './organization.service';
 
 interface AuditsResponse {
   currentPage: number;

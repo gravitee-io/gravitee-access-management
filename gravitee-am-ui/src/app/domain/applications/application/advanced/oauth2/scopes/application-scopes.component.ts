@@ -154,6 +154,7 @@ export class ApplicationScopesComponent implements OnInit {
   }
 
   scopeApprovalExists(scopeKey) {
+    // eslint-disable-next-line no-prototype-builtins
     return this.selectedScopeApprovals.hasOwnProperty(scopeKey);
   }
 

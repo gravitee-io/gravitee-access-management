@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Resolve } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
 
 @Injectable()
-export class NewsletterResolver implements Resolve<any> {
+export class NewsletterResolver {
   constructor(private authService: AuthService) {}
 
   resolve(): Observable<any> {

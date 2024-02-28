@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { I18nDictionaryService } from '../services/dictionary.service';
 
 @Injectable()
-export class DictionariesResolver implements Resolve<any> {
+export class DictionariesResolver {
   constructor(private dictionaryService: I18nDictionaryService) {}
 
   resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {

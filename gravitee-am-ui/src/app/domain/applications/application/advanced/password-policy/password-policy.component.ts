@@ -45,7 +45,7 @@ export class PasswordPolicyComponent implements OnInit {
   excludeUserProfileInfoInPassword: boolean;
   expiryDuration: number;
 
-  passwordHistoryEnabled: number;
+  passwordHistoryEnabled: boolean;
   oldPasswords: number;
 
   constructor(

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnDestroy } from '@angular/core';
-import { ActivatedRoute, NavigationEnd, Router, RouterEvent } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 
@@ -29,7 +29,7 @@ export class ApplicationDesignComponent implements OnDestroy {
   private subscription: Subscription;
 
   constructor(private authService: AuthService, private router: Router, private route: ActivatedRoute) {
-    this.subscription = this.router.events.pipe(filter((event: RouterEvent) => event instanceof NavigationEnd)).subscribe((next) => {
+    this.subscription = this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((next: NavigationEnd) => {
       if (next.url.endsWith('design')) {
         this.loadPermissions();
       }

@@ -38,7 +38,7 @@
               placeholder="Authentication Request Expiry"
               name="authReqExpiry"
               min="0"
-              (ngModelChange)="modelChanged($event)"
+              (ngModelChange)="modelChanged()"
               [(ngModel)]="domain.oidc.cibaSettings.authReqExpiry"
               [disabled]="!editMode"
             />
@@ -52,7 +52,7 @@
               placeholder="Token Request Interval"
               name="tokenReqInterval"
               min="0"
-              (ngModelChange)="modelChanged($event)"
+              (ngModelChange)="modelChanged()"
               [(ngModel)]="domain.oidc.cibaSettings.tokenReqInterval"
               [disabled]="!editMode"
             />
@@ -67,7 +67,7 @@
               name="bindingMessageLength"
               min="0"
               max="1000"
-              (ngModelChange)="modelChanged($event)"
+              (ngModelChange)="modelChanged()"
               [(ngModel)]="domain.oidc.cibaSettings.bindingMessageLength"
               [disabled]="!editMode"
             />
@@ -78,7 +78,7 @@
               placeholder="Device Notifier"
               name="deviceNotifier"
               [(ngModel)]="selectedDeviceNotifier"
-              (selectionChange)="modelChanged($event)"
+              (selectionChange)="modelChanged()"
             >
               <mat-option><em>None</em></mat-option>
               <mat-option *ngFor="let deviceNotifier of deviceNotifiers" [value]="deviceNotifier.id">{{ deviceNotifier.name }}</mat-option>

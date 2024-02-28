@@ -1,7 +1,8 @@
 .mfa-section-title {
   display: flex;
-  flex-direction: row;
   width: 100%;
+  flex-direction: row;
+  align-items: center;
 
   .mfa-title {
     width: 95%;
@@ -9,14 +10,6 @@
 
   .mfa-chip {
     margin-right: 10px;
-    mat-chip-list {
-      mat-chip {
-        font-size: 11px;
-        opacity: 1;
-        background-color: transparent;
-        border: thin solid rgba(0, 0, 0, 0.2);
-      }
-    }
   }
 }
 

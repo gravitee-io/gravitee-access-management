@@ -49,7 +49,7 @@
                 (click)="addMetadata($event)"
                 [disabled]="!metadata.name || !metadata.value"
               >
-                + ADD
+                +&nbsp;ADD
               </button>
             </div>
           </div>
@@ -63,7 +63,6 @@
             class="material"
             [columnMode]="'flex'"
             [headerHeight]="40"
-            [footerHeight]="40"
             [rowHeight]="55"
             [messages]="{ emptyMessage: 'There is no metadata' }"
             [rows]="appMetadata"

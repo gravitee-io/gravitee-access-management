@@ -1,29 +1,35 @@
 .applications-search {
   text-align: center;
+
   mat-form-field {
     width: 70%;
   }
+
   mat-icon {
-    vertical-align: middle;
     padding-bottom: 4px;
+    vertical-align: middle;
   }
 }
+
 .gv-page-content {
   ngx-datatable {
     .app-header {
-      margin: 5px;
       align-items: center;
+      margin: 5px;
+
       .app-logo {
         width: 40px;
         height: 40px;
         margin: 0 12px 0 0;
+
         img {
           border-radius: 25%;
         }
       }
+
       .app-information {
         small {
-          color: rgba(0, 0, 0, 0.54);
+          color: rgb(0 0 0 / 54%);
         }
       }
     }
@@ -32,6 +38,7 @@
 
 :host ::ng-deep.app-name-cell {
   padding: 0 !important;
+
   a {
     text-decoration: none;
   }
@@ -43,25 +50,25 @@
   line-height: 12px;
 }
 
-:host ::ng-deep.mat-badge-small.mat-badge-overlap.mat-badge-after .mat-badge-content {
-  right: 1px;
+:host ::ng-deep.app-disabled .mat-badge-content {
+  background: red;
+  color: white;
+}
+
+:host ::ng-deep.app-is-template .mat-badge-content {
+  background: #ff9100;
+  color: white;
+}
+
+:host ::ng-deep.app-enabled .mat-badge-content {
+  background: limegreen;
+  color: white;
 }
 
 :host ::ng-deep.mat-badge-small.mat-badge-above .mat-badge-content {
   top: -2px;
 }
 
-:host ::ng-deep.app-enabled .mat-badge-content {
-  color: white;
-  background: limegreen;
-}
-
-:host ::ng-deep.app-is-template .mat-badge-content {
-  color: white;
-  background: #ff9100;
-}
-
-:host ::ng-deep.app-disabled .mat-badge-content {
-  color: white;
-  background: red;
+:host ::ng-deep.mat-badge-small.mat-badge-overlap.mat-badge-after .mat-badge-content {
+  right: 1px;
 }

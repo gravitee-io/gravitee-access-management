@@ -21,8 +21,9 @@ import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges } from
   styleUrls: ['./form.component.scss'],
 })
 export class ResourceFormComponent implements OnChanges {
+  // eslint-disable-next-line @angular-eslint/no-input-rename
   @Input('resourceConfiguration') configuration: any = {};
-  @Input('resourceSchema') resourceSchema: any;
+  @Input() resourceSchema: any;
   @Output() configurationCompleted = new EventEmitter<any>();
   displayForm = false;
   data: any = {};

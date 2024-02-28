@@ -25,9 +25,9 @@ import { SnackbarService } from '../../../../../../services/snackbar.service';
   styleUrls: ['./step2.component.scss'],
 })
 export class ProviderCreationStep2Component implements OnInit, OnChanges {
-  @Input('provider') provider: any;
-  @Input('configurationIsValid') configurationIsValid: boolean;
-  @Output('configurationIsValidChange') configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Input() provider: any;
+  @Input() configurationIsValid: boolean;
+  @Output() configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
   configuration: any;
   providerSchema: any = {};
   domainWhitelistPattern = '';

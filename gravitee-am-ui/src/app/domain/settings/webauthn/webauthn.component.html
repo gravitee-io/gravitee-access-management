@@ -204,7 +204,7 @@
                 (click)="addCertificate($event)"
                 [disabled]="!attestation.name || !attestation.value"
               >
-                + ADD
+                <mat-icon svgIcon="gio:plus"></mat-icon>ADD
               </button>
             </div>
           </div>
@@ -217,7 +217,6 @@
             class="material"
             [columnMode]="'flex'"
             [headerHeight]="40"
-            [footerHeight]="40"
             [rowHeight]="55"
             [messages]="{ emptyMessage: 'There is no certificate' }"
             [rows]="attestationCertificates"
@@ -268,7 +267,7 @@
             <ngx-datatable-column name="" [flexGrow]="1">
               <ng-template let-row="row" ngx-datatable-cell-template>
                 <div fxLayout="row" class="gv-table-cell-actions">
-                  <button mat-icon-button (click)="deleteCertificate(row.id, $event)"><mat-icon>close</mat-icon></button>
+                  <button mat-button (click)="deleteCertificate(row.id, $event)"><mat-icon>close</mat-icon></button>
                 </div>
               </ng-template>
             </ngx-datatable-column>

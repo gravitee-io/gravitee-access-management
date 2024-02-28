@@ -19,14 +19,16 @@
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to identity providers</small></a>
   <div class="providerTitle">
     <h1>{{ provider.name }}</h1>
-    <mat-chip-list *ngIf="provider.system"><mat-chip>system</mat-chip></mat-chip-list>
+    <span *ngIf="provider.system" class="gio-badge-neutral">system</span>
   </div>
-  <nav mat-tab-nav-bar color="accent">
+  <nav mat-tab-nav-bar [tabPanel]="tabPanel" color="accent">
     <a mat-tab-link *ngFor="let link of navLinks" [routerLink]="link.href" routerLinkActive #rla="routerLinkActive" [active]="rla.isActive">
       {{ link.label }}
     </a>
   </nav>
-  <div class="gv-page-content">
-    <router-outlet></router-outlet>
-  </div>
+  <mat-tab-nav-panel #tabPanel>
+    <div class="gv-page-content">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-tab-nav-panel>
 </div>

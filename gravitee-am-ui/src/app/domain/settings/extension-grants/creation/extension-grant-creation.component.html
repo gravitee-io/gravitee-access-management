@@ -39,7 +39,7 @@
           <small>Extension grant configuration</small>
         </ng-template>
         <extension-grant-creation-step2
-          *ngIf="stepper.selectedIndex == 1"
+          *ngIf="stepper.selectedIndex === 1"
           [extensionGrant]="extensionGrant"
           [(configurationIsValid)]="configurationIsValid"
         ></extension-grant-creation-step2>

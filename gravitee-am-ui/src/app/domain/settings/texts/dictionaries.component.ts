@@ -17,15 +17,15 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 
-import { i18nLanguages } from './i18nLanguages';
-
 import { DomainService } from '../../../services/domain.service';
 import { DialogService } from '../../../services/dialog.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { AuthService } from '../../../services/auth.service';
 import { NavbarService } from '../../../components/navbar/navbar.service';
-import { DictionaryDialog } from '../../../components/dialog/dictionary/dictionary-dialog.component';
+import { DictionaryDialogComponent } from '../../../components/dialog/dictionary/dictionary-dialog.component';
 import { I18nDictionaryService } from '../../../services/dictionary.service';
+
+import { i18nLanguages } from './i18nLanguages';
 
 interface Dictionary {
   id?: string;
@@ -82,7 +82,7 @@ export class DomainSettingsDictionariesComponent implements OnInit {
   }
 
   addLanguage() {
-    const dialogRef = this.dialog.open(DictionaryDialog, {
+    const dialogRef = this.dialog.open(DictionaryDialogComponent, {
       data: {
         title: 'Add a new language',
         prop1Label: 'Language code',
@@ -158,7 +158,7 @@ export class DomainSettingsDictionariesComponent implements OnInit {
   addTranslation() {
     const tempEntries = [...this.translations];
     if (this.selectedDictionary) {
-      const dialogRef = this.dialog.open(DictionaryDialog, {
+      const dialogRef = this.dialog.open(DictionaryDialogComponent, {
         data: {
           title: 'Add a new translation',
           prop1Label: 'Key',
@@ -222,6 +222,7 @@ export class DomainSettingsDictionariesComponent implements OnInit {
   }
 
   private entriesToObject() {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     return Object.fromEntries(this.translations.flatMap((row) => [Object.values(row)]));
   }

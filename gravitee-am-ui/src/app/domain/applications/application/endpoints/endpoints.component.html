@@ -24,7 +24,7 @@
     <div>
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>Authorization endpoint</mat-label>
-        <input matInput type="text" name="authorizeEndpoint" [value]="endpoint('/oauth/authorize')" disabled />
+        <input matInput type="text" name="authorizeEndpoint" [value]="endpoint('/oauth/authorize')" readonly />
         <mat-hint
           >The authorization endpoint is used to obtain an OAuth 2.0 token using either authorization code or implicit grant type</mat-hint
         >
@@ -42,7 +42,7 @@
       </mat-form-field>
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>Token endpoint</mat-label>
-        <input matInput type="text" name="tokenEndpoint" [value]="endpoint('/oauth/token')" disabled />
+        <input matInput type="text" name="tokenEndpoint" [value]="endpoint('/oauth/token')" readonly />
         <mat-hint>The token endpoint is used to obtain an OAuth 2.0 token</mat-hint>
         <button
           mat-icon-button
@@ -58,7 +58,7 @@
       </mat-form-field>
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>Introspection endpoint</mat-label>
-        <input matInput type="text" name="introspectEndpoint" [value]="endpoint('/oauth/introspect')" disabled />
+        <input matInput type="text" name="introspectEndpoint" [value]="endpoint('/oauth/introspect')" readonly />
         <mat-hint>The introspection endpoint allows to access information about an OAuth 2.0 token</mat-hint>
         <button
           mat-icon-button
@@ -74,7 +74,7 @@
       </mat-form-field>
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>Revocation endpoint</mat-label>
-        <input matInput type="text" name="revokeEndpoint" [value]="endpoint('/oauth/revoke')" disabled />
+        <input matInput type="text" name="revokeEndpoint" [value]="endpoint('/oauth/revoke')" readonly />
         <mat-hint> The revocation endpoint allows to invalidate a previously obtained OAuth 2.0 refresh or access token</mat-hint>
         <button
           mat-icon-button
@@ -90,7 +90,7 @@
       </mat-form-field>
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>UserInfo endpoint</mat-label>
-        <input matInput type="text" name="userInfoEndpoint" [value]="endpoint('/oidc/userinfo')" disabled />
+        <input matInput type="text" name="userInfoEndpoint" [value]="endpoint('/oidc/userinfo')" readonly />
         <mat-hint>The user info endpoint allows client applications to retrieve information about an authenticated user</mat-hint>
         <button
           mat-icon-button
@@ -106,7 +106,7 @@
       </mat-form-field>
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>End session endpoint</mat-label>
-        <input matInput type="text" name="endSessionEndpoint" [value]="endpoint('/logout')" disabled />
+        <input matInput type="text" name="endSessionEndpoint" [value]="endpoint('/logout')" readonly />
         <mat-hint>The end session endpoint allows to invalidate a user's session</mat-hint>
         <button
           mat-icon-button
@@ -127,7 +127,7 @@
           type="text"
           name="openIdConfigurationEndpoint"
           [value]="endpoint('/oidc/.well-known/openid-configuration')"
-          disabled
+          readonly
         />
         <mat-hint>The OpenId configuration endpoint allows third party systems to get the complete OpenId configuration</mat-hint>
         <button
@@ -144,7 +144,7 @@
       </mat-form-field>
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>JWKs endpoint</mat-label>
-        <input matInput type="text" name="jwksEndpoint" [value]="endpoint('/oidc/.well-known/jwks.json')" disabled />
+        <input matInput type="text" name="jwksEndpoint" [value]="endpoint('/oidc/.well-known/jwks.json')" readonly />
         <mat-hint>Exposes the JWKs (JSON Web Keys) used to sign or encrypt JWTs issued by the authorization server</mat-hint>
         <button
           mat-icon-button
@@ -160,7 +160,7 @@
       </mat-form-field>
       <mat-form-field *ngIf="scimEnabled()" appearance="outline" floatLabel="always">
         <mat-label>SCIM Configuration endpoint</mat-label>
-        <input matInput type="text" name="scimConfigurationEndpoint" [value]="endpoint('/scim/ServiceProviderConfig')" disabled />
+        <input matInput type="text" name="scimConfigurationEndpoint" [value]="endpoint('/scim/ServiceProviderConfig')" readonly />
         <mat-hint>The SCIM configuration endpoint allows third party systems to get the complete SCIM configuration</mat-hint>
         <button
           mat-icon-button
@@ -177,7 +177,7 @@
       <div *ngIf="uma2Enabled()">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>UMA 2.0 Configuration endpoint</mat-label>
-          <input matInput type="text" name="uma2ConfigurationEndpoint" [value]="endpoint('/uma/.well-known/uma2-configuration')" disabled />
+          <input matInput type="text" name="uma2ConfigurationEndpoint" [value]="endpoint('/uma/.well-known/uma2-configuration')" readonly />
           <mat-hint>The UMA 2.0 configuration endpoint allows third party systems to get the complete UMA 2.0 configuration</mat-hint>
           <button
             mat-icon-button
@@ -193,7 +193,7 @@
         </mat-form-field>
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>UMA 2.0 Resource Registration endpoint</mat-label>
-          <input matInput type="text" name="uma2ResourceRegistrationEndpoint" [value]="endpoint('/uma/protection/resource_set')" disabled />
+          <input matInput type="text" name="uma2ResourceRegistrationEndpoint" [value]="endpoint('/uma/protection/resource_set')" readonly />
           <mat-hint
             >The resource registration endpoint enables the resource server to put resources under the protection of the authorization
             server</mat-hint
@@ -212,7 +212,7 @@
         </mat-form-field>
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>UMA 2.0 Permission endpoint</mat-label>
-          <input matInput type="text" name="uma2PermissionEndpoint" [value]="endpoint('/uma/protection/permission')" disabled />
+          <input matInput type="text" name="uma2PermissionEndpoint" [value]="endpoint('/uma/protection/permission')" readonly />
           <mat-hint
             >The permission endpoint defines a means for the resource server to request permissions, and to receive a permission ticket in
             return</mat-hint
@@ -236,7 +236,7 @@
             type="text"
             name="uma2AccessPolicyEndpoint"
             [value]="endpoint('/uma/protection/resource_set/:resourceId/policies')"
-            disabled
+            readonly
           />
           <mat-hint
             >Endpoint where the resource owner can immediately set or modify access policies subsequent to the resource registration
@@ -258,7 +258,7 @@
       <div *ngIf="cibaEnabled()">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Backchannel Authentication endpoint</mat-label>
-          <input matInput type="text" name="cibaEndpoint" [value]="endpoint('/oidc/ciba/authenticate')" disabled />
+          <input matInput type="text" name="cibaEndpoint" [value]="endpoint('/oidc/ciba/authenticate')" readonly />
           <mat-hint
             >The Client Initiated Backchannel Authentication endpoint used to initiate an out-of-band authentication of the
             end-user</mat-hint
@@ -279,7 +279,7 @@
       <div *ngIf="samlEnabled()">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>SAML 2.0 IdP metadata</mat-label>
-          <input matInput type="text" name="samlMetadataEndpoint" [value]="endpoint('/saml2/idp/metadata')" disabled />
+          <input matInput type="text" name="samlMetadataEndpoint" [value]="endpoint('/saml2/idp/metadata')" readonly />
           <mat-hint>The SAML 2.0 metadata endpoint at the identity provider</mat-hint>
           <button
             mat-icon-button
@@ -295,7 +295,7 @@
         </mat-form-field>
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>SAML 2.0 Single Sign On Service</mat-label>
-          <input matInput type="text" name="samlSsoEndpoint" [value]="endpoint('/saml2/idp/SSO')" disabled />
+          <input matInput type="text" name="samlSsoEndpoint" [value]="endpoint('/saml2/idp/SSO')" readonly />
           <mat-hint>The SAML 2.0 authentication request protocol endpoint at the identity provider</mat-hint>
           <button
             mat-icon-button
@@ -311,7 +311,7 @@
         </mat-form-field>
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>SAML 2.0 Single Logout Service</mat-label>
-          <input matInput type="text" name="samlLogoutEndpoint" [value]="endpoint('/saml2/idp/logout')" disabled />
+          <input matInput type="text" name="samlLogoutEndpoint" [value]="endpoint('/saml2/idp/logout')" readonly />
           <mat-hint>The SAML 2.0 single logout protocol endpoint at the identity provider</mat-hint>
           <button
             mat-icon-button

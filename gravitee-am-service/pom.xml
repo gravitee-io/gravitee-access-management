@@ -24,9 +24,6 @@
         <artifactId>gravitee-am-parent</artifactId>
         <version>4.3.0-SNAPSHOT</version>
     </parent>
-    <properties>
-        <spring-security-crypto.version>6.1.1</spring-security-crypto.version>
-    </properties>
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.gravitee.am.service</groupId>
@@ -102,7 +99,7 @@
         <!-- Bouncy Castle -->
         <dependency>
             <groupId>org.bouncycastle</groupId>
-            <artifactId>bcpkix-jdk15on</artifactId>
+            <artifactId>bcpkix-jdk18on</artifactId>
         </dependency>
 
         <!-- Spring dependencies -->
@@ -158,7 +155,7 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-crypto</artifactId>
-            <version>${spring-security-crypto.version}</version>
+            <version>${spring-security.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

@@ -16,10 +16,10 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
+import { AppConfig } from '../../config/app.config';
+
 import { AuditService } from './audit.service';
 import { OrganizationService } from './organization.service';
-
-import { AppConfig } from '../../config/app.config';
 
 jest.mock('moment', () => {
   return () => jest.requireActual('moment')('2021-01-04T00:00:00.000Z');

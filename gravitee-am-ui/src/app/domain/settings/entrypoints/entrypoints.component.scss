@@ -7,11 +7,12 @@
     padding-right: 10px;
     color: grey;
   }
+
   height: 30px;
   padding-bottom: 30px;
 }
 
-.mat-icon-button {
+.mat-mdc-icon-button {
   width: 25px;
   height: 25px;
 }
@@ -22,8 +23,8 @@
 
 .hint {
   display: block;
+  font-family: Roboto, 'Helvetica Neue Light', sans-serif;
   font-size: 75%;
-  font-family: Roboto, Helvetica Neue Light, sans-serif;
 }
 
 mat-icon {
@@ -36,10 +37,10 @@ a {
 
 .switch-mode {
   padding-left: 12px;
-  text-decoration: none;
   font-size: 12px;
+  text-decoration: none;
 }
 
-#cors-settings > .mat-form-field {
+#cors-settings > .mat-mdc-form-field {
   margin-bottom: 15px;
 }

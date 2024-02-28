@@ -29,7 +29,7 @@ interface Language {
   templateUrl: './dictionary-dialog.component.html',
   styleUrls: ['./dictionary-dialog.component.scss'],
 })
-export class DictionaryDialog implements OnInit {
+export class DictionaryDialogComponent implements OnInit {
   prop1: string;
   prop2: string;
   prop1Label: string;
@@ -42,7 +42,7 @@ export class DictionaryDialog implements OnInit {
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: { title: string; prop1Label: string; prop2Label: string; languageCodes: string[] },
-    public dialogRef: MatDialogRef<DictionaryDialog>,
+    public dialogRef: MatDialogRef<DictionaryDialogComponent>,
   ) {
     this.prop1Label = data.prop1Label;
     this.prop2Label = data.prop2Label;

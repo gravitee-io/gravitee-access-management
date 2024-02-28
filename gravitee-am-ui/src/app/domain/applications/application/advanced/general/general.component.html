@@ -71,7 +71,6 @@
               matInput
               type="password"
               name="clientSecret"
-              [value]="xxx"
               disabled
               matTooltip="Client Secret can't be copied once created. If you've lost it, you need to Renew the client secret"
             />
@@ -111,13 +110,13 @@
                     name="redirectUri"
                     (keydown.enter)="addRedirectUris($event)"
                     [value]="redirectUri || ''"
-                    (input)="redirectUri = $event.target.value"
+                    (input)="redirectUri = $any($event.target).value"
                   />
                 </mat-form-field>
               </div>
               <div>
                 <button mat-stroked-button style="margin-top: 7px" (click)="addRedirectUris($event)" [disabled]="!redirectUri">
-                  + ADD
+                  <mat-icon svgIcon="gio:plus"></mat-icon>ADD
                 </button>
               </div>
             </div>
@@ -125,7 +124,6 @@
               class="material"
               [columnMode]="'flex'"
               [headerHeight]="40"
-              [footerHeight]="40"
               [rowHeight]="50"
               [messages]="{ emptyMessage: 'There is no redirect URIs' }"
               [rows]="redirectUris"
@@ -138,7 +136,7 @@
               <ngx-datatable-column name="" [flexGrow]="1" *hasPermission="['application_settings_update']">
                 <ng-template let-row="row" ngx-datatable-cell-template>
                   <div fxLayout="row" *ngIf="editMode" class="gv-table-cell-actions">
-                    <button mat-icon-button (click)="deleteRedirectUris(row.value, $event)"><mat-icon>close</mat-icon></button>
+                    <button mat-button (click)="deleteRedirectUris(row.value, $event)"><mat-icon>close</mat-icon></button>
                   </div>
                 </ng-template>
               </ngx-datatable-column>
@@ -166,13 +164,13 @@
                     name="logoutRedirectUri"
                     (keydown.enter)="addLogoutRedirectUris($event)"
                     [value]="logoutRedirectUri || ''"
-                    (input)="logoutRedirectUri = $event.target.value"
+                    (input)="logoutRedirectUri = $any($event.target).value"
                   />
                 </mat-form-field>
               </div>
               <div>
                 <button mat-stroked-button style="margin-top: 7px" (click)="addLogoutRedirectUris($event)" [disabled]="!logoutRedirectUri">
-                  + ADD
+                  <mat-icon svgIcon="gio:plus"></mat-icon>ADD
                 </button>
               </div>
             </div>
@@ -180,7 +178,6 @@
               class="material"
               [columnMode]="'flex'"
               [headerHeight]="40"
-              [footerHeight]="40"
               [rowHeight]="50"
               [messages]="{ emptyMessage: 'There is no redirect URIs' }"
               [rows]="logoutRedirectUris"
@@ -221,19 +218,20 @@
                     name="requestUri"
                     (keydown.enter)="addRequestUris($event)"
                     [value]="requestUri || ''"
-                    (input)="requestUri = $event.target.value"
+                    (input)="requestUri = $any($event.target).value"
                   />
                 </mat-form-field>
               </div>
               <div>
-                <button mat-stroked-button style="margin-top: 7px" (click)="addRequestUris($event)" [disabled]="!requestUri">+ ADD</button>
+                <button mat-stroked-button style="margin-top: 7px" (click)="addRequestUris($event)" [disabled]="!requestUri">
+                  <mat-icon svgIcon="gio:plus"></mat-icon>ADD
+                </button>
               </div>
             </div>
             <ngx-datatable
               class="material"
               [columnMode]="'flex'"
               [headerHeight]="40"
-              [footerHeight]="40"
               [rowHeight]="50"
               [messages]="{ emptyMessage: 'There is no request URIs' }"
               [rows]="requestUris"
@@ -322,36 +320,43 @@
       </form>
       <div class="application-settings-delete-zone" fxLayout="column" *ngIf="deleteMode || renewSecretMode">
         <mat-list>
-          <mat-list-item *ngIf="editMode">
-            <h3 matLine>Change application type</h3>
-            <p matLine>By changing the application type, some default values and options will be updated.</p>
-            <mat-form-field appearance="outline" class="mat-select-change-app" style="width: auto">
-              <mat-select
-                placeholder="Change the application type"
-                name="type"
-                [(ngModel)]="applicationType"
-                (ngModelChange)="changeApplicationType()"
-              >
-                <mat-option *ngFor="let applicationType of applicationTypes" [value]="applicationType.type">{{
-                  applicationType.name
-                }}</mat-option>
-              </mat-select>
-            </mat-form-field>
+          <mat-list-item *ngIf="editMode" lines="3">
+            <h3 matListItemTitle>Change application type</h3>
+            <p matListItemLine>By changing the application type, some default values and options will be updated.</p>
+            <span matListItemMeta class="action">
+              <mat-form-field appearance="outline" class="mat-select-change-app" style="width: auto">
+                <mat-select
+                  placeholder="Change the application type"
+                  name="type"
+                  [(ngModel)]="applicationType"
+                  (ngModelChange)="changeApplicationType()"
+                >
+                  <mat-option *ngFor="let applicationType of applicationTypes" [value]="applicationType.type">{{
+                    applicationType.name
+                  }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </span>
           </mat-list-item>
           <mat-divider *ngIf="editMode"></mat-divider>
-          <mat-list-item *ngIf="renewSecretMode">
-            <h3 matLine>Renew secret</h3>
-            <p matLine>
+          <mat-list-item *ngIf="renewSecretMode" lines="3">
+            <h3 matListItemTitle>Renew secret</h3>
+            <p matListItemLine>
               All applications using this OAuth 2.0 client secret will need to be updated to be able to request for tokens and access
               protected resources.
             </p>
-            <button mat-stroked-button color="warn" (click)="renewClientSecret($event)">RENEW</button>
+            <span matListItemMeta class="action">
+              <button mat-stroked-button color="warn" (click)="renewClientSecret($event)">RENEW</button>
+            </span>
           </mat-list-item>
           <mat-divider *ngIf="renewSecretMode && deleteMode"></mat-divider>
-          <mat-list-item *ngIf="deleteMode">
-            <h3 matLine>Delete application</h3>
-            <p matLine>Application will be deleted, it will no longer be use for authentication and request for tokens.</p>
-            <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
+          <mat-list-item *ngIf="deleteMode" lines="3">
+            <h3 matListItemTitle>Delete application</h3>
+            <p matListItemLine>Application will be deleted, it will no longer be use for authentication and request for tokens.</p>
+
+            <span matListItemMeta class="action">
+              <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
+            </span>
           </mat-list-item>
         </mat-list>
       </div>

@@ -30,7 +30,7 @@
         *ngIf="!isEmpty"
         [columnMode]="'flex'"
         [headerHeight]="40"
-        [footerHeight]="40"
+        [footerHeight]="50"
         [rowHeight]="50"
         [messages]="{ emptyMessage: 'There is no linked identity to display.', totalMessage: 'total' }"
         [rows]="identities"
@@ -40,7 +40,7 @@
           <ng-template let-row="row" let-expanded="expanded" ngx-datatable-row-detail-template>
             <div style="padding-left: 35px; max-width: 95%">
               <div style="margin-bottom: 20px"><strong>Details</strong></div>
-              <codemirror [value]="identityDetails(row)" [config]="config"></codemirror>
+              <ngx-codemirror [ngModel]="identityDetails(row)" [options]="config"></ngx-codemirror>
             </div>
           </ng-template>
         </ngx-datatable-row-detail>
@@ -71,7 +71,7 @@
         <ngx-datatable-column [sortable]="false" name="Actions" [flexGrow]="1">
           <ng-template let-row="row" ngx-datatable-cell-template>
             <div fxLayout="row" class="gv-table-cell-actions">
-              <button *ngIf="canRevoke" mat-icon-button (click)="remove($event, row)">
+              <button *ngIf="canRevoke" mat-button (click)="remove($event, row)">
                 <mat-icon style="color: #f44336" matTooltip="Unlink identity">link_off</mat-icon>
               </button>
             </div>

@@ -27,7 +27,6 @@
             class="material"
             [columnMode]="'flex'"
             [headerHeight]="40"
-            [footerHeight]="40"
             [rowHeight]="50"
             [messages]="{ emptyMessage: 'There are no i18nLanguages' }"
             [rows]="dictionaries"
@@ -46,7 +45,7 @@
             <ngx-datatable-column name="" [flexGrow]="1" *hasPermission="['domain_i18n_dictionary_delete']">
               <ng-template let-row="row" ngx-datatable-cell-template>
                 <div fxLayout="row" class="gv-table-cell-actions">
-                  <button mat-icon-button (click)="deleteLanguage(row, $event)">
+                  <button mat-button (click)="deleteLanguage(row, $event)">
                     <mat-icon>delete</mat-icon>
                   </button>
                 </div>
@@ -79,25 +78,24 @@
                 class="material"
                 [columnMode]="'flex'"
                 [headerHeight]="40"
-                [footerHeight]="40"
                 [rowHeight]="50"
                 [messages]="{ emptyMessage: 'There are no translations' }"
                 [rows]="translations"
               >
                 <ngx-datatable-column name="Key" [flexGrow]="4">
                   <ng-template let-row="row" ngx-datatable-cell-template>
-                    <input matInput type="text" [(ngModel)]="row.key" (input)="enableSaveChangeButton()" />
+                    <input class="table__edit__input" matInput type="text" [(ngModel)]="row.key" (input)="enableSaveChangeButton()" />
                   </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column name="Value" [flexGrow]="6" prop="message">
                   <ng-template let-row="row" ngx-datatable-cell-template>
-                    <input matInput type="text" [(ngModel)]="row.message" (input)="enableSaveChangeButton()" />
+                    <input class="table__edit__input" matInput type="text" [(ngModel)]="row.message" (input)="enableSaveChangeButton()" />
                   </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column name="" [flexGrow]="1" *hasPermission="['domain_i18n_dictionary_update']" maxWidth="50">
+                <ngx-datatable-column name="" [flexGrow]="1" *hasPermission="['domain_i18n_dictionary_update']" [maxWidth]="50">
                   <ng-template let-rowIndex="rowIndex" ngx-datatable-cell-template>
                     <div fxLayout="row" class="gv-table-cell-actions">
-                      <button mat-icon-button (click)="deleteTranslation(rowIndex, $event)">
+                      <button mat-button (click)="deleteTranslation(rowIndex, $event)">
                         <mat-icon>delete</mat-icon>
                       </button>
                     </div>
@@ -127,12 +125,12 @@
           </mat-tab>
           <mat-tab label="Edit in file" data-testid="editInFileTab">
             <div>
-              <codemirror
+              <ngx-codemirror
                 *ngIf="displayCodeMirror"
                 [(ngModel)]="formContent"
-                [config]="codeMirrorConfig"
-                (change)="onContentChanges($event)"
-              ></codemirror>
+                [options]="codeMirrorConfig"
+                (ngModelChange)="onContentChanges($event)"
+              ></ngx-codemirror>
               <div *hasPermission="['domain_i18n_dictionary_create']" fxLayout="row wrap" fxLayoutGap="10px" style="margin: 10px 0 10px 0">
                 <input type="file" accept=".json" class="file-input" hidden="true" (change)="onFileSelected($event)" #fileUpload />
                 <button

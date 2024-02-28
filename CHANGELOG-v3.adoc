@@ -1,5 +1,64 @@
 # Change Log
 
+==  - 3.21.18 (2024-02-20)
+
+== What's new !
+
+
+
+=== Gateway
+
+* Unable to finalize SAML authentication using HTTP-POST binding https://github.com/gravitee-io/issues/issues/9485[#9485]
+
+=== Console
+
+* Missing read password policy role https://github.com/gravitee-io/issues/issues/8924[#8924]
+
+=== Other
+
+* SAML 2.0 Identity Provider requires AM dependency update https://github.com/gravitee-io/issues/issues/9515[#9515]
+
+
+==  - 3.20.20 (2024-02-19)
+
+== What's new !
+
+
+
+=== Gateway
+
+* Unable to finalize SAML authentication using HTTP-POST binding https://github.com/gravitee-io/issues/issues/9485[#9485]
+
+=== Management API
+
+
+
+=== Console
+
+* Missing read password policy role https://github.com/gravitee-io/issues/issues/8924[#8924]
+
+
+
+==  - 3.21.17 (2024-02-09)
+
+== What's new !
+
+=== Gateway
+
+* SCIM search operator PR doesn't work as expected https://github.com/gravitee-io/issues/issues/9265[#9265]
+* Authentication flow rejected due to redirect_uri when PAR is used https://github.com/gravitee-io/issues/issues/9478[#9478]
+
+
+==  - 3.20.19 (2024-02-09)
+
+== What's new !
+
+=== Gateway
+
+* SCIM search operator PR doesn't work as expected https://github.com/gravitee-io/issues/issues/9265[#9265]
+* Authentication flow rejected due to redirect_uri when PAR is used https://github.com/gravitee-io/issues/issues/9478[#9478]
+
+
 == AM - 3.21.16 (2024-01-22)
 
 == What's new !
@@ -7,7 +66,7 @@
 === Gateway
 
 * Passwordless not working for iOS v17.2.1 https://github.com/gravitee-io/issues/issues/9470[#9470]
-
+* WebAuthn : "Force authenticator integrity" - LastCheckedAt systematically updated at each webauthn login https://github.com/gravitee-io/issues/issues/9327[#9327]
 
 == AM - 3.20.18 (2024-01-22)
 

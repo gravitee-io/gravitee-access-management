@@ -46,11 +46,10 @@ export class FormComponent implements OnInit, AfterViewInit {
   formFound = false;
   formChanged = false;
   config: any = { lineNumbers: true, readOnly: true };
-  @ViewChild('editor', { static: true }) editor: any;
   @ViewChild('preview', { static: true }) preview: ElementRef;
-  @Input('createMode') createMode: boolean;
-  @Input('editMode') editMode: boolean;
-  @Input('deleteMode') deleteMode: boolean;
+  @Input() createMode: boolean;
+  @Input() editMode: boolean;
+  @Input() deleteMode: boolean;
 
   constructor(
     private router: Router,
@@ -177,13 +176,13 @@ export class FormComponent implements OnInit, AfterViewInit {
   }
 
   openDialog() {
-    this.dialog.open(FormInfoDialog, {
+    this.dialog.open(FormInfoDialogComponent, {
       data: { rawTemplate: this.rawTemplate, template: this.template },
     });
   }
 
   private enableCodeMirror(): void {
-    this.editor.instance.setOption('readOnly', !this.form.enabled);
+    this.config.readOnly = !this.form.enabled;
   }
 }
 
@@ -191,6 +190,6 @@ export class FormComponent implements OnInit, AfterViewInit {
   selector: 'form-info-dialog',
   templateUrl: './dialog/form-info.component.html',
 })
-export class FormInfoDialog {
-  constructor(public dialogRef: MatDialogRef<FormInfoDialog>, @Inject(MAT_DIALOG_DATA) public data: DialogData) {}
+export class FormInfoDialogComponent {
+  constructor(public dialogRef: MatDialogRef<FormInfoDialogComponent>, @Inject(MAT_DIALOG_DATA) public data: DialogData) {}
 }

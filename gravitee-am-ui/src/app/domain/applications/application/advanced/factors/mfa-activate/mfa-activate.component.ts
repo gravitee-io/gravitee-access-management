@@ -89,7 +89,7 @@ export class MfaActivateComponent implements OnInit {
   private initModes(): void {
     this.modes = Object.keys(MfaActivateComponent.modeOptions).map((key) => {
       const option = MfaActivateComponent.modeOptions[key];
-      option.isMissingFeature$ = this.licenseService.isMissingFeature$(option.licenseOptions);
+      option.isMissingFeature$ = this.licenseService.isMissingFeature$(option.licenseOptions.feature);
       return option;
     });
   }

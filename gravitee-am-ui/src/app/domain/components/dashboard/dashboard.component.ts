@@ -44,7 +44,7 @@ Highcharts.setOptions({
   styleUrls: ['./dashboard.component.scss'],
 })
 export class DashboardComponent implements OnInit {
-  @Input('dashboard') dashboard: DashboardData;
+  @Input() dashboard: DashboardData;
   widgets: Widget[];
   Highcharts: typeof Highcharts = Highcharts;
 

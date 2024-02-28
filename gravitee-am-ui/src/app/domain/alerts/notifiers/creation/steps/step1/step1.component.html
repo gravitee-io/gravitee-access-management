@@ -20,9 +20,10 @@
 
   <div *ngIf="notifiers.length > 0" fxLayout="row wrap" fxFlex fxLayoutGap="10px" fxLayoutAlign="center">
     <mat-card
+      appearance="outlined"
       *ngFor="let n of notifiers"
       fxFlex="30"
-      [class.selected]="alertNotifier.id === n.id"
+      [class.selected]="alertNotifier.type === n.id"
       (click)="selectNotifier(n)"
       (keyup.enter)="selectNotifier(n)"
       tabIndex="0"
@@ -34,7 +35,7 @@
     </mat-card>
   </div>
 
-  <div *ngIf="notifiers.length == 0" fxLayout="row wrap" fxFlex fxLayoutGap="10px" fxLayoutAlign="center">
+  <div *ngIf="notifiers.length === 0" fxLayout="row wrap" fxFlex fxLayoutGap="10px" fxLayoutAlign="center">
     <p>No plugin notifier installed</p>
   </div>
 </div>

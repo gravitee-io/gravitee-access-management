@@ -23,7 +23,7 @@ import { find } from 'lodash';
   styleUrls: ['./step2.component.scss'],
 })
 export class ApplicationCreationStep2Component implements OnInit {
-  @Input('application') application: any;
+  @Input() application: any;
   @ViewChild('appForm') form: any;
   domain: any;
   applicationTypes: any[] = [
