@@ -1,5 +1,17 @@
 # Change Log
 
+==  - 3.21.19 (2024-02-29)
+
+== What's new !
+
+
+
+=== Gateway
+
+* Passwordless authentication doesn't take the IDP status into account https://github.com/gravitee-io/issues/issues/9494[#9494]
+
+
+
 ==  - 3.21.18 (2024-02-20)
 
 == What's new !
