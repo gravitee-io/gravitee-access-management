@@ -64,11 +64,3 @@
   background: limegreen;
   color: white;
 }
-
-:host ::ng-deep.mat-badge-small.mat-badge-above .mat-badge-content {
-  top: -2px;
-}
-
-:host ::ng-deep.mat-badge-small.mat-badge-overlap.mat-badge-after .mat-badge-content {
-  right: 1px;
-}
