@@ -79,7 +79,7 @@ public interface ConstantKeys {
     String MFA_ENROLLMENT_COMPLETED_KEY = "mfaEnrollmentCompleted";
     String MFA_CHALLENGE_COMPLETED_KEY = "mfaChallengeCompleted";
     String STRONG_AUTH_COMPLETED_KEY = "strongAuthCompleted";
-    String SELECTED_ENROLL_FACTOR_ID_KEY = "enrolledFactorId";
+    String ENROLLED_FACTOR_ID_KEY = "enrolledFactorId";
     String ENROLLED_FACTOR_SECURITY_VALUE_KEY = "enrolledFactorSecurityValue";
     String ENROLLED_FACTOR_PHONE_NUMBER = "enrolledFactorPhoneNumber";
     String ENROLLED_FACTOR_EXTENSION_PHONE_NUMBER = "enrolledFactorExtensionPhoneNumber";

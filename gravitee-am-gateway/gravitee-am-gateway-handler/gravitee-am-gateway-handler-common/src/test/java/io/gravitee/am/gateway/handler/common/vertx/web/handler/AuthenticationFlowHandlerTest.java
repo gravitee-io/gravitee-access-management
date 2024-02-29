@@ -21,7 +21,7 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import static io.gravitee.am.common.utils.ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.SELECTED_ENROLL_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.RISK_ASSESSMENT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.STRONG_AUTH_COMPLETED_KEY;
@@ -67,7 +67,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import static org.mockito.ArgumentMatchers.any;
@@ -193,7 +192,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             String rule = "{context.attributes['geoip']['country_iso_code'] == 'FR'";
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, rule);
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.CONDITIONAL, rule);
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -223,7 +222,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             String rule = "{context.attributes['geoip']['country_iso_code'] == 'FR'";
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, rule);
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.CONDITIONAL, rule);
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -258,7 +257,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             String rule = "{context.attributes['geoip']['country_iso_code'] == 'FR'";
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, rule);
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.CONDITIONAL, rule);
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -274,7 +273,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(List.of(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(SELECTED_ENROLL_FACTOR_ID_KEY, FACTOR_ID);
+            rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
             rc.next();
         });
 
@@ -332,7 +331,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             setFactors(client);
             client.setMfaSettings(mfaSettings);
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            rc.session().put(SELECTED_ENROLL_FACTOR_ID_KEY, FACTOR_ID);
+            rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
             // set user
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             rc.getDelegate().setUser(new User(endUser));
@@ -500,7 +499,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
-            rc.session().put(SELECTED_ENROLL_FACTOR_ID_KEY, FACTOR_ID);
+            rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
             rc.next();
         });
 
@@ -593,7 +592,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             endUser.setFactors(List.of(enrolledRecovery, enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, false);
-            rc.session().put(SELECTED_ENROLL_FACTOR_ID_KEY, "factor-id");
+            rc.session().put(ENROLLED_FACTOR_ID_KEY, "factor-id");
             rc.next();
         });
 
@@ -846,7 +845,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             String challengeRule = "{#context.attributes['geoip']['country_iso_code'] == 'FR'}";
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.RISK_BASED, challengeRule);
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.CONDITIONAL, challengeRule);
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -1150,7 +1149,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             String challenge = "{#context.attributes['geoip']['country_iso_code'] == 'FR'}";
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.RISK_BASED, challenge);
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.CONDITIONAL, challenge);
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -1185,7 +1184,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             String rule = "{#context.attributes['geoip']['country_iso_code'] == 'FR'}";
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, rule);
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.CONDITIONAL, rule);
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -1193,7 +1192,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             client.setMfaSettings(mfaSettings);
-            rc.session().put(SELECTED_ENROLL_FACTOR_ID_KEY, FACTOR_ID);
+            rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
 
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
@@ -1227,7 +1226,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             MFASettings mfaSettings = new MFASettings();
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             client.setMfaSettings(mfaSettings);
-            rc.session().put(SELECTED_ENROLL_FACTOR_ID_KEY, FACTOR_ID);
+            rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
 
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
@@ -1251,7 +1250,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             String rule = "{#context.attributes['geoip']['country_iso_code'] == 'FR'}";
             EnrollSettings enrollSettings = createEnrollSettings(true, false, MfaEnrollType.REQUIRED, 0, "");
-            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.REQUIRED, rule);
+            ChallengeSettings challengeSettings = createChallengeSettings(true, MfaChallengeType.CONDITIONAL, rule);
             MFASettings mfaSettings = createMFASettings(enrollSettings, challengeSettings);
             // set client
             Client client = new Client();
@@ -1259,7 +1258,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
             client.setMfaSettings(mfaSettings);
-            rc.session().put(SELECTED_ENROLL_FACTOR_ID_KEY, FACTOR_ID);
+            rc.session().put(ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
             rc.session().put(ALTERNATIVE_FACTOR_ID_KEY, "factor-2");
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();

@@ -32,7 +32,7 @@ import io.vertx.rxjava3.ext.web.Session;
 import java.util.List;
 
 import static io.gravitee.am.common.factor.FactorType.FIDO2;
-import static io.gravitee.am.common.utils.ConstantKeys.SELECTED_ENROLL_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -91,7 +91,7 @@ public class WebAuthnRegisterStep extends AuthenticationFlowStep {
     }
 
     private boolean isEnrollingFido2Factor(RoutingContext ctx) {
-        final String factorId = ctx.session().get(SELECTED_ENROLL_FACTOR_ID_KEY);
+        final String factorId = ctx.session().get(ENROLLED_FACTOR_ID_KEY);
         if (factorId != null) {
             return factorManager.getFactor(factorId).is(FIDO2);
         }

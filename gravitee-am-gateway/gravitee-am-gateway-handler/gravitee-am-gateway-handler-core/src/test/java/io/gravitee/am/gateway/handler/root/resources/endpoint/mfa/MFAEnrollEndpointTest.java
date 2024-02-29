@@ -727,7 +727,7 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
     }
 
     @Test
-    public void shouldEnrollWhenUserCannotSkip() throws Exception {
+    public void shouldNotSetSkippedTimeWhenUserCannotSkip() throws Exception {
         final var USER_FACTOR_ID = UUID.randomUUID().toString();
         final var ENROLL_FACTOR_ID = UUID.randomUUID().toString();
         final var EMAIL_ADDR = "fake@acme.com";
@@ -754,12 +754,6 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                 .handler(ctx -> {
                     User user = new User();
                     user.setId("userId");
-                    EnrolledFactor enrolledFactor = new EnrolledFactor();
-                    EnrolledFactorSecurity enrolledFactorSecurity = new EnrolledFactorSecurity();
-                    enrolledFactor.setFactorId(USER_FACTOR_ID);
-                    enrolledFactor.setStatus(FactorStatus.ACTIVATED);
-                    enrolledFactor.setSecurity(enrolledFactorSecurity);
-                    user.setFactors(Collections.singletonList(enrolledFactor));
 
                     Client client = new Client();
                     FactorSettings factorSettings = new FactorSettings();
@@ -768,7 +762,9 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
 
                     var mfa = new MFASettings();
                     var enroll = new EnrollSettings();
+                    enroll.setActive(true);
                     enroll.setForceEnrollment(true);
+                    enroll.setType(MfaEnrollType.CONDITIONAL);
                     mfa.setEnroll(enroll);
                     client.setMfaSettings(mfa);
 
@@ -811,8 +807,7 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
     }
 
     @Test
-    public void shouldEnrollSkipWhenUserSkipped() throws Exception {
-        final var USER_FACTOR_ID = UUID.randomUUID().toString();
+    public void shouldSetSkippedTimeWhenUserSkipped() throws Exception {
         final var ENROLL_FACTOR_ID = UUID.randomUUID().toString();
         final var EMAIL_ADDR = "fake@acme.com";
         final var USER_ACCEPT_ENROLL = false;
@@ -823,15 +818,8 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                 .handler(ctx -> {
                     User user = new User();
                     user.setId("userId");
-                    EnrolledFactor enrolledFactor = new EnrolledFactor();
-                    EnrolledFactorSecurity enrolledFactorSecurity = new EnrolledFactorSecurity();
-                    enrolledFactor.setFactorId(USER_FACTOR_ID);
-                    enrolledFactor.setStatus(FactorStatus.ACTIVATED);
-                    enrolledFactor.setSecurity(enrolledFactorSecurity);
-                    user.setFactors(Collections.singletonList(enrolledFactor));
 
                     Client client = new Client();
-                    client.setFactors(Set.of(ENROLL_FACTOR_ID, USER_FACTOR_ID));
 
                     var mfa = new MFASettings();
                     var enroll = new EnrollSettings();

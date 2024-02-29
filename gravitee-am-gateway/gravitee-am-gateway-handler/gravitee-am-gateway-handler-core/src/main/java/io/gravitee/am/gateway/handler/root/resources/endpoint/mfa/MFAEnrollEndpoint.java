@@ -264,7 +264,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         FactorProvider provider = optFactor.getValue();
         if (provider.checkSecurityFactor(getSecurityFactor(params, optFactor.getKey()))) {
             // save enrolled factor for the current user and continue
-            routingContext.session().put(ConstantKeys.SELECTED_ENROLL_FACTOR_ID_KEY, optFactor.getKey().getId());
+            routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, optFactor.getKey().getId());
             if (sharedSecret != null) {
                 routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY, sharedSecret);
             }

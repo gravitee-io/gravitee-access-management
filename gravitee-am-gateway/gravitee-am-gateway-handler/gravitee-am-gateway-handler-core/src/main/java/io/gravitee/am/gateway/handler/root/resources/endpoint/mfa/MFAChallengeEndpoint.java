@@ -80,7 +80,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -100,7 +99,7 @@ import static io.gravitee.am.common.factor.FactorType.FIDO2;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_TYPE;
-import static io.gravitee.am.common.utils.ConstantKeys.SELECTED_ENROLL_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ACTION_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ENABLE_KEY;
@@ -384,7 +383,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                 cleanSession(routingContext);
                 redirectToAuthorize(routingContext, client, endUser);
             } else {
-                final String fidoFactorId = routingContext.session().get(SELECTED_ENROLL_FACTOR_ID_KEY);
+                final String fidoFactorId = routingContext.session().get(ENROLLED_FACTOR_ID_KEY);
                 factorService.enrollFactor(endUser, createEnrolledFactor(fidoFactorId, credentialId))
                         .ignoreElement()
                         .subscribe(
@@ -504,8 +503,8 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         // factor can be either in session (if user come from mfa/enroll or mfa/challenge/alternatives page)
         // or from the user enrolled factor list
         final String savedFactorId =
-                routingContext.session().get(ConstantKeys.SELECTED_ENROLL_FACTOR_ID_KEY) != null ?
-                        routingContext.session().get(ConstantKeys.SELECTED_ENROLL_FACTOR_ID_KEY) :
+                routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY) != null ?
+                        routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY) :
                         routingContext.session().get(ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY);
 
         if (savedFactorId != null) {
@@ -549,7 +548,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                                              FactorContext factorContext) {
         // enrolled factor can be either in session (if user come from mfa/enroll page)
         // or from the user enrolled factor list
-        final String savedFactorId = routingContext.session().get(ConstantKeys.SELECTED_ENROLL_FACTOR_ID_KEY);
+        final String savedFactorId = routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY);
         if (factor.getId().equals(savedFactorId)) {
             EnrolledFactor enrolledFactor = new EnrolledFactor();
             enrolledFactor.setFactorId(factor.getId());
@@ -710,7 +709,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         ctx.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
         ctx.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
 
-        ctx.session().remove(ConstantKeys.SELECTED_ENROLL_FACTOR_ID_KEY);
+        ctx.session().remove(ConstantKeys.ENROLLED_FACTOR_ID_KEY);
         ctx.session().remove(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY);
         ctx.session().remove(ConstantKeys.ENROLLED_FACTOR_PHONE_NUMBER);
         ctx.session().remove(ConstantKeys.ENROLLED_FACTOR_EXTENSION_PHONE_NUMBER);

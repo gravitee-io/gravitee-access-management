@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mf
 
 import io.gravitee.am.common.utils.ConstantKeys;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.SELECTED_ENROLL_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_STOP;
 import static io.gravitee.am.common.utils.ConstantKeys.STRONG_AUTH_COMPLETED_KEY;
@@ -210,7 +210,7 @@ class MFAChallengeStepTest {
 
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY)).thenReturn(true);
-        when(session.get(SELECTED_ENROLL_FACTOR_ID_KEY)).thenReturn(null);
+        when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(null);
         when(session.get(MFA_CHALLENGE_COMPLETED_KEY)).thenReturn(true);
         when(session.get(MFA_STOP)).thenReturn(false);
 
@@ -232,7 +232,7 @@ class MFAChallengeStepTest {
         when(mfa.getRememberDevice()).thenReturn(rememberDevice);
 
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
-        when(session.get(SELECTED_ENROLL_FACTOR_ID_KEY)).thenReturn(null);
+        when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(null);
         when(session.get(MFA_CHALLENGE_COMPLETED_KEY)).thenReturn(false);
         when(session.get(DEVICE_ALREADY_EXISTS_KEY)).thenReturn(true);
         when(session.get(STRONG_AUTH_COMPLETED_KEY)).thenReturn(false);
@@ -357,7 +357,7 @@ class MFAChallengeStepTest {
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(session.get(MFA_CHALLENGE_COMPLETED_KEY)).thenReturn(true);
         when(session.get(MFA_STOP)).thenReturn(false);
-        when(session.get(SELECTED_ENROLL_FACTOR_ID_KEY)).thenReturn(null);
+        when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(null);
         when(session.get(STRONG_AUTH_COMPLETED_KEY)).thenReturn(true);
 
         mfaChallengeStep.execute(routingContext, flow);
@@ -378,7 +378,7 @@ class MFAChallengeStepTest {
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(session.get(MFA_CHALLENGE_COMPLETED_KEY)).thenReturn(false);
         when(session.get(MFA_STOP)).thenReturn(false);
-        when(session.get(SELECTED_ENROLL_FACTOR_ID_KEY)).thenReturn(null);
+        when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(null);
         when(session.get(STRONG_AUTH_COMPLETED_KEY)).thenReturn(false);
 
         mockRiskBasedSatisfied(false);
@@ -398,7 +398,7 @@ class MFAChallengeStepTest {
 
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(session.get(MFA_STOP)).thenReturn(false);
-        when(session.get(SELECTED_ENROLL_FACTOR_ID_KEY)).thenReturn(null);
+        when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(null);
         when(session.get(MFA_CHALLENGE_COMPLETED_KEY)).thenReturn(false);
 
         mfaChallengeStep.execute(routingContext, flow);
@@ -411,7 +411,7 @@ class MFAChallengeStepTest {
         when(routingContext.user()).thenReturn(io.vertx.rxjava3.ext.auth.User.newInstance(authUser));
         when(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(session.get(MFA_STOP)).thenReturn(false);
-        when(session.get(SELECTED_ENROLL_FACTOR_ID_KEY)).thenReturn(new Object());
+        when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(new Object());
 
         mfaChallengeStep.execute(routingContext, flow);
 

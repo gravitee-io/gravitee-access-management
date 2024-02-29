@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mf
 
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
-import static io.gravitee.am.common.utils.ConstantKeys.SELECTED_ENROLL_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLL_CONDITIONAL_SKIPPED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_STOP;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
@@ -210,7 +210,7 @@ class MFAEnrollStepTest {
         when(client.getMfaSettings()).thenReturn(mfa);
         when(factor.getFactorType()).thenReturn(FactorType.SMS);
 
-        when(session.get(SELECTED_ENROLL_FACTOR_ID_KEY)).thenReturn(FACTOR_ID);
+        when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(FACTOR_ID);
         when(factorManager.getFactor(FACTOR_ID)).thenReturn(factor);
 
         mockFactorRuleSatisfied(selectionRule, true);
@@ -218,7 +218,7 @@ class MFAEnrollStepTest {
         mfaEnrollStep.execute(routingContext, flow);
 
         verifyContinue();
-        verify(session, never()).put(SELECTED_ENROLL_FACTOR_ID_KEY, DEFAULT_FACTOR.getId());
+        verify(session, never()).put(ENROLLED_FACTOR_ID_KEY, DEFAULT_FACTOR.getId());
     }
 
     @Test
@@ -236,7 +236,7 @@ class MFAEnrollStepTest {
 
         when(factor.getFactorType()).thenReturn(FactorType.SMS);
 
-        when(session.get(SELECTED_ENROLL_FACTOR_ID_KEY)).thenReturn(FACTOR_ID);
+        when(session.get(ENROLLED_FACTOR_ID_KEY)).thenReturn(FACTOR_ID);
         lenient().when(factorManager.getFactor(FACTOR_ID)).thenReturn(factor);
         lenient().when(factorManager.getFactor(DEFAULT_FACTOR.getId())).thenReturn(factor);
 
