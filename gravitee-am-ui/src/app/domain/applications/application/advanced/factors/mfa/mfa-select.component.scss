@@ -34,11 +34,18 @@
 
 .no-factor-selected-box {
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 
   .bell-icon {
     padding: 15px;
     border-radius: 50px;
     background: rgb(30 202 211 / 54%);
     color: rgb(30 102 112);
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 }
