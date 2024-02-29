@@ -16,7 +16,7 @@
 
 -->
 
-<div>
+<div class="add-factors-container">
   <h5>Add Factors</h5>
   <p><small>Select factors from your library.</small></p>
   <button mat-raised-button (click)="gotoMfaSettings()">Add/ Edit MFA Factors</button>
@@ -46,7 +46,7 @@
       </ngx-datatable-column>
       <ngx-datatable-column name="Select/unselect" [width]="120" [draggable]="false" [resizeable]="false" [flexGrow]="1" [sortable]="false">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <mat-checkbox (change)="select(row.id, $event.checked)" [ngModel]="model.get(row.id)"></mat-checkbox>
+            <input type='checkbox' (change)="select(row.id)" [ngModel]="model.get(row.id)">
         </ng-template>
       </ngx-datatable-column>
     </ngx-datatable>

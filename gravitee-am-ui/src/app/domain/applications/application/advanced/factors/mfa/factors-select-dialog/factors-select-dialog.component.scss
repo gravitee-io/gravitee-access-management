@@ -2,6 +2,10 @@
   display: none;
 }
 
+.add-factors-container {
+  padding: 15px;
+}
+
 .material {
   min-height: 290px;
   overflow-y: auto;
@@ -10,6 +14,7 @@
 .action-button-container {
   button {
     margin-right: 10px;
+
   }
 }
 
@@ -21,3 +26,4 @@
     margin-left: 5px;
   }
 }
+

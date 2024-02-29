@@ -64,8 +64,9 @@ export class FactorsSelectDialogComponent implements OnInit {
     this.dialogRef.close(result);
   }
 
-  select(rowId: string, checked: boolean): void {
-    this.model.set(rowId, checked);
+  select(rowId: string): void {
+    const value = this.model.get(rowId);
+    this.model.set(rowId, !value);
   }
 
   anyFactorExists(): boolean {
