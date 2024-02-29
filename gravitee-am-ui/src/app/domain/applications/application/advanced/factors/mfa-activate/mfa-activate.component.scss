@@ -71,6 +71,9 @@ blockquote {
   border-radius: 4px;
   background: #f7f8fd;
   gap: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .config-section {

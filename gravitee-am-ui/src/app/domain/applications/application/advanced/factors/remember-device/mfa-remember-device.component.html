@@ -71,7 +71,6 @@
             [value]="displayExpiresIn()"
             (keyup)="onTimeChange($event)"
           />
-          <mat-hint>Default time is 10 hours</mat-hint>
         </mat-form-field>
         <mat-form-field appearance="outline" floatLabel="always" fxFlex="32" style="margin-left: 5px">
           <mat-select placeholder="Unit" name="expirationTimeUnit" [value]="displayUnitTime()" (selectionChange)="onUnitChange($event)">
@@ -83,7 +82,6 @@
             <mat-option value="months">MONTHS</mat-option>
             <mat-option value="years">YEARS</mat-option>
           </mat-select>
-          <mat-hint>Period of time users can trust devices</mat-hint>
         </mat-form-field>
       </div>
       <div *ngIf="isConditional()" class="gv-form-section-description">
