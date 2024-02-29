@@ -60,7 +60,6 @@
     "ngx-clipboard": "16.0.0",
     "ngx-file-helpers": "11.0.0",
     "rxjs": "7.8.1",
-    "whatwg-fetch": "3.6.17",
     "zone.js": "0.14.4"
   },
   "devDependencies": {
