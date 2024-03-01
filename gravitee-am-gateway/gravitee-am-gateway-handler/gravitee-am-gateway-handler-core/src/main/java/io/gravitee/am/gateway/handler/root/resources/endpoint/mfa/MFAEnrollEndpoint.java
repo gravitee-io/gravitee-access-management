@@ -65,6 +65,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
+import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 
 /**
@@ -198,9 +199,18 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
 
     private void saveEnrollment(RoutingContext routingContext) {
         MultiMap params = routingContext.request().formAttributes();
-        final boolean acceptEnrollment = Boolean.parseBoolean(params.get(ConstantKeys.USER_MFA_ENROLLMENT));
+        final boolean acceptEnrollment = ofNullable(params.get(ConstantKeys.USER_MFA_ENROLLMENT)).map(Boolean::parseBoolean).orElse(true);
         final String factorId = params.get(ConstantKeys.MFA_ENROLLMENT_FACTOR_ID);
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+
+        if (!acceptEnrollment && !MfaUtils.isCanSkip(routingContext, client)) {
+            // user request a skipEnrollment but it is required,
+            // redirect back to the authorize endpoint to force
+            // the enrollment
+            redirectToAuthorize(routingContext);
+            return;
+        }
+
         if (!isSkipped(routingContext, acceptEnrollment, client)) {
             getValidFactor(routingContext, factorId, client).ifPresent(optFactor -> manageEnrolledFactors(routingContext, optFactor, params));
         }
