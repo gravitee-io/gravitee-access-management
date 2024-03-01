@@ -15,73 +15,51 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import io.gravitee.am.model.ChallengeSettings;
+import io.gravitee.am.model.EnrollSettings;
+import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.EnrollmentSettings;
 
+import io.gravitee.am.model.StepUpAuthenticationSettings;
 import java.util.Objects;
 
 import static java.util.Optional.ofNullable;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
+@NoArgsConstructor
 public class MFASettingsMongo {
 
     private String loginRule;
+    private FactorMongoSettings factor;
     private String stepUpAuthenticationRule;
+    private StepUpAuthenticationMongoSettings stepUpAuthentication;
     private String adaptiveAuthenticationRule;
     private RememberDeviceSettingsMongo rememberDevice;
     private EnrollmentSettingsMongo enrollment;
-
-    public String getLoginRule() {
-        return loginRule;
-    }
-
-    public void setLoginRule(String loginRule) {
-        this.loginRule = loginRule;
-    }
-
-    public String getStepUpAuthenticationRule() {
-        return stepUpAuthenticationRule;
-    }
-
-    public void setStepUpAuthenticationRule(String stepUpAuthenticationRule) {
-        this.stepUpAuthenticationRule = stepUpAuthenticationRule;
-    }
-
-    public String getAdaptiveAuthenticationRule() {
-        return adaptiveAuthenticationRule;
-    }
-
-    public void setAdaptiveAuthenticationRule(String adaptiveAuthenticationRule) {
-        this.adaptiveAuthenticationRule = adaptiveAuthenticationRule;
-    }
-
-    public RememberDeviceSettingsMongo getRememberDevice() {
-        return rememberDevice;
-    }
-
-    public void setRememberDevice(RememberDeviceSettingsMongo rememberDevice) {
-        this.rememberDevice = rememberDevice;
-    }
-
-    public EnrollmentSettingsMongo getEnrollment() {
-        return enrollment;
-    }
-
-    public void setEnrollment(EnrollmentSettingsMongo enrollment) {
-        this.enrollment = enrollment;
-    }
+    private EnrollSettingsMongo enroll;
+    private ChallengeSettingsMongo challenge;
 
     public MFASettings convert() {
         MFASettings mfaSettings = new MFASettings();
         mfaSettings.setLoginRule(getLoginRule());
+        mfaSettings.setFactor(ofNullable(getFactor()).orElse(new FactorMongoSettings()).convert());
         mfaSettings.setStepUpAuthenticationRule(getStepUpAuthenticationRule());
+        mfaSettings.setStepUpAuthentication(ofNullable(getStepUpAuthentication()).orElse(new StepUpAuthenticationMongoSettings()).convert());
         mfaSettings.setAdaptiveAuthenticationRule(getAdaptiveAuthenticationRule());
         mfaSettings.setRememberDevice(ofNullable(getRememberDevice()).orElse(new RememberDeviceSettingsMongo()).convert());
         mfaSettings.setEnrollment(ofNullable(getEnrollment()).orElse(new EnrollmentSettingsMongo()).convert());
+        mfaSettings.setEnroll(ofNullable(getEnroll()).orElse(new EnrollSettingsMongo()).convert());
+        mfaSettings.setChallenge(ofNullable(getChallenge()).orElse(new ChallengeSettingsMongo()).convert());
         return mfaSettings;
     }
 
@@ -89,10 +67,14 @@ public class MFASettingsMongo {
         return ofNullable(mfaSettings).filter(Objects::nonNull).map(settings -> {
             MFASettingsMongo mfaSettingsMongo = new MFASettingsMongo();
             mfaSettingsMongo.setLoginRule(settings.getLoginRule());
+            mfaSettingsMongo.setFactor(FactorMongoSettings.convert(ofNullable(mfaSettings.getFactor()).orElse(new FactorSettings())));
             mfaSettingsMongo.setStepUpAuthenticationRule(settings.getStepUpAuthenticationRule());
+            mfaSettingsMongo.setStepUpAuthentication(StepUpAuthenticationMongoSettings.convert(ofNullable(mfaSettings.getStepUpAuthentication()).orElse(new StepUpAuthenticationSettings())));
             mfaSettingsMongo.setAdaptiveAuthenticationRule(settings.getAdaptiveAuthenticationRule());
             mfaSettingsMongo.setRememberDevice(RememberDeviceSettingsMongo.convert(ofNullable(mfaSettings.getRememberDevice()).orElse(new RememberDeviceSettings())));
             mfaSettingsMongo.setEnrollment(EnrollmentSettingsMongo.convert(ofNullable(mfaSettings.getEnrollment()).orElse(new EnrollmentSettings())));
+            mfaSettingsMongo.setEnroll(EnrollSettingsMongo.convert(ofNullable(mfaSettings.getEnroll()).orElse(new EnrollSettings())));
+            mfaSettingsMongo.setChallenge(ChallengeSettingsMongo.convert(ofNullable(mfaSettings.getChallenge()).orElse(new ChallengeSettings())));
             return mfaSettingsMongo;
         }).orElse(null);
     }

@@ -1,0 +1,26 @@
+.assessment-container {
+  h3 {
+    font-weight: normal;
+  }
+}
+
+.risk-based-options-titles {
+  align-content: center;
+  font-family: 'Golos UI', Roboto, 'Helvetica Neue', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.risk-based-group {
+  padding: 4px;
+  border: 1px solid #d3d5dc;
+  border-radius: 4px;
+  color: #d3d5dc;
+  gap: 4px;
+}
+
+.mat-button-toggle-checked {
+  background-color: #6c59bd;
+  color: #fff;
+}

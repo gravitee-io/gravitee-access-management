@@ -66,7 +66,6 @@ public interface ConstantKeys {
     String DEVICE_ID = "deviceId";
     String X_XSRF_TOKEN = "X-XSRF-TOKEN";
     String _CSRF = "_csrf";
-    String __BODY_HANDLED = "__body-handled";
     String SOCIAL_PROVIDER_CONTEXT_KEY = "socialProviders";
 
     // enrich authentication flow keys
@@ -75,7 +74,8 @@ public interface ConstantKeys {
     String AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY = "authFlow";
 
     // MFA keys.
-    String MFA_SKIPPED_KEY = "mfaEnrollmentSkipped";
+    String MFA_STOP = "mfaStop";
+    String MFA_ENROLL_CONDITIONAL_SKIPPED_KEY = "mfaEnrollmentCanBeSkippedConditionally";
     String MFA_ENROLLMENT_COMPLETED_KEY = "mfaEnrollmentCompleted";
     String MFA_CHALLENGE_COMPLETED_KEY = "mfaChallengeCompleted";
     String STRONG_AUTH_COMPLETED_KEY = "strongAuthCompleted";
@@ -153,8 +153,9 @@ public interface ConstantKeys {
 
     //remember device
     String DEVICE_ALREADY_EXISTS_KEY = "deviceAlreadyExists";
+    String REMEMBER_DEVICE_OR_SKIP_UNTIL = "deviceDeviceOrSkipUntil";
     String REMEMBER_DEVICE_CONSENT_TIME_SECONDS = "rememberDeviceConsentTimeSeconds";
-    long DEFAULT_REMEMBER_DEVICE_CONSENT_TIME = 10 * 60 * 60; // 10 hours
+    long DEFAULT_REMEMBER_DEVICE_CONSENT_TIME = 36000; // 10 hours
     String REMEMBER_DEVICE_IS_ACTIVE = "rememberDeviceIsActive";
     String DEVICE_IDENTIFIER_PROVIDER_KEY = "deviceIdentifierProvider";
 
@@ -228,13 +229,13 @@ public interface ConstantKeys {
     String FORGOT_ACTION_KEY = "forgotPasswordAction";
     String REQUEST_CONTEXT_KEY = "request";
     Set<String> ID_TOKEN_EXCLUDED_CLAIMS = Set.of(
-        ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY,
-        ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY,
-        Claims.iat,
-        Claims.exp,
-        Claims.nbf,
-        Claims.auth_time,
-        Claims.updated_at
+            ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY,
+            ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY,
+            Claims.iat,
+            Claims.exp,
+            Claims.nbf,
+            Claims.auth_time,
+            Claims.updated_at
     );
 
     String REGISTRATION_VERIFY_SUCCESS = "registration_verify_success";

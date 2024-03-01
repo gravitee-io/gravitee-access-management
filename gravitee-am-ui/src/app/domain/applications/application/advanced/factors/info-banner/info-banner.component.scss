@@ -1,0 +1,35 @@
+.title {
+  font-family: 'Golos UI', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.close-info {
+  padding: 10px;
+}
+
+.close-info:hover {
+  cursor: pointer;
+}
+
+.info-icon {
+  color: white;
+  text-shadow: 1px 1px 1px black;
+}
+
+.show-info {
+  padding: 12px 12px 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  gap: 16px;
+}
+
+.more-info-button {
+  padding: 3px 18px;
+  font-family: 'Golos UI', Roboto, 'Helvetica Neue', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  gap: 8px;
+  letter-spacing: 0.4px;
+}

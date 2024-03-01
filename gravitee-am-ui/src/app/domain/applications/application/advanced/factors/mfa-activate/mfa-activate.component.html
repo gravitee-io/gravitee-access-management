@@ -22,58 +22,51 @@
       <span class="gio-badge-neutral">2</span>
     </div>
     <div class="mfa-title">
-      <h5>Activate MFA</h5>
-      <small>The end user will be prompted to process verification after he has been authenticated.</small>
+      <h5>MFA enrollment</h5>
+      <small>Configure the user MFA enrollment requirements.</small>
     </div>
+    <mat-slide-toggle (change)="switchEnable()" [checked]="this.enrollment.active"></mat-slide-toggle>
   </div>
-  <div fxLayout="column">
-    <form>
-      <mat-form-field appearance="outline" floatLabel="always" fxFlex="40" style="margin-left: 5px">
-        <mat-select placeholder="Mode" name="mode" [(ngModel)]="this.currentMode" (selectionChange)="applyModeChange($event)">
-          <mat-option *ngFor="let mode of modes" [value]="mode" [gioLicense]="mode.licenseOptions">
-            {{ mode.label }}
-            <mat-icon *ngIf="mode?.isMissingFeature$ | async" svgIcon="gio:lock"></mat-icon>
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </form>
-
-    <blockquote class="info">
-      <p>
-        <mat-icon>info_outline</mat-icon>
+  <div fxLayout="column" *ngIf="this.enrollment.active">
+    <div fxLayout="row" style="padding-bottom: 10px">
+      <div fxFlex="50">
+        <span class="options-title">Options</span>
+        <div *ngFor="let opt of modes" class="options">
+          <mat-radio-button
+            name="mfa-enrollment"
+            (change)="onOptionChange(opt)"
+            [checked]="isChecked(opt)"
+            [gioLicense]="opt.licenseOptions"
+          >
+            {{ opt.label }}
+            <mat-icon *ngIf="opt?.isMissingFeature$ | async" svgIcon="gio:lock"></mat-icon>
+          </mat-radio-button>
+        </div>
+      </div>
+      <div class="description" fxFlex="50">
         {{ currentMode.message }}
-      </p>
-    </blockquote>
-
-    <blockquote *ngIf="currentMode.warning" class="warning">
-      <p><mat-icon>warning_outline</mat-icon><span [innerHTML]="currentMode.warning"></span></p>
-    </blockquote>
-
-    <div *ngIf="this.currentMode !== modeOptions.REQUIRED" class="gv-form-section-title mfa-section-title">
-      <div class="mfa-title">
-        <h5>Configuration</h5>
       </div>
     </div>
 
-    <mfa-optional
-      *ngIf="this.currentMode === modeOptions.OPTIONAL"
-      [enrollment]="this.enrollment"
-      (settings-change)="updateOptional($event)"
-    >
-    </mfa-optional>
+    <div class="config-section">
+      <div *ngIf="currentMode.warning && currentMode.warningLink">
+        <info-banner [link]="currentMode.warningLink" [text]="currentMode.warning"> </info-banner>
+      </div>
 
-    <mfa-conditional
-      *ngIf="this.currentMode === modeOptions.CONDITIONAL"
-      [adaptiveMfaRule]="this.adaptiveMfaRule"
-      (on-rule-change)="updateAdaptiveMfaRule($event)"
-    >
-    </mfa-conditional>
+      <time-period-picker
+        title="Specify how long the device should be trusted"
+        *ngIf="this.currentMode === modeOptions.OPTIONAL"
+        [defaultTimeSec]="this.enrollment.skipTimeSeconds"
+        (settingsChange)="onSkipChange($event)"
+      >
+      </time-period-picker>
 
-    <mfa-intelligent
-      [riskAssessment]="riskAssessment"
-      (on-settings-change)="updateRiskAssessment($event)"
-      *ngIf="this.currentMode === modeOptions.INTELLIGENT"
-    >
-    </mfa-intelligent>
+      <mfa-conditional
+        *ngIf="this.currentMode === modeOptions.CONDITIONAL"
+        [enrollment]="this.enrollment"
+        (settingsChange)="onConditionalChange($event)"
+      >
+      </mfa-conditional>
+    </div>
   </div>
 </div>

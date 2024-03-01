@@ -21,24 +21,29 @@ import io.gravitee.am.factor.api.Enrollment;
 import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
+import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.Factor;
+import io.gravitee.am.model.FactorSettings;
+import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.MfaEnrollType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Session;
-import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
@@ -56,8 +61,6 @@ import org.springframework.context.ApplicationContext;
 
 import java.util.*;
 
-import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
 import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
@@ -88,12 +91,14 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
     private MFAEnrollEndpoint mfaEnrollEndpoint;
     @Mock
     private TemplateEngine engine;
+    @Mock
+    private RuleEngine ruleEngine;
     private LocalSessionStore localSessionStore;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        mfaEnrollEndpoint = new MFAEnrollEndpoint(factorManager, templateEngine, userService, domain, applicationContext);
+        mfaEnrollEndpoint = new MFAEnrollEndpoint(factorManager, templateEngine, userService, domain, applicationContext, ruleEngine);
         localSessionStore = LocalSessionStore.create(vertx);
 
         localSessionStore = LocalSessionStore.create(vertx);
@@ -122,7 +127,9 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                 .handler(ctx -> {
                     User user = new User();
                     Client client = new Client();
-                    client.setFactors(Collections.singleton("factor-id"));
+                    FactorSettings factorSettings = new FactorSettings();
+                    factorSettings.setApplicationFactors(List.of(getApplicationFactorSettings("factor-id")));
+                    client.setFactorSettings(factorSettings);
                     ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
@@ -135,6 +142,7 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
         when(factorProvider.enroll(any(FactorContext.class))).thenReturn(Single.just(enrollment));
         Factor factor = mock(Factor.class);
         when(factor.getFactorType()).thenReturn(FactorType.EMAIL);
+        when(factor.getId()).thenReturn("factor-id");
         when(factorManager.get(any())).thenReturn(factorProvider);
         when(factorManager.getFactor(any())).thenReturn(factor);
 
@@ -146,14 +154,17 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
 
     @Test
     public void shouldRenderPage_displayOnlyTheAlternativeId() throws Exception {
+        String emailFactorId = "factor-id";
+        String smsFactorId = "other-factor-id";
         router.route(REQUEST_PATH)
                 .handler(ctx -> {
                     User user = new User();
                     Client client = new Client();
-                    client.setFactors(Set.of("factor-id", "other-factor-id"));
+                    client.setFactorSettings(getFactorSettings(emailFactorId, smsFactorId));
+                    client.setFactors(Set.of(emailFactorId, smsFactorId));
                     ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-                    ctx.session().put(ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY, "factor-id");
+                    ctx.session().put(ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY, emailFactorId);
                     ctx.next();
                 })
                 .handler(checkFactorList(mfaEnrollEndpoint))
@@ -163,21 +174,35 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
         FactorProvider factorProvider = mock(FactorProvider.class);
         when(factorProvider.enroll(any(FactorContext.class))).thenReturn(Single.just(enrollment));
         Factor emailFactor = mock(Factor.class);
-        when(emailFactor.getId()).thenReturn("factor-id");
+        when(emailFactor.getId()).thenReturn(emailFactorId);
         when(emailFactor.getFactorType()).thenReturn(FactorType.EMAIL);
-        when(factorManager.get("factor-id")).thenReturn(factorProvider);
-        when(factorManager.getFactor("factor-id")).thenReturn(emailFactor);
+        when(factorManager.get(emailFactorId)).thenReturn(factorProvider);
+        when(factorManager.getFactor(emailFactorId)).thenReturn(emailFactor);
 
         Factor smsFactor = mock(Factor.class);
-        when(smsFactor.getId()).thenReturn("other-factor-id");
+        when(smsFactor.getId()).thenReturn(smsFactorId);
         when(smsFactor.getFactorType()).thenReturn(FactorType.SMS);
-        when(factorManager.get("other-factor-id")).thenReturn(factorProvider);
-        when(factorManager.getFactor("other-factor-id")).thenReturn(smsFactor);
+        when(factorManager.get(smsFactorId)).thenReturn(factorProvider);
+        when(factorManager.getFactor(smsFactorId)).thenReturn(smsFactor);
 
         testRequest(HttpMethod.GET,
                 REQUEST_PATH,
                 200,
                 "OK");
+    }
+
+    private static FactorSettings getFactorSettings(String emailFactor, String smsFactor) {
+        ApplicationFactorSettings appEmailFactor = getApplicationFactorSettings(emailFactor);
+        appEmailFactor.setSelectionRule("");
+
+        ApplicationFactorSettings appSmsFactor = getApplicationFactorSettings(smsFactor);
+        appSmsFactor.setSelectionRule("");
+
+
+        FactorSettings factorSettings = new FactorSettings();
+        factorSettings.setDefaultFactorId("default-factor-id");
+        factorSettings.setApplicationFactors(List.of(appEmailFactor, appSmsFactor));
+        return factorSettings;
     }
 
     private Handler<RoutingContext> checkFactorList(Handler handler) {
@@ -218,7 +243,9 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                 .handler(ctx -> {
                     User user = new User();
                     Client client = new Client();
-                    client.setFactors(Collections.singleton("factor-id"));
+                    FactorSettings factorSettings = new FactorSettings();
+                    factorSettings.setApplicationFactors(List.of(getApplicationFactorSettings("factor-id")));
+                    client.setFactorSettings(factorSettings);
                     ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
@@ -243,7 +270,9 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                 .handler(ctx -> {
                     User user = new User();
                     Client client = new Client();
-                    client.setFactors(Collections.singleton("factor-id"));
+                    FactorSettings factorSettings = new FactorSettings();
+                    factorSettings.setApplicationFactors(List.of(getApplicationFactorSettings("factor-id")));
+                    client.setFactorSettings(factorSettings);
                     ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
@@ -277,7 +306,9 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                 .handler(ctx -> {
                     User user = new User();
                     Client client = new Client();
-                    client.setFactors(Collections.singleton("factor-id"));
+                    FactorSettings factorSettings = new FactorSettings();
+                    factorSettings.setApplicationFactors(List.of(getApplicationFactorSettings("factor-id")));
+                    client.setFactorSettings(factorSettings);
                     ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
@@ -314,7 +345,9 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                 .handler(ctx -> {
                     User user = new User();
                     Client client = new Client();
-                    client.setFactors(Collections.singleton("factor-id"));
+                    FactorSettings factorSettings = new FactorSettings();
+                    factorSettings.setApplicationFactors(List.of(getApplicationFactorSettings("factor-id")));
+                    client.setFactorSettings(factorSettings);
                     ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
@@ -384,13 +417,15 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                     user.setFactors(Collections.singletonList(enrolledFactor));
 
                     Client client = new Client();
-                    client.setFactors(Set.of(ENROLL_FACTOR_ID, RECOVERY_FACTOR_ID));
+                    FactorSettings factorSettings = new FactorSettings();
+                    factorSettings.setApplicationFactors(List.of(getApplicationFactorSettings(ENROLL_FACTOR_ID), getApplicationFactorSettings(RECOVERY_FACTOR_ID)));
+                    client.setFactorSettings(factorSettings);
                     ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 
                     ctx.next();
                 })
-                .handler(new MFAEnrollEndpoint(factorManager, engine, userService, domain, applicationContext))
+                .handler(new MFAEnrollEndpoint(factorManager, engine, userService, domain, applicationContext, ruleEngine))
                 .failureHandler(new ErrorHandler(RootProvider.PATH_ERROR));
 
         testRequest(
@@ -416,6 +451,12 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                     assertTrue(location.contains("/authorize"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    private static ApplicationFactorSettings getApplicationFactorSettings(String ENROLL_FACTOR_ID) {
+        ApplicationFactorSettings applicationFactorSettings = new ApplicationFactorSettings();
+        applicationFactorSettings.setId(ENROLL_FACTOR_ID);
+        return applicationFactorSettings;
     }
 
     @Test
@@ -444,13 +485,16 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                     user.setFactors(Collections.singletonList(enrolledFactor));
 
                     Client client = new Client();
-                    client.setFactors(Collections.singleton(ENROLL_FACTOR_ID));
+                    ApplicationFactorSettings applicationFactorSettings = getApplicationFactorSettings(ENROLL_FACTOR_ID);
+                    FactorSettings factorSettings = new FactorSettings();
+                    factorSettings.setApplicationFactors(List.of(applicationFactorSettings));
+                    client.setFactorSettings(factorSettings);
                     ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 
                     ctx.next();
                 })
-                .handler(new MFAEnrollEndpoint(factorManager, engine, userService, domain, applicationContext))
+                .handler(new MFAEnrollEndpoint(factorManager, engine, userService, domain, applicationContext, ruleEngine))
                 .failureHandler(new ErrorHandler(RootProvider.PATH_ERROR));
 
         testRequest(
@@ -502,13 +546,15 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                     user.setFactors(Collections.singletonList(enrolledFactor));
 
                     Client client = new Client();
-                    client.setFactors(Collections.singleton(ENROLL_FACTOR_ID));
+                    FactorSettings factorSettings = new FactorSettings();
+                    factorSettings.setApplicationFactors(List.of(getApplicationFactorSettings(ENROLL_FACTOR_ID)));
+                    client.setFactorSettings(factorSettings);
                     ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 
                     ctx.next();
                 })
-                .handler(new MFAEnrollEndpoint(factorManager, engine, userService, domain, applicationContext))
+                .handler(new MFAEnrollEndpoint(factorManager, engine, userService, domain, applicationContext, ruleEngine))
                 .failureHandler(new ErrorHandler(RootProvider.PATH_ERROR));
 
         testRequest(
@@ -569,13 +615,15 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                     user.setFactors(Collections.singletonList(enrolledFactor));
 
                     Client client = new Client();
-                    client.setFactors(Set.of(ENROLL_FACTOR_ID, USER_FACTOR_ID));
+                    FactorSettings factorSettings = new FactorSettings();
+                    factorSettings.setApplicationFactors(List.of(getApplicationFactorSettings(ENROLL_FACTOR_ID), getApplicationFactorSettings(USER_FACTOR_ID)));
+                    client.setFactorSettings(factorSettings);
                     ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 
                     ctx.next();
                 })
-                .handler(new MFAEnrollEndpoint(factorManager, engine, userService, domain, applicationContext))
+                .handler(new MFAEnrollEndpoint(factorManager, engine, userService, domain, applicationContext, ruleEngine))
                 .failureHandler(new ErrorHandler(RootProvider.PATH_ERROR));
 
         testRequest(
@@ -639,7 +687,9 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                     user.setFactors(Collections.singletonList(enrolledFactor));
 
                     Client client = new Client();
-                    client.setFactors(Set.of(ENROLL_FACTOR_ID, USER_FACTOR_ID));
+                    FactorSettings factorSettings = new FactorSettings();
+                    factorSettings.setApplicationFactors(List.of(getApplicationFactorSettings(ENROLL_FACTOR_ID), getApplicationFactorSettings(USER_FACTOR_ID)));
+                    client.setFactorSettings(factorSettings);
                     ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 
@@ -648,7 +698,7 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
 
                     ctx.next();
                 })
-                .handler(new MFAEnrollEndpoint(factorManager, engine, userService, domain, applicationContext))
+                .handler(new MFAEnrollEndpoint(factorManager, engine, userService, domain, applicationContext, ruleEngine))
                 .failureHandler(new ErrorHandler(RootProvider.PATH_ERROR));
 
         testRequest(
@@ -674,5 +724,137 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                     assertTrue(location.contains("/authorize"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldNotSetSkippedTimeWhenUserCannotSkip() throws Exception {
+        final var USER_FACTOR_ID = UUID.randomUUID().toString();
+        final var ENROLL_FACTOR_ID = UUID.randomUUID().toString();
+        final var EMAIL_ADDR = "fake@acme.com";
+        final var USER_ACCEPT_ENROLL = false;
+
+        Factor emailFactor = new Factor();
+        emailFactor.setId(ENROLL_FACTOR_ID);
+        emailFactor.setFactorType(FactorType.EMAIL);
+
+        Factor smsFactor = new Factor();
+        smsFactor.setId(USER_FACTOR_ID);
+        smsFactor.setFactorType(FactorType.SMS);
+
+        router.route(HttpMethod.POST, REQUEST_PATH)
+                .handler(ctx -> {
+                    User user = new User();
+                    user.setId("userId");
+
+                    Client client = new Client();
+                    FactorSettings factorSettings = new FactorSettings();
+                    factorSettings.setApplicationFactors(List.of(getApplicationFactorSettings(ENROLL_FACTOR_ID), getApplicationFactorSettings(USER_FACTOR_ID)));
+                    client.setFactorSettings(factorSettings);
+
+                    var mfa = new MFASettings();
+                    var enroll = new EnrollSettings();
+                    enroll.setActive(true);
+                    enroll.setForceEnrollment(true);
+                    enroll.setType(MfaEnrollType.CONDITIONAL);
+                    mfa.setEnroll(enroll);
+                    client.setMfaSettings(mfa);
+
+                    ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+                    ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+
+                    ctx.session().put(ConstantKeys.MFA_FORCE_ENROLLMENT, true);
+                    ctx.session().put(ConstantKeys.MFA_ENROLL_CONDITIONAL_SKIPPED_KEY, false);
+
+                    ctx.next();
+                })
+                .handler(new MFAEnrollEndpoint(factorManager, engine, userService, domain, applicationContext, ruleEngine))
+                .failureHandler(new ErrorHandler(RootProvider.PATH_ERROR));
+
+        testRequest(
+                HttpMethod.POST,
+                REQUEST_PATH,
+                req -> {
+                    Buffer buffer = Buffer.buffer();
+                    buffer
+                            .appendString("factorId=" + ENROLL_FACTOR_ID)
+                            .appendString("&")
+                            .appendString(ConstantKeys.USER_MFA_ENROLLMENT + "=" + USER_ACCEPT_ENROLL)
+                            .appendString("&")
+                            .appendString(ConstantKeys.MFA_ENROLLMENT_SHARED_SECRET + "=" + UUID.randomUUID())
+                            .appendString("&")
+                            .appendString(ConstantKeys.MFA_ENROLLMENT_EMAIL + "=" + EMAIL_ADDR);
+                    req.headers().set("content-length", String.valueOf(buffer.length()));
+                    req.headers().set("content-type", "application/x-www-form-urlencoded");
+                    req.write(buffer);
+                },
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.contains("/authorize"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+
+        verify(userService, never()).setMfaEnrollmentSkippedTime(any(), any());
+    }
+
+    @Test
+    public void shouldSetSkippedTimeWhenUserSkipped() throws Exception {
+        final var ENROLL_FACTOR_ID = UUID.randomUUID().toString();
+        final var EMAIL_ADDR = "fake@acme.com";
+        final var USER_ACCEPT_ENROLL = false;
+
+        when(userService.setMfaEnrollmentSkippedTime(any(), any())).thenReturn(Completable.complete());
+
+        router.route(HttpMethod.POST, REQUEST_PATH)
+                .handler(ctx -> {
+                    User user = new User();
+                    user.setId("userId");
+
+                    Client client = new Client();
+
+                    var mfa = new MFASettings();
+                    var enroll = new EnrollSettings();
+                    enroll.setActive(true);
+                    enroll.setForceEnrollment(true);
+                    enroll.setType(MfaEnrollType.CONDITIONAL);
+                    mfa.setEnroll(enroll);
+                    client.setMfaSettings(mfa);
+
+                    ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+                    ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+
+                    ctx.session().put(ConstantKeys.MFA_FORCE_ENROLLMENT, true);
+                    ctx.session().put(ConstantKeys.MFA_ENROLL_CONDITIONAL_SKIPPED_KEY, true);
+
+                    ctx.next();
+                })
+                .handler(new MFAEnrollEndpoint(factorManager, engine, userService, domain, applicationContext, ruleEngine))
+                .failureHandler(new ErrorHandler(RootProvider.PATH_ERROR));
+
+        testRequest(
+                HttpMethod.POST,
+                REQUEST_PATH,
+                req -> {
+                    Buffer buffer = Buffer.buffer();
+                    buffer
+                            .appendString("factorId=" + ENROLL_FACTOR_ID)
+                            .appendString("&")
+                            .appendString(ConstantKeys.USER_MFA_ENROLLMENT + "=" + USER_ACCEPT_ENROLL)
+                            .appendString("&")
+                            .appendString(ConstantKeys.MFA_ENROLLMENT_SHARED_SECRET + "=" + UUID.randomUUID())
+                            .appendString("&")
+                            .appendString(ConstantKeys.MFA_ENROLLMENT_EMAIL + "=" + EMAIL_ADDR);
+                    req.headers().set("content-length", String.valueOf(buffer.length()));
+                    req.headers().set("content-type", "application/x-www-form-urlencoded");
+                    req.write(buffer);
+                },
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.contains("/authorize"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+
+        verify(userService, times(1)).setMfaEnrollmentSkippedTime(any(), any());
     }
 }

@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
@@ -34,6 +35,10 @@ public abstract class MFAEndpoint extends AbstractEndpoint implements Handler<Ro
 
     public MFAEndpoint(TemplateEngine templateEngine) {
         super(templateEngine);
+    }
+
+    protected final boolean hasApplicationFactorSettings(Client client) {
+        return client.getFactorSettings() != null && client.getFactorSettings().getApplicationFactors() != null;
     }
 
     protected User user(RoutingContext routingContext) {

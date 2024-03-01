@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequ
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
@@ -70,6 +71,7 @@ import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
+import static java.lang.Boolean.TRUE;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -78,7 +80,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -290,11 +291,10 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                 .subscribe(verifyAttempt -> verify(factorProvider, factorCtx, verifyAttempt,
                                 verifyHandler(routingContext, client, endUser, factor, code, factorId, factorProvider, enrolledFactor, factorCtx)),
                         error -> {
-                            if (error instanceof MFAValidationAttemptException) {
-
+                            if (error instanceof MFAValidationAttemptException e) {
                                 auditService.report(AuditBuilder.builder(VerifyAttemptAuditBuilder.class)
                                         .type(EventType.MFA_VERIFICATION_LIMIT_EXCEED)
-                                        .verifyAttempt(((MFAValidationAttemptException) error).getVerifyAttempt())
+                                        .verifyAttempt(e.getVerifyAttempt())
                                         .ipAddress(routingContext)
                                         .userAgent(routingContext)
                                         .client(client)
@@ -517,9 +517,15 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
 
         // get the primary enrolled factor
         // if there is no primary, select the first created
-        List<EnrolledFactor> enrolledFactors = endUser.getFactors()
+        final var factors = hasApplicationFactorSettings(client) ? client.getFactorSettings()
+                .getApplicationFactors()
                 .stream()
-                .filter(enrolledFactor -> client.getFactors().contains(enrolledFactor.getFactorId()))
+                .map(ApplicationFactorSettings::getId)
+                .collect(Collectors.toSet()) : Set.of();
+
+        final var enrolledFactors = endUser.getFactors()
+                .stream()
+                .filter(enrolledFactor -> factors.contains(enrolledFactor.getFactorId()))
                 .sorted(Comparator.comparing(EnrolledFactor::getCreatedAt))
                 .collect(Collectors.toList());
 
@@ -529,7 +535,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
 
         return enrolledFactors
                 .stream()
-                .filter(e -> Boolean.TRUE.equals(e.isPrimary()))
+                .filter(e -> TRUE.equals(e.isPrimary()))
                 .map(enrolledFactor -> factorManager.getFactor(enrolledFactor.getFactorId()))
                 .findFirst()
                 .orElse(factorManager.getFactor(enrolledFactors.get(0).getFactorId()));
@@ -575,6 +581,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                         factorSecurity.ifPresent(enrolledFactor::setSecurity);
                     }
                     break;
+                default:
             }
 
             // if the factor provider uses a moving factor security mechanism,
@@ -656,7 +663,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
             doRedirect(routingContext.response(), redirectUrl);
         } else {
             this.deviceService.deviceExists(domain, client.getClientId(), userId, rememberDeviceId, deviceId).flatMapMaybe(isEmpty -> {
-                if (!isEmpty) {
+                if (Boolean.FALSE.equals(isEmpty)) {
                     routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
                     return Maybe.empty();
                 }
@@ -736,7 +743,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         if (endUser.getFactors() == null || endUser.getFactors().size() <= 1) {
             return false;
         }
-        if (client.getFactors() == null || client.getFactors().size() <= 1) {
+        if (client.getFactorSettings() == null || client.getFactorSettings().getApplicationFactors() == null || client.getFactorSettings().getApplicationFactors().size() <= 1) {
             return false;
         }
         final Set<String> clientFactorIds = client.getFactors();

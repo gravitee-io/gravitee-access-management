@@ -416,18 +416,12 @@ import { Saml2Component } from './domain/settings/saml2/saml2.component';
 import { MfaSelectComponent } from './domain/applications/application/advanced/factors/mfa/mfa-select.component';
 import { MfaRememberDeviceComponent } from './domain/applications/application/advanced/factors/remember-device/mfa-remember-device.component';
 import { TimeConverterService } from './services/time-converter.service';
-import {
-  MfaStepUpComponent,
-  MfaStepUpDialogComponent,
-} from './domain/applications/application/advanced/factors/step-up-auth/mfa-step-up.component';
+import { MfaStepUpComponent } from './domain/applications/application/advanced/factors/step-up-auth/mfa-step-up.component';
 import { MfaActivateComponent } from './domain/applications/application/advanced/factors/mfa-activate/mfa-activate.component';
-import { MfaOptionalComponent } from './domain/applications/application/advanced/factors/mfa-activate/optional/mfa-optional.component';
-import {
-  AdaptiveMfaDialogComponent,
-  MfaConditionalComponent,
-} from './domain/applications/application/advanced/factors/mfa-activate/conditional/mfa-conditional.component';
-import { MfaIntelligentComponent } from './domain/applications/application/advanced/factors/mfa-activate/intelligent/mfa-intelligent.component';
-import { AssessmentComponent } from './domain/applications/application/advanced/factors/mfa-activate/intelligent/assessment/assessment.component';
+import { TimePeriodPickerComponent } from './domain/applications/application/advanced/factors/time-period-picker/time-period-picker.component';
+import { MfaConditionalComponent } from './domain/applications/application/advanced/factors/mfa-activate/conditional/mfa-conditional.component';
+import { MfaRiskBasedComponent } from './domain/applications/application/advanced/factors/mfa-challenge/risk-based/mfa-risk-based.component';
+import { AssessmentComponent } from './domain/applications/application/advanced/factors/mfa-challenge/risk-based/assessment/assessment.component';
 import { DomainSettingsDictionariesComponent } from './domain/settings/texts/dictionaries.component';
 import { DictionaryDialogComponent } from './components/dialog/dictionary/dictionary-dialog.component';
 import { DictionariesResolver } from './resolvers/dictionaries.resolver';
@@ -440,6 +434,11 @@ import { EmailTemplateFactoryService } from './services/email.template.factory.s
 import { FormTemplateFactoryService } from './services/form.template.factory.service';
 import { LicenseGuard } from './guards/license-guard.service';
 import { ApplicationClientSecretDialogModule } from './domain/applications/client-secret/application-client-secret-dialog.module';
+import { MfaChallengeComponent } from './domain/applications/application/advanced/factors/mfa-challenge/mfa-challenge.component';
+import { InfoBannerComponent } from './domain/applications/application/advanced/factors/info-banner/info-banner.component';
+import { ExpressionInfoDialogComponent } from './domain/applications/application/advanced/factors/expression-info-dialog/expression-info-dialog.component';
+import { FactorsSelectDialogComponent } from './domain/applications/application/advanced/factors/mfa/factors-select-dialog/factors-select-dialog.component';
+import { SelectionRuleDialogComponent } from './domain/applications/application/advanced/factors/selection-rule-dialog/selection-rule-dialog.component';
 
 @NgModule({
   declarations: [
@@ -630,6 +629,7 @@ import { ApplicationClientSecretDialogModule } from './domain/applications/clien
     HasPermissionDirective,
     HasAnyPermissionDirective,
     IdenticonHashDirective,
+    InfoBannerComponent,
     DashboardComponent,
     WidgetComponent,
     WidgetChartLineComponent,
@@ -673,20 +673,22 @@ import { ApplicationClientSecretDialogModule } from './domain/applications/clien
     BotDetectionCreationStep2Component,
     BotDetectionComponent,
     BotDetectionFormComponent,
-    MfaStepUpDialogComponent,
-    AdaptiveMfaDialogComponent,
+    ExpressionInfoDialogComponent,
+    SelectionRuleDialogComponent,
     GvFormControlDirective,
     IdpSelectionInfoDialogComponent,
     MfaSelectComponent,
     MfaRememberDeviceComponent,
     MfaStepUpComponent,
     MfaActivateComponent,
-    MfaOptionalComponent,
+    TimePeriodPickerComponent,
     MfaConditionalComponent,
-    MfaIntelligentComponent,
+    MfaRiskBasedComponent,
     AssessmentComponent,
     HelpTipsThemeComponent,
     DisplayableItemPipe,
+    MfaChallengeComponent,
+    FactorsSelectDialogComponent,
   ],
   imports: [
     BrowserModule,

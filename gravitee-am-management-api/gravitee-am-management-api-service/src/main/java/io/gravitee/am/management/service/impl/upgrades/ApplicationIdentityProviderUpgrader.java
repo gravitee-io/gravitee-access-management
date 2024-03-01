@@ -25,7 +25,6 @@ import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,12 +118,6 @@ public class ApplicationIdentityProviderUpgrader extends SystemTaskUpgrader {
                     logger.error("Unable to update application identityProvider options for applications: {}", err.getMessage(), err);
                     return Single.just(application);
                 });
-    }
-
-    private Single<SystemTask> updateSystemTask(SystemTask task, SystemTaskStatus status, String operationId) {
-        task.setUpdatedAt(new Date());
-        task.setStatus(status.name());
-        return systemTaskRepository.updateIf(task, operationId);
     }
 
     @Override

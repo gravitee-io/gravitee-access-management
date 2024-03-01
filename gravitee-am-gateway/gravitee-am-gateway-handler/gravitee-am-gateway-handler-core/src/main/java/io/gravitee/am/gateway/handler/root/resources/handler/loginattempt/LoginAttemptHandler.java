@@ -80,7 +80,8 @@ public class LoginAttemptHandler implements Handler<RoutingContext> {
 
     private String getAdaptiveRule(Client client) {
         return ofNullable(client.getMfaSettings()).filter(Objects::nonNull)
-                .map(MFASettings::getAdaptiveAuthenticationRule)
+                .map(MFASettings::getChallenge)
+                .map(ChallengeSettings::getChallengeRule)
                 .orElse("");
     }
 

@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
@@ -23,7 +22,6 @@ import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.media.SchemaProperty;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -70,8 +68,11 @@ public class Application implements Resource, PasswordSettingsAware {
      */
     private boolean template;
     /**
+     * Deprecated since 4.3
+     * Instead use factorSettings
      * Factors used for authentication
      */
+    @Deprecated
     private Set<String> factors;
     /**
      * Certificate use to sign the tokens
@@ -266,6 +267,7 @@ public class Application implements Resource, PasswordSettingsAware {
         client.setCertificate(this.certificate);
         client.setIdentityProviders(this.identityProviders);
         client.setFactors(this.factors);
+        Optional.ofNullable(settings).map(ApplicationSettings::getMfa).map(MFASettings::getFactor).ifPresent(client::setFactorSettings);
         client.setMetadata(this.metadata);
         client.setCreatedAt(this.createdAt);
         client.setUpdatedAt(this.updatedAt);

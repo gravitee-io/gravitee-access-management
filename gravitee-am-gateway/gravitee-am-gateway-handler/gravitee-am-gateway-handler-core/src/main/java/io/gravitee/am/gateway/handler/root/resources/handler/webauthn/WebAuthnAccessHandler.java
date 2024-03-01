@@ -17,11 +17,13 @@ package io.gravitee.am.gateway.handler.root.resources.handler.webauthn;
 
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import org.springframework.util.CollectionUtils;
 
 import java.util.Set;
 
@@ -53,12 +55,14 @@ public class WebAuthnAccessHandler implements Handler<RoutingContext> {
     }
 
     private boolean hasFidoFactor(Client client) {
-        Set<String> factors = client.getFactors();
-        if (factors == null || factors.isEmpty()) {
+        if (client.getFactorSettings() == null || CollectionUtils.isEmpty(client.getFactorSettings().getApplicationFactors())) {
             return false;
         }
 
-        return factors.stream()
+        return client.getFactorSettings()
+                .getApplicationFactors()
+                .stream()
+                .map(ApplicationFactorSettings::getId)
                 .filter(f -> factorManager.get(f) != null)
                 .map(factorManager::getFactor)
                 .anyMatch(f -> f.is(FactorType.FIDO2));

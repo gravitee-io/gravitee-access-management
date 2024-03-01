@@ -1,0 +1,27 @@
+:host ::ng-deep.ngx-datatable.material .datatable-footer {
+  display: none;
+}
+
+.add-factors-container {
+  padding: 15px;
+}
+
+.material {
+  min-height: 290px;
+  overflow-y: auto;
+}
+
+.action-button-container {
+  button {
+    margin-right: 10px;
+  }
+}
+
+.factor-cell-title {
+  display: flex;
+  align-items: center;
+
+  .factor-type {
+    margin-left: 5px;
+  }
+}

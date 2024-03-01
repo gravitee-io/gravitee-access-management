@@ -13,192 +13,100 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { takeUntil, tap } from 'rxjs/operators';
-import { Observable, Subject } from 'rxjs';
-import { GioLicenseService, LicenseOptions } from '@gravitee/ui-particles-angular';
+import { Component, EventEmitter, Input, OnInit, Output, ChangeDetectorRef, AfterViewInit } from '@angular/core';
+import { GioLicenseService } from '@gravitee/ui-particles-angular';
 
-import { OrganizationService } from '../../../../../../services/organization.service';
-import { AmFeature } from '../../../../../../components/gio-license/gio-license-data';
-
-interface ModeOption {
-  label: string;
-  message: string;
-  licenseOptions?: LicenseOptions;
-  isMissingFeature$?: Observable<boolean>;
-  warning?: string;
-}
+import { Enroll, ModeOption } from '../model';
 
 @Component({
   selector: 'mfa-activate',
   templateUrl: './mfa-activate.component.html',
   styleUrls: ['./mfa-activate.component.scss'],
 })
-export class MfaActivateComponent implements OnInit, OnDestroy {
-  constructor(private organizationService: OrganizationService, private licenseService: GioLicenseService) {}
-
-  @Input() enrollment: any;
-  @Input() adaptiveMfaRule: string;
-  @Input() riskAssessment: any;
-  // eslint-disable-next-line @angular-eslint/no-output-rename
-  @Output('settings-change') settingsChangeEmitter: EventEmitter<any> = new EventEmitter<any>();
-  currentMode: any;
-  factors: any[];
-  modes: any[];
-
-  private unsubscribe$: Subject<boolean> = new Subject<boolean>();
-
+export class MfaActivateComponent implements OnInit, AfterViewInit {
   private static modeOptions: Record<string, ModeOption> = {
     OPTIONAL: {
       label: 'Optional',
-      message: 'Choose the period of time users can skip MFA. Default time is 10 hours.',
+      value: 'OPTIONAL',
+      message:
+        'Users will be given the option to use MFA when signing in. You can specify the period of time during which enrollment can be skipped.',
     },
     REQUIRED: {
       label: 'Required',
-      message: 'MFA will always be displayed.',
+      value: 'REQUIRED',
+      message: 'All users will be required to enrol with MFA during sign-in.',
     },
     CONDITIONAL: {
       label: 'Conditional',
-      message: 'Set conditions that will display MFA based on the user’s information',
-      warning: 'You need to install the <b> GeoIP service </b> plugin to use the geoip based variables',
-    },
-    INTELLIGENT: {
-      label: 'Risk-based',
-      message: 'Configure the thresholds that will display MFA based on risks.',
-      warning: 'You need to install the <b> GeoIP service </b> and <b> Risk Assessment </b> plugins to use Risk-based MFA',
-      licenseOptions: {
-        feature: AmFeature.AM_GRAVITEE_RISK_ASSESSMENT,
-      },
+      value: 'CONDITIONAL',
+      message:
+        'Conditional allows you to configure the rules on how users will be enrolled to use MFA. This is done using Expression Language.',
+      warning: 'To use the GeoIP based variables, ensure to install GeoIP service plugins on your application.',
+      warningLink: 'https://docs.gravitee.io/am/current/am_userguide_mfa_amfa.html',
     },
   };
 
+  @Input() enrollment: Enroll;
+  @Output() settingsChange = new EventEmitter<Enroll>();
+
+  currentMode: any;
+  modes: any[];
+  constructor(private licenseService: GioLicenseService, private cdr: ChangeDetectorRef) {}
+
   ngOnInit(): void {
-    this.organizationService
-      .factors()
-      .pipe(
-        tap((factors) => {
-          this.factors = factors;
-        }),
-        takeUntil(this.unsubscribe$),
-      )
-      .subscribe();
-
     this.initModes();
-
-    if (this.riskAssessment && this.riskAssessment.enabled) {
-      this.currentMode = MfaActivateComponent.modeOptions.INTELLIGENT;
-    } else if (this.adaptiveMfaRule && this.adaptiveMfaRule !== '') {
-      this.currentMode = MfaActivateComponent.modeOptions.CONDITIONAL;
-    } else if (this.enrollment && this.enrollment.forceEnrollment) {
-      this.currentMode = MfaActivateComponent.modeOptions.REQUIRED;
-    } else {
-      this.currentMode = MfaActivateComponent.modeOptions.OPTIONAL;
-    }
+    this.currentMode = this.enrollment.type
+      ? MfaActivateComponent.modeOptions[this.enrollment.type.toUpperCase()]
+      : MfaActivateComponent.modeOptions.OPTIONAL;
   }
-
-  ngOnDestroy(): void {
-    this.unsubscribe$.next(false);
-    this.unsubscribe$.unsubscribe();
+  switchEnable(): void {
+    this.enrollment.active = !this.enrollment.active;
+    this.onOptionChange(this.currentMode);
   }
-
   get modeOptions() {
     return MfaActivateComponent.modeOptions;
   }
-
-  applyModeChange($event) {
-    switch ($event.value) {
-      case MfaActivateComponent.modeOptions.OPTIONAL:
-        this.updateOptional({ forceEnrollment: false, skipTimeSeconds: this.enrollment.skipTimeSeconds });
-        break;
-      case MfaActivateComponent.modeOptions.REQUIRED:
-        this.updateRequired(this.enrollment);
-        break;
-      case MfaActivateComponent.modeOptions.CONDITIONAL:
-        this.updateAdaptiveMfaRule(this.adaptiveMfaRule);
-        break;
-      case MfaActivateComponent.modeOptions.INTELLIGENT:
-        this.updateRiskAssessment(this.riskAssessment);
-        break;
-    }
+  onOptionChange(option: ModeOption): void {
+    this.currentMode = option;
+    this.update();
   }
 
-  updateOptional(enrollment) {
-    this.settingsChangeEmitter.emit({
-      enrollment: enrollment,
-      adaptiveMfaRule: '',
-      riskAssessment: this.getRiskAssessment(this.riskAssessment, false),
-      selectedMFAOption: MfaActivateComponent.modeOptions.OPTIONAL.label,
-    });
+  onSkipChange(skipTime: number): void {
+    this.enrollment.skipTimeSeconds = skipTime;
+    this.update();
+  }
+  onConditionalChange(enrollment: Enroll): void {
+    this.enrollment.enrollmentSkipActive = enrollment.enrollmentSkipActive;
+    this.enrollment.enrollmentRule = enrollment.enrollmentRule;
+    this.enrollment.skipTimeSeconds = enrollment.skipTimeSeconds;
+    this.update();
   }
 
-  updateRequired(enrollment) {
-    this.settingsChangeEmitter.emit({
-      enrollment: { forceEnrollment: true, skipTimeSeconds: enrollment.skipTimeSeconds },
-      adaptiveMfaRule: '',
-      riskAssessment: this.getRiskAssessment(this.riskAssessment, false),
-      selectedMFAOption: MfaActivateComponent.modeOptions.REQUIRED.label,
-    });
+  isChecked(option: ModeOption): boolean {
+    return this.currentMode === option;
   }
 
-  updateAdaptiveMfaRule(adaptiveMfaRule) {
-    this.settingsChangeEmitter.emit({
-      enrollment: { forceEnrollment: true, skipTimeSeconds: this.enrollment.skipTimeSeconds },
-      adaptiveMfaRule: adaptiveMfaRule,
-      riskAssessment: this.getRiskAssessment(this.riskAssessment, false),
-      selectedMFAOption: MfaActivateComponent.modeOptions.CONDITIONAL.label,
-    });
-  }
-
-  updateRiskAssessment(assessments) {
-    const safeRiskAssessment = this.getRiskAssessment(assessments, true);
-    const value = {
-      enrollment: { forceEnrollment: true, skipTimeSeconds: this.enrollment.skipTimeSeconds },
-      adaptiveMfaRule: MfaActivateComponent.computeRiskAssessmentRule(safeRiskAssessment),
-      riskAssessment: safeRiskAssessment,
-      selectedMFAOption: MfaActivateComponent.modeOptions.INTELLIGENT.label,
-    };
-    this.settingsChangeEmitter.emit(value);
-  }
-
-  private static readonly RISK_ASSESSMENT_PREFIX = "#context.attributes['risk_assessment'].";
-  private static readonly RISK_ASSESSMENT_SUFFIX = ".assessment.name() == 'SAFE'";
-
-  private static computeRiskAssessmentRule(riskAssessment) {
-    let rule = '{';
-    const devices = riskAssessment.deviceAssessment;
-    if (devices && devices.enabled) {
-      rule += this.RISK_ASSESSMENT_PREFIX + 'devices' + this.RISK_ASSESSMENT_SUFFIX;
-    }
-    const ipReputation = riskAssessment.ipReputationAssessment;
-    if (ipReputation && ipReputation.enabled) {
-      rule += (rule.length === 1 ? ' ' : ' && ') + this.RISK_ASSESSMENT_PREFIX + 'ipReputation' + this.RISK_ASSESSMENT_SUFFIX;
-    }
-    const geoVelocity = riskAssessment.geoVelocityAssessment;
-    if (geoVelocity && geoVelocity.enabled) {
-      rule += (rule.length === 1 ? ' ' : ' && ') + this.RISK_ASSESSMENT_PREFIX + 'geoVelocity' + this.RISK_ASSESSMENT_SUFFIX;
-    }
-    rule += '}';
-    return rule;
-  }
-
-  private getRiskAssessment(riskAssessment, enabled) {
-    return {
-      enabled: enabled,
-      deviceAssessment: this.getAssessment(riskAssessment, 'deviceAssessment'),
-      ipReputationAssessment: this.getAssessment(riskAssessment, 'ipReputationAssessment'),
-      geoVelocityAssessment: this.getAssessment(riskAssessment, 'geoVelocityAssessment'),
-    };
-  }
-
-  private getAssessment(riskAssessment, assessmentName: string) {
-    return riskAssessment && riskAssessment[assessmentName] ? riskAssessment[assessmentName] : { enabled: false, thresholds: {} };
-  }
-
-  private initModes() {
+  private initModes(): void {
     this.modes = Object.keys(MfaActivateComponent.modeOptions).map((key) => {
       const option = MfaActivateComponent.modeOptions[key];
-      option.isMissingFeature$ = this.licenseService.isMissingFeature$(option.licenseOptions.feature);
+      option.isMissingFeature$ = this.licenseService.isMissingFeature$(option.licenseOptions?.feature);
       return option;
+    });
+  }
+  ngAfterViewInit(): void {
+    this.cdr.detectChanges();
+  }
+
+  private update(): void {
+    this.settingsChange.emit({
+      active: this.enrollment.active,
+      forceEnrollment: this.currentMode !== MfaActivateComponent.modeOptions.OPTIONAL,
+      skipTimeSeconds: this.enrollment.skipTimeSeconds,
+      enrollmentRule: this.currentMode === MfaActivateComponent.modeOptions.CONDITIONAL ? this.enrollment.enrollmentRule : '',
+      enrollmentSkipActive:
+        this.currentMode === MfaActivateComponent.modeOptions.CONDITIONAL ? this.enrollment.enrollmentSkipActive : false,
+      enrollmentSkipRule: this.currentMode === MfaActivateComponent.modeOptions.CONDITIONAL ? this.enrollment.enrollmentSkipRule : '',
+      type: this.currentMode.value,
     });
   }
 }

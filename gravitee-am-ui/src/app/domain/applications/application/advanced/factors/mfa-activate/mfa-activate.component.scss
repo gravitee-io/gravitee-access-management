@@ -48,3 +48,34 @@ blockquote {
     line-height: 16px;
   }
 }
+
+.section-body {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 0 0 44px;
+}
+
+.options {
+  padding: 5px 0 0 44px;
+  gap: 8px;
+}
+
+.options-title {
+  padding: 0 0 0 44px;
+  color: #606274;
+}
+
+.description {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  border: 1px solid #313133;
+  border-radius: 4px;
+  background: #f7f8fd;
+  gap: 4px;
+}
+
+.config-section {
+  padding: 10px 0 0 44px;
+}

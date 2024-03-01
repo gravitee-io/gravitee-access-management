@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog } from '@angular/material/dialog';
+
+import { ExpressionInfoDialogComponent } from '../../expression-info-dialog/expression-info-dialog.component';
+import { Enroll } from '../../model';
 
 @Component({
   selector: 'mfa-conditional',
@@ -22,28 +25,36 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
   styleUrls: ['./mfa-conditional.component.scss'],
 })
 export class MfaConditionalComponent {
-  @Input() adaptiveMfaRule: string;
-  // eslint-disable-next-line @angular-eslint/no-output-on-prefix, @angular-eslint/no-output-rename
-  @Output('on-rule-change') amfaRuleEmitter: EventEmitter<string> = new EventEmitter<string>();
+  @Input() enrollment: Enroll;
+  @Output() settingsChange = new EventEmitter<Enroll>();
 
   constructor(private dialog: MatDialog) {}
 
-  openAMFADialog($event) {
+  openInfoDialog($event: any): void {
     $event.preventDefault();
-    this.dialog.open(AdaptiveMfaDialogComponent, { width: '700px' });
+    this.dialog.open(ExpressionInfoDialogComponent, { width: '700px' });
   }
 
-  updateAdaptiveMfaRule($event) {
+  updateRule($event: any): void {
     if ($event.target) {
-      this.amfaRuleEmitter.emit($event.target.value);
+      this.enrollment.enrollmentRule = $event.target.value;
+      this.update();
     }
   }
-}
-
-@Component({
-  selector: 'adaptive-mfa-dialog',
-  templateUrl: './dialog/adaptive-mfa-info.component.html',
-})
-export class AdaptiveMfaDialogComponent {
-  constructor(public dialogRef: MatDialogRef<AdaptiveMfaDialogComponent>) {}
+  updateSkipRule($event: any): void {
+    if ($event.target) {
+      this.enrollment.enrollmentSkipRule = $event.target.value;
+      this.update();
+    }
+  }
+  switchSkipConditional(): void {
+    this.enrollment.enrollmentSkipActive = !this.enrollment.enrollmentSkipActive;
+  }
+  onSettingChange(skipTimeSeconds: number): void {
+    this.enrollment.skipTimeSeconds = skipTimeSeconds;
+    this.update();
+  }
+  private update(): void {
+    this.settingsChange.emit(this.enrollment);
+  }
 }

@@ -69,7 +69,6 @@ import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static io.gravitee.am.model.Template.REGISTRATION_VERIFY;
 import static io.gravitee.am.model.Template.RESET_PASSWORD;
 import static io.reactivex.rxjava3.core.Completable.*;
-import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.util.Map.entry;
 import static java.util.Objects.isNull;
@@ -608,12 +607,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Completable setMfaEnrollmentSkippedTime(Client client, User user) {
-        var mfaEnrollmentSettings = getMfaEnrollmentSettings(client);
-        final Boolean active = Optional.ofNullable(mfaEnrollmentSettings.getForceEnrollment()).orElse(false);
-        if (FALSE.equals(active) && nonNull(user)) {
+        if (nonNull(user)) {
             Date now = new Date();
-            long skipTime = ofNullable(mfaEnrollmentSettings.getSkipTimeSeconds()).orElse(ConstantKeys.DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS) * 1000L;
-            if (isNull(user.getMfaEnrollmentSkippedAt()) || user.getMfaEnrollmentSkippedAt().getTime() + skipTime < now.getTime()) {
+            long skipTime = ofNullable(getMfaEnrollmentSettings(client).getSkipTimeSeconds()).orElse(ConstantKeys.DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS) * 1000L;
+            if (isNull(user.getMfaEnrollmentSkippedAt()) || (user.getMfaEnrollmentSkippedAt().getTime() + skipTime) < now.getTime()) {
                 user.setMfaEnrollmentSkippedAt(now);
                 return userService.update(user).ignoreElement();
             }
@@ -621,11 +618,11 @@ public class UserServiceImpl implements UserService {
         return complete();
     }
 
-    private EnrollmentSettings getMfaEnrollmentSettings(Client client) {
+    private EnrollSettings getMfaEnrollmentSettings(Client client) {
         return ofNullable(client)
                 .map(Client::getMfaSettings)
-                .map(MFASettings::getEnrollment)
-                .orElse(new EnrollmentSettings());
+                .map(MFASettings::getEnroll)
+                .orElse(new EnrollSettings());
     }
 
     private Maybe<Optional<Client>> clientSource(String audience) {

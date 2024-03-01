@@ -19,40 +19,82 @@
 <div class="gv-form-section">
   <div class="gv-form-section-title mfa-section-title">
     <div class="mfa-chip">
-      <span class="gio-badge-neutral">1</span>
+      <mat-chip-list [disabled]="true">
+        <mat-chip [disableRipple]="true" [selectable]="false">1</mat-chip>
+      </mat-chip-list>
     </div>
     <div class="mfa-title">
-      <h5>MFA</h5>
-      <small>Multi-factor Authentication adds an additional factor to the login process in order to grant user access.</small>
+      <h5
+        matBadgeHidden="{{ !anyFactorSelected() }}"
+        matBadge="{{ selectedFactorsCount() }}"
+        matBadgeOverlap="false"
+        matBadgePosition="after"
+      >
+        Factors
+      </h5>
+      <small>Select factors to enrol and challenge users during login. Use selection rules to customize factor configuration.</small>
     </div>
+    <mat-icon *ngIf="expanded && anyFactorSelected()" (click)="expand(false)">expand_more</mat-icon>
+    <mat-icon *ngIf="!expanded && anyFactorSelected()" (click)="expand(true)">expand_less</mat-icon>
+  </div>
+  <div fxLayout="row" style="margin-top: 20px">
+    <button mat-raised-button color="primary" [disabled]="!editMode" (click)="openFactorSelectionDialog($event)">Select Factors</button>
   </div>
   <div fxLayout="column">
-    <div *ngIf="hasFactors()">
-      <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [rowHeight]="50" [rows]="factors">
-        <ngx-datatable-column name="Factors" [flexGrow]="4">
+    <div *ngIf="this.expanded && anyFactorSelected()">
+      <ngx-datatable
+        class="material"
+        [columnMode]="'flex'"
+        [headerHeight]="40"
+        [footerHeight]="0"
+        [rowHeight]="50"
+        [rows]="selectedFactors"
+      >
+        <ngx-datatable-column name="Factors" [flexGrow]="1">
           <ng-template let-row="row" ngx-datatable-cell-template>
             {{ row.name }}
           </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column name="" [flexGrow]="1">
+        <ngx-datatable-column name="Selection Rule" [flexGrow]="1" [sortable]="false">
           <ng-template let-row="row" ngx-datatable-cell-template>
-            <span class="factor-cell-title">
-              <mat-icon>{{ getFactorTypeIcon(row.factorType) }}</mat-icon>
-              <small class="factor-type">{{ displayFactorType(row.factorType) }}</small>
+            <span (click)="addSelectionRule(row)" class="wrapper" style="cursor: pointer">
+              <span
+                [matTooltip]="row.selectionRule ? 'Selection rule' : 'New selection rule'"
+                [style]="row.selectionRule ? 'color: green' : 'color: grey'"
+                class="mat-icon notranslate material-icons mat-icon-no-color"
+              >
+                {{ row.selectionRule ? 'playlist_add_check' : 'playlist_add_plus' }}
+              </span>
             </span>
           </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column name="" [flexGrow]="1">
+        <ngx-datatable-column name="Type" [flexGrow]="1">
           <ng-template let-row="row" ngx-datatable-cell-template>
-            <mat-slide-toggle (change)="selectFactor($event, row.id)" [checked]="isFactorSelected(row.id)" [disabled]="!editMode">
-            </mat-slide-toggle>
+            <span class="factor-cell-title">
+              <mat-icon>{{ getFactorIconType(row.factorType) }}</mat-icon>
+              <small class="factor-type">{{ getDisplayFactorType(row.factorType) }}</small>
+            </span>
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Default" [flexGrow]="1" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <mat-radio-button (change)="setFactorDefault(row.id)" [checked]="row.isDefault" [disabled]="!editMode"> </mat-radio-button>
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column [flexGrow]="1" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <mat-icon (click)="removeSelectedFactor($event, row.id)">close</mat-icon>
           </ng-template>
         </ngx-datatable-column>
       </ngx-datatable>
     </div>
 
-    <div *ngIf="!hasFactors()" style="font-size: 14px; text-align: center">
-      <p>No multi-factor authentication has been set up.</p>
+    <div *ngIf="!anyFactorSelected()" class="no-factor-selected-box">
+      <div class="bell-icon">
+        <mat-icon>notifications_none</mat-icon>
+      </div>
+      <h5>No factors selected</h5>
+      <small>Select factors from your library</small>
     </div>
   </div>
 </div>

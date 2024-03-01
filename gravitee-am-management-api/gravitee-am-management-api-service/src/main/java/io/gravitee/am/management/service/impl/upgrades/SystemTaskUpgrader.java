@@ -103,6 +103,12 @@ public abstract class SystemTaskUpgrader implements Upgrader, Ordered {
 
     protected abstract String getTaskId();
 
+    protected Single<SystemTask> updateSystemTask(SystemTask task, SystemTaskStatus status, String operationId) {
+        task.setUpdatedAt(new Date());
+        task.setStatus(status.name());
+        return systemTaskRepository.updateIf(task, operationId);
+    }
+
     private static class RetryWithDelay implements Function<Flowable<Throwable>, Publisher<?>> {
         private final int maxRetries;
         private final int retryDelayMillis;

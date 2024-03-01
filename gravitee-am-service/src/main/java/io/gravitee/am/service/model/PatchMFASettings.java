@@ -21,64 +21,40 @@ import io.gravitee.am.service.utils.SetterUtils;
 import java.util.Optional;
 
 import static java.util.Objects.nonNull;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public class PatchMFASettings {
-
     private Optional<String> loginRule;
+    private Optional<PatchFactorSettings> factor;
     private Optional<String> stepUpAuthenticationRule;
+    private Optional<PatchStepUpAuthentication> stepUpAuthentication;
     private Optional<String> adaptiveAuthenticationRule;
     private Optional<PatchRememberDeviceSettings> rememberDevice;
+    @Deprecated
     private Optional<PatchEnrollmentSettings> enrollment;
-
-    public Optional<String> getLoginRule() {
-        return loginRule;
-    }
-
-    public void setLoginRule(Optional<String> loginRule) {
-        this.loginRule = loginRule;
-    }
-
-    public Optional<String> getStepUpAuthenticationRule() {
-        return stepUpAuthenticationRule;
-    }
-
-    public void setStepUpAuthenticationRule(Optional<String> stepUpAuthenticationRule) {
-        this.stepUpAuthenticationRule = stepUpAuthenticationRule;
-    }
-
-    public Optional<String> getAdaptiveAuthenticationRule() {
-        return adaptiveAuthenticationRule;
-    }
-
-    public void setAdaptiveAuthenticationRule(Optional<String> adaptiveAuthenticationRule) {
-        this.adaptiveAuthenticationRule = adaptiveAuthenticationRule;
-    }
-
-    public Optional<PatchRememberDeviceSettings> getRememberDevice() {
-        return rememberDevice;
-    }
-
-    public void setRememberDevice(Optional<PatchRememberDeviceSettings> rememberDevice) {
-        this.rememberDevice = rememberDevice;
-    }
-
-    public Optional<PatchEnrollmentSettings> getEnrollment() {
-        return enrollment;
-    }
-
-    public void setEnrollment(Optional<PatchEnrollmentSettings> enrollment) {
-        this.enrollment = enrollment;
-    }
-
+    private Optional<PatchEnrollSettings> enroll;
+    private Optional<PatchChallengeSettings> challenge;
     public MFASettings patch(MFASettings _toPatch) {
         MFASettings toPatch = _toPatch == null ? new MFASettings() : new MFASettings(_toPatch);
         SetterUtils.safeSet(toPatch::setLoginRule, this.getLoginRule());
+
+        if (nonNull(this.getFactor()) && this.getFactor().isPresent()) {
+            toPatch.setFactor(this.getFactor().get().patch(toPatch.getFactor()));
+        }
+
         SetterUtils.safeSet(toPatch::setStepUpAuthenticationRule, this.getStepUpAuthenticationRule());
         SetterUtils.safeSet(toPatch::setAdaptiveAuthenticationRule, this.getAdaptiveAuthenticationRule());
+
+        if (nonNull(this.getStepUpAuthentication()) && this.getStepUpAuthentication().isPresent()) {
+            toPatch.setStepUpAuthentication(this.getStepUpAuthentication().get().patch(toPatch.getStepUpAuthentication()));
+        }
 
         if (nonNull(this.getRememberDevice()) && this.getRememberDevice().isPresent()) {
             toPatch.setRememberDevice(this.getRememberDevice().get().patch(toPatch.getRememberDevice()));
@@ -86,6 +62,14 @@ public class PatchMFASettings {
 
         if (nonNull(this.getEnrollment()) && this.getEnrollment().isPresent()) {
             toPatch.setEnrollment(this.getEnrollment().get().patch(toPatch.getEnrollment()));
+        }
+
+        if (nonNull(this.getEnroll()) && this.getEnroll().isPresent()) {
+            toPatch.setEnroll(this.getEnroll().get().patch(toPatch.getEnroll()));
+        }
+
+        if (nonNull(this.getChallenge()) && this.getChallenge().isPresent()) {
+            toPatch.setChallenge(this.getChallenge().get().patch(toPatch.getChallenge()));
         }
         return toPatch;
     }

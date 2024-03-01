@@ -15,8 +15,10 @@
  */
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { duration } from 'moment';
+import { ActivatedRoute } from '@angular/router';
 
 import { TimeConverterService } from '../../../../../../services/time-converter.service';
+import { Enroll, RememberDevice } from '../model';
 
 @Component({
   selector: 'mfa-remember-device',
@@ -27,25 +29,25 @@ export class MfaRememberDeviceComponent implements OnInit, OnChanges {
   @Input() rememberDevice: any;
   @Input() deviceIdentifiers: any[] = [];
   @Input() selectedMFAOption: any;
-  @Input() enrollment: any;
+  @Input() enrollment: Enroll;
   @Input() adaptiveMfaRule: string;
   @Input() riskAssessment: any;
 
-  // eslint-disable-next-line @angular-eslint/no-output-rename
-  @Output('settings-change') settingsChangeEmitter: EventEmitter<any> = new EventEmitter<any>();
+  @Output() settingsChange = new EventEmitter<RememberDevice>();
 
   private humanTime: { expirationTime: any; expirationUnit: any };
   active: boolean;
   skipRememberDevice: boolean;
   selectedDeviceIdentifier: any;
-  isConditional: any;
 
-  constructor(private timeConverterService: TimeConverterService) {}
+  domainName: string;
+  environment: string;
+
+  constructor(private timeConverterService: TimeConverterService, private route: ActivatedRoute) {}
 
   ngOnInit(): void {
     this.active = this.rememberDevice ? this.rememberDevice.active : false;
     this.skipRememberDevice = this.rememberDevice ? this.rememberDevice.skipRememberDevice : false;
-    this.isConditional = this.isConditionalConfig();
     const time = this.rememberDevice ? this.rememberDevice.expirationTimeSeconds || 36000 : 36000; // Default 10h
     if (this.hasDeviceIdentifierPlugins()) {
       this.selectedDeviceIdentifier = this.rememberDevice ? this.rememberDevice.deviceIdentifierId : null;
@@ -54,96 +56,76 @@ export class MfaRememberDeviceComponent implements OnInit, OnChanges {
       expirationTime: this.timeConverterService.getTime(time, 'seconds'),
       expirationUnit: this.timeConverterService.getUnitTime(time, 'seconds'),
     };
+    this.domainName = this.route.snapshot.data['domain']?.hrid;
+    this.environment = this.route.snapshot.data['domain']?.referenceId;
   }
 
-  ngOnChanges(changes: SimpleChanges) {
+  getDeviceIdentifierLink(): string {
+    return `/environments/${this.environment}/domains/${this.domainName}/settings/device-identifier`;
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
     if (changes.selectedMFAOption) {
-      this.isConditional = changes.selectedMFAOption.currentValue === 'Conditional';
+      if (!this.isConditional()) {
+        this.skipRememberDevice = false;
+        this.update();
+      }
     }
   }
 
-  displayExpiresIn() {
+  displayExpiresIn(): any {
     return this.humanTime.expirationTime;
   }
 
-  displayUnitTime() {
+  displayUnitTime(): any {
     return this.humanTime.expirationUnit;
   }
 
-  hasDeviceIdentifierPlugins() {
+  hasDeviceIdentifierPlugins(): boolean {
     return this.deviceIdentifiers && this.deviceIdentifiers.length > 0;
   }
 
-  updateDeviceIdentifierId($event) {
+  updateDeviceIdentifierId($event: any): void {
     this.selectedDeviceIdentifier = $event.value;
-    this.updateRememberDeviceSettings({
-      active: this.active,
-      skipRememberDevice: this.skipRememberDevice,
-      deviceIdentifierId: this.selectedDeviceIdentifier,
-      expirationTimeSeconds: this.humanTimeToSeconds(),
-    });
+    this.update();
   }
 
-  onToggle($event) {
+  onToggle($event: any): void {
     this.active = $event.checked;
-    (this.skipRememberDevice = !this.active ? false : this.skipRememberDevice),
-      this.updateRememberDeviceSettings({
+    this.skipRememberDevice = this.active && this.skipRememberDevice;
+    this.update();
+  }
+
+  onSkip($event: any): void {
+    this.skipRememberDevice = $event.checked;
+    this.update();
+  }
+
+  onTimeChange($event: any): void {
+    this.humanTime.expirationTime = Math.abs($event.target.value);
+    this.update();
+  }
+
+  onUnitChange($event: any): void {
+    this.humanTime.expirationUnit = $event.value;
+    this.update();
+  }
+  isConditional(): boolean {
+    return this.selectedMFAOption?.toUpperCase() === 'CONDITIONAL';
+  }
+
+  private humanTimeToSeconds(): number {
+    return duration(this.humanTime.expirationTime, this.humanTime.expirationUnit).asSeconds();
+  }
+
+  private update(): void {
+    if (this.hasDeviceIdentifierPlugins() && this.humanTime?.expirationTime && this.humanTime?.expirationUnit) {
+      this.settingsChange.emit({
         active: this.active,
         skipRememberDevice: this.skipRememberDevice,
         deviceIdentifierId: this.selectedDeviceIdentifier,
         expirationTimeSeconds: this.humanTimeToSeconds(),
       });
-  }
-
-  onSkip($event) {
-    this.skipRememberDevice = $event.checked;
-    this.updateRememberDeviceSettings({
-      active: this.active,
-      skipRememberDevice: this.skipRememberDevice,
-      deviceIdentifierId: this.selectedDeviceIdentifier,
-      expirationTimeSeconds: this.humanTimeToSeconds(),
-    });
-  }
-
-  onTimeChange($event) {
-    this.humanTime.expirationTime = Math.abs($event.target.value);
-    this.updateRememberDeviceSettings({
-      active: this.active,
-      skipRememberDevice: this.skipRememberDevice,
-      deviceIdentifierId: this.selectedDeviceIdentifier,
-      expirationTimeSeconds: this.humanTimeToSeconds(),
-    });
-  }
-
-  onUnitChange($event) {
-    this.humanTime.expirationUnit = $event.value;
-    this.updateRememberDeviceSettings({
-      active: this.active,
-      skipRememberDevice: this.skipRememberDevice,
-      deviceIdentifierId: this.selectedDeviceIdentifier,
-      expirationTimeSeconds: this.humanTimeToSeconds(),
-    });
-  }
-
-  private humanTimeToSeconds() {
-    return duration(this.humanTime.expirationTime, this.humanTime.expirationUnit).asSeconds();
-  }
-
-  private updateRememberDeviceSettings(rememberDevice) {
-    if (this.hasDeviceIdentifierPlugins()) {
-      this.settingsChangeEmitter.emit(rememberDevice);
-    }
-  }
-
-  isActive() {
-    return this.active;
-  }
-
-  isConditionalConfig() {
-    if (this.riskAssessment && this.riskAssessment.enabled) {
-      return false;
-    } else {
-      return this.adaptiveMfaRule && this.adaptiveMfaRule !== '';
     }
   }
 }

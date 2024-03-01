@@ -22,19 +22,21 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static java.util.Objects.isNull;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class PatchEnrollmentSettings {
 
+@Getter
+@Setter
+@NoArgsConstructor
+public class PatchEnrollmentSettings {
     private Optional<Boolean> forceEnrollment;
     private Optional<Long> skipTimeSeconds;
-
-    public PatchEnrollmentSettings() {
-    }
-
     public EnrollmentSettings patch(EnrollmentSettings _toPatch) {
         EnrollmentSettings toPatch = _toPatch == null ? new EnrollmentSettings() : new EnrollmentSettings(_toPatch);
         SetterUtils.safeSet(toPatch::setForceEnrollment, this.getForceEnrollment());
@@ -42,21 +44,5 @@ public class PatchEnrollmentSettings {
                 this.getSkipTimeSeconds().filter(Objects::nonNull).map(Math::abs);
         SetterUtils.safeSet(toPatch::setSkipTimeSeconds, skipTimeSeconds);
         return toPatch;
-    }
-
-    public Optional<Boolean> getForceEnrollment() {
-        return forceEnrollment;
-    }
-
-    public void setForceEnrollment(Optional<Boolean> forceEnrollment) {
-        this.forceEnrollment = forceEnrollment;
-    }
-
-    public Optional<Long> getSkipTimeSeconds() {
-        return skipTimeSeconds;
-    }
-
-    public void setSkipTimeSeconds(Optional<Long> skipTimeSeconds) {
-        this.skipTimeSeconds = skipTimeSeconds;
     }
 }

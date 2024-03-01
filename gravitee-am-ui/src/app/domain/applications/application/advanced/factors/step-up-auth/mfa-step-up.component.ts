@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog } from '@angular/material/dialog';
+
+import { ExpressionInfoDialogComponent } from '../expression-info-dialog/expression-info-dialog.component';
+import { StepUpAuth } from '../model';
 
 @Component({
   selector: 'mfa-step-up',
@@ -22,28 +25,34 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
   styleUrls: ['./mfa-step-up.component.scss'],
 })
 export class MfaStepUpComponent {
-  @Input() stepUpRule = '';
-  // eslint-disable-next-line @angular-eslint/no-output-on-prefix, @angular-eslint/no-output-rename
-  @Output('on-rule-change') stepUpRuleEmitter: EventEmitter<string> = new EventEmitter<string>();
+  @Output() settingsChange: EventEmitter<StepUpAuth> = new EventEmitter<StepUpAuth>();
+  @Input() stepUpAuth: StepUpAuth;
 
   constructor(private dialog: MatDialog) {}
 
-  change($event) {
+  updateRule($event: any): void {
     if ($event.target) {
-      this.stepUpRuleEmitter.emit($event.target.value);
+      this.update();
     }
   }
 
-  openStepUpDialog($event) {
+  openInfoDialog($event: any): void {
     $event.preventDefault();
-    this.dialog.open(MfaStepUpDialogComponent, { width: '700px' });
+    this.dialog.open(ExpressionInfoDialogComponent, {
+      width: '700px',
+      data: {
+        info: `{#request.params['scope'][0] == 'write'}
+{#request.params['audience'][0] == 'https://myapi.com'}`,
+      },
+    });
   }
-}
 
-@Component({
-  selector: 'mfa-step-up-dialog',
-  templateUrl: './dialog/mfa-step-up-info.component.html',
-})
-export class MfaStepUpDialogComponent {
-  constructor(public dialogRef: MatDialogRef<MfaStepUpDialogComponent>) {}
+  onToggle($event: any): void {
+    this.stepUpAuth.active = $event.checked;
+    this.update();
+  }
+
+  private update(): void {
+    this.settingsChange.emit(this.stepUpAuth);
+  }
 }

@@ -16,24 +16,23 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
+
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLL_CONDITIONAL_SKIPPED_KEY;
+
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.chain.MfaFilterChain;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.ClientNullFilter;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.EndUserEnrolledFilter;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.MfaSkipFilter;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.NoFactorFilter;
+import io.gravitee.am.model.EnrollSettings;
+import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.MfaChallengeType;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.*;
+import static java.util.Optional.ofNullable;
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author Rémi SULTAN (remi.sultan at graviteesource.com)
- * @author GraviteeSource Team
- */
 public class MFAEnrollStep extends MFAStep {
 
     private final FactorManager factorManager;
@@ -46,15 +45,107 @@ public class MFAEnrollStep extends MFAStep {
     @Override
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        var context = new MfaFilterContext(routingContext, client, factorManager);
+        final MfaFilterContext context = new MfaFilterContext(routingContext, client, factorManager, ruleEngine);
+        if (hasFactors(client, factorManager)) {
+            if (context.isFactorSelected() && !context.checkSelectedFactor()) {
+                enrollment(context, flow);
+            } else if (!userHasFactor(context) && stepUpRequired(context, client, ruleEngine)) {
+                enrollment(context, flow);
+            } else if (isEnrollActive(client)) {
+                switch (getEnrollSettings(client).getType()) {
+                    case OPTIONAL -> optional(flow, context);
+                    case REQUIRED -> required(flow, context);
+                    case CONDITIONAL -> conditional(flow, client, context);
+                }
+            } else if (stepUpRequired(context, client, ruleEngine)) {
+                continueFlow(context, flow);
+            } else if (isChallengeActive(client)) {
+                enrollIfChallengeRequires(flow, client, context);
+            } else {
+                stop(context, flow);
+            }
+        } else {
+            stop(context, flow);
+        }
+    }
 
-        // Rules that makes you skip MFA enroll
-        var mfaFilterChain = new MfaFilterChain(
-                new ClientNullFilter(client),
-                new NoFactorFilter(client.getFactors(), factorManager),
-                new EndUserEnrolledFilter(context),
-                new MfaSkipFilter(context)
-        );
-        mfaFilterChain.doFilter(this, flow, routingContext);
+    private void required(AuthenticationFlowChain flow, MfaFilterContext context) {
+        if (userHasFactor(context)) {
+            continueFlow(context, flow);
+        } else {
+            enrollment(context, flow);
+        }
+    }
+
+    private void conditional(AuthenticationFlowChain flow, Client client, MfaFilterContext context) {
+        if (enrollConditionSatisfied(client, context)) {
+            stop(context, flow);
+        } else if (userHasFactor(context)) {
+            continueFlow(context, flow);
+        } else if (canUserSkip(client, context)) {
+            context.session().put(MFA_ENROLL_CONDITIONAL_SKIPPED_KEY, true);
+            if (context.isEnrollSkipped()) {
+                stopMfaFlow(context, flow);
+            } else {
+                enrollment(context, flow);
+            }
+        } else {
+            enrollment(context, flow);
+        }
+    }
+
+    private void optional(AuthenticationFlowChain flow, MfaFilterContext context) {
+        if (context.isEnrollSkipped()) {
+            stop(context, flow);
+        } else {
+            if (userHasFactor(context)) {
+                continueFlow(context, flow);
+            } else {
+                enrollment(context, flow);
+            }
+        }
+    }
+
+    private void enrollIfChallengeRequires(AuthenticationFlowChain flow, Client client, MfaFilterContext context) {
+        if (MfaChallengeType.CONDITIONAL.equals(getChallengeSettings(client).getType())) {
+            if (challengeConditionSatisfied(client, context, ruleEngine)) {
+                stop(context, flow);
+            } else {
+                required(flow, context);
+            }
+        } else {
+            required(flow, context);
+        }
+    }
+
+    private void enrollment(MfaFilterContext routingContext, AuthenticationFlowChain flow) {
+        executeFlowStep(routingContext, flow, this);
+    }
+
+    private boolean enrollConditionSatisfied(Client client, MfaFilterContext context) {
+        return evaluateRule(getEnrollSettings(client).getEnrollmentRule(), context, ruleEngine);
+    }
+
+    private boolean isEnrollActive(Client client) {
+        return ofNullable(client.getMfaSettings()).map(MFASettings::getEnroll).map(EnrollSettings::isActive).orElse(false);
+    }
+
+    private boolean userHasFactor(MfaFilterContext context) {
+        return context.isUserSelectedEnrollFactor() || context.userHasMatchingActivatedFactors();
+    }
+
+    private static void continueFlow(MfaFilterContext routingContext, AuthenticationFlowChain flow) {
+        routingContext.session().put(MFA_ENROLLMENT_COMPLETED_KEY, true);
+        continueMfaFlow(routingContext, flow);
+    }
+
+    private static void stop(MfaFilterContext routingContext, AuthenticationFlowChain flow) {
+        routingContext.session().put(MFA_ENROLLMENT_COMPLETED_KEY, true);
+        stopMfaFlow(routingContext, flow);
+    }
+
+    public boolean canUserSkip(Client client, MfaFilterContext context) {
+        var enroll = ofNullable(client.getMfaSettings()).map(MFASettings::getEnroll).orElse(new EnrollSettings());
+        return enroll.isEnrollmentSkipActive() && evaluateRule(enroll.getEnrollmentSkipRule(), context, ruleEngine);
     }
 }

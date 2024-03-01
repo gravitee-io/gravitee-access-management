@@ -16,28 +16,24 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.chain.MfaFilterChain;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.AdaptiveMfaFilter;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.ClientNullFilter;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.MfaChallengeCompleteFilter;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.MfaSkipUserStronglyAuthFilter;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.NoFactorFilter;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.RememberDeviceFilter;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.StepUpAuthenticationFilter;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.challengeConditionSatisfied;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.continueMfaFlow;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.evaluateRule;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.executeFlowStep;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.getAdaptiveMfaStepUpRule;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.getChallengeSettings;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.isChallengeActive;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.isMfaFlowStopped;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.stepUpRequired;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author Rémi SULTAN (remi.sultan at graviteesource.com)
- * @author GraviteeSource Team
- */
 public class MFAChallengeStep extends MFAStep {
-
     private final FactorManager factorManager;
 
     public MFAChallengeStep(Handler<RoutingContext> wrapper, RuleEngine ruleEngine, FactorManager factorManager) {
@@ -48,19 +44,69 @@ public class MFAChallengeStep extends MFAStep {
     @Override
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        var context = new MfaFilterContext(routingContext, client, factorManager);
+        final MfaFilterContext context = new MfaFilterContext(routingContext, client, factorManager, ruleEngine);
+        if (!isMfaFlowStopped(context)) {
+            if (context.isUserSelectedEnrollFactor()) {
+                challenge(context, flow);
+            } else if (!context.isChallengeCompleted() && stepUpRequired(context, client, ruleEngine)) {
+                challenge(context, flow);
+            } else if (isChallengeActive(client)) {
+                switch (getChallengeSettings(client).getType()) {
+                    case REQUIRED -> required(context, flow);
+                    case CONDITIONAL -> conditional(context, flow, client);
+                    case RISK_BASED -> riskBased(context, flow, client);
+                }
+            } else {
+                continueFlow(context, flow);
+            }
+        } else {
+            continueFlow(context, flow);
+        }
+    }
 
-        // Rules that makes you skip MFA challenge
-        var mfaFilterChain = new MfaFilterChain(
-                new ClientNullFilter(client),
-                new NoFactorFilter(client.getFactors(), factorManager),
-                new MfaChallengeCompleteFilter(context),
-                new AdaptiveMfaFilter(context, ruleEngine),
-                new StepUpAuthenticationFilter(context, ruleEngine),
-                new RememberDeviceFilter(context),
-                new MfaSkipUserStronglyAuthFilter(context)
-        );
-        // We want to force strong auth if we skip challenge
-        mfaFilterChain.doFilter(this, flow, routingContext, true);
+    private void required(MfaFilterContext context, AuthenticationFlowChain flow) {
+        if (context.isUserStronglyAuth() || isRememberDevice(context)) {
+            continueFlow(context, flow);
+        } else {
+            challenge(context, flow);
+        }
+    }
+
+    private void conditional(MfaFilterContext context, AuthenticationFlowChain flow, Client client) {
+        if (challengeConditionSatisfied(client, context, ruleEngine)) {
+            continueFlow(context, flow);
+        } else if (context.getRememberDeviceSettings().isSkipChallengeWhenRememberDevice()) {
+            required(context, flow);
+        } else if (context.isUserStronglyAuth()) {
+            continueFlow(context, flow);
+        } else {
+            challenge(context, flow);
+        }
+    }
+
+    private void riskBased(MfaFilterContext context, AuthenticationFlowChain flow, Client client) {
+        if (context.isUserStronglyAuth() || isSafe(context, client)) {
+            continueFlow(context, flow);
+        } else {
+            challenge(context, flow);
+        }
+    }
+
+    private void challenge(MfaFilterContext routingContext, AuthenticationFlowChain flow) {
+        executeFlowStep(routingContext, flow, this);
+    }
+
+    private boolean isSafe(MfaFilterContext context, Client client) {
+        return evaluateRule(getAdaptiveMfaStepUpRule(client), context, ruleEngine);
+    }
+
+    private boolean isRememberDevice(MfaFilterContext context) {
+        return !context.isDeviceRiskAssessmentEnabled() && context.getRememberDeviceSettings().isActive() && context.deviceAlreadyExists();
+    }
+
+    private static void continueFlow(MfaFilterContext routingContext, AuthenticationFlowChain flow) {
+        routingContext.session().put(MFA_CHALLENGE_COMPLETED_KEY, true);
+        continueMfaFlow(routingContext, flow);
     }
 }
+

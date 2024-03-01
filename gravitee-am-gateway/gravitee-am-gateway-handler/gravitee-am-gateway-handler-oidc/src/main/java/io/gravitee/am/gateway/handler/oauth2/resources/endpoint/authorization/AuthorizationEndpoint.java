@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization;
 
 import io.gravitee.am.common.oauth2.ResponseMode;
 import io.gravitee.am.common.utils.ConstantKeys;
+import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
@@ -35,8 +36,6 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
 
 /**
  * The authorization endpoint is used to interact with the resource owner and obtain an authorization grant.
@@ -67,7 +66,7 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
         // The authorization server authenticates the resource owner and obtains
         // an authorization decision (by asking the resource owner or by establishing approval via other means).
         User authenticatedUser = context.user();
-        if (authenticatedUser == null || ! (authenticatedUser.getDelegate() instanceof io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User)) {
+        if (authenticatedUser == null || !(authenticatedUser.getDelegate() instanceof io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User)) {
             throw new AccessDeniedException();
         }
 
@@ -82,9 +81,9 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
 
         final String uriIdentifier = context.get(ConstantKeys.REQUEST_URI_ID_KEY);
         parService.deleteRequestUri(uriIdentifier).onErrorResumeNext((err) -> {
-            logger.warn("Deletion of Pushed Authorization Request with id '{}' failed", uriIdentifier, err);
-            return Completable.complete();
-        })
+                    logger.warn("Deletion of Pushed Authorization Request with id '{}' failed", uriIdentifier, err);
+                    return Completable.complete();
+                })
                 .andThen(flow.run(request, client, endUser))
                 .subscribe(
                         authorizationResponse -> {
@@ -152,5 +151,6 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
         context.session().remove(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY);
         context.session().remove(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY);
         context.session().remove(ConstantKeys.USER_LOGIN_COMPLETED_KEY);
+        context.session().remove(ConstantKeys.MFA_ENROLL_CONDITIONAL_SKIPPED_KEY);
     }
 }

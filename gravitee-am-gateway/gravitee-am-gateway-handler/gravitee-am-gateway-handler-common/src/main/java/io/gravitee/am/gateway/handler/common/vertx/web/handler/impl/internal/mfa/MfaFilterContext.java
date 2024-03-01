@@ -13,40 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
-import io.gravitee.am.common.factor.FactorType;
+import static io.gravitee.am.common.factor.FactorType.RECOVERY_CODE;
+import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS;
+import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;
+
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
+
+import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
+
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
 import io.gravitee.am.gateway.handler.context.EvaluableExecutionContext;
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
-import io.gravitee.am.model.EnrollmentSettings;
+import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
+
+import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
+
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.risk.assessment.api.assessment.settings.AssessmentSettings;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
-import java.util.Map;
+import org.jsoup.internal.StringUtil;
+
+import static java.lang.Boolean.TRUE;
 
 import java.util.Date;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.List;
+import java.util.Map;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static io.gravitee.am.common.factor.FactorType.RECOVERY_CODE;
-import static io.gravitee.am.common.utils.ConstantKeys.*;
-import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
-import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
 import static java.util.Objects.isNull;
-import static java.lang.Boolean.FALSE;
-import static java.lang.Boolean.TRUE;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
+
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static org.springframework.util.StringUtils.hasText;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -59,62 +71,21 @@ public class MfaFilterContext {
     private final Session session;
     private final User endUser;
     private final FactorManager factorManager;
+    private final RuleEngine ruleEngine;
 
-    private boolean isAmfaRuleTrue;
-    private boolean isStepUpRuleTrue;
-
-    public MfaFilterContext(RoutingContext routingContext, Client client, FactorManager factorManager) {
+    public MfaFilterContext(RoutingContext routingContext, Client client, FactorManager factorManager, RuleEngine ruleEngine) {
         this.routingContext = routingContext;
         this.client = client;
         this.session = routingContext.session();
         this.endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
         this.factorManager = factorManager;
+        this.ruleEngine = ruleEngine;
     }
 
-    public String getAmfaRule() {
-        return MfaUtils.getAdaptiveMfaStepUpRule(client);
-    }
-
-    public boolean isAmfaActive() {
-        final String amfaRule = getAmfaRule();
-        return !isNullOrEmpty(amfaRule) && !amfaRule.isBlank();
-    }
-
-    public boolean isAmfaRuleTrue() {
-        return isAmfaRuleTrue;
-    }
-
-    public void setAmfaRuleTrue(boolean amfaRuleTrue) {
-        isAmfaRuleTrue = amfaRuleTrue;
-    }
-
-    public String getStepUpRule() {
-        return MfaUtils.getMfaStepUpRule(client);
-    }
-
-    public boolean isStepUpRuleTrue() {
-        return isStepUpRuleTrue;
-    }
-
-    public void setStepUpRuleTrue(boolean stepUpRuleTrue) {
-        isStepUpRuleTrue = stepUpRuleTrue;
-    }
-
-    public boolean isStepUpActive() {
-        final String stepUpRule = getStepUpRule();
-        return !isNullOrEmpty(stepUpRule) && !stepUpRule.isBlank();
-    }
-
-    public boolean isMfaSkipped() {
-        return !hasEndUserAlreadyEnrolled() && isEnrollSkipped();
-    }
-
-    private boolean isEnrollSkipped() {
-        final EnrollmentSettings enrollmentSettings = MfaUtils.getEnrollmentSettings(client);
-        final Boolean forceEnrollment = Optional.ofNullable(enrollmentSettings.getForceEnrollment()).orElse(false);
-        if (FALSE.equals(forceEnrollment) && nonNull(endUser.getMfaEnrollmentSkippedAt())) {
+    public boolean isEnrollSkipped() {
+        if (nonNull(endUser.getMfaEnrollmentSkippedAt())) {
             Date now = new Date();
-            long skipTime = ofNullable(enrollmentSettings.getSkipTimeSeconds()).orElse(DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS) * 1000L;
+            long skipTime = ofNullable(MfaUtils.getEnrollSettings(client).getSkipTimeSeconds()).orElse(DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS) * 1000L;
             return endUser.getMfaEnrollmentSkippedAt().getTime() + skipTime > now.getTime();
         }
         return false;
@@ -131,17 +102,20 @@ public class MfaFilterContext {
     public boolean deviceAlreadyExists() {
         return MfaUtils.deviceAlreadyExists(session);
     }
+    public RoutingContext routingContext() {
+        return routingContext;
+    }
+
+    public Session session() {
+        return session;
+    }
 
     public Object getLoginAttempt() {
         return session.get(LOGIN_ATTEMPT_KEY);
     }
 
-    public boolean hasEndUserAlreadyEnrolled() {
+    public boolean isUserSelectedEnrollFactor() {
         return nonNull(session.get(ENROLLED_FACTOR_ID_KEY));
-    }
-
-    public boolean hasUserChosenAlternativeFactor() {
-        return nonNull(session.get(ALTERNATIVE_FACTOR_ID_KEY));
     }
 
     public Map<String, Object> getEvaluableContext() {
@@ -154,39 +128,80 @@ public class MfaFilterContext {
         );
     }
 
-    public boolean userHasMatchingFactors() {
-        if (isNull(endUser.getFactors()) || endUser.getFactors().isEmpty()) {
-            return false;
-        }
-        return endUser.getFactors().stream()
-                .filter(ef -> ef.getStatus() == ACTIVATED)
-                .map(EnrolledFactor::getFactorId)
-                .filter(this::isNotRecoveryCodeType)
-                .anyMatch(client.getFactors()::contains);
-    }
-
-    public boolean isMfaChallengeComplete() {
-        return nonNull(session.get(MFA_CHALLENGE_COMPLETED_KEY)) &&
-                TRUE.equals(session.get(MFA_CHALLENGE_COMPLETED_KEY));
-    }
-
     public boolean userHasMatchingActivatedFactors() {
         if (isNull(endUser.getFactors()) || endUser.getFactors().isEmpty()) {
             return false;
         }
+        var applicationFactors = client.getFactorSettings().getApplicationFactors().stream().map(ApplicationFactorSettings::getId).collect(Collectors.toSet());
         return endUser.getFactors().stream()
                 .filter(factor -> ACTIVATED.equals(factor.getStatus()))
                 .map(EnrolledFactor::getFactorId)
                 .filter(this::isNotRecoveryCodeType)
-                .anyMatch(client.getFactors()::contains);
+                .anyMatch(applicationFactors::contains);
     }
 
     public boolean isDeviceRiskAssessmentEnabled() {
-        return Optional.ofNullable(client.getRiskAssessment())
+        return ofNullable(client.getRiskAssessment())
                 .filter(RiskAssessmentSettings::isEnabled)
                 .map(RiskAssessmentSettings::getDeviceAssessment)
                 .map(AssessmentSettings::isEnabled)
                 .orElse(false);
+    }
+
+    public boolean isChallengeCompleted() {
+        return TRUE.equals(session.get(MFA_CHALLENGE_COMPLETED_KEY));
+    }
+
+
+    public boolean checkSelectedFactor() {
+        String enrollingFactorId = session.get(ENROLLED_FACTOR_ID_KEY);
+        List<ApplicationFactorSettings> applicableFactors = getApplicableFactors();
+        return applicableFactors.stream().anyMatch(factor -> factor.getId().equals(enrollingFactorId));
+    }
+
+    private List<ApplicationFactorSettings> getApplicableFactors() {
+        FactorSettings factorSettings = Optional.ofNullable(client.getFactorSettings()).orElseGet(FactorSettings::new);
+        List<ApplicationFactorSettings> passedRule = factorSettings.getApplicationFactors()
+                .stream()
+                .filter(factor -> evaluateFactorRule(factor.getSelectionRule()))
+                .toList();
+        if (passedRule.isEmpty()) {
+            return factorSettings.getApplicationFactors()
+                    .stream()
+                    .filter(factor -> factor.getId().equals(factorSettings.getDefaultFactorId()))
+                    .toList();
+        } else {
+            return passedRule;
+        }
+    }
+
+    public boolean isFactorSelected() {
+        return !StringUtil.isBlank(session.get(ENROLLED_FACTOR_ID_KEY));
+    }
+
+    public boolean evaluateFactorRuleByFactorId(String factorId) {
+        FactorSettings factorSettings = Optional.ofNullable(client.getFactorSettings()).orElseGet(FactorSettings::new);
+        var appFactors = factorSettings.getApplicationFactors();
+        if (appFactors.size() == 1 && factorId.equals(factorSettings.getDefaultFactorId())) {
+            return true;
+        } else {
+            return appFactors.stream()
+                    .filter(f -> f.getId().equals(factorId))
+                    .map(factor -> evaluateFactorRule(factor.getSelectionRule()))
+                    .findFirst()
+                    .orElse(false);
+        }
+    }
+
+    public boolean isDefaultFactor(String factorId) {
+        FactorSettings factorSettings = client.getFactorSettings();
+        return Optional.ofNullable(factorSettings)
+                .map(settings -> settings.getDefaultFactorId().equals(factorId))
+                .orElse(false);
+    }
+
+    private boolean evaluateFactorRule(String selectionRule) {
+        return !hasText(selectionRule) || TRUE.equals(MfaUtils.evaluateRule(selectionRule, this, ruleEngine));
     }
 
     private boolean isNotRecoveryCodeType(String factorId) {
