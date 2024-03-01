@@ -741,15 +741,6 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
         smsFactor.setId(USER_FACTOR_ID);
         smsFactor.setFactorType(FactorType.SMS);
 
-        FactorProvider provider = mock(FactorProvider.class);
-        when(provider.checkSecurityFactor(any())).thenReturn(true);
-
-        when(factorManager.getFactor(ENROLL_FACTOR_ID)).thenReturn(emailFactor);
-        when(factorManager.get(ENROLL_FACTOR_ID)).thenReturn(provider);
-
-        when(factorManager.getFactor(USER_FACTOR_ID)).thenReturn(smsFactor);
-        when(factorManager.get(USER_FACTOR_ID)).thenReturn(provider);
-
         router.route(HttpMethod.POST, REQUEST_PATH)
                 .handler(ctx -> {
                     User user = new User();
