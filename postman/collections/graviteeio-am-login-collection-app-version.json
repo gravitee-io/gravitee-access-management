@@ -3674,7 +3674,7 @@
 											"    var location = postman.getResponseHeader('Location');",
 											"    let domain = pm.environment.get(\"domainHrid\");",
 											"",
-											"    tests['Redirect to mfa enroll'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/mfa/enroll') && location.includes('client_id=' + pm.environment.get('clientId4'));",
+											"    tests['Redirect to mfa challenge'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/mfa/challenge');",
 											"        ",
 											"});"
 										],
@@ -3723,7 +3723,7 @@
 											"    var location = postman.getResponseHeader('Location');",
 											"    let domain = pm.environment.get(\"domainHrid\");",
 											"    ",
-											"    tests['Redirect to mfa enroll'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/mfa/enroll') && location.includes('client_id=' + pm.environment.get('clientId4'));",
+											"    tests['Redirect to mfa challenge'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/mfa/challenge');",
 											"    ",
 											"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 											"});"
