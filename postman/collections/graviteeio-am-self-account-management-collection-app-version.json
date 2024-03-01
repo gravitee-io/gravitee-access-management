@@ -1,8 +1,9 @@
 {
 	"info": {
-		"_postman_id": "d0fdab08-fbf7-4671-8952-b41c118261cf",
+		"_postman_id": "60499cb4-7d51-4b7a-900b-ff8c44c48c09",
 		"name": "Gravitee.io - AM - Self Account Management - app version",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31343100"
 	},
 	"item": [
 		{
@@ -1805,7 +1806,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n    \"factors\": [      \n       \"{{recoveryCodeFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {}\n    }\n}"
+											"raw": "{\n    \"factors\": [      \n       \"{{recoveryCodeFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {\n            \"factor\": {\n                \"applicationFactors\": [ {\n                    \"id\": \"{{recoveryCodeFactorId}}\"\n                }]\n            }\n        }\n    }\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{client}}",
