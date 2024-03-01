@@ -27,7 +27,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class StepUpAuthenticationSettings {
-    private Boolean active = Boolean.FALSE;
+    private boolean active = false;
     private String stepUpAuthenticationRule;
 
     public StepUpAuthenticationSettings(StepUpAuthenticationSettings other) {

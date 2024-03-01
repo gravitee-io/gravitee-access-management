@@ -122,7 +122,15 @@ public class ApplicationFactorSettingsUpgraderTest {
             updatedApp.getSettings() != null &&
                     updatedApp.getSettings().getMfa().getFactor() != null &&
                     updatedApp.getSettings().getMfa().getFactor().getApplicationFactors().stream().map(ApplicationFactorSettings::getId).allMatch(factorIds::contains) &&
-                    updatedApp.getSettings().getMfa().getFactor().getDefaultFactorId().equals(FACTOR_ID_OTP)
+                    updatedApp.getSettings().getMfa().getFactor().getDefaultFactorId().equals(FACTOR_ID_OTP) &&
+                    updatedApp.getSettings().getMfa().getEnroll() != null &&
+                    !updatedApp.getSettings().getMfa().getEnroll().isActive() &&
+                    updatedApp.getSettings().getMfa().getChallenge() != null &&
+                    !updatedApp.getSettings().getMfa().getChallenge().isActive() &&
+                    updatedApp.getSettings().getMfa().getRememberDevice() != null &&
+                    !updatedApp.getSettings().getMfa().getRememberDevice().isActive() &&
+                    updatedApp.getSettings().getMfa().getStepUpAuthentication() != null &&
+                    !updatedApp.getSettings().getMfa().getStepUpAuthentication().isActive()
         ));
     }
 
@@ -160,7 +168,9 @@ public class ApplicationFactorSettingsUpgraderTest {
                         updatedApp.getSettings().getMfa().getChallenge() != null &&
                         updatedApp.getSettings().getMfa().getChallenge().isActive() &&
                         updatedApp.getSettings().getMfa().getChallenge().getType().equals(MfaChallengeType.REQUIRED) &&
-                        updatedApp.getSettings().getMfa().getChallenge().getChallengeRule() == null
+                        updatedApp.getSettings().getMfa().getChallenge().getChallengeRule() == null &&
+                        updatedApp.getSettings().getMfa().getStepUpAuthentication() != null &&
+                        !updatedApp.getSettings().getMfa().getStepUpAuthentication().isActive()
         ));
     }
 
@@ -196,7 +206,9 @@ public class ApplicationFactorSettingsUpgraderTest {
                         updatedApp.getSettings().getMfa().getChallenge() != null &&
                         updatedApp.getSettings().getMfa().getChallenge().isActive() &&
                         updatedApp.getSettings().getMfa().getChallenge().getType().equals(MfaChallengeType.REQUIRED) &&
-                        updatedApp.getSettings().getMfa().getChallenge().getChallengeRule() == null
+                        updatedApp.getSettings().getMfa().getChallenge().getChallengeRule() == null &&
+                        updatedApp.getSettings().getMfa().getStepUpAuthentication() != null &&
+                        !updatedApp.getSettings().getMfa().getStepUpAuthentication().isActive()
         ));
     }
 
@@ -233,7 +245,9 @@ public class ApplicationFactorSettingsUpgraderTest {
                         updatedApp.getSettings().getMfa().getChallenge() != null &&
                         updatedApp.getSettings().getMfa().getChallenge().isActive() &&
                         updatedApp.getSettings().getMfa().getChallenge().getType().equals(MfaChallengeType.CONDITIONAL) &&
-                        updatedApp.getSettings().getMfa().getChallenge().getChallengeRule().equals(mfaSettings.getAdaptiveAuthenticationRule())
+                        updatedApp.getSettings().getMfa().getChallenge().getChallengeRule().equals(mfaSettings.getAdaptiveAuthenticationRule()) &&
+                        updatedApp.getSettings().getMfa().getStepUpAuthentication() != null &&
+                        !updatedApp.getSettings().getMfa().getStepUpAuthentication().isActive()
         ));
     }
 
@@ -274,7 +288,9 @@ public class ApplicationFactorSettingsUpgraderTest {
                         updatedApp.getSettings().getMfa().getChallenge().isActive() &&
                         updatedApp.getSettings().getMfa().getChallenge().getType().equals(MfaChallengeType.RISK_BASED) &&
                         updatedApp.getSettings().getMfa().getChallenge().getChallengeRule().equals(mfaSettings.getAdaptiveAuthenticationRule()) &&
-                        updatedApp.getSettings().getRiskAssessment().isEnabled()
+                        updatedApp.getSettings().getRiskAssessment().isEnabled() &&
+                        updatedApp.getSettings().getMfa().getStepUpAuthentication() != null &&
+                        !updatedApp.getSettings().getMfa().getStepUpAuthentication().isActive()
         ));
     }
 
@@ -314,7 +330,7 @@ public class ApplicationFactorSettingsUpgraderTest {
                         updatedApp.getSettings().getMfa().getChallenge().getType().equals(MfaChallengeType.CONDITIONAL) &&
                         updatedApp.getSettings().getMfa().getChallenge().getChallengeRule().equals(mfaSettings.getAdaptiveAuthenticationRule()) &&
                         updatedApp.getSettings().getMfa().getStepUpAuthentication() != null &&
-                        Boolean.TRUE.equals(updatedApp.getSettings().getMfa().getStepUpAuthentication().getActive()) &&
+                        updatedApp.getSettings().getMfa().getStepUpAuthentication().isActive() &&
                         updatedApp.getSettings().getMfa().getStepUpAuthentication().getStepUpAuthenticationRule().equals(mfaSettings.getStepUpAuthenticationRule())
         ));
     }

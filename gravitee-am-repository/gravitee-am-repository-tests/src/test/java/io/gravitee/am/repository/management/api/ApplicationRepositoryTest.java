@@ -455,7 +455,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         mfaSettings.setRememberDevice(rememberDeviceSettings);
         mfaSettings.setAdaptiveAuthenticationRule("adaptive-rule");
 
-        var applicationSettings = new ApplicationSettings();
+        var applicationSettings = app.getSettings();
         applicationSettings.setMfa(mfaSettings);
 
         // update app
