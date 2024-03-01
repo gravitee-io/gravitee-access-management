@@ -24,7 +24,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class StepUpAuthenticationMongoSettings {
-    private Boolean active;
+    private boolean active;
     private String stepUpAuthenticationRule;
 
     public StepUpAuthenticationSettings convert() {
@@ -36,7 +36,7 @@ public class StepUpAuthenticationMongoSettings {
 
     public static StepUpAuthenticationMongoSettings convert(StepUpAuthenticationSettings stepUpAuthenticationSettings) {
         var stepUpAuthenticationMongoSettings = new StepUpAuthenticationMongoSettings();
-        stepUpAuthenticationMongoSettings.setActive(stepUpAuthenticationSettings.getActive());
+        stepUpAuthenticationMongoSettings.setActive(stepUpAuthenticationSettings.isActive());
         stepUpAuthenticationMongoSettings.setStepUpAuthenticationRule(stepUpAuthenticationSettings.getStepUpAuthenticationRule());
         return stepUpAuthenticationMongoSettings;
     }

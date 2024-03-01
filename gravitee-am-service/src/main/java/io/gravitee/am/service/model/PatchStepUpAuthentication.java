@@ -31,7 +31,7 @@ public class PatchStepUpAuthentication {
 
     public StepUpAuthenticationSettings patch(StepUpAuthenticationSettings _toPatch) {
         var toPatch = _toPatch == null ? new StepUpAuthenticationSettings() : new StepUpAuthenticationSettings(_toPatch);
-        SetterUtils.safeSet(toPatch::setActive, getActive());
+        SetterUtils.safeSet(toPatch::setActive, getActive(), boolean.class);
         SetterUtils.safeSet(toPatch::setStepUpAuthenticationRule, getStepUpAuthenticationRule());
         return toPatch;
     }

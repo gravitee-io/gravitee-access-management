@@ -25,6 +25,7 @@ import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.MfaChallengeType;
 import io.gravitee.am.model.MfaEnrollType;
+import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.StepUpAuthenticationSettings;
 import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.model.SystemTaskStatus;
@@ -90,7 +91,7 @@ public class ApplicationFactorSettingsUpgrader extends SystemTaskUpgrader {
                                     if (app.getSettings() == null) {
                                         logger.warn("Application '{}' enables factor but there is no settings set," +
                                                 " migrate factor settings but leave MFA settings empty", app.getId());
-                                        app.setSettings(new ApplicationSettings());
+                                        app.setSettings(buildEmptySettings());
                                     } else if (app.getSettings().getMfa() != null) {
                                         migrateEnrollSettings(app);
                                         migrateChallengeSettings(app);
@@ -120,6 +121,29 @@ public class ApplicationFactorSettingsUpgrader extends SystemTaskUpgrader {
                     logger.error("Unable to migrate factor settings for applications: {}", err.getMessage());
                     return Single.just(false);
                 });
+    }
+
+    private static ApplicationSettings buildEmptySettings() {
+        ApplicationSettings settings = new ApplicationSettings();
+        MFASettings mfaSettings = new MFASettings();
+        settings.setMfa(mfaSettings);
+
+        final var enrollSettings = new EnrollSettings();
+        mfaSettings.setEnroll(enrollSettings);
+        enrollSettings.setActive(false);
+
+        final var challengeSettings = new ChallengeSettings();
+        mfaSettings.setChallenge(challengeSettings);
+        challengeSettings.setActive(false);
+
+        final var rememberDeviceSettings = new RememberDeviceSettings();
+        mfaSettings.setRememberDevice(rememberDeviceSettings);
+        rememberDeviceSettings.setActive(false);
+
+        final var stepUpSettings = new StepUpAuthenticationSettings();
+        mfaSettings.setStepUpAuthentication(stepUpSettings);
+        stepUpSettings.setActive(false);
+        return settings;
     }
 
     private void migrateEnrollSettings(Application app) {
@@ -155,12 +179,10 @@ public class ApplicationFactorSettingsUpgrader extends SystemTaskUpgrader {
 
     private void migrateStepUpSettings(Application app) {
         final var mfaSettings = app.getSettings().getMfa();
-        if (hasLength(mfaSettings.getStepUpAuthenticationRule())) {
-            final var stepUpSettings = new StepUpAuthenticationSettings();
-            stepUpSettings.setActive(true);
-            stepUpSettings.setStepUpAuthenticationRule(mfaSettings.getStepUpAuthenticationRule());
-            mfaSettings.setStepUpAuthentication(stepUpSettings);
-        }
+        final var stepUpSettings = new StepUpAuthenticationSettings();
+        stepUpSettings.setActive(hasLength(mfaSettings.getStepUpAuthenticationRule()));
+        stepUpSettings.setStepUpAuthenticationRule(mfaSettings.getStepUpAuthenticationRule());
+        mfaSettings.setStepUpAuthentication(stepUpSettings);
     }
 
     private static void moveFactorIdsIntoFactorSettings(Application app, List<String> recoveryCodeIds) {
