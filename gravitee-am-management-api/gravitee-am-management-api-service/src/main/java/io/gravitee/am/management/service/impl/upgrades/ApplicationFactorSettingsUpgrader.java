@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.APPLICATION_FACTOR_UPGRADER;
+import static java.lang.Boolean.FALSE;
 import static org.springframework.util.CollectionUtils.isEmpty;
 import static org.springframework.util.StringUtils.hasLength;
 
@@ -151,7 +152,7 @@ public class ApplicationFactorSettingsUpgrader extends SystemTaskUpgrader {
         final var enrollSettings = new EnrollSettings();
         mfaSettings.setEnroll(enrollSettings);
         enrollSettings.setActive(true);
-        if (!mfaSettings.getEnrollment().getForceEnrollment()) {
+        if (FALSE.equals(mfaSettings.getEnrollment().getForceEnrollment())) {
             enrollSettings.setType(MfaEnrollType.OPTIONAL);
             enrollSettings.setForceEnrollment(false);
             enrollSettings.setSkipTimeSeconds(mfaSettings.getEnrollment().getSkipTimeSeconds());
