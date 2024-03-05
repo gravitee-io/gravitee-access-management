@@ -1,3 +1,4 @@
 # Default
-*                                                             @gravitee-io/am @gravitee-io/platform
+*                                                             @gravitee-io/am
+/helm/                                                        @gravitee-io/am @gravitee-io/platform
 
