@@ -174,8 +174,6 @@ management:
 # All services are enabled by default. To stop one of them, you have to add the property 'enabled: false' (See the
 # 'local' service for an example).
 services:
-  sync:
-    cron: '* * * * * *'
   core:
     http:
       enabled: true
