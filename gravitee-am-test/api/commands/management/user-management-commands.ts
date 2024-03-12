@@ -114,7 +114,13 @@ export const deleteUser = (domainId, accessToken, userId) =>
     user: userId,
   });
 
-export async function buildCreateAndTestUser(domainId, accessToken, i: number, preRegistration: boolean = false) {
+export async function buildCreateAndTestUser(
+  domainId,
+  accessToken,
+  i: number,
+  preRegistration: boolean = false,
+  password = 'SomeP@ssw0rd',
+) {
   const firstName = 'firstName' + i;
   const lastName = 'lastName' + i;
   const payload = {
@@ -122,7 +128,7 @@ export async function buildCreateAndTestUser(domainId, accessToken, i: number, p
     lastName: lastName,
     email: `${firstName}.${lastName}@mail.com`,
     username: `${firstName}.${lastName}`,
-    password: 'SomeP@ssw0rd',
+    password: password,
     preRegistration: preRegistration,
   };
 
