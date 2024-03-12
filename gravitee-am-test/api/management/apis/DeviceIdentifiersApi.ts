@@ -30,7 +30,6 @@ import * as runtime from '../runtime';
 import {
   BotDetection,
   BotDetectionFromJSON,
-  BotDetectionToJSON,
   NewDeviceIdentifier,
   NewDeviceIdentifierFromJSON,
   NewDeviceIdentifierToJSON,
@@ -85,7 +84,7 @@ export class DeviceIdentifiersApi extends runtime.BaseAPI {
   async create7Raw(
     requestParameters: Create7Request,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
+  ): Promise<runtime.ApiResponse<NewDeviceIdentifier>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
@@ -135,7 +134,7 @@ export class DeviceIdentifiersApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.VoidApiResponse(response);
+    return new runtime.JSONApiResponse(response, (jsonValue) => NewDeviceIdentifierFromJSON(jsonValue));
   }
 
   /**

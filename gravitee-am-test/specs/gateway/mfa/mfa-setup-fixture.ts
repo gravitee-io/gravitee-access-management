@@ -6,6 +6,7 @@ import { createFactor } from '@management-commands/factor-management-commands';
 import { createApplication, patchApplication } from '@management-commands/application-management-commands';
 import { withRetry } from '@utils-commands/retry';
 import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
+import { createDevice } from '@management-commands/device-management-commands';
 
 export interface MfaTestContext {
   admin: {
@@ -19,6 +20,7 @@ export interface MfaTestContext {
     domainHrid: string;
     defaultIdpId: string;
     factors: { id: string }[];
+    devices: { id: string }[];
     user: { username: string; password: string };
   };
 
@@ -49,6 +51,7 @@ export async function init(testContext: MfaTestContext) {
   testContext.domain.defaultIdpId = domainDetails.defaultIdpId;
   testContext.domain.user = await createTestUser(testContext);
   testContext.domain.factors = await createMockFactors(testContext);
+  testContext.domain.devices = [await createMockDevice(testContext)];
   const oidc = await withRetry(() => getWellKnownOpenIdConfiguration(testContext.domain.domainHrid).expect(200));
   testContext.oidc = {
     authorizationEndpoint: oidc.body.authorization_endpoint,
@@ -73,7 +76,8 @@ export async function createTestDomain(ctx: MfaTestContext): Promise<any> {
 
 export async function createTestUser(ctx: MfaTestContext): Promise<any> {
   const password = 'SomeP@ssw0rd';
-  return buildCreateAndTestUser(ctx.domain.domainId, ctx.admin.accessToken, 1, false, password).then((user) => {
+  const random = Math.floor(Math.random() * 200000);
+  return buildCreateAndTestUser(ctx.domain.domainId, ctx.admin.accessToken, random, false, password).then((user) => {
     return {
       username: user.username,
       password: password,
@@ -97,6 +101,17 @@ export async function createMockFactors(ctx: MfaTestContext): Promise<any> {
   const factor1 = await createFactor(ctx.domain.domainId, ctx.admin.accessToken, createFactorBody);
   const factor2 = await createFactor(ctx.domain.domainId, ctx.admin.accessToken, createFactorBody);
   return [{ id: factor1.id }, { id: factor2.id }];
+}
+
+export async function createMockDevice(ctx: MfaTestContext) {
+  const body = {
+    configuration: '{}',
+    name: 'device',
+    type: 'fingerprintjs-v3-community-device-identifier',
+  };
+  const device = await createDevice(ctx.domain.domainId, ctx.admin.accessToken, body);
+  const value = await device.value();
+  return { id: value.id };
 }
 
 export async function createApp(ctx: MfaTestContext) {
