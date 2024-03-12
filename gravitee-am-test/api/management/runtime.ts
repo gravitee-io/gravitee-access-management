@@ -131,7 +131,21 @@ export class BaseAPI {
     if (response.status >= 200 && response.status < 300) {
       return response;
     }
-    throw new ResponseError(response, 'Response returned an error code');
+    throw new ResponseError(
+      response,
+      `Response returned an error code ${response.status}, msg=${await this.streamToString(response.body)}`,
+    );
+  }
+
+  async streamToString(stream) {
+    // lets have a ReadableStream as a stream variable
+    const chunks = [];
+
+    for await (const chunk of stream) {
+      chunks.push(Buffer.from(chunk));
+    }
+
+    return Buffer.concat(chunks).toString('utf-8');
   }
 
   private async createFetchParams(context: RequestOpts, initOverrides?: RequestInit | InitOverideFunction) {
