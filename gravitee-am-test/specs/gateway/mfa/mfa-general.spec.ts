@@ -1,377 +1,368 @@
-import { afterAll, afterEach, beforeAll, beforeEach, expect, jest } from '@jest/globals';
-import { createApp, init, MfaTestContext, removeDomain } from './mfa-setup-fixture';
-import { withRetry } from '@utils-commands/retry';
-import { deleteApplication, patchApplication } from '@management-commands/application-management-commands';
-import { performFormPost } from '@gateway-commands/oauth-oidc-commands';
+/*
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import {afterAll, beforeAll, expect, jest} from '@jest/globals';
+import {
+    Domain,
+    enableDomain,
+    initClient,
+    initDomain,
+    removeDomain,
+    TestSuiteContext
+} from './fixture/mfa-setup-fixture';
+import {withRetry} from '@utils-commands/retry';
+import {getWellKnownOpenIdConfiguration} from '@gateway-commands/oauth-oidc-commands';
 import fetch from 'cross-fetch';
-import { extractDomAttr, extractDomValue } from './mfa-extract-fixture';
-import { followUpGet, get } from './mfa-flow-fixture';
-import { logoutUser } from './mfa-login-fixture';
+import {extractDomAttr, extractDomValue} from './fixture/mfa-extract-fixture';
+import {followUpGet, get, postForm, processMfaEndToEnd} from './fixture/mfa-flow-fixture';
+import {waitFor} from "@management-commands/domain-management-commands";
 
 global.fetch = fetch;
 jest.setTimeout(200000);
 
-const testContext: MfaTestContext = {
-  admin: {
-    username: 'admin',
-    password: 'adminadmin',
-  },
-  domain: {
-    domainHrid: 'mfa-test-domain',
-  },
-} as MfaTestContext;
+const domain: Domain = {
+    admin: {
+        username: 'admin',
+        password: 'adminadmin',
+    },
+    domain: {
+        domainHrid: 'mfa-test-domain-general',
+    },
+} as Domain;
 
 function defaultApplicationSettings() {
-  return {
-    factors: [],
-    settings: {
-      mfa: {
-        factor: {
-          defaultFactorId: null,
-          applicationFactors: [],
+    return {
+        factors: [],
+        settings: {
+            mfa: {
+                factor: {
+                    defaultFactorId: null,
+                    applicationFactors: [],
+                },
+                stepUpAuthenticationRule: '',
+                stepUpAuthentication: {active: false, stepUpAuthenticationRule: ''},
+                adaptiveAuthenticationRule: '',
+                rememberDevice: {active: false, skipRememberDevice: false},
+                enrollment: {forceEnrollment: false},
+                enroll: {active: false, enrollmentSkipActive: false, forceEnrollment: false, type: 'required'},
+                challenge: {active: false, challengeRule: '', type: 'required'},
+            },
         },
-        stepUpAuthenticationRule: '',
-        stepUpAuthentication: { active: false, stepUpAuthenticationRule: '' },
-        adaptiveAuthenticationRule: '',
-        rememberDevice: { active: false, skipRememberDevice: false },
-        enrollment: { forceEnrollment: false },
-        enroll: { active: false, enrollmentSkipActive: false, forceEnrollment: false, type: 'required' },
-        challenge: { active: false, challengeRule: '', type: 'required' },
-      },
-    },
-  };
+    };
 }
 
-const defaultClientSettings = {
-  clientId: 'test-client',
-  name: 'test-client',
-  id: 'test-client',
-  clientSecret: 'test-client',
-  redirectUris: ['https://auth-nightly.gravitee.io/myApp/callback'],
-};
 beforeAll(async () => {
-  await init(testContext);
+    await initDomain(domain, 7);
+
+    let settings;
+
+    settings = defaultApplicationSettings();
+    const noFactorClient = await initClient(domain, 'no-factors-client', settings);
+
+    settings = {
+        ...defaultApplicationSettings(),
+        settings: {
+            mfa: {
+                factor: {
+                    defaultFactorId: domain.domain.factors[0].id,
+                    applicationFactors: [domain.domain.factors[0]],
+                },
+                stepUpAuthenticationRule: '{{ false }}',
+                stepUpAuthentication: {active: true, stepUpAuthenticationRule: '{{ false }}'},
+            },
+        },
+    }
+    const stepUpNegativeClient1 = await initClient(domain, 'step-up-positive-1', settings);
+
+    settings = {
+        ...defaultApplicationSettings(),
+        settings: {
+            mfa: {
+                factor: {
+                    defaultFactorId: domain.domain.factors[0].id,
+                    applicationFactors: [domain.domain.factors[0]],
+                },
+                stepUpAuthenticationRule: '',
+                stepUpAuthentication: {active: false, stepUpAuthenticationRule: ''},
+            },
+        },
+    };
+    const stepUpOffClient = await initClient(domain, 'step-up-off-1', settings);
+
+    settings = {
+        ...defaultApplicationSettings(),
+        settings: {
+            mfa: {
+                factor: {
+                    defaultFactorId: domain.domain.factors[0].id,
+                    applicationFactors: [domain.domain.factors[0]],
+                },
+                stepUpAuthenticationRule: '{{ true }}',
+                stepUpAuthentication: {active: true, stepUpAuthenticationRule: '{{ true }}'},
+                enrollment: {forceEnrollment: true},
+                enroll: {active: true, enrollmentSkipActive: false, forceEnrollment: true, type: 'required'},
+                challenge: {active: true, challengeRule: '', type: 'required'},
+            },
+        },
+    };
+    const stepUpTrueClient2 = await initClient(domain, 'step-up-positive-2', settings);
+
+    settings = {
+        ...defaultApplicationSettings(),
+        settings: {
+            mfa: {
+                factor: {
+                    defaultFactorId: domain.domain.factors[0].id,
+                    applicationFactors: [domain.domain.factors[0]],
+                },
+            },
+        },
+    };
+    const withFactorsClient = await initClient(domain, 'with-factors-client-1', settings);
+
+    settings = {
+        ...defaultApplicationSettings(),
+        settings: {
+            mfa: {
+                factor: {
+                    defaultFactorId: domain.domain.factors[0].id,
+                    applicationFactors: [
+                        {id: domain.domain.factors[0].id, selectionRule: '{{ false }}'},
+                        {id: domain.domain.factors[1].id, selectionRule: '{{ false }}'},
+                    ],
+                },
+                enroll: {active: true, enrollmentSkipActive: false, forceEnrollment: false, type: 'required'},
+            },
+        },
+    };
+    const enrollmentTrueClient = await initClient(domain, 'enrollment-true-1', settings);
+
+    settings = defaultApplicationSettings();
+    settings.settings.mfa.factor = {
+        defaultFactorId: domain.domain.factors[0].id,
+        applicationFactors: [domain.domain.factors[0]],
+    }
+    settings.settings.mfa.stepUpAuthentication =  {active: true, stepUpAuthenticationRule: '{{ true }}'};
+    settings.settings.mfa.stepUpAuthenticationRule =  '{{ true }}';
+    const stepUpTrueClient3 = await initClient(domain, 'step-up-positive-3', settings);
+
+    const oidc = await enableDomain(domain)
+        .then(() => waitFor(3000))
+        .then(() => withRetry(() => getWellKnownOpenIdConfiguration(domain.domain.domainHrid).expect(200)))
+
+    noFactorsCtx = new TestSuiteContext(domain, noFactorClient, domain.domain.users[0], oidc.body.authorization_endpoint)
+    stepUpNegativeCtx = new TestSuiteContext(domain, stepUpNegativeClient1, domain.domain.users[1], oidc.body.authorization_endpoint)
+    stepUpOffCtx = new TestSuiteContext(domain, stepUpOffClient, domain.domain.users[2], oidc.body.authorization_endpoint)
+    stepUpPositiveCtx2 = new TestSuiteContext(domain, stepUpTrueClient2, domain.domain.users[3], oidc.body.authorization_endpoint)
+    withFactorsCtx = new TestSuiteContext(domain, withFactorsClient, domain.domain.users[4], oidc.body.authorization_endpoint)
+    enrollmentTrueCtx = new TestSuiteContext(domain, enrollmentTrueClient, domain.domain.users[5], oidc.body.authorization_endpoint)
+    stepUpPositiveChallengeDisabledCtx = new TestSuiteContext(domain, stepUpTrueClient3, domain.domain.users[6], oidc.body.authorization_endpoint)
+
 });
+
+let noFactorsCtx: TestSuiteContext;
+let stepUpNegativeCtx: TestSuiteContext;
+let stepUpOffCtx: TestSuiteContext;
+let stepUpPositiveCtx2: TestSuiteContext;
+let withFactorsCtx: TestSuiteContext;
+let enrollmentTrueCtx: TestSuiteContext;
+let stepUpPositiveChallengeDisabledCtx: TestSuiteContext;
 
 afterAll(async () => {
-  await removeDomain(testContext);
-});
-
-beforeEach(async () => {
-  testContext.application = defaultClientSettings;
-  testContext.application.id = await createApp(testContext);
-  testContext.oidc.clientAuthorizationEndpoint = `${testContext.oidc.authorizationEndpoint}?response_type=code&client_id=${testContext.application.clientId}&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback`;
-  await logoutUser(testContext);
-});
-
-afterEach(async () => {
-  await deleteApplication(testContext.domain.domainId, testContext.admin.accessToken, testContext.application.id);
+    await removeDomain(domain);
 });
 
 describe('With disabled factors', () => {
-  it('should omit MFA flow', async () => {
-    const authResponse = await withRetry(() => get(testContext.oidc.clientAuthorizationEndpoint, 302));
-    const loginPage = await withRetry(() => followUpGet(authResponse, 200));
+    it('should omit MFA flow', async () => {
+        const ctx = noFactorsCtx;
+        const authResponse = await get(ctx.clientAuthUrl, 302);
+        const loginPage = await followUpGet(authResponse, 200);
 
-    let xsrf = await extractDomValue(loginPage, '[name=X-XSRF-TOKEN]');
-    let action = await extractDomAttr(loginPage, 'form', 'action');
+        let xsrf = extractDomValue(loginPage, '[name=X-XSRF-TOKEN]');
+        let action = extractDomAttr(loginPage, 'form', 'action');
 
-    const loginPostResponse = await withRetry(() =>
-      performFormPost(
-        action,
-        '',
-        {
-          'X-XSRF-TOKEN': xsrf,
-          username: testContext.domain.user.username,
-          password: testContext.domain.user.password,
-          rememberMe: 'off',
-          client_id: testContext.application.clientId,
-        },
-        {
-          Cookie: loginPage.headers['set-cookie'],
-          'Content-type': 'application/x-www-form-urlencoded',
-        },
-      ).expect(302),
-    );
+        const loginPostResponse = await postForm(
+            action,
+            {
+                'X-XSRF-TOKEN': xsrf,
+                username: ctx.user.username,
+                password: ctx.user.password,
+                rememberMe: 'off',
+                client_id: ctx.client.clientId,
+            },
+            {
+                Cookie: loginPage.headers['set-cookie'],
+                'Content-type': 'application/x-www-form-urlencoded',
+            },
+            302);
 
-    const authResponseFinal = await withRetry(() => followUpGet(loginPostResponse, 302));
+        const authResponseFinal = await followUpGet(loginPostResponse, 302);
 
-    expect(authResponseFinal.headers['location']).toBeDefined();
-    expect(authResponseFinal.headers['location']).toContain(testContext.application.redirectUris[0]);
-    expect(authResponseFinal.headers['location']).toContain('code=');
-  });
+        expect(authResponseFinal.headers['location']).toBeDefined();
+        expect(authResponseFinal.headers['location']).toContain(ctx.client.redirectUris[0]);
+        expect(authResponseFinal.headers['location']).toContain('code=');
+    });
 });
 
 describe('With one enabled factor should omit MFA flow', () => {
-  it('when stepUp=false', async () => {
-    const applicationSettings = {
-      ...defaultApplicationSettings(),
-      settings: {
-        mfa: {
-          factor: {
-            defaultFactorId: testContext.domain.factors[0].id,
-            applicationFactors: [testContext.domain.factors[0]],
-          },
-          stepUpAuthenticationRule: '{{ false }}',
-          stepUpAuthentication: { active: true, stepUpAuthenticationRule: '{{ false }}' },
-        },
-      },
-    };
+    it('when stepUp=false', async () => {
+        const ctx = stepUpNegativeCtx;
 
-    await patchApplication(testContext.domain.domainId, testContext.admin.accessToken, applicationSettings, testContext.application.id);
+        const authResponse = await get(ctx.clientAuthUrl, 302);
+        const loginPage = await followUpGet(authResponse, 200);
 
-    const authResponse = await withRetry(() => get(testContext.oidc.clientAuthorizationEndpoint, 302));
-    const loginPage = await withRetry(() => followUpGet(authResponse, 200));
+        let xsrf = extractDomValue(loginPage, '[name=X-XSRF-TOKEN]');
+        let action = extractDomAttr(loginPage, 'form', 'action');
 
-    let xsrf = await extractDomValue(loginPage, '[name=X-XSRF-TOKEN]');
-    let action = await extractDomAttr(loginPage, 'form', 'action');
+        const loginPostResponse = await postForm(
+            action,
+            {
+                'X-XSRF-TOKEN': xsrf,
+                username: ctx.user.username,
+                password: ctx.user.password,
+                rememberMe: 'off',
+                client_id: ctx.client.clientId,
+            },
+            {
+                Cookie: loginPage.headers['set-cookie'],
+                'Content-type': 'application/x-www-form-urlencoded',
+            },
+            302
+        );
 
-    const loginPostResponse = await withRetry(() =>
-      performFormPost(
-        action,
-        '',
-        {
-          'X-XSRF-TOKEN': xsrf,
-          username: testContext.domain.user.username,
-          password: testContext.domain.user.password,
-          rememberMe: 'off',
-          client_id: testContext.application.clientId,
-        },
-        {
-          Cookie: loginPage.headers['set-cookie'],
-          'Content-type': 'application/x-www-form-urlencoded',
-        },
-      ).expect(302),
-    );
+        const authResponseFinal = await followUpGet(loginPostResponse, 302);
 
-    const authResponseFinal = await withRetry(() => followUpGet(loginPostResponse, 302));
+        expect(authResponseFinal.headers['location']).toBeDefined();
+        expect(authResponseFinal.headers['location']).toContain(ctx.client.redirectUris[0]);
+        expect(authResponseFinal.headers['location']).toContain('code=');
+    });
 
-    expect(authResponseFinal.headers['location']).toBeDefined();
-    expect(authResponseFinal.headers['location']).toContain(testContext.application.redirectUris[0]);
-    expect(authResponseFinal.headers['location']).toContain('code=');
-  });
-  it('when stepUp is disabled', async () => {
-    const applicationSettings = {
-      ...defaultApplicationSettings(),
-      settings: {
-        mfa: {
-          factor: {
-            defaultFactorId: testContext.domain.factors[0].id,
-            applicationFactors: [testContext.domain.factors[0]],
-          },
-          stepUpAuthenticationRule: '',
-          stepUpAuthentication: { active: false, stepUpAuthenticationRule: '' },
-        },
-      },
-    };
+    it('when stepUp is disabled', async () => {
+        const ctx = stepUpOffCtx;
+        const authResponse = await get(ctx.clientAuthUrl, 302);
+        const loginPage = await followUpGet(authResponse, 200);
 
-    await patchApplication(testContext.domain.domainId, testContext.admin.accessToken, applicationSettings, testContext.application.id);
+        let xsrf = extractDomValue(loginPage, '[name=X-XSRF-TOKEN]');
+        let action = extractDomAttr(loginPage, 'form', 'action');
 
-    const authResponse = await withRetry(() => get(testContext.oidc.clientAuthorizationEndpoint, 302));
-    const loginPage = await withRetry(() => followUpGet(authResponse, 200));
+        const loginPostResponse = await postForm(
+            action,
+            {
+                'X-XSRF-TOKEN': xsrf,
+                username: ctx.user.username,
+                password: ctx.user.password,
+                rememberMe: 'off',
+                client_id: ctx.client.clientId,
+            },
+            {
+                Cookie: loginPage.headers['set-cookie'],
+                'Content-type': 'application/x-www-form-urlencoded',
+            }, 302);
 
-    let xsrf = await extractDomValue(loginPage, '[name=X-XSRF-TOKEN]');
-    let action = await extractDomAttr(loginPage, 'form', 'action');
+        const authResponseFinal = await followUpGet(loginPostResponse, 302);
 
-    const loginPostResponse = await withRetry(() =>
-      performFormPost(
-        action,
-        '',
-        {
-          'X-XSRF-TOKEN': xsrf,
-          username: testContext.domain.user.username,
-          password: testContext.domain.user.password,
-          rememberMe: 'off',
-          client_id: testContext.application.clientId,
-        },
-        {
-          Cookie: loginPage.headers['set-cookie'],
-          'Content-type': 'application/x-www-form-urlencoded',
-        },
-      ).expect(302),
-    );
-
-    const authResponseFinal = await withRetry(() => followUpGet(loginPostResponse, 302));
-
-    expect(authResponseFinal.headers['location']).toBeDefined();
-    expect(authResponseFinal.headers['location']).toContain(testContext.application.redirectUris[0]);
-    expect(authResponseFinal.headers['location']).toContain('code=');
-  });
+        expect(authResponseFinal.headers['location']).toBeDefined();
+        expect(authResponseFinal.headers['location']).toContain(ctx.client.redirectUris[0]);
+        expect(authResponseFinal.headers['location']).toContain('code=');
+    });
 });
 
-describe('With enrolled factor should redirect to Enrollment and Challenge', () => {
-  it('when stepUp is not false', async () => {
-    const applicationSettings = {
-      ...defaultApplicationSettings(),
-      settings: {
-        mfa: {
-          factor: {
-            defaultFactorId: testContext.domain.factors[0].id,
-            applicationFactors: [testContext.domain.factors[0]],
-          },
-          stepUpAuthenticationRule: '{{ true }}',
-          stepUpAuthentication: { active: true, stepUpAuthenticationRule: '{{ true }}' },
-          enrollment: { forceEnrollment: true },
-          enroll: { active: true, enrollmentSkipActive: false, forceEnrollment: true, type: 'required' },
-          challenge: { active: true, challengeRule: '', type: 'required' },
-        },
-      },
-    };
+describe('With active session, when stepUp is true, on authorization', () => {
+    it('should Challenge', async () => {
+        const ctx = stepUpPositiveCtx2;
 
-    await patchApplication(testContext.domain.domainId, testContext.admin.accessToken, applicationSettings, testContext.application.id);
+        const session = await processMfaEndToEnd(ctx);
+        const authResponse = await get(ctx.clientAuthUrl, 302, {Cookie: session.cookie});
 
-    const authResponse = await withRetry(() => get(testContext.oidc.clientAuthorizationEndpoint, 302));
-    const loginPage = await withRetry(() => followUpGet(authResponse, 200));
-
-    let xsrf = await extractDomValue(loginPage, '[name=X-XSRF-TOKEN]');
-    let action = await extractDomAttr(loginPage, 'form', 'action');
-
-    const loginPostResponse = await withRetry(() =>
-      performFormPost(
-        action,
-        '',
-        {
-          'X-XSRF-TOKEN': xsrf,
-          username: testContext.domain.user.username,
-          password: testContext.domain.user.password,
-          rememberMe: 'off',
-          client_id: testContext.application.clientId,
-        },
-        {
-          Cookie: loginPage.headers['set-cookie'],
-          'Content-type': 'application/x-www-form-urlencoded',
-        },
-      ).expect(302),
-    );
-
-    const authResponse2 = await withRetry(() => followUpGet(loginPostResponse, 302, 'enroll'));
-    const enrollmentPage = await withRetry(() => followUpGet(authResponse2, 200));
-
-    xsrf = await extractDomValue(enrollmentPage, '[name=X-XSRF-TOKEN]');
-    action = await extractDomAttr(enrollmentPage, 'form', 'action');
-    let factorId = await extractDomValue(enrollmentPage, '[name=factorId]');
-
-    const enrollmentPostResponse = await withRetry(() =>
-      performFormPost(
-        action,
-        '',
-        {
-          'X-XSRF-TOKEN': xsrf,
-          factorId: factorId,
-          ser_mfa_enrollment: true,
-        },
-        {
-          Cookie: enrollmentPage.headers['set-cookie'],
-          'Content-type': 'application/x-www-form-urlencoded',
-        },
-      ).expect(302),
-    );
-
-    const authResponse3 = await withRetry(() =>
-      get(testContext.oidc.clientAuthorizationEndpoint, 302, { Cookie: enrollmentPostResponse.headers['set-cookie'] }, 'challenge'),
-    );
-
-    expect(authResponse3.headers['location']).toBeDefined();
-    expect(authResponse3.headers['location']).toContain('/challenge');
-  });
+        expect(authResponse.headers['location']).toBeDefined();
+        expect(authResponse.headers['location']).toContain('/challenge');
+    });
 });
 
 describe('With enabled factors and disabled enrollment and disabled challenge', () => {
-  it('should stop MFA flow', async () => {
-    const applicationSettings = {
-      ...defaultApplicationSettings(),
-      settings: {
-        mfa: {
-          factor: {
-            defaultFactorId: testContext.domain.factors[0].id,
-            applicationFactors: [testContext.domain.factors[0]],
-          },
-        },
-      },
-    };
-    await patchApplication(testContext.domain.domainId, testContext.admin.accessToken, applicationSettings, testContext.application.id);
+    it('should stop MFA flow', async () => {
+        const ctx = withFactorsCtx;
 
-    const authResponse = await withRetry(() => get(testContext.oidc.clientAuthorizationEndpoint, 302));
-    const loginPage = await withRetry(() => followUpGet(authResponse, 200));
+        const authResponse = await get(ctx.clientAuthUrl, 302);
+        const loginPage = await followUpGet(authResponse, 200);
 
-    let xsrf = await extractDomValue(loginPage, '[name=X-XSRF-TOKEN]');
-    let action = await extractDomAttr(loginPage, 'form', 'action');
+        let xsrf = extractDomValue(loginPage, '[name=X-XSRF-TOKEN]');
+        let action = extractDomAttr(loginPage, 'form', 'action');
 
-    const loginPostResponse = await withRetry(() =>
-      performFormPost(
-        action,
-        '',
-        {
-          'X-XSRF-TOKEN': xsrf,
-          username: testContext.domain.user.username,
-          password: testContext.domain.user.password,
-          rememberMe: 'off',
-          client_id: testContext.application.clientId,
-        },
-        {
-          Cookie: loginPage.headers['set-cookie'],
-          'Content-type': 'application/x-www-form-urlencoded',
-        },
-      ).expect(302),
-    );
+        const loginPostResponse = await postForm(
+            action,
+            {
+                'X-XSRF-TOKEN': xsrf,
+                username: ctx.user.username,
+                password: ctx.user.password,
+                rememberMe: 'off',
+                client_id: ctx.client.clientId,
+            },
+            {
+                Cookie: loginPage.headers['set-cookie'],
+                'Content-type': 'application/x-www-form-urlencoded',
+            }, 302);
 
-    const authResponseFinal = await withRetry(() => followUpGet(loginPostResponse, 302, 'code='));
+        const finalLocationResponse = await followUpGet(loginPostResponse, 302);
 
-    expect(authResponseFinal.headers['location']).toBeDefined();
-    expect(authResponseFinal.headers['location']).toContain(testContext.application.redirectUris[0]);
-    expect(authResponseFinal.headers['location']).toContain('code=');
-  });
+        expect(finalLocationResponse.headers['location']).toBeDefined();
+        expect(finalLocationResponse.headers['location']).toContain(ctx.client.redirectUris[0]);
+        expect(finalLocationResponse.headers['location']).toContain('code=');
+    });
 });
 
 describe('With enabled factors and but failing selection rule', () => {
-  it('only default factor should be visible', async () => {
-    const applicationSettings = {
-      ...defaultApplicationSettings(),
-      settings: {
-        mfa: {
-          factor: {
-            defaultFactorId: testContext.domain.factors[0].id,
-            applicationFactors: [
-              { id: testContext.domain.factors[0].id, selectionRule: '{{ false }}' },
-              { id: testContext.domain.factors[1].id, selectionRule: '{{ false }}' },
-            ],
-          },
-          enroll: { active: true, enrollmentSkipActive: false, forceEnrollment: false, type: 'required' },
-        },
-      },
-    };
+    it('only default factor should be visible', async () => {
+        const ctx = enrollmentTrueCtx;
 
-    await patchApplication(testContext.domain.domainId, testContext.admin.accessToken, applicationSettings, testContext.application.id);
+        const authResponse = await get(ctx.clientAuthUrl, 302);
+        const loginPage = await followUpGet(authResponse, 200);
 
-    const authResponse = await withRetry(() => get(testContext.oidc.clientAuthorizationEndpoint, 302));
-    const loginPage = await withRetry(() => followUpGet(authResponse, 200));
+        let xsrf = extractDomValue(loginPage, '[name=X-XSRF-TOKEN]');
+        let action = extractDomAttr(loginPage, 'form', 'action');
 
-    let xsrf = await extractDomValue(loginPage, '[name=X-XSRF-TOKEN]');
-    let action = await extractDomAttr(loginPage, 'form', 'action');
+        const loginPostResponse = await postForm(
+            action,
+            {
+                'X-XSRF-TOKEN': xsrf,
+                username: ctx.user.username,
+                password: ctx.user.password,
+                rememberMe: 'off',
+                client_id: ctx.client.clientId,
+            },
+            {
+                Cookie: loginPage.headers['set-cookie'],
+                'Content-type': 'application/x-www-form-urlencoded',
+            }, 302);
 
-    const loginPostResponse = await withRetry(() =>
-      performFormPost(
-        action,
-        '',
-        {
-          'X-XSRF-TOKEN': xsrf,
-          username: testContext.domain.user.username,
-          password: testContext.domain.user.password,
-          rememberMe: 'off',
-          client_id: testContext.application.clientId,
-        },
-        {
-          Cookie: loginPage.headers['set-cookie'],
-          'Content-type': 'application/x-www-form-urlencoded',
-        },
-      ).expect(302),
-    );
+        const enrollLocationResponse = await followUpGet(loginPostResponse, 302);
+        const enrollmentPage = await followUpGet(enrollLocationResponse, 200);
 
-    const authResponseFinal = await withRetry(() => followUpGet(loginPostResponse, 302, 'enroll'));
-    const enrollmentPage = await withRetry(() => followUpGet(authResponseFinal, 200));
+        const factorId = extractDomValue(enrollmentPage, '[name=factorId]');
 
-    const factorId = await extractDomValue(enrollmentPage, '[name=factorId]');
+        expect(factorId).toBe(domain.domain.factors[0].id);
+    });
+});
 
-    expect(factorId).toBe(testContext.domain.factors[0].id);
-  });
+describe('With active session, when stepUp is true, with challenge disabled, on authorization', () => {
+    it('should Challenge', async () => {
+        const ctx = stepUpPositiveChallengeDisabledCtx;
+        const session = await processMfaEndToEnd(ctx);
+
+        const authResponse = await get(ctx.clientAuthUrl, 302, {Cookie: session.cookie});
+        expect(authResponse.headers['location']).toBeDefined();
+        expect(authResponse.headers['location']).toContain("challenge");
+    });
 });
