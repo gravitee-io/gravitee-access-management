@@ -201,16 +201,22 @@ describe('With one enabled factor should omit MFA flow', () => {
 
 describe('With enrolled factor should redirect to Enrollment and Challenge', () => {
   it('when stepUp is not false', async () => {
-    const applicationSettings = { ...defaultApplicationSettings() };
-    applicationSettings.settings.mfa.factor = {
-      defaultFactorId: testContext.domain.factors[0].id,
-      applicationFactors: [testContext.domain.factors[0]],
+    const applicationSettings = {
+      ...defaultApplicationSettings(),
+      settings: {
+        mfa: {
+          factor: {
+            defaultFactorId: testContext.domain.factors[0].id,
+            applicationFactors: [testContext.domain.factors[0]],
+          },
+          stepUpAuthenticationRule: '{{ true }}',
+          stepUpAuthentication: { active: true, stepUpAuthenticationRule: '{{ true }}' },
+          enrollment: { forceEnrollment: true },
+          enroll: { active: true, enrollmentSkipActive: false, forceEnrollment: true, type: 'required' },
+          challenge: { active: true, challengeRule: '', type: 'required' },
+        },
+      },
     };
-    applicationSettings.settings.mfa.stepUpAuthenticationRule = '{{ true }}';
-    applicationSettings.settings.mfa.stepUpAuthentication = { active: true, stepUpAuthenticationRule: '{{ true }}' };
-    applicationSettings.settings.mfa.enrollment = { forceEnrollment: true };
-    applicationSettings.settings.mfa.enroll = { active: true, enrollmentSkipActive: false, forceEnrollment: true, type: 'required' };
-    applicationSettings.settings.mfa.challenge = { active: true, challengeRule: '', type: 'required' };
 
     await patchApplication(testContext.domain.domainId, testContext.admin.accessToken, applicationSettings, testContext.application.id);
 
@@ -270,14 +276,19 @@ describe('With enrolled factor should redirect to Enrollment and Challenge', () 
   });
 });
 
-describe('With enabled factors and disabled enrollment and disabled challange', () => {
+describe('With enabled factors and disabled enrollment and disabled challenge', () => {
   it('should stop MFA flow', async () => {
-    const applicationSettings = { ...defaultApplicationSettings() };
-    applicationSettings.settings.mfa.factor = {
-      defaultFactorId: testContext.domain.factors[0].id,
-      applicationFactors: [testContext.domain.factors[0]],
+    const applicationSettings = {
+      ...defaultApplicationSettings(),
+      settings: {
+        mfa: {
+          factor: {
+            defaultFactorId: testContext.domain.factors[0].id,
+            applicationFactors: [testContext.domain.factors[0]],
+          },
+        },
+      },
     };
-
     await patchApplication(testContext.domain.domainId, testContext.admin.accessToken, applicationSettings, testContext.application.id);
 
     const authResponse = await withRetry(() => get(testContext.oidc.clientAuthorizationEndpoint, 302));
