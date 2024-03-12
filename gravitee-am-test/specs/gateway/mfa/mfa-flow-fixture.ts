@@ -4,10 +4,10 @@ import { ResponseError } from '../../../api/management/runtime';
 export async function get(uri: string, expectedStatus: number, headers: any = null, expectedLocation: string = null) {
   const response = await performGet(uri, '', headers).expect(expectedStatus);
   if (response?.headers['location']?.includes('error')) {
-    throw new ResponseError(response);
+    throw new ResponseError(response, 'error in Location');
   }
   if (expectedLocation && !response?.headers['location']?.includes(expectedLocation)) {
-    throw new ResponseError(response);
+    throw new ResponseError(response, `expectedLocation=${expectedLocation}, Location=${response?.headers['location']}`);
   }
   return response;
 }
