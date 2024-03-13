@@ -51,6 +51,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static io.gravitee.am.common.oauth2.GrantType.CLIENT_CREDENTIALS;
+import static io.gravitee.am.common.oauth2.GrantType.JWT_BEARER;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
@@ -298,14 +299,16 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
     }
 
     /**
-     * Application, only with 'client_credentials' grant type cannot have
+     * Application, only with 'client_credentials' or 'urn:ietf:params:oauth:grant-type:jwt-bearer' grant type cannot have
      * `redirect_uri` in the request
      */
     private boolean invalidParamRedirectURI(Client client, String redirectURI) {
         return client != null
                 && client.getAuthorizedGrantTypes() != null
-                && client.getAuthorizedGrantTypes().size() == 1
-                && client.getAuthorizedGrantTypes().contains(CLIENT_CREDENTIALS)
+                && client.getAuthorizedGrantTypes().stream()
+                    .filter(grantType -> !(CLIENT_CREDENTIALS.equals(grantType) || grantType.startsWith(JWT_BEARER)))
+                    .findFirst()
+                    .isEmpty()
                 && redirectURI != null;
     }
 }
