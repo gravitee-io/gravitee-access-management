@@ -67,6 +67,7 @@ import java.util.List;
 
 import static io.gravitee.am.common.oauth2.GrantType.AUTHORIZATION_CODE;
 import static io.gravitee.am.common.oauth2.GrantType.CLIENT_CREDENTIALS;
+import static io.gravitee.am.common.oauth2.GrantType.JWT_BEARER;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
@@ -1376,11 +1377,61 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
     }
 
     @Test
+    public void shouldNotInvokeAuthorizationEndpoint_ClientCredentials_JwtBearer_withRedirectUri() throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setAuthorizedGrantTypes(List.of(CLIENT_CREDENTIALS, JWT_BEARER));
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(CLIENT_CONTEXT_KEY, client);
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?client_id=client-id&redirect_uri=http://dummy",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/test/oauth/error?client_id=client-id&error=invalid_request&error_description=Missing+parameter%253A+response_type"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
     public void shouldNotInvokeAuthorizationEndpoint_ClientCredentials_withRedirectUri() throws Exception {
         final Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");
         client.setAuthorizedGrantTypes(List.of(CLIENT_CREDENTIALS));
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(CLIENT_CONTEXT_KEY, client);
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?client_id=client-id&redirect_uri=http://dummy",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/test/oauth/error?client_id=client-id&error=invalid_request&error_description=Missing+parameter%253A+response_type"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldNotInvokeAuthorizationEndpoint_JwtBearer_withRedirectUri() throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setAuthorizedGrantTypes(List.of(JWT_BEARER));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
         router.route().order(-1).handler(routingContext -> {
@@ -1407,7 +1458,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         final Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");
-        client.setAuthorizedGrantTypes(List.of(AUTHORIZATION_CODE));
+        client.setAuthorizedGrantTypes(List.of(AUTHORIZATION_CODE, JWT_BEARER, CLIENT_CREDENTIALS));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
