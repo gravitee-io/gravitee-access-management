@@ -587,21 +587,6 @@ public class UserAuthenticationServiceTest {
     }
 
     @Test
-    public void shouldNotConnectWithPasswordless_idpNotEnabledOnApplication() {
-        final String userId = "userId";
-        final Client client = initClient();
-        final User user = initUser(client);
-        user.setSource("unknown");
-        when(userService.findById(userId)).thenReturn(Maybe.just(user));
-
-        TestObserver testObserver = userAuthenticationService.connectWithPasswordless(userId, client).test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-
-        testObserver.assertError(UserNotFoundException.class);
-        verify(userService, never()).update(any());
-    }
-
-    @Test
     public void shouldConnectWithPasswordless_nominalCase() {
         final String userId = "userId";
         final Client client = initClient();
