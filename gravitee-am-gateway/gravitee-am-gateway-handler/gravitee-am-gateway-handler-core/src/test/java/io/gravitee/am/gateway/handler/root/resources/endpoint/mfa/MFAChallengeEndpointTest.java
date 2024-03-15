@@ -31,6 +31,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.VerifyAttempt;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
+import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
@@ -69,6 +70,7 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -323,6 +325,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         when(factor.getId()).thenReturn("factor");
         FactorProvider factorProvider = mock(FactorProvider.class);
         when(factorProvider.verify(any())).thenReturn(Completable.complete());
+        when(factorProvider.useVariableFactorSecurity(any())).thenReturn(false);
         when(factorManager.getFactor("factor")).thenReturn(factor);
         when(factorManager.get("factor")).thenReturn(factorProvider);
         when(verifyAttemptService.checkVerifyAttempt(any(), any(), any(), any())).thenReturn(Maybe.empty());
@@ -341,7 +344,107 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
                 302,
                 "Found", null);
 
-        verify(auditService, times(1)).report(any());
+        verify(auditService).report(any());
+        verify(userService, never()).addFactor(any(), any(), any());
+    }
+
+    @Test
+    public void shouldVerifyCode_nominalCase_saveFactor() throws Exception {
+        final var endUser = new User();
+        EnrolledFactor enrolledFactor = new EnrolledFactor();
+        enrolledFactor.setFactorId("factor");
+        enrolledFactor.setStatus(FactorStatus.ACTIVATED);
+        endUser.setFactors(Collections.singletonList(enrolledFactor));
+
+        router.route(HttpMethod.POST, "/mfa/challenge")
+                .order(-1)
+                .handler(routingContext -> {
+                    Client client = new Client();
+                    ApplicationFactorSettings applicationFactorSettings = new ApplicationFactorSettings();
+                    applicationFactorSettings.setId("factor");
+                    FactorSettings factorSettings = new FactorSettings();
+                    factorSettings.setApplicationFactors(List.of(applicationFactorSettings));
+                    client.setFactorSettings(factorSettings);
+                    routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+                    routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+                    routingContext.next();
+                });
+
+        Factor factor = mock(Factor.class);
+        when(factor.getId()).thenReturn("factor");
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.verify(any())).thenReturn(Completable.complete());
+        when(factorProvider.useVariableFactorSecurity(any())).thenReturn(true);
+        when(factorProvider.changeVariableFactorSecurity(any())).thenAnswer(arg -> Single.just(arg.getArguments()[0]));
+        when(factorManager.getFactor("factor")).thenReturn(factor);
+        when(factorManager.get("factor")).thenReturn(factorProvider);
+        when(verifyAttemptService.checkVerifyAttempt(any(), any(), any(), any())).thenReturn(Maybe.empty());
+        when(userService.addFactor(any(), any(), any())).thenAnswer(args -> Single.just(endUser));
+        testRequest(HttpMethod.POST,
+                "/mfa/challenge",
+                req -> {
+                    req.setChunked(true);
+                    req.putHeader(CONTENT_TYPE, APPLICATION_X_WWW_FORM_URLENCODED);
+                    req.write(Buffer.buffer("code=123456&factorId=factor"));
+                },
+                res -> {
+                    String location = res.getHeader("Location");
+                    Assert.assertTrue(location.endsWith("/oauth/authorize"));
+                },
+                302,
+                "Found", null);
+
+        verify(auditService).report(any());
+        verify(userService).addFactor(any(), any(), any());
+    }
+
+    @Test
+    public void shouldVerifyCode_enrollementCase_saveFactor() throws Exception {
+        final var endUser = new User();
+        EnrolledFactor enrolledFactor = new EnrolledFactor();
+        enrolledFactor.setFactorId("factor");
+        enrolledFactor.setStatus(FactorStatus.PENDING_ACTIVATION);
+        endUser.setFactors(Collections.singletonList(enrolledFactor));
+
+        router.route(HttpMethod.POST, "/mfa/challenge")
+                .order(-1)
+                .handler(routingContext -> {
+                    Client client = new Client();
+                    ApplicationFactorSettings applicationFactorSettings = new ApplicationFactorSettings();
+                    applicationFactorSettings.setId("factor");
+                    FactorSettings factorSettings = new FactorSettings();
+                    factorSettings.setApplicationFactors(List.of(applicationFactorSettings));
+                    client.setFactorSettings(factorSettings);
+                    routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+                    routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+                    routingContext.next();
+                });
+
+        Factor factor = mock(Factor.class);
+        when(factor.getId()).thenReturn("factor");
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.verify(any())).thenReturn(Completable.complete());
+        when(factorProvider.changeVariableFactorSecurity(any())).thenAnswer(arg -> Single.just(arg.getArguments()[0]));
+        when(factorManager.getFactor("factor")).thenReturn(factor);
+        when(factorManager.get("factor")).thenReturn(factorProvider);
+        when(verifyAttemptService.checkVerifyAttempt(any(), any(), any(), any())).thenReturn(Maybe.empty());
+        when(userService.addFactor(any(), any(), any())).thenAnswer(args -> Single.just(endUser));
+        testRequest(HttpMethod.POST,
+                "/mfa/challenge",
+                req -> {
+                    req.setChunked(true);
+                    req.putHeader(CONTENT_TYPE, APPLICATION_X_WWW_FORM_URLENCODED);
+                    req.write(Buffer.buffer("code=123456&factorId=factor"));
+                },
+                res -> {
+                    String location = res.getHeader("Location");
+                    Assert.assertTrue(location.endsWith("/oauth/authorize"));
+                },
+                302,
+                "Found", null);
+
+        verify(auditService).report(any());
+        verify(userService).addFactor(any(), any(), any());
     }
 
     @Test
