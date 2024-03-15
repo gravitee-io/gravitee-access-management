@@ -111,3 +111,12 @@
 .config-section {
   padding: 10px 0 0 44px;
 }
+
+.radio-btn-option {
+  display: flex;
+  align-items: center;
+
+  span {
+    margin-right: 10px;
+  }
+}
