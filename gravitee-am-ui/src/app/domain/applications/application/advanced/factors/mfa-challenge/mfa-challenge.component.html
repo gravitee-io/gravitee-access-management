@@ -34,8 +34,16 @@
       <div fxFlex="50">
         <span class="options-title">Options</span>
         <div *ngFor="let opt of modes" class="options">
-          <mat-radio-button name="mfa-challenge" (change)="selectChallengeOption(opt)" [checked]="isChallengeChecked(opt)">
-            {{ opt.label }}
+          <mat-radio-button
+            name="mfa-challenge"
+            (change)="selectChallengeOption(opt)"
+            [checked]="isChallengeChecked(opt)"
+            [gioLicense]="opt.licenseOptions"
+          >
+            <div class="radio-btn-option">
+              <span>{{ opt.label }}</span>
+              <mat-icon *ngIf="opt?.isMissingFeature$ | async" svgIcon="gio:lock"></mat-icon>
+            </div>
           </mat-radio-button>
         </div>
       </div>
