@@ -323,8 +323,9 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                                                      EnrolledFactor enrolledFactor,
                                                      FactorContext factorContext) {
         return h -> {
+            final boolean enrolling = isEnrolling(enrolledFactor);
             if (h.failed()) {
-                String failureReason = isEnrolling(enrolledFactor) ? MFA_ENROLLMENT : MFA_CHALLENGE;
+                String failureReason = enrolling ? MFA_ENROLLMENT : MFA_CHALLENGE;
                 updateAuditLog(routingContext, failureReason, endUser, client, factor, factorContext, h.cause());
                 handleException(routingContext, ERROR_PARAM_KEY, "mfa_challenge_failed");
                 return;
@@ -336,19 +337,19 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
             }
             // save enrolled factor if needed and redirect to the original url
             routingContext.session().put(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY, factorId);
-            if (isEnrolling(enrolledFactor)) {
+            if (enrolling || factorProvider.useVariableFactorSecurity(factorContext)) {
                 enrolledFactor.setStatus(FactorStatus.ACTIVATED);
                 saveFactor(endUser, factorProvider.changeVariableFactorSecurity(enrolledFactor), fh -> {
                     if (fh.failed()) {
                         logger.error("An error occurs while saving enrolled factor for the current user", fh.cause());
-                        updateAuditLog(routingContext, MFA_ENROLLMENT, endUser, client, factor, factorContext, fh.cause());
+                        updateAuditLog(routingContext, enrolling ? MFA_ENROLLMENT : MFA_CHALLENGE, endUser, client, factor, factorContext, fh.cause());
                         handleException(routingContext, ERROR_PARAM_KEY, "mfa_challenge_failed");
                         return;
                     }
 
                     cleanSession(routingContext);
                     updateStrongAuthStatus(routingContext);
-                    updateAuditLog(routingContext, MFA_ENROLLMENT, endUser, client, factor, factorContext, null);
+                    updateAuditLog(routingContext, enrolling ? MFA_ENROLLMENT : MFA_CHALLENGE, endUser, client, factor, factorContext, null);
                     redirectToAuthorize(routingContext, client, endUser);
                 });
             } else {
