@@ -1,5 +1,16 @@
 # Change Log
 
+==  - 3.21.20 (2024-03-15)
+
+== What's new !
+
+
+
+=== Gateway
+
+* Redirect executed with jwt-bearer grant_type https://github.com/gravitee-io/issues/issues/9505[#9505]
+
+
 ==  - 3.21.19 (2024-02-29)
 
 == What's new !
