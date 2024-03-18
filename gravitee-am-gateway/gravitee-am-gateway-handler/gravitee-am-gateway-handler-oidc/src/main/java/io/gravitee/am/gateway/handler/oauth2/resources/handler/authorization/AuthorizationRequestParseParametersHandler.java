@@ -127,7 +127,6 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
     private void clearUser(RoutingContext ctx){
         ctx.clearUser();
         ctx.session().remove(STRONG_AUTH_COMPLETED_KEY);
-        ctx.session().remove(USER_ID_KEY);
     }
 
     private void parsePKCEParameter(RoutingContext context, Client client) {
