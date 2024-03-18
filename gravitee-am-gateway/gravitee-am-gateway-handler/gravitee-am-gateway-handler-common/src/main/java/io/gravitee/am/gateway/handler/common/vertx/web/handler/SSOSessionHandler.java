@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSession;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
@@ -40,6 +41,7 @@ import io.vertx.ext.web.handler.HttpException;
 import io.vertx.rxjava3.ext.auth.User;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +49,8 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
@@ -194,12 +198,15 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
                         return Completable.complete();
                     }
 
+                    Set<String> userIdentities = ofNullable(user.getIdentities()).orElseGet(List::of).stream().map(UserIdentity::getProviderId).collect(Collectors.toSet());
+                    userIdentities.add(user.getSource());
+
                     // both clients are sharing the same provider, continue
                     if (nonNull(requestedClient.getIdentityProviders()) &&
                             requestedClient.getIdentityProviders().stream()
-                                    .anyMatch(appIdp -> appIdp.getIdentity().equals(user.getSource()))) {
+                                    .anyMatch(appIdp -> userIdentities.contains(appIdp.getIdentity()))) {
 
-                        // check brute force status to be sure that a active session on another client bypass the BlockedUser status
+                        // check brute force status to be sure that an active session on another client bypass the BlockedUser status
                         final AccountSettings accountSettings = AccountSettings.getInstance(domain, requestedClient);
                         if (accountSettings != null && accountSettings.isLoginAttemptsDetectionEnabled()) {
                             LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
