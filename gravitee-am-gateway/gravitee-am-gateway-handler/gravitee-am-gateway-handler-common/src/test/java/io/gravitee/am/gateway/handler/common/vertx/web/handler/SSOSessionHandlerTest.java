@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessio
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.LoginAttempt;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
@@ -43,6 +44,7 @@ import org.mockito.exceptions.misusing.InvalidUseOfMatchersException;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Date;
+import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -228,7 +230,53 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         requestedClient.setClientId("requested-client");
         requestedClient.setIdentityProviders(getApplicationIdentityProviders("idp-1"));
 
-        when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty()).thenReturn(Maybe.empty());
+        when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty());
+        when(clientSyncService.findByClientId(anyString())).thenAnswer(
+                invocation -> {
+                    String argument = invocation.getArgument(0);
+                    if (argument.equals("test-client")) {
+                        return Maybe.just(client);
+                    } else if (argument.equals("requested-client")) {
+                        return Maybe.just(requestedClient);
+                    }
+                    throw new InvalidUseOfMatchersException(
+                            String.format("Argument %s does not match", argument)
+                    );
+                }
+        );
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET,
+                "/login?client_id=requested-client",
+                HttpStatusCode.OK_200, "OK");
+    }
+
+
+    @Test
+    public void shouldInvoke_differentClient_sameIdp_using_UserIdentities() throws Exception {
+        User user = new User();
+        user.setId("user-id");
+        user.setClient("test-client");
+        user.setSource("idp-1");
+        UserIdentity userIdentity = new UserIdentity();
+        userIdentity.setProviderId("idp-2");
+        user.setIdentities(List.of(userIdentity));
+
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("test-client");
+
+        Client requestedClient = new Client();
+        requestedClient.setId("client-requested-id");
+        requestedClient.setClientId("requested-client");
+        requestedClient.setIdentityProviders(getApplicationIdentityProviders("idp-2"));
+
+        when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty());
         when(clientSyncService.findByClientId(anyString())).thenAnswer(
                 invocation -> {
                     String argument = invocation.getArgument(0);
@@ -285,7 +333,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         attempts.setAttempts(2);
         when(loginAttemptService.checkAccount(any(), any())).thenReturn(Maybe.just(attempts));
 
-        when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty()).thenReturn(Maybe.empty());
+        when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty());
         when(clientSyncService.findByClientId(anyString())).thenAnswer(
                 invocation -> {
                     String argument = invocation.getArgument(0);
@@ -343,7 +391,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         attempts.setAttempts(1);
         when(loginAttemptService.checkAccount(any(), any())).thenReturn(Maybe.just(attempts));
 
-        when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty()).thenReturn(Maybe.empty());
+        when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty());
         when(clientSyncService.findByClientId(anyString())).thenAnswer(
                 invocation -> {
                     String argument = invocation.getArgument(0);
