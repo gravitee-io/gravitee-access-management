@@ -27,16 +27,22 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.ext.auth.impl.UserImpl;
+import io.vertx.ext.web.Session;
+import io.vertx.rxjava3.ext.auth.User;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static io.gravitee.am.common.utils.ConstantKeys.STRONG_AUTH_COMPLETED_KEY;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -47,6 +53,9 @@ public class AuthorizationRequestParseParametersHandlerTest extends RxWebTestBas
 
     @Mock
     private Domain domain;
+
+    @Mock
+    private Session session;
 
     @Override
     public void setUp() throws Exception {
@@ -281,7 +290,7 @@ public class AuthorizationRequestParseParametersHandlerTest extends RxWebTestBas
                 HttpStatusCode.OK_200, "OK", null);
     }
 
-  @Test
+    @Test
     public void shouldAcceptRequest_redirect_URI_ok_3() throws Exception {
         doReturn(false).when(domain).isRedirectUriStrictMatching();
         OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
@@ -390,4 +399,34 @@ public class AuthorizationRequestParseParametersHandlerTest extends RxWebTestBas
                 null,
                 HttpStatusCode.BAD_REQUEST_400, "Bad Request", null);
     }
+
+    @Test
+    public void shouldRemoveAuthorizationFromTheSessionOnPromptLoginParam() throws Exception {
+        doReturn(false).when(session).get(ConstantKeys.USER_LOGIN_COMPLETED_KEY);
+        OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
+        openIDProviderMetadata.setResponseTypesSupported(Arrays.asList(ResponseType.CODE));
+        Client client = new Client();
+        client.setAuthorizedGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        client.setResponseTypes(Collections.singletonList(ResponseType.CODE));
+        router.route().order(-1)
+                .handler(context -> {
+                    context.setSession(new io.vertx.rxjava3.ext.web.Session(session));
+                    context.setUser(new User(new UserImpl()));
+                    context.next();
+                })
+                .handler(routingContext -> {
+                    routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+                    routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
+                    routingContext.put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+                    routingContext.next();
+                });
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&redirect_uri=https://callback&prompt=login",
+                null,
+                HttpStatusCode.OK_200, "OK", null);
+
+        Mockito.verify(session, times(1)).remove(STRONG_AUTH_COMPLETED_KEY);
+    }
+
 }

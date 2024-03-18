@@ -45,8 +45,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
-import static io.gravitee.am.common.utils.ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.REQUEST_OBJECT_FROM_URI;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.getOAuthParameter;
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.redirectMatches;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.requireNonce;
@@ -119,10 +118,15 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
             // In this case, the Authorization Server MUST reauthenticate the End-User even if the End-User is already authenticated.
             if (promptValues.contains("login") && context.user() != null) {
                 if (!returnFromLoginPage(context)) {
-                    context.clearUser();
+                    clearUser(context);
                 }
             }
         }
+    }
+
+    private void clearUser(RoutingContext ctx){
+        ctx.clearUser();
+        ctx.session().remove(STRONG_AUTH_COMPLETED_KEY);
     }
 
     private void parsePKCEParameter(RoutingContext context, Client client) {
