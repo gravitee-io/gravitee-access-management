@@ -29,7 +29,7 @@ enum MfaType {
   EMAIL = 'EMAIL',
   CALL = 'CALL',
   HTTP = 'HTTP',
-  RECOVERY_CODE = 'Recovery Code',
+  RECOVERY_CODE = 'RECOVERY_CODE',
   FIDO2 = 'FIDO2',
 }
 
