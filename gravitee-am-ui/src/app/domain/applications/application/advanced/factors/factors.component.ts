@@ -124,13 +124,17 @@ export class ApplicationFactorsComponent implements OnInit {
           selectionRule: i.selectionRule,
         } as any;
       });
+    const defaultFactors = this.factors
+      .filter((i) => i.selected)
+      .filter((i) => i.isDefault)
+      .map((i) => i.id);
     const data = {
       factors: this.application.factors,
       settings: {
         riskAssessment: this.challenge.riskAssessment,
         mfa: {
           factor: {
-            defaultFactorId: this.factors.filter((i) => i.isDefault)[0]?.id,
+            defaultFactorId: defaultFactors.length > 0 ? defaultFactors[0] : undefined,
             applicationFactors: factorsApp,
           },
           stepUpAuthenticationRule: this.stepUpAuth.active ? this.stepUpAuth.stepUpAuthenticationRule : '',
