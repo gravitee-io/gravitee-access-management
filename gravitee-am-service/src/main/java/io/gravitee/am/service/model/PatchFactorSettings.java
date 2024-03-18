@@ -36,14 +36,14 @@ public class PatchFactorSettings {
 
     public FactorSettings patch(FactorSettings _toPatch) {
         FactorSettings toPatch = _toPatch == null ? new FactorSettings() : new FactorSettings(_toPatch);
-        if ((hasText(toPatch.getDefaultFactorId()) && defaultFactorId.isEmpty())
-                || (toPatch.getApplicationFactors() == null || toPatch.getApplicationFactors().isEmpty()) && (applicationFactors.isEmpty() || applicationFactors.get().isEmpty())) {
-            throw new InvalidParameterException("Default factor is not set");
-        }
         SetterUtils.safeSet(toPatch::setDefaultFactorId, getDefaultFactorId());
         getApplicationFactors().ifPresent(patchApplicationFactorSettings -> toPatch.setApplicationFactors(
                 applicationFactorsPath(toPatch.getApplicationFactors(), patchApplicationFactorSettings)
         ));
+        boolean hasFactors = toPatch.getApplicationFactors() != null && !toPatch.getApplicationFactors().isEmpty();
+        if(hasFactors && !hasText(toPatch.getDefaultFactorId())){
+            throw new InvalidParameterException("Default factor is not set");
+        }
         return toPatch;
     }
 

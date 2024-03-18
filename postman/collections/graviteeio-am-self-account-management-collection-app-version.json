@@ -1806,7 +1806,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n    \"factors\": [      \n       \"{{recoveryCodeFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {\n            \"factor\": {\n                \"applicationFactors\": [ {\n                    \"id\": \"{{recoveryCodeFactorId}}\"\n                }]\n            }\n        }\n    }\n}"
+											"raw": "{\n    \"factors\": [      \n       \"{{recoveryCodeFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {\n            \"factor\": {\n                \"applicationFactors\": [ {\n                    \"id\": \"{{recoveryCodeFactorId}}\"\n                }],\n                \"defaultFactorId\":\"{{recoveryCodeFactorId}}\"\n            }\n        }\n    }\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{client}}",
