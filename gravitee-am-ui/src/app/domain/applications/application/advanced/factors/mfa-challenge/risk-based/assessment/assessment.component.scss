@@ -1,6 +1,7 @@
 .assessment-container {
-  h3 {
+  div {
     font-weight: normal;
+    margin: 25px 0 0 0;
   }
 }
 
@@ -10,6 +11,9 @@
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.4px;
+  padding-right: 5px;
+  position: relative;
+  bottom: 8px;
 }
 
 .risk-based-group {

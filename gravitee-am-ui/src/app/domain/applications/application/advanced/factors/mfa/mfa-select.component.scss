@@ -2,7 +2,6 @@
   display: flex;
   width: 100%;
   flex-direction: row;
-  align-items: center;
 
   .mfa-title {
     width: 95%;
@@ -20,6 +19,12 @@
 
   .mfa-chip {
     margin-right: 10px;
+  }
+
+  .badge-border {
+    padding: 5px 12px 5px 12px;
+    gap: 4px;
+    border: solid 2px #E7E8EF;
   }
 }
 
@@ -48,4 +53,8 @@
     background: rgb(30 202 211 / 54%);
     color: rgb(30 102 112);
   }
+}
+
+:host ::ng-deep .mat-mdc-radio-button .mdc-radio {
+  top: -8px  !important;
 }
