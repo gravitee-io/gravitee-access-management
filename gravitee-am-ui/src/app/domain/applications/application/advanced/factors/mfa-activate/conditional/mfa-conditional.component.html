@@ -16,12 +16,12 @@
 
 -->
 
-<div>
+<div fxLayout="column">
   <p class="rule-title">Conditional Rules</p>
   <mat-form-field appearance="outline" floatLabel="always">
     <input
       matInput
-      placeholder="Enter eligibility rule using Gravitee Expression Language."
+      placeholder="Configure MFA enrollment rules using Gravitee Expression Language."
       name="enrollmentConditionalMfaRule"
       [(ngModel)]="this.enrollment.enrollmentRule"
       (keyup)="updateRule($event)"
@@ -36,32 +36,29 @@
     >
       <mat-icon>info_outline</mat-icon>
     </button>
-    <mat-hint>
-      <a href="https://documentation.gravitee.io/apim/guides/gravitee-expression-language" target="_blank">
-        <p class="link">Read more about Gravitee Expression Language</p>
-      </a>
-    </mat-hint>
   </mat-form-field>
-  <mat-slide-toggle (change)="switchSkipConditional()" [checked]="this.enrollment.enrollmentSkipActive"
-    >Allow users to skip Conditional enrollment
+  <a class="link" href="https://documentation.gravitee.io/apim/guides/gravitee-expression-language" target="_blank">
+    Read more about Gravitee Expression Language
+  </a>
+  <mat-slide-toggle style="margin-top: 30px" (change)="switchSkipConditional()" [checked]="this.enrollment.enrollmentSkipActive"
+    >Allow users to skip Conditional Enrollment
   </mat-slide-toggle>
-  <div *ngIf="this.enrollment.enrollmentSkipActive" style="padding-top: 20px">
+  <div fxLayout="column" *ngIf="this.enrollment.enrollmentSkipActive" style="margin-top: 30px">
     <p class="rule-title">Skip Conditional enrollment Rules</p>
     <mat-form-field appearance="outline" floatLabel="always">
       <input
         matInput
-        placeholder="Enter eligibility rule using Gravitee Expression Language."
+        placeholder="Skip MFA enrollment rules using Gravitee Expression language."
         name="skipEnrollmentConditionalMfaRulee"
         [(ngModel)]="this.enrollment.enrollmentSkipRule"
         (keyup)="updateSkipRule($event)"
       />
-      <mat-hint>
-        <a href="https://documentation.gravitee.io/apim/guides/gravitee-expression-language" target="_blank">
-          <p class="link">Read more about Gravitee Expression Language</p>
-        </a>
-      </mat-hint>
     </mat-form-field>
+    <a class="link" href="https://documentation.gravitee.io/apim/guides/gravitee-expression-language" target="_blank">
+      Read more about Gravitee Expression Language
+    </a>
     <time-period-picker
+      style="margin-top: 30px"
       title="Duration before users will be asked to enrol with MFA"
       [defaultTimeSec]="this.enrollment.skipTimeSeconds"
       (settingsChange)="onSettingChange($event)"
