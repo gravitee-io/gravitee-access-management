@@ -38,7 +38,7 @@
     "@angular/router": "16.2.12",
     "@ctrl/ngx-codemirror": "^7.0.0",
     "@gravitee/ui-components": "3.45.2",
-    "@gravitee/ui-particles-angular": "11.0.1",
+    "@gravitee/ui-particles-angular": "11.3.1",
     "@ngx-formly/core": "6.2.2",
     "@ngx-formly/material": "6.2.2",
     "@swimlane/ngx-datatable": "20.1.0",
