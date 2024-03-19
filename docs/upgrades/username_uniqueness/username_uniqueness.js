@@ -99,7 +99,7 @@ function searchDuplicates(collection) {
 
 function isExternalIdp(source) {
     var idp = db.getCollection('identities').find({'_id': source}).next();
-    return idp.external;
+    return idp.external || 'http-am-idp' === idp.type;
 }
 
 /**
@@ -241,12 +241,12 @@ Object.keys(duplicatesUsersGroupByUsernameAndSource).forEach(entry => {
                 }
             }
         } else {
-            console.error("[ERROR] Unable to rename remaining users with username [" + referenceUser._id.username + "] IDP collection is missing");
+            console.error("[ERROR] Unable to rename users with username [" + referenceUser._id.username + "] IDP collection is missing");
             reportEntry['error'] = "Idp collection [" + idpId +"] not found";
         }
 
     } catch(error) {
-        console.error("[ERROR] Unable to rename remaining users with username [" + referenceUser._id.username + "] due to : " + error);
+        console.error("[ERROR] Unable to rename users with username [" + referenceUser._id.username + "] due to : " + error);
         reportEntry['error'] = error;
     }
 });
@@ -287,7 +287,7 @@ Object.keys(duplicatesOrgUsersGroupByUsernameAndSource).forEach(entry => {
     const referenceUser = dupUsers.shift();
 
     if (referenceUser._id.source !== "gravitee" && referenceUser._id.source !== "cockpit") {
-        console.error("[ERROR] Unable to rename remaining users with username [" + referenceUser._id.username + "] IDP collection is not managed by AM");
+        console.error("[ERROR] Unable to rename users with username [" + referenceUser._id.username + "] IDP collection is not managed by AM");
         reportEntry['error'] = "Idp collection [" + idpId +"] is not Cockpit or Gravitee";
     } else {
         console.log("[INFO] Keep: user_id=" + referenceUser.result._id);
@@ -331,7 +331,7 @@ Object.keys(duplicatesOrgUsersGroupByUsernameAndSource).forEach(entry => {
             }
 
         } catch (error) {
-            console.error("[ERROR] Unable to rename remaining users with username [" + referenceUser._id.username + "] due to : " + error);
+            console.error("[ERROR] Unable to rename users with username [" + referenceUser._id.username + "] due to : " + error);
             reportEntry['error'] = error;
         }
     }
