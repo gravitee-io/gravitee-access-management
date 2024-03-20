@@ -19,9 +19,7 @@
 <div class="gv-form-section">
   <div class="gv-form-section-title mfa-section-title">
     <div class="mfa-chip">
-      <mat-chip-list [disabled]="true">
-        <mat-chip [disableRipple]="true" [selectable]="false">3</mat-chip>
-      </mat-chip-list>
+      <span class="gio-badge-white badge-border">3</span>
     </div>
     <div class="mfa-title">
       <h5>MFA Challenge</h5>
@@ -30,7 +28,7 @@
     <mat-slide-toggle (change)="switchEnable()" [checked]="this.challenge.active"></mat-slide-toggle>
   </div>
   <div *ngIf="this.challenge.active">
-    <div fxLayout="row">
+    <div fxLayout="row" style="padding-bottom: 10px">
       <div fxFlex="50">
         <span class="options-title">Options</span>
         <div *ngFor="let opt of modes" class="options">
@@ -52,7 +50,7 @@
 
     <div class="config-section">
       <div class="mfa-section-body" *ngIf="this.currentMode === modeOptions.CONDITIONAL">
-        <p>Conditional Rules</p>
+        <p class="rule-title">Conditional Rules</p>
         <mat-form-field appearance="outline" floatLabel="always">
           <input
             matInput

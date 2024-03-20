@@ -17,6 +17,7 @@
 -->
 
 <div>
+  <p class="rule-title">Conditional Rules</p>
   <mat-form-field appearance="outline" floatLabel="always">
     <input
       matInput
@@ -44,8 +45,8 @@
   <mat-slide-toggle (change)="switchSkipConditional()" [checked]="this.enrollment.enrollmentSkipActive"
     >Allow users to skip Conditional enrollment
   </mat-slide-toggle>
-  <div *ngIf="this.enrollment.enrollmentSkipActive">
-    <p>Skip Conditional enrollment Rules</p>
+  <div *ngIf="this.enrollment.enrollmentSkipActive" style="padding-top: 20px">
+    <p class="rule-title">Skip Conditional enrollment Rules</p>
     <mat-form-field appearance="outline" floatLabel="always">
       <input
         matInput

@@ -1,11 +1,15 @@
 .assessment-container {
-  h3 {
+  div {
+    margin: 25px 0 0;
     font-weight: normal;
   }
 }
 
 .risk-based-options-titles {
+  position: relative;
+  bottom: 8px;
   align-content: center;
+  padding-right: 5px;
   font-family: 'Golos UI', Roboto, 'Helvetica Neue', sans-serif;
   font-size: 14px;
   font-weight: 700;

@@ -17,7 +17,10 @@
 -->
 
 <div class="assessment-container">
-  <h3 class="risk-based-options-titles">{{ title }}</h3>
+  <div>
+    <span class="risk-based-options-titles">{{ title }}</span
+    ><mat-icon>info_outline</mat-icon>
+  </div>
   <mat-button-toggle-group name="fontStyle" aria-label="Font Style" [value]="this.current" class="risk-based-group">
     <ng-template ngFor let-assessment [ngForOf]="options" let-i="index">
       <mat-button-toggle
