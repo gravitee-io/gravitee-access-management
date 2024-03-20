@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * User identity object when accounts are linked.
@@ -79,5 +80,18 @@ public class UserIdentity {
 
     public void setLinkedAt(Date linkedAt) {
         this.linkedAt = linkedAt;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        UserIdentity that = (UserIdentity) o;
+        return Objects.equals(userId, that.userId) && Objects.equals(providerId, that.providerId) && Objects.equals(additionalInformation, that.additionalInformation) && Objects.equals(linkedAt, that.linkedAt);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(userId, providerId, additionalInformation, linkedAt);
     }
 }
