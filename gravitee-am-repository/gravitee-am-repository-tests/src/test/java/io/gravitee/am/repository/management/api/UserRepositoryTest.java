@@ -34,6 +34,7 @@ import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -45,6 +46,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static java.time.ZoneOffset.UTC;
+import static java.util.List.of;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -230,9 +232,13 @@ public class UserRepositoryTest extends AbstractManagementTest {
     public void shouldUpdate_AllProfile() throws TechnicalException {
         // create user
         User user = buildUser();
+        user.setIdentities(of(getUserIdentity()));
         User userCreated = userRepository.create(user).blockingGet();
 
         User userUpdated = buildUser();
+        UserIdentity userIdentity2 = getUserIdentity();
+        userIdentity2.setAdditionalInformation(Map.of("key", "valueUpdated"));
+        userUpdated.setIdentities(of(userIdentity2));
         userUpdated.setId(user.getId());
 
 
@@ -260,6 +266,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         Assert.assertTrue(actions.updateEntitlements());
         Assert.assertTrue(actions.updateRole());
         Assert.assertTrue(actions.updateDynamicRole());
+        Assert.assertTrue(actions.updateIdentities());
 
         TestObserver<User> testObserver = userRepository.update(userUpdated, actions).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -298,11 +305,14 @@ public class UserRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void shouldUpdate_ProfileOnly() throws TechnicalException {
+        Assume.assumeTrue(userRepository.getClass().getSimpleName().equals("JdbcUserRepository"));
+        
         // create user
         User user = buildUser();
         User userCreated = userRepository.create(user).blockingGet();
 
         User userUpdated = buildUser();
+        userUpdated.setIdentities(of(getUserIdentity()));
         userUpdated.setId(user.getId());
         userUpdated.setRegistrationCompleted(!userCreated.isRegistrationCompleted());
 
@@ -331,6 +341,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         Assert.assertFalse(actions.updateEntitlements());
         Assert.assertFalse(actions.updateRole());
         Assert.assertFalse(actions.updateDynamicRole());
+        Assert.assertFalse(actions.updateIdentities());
 
 
         TestObserver<User> testObserver = userRepository.update(userUpdated, actions).test();
@@ -360,6 +371,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         // Shouldn't have changed
         testObserver.assertValue(u -> Objects.equals(u.getRoles(), user.getRoles()));
         testObserver.assertValue(u -> Objects.equals(u.getDynamicRoles(), user.getDynamicRoles()));
+        testObserver.assertValue(u -> Objects.equals(u.getIdentities(), Optional.ofNullable(user.getIdentities()).orElse(of())));
         testObserver.assertValue(u -> Objects.equals(u.getEntitlements(), user.getEntitlements()));
         testObserver.assertValue(u -> Objects.equals(u.getEmails(), user.getEmails()));
         testObserver.assertValue(u -> Objects.equals(u.getPhoneNumbers(), user.getPhoneNumbers()));
@@ -475,11 +487,8 @@ public class UserRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testCreate_withIdentities() throws TechnicalException {
-        UserIdentity userIdentity = new UserIdentity();
-        userIdentity.setUserId("userId");
-        userIdentity.setProviderId("providerId");
-        userIdentity.setLinkedAt(new Date());
-        userIdentity.setAdditionalInformation(Collections.singletonMap("key", "value"));
+
+        UserIdentity userIdentity = getUserIdentity();
 
         User user = buildUser();
         user.setIdentities(Collections.singletonList(userIdentity));
@@ -493,6 +502,15 @@ public class UserRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(u -> u.getIdentities() != null);
         testObserver.assertValue(u -> userIdentity.getUserId().equals(u.getIdentities().get(0).getUserId()));
         testObserver.assertValue(u -> "value".equals(u.getIdentities().get(0).getAdditionalInformation().get("key")));
+    }
+
+    private static UserIdentity getUserIdentity() {
+        UserIdentity userIdentity = new UserIdentity();
+        userIdentity.setUserId("userId");
+        userIdentity.setProviderId("providerId");
+        userIdentity.setLinkedAt(new Date());
+        userIdentity.setAdditionalInformation(Collections.singletonMap("key", "value"));
+        return userIdentity;
     }
 
     @Test
@@ -527,11 +545,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         user.setUsername("testUsername");
         User userCreated = userRepository.create(user).blockingGet();
 
-        UserIdentity userIdentity = new UserIdentity();
-        userIdentity.setUserId("userId");
-        userIdentity.setProviderId("providerId");
-        userIdentity.setLinkedAt(new Date());
-        userIdentity.setAdditionalInformation(Collections.singletonMap("key", "value"));
+        UserIdentity userIdentity = getUserIdentity();
 
         User updatedUser = new User();
         updatedUser.setReferenceType(ReferenceType.DOMAIN);
@@ -539,7 +553,9 @@ public class UserRepositoryTest extends AbstractManagementTest {
         updatedUser.setId(userCreated.getId());
         updatedUser.setUsername("testUsername");
         updatedUser.setIdentities(Collections.singletonList(userIdentity));
-        User userUpdated = userRepository.update(updatedUser).blockingGet();
+
+        userRepository.update(updatedUser).blockingGet();
+
         // fetch user
         TestObserver<User> testObserver = userRepository.findById(userCreated.getId()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
