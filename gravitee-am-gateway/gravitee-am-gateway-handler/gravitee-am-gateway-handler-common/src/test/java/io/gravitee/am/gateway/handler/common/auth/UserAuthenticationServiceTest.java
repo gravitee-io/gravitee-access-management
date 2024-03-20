@@ -32,6 +32,7 @@ import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.repository.management.api.CommonUserRepository;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
@@ -483,7 +484,7 @@ public class UserAuthenticationServiceTest {
             return u.getIdentities() != null &&
                     id.equals(u.getIdentities().get(0).getUserId()) &&
                     source.equals(u.getIdentities().get(0).getProviderId());
-        }), any());
+        }), argThat(CommonUserRepository.UpdateActions::updateIdentities));
     }
 
     @Test
