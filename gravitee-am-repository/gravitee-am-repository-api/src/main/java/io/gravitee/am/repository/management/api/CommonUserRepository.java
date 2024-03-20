@@ -74,6 +74,7 @@ public interface CommonUserRepository extends CrudRepository<User, String> {
         private boolean attributes = true;
         private boolean entitlements = true;
         private boolean addresses = true;
+        private boolean identities = true;
 
         UpdateActions() {}
 
@@ -121,9 +122,17 @@ public interface CommonUserRepository extends CrudRepository<User, String> {
             this.addresses = addresses;
             return this;
         }
+        public boolean updateIdentities() {
+            return identities;
+        }
+
+        public UpdateActions updateIdentities(boolean identities) {
+            this.identities = identities;
+            return this;
+        }
 
         public boolean updateRequire() {
-            return (addresses || attributes || entitlements || role || dynamicRole);
+            return (addresses || attributes || entitlements || role || dynamicRole || identities);
         }
 
         public static UpdateActions updateAll() {
@@ -136,7 +145,8 @@ public interface CommonUserRepository extends CrudRepository<User, String> {
                     .updateDynamicRole(false)
                     .updateEntitlements(false)
                     .updateAttributes(false)
-                    .updateAddresses(false);
+                    .updateAddresses(false)
+                    .updateIdentities(false);
         }
 
         public static UpdateActions build(io.gravitee.am.model.User existingUser, io.gravitee.am.model.User updatedUser) {
@@ -151,6 +161,7 @@ public interface CommonUserRepository extends CrudRepository<User, String> {
             actions.updateAddresses(needUpdate(existingUser.getAddresses(), updatedUser.getAddresses()));
             actions.updateRole(needUpdate(existingUser.getRoles(), updatedUser.getRoles()));
             actions.updateDynamicRole(needUpdate(existingUser.getDynamicRoles(), updatedUser.getDynamicRoles()));
+            actions.updateIdentities(needUpdate(existingUser.getIdentities(), updatedUser.getIdentities()));
 
             return actions;
         }

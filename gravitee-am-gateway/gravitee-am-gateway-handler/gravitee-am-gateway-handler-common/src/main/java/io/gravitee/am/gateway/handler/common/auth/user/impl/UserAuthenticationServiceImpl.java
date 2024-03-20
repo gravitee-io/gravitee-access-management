@@ -311,6 +311,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
         // check if it's a linked account
         if (isAccountLinked(accountLinking, existingUser, preConnectedUser)) {
             upsertLinkedIdentities(existingUser, preConnectedUser);
+            updateActions.updateIdentities(true);
         } else {
             // set external id
             existingUser.setExternalId(preConnectedUser.getExternalId());
