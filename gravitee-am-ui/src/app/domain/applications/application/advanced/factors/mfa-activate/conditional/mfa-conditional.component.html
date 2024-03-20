@@ -44,11 +44,11 @@
     >Allow users to skip Conditional Enrollment
   </mat-slide-toggle>
   <div fxLayout="column" *ngIf="this.enrollment.enrollmentSkipActive" style="margin-top: 30px">
-    <p class="rule-title">Skip Conditional enrollment Rules</p>
+    <p class="rule-title">Skip Conditional Enrollment Rules</p>
     <mat-form-field appearance="outline" floatLabel="always">
       <input
         matInput
-        placeholder="Skip MFA enrollment rules using Gravitee Expression language."
+        placeholder="Skip MFA enrollment rules using Gravitee Expression Language."
         name="skipEnrollmentConditionalMfaRulee"
         [(ngModel)]="this.enrollment.enrollmentSkipRule"
         (keyup)="updateSkipRule($event)"
