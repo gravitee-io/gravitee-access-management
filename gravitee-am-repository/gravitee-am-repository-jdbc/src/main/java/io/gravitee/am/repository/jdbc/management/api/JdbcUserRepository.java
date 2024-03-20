@@ -745,6 +745,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
         Mono<Long> action = update.fetch().rowsUpdated();
 
+
         if (updateActions.updateRequire()) {
             action = deleteChildEntities(item.getId(), updateActions).then(action);
             action = persistChildEntities(action, item, updateActions);
@@ -907,9 +908,10 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
             Mono<Long> deleteEntitlements = getTemplate().delete(JdbcUser.Entitlements.class).matching(criteria).all();
             result = result.then(deleteEntitlements);
         }
-        // TODO manage update actions
-        Mono<Long> deleteIdentities = getTemplate().delete(JdbcUser.Identity.class).matching(criteria).all();
-        result = result.then(deleteIdentities);
+        if (actions.updateIdentities()) {
+            Mono<Long> deleteIdentities = getTemplate().delete(JdbcUser.Identity.class).matching(criteria).all();
+            result = result.then(deleteIdentities);
+        }
         return result;
     }
 
