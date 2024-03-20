@@ -16,10 +16,13 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
 import io.gravitee.am.common.utils.ConstantKeys;
-import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
+import io.gravitee.am.model.oidc.Client;
+import io.vertx.core.Handler;
+import io.vertx.rxjava3.ext.web.RoutingContext;
+
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.challengeConditionSatisfied;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.continueMfaFlow;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.evaluateRule;
@@ -29,9 +32,6 @@ import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.inter
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.isChallengeActive;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.isMfaFlowStopped;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.stepUpRequired;
-import io.gravitee.am.model.oidc.Client;
-import io.vertx.core.Handler;
-import io.vertx.rxjava3.ext.web.RoutingContext;
 
 public class MFAChallengeStep extends MFAStep {
     private final FactorManager factorManager;
@@ -105,7 +105,6 @@ public class MFAChallengeStep extends MFAStep {
     }
 
     private static void continueFlow(MfaFilterContext routingContext, AuthenticationFlowChain flow) {
-        routingContext.session().put(MFA_CHALLENGE_COMPLETED_KEY, true);
         continueMfaFlow(routingContext, flow);
     }
 }
