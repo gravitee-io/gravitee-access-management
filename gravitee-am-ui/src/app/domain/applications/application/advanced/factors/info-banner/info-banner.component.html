@@ -16,7 +16,7 @@
 
 -->
 
-<div *ngIf="showInfo" fxLayout="row" fxLayoutAlign="start center" class="show-info" [style]="getColors()">
+<div fxLayout="row" fxLayoutAlign="start center" class="show-info" [style]="getColors()">
   <div fxFlex="initial" fxLayoutGap="5" fxLayoutAlign="start center"><mat-icon>info_outline</mat-icon></div>
   <div fxFlex fxLayoutGap="5">
     <span style="gap: 4px">{{ text }}</span>
@@ -25,6 +25,5 @@
     <button (click)="gotoLink($event)" mat-raised-button class="more-info-button">
       {{ buttonName }}
     </button>
-    <mat-icon class="close-info" (click)="closeInfo()">close</mat-icon>
   </div>
 </div>
