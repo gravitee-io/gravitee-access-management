@@ -10,6 +10,22 @@ a.gv-accent-link {
   }
 
   mat-icon {
+    height: 40px;
+    padding-top: 10px;
     color: grey;
   }
+}
+
+.mat-mdc-list-item-icon {
+  color: #808080;
+}
+
+.mat-mdc-list-item-title {
+  color: #000000de;
+  font-size: 14px;
+}
+
+.mat-mdc-list-item-line {
+  color: #00000061;
+  font-size: 12px;
 }
