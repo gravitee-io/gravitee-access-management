@@ -50,7 +50,7 @@
 
     <div class="config-section">
       <div *ngIf="currentMode.warning && currentMode.warningLink">
-        <info-banner [link]="currentMode.warningLink" [text]="currentMode.warning"> </info-banner>
+        <info-banner [link]="currentMode.warningLink" [text]="currentMode.warning" [isRouterLink]="false"></info-banner>
       </div>
 
       <time-period-picker

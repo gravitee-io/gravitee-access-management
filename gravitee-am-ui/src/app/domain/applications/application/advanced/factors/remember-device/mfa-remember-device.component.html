@@ -40,7 +40,7 @@
       [link]="getDeviceIdentifierLink()"
       text="To use the Remember Device feature, you need to first create a Device Identifier Plugin."
       type="warning"
-      buttonName="Add device identifier"
+      buttonName="Create Device Identifier"
     >
     </info-banner>
     <form *ngIf="active" fxLayoutGap="10px">
@@ -82,7 +82,7 @@
           </mat-select>
         </mat-form-field>
       </div>
-      <div *ngIf="isConditional()" class="gv-form-section-description">
+      <div *ngIf="isConditional()" class="gv-form-section-description" style="padding-top: 30px">
         <mat-slide-toggle
           matInput
           placeholder="Skip Remember Device if conditional MFA evaluates no risk"
