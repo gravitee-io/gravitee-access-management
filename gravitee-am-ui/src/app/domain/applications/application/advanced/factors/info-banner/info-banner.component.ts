@@ -25,11 +25,9 @@ export class InfoBannerComponent {
   @Input() text: string;
   @Input() type: 'warning' | 'info' | undefined;
   @Input() buttonName = 'More info';
-
-  showInfo = true;
+  @Input() isRouterLink = true;
 
   constructor(private router: Router) {}
-
   getColors(): string {
     if (this.type === 'warning') {
       return `background-color: #FFECE5; border: 3px solid #BF3F0E; color: #BF3F0E;`;
@@ -37,13 +35,12 @@ export class InfoBannerComponent {
       return `background-color: #E7E2FB; border: 3px solid #51438E; color: #51438E;`;
     }
   }
-
-  closeInfo(): void {
-    this.showInfo = false;
-  }
-
   gotoLink($event: Event): void {
     $event.preventDefault();
-    this.router.navigate([this.link]);
+    if (this.isRouterLink) {
+      this.router.navigate([this.link]);
+    } else {
+      window.open(this.link, '_blank');
+    }
   }
 }
