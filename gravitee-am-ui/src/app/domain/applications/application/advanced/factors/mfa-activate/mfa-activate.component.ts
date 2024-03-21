@@ -42,7 +42,7 @@ export class MfaActivateComponent implements OnInit, AfterViewInit {
       message:
         'Conditional allows you to configure the rules on how users will be enrolled to use MFA. This is done using Expression Language.',
       warning: 'To use the GeoIP based variables, ensure to install GeoIP service plugins on your application.',
-      warningLink: 'https://docs.gravitee.io/am/current/am_userguide_mfa_amfa.html',
+      warningLink: 'https://documentation.gravitee.io/am/guides/multi-factor-authentication',
     },
   };
 
