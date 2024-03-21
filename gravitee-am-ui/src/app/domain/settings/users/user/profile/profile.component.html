@@ -284,47 +284,47 @@
       <div class="gv-page-description-content">
         <mat-list>
           <mat-list-item>
-            <mat-icon mat-list-icon>trending_up</mat-icon>
-            <h4 matLine>Logins count</h4>
-            <p matLine>{{ user.loginsCount }}</p>
+            <mat-icon matListItemIcon>trending_up</mat-icon>
+            <h4 matListItemLine>Logins count</h4>
+            <p matListItemLine>{{ user.loginsCount }}</p>
           </mat-list-item>
           <mat-list-item>
-            <mat-icon mat-list-icon>alarm</mat-icon>
-            <h4 matLine>Last login</h4>
-            <p matLine>
+            <mat-icon matListItemIcon>alarm</mat-icon>
+            <h4 matListItemLine>Last login</h4>
+            <p matListItemLine>
               <span *ngIf="!user.loggedAt">Never logged in</span>
               <span *ngIf="user.loggedAt">{{ user.loggedAt | humanDate }}</span>
             </p>
           </mat-list-item>
           <mat-list-item>
-            <mat-icon mat-list-icon>alarm_on</mat-icon>
-            <h4 matLine>Created at</h4>
-            <p matLine>{{ user.createdAt | humanDate }}</p>
+            <mat-icon matListItemIcon>alarm_on</mat-icon>
+            <h4 matListItemLine>Created at</h4>
+            <p matListItemLine>{{ user.createdAt | humanDate }}</p>
           </mat-list-item>
           <mat-list-item>
-            <mat-icon mat-list-icon>alarm_on</mat-icon>
-            <h4 matLine>Password last reset at</h4>
-            <p matLine>{{ user.lastPasswordReset | humanDate }}</p>
+            <mat-icon matListItemIcon>alarm_on</mat-icon>
+            <h4 matListItemLine>Password last reset at</h4>
+            <p matListItemLine>{{ user.lastPasswordReset | humanDate }}</p>
           </mat-list-item>
           <mat-list-item *ngIf="user.referenceType === 'domain'">
-            <mat-icon mat-list-icon>dock</mat-icon>
-            <h4 matLine>Last application</h4>
-            <p matLine>{{ displayClientName() }}</p>
+            <mat-icon matListItemIcon>dock</mat-icon>
+            <h4 matListItemLine>Last application</h4>
+            <p matListItemLine>{{ displayClientName() }}</p>
           </mat-list-item>
           <mat-list-item>
-            <mat-icon mat-list-icon>link</mat-icon>
-            <h4 matLine>Last identity provider</h4>
-            <p matLine>{{ user.lastIdentityUsed }}</p>
+            <mat-icon matListItemIcon>link</mat-icon>
+            <h4 matListItemLine>Last identity provider</h4>
+            <p matListItemLine>{{ user.lastIdentityUsed }}</p>
           </mat-list-item>
           <mat-list-item>
-            <mat-icon mat-list-icon>device_hub</mat-icon>
-            <h4 matLine>Source</h4>
-            <p matLine>{{ user.source }}</p>
+            <mat-icon matListItemIcon>device_hub</mat-icon>
+            <h4 matListItemLine>Source</h4>
+            <p matListItemLine>{{ user.source }}</p>
           </mat-list-item>
           <mat-list-item *ngIf="accountLocked(user)">
-            <mat-icon mat-list-icon>blocked</mat-icon>
-            <h4 matLine>Account blocked</h4>
-            <p matLine>Until : {{ user.accountLockedUntil | date: 'medium' }}</p>
+            <mat-icon matListItemIcon>blocked</mat-icon>
+            <h4 matListItemLine>Account blocked</h4>
+            <p matListItemLine>Until : {{ user.accountLockedUntil | date: 'medium' }}</p>
           </mat-list-item>
         </mat-list>
       </div>
