@@ -66,19 +66,19 @@
     <div class="gv-page-description-content">
       <mat-list>
         <mat-list-item>
-          <mat-icon matListItemIcon>alarm_on</mat-icon>
-          <h4 matListItemLine>Created at</h4>
-          <p matListItemLine>{{ group.createdAt | humanDate }}</p>
+          <mat-icon mat-list-icon>alarm_on</mat-icon>
+          <h4 matLine>Created at</h4>
+          <p matLine>{{ group.createdAt | humanDate }}</p>
         </mat-list-item>
         <mat-list-item>
-          <mat-icon matListItemIcon>alarm</mat-icon>
-          <h4 matListItemLine>Last update</h4>
-          <p matListItemLine>{{ group.updatedAt | humanDate }}</p>
+          <mat-icon mat-list-icon>alarm</mat-icon>
+          <h4 matLine>Last update</h4>
+          <p matLine>{{ group.updatedAt | humanDate }}</p>
         </mat-list-item>
         <mat-list-item>
-          <mat-icon matListItemIcon>people</mat-icon>
-          <h4 matListItemLine>Members count</h4>
-          <p matListItemLine>
+          <mat-icon mat-list-icon>people</mat-icon>
+          <h4 matLine>Members count</h4>
+          <p matLine>
             <span *ngIf="!group.members || group.members.length === 0; else members">No member</span
             ><ng-template #members>{{ group.members.length }} members</ng-template>
           </p>
