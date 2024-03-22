@@ -53,6 +53,7 @@ import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import net.minidev.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +61,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -385,7 +387,16 @@ public class TokenServiceImpl implements TokenService {
                             String claimExpression = tokenClaim.getClaimValue();
                             Object extValue = (claimExpression != null) ? executionContext.getTemplateEngine().getValue(claimExpression, Object.class) : null;
                             if (extValue != null) {
-                                jwt.put(claimName, extValue);
+                                if (Claims.aud.equals(claimName) && (extValue instanceof String[] || extValue instanceof List)) {
+                                    var audiences = new LinkedHashSet<>();
+                                    audiences.add(jwt.getAud()); // make sure the client_id is the first entry of the aud array
+                                    audiences.addAll(extValue instanceof List ? (List)extValue : List.of((String[]) extValue)); // Set will remove duplicate client_id if any
+                                    var jsonArray = new JSONArray();
+                                    jsonArray.addAll(audiences);
+                                    jwt.put(claimName, jsonArray);
+                                } else {
+                                    jwt.put(claimName, extValue);
+                                }
                             }
                         } catch (Exception ex) {
                             logger.debug("An error occurs while parsing expression language : {}", tokenClaim.getClaimValue(), ex);
