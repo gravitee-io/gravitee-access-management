@@ -15,30 +15,27 @@
  */
 package io.gravitee.am.management.handlers.management.api.provider;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.common.http.HttpStatusCode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author GraviteeSource Team
- */
 @Provider
-public class ThrowableMapper extends AbstractExceptionMapper<Throwable> {
-    private static Logger LOGGER = LoggerFactory.getLogger(ThrowableMapper.class);
+public class JsonParseExceptionMapper extends AbstractExceptionMapper<JsonParseException> {
+    private static Logger LOGGER = LoggerFactory.getLogger(JsonParseExceptionMapper.class);
+
 
     @Override
-    public Response toResponse(Throwable e) {
-        LOGGER.error("Internal error", e);
+    public Response toResponse(JsonParseException e) {
+        LOGGER.debug("Malformed request body, msg={}", e.getMessage());
         return Response
-                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                .status(Response.Status.BAD_REQUEST)
                 .type(MediaType.APPLICATION_JSON_TYPE)
-                .entity(new ErrorEntity("Internal error", HttpStatusCode.INTERNAL_SERVER_ERROR_500))
+                .entity(new ErrorEntity("Malformed request body", HttpStatusCode.BAD_REQUEST_400))
                 .build();
     }
 }
