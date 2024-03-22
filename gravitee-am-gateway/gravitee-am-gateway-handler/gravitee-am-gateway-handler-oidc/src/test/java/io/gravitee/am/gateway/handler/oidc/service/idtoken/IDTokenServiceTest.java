@@ -197,17 +197,24 @@ public class IDTokenServiceTest {
 
         TokenClaim customClaim = new TokenClaim();
         customClaim.setTokenType(TokenTypeHint.ID_TOKEN);
-        customClaim.setClaimName("iss");
+        customClaim.setClaimName(Claims.iss);
         customClaim.setClaimValue("https://custom-iss");
+
+        TokenClaim customAudClaim = new TokenClaim();
+        customAudClaim.setTokenType(TokenTypeHint.ID_TOKEN);
+        customAudClaim.setClaimName(io.gravitee.am.common.jwt.Claims.aud);
+        String customClaimExpression = "{T(java.lang.String).valueOf(\"client_id_value,other_value,client-id\").split(\",\")}";
+        customAudClaim.setClaimValue(customClaimExpression);
 
         Client client = new Client();
         client.setCertificate("certificate-client");
         client.setClientId("my-client-id");
-        client.setTokenCustomClaims(Arrays.asList(customClaim));
+        client.setTokenCustomClaims(Arrays.asList(customClaim, customAudClaim));
 
         ExecutionContext executionContext = mock(ExecutionContext.class);
         TemplateEngine templateEngine = mock(TemplateEngine.class);
         when(templateEngine.getValue("https://custom-iss", Object.class)).thenReturn("https://custom-iss");
+        when(templateEngine.getValue(customClaimExpression, Object.class)).thenReturn(new String[]{"client_id_value","other_value","client-id"});
         when(executionContext.getTemplateEngine()).thenReturn(templateEngine);
 
         String idTokenPayload = "payload";
@@ -225,7 +232,11 @@ public class IDTokenServiceTest {
 
         JWT jwt = jwtCaptor.getValue();
         assertNotNull(jwt);
-        assertTrue(jwt.get("iss") != null && "https://custom-iss".equals(jwt.get("iss")));
+        assertTrue(jwt.get(Claims.iss) != null && "https://custom-iss".equals(jwt.get(Claims.iss)));
+        assertTrue("client-id".equals(jwt.getAud()));
+        assertTrue(jwt.get(Claims.aud) != null
+                && jwt.get(Claims.aud) instanceof List
+                && ((List)jwt.get(Claims.aud)).size() == 3);
 
         verify(certificateManager, times(1)).findByAlgorithm(any());
         verify(certificateManager, times(1)).get(anyString());
