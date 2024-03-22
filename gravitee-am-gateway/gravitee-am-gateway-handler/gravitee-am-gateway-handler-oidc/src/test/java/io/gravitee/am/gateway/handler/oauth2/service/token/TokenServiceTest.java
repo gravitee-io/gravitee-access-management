@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token;
 
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.utils.ConstantKeys;
@@ -36,6 +37,7 @@ import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.gravitee.el.TemplateEngine;
+import io.gravitee.el.spel.SpelTemplateEngine;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -55,6 +57,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -119,6 +122,77 @@ public class TokenServiceTest {
         verify(tokenManager, times(1)).storeAccessToken(any());
         verify(accessTokenRepository, never()).delete(anyString());
         verify(refreshTokenRepository, never()).delete(anyString());
+    }
+
+    @Test
+    public void shouldCreate_withAudArray() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setClientId("my-client-id");
+
+        Client client = new Client();
+        client.setClientId("my-client-id");
+        TokenClaim customClaim = new TokenClaim();
+        customClaim.setTokenType(TokenTypeHint.ACCESS_TOKEN);
+        customClaim.setClaimName(Claims.aud);
+        String customClaimExpression = "{T(java.lang.String).valueOf(\"another_client_identifier,other_value,my-client-id\").split(\",\")}";
+        customClaim.setClaimValue(customClaimExpression);
+        client.setTokenCustomClaims(List.of(customClaim));
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        TemplateEngine tplEngine = mock(TemplateEngine.class);
+        when(tplEngine.getValue(eq(customClaimExpression), any())).thenReturn(new String[]{"another_client_identifier","other_value","my-client-id"});
+        when(executionContext.getTemplateEngine()).thenReturn(tplEngine);
+
+        when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+        TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(tokenManager, times(1)).storeAccessToken(any());
+        verify(accessTokenRepository, never()).delete(anyString());
+        verify(refreshTokenRepository, never()).delete(anyString());
+        verify(jwtService).encode(argThat(jwt -> jwt.get(Claims.aud) instanceof List
+                && jwt.getAud().equals(((List)jwt.get(Claims.aud)).get(0))
+                && ((List)jwt.get(Claims.aud)).size() == 3
+                && oAuth2Request.getClientId().equals(jwt.getAud())), any(Client.class));
+    }
+    @Test
+    public void shouldCreate_withAudArray_forceClientId() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setClientId("my-client-id");
+
+        Client client = new Client();
+        client.setClientId("my-client-id");
+        TokenClaim customClaim = new TokenClaim();
+        customClaim.setTokenType(TokenTypeHint.ACCESS_TOKEN);
+        customClaim.setClaimName(Claims.aud);
+        String customClaimExpression = "{T(java.lang.String).valueOf(\"another_client_identifier,other_value\").split(\",\")}";
+        customClaim.setClaimValue(customClaimExpression);
+        client.setTokenCustomClaims(List.of(customClaim));
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        TemplateEngine tplEngine = mock(TemplateEngine.class);
+        when(tplEngine.getValue(eq(customClaimExpression), any())).thenReturn(new String[]{"another_client_identifier","other_value"});
+        when(executionContext.getTemplateEngine()).thenReturn(tplEngine);
+
+        when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+        TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(tokenManager, times(1)).storeAccessToken(any());
+        verify(accessTokenRepository, never()).delete(anyString());
+        verify(refreshTokenRepository, never()).delete(anyString());
+        verify(jwtService).encode(argThat(jwt -> jwt.get(Claims.aud) instanceof List
+                && jwt.getAud().equals(((List)jwt.get(Claims.aud)).get(0))
+                && ((List)jwt.get(Claims.aud)).size() == 3
+                && oAuth2Request.getClientId().equals(jwt.getAud())), any(Client.class));
     }
 
     @Test
