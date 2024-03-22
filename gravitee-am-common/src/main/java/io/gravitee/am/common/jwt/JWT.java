@@ -17,6 +17,7 @@ package io.gravitee.am.common.jwt;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -52,7 +53,16 @@ public class JWT extends HashMap<String, Object> {
     }
 
     public String getAud() {
-        return containsKey(Claims.aud) ? (String) get(Claims.aud) : null;
+        if (containsKey(Claims.aud)) {
+            Object aud = get(Claims.aud);
+            if (aud instanceof List && !((List<?>) aud).isEmpty()) {
+                return ((List<String>) aud).get(0);
+            } else {
+                return (String) aud;
+            }
+        } else {
+            return null;
+        }
     }
 
     public void setAud(String aud) {
