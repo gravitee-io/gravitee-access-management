@@ -130,9 +130,13 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @Override
-    public Completable update(ReferenceType referenceType, String referenceId, String credentialId, Credential credential) {
+    public Single<Credential> update(ReferenceType referenceType, String referenceId, String credentialId, Credential credential) {
         LOGGER.debug("Update a credential {}", credentialId);
         return credentialRepository.findByCredentialId(referenceType, referenceId, credentialId)
+                // filter on userId to restrict the credential to the current user.
+                // if credentialToUpdate has null userid, we are in the registration phase
+                // we want to assign this credential to the user profile, so we accept it.
+                .filter(credentialToUpdate -> credentialToUpdate.getUserId() == null || credentialToUpdate.getUserId().equals(credential.getUserId()))
                 .flatMapSingle(credentialToUpdate -> {
                     // update only business values (i.e not set via the vert.x authenticator object)
                     credentialToUpdate.setUserId(credential.getUserId());
@@ -142,7 +146,8 @@ public class CredentialServiceImpl implements CredentialService {
                     credentialToUpdate.setAccessedAt(credentialToUpdate.getUpdatedAt());
                     return credentialRepository.update(credentialToUpdate);
                 })
-                .ignoreElements();
+                .firstElement()
+                .switchIfEmpty(Single.error(() -> new CredentialNotFoundException(credentialId)));
     }
 
     @Override

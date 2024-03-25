@@ -39,6 +39,7 @@ import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Session;
 import io.vertx.reactivex.core.buffer.Buffer;
@@ -124,7 +125,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         when(factor.is(FactorType.FIDO2)).thenReturn(true);
         when(factorManager.get("factorId")).thenReturn(factorProvider);
         when(factorManager.getFactor("factorId")).thenReturn(factor);
-        when(credentialService.update(any(), any(), any(), any())).thenReturn(Completable.complete());
+        when(credentialService.update(any(), any(), any(), any())).thenAnswer(answer -> Single.just(answer.getArguments()[answer.getArguments().length-1]));
         when(verifyAttemptService.checkVerifyAttempt(any(), any(), any(), any())).thenReturn(Maybe.empty());
         router.route(HttpMethod.POST, "/mfa/challenge")
                 .handler(ctx -> {

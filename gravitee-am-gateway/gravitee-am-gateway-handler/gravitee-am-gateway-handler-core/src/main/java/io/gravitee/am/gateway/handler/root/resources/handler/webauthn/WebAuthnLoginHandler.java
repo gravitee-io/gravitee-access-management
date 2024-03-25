@@ -198,7 +198,7 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
                                     ctx.fail(401);
                                     return;
                                 }
-                                manageFido2FactorEnrollment(ctx, client, credentialId, authenticatedUser);
+                                manageFido2FactorEnrollment(ctx, client, credentialHandler.result(), authenticatedUser);
                             });
                         });
                     } else {
