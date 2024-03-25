@@ -200,6 +200,76 @@ public class CredentialServiceTest {
     }
 
     @Test
+    public void shouldUpdate_byCredentialId_idPresent() {
+        Credential updateCredential = new Credential();
+        updateCredential.setId("my-credential-internal-id");
+        updateCredential.setCredentialId("my-credential-id");
+        Credential existingCredential = new Credential();
+        existingCredential.setCredentialId(updateCredential.getCredentialId());
+
+        when(credentialRepository.findByCredentialId(any(), any(), any())).thenReturn(Flowable.just(existingCredential));
+        when(credentialRepository.update(any(Credential.class))).thenReturn(Single.just(new Credential()));
+
+        TestObserver testObserver = credentialService.update(ReferenceType.DOMAIN, DOMAIN, updateCredential.getCredentialId(), updateCredential).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(credentialRepository, times(1)).findByCredentialId(any(), any(), any());
+        verify(credentialRepository, times(1)).update(any(Credential.class));
+    }
+
+    @Test
+    public void shouldUpdate_byCredentialId_idPresent_filterUserId() {
+        Credential updateCredential = new Credential();
+        updateCredential.setId("my-credential-internal-id");
+        updateCredential.setCredentialId("my-credential-id");
+        updateCredential.setUserId("user01");
+
+        Credential existingCredential = new Credential();
+        existingCredential.setCredentialId(updateCredential.getCredentialId());
+        existingCredential.setUserId("user01");
+
+        Credential existingCredential2 = new Credential();
+        existingCredential2.setCredentialId(updateCredential.getCredentialId());
+        existingCredential2.setUserId("user02");
+
+        when(credentialRepository.findByCredentialId(any(), any(), any())).thenReturn(Flowable.just(existingCredential2, existingCredential));
+        when(credentialRepository.update(any(Credential.class))).thenReturn(Single.just(new Credential()));
+
+        TestObserver testObserver = credentialService.update(ReferenceType.DOMAIN, DOMAIN, updateCredential.getCredentialId(), updateCredential).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(credentialRepository, times(1)).findByCredentialId(any(), any(), any());
+        verify(credentialRepository, times(1)).update(argThat(cred -> cred.getUserId().equals(existingCredential.getUserId())));
+    }
+
+    @Test
+    public void shouldUpdate_byCredentialId_idMissing() {
+        Credential updateCredential = new Credential();
+        updateCredential.setId("my-credential-internal-id");
+        updateCredential.setCredentialId("my-credential-id");
+        Credential existingCredential = new Credential();
+        existingCredential.setCredentialId(null);
+
+        when(credentialRepository.findByCredentialId(any(), any(), any())).thenReturn(Flowable.just(existingCredential));
+        when(credentialRepository.update(any(Credential.class))).thenReturn(Single.just(new Credential()));
+
+        TestObserver testObserver = credentialService.update(ReferenceType.DOMAIN, DOMAIN, updateCredential.getCredentialId(), updateCredential).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(credentialRepository, times(1)).findByCredentialId(any(), any(), any());
+        verify(credentialRepository, times(1)).update(any(Credential.class));
+    }
+
+    @Test
     public void shouldUpdate_technicalException() {
         Credential updateCredential = Mockito.mock(Credential.class);
         when(updateCredential.getId()).thenReturn("my-credential");

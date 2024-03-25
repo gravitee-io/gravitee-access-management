@@ -76,6 +76,10 @@ public class UserConsentPrepareContextHandler implements Handler<RoutingContext>
         if (webAuthnCredentialId != null) {
             context.put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, webAuthnCredentialId);
         }
+        String webAuthnCredentialInternalId = context.session().get(ConstantKeys.WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY);
+        if (webAuthnCredentialInternalId != null) {
+            context.put(ConstantKeys.WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY, webAuthnCredentialInternalId);
+        }
 
         // add mfa factor id if exists
         String mfaFactorId = context.session().get(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY);

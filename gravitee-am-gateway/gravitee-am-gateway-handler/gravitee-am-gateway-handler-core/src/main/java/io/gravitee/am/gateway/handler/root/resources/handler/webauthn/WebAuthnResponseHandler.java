@@ -19,6 +19,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.CredentialService;
@@ -131,10 +132,11 @@ public class WebAuthnResponseHandler extends WebAuthnHandler {
                                         ctx.fail(401);
                                         return;
                                     }
+                                    final Credential credential = credentialHandler.result();
                                     if (isEnrollingFido2Factor(ctx)) {
-                                        enrollFido2Factor(ctx, authenticatedUser, createEnrolledFactor(session.get(ENROLLED_FACTOR_ID_KEY), credentialId));
+                                        enrollFido2Factor(ctx, authenticatedUser, createEnrolledFactor(session.get(ENROLLED_FACTOR_ID_KEY), credentialId), credential);
                                     } else {
-                                        manageFido2FactorEnrollment(ctx, client, credentialId, authenticatedUser);
+                                        manageFido2FactorEnrollment(ctx, client, credential, authenticatedUser);
                                     }
                                 });
                             });
