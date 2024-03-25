@@ -203,6 +203,7 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
                             // the user has upgraded from unauthenticated to authenticated
                             // session should be upgraded as recommended by owasp
                             session.regenerateId();
+<<<<<<< HEAD
                             // keep the webauthn action into session to be able to do distinction
                             // between login or registration action
                             session.put(PASSWORDLESS_AUTH_ACTION_KEY, PASSWORDLESS_AUTH_ACTION_VALUE_LOGIN);
@@ -212,6 +213,24 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
                         },
                         ctx::fail
                 );
+=======
+                            final io.gravitee.am.model.User authenticatedUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) user).getUser();
+                            // update the credential
+                            updateCredential(authenticationContext, credentialId, authenticatedUser.getId(), credentialHandler -> {
+                                if (credentialHandler.failed()) {
+                                    logger.error("An error has occurred while authenticating user {}", username, credentialHandler.cause());
+                                    ctx.fail(401);
+                                    return;
+                                }
+                                manageFido2FactorEnrollment(ctx, client, credentialHandler.result(), authenticatedUser);
+                            });
+                        });
+                    } else {
+                        logger.error("Unexpected exception", authenticate.cause());
+                        ctx.fail(authenticate.cause());
+                    }
+                });
+>>>>>>> 3482364176 (fix: make webAuthnCredentialInternalId available into the session)
     }
 
     protected Completable checkAuthenticatorConformity(String credentialId, String username) {
