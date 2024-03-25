@@ -40,9 +40,15 @@ import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.MFAValidationAttemptException;
 import io.gravitee.am.service.reporter.builder.gateway.VerifyAttemptAuditBuilder;
 import io.gravitee.common.http.HttpStatusCode;
+<<<<<<< HEAD
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+=======
+import io.reactivex.Completable;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
+>>>>>>> 3482364176 (fix: make webAuthnCredentialInternalId available into the session)
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Session;
 import io.vertx.rxjava3.core.buffer.Buffer;
@@ -131,7 +137,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         when(factor.is(FactorType.FIDO2)).thenReturn(true);
         when(factorManager.get("factorId")).thenReturn(factorProvider);
         when(factorManager.getFactor("factorId")).thenReturn(factor);
-        when(credentialService.update(any(), any(), any(), any())).thenReturn(Completable.complete());
+        when(credentialService.update(any(), any(), any(), any())).thenAnswer(answer -> Single.just(answer.getArguments()[answer.getArguments().length-1]));
         when(verifyAttemptService.checkVerifyAttempt(any(), any(), any(), any())).thenReturn(Maybe.empty());
         when(factorService.enrollFactor(any(), any())).thenReturn(Single.just(mock(User.class)));
 
