@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.handler.webauthn;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
@@ -188,6 +189,7 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
                     // invalidate the challenge
                     session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
                     session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
+<<<<<<< HEAD
                 })
                 .subscribe(
                         user -> {
@@ -212,5 +214,30 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
                             ctx.fail(throwable.getCause());
                         }
                 );
+=======
+
+                    if (authenticate.succeeded()) {
+                        // create the authentication context
+                        final AuthenticationContext authenticationContext = createAuthenticationContext(ctx);
+                        // update the credential
+                        updateCredential(authenticationContext, credentialId, authenticatedUser.getId(), credentialHandler -> {
+                            if (credentialHandler.failed()) {
+                                logger.error("An error has occurred while updating credential for user {}", username, credentialHandler.cause());
+                                ctx.fail(401);
+                                return;
+                            }
+                            final Credential credential = credentialHandler.result();
+                            if (isEnrollingFido2Factor(ctx)) {
+                                enrollFido2Factor(ctx, authenticatedUser, createEnrolledFactor(session.get(ENROLLED_FACTOR_ID_KEY), credentialId), credential);
+                            } else {
+                                manageFido2FactorEnrollment(ctx, client, credential, authenticatedUser);
+                            }
+                        });
+                    } else {
+                        logger.error("Unexpected exception", authenticate.cause());
+                        ctx.fail(authenticate.cause());
+                    }
+                });
+>>>>>>> 3482364176 (fix: make webAuthnCredentialInternalId available into the session)
     }
 }

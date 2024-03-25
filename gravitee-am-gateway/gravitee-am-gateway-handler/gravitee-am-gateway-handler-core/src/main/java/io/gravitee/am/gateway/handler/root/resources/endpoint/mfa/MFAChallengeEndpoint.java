@@ -644,7 +644,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
         }
     }
 
-    private void updateCredential(HttpServerRequest request, String credentialId, String userId, Handler<AsyncResult<Void>> handler) {
+    private void updateCredential(HttpServerRequest request, String credentialId, String userId, Handler<AsyncResult<Credential>> handler) {
         final Credential credential = new Credential();
         credential.setUserId(userId);
         credential.setUserAgent(RequestUtils.userAgent(request));
@@ -652,7 +652,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
 
         credentialService.update(ReferenceType.DOMAIN, domain.getId(), credentialId, credential)
                 .subscribe(
-                        () -> handler.handle(Future.succeededFuture()),
+                        (updatedCredential) -> handler.handle(Future.succeededFuture(updatedCredential)),
                         error -> handler.handle(Future.failedFuture(error))
                 );
     }

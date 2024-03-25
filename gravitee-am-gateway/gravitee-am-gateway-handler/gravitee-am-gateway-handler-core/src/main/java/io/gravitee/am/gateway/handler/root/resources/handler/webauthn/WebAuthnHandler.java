@@ -129,34 +129,34 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
         }
     }
 
-    protected void manageFido2FactorEnrollment(RoutingContext ctx, Client client, String credentialId, User authenticatedUser) {
+    protected void manageFido2FactorEnrollment(RoutingContext ctx, Client client, Credential credential, User authenticatedUser) {
         Optional<Factor> clientFido2Factor = getClientFido2Factor(client);
         if (clientFido2Factor.isPresent()) {
             Optional<EnrolledFactorSecurity> enrolledFido2FactorSecurity = getEnrolledFido2FactorSecurity(authenticatedUser);
-            if (enrolledFido2FactorSecurity.isPresent() && enrolledFido2FactorSecurity.get().getValue().equals(credentialId)) {
+            if (enrolledFido2FactorSecurity.isPresent() && enrolledFido2FactorSecurity.get().getValue().equals(credential.getCredentialId())) {
                 //user already has fido2 factor for this credential
                 updateSessionAuthAndChallengeStatus(ctx);
-                updateSessionLoginCompletedStatus(ctx, credentialId);
+                updateSessionLoginCompletedStatus(ctx, credential);
                 ctx.next();
             } else {
                 //save the fido factor
-                final EnrolledFactor enrolledFactor = createEnrolledFactor(clientFido2Factor.get().getId(), credentialId);
-                enrollFido2Factor(ctx, authenticatedUser, enrolledFactor);
+                final EnrolledFactor enrolledFactor = createEnrolledFactor(clientFido2Factor.get().getId(), credential.getCredentialId());
+                enrollFido2Factor(ctx, authenticatedUser, enrolledFactor, credential);
             }
         } else {
-            updateSessionLoginCompletedStatus(ctx, credentialId);
+            updateSessionLoginCompletedStatus(ctx, credential);
             ctx.next();
         }
     }
 
-    protected void enrollFido2Factor(RoutingContext ctx, User authenticatedUser, EnrolledFactor enrolledFactor) {
+    protected void enrollFido2Factor(RoutingContext ctx, User authenticatedUser, EnrolledFactor enrolledFactor, Credential credential) {
         final var credentialId = enrolledFactor.getSecurity().getValue();
         factorService.enrollFactor(authenticatedUser, enrolledFactor)
                 .ignoreElement()
                 .subscribe(
                         () -> {
                             updateSessionAuthAndChallengeStatus(ctx);
-                            updateSessionLoginCompletedStatus(ctx, credentialId);
+                            updateSessionLoginCompletedStatus(ctx, credential);
                             ctx.next();
                         },
                         error -> {
@@ -205,9 +205,10 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
         ctx.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
     }
 
-    protected void updateSessionLoginCompletedStatus(RoutingContext ctx, String credentialId) {
+    protected void updateSessionLoginCompletedStatus(RoutingContext ctx, Credential credential) {
         ctx.session().put(ConstantKeys.PASSWORDLESS_AUTH_COMPLETED_KEY, true);
-        ctx.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, credentialId);
+        ctx.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, credential.getCredentialId());
+        ctx.session().put(WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY, credential.getId());
         ctx.session().put(USER_LOGIN_COMPLETED_KEY, true);
     }
 
@@ -249,6 +250,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
                 );
     }
 
+<<<<<<< HEAD
     protected Single<io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User> authenticateUser(Client client,
                                                                                                       AuthenticationContext authenticationContext,
                                                                                                       String username,
@@ -271,8 +273,16 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
                                     boolean afterLogin,
                                     Handler<AsyncResult<Void>> handler) {
         updateCredential(authenticationContext, credentialId, userId, afterLogin)
+=======
+    protected void updateCredential(AuthenticationContext authenticationContext, String credentialId, String userId, Handler<AsyncResult<Credential>> handler) {
+        Credential credential = new Credential();
+        credential.setUserId(userId);
+        credential.setUserAgent(String.valueOf(authenticationContext.get(Claims.user_agent)));
+        credential.setIpAddress(String.valueOf(authenticationContext.get(Claims.ip_address)));
+        credentialService.update(ReferenceType.DOMAIN, domain.getId(), credentialId, credential)
+>>>>>>> 3482364176 (fix: make webAuthnCredentialInternalId available into the session)
                 .subscribe(
-                        () -> handler.handle(Future.succeededFuture()),
+                        (updatedCredential) -> handler.handle(Future.succeededFuture(updatedCredential)),
                         error -> handler.handle(Future.failedFuture(error))
                 );
     }
