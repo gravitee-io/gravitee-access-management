@@ -94,6 +94,7 @@
               <p *ngIf="row.accessPoint">
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                 <span *ngIf="row.accessPoint.ipAddress"><strong>IP: </strong> {{row.accessPoint.ipAddress}}</span>
                 <span
                   *ngIf="row.accessPoint.userAgent"><strong>User agent: </strong> {{row.accessPoint.userAgent}}</span>
@@ -103,6 +104,11 @@
 >>>>>>> 8fff0ce1de (fix: added space between IP and User agent)
 =======
                 <span style="padding-right: 5px"  *ngIf="row.accessPoint.ipAddress"><strong>IP: </strong>{{ row.accessPoint.ipAddress }}</span>
+=======
+                <span style="padding-right: 5px" *ngIf="row.accessPoint.ipAddress">
+                  <strong>IP: </strong>{{ row.accessPoint.ipAddress }}
+                </span>
+>>>>>>> 9fcb6b9815 (fix: lint error)
                 <span *ngIf="row.accessPoint.userAgent"><strong>User agent: </strong>{{ row.accessPoint.userAgent }}</span>
 >>>>>>> 8b64a45eac (fix: applied changes from comment)
               </p>
