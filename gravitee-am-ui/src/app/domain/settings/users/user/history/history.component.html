@@ -93,6 +93,7 @@
               <div style="margin-bottom: 20px;"><strong>Details</strong></div>
               <p *ngIf="row.accessPoint">
 <<<<<<< HEAD
+<<<<<<< HEAD
                 <span *ngIf="row.accessPoint.ipAddress"><strong>IP: </strong> {{row.accessPoint.ipAddress}}</span>
                 <span
                   *ngIf="row.accessPoint.userAgent"><strong>User agent: </strong> {{row.accessPoint.userAgent}}</span>
@@ -100,6 +101,10 @@
                 <span *ngIf="row.accessPoint.ipAddress"><strong>IP: </strong> {{ row.accessPoint.ipAddress }} </span>
                 <span *ngIf="row.accessPoint.userAgent"><strong>User agent: </strong> {{ row.accessPoint.userAgent }}</span>
 >>>>>>> 8fff0ce1de (fix: added space between IP and User agent)
+=======
+                <span style="padding-right: 5px"  *ngIf="row.accessPoint.ipAddress"><strong>IP: </strong>{{ row.accessPoint.ipAddress }}</span>
+                <span *ngIf="row.accessPoint.userAgent"><strong>User agent: </strong>{{ row.accessPoint.userAgent }}</span>
+>>>>>>> 8b64a45eac (fix: applied changes from comment)
               </p>
               <codemirror [value]="auditDetails(row)" [config]="config"></codemirror>
             </div>
