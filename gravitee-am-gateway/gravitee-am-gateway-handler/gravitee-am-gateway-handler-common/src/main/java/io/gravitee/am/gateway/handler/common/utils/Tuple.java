@@ -20,23 +20,23 @@ package io.gravitee.am.gateway.handler.common.utils;
  * @author GraviteeSource Team
  */
 public class Tuple<T1, T2> {
-    private final T1 reporters;
-    private final T2 context;
+    private final T1 value1;
+    private final T2 value2;
 
-    Tuple(T1 reporters, T2 context) {
-        this.reporters = reporters;
-        this.context = context;
+    Tuple(T1 value1, T2 value2) {
+        this.value1 = value1;
+        this.value2 = value2;
     }
 
     public T1 getT1() {
-        return reporters;
+        return value1;
     }
 
     public T2 getT2() {
-        return context;
+        return value2;
     }
 
-    public static <T1, T2> Tuple<T1, T2> of(T1 reporters, T2 context) {
-        return new Tuple(reporters, context);
+    public static <T1, T2> Tuple<T1, T2> of(T1 value1, T2 value2) {
+        return new Tuple(value1, value2);
     }
 }
