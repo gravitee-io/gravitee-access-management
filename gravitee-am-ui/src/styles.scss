@@ -5,7 +5,8 @@
 @import '@gravitee/ui-components/assets/css/gravitee-console-theme.css';
 @import '@swimlane/ngx-datatable/themes/material';
 @import '@swimlane/ngx-datatable/assets/icons';
-@import 'codemirror/lib/codemirror.css';
+@import 'codemirror/lib/codemirror';
+@import 'codemirror/theme/material';
 
 /* Configure theme */
 @include gio.import-fonts;

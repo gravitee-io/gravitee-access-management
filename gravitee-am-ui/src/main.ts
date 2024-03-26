@@ -23,6 +23,8 @@ import { AppModule } from './app/app.module';
 import { environment } from './environments/environment';
 import { AppConfig } from './config/app.config';
 import { FeatureInfoData } from './app/components/gio-license/gio-license-data';
+import 'codemirror/mode/javascript/javascript';
+import 'codemirror/mode/markdown/markdown';
 
 if (environment.production) {
   enableProdMode();
