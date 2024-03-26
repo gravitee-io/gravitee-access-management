@@ -55,7 +55,7 @@
           <input matInput placeholder="IP Address" disabled [value]="audit.accessPoint?.ipAddress" />
           <mat-hint>Remote IP Address</mat-hint>
         </mat-form-field>
-        <mat-form-field *ngIf="audit.accessPoint?.ipAddress" appearance="outline" floatLabel="always">
+        <mat-form-field *ngIf="audit.accessPoint?.userAgent" appearance="outline" floatLabel="always">
           <mat-label>User Agent</mat-label>
           <input matInput placeholder="User Agent" disabled [value]="audit.accessPoint?.userAgent" />
           <mat-hint>Remote Client User Agent</mat-hint>
