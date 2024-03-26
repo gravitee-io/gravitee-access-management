@@ -100,6 +100,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_CHALLENGE_KE
 import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.RATE_LIMIT_ERROR_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.VERIFY_ATTEMPT_ERROR_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY;
 import static io.gravitee.am.factor.api.FactorContext.KEY_USER;
 import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
@@ -359,9 +360,12 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                 return;
             }
 
+
             updateStrongAuthStatus(routingContext);
             // set the credentialId in session
             routingContext.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, credentialId);
+            final Credential credential = ch.result();
+            routingContext.session().put(WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY, credential.getId());
 
             if (userHasFido2Factor(endUser)) {
                 cleanSession(routingContext);
@@ -658,7 +662,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         }
     }
 
-    private void updateCredential(HttpServerRequest request, String credentialId, String userId, Handler<AsyncResult<Void>> handler) {
+    private void updateCredential(HttpServerRequest request, String credentialId, String userId, Handler<AsyncResult<Credential>> handler) {
         final Credential credential = new Credential();
         credential.setUserId(userId);
         credential.setUserAgent(RequestUtils.userAgent(request));
@@ -666,7 +670,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
 
         credentialService.update(ReferenceType.DOMAIN, domain.getId(), credentialId, credential)
                 .subscribe(
-                        () -> handler.handle(Future.succeededFuture()),
+                        updatedCredential -> handler.handle(Future.succeededFuture(updatedCredential)),
                         error -> handler.handle(Future.failedFuture(error))
                 );
     }
