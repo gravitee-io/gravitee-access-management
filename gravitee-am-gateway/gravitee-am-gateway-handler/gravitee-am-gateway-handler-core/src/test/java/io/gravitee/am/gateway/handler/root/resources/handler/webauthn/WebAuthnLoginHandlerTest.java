@@ -151,7 +151,7 @@ public class WebAuthnLoginHandlerTest extends RxWebTestBase {
         when(domain.getWebAuthnSettings()).thenReturn(webAuthnSettings);
 
         when(credentialService.findByCredentialId(any(), any(), any())).thenReturn(Flowable.just(new Credential()));
-        when(credentialService.update(any(), any(), any(), any())).thenReturn(Completable.complete());
+        when(credentialService.update(any(), any(), any(), any())).thenReturn(Single.just(new Credential()));
         when(userAuthenticationManager.connectWithPasswordless(any(), any(), any())).thenReturn(Single.just(new User()));
 
         router.route(HttpMethod.POST, "/webauthn/login")
@@ -184,7 +184,7 @@ public class WebAuthnLoginHandlerTest extends RxWebTestBase {
         Credential credential = packedCredential();
 
         when(credentialService.findByCredentialId(any(), any(), any())).thenReturn(Flowable.just(credential));
-        when(credentialService.update(any(), any(), any(), any())).thenReturn(Completable.complete());
+        when(credentialService.update(any(), any(), any(), any())).thenReturn(Single.just(new Credential()));
         when(userAuthenticationManager.connectWithPasswordless(any(), any(), any())).thenReturn(Single.just(new User()));
 
         router.route(HttpMethod.POST, "/webauthn/login")
@@ -217,7 +217,7 @@ public class WebAuthnLoginHandlerTest extends RxWebTestBase {
         Credential credential = packedCredential();
 
         when(credentialService.findByCredentialId(any(), any(), any())).thenReturn(Flowable.just(credential));
-        when(credentialService.update(any(), any(), any(), any())).thenReturn(Completable.complete());
+        when(credentialService.update(any(), any(), any(), any())).thenReturn(Single.just(new Credential()));
         when(userAuthenticationManager.connectWithPasswordless(any(), any(), any())).thenReturn(Single.just(new User()));
 
         router.route(HttpMethod.POST, "/webauthn/login")
@@ -250,7 +250,7 @@ public class WebAuthnLoginHandlerTest extends RxWebTestBase {
         Credential credential = noneCredential();
 
         when(credentialService.findByCredentialId(any(), any(), any())).thenReturn(Flowable.just(credential));
-        when(credentialService.update(any(), any(), any(), any())).thenReturn(Completable.complete());
+        when(credentialService.update(any(), any(), any(), any())).thenReturn(Single.just(new Credential()));
         when(userAuthenticationManager.connectWithPasswordless(any(), any(), any())).thenReturn(Single.just(new User()));
 
         router.route(HttpMethod.POST, "/webauthn/login")
@@ -284,7 +284,7 @@ public class WebAuthnLoginHandlerTest extends RxWebTestBase {
         credential.setAttestationStatement("{\"alg\":\"ES256\"}");
 
         when(credentialService.findByCredentialId(any(), any(), any())).thenReturn(Flowable.just(credential));
-        when(credentialService.update(any(), any(), any(), any())).thenReturn(Completable.complete());
+        when(credentialService.update(any(), any(), any(), any())).thenReturn(Single.just(new Credential()));
         when(userAuthenticationManager.connectWithPasswordless(any(), any(), any())).thenReturn(Single.just(new User()));
 
         router.route(HttpMethod.POST, "/webauthn/login")
