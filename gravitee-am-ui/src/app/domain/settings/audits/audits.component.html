@@ -128,7 +128,7 @@
           <div style="padding-left: 35px; max-width: 95%">
             <div style="margin-bottom: 20px"><strong>Details</strong></div>
             <p *ngIf="row.accessPoint">
-              <span *ngIf="row.accessPoint.ipAddress"><strong>IP: </strong> {{ row.accessPoint.ipAddress }}</span>
+              <span *ngIf="row.accessPoint.ipAddress"><strong>IP: </strong> {{ row.accessPoint.ipAddress }} </span>
               <span *ngIf="row.accessPoint.userAgent"><strong>User agent: </strong> {{ row.accessPoint.userAgent }}</span>
             </p>
             <codemirror [value]="auditDetails(row)" [config]="config"></codemirror>
