@@ -19,7 +19,10 @@ import io.gravitee.am.common.exception.authentication.AccountDeviceIntegrityExce
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.utils.Tuple;
+import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.login.WebAuthnSettings;
@@ -48,6 +51,7 @@ import java.util.Date;
 import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_AUTH_ACTION_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_AUTH_ACTION_VALUE_LOGIN;
 import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -189,18 +193,21 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
                 // check user authenticator conformity
                 .flatMap(user -> checkAuthenticatorConformity(credentialId, username).andThen(Single.just(user)))
                 // update the credential
-                .flatMap(user -> updateCredential(authenticationContext, credentialId, user.getUser().getId(), true).andThen(Single.just(user)))
+                .flatMap(user -> Single.zip(updateCredential(authenticationContext, credentialId, user.getUser().getId(), true), Single.just(user), Tuple::of))
                 .doFinally(() -> {
                     // invalidate the challenge
                     session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
                     session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
                 })
                 .subscribe(
-                        user -> {
+                        tuple -> {
                             // save the user and credential id into the context
+                            final Credential credential = tuple.getT1();
+                            final User user = tuple.getT2();
                             ctx.getDelegate().setUser(user);
                             ctx.put(ConstantKeys.USER_CONTEXT_KEY, user.getUser());
                             ctx.put(WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, credentialId);
+                            ctx.put(WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY, credential.getId());
                             // the user has upgraded from unauthenticated to authenticated
                             // session should be upgraded as recommended by owasp
                             session.regenerateId();
@@ -209,7 +216,7 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
                             session.put(PASSWORDLESS_AUTH_ACTION_KEY, PASSWORDLESS_AUTH_ACTION_VALUE_LOGIN);
                             ctx.put(PASSWORDLESS_AUTH_ACTION_KEY, PASSWORDLESS_AUTH_ACTION_VALUE_LOGIN);
                             // manage FIDO2 device enrollment if needed and continue
-                            manageFido2FactorEnrollment(ctx, client, credentialId, user.getUser());
+                            manageFido2FactorEnrollment(ctx, client, credential, user.getUser());
                         },
                         ctx::fail
                 );
