@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
+import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
@@ -131,7 +132,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         when(factor.is(FactorType.FIDO2)).thenReturn(true);
         when(factorManager.get("factorId")).thenReturn(factorProvider);
         when(factorManager.getFactor("factorId")).thenReturn(factor);
-        when(credentialService.update(any(), any(), any(), any())).thenReturn(Completable.complete());
+        when(credentialService.update(any(), any(), any(), any())).thenReturn(Single.just(new Credential()));
         when(verifyAttemptService.checkVerifyAttempt(any(), any(), any(), any())).thenReturn(Maybe.empty());
         when(factorService.enrollFactor(any(), any())).thenReturn(Single.just(mock(User.class)));
 
