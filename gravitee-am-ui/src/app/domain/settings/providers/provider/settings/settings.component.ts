@@ -83,32 +83,19 @@ export class ProviderSettingsComponent implements OnInit {
       this.providerSchema = data;
       if (data) {
         // handle default null values
-<<<<<<< HEAD
         let self = this;
         Object.keys(this.providerSchema['properties']).forEach(function(key) {
-          if (self.providerSchema['properties'][key].default && !self.providerConfiguration[key]) {
+          if (self.providerSchema['properties'][key].default && self.providerConfiguration[key] == null) {
             self.providerConfiguration[key] = self.providerSchema['properties'][key].default;
-          } 
-          self.providerSchema['properties'][key].default = '';
-=======
-        Object.keys(this.providerSchema['properties']).forEach((key) => {
-          if (this.providerSchema['properties'][key].default && this.providerConfiguration[key] == null) {
-            this.providerConfiguration[key] = this.providerSchema['properties'][key].default;
           }
-          this.providerSchema['properties'][key].default = '';
->>>>>>> 81eb82fdc3 (AM-2861: fix ldap user group field)
+          self.providerSchema['properties'][key].default = '';
         });
       }
     });
   }
 
-<<<<<<< HEAD
-  update(event) {
-    if (this.provider.type !== "inline-am-idp"){
-=======
   update(event: Event): void {
-    if (this.provider.type !== 'inline-am-idp') {
->>>>>>> 81eb82fdc3 (AM-2861: fix ldap user group field)
+    if (this.provider.type !== "inline-am-idp") {
       this._update();
     } else {
       event.preventDefault();
@@ -165,11 +152,7 @@ export class ProviderSettingsComponent implements OnInit {
     });
   }
 
-<<<<<<< HEAD
-  addDomainWhitelistPattern(event){
-=======
   addDomainWhitelistPattern(event: Event): void {
->>>>>>> 81eb82fdc3 (AM-2861: fix ldap user group field)
     event.preventDefault();
     if (this.domainWhitelistPattern) {
       if (!this.provider.domainWhitelist.some(el => el === this.domainWhitelistPattern)) {
@@ -183,11 +166,7 @@ export class ProviderSettingsComponent implements OnInit {
     }
   }
 
-<<<<<<< HEAD
-  removeDomainWhitelistPattern(dwPattern){
-=======
   removeDomainWhitelistPattern(dwPattern: string): void {
->>>>>>> 81eb82fdc3 (AM-2861: fix ldap user group field)
     const index = this.provider.domainWhitelist.indexOf(dwPattern);
     if (index > -1){
       this.provider.domainWhitelist.splice(index, 1);
