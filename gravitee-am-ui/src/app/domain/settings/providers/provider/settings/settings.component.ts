@@ -34,7 +34,6 @@ import { AppConfig } from '../../../../../../config/app.config';
 export class ProviderSettingsComponent implements OnInit {
   @ViewChild('providerForm', { static: true }) public form: NgForm;
   private domainId: string;
-  private certificates: any[];
   organizationContext = false;
   domain: any = {};
   entrypoint: any = {};
@@ -66,7 +65,6 @@ export class ProviderSettingsComponent implements OnInit {
       // define the mappers as default landing page in this case
       this.router.navigate(['../mappers'], { relativeTo: this.route });
     }
-    this.certificates = this.route.snapshot.data['certificates'];
     this.customCode = '<a th:href="${authorizeUrls.get(\'' + this.provider.id + '\')}">SIGN IN WITH OAUTH2 PROVIDER</a>';
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
@@ -90,7 +88,7 @@ export class ProviderSettingsComponent implements OnInit {
       if (data) {
         // handle default null values
         Object.keys(this.providerSchema['properties']).forEach((key) => {
-          if (this.providerSchema['properties'][key].default && !this.providerConfiguration[key]) {
+          if (this.providerSchema['properties'][key].default && this.providerConfiguration[key] == null) {
             this.providerConfiguration[key] = this.providerSchema['properties'][key].default;
           }
           this.providerSchema['properties'][key].default = '';
@@ -99,7 +97,7 @@ export class ProviderSettingsComponent implements OnInit {
     });
   }
 
-  update(event) {
+  update(event: Event): void {
     if (this.provider.type !== 'inline-am-idp') {
       this._update();
     } else {
@@ -126,7 +124,7 @@ export class ProviderSettingsComponent implements OnInit {
     }
   }
 
-  private _update() {
+  private _update(): void {
     this.provider.configuration = this.updateProviderConfiguration;
     this.providerService.update(this.domainId, this.provider.id, this.provider, this.organizationContext).subscribe((data) => {
       this.provider = data;
@@ -138,7 +136,7 @@ export class ProviderSettingsComponent implements OnInit {
     });
   }
 
-  delete(event) {
+  delete(event: Event): void {
     event.preventDefault();
     this.dialogService
       .confirm('Delete Provider', 'Are you sure you want to delete this provider ?')
@@ -153,7 +151,7 @@ export class ProviderSettingsComponent implements OnInit {
       .subscribe();
   }
 
-  enableProviderUpdate(configurationWrapper) {
+  enableProviderUpdate(configurationWrapper: any): void {
     window.setTimeout(() => {
       this.configurationPristine = this.provider.configuration === JSON.stringify(configurationWrapper.configuration);
       this.configurationIsValid = configurationWrapper.isValid;
@@ -161,7 +159,7 @@ export class ProviderSettingsComponent implements OnInit {
     });
   }
 
-  addDomainWhitelistPattern(event) {
+  addDomainWhitelistPattern(event: Event): void {
     event.preventDefault();
     if (this.domainWhitelistPattern) {
       if (!this.provider.domainWhitelist.some((el) => el === this.domainWhitelistPattern)) {
@@ -175,7 +173,7 @@ export class ProviderSettingsComponent implements OnInit {
     }
   }
 
-  removeDomainWhitelistPattern(dwPattern) {
+  removeDomainWhitelistPattern(dwPattern: string): void {
     const index = this.provider.domainWhitelist.indexOf(dwPattern);
     if (index > -1) {
       this.provider.domainWhitelist.splice(index, 1);
@@ -183,7 +181,7 @@ export class ProviderSettingsComponent implements OnInit {
     }
   }
 
-  valueCopied(message: string) {
+  valueCopied(message: string): void {
     this.snackbarService.open(message);
   }
 }
