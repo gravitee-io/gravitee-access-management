@@ -7,18 +7,20 @@ as it is the same scenario but with signed JWT instead of JWE.
 
 ```
 public static void main(String[] args) throws Exception {
-        final String jwt = "eyJra...BIsUZkw";
-        final com.nimbusds.jwt.JWT parse = JWTParser.parse(jwt);
+final String jwt = "eyJraWQiOiJyc2Etc2lnbmF0dXJlIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJhbGljZSIsImlzcyI6Imh0dHBzOlwvXC9jMmlkLmNvbSIsInN0YXRlIjoib3ZlcnJpZGUtc3RhdGUiLCJleHAiOjE1ODg2ODExMDAsIm5vbmNlIjoib3ZlcnJpZGUtbm9uY2UifQ.uQLxFiaReQwWqT-TnMXPNrIMdEaHMDlar90iuv_ub3njH1hTNIYV_IdRWs-2Skx5e9tYxnSNt7swHPE1aLKnnmylo52sa2-d7gOxkIiGzsnET8io-_AQsSocl25x8IiXP6IYyUSclVHFUNc_hjcbWkgw2oNXH8f6gx_z7nMahMbEW0L2XlA7fq7SZXzZE78hd9VZ3IaVVUHV90CafYt7kf_Y3Y7VpqoNPXpmfjLQKGWi9tXwmwfoS2OgqlrnXr5kVUiPhbO1OernunlZW7E3er3hBtguhYNzgtXU2iZQEjUD-rPfrnEJdNxdCxq8DnSgKJxBIzabjaJLG5BdgVD7qw";
+
         final JWK pubKey = JWK.parseFromPEMEncodedObjects("-----BEGIN PUBLIC KEY-----\n" +
-                "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsOVPMlbmEo2MV+4r1TRk\n" +
-                "Uxzal92iz4aiROuZ5uC2+BuZfETjbu6tgAS5Nn4x15YPhXHzV8Cs1Rp1QB5R4XJa\n" +
-                "h2laHBX4IBtu+1yEVIQdcHhMAyn/H+CYDM4RoGkSaHFGuImmhBNZ1X2AiNQSiQvD\n" +
-                "5JFZh+CByhsNVjRbgScrwH0BnhNLpB+mmd+tieCdtrhT1ocU89QnpbI+BoZIQD/l\n" +
-                "4QSFe0yrgFtz4aSdvR58BT195zu1IA0gwxR7bQsZ9tGbu4RRZKwLbe7S0L3PyoaF\n" +
-                "SH3pwq/JYGrbxqZWH4khzaBDgzqvX9OQYYbtTPWff+cqYMl4dgZ4kKPdKFHVrG80\n" +
-                "UwIDAQAB\n" +
+                "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlUn9O0xFVrbNCbLq9+jx\n" +
+                "QTWxdSaWajk71nJJ0nZPBCqzcyCUTRQR5Z8xFQ4RPM9aLrs9LLNOT1wvrU9J5Ym/\n" +
+                "3JzCKr1Q5AsEXRLOFSlH46ZB6FkqPl7BOU36N1kPN47eGfwNsA8UVsbiDEd4nymK\n" +
+                "WUF4W24MYMNweHyusjP5Ne5UUlEa8LBDnkfeNMnS4GBX/BGQdCFLh3jhNqPWIHyV\n" +
+                "2GrUKm43AYhRDPBXGdyjuamMaZtu58xgiauhnNB13D3m0zYs3YRJTugMWjAXsTST\n" +
+                "2X63VNvmvIcL9/gmSKNh33Xld78bT0gfooMXNIJ4Fvfem03w+yNs0RCAk8hgG7ge\n" +
+                "kQIDAQAB\n" +
                 "-----END PUBLIC KEY-----\n");
-        System.out.printf("");
+
+        System.out.println();
+        System.out.println();
 
         JWEAlgorithm alg = JWEAlgorithm.RSA_OAEP_256;
         EncryptionMethod enc = EncryptionMethod.A128CBC_HS256;
@@ -32,5 +34,50 @@ public static void main(String[] args) throws Exception {
                 new JWEHeader(alg, enc),
                 new Payload(jwt));
         jwe.encrypt(new RSAEncrypter(pubKey.toRSAKey().toRSAPublicKey(), cek));
-        System.out.println(jwe.serialize());
+        System.out.println("JWE for request : " + jwe.serialize());
+
+
+
+        final JWK privKey = JWK.parseFromPEMEncodedObjects("-----BEGIN PRIVATE KEY-----\n" +
+                "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCVSf07TEVWts0J\n" +
+                "sur36PFBNbF1JpZqOTvWcknSdk8EKrNzIJRNFBHlnzEVDhE8z1ouuz0ss05PXC+t\n" +
+                "T0nlib/cnMIqvVDkCwRdEs4VKUfjpkHoWSo+XsE5Tfo3WQ83jt4Z/A2wDxRWxuIM\n" +
+                "R3ifKYpZQXhbbgxgw3B4fK6yM/k17lRSURrwsEOeR940ydLgYFf8EZB0IUuHeOE2\n" +
+                "o9YgfJXYatQqbjcBiFEM8FcZ3KO5qYxpm27nzGCJq6Gc0HXcPebTNizdhElO6Axa\n" +
+                "MBexNJPZfrdU2+a8hwv3+CZIo2HfdeV3vxtPSB+igxc0gngW996bTfD7I2zREICT\n" +
+                "yGAbuB6RAgMBAAECggEAB2RTepUrNcD1ZA6M3duV3oG3GLLhbb8JvHOKPjaHcRBg\n" +
+                "NEofrbVZsYHxXzaEGfu2Xmv8+nKiZQGOhslPQmNQsa69WnpnP/NfsvAUbi3OFnKL\n" +
+                "/uIzWkU80gaPZiAtxbV4P9cgImCMxEMyvCLp0Q+wfvzj5bsMN9pVflHGIKK8KzRf\n" +
+                "byJ73eIzMq5DRN+xYHbgrv/fhne8gEQhrnpL+dVozhCxYBiPcXpC9qP96Xm7HFvJ\n" +
+                "zh5Dyc2oswkzPT9d1VuSBeArL2dSt2+79lIjLcTjPilBs4kxCS03Quv8yu1lxfAM\n" +
+                "bFxliCPfaIzwS16M3ZQtU+L4F28Tou2l51vajnijJQKBgQDKtBvg2ArpOXuFDv76\n" +
+                "210hY8x7ZYML8vhjY/Y8tlf4q39KwM7Se5BL+x0KiKCQeJL+ELvd+5UWGZH336so\n" +
+                "ALBQM3E0Xo8yWogEHptuemttTu2/tI13EPWTrh5d9uTglXnCnfjNAiGJEMxj/TjK\n" +
+                "ikVGa7VnH8Q2Znv7O16KE8V2swKBgQC8ipIUwIUUlcDBWfEqNg/7W48ef0DYJ4EM\n" +
+                "QFZ34DY8LnVnHKFmurDnkn/ePcvs6AdRNt2uG1t2PwnIyVNy4Qsm9W3zFhJZPd2Y\n" +
+                "NCg50+46avh7jDKfIh73DggxVFUhfUch81lx/xiUzNqvuHGoLMNn0ip84xcFqVrJ\n" +
+                "RQaE/BlXqwKBgQCu/y0uQPWygajMp7Sj16wgPmtzgKDRORMNo2ga5AUwrsY3QBuO\n" +
+                "BZT+s61PwcJ011N3ufSm4SLFsI+fIl8+KtIMe0zZPGV9wEC65b2kdFW4SbLhlTuo\n" +
+                "NmD8/Q5EavkPlpxG02DPhG51SaZbEGruGM9Ty3sRq5AWswWIUKn+pLEOFwKBgDMf\n" +
+                "9CqyZaPGU8VaST3j+QN0uWNQqFm0pJaY35mT78Dz7BvwtIdxukShAhFWenScGlfY\n" +
+                "Y9YxTuTKhTGv/fPZuDdxN8ZBxunyD6OVCQ9dO20V0plV0+g4zWK6qFgQASGaoe4/\n" +
+                "2ZJC1PyMbARYJGGw+a+uWp0Qyw5a9OY81F69KXYPAoGASeUeCdB1I6kYZGmOISpM\n" +
+                "n/mAnoRJNIqMeLdpUqruT4kx502tCj26VrD+86sAGjz3JcALE1JP7aXDc9gTKzNQ\n" +
+                "U/92KzpbkHyHnRVDc2y6+aZOCROEhChj/HEYrpp2oLiMh5ayLNuxDDqdpaslZE6o\n" +
+                "ILtQ9Ad5RTs7oaZwarMJwr0=\n" +
+                "-----END PRIVATE KEY-----");
+
+        System.out.println();
+        System.out.println("JWKS entry for ecnryption+ " + privKey.toJSONString());
+}
 ```
+
+## Cert generation for encryption use case
+
+openssl genrsa -out enc.key 2048
+openssl req -new -key enc.key -out enc.csr -sha256 -subj "/emailAddress=contact@graviteesource.com/CN=localhost/OU=Cockpit/O=GraviteeSource/L=Lille/ST=France/C=FR"
+openssl x509 -req -in enc.csr -key enc.key -set_serial 100 -days 3650 -outform PEM -out enc.cer -sha256 -passin pass:changeit
+openssl pkcs12 -export -inkey enc.key -in enc.cer -out enc.p12 -passout pass:changeit -name client1-jwks
+
+
+openssl rsa -in enc.key -pubout > enckey.pub
