@@ -366,7 +366,8 @@ mat-horizontal-stepper {
 }
 
 .gv-form-section {
-  padding: 20px;
+  position: relative;
+  padding: 30px 20px 20px 20px;
   background: #ffffff;
   border-radius: 8px;
   border: 1px solid map.get(gio.$mat-dove-palette, darker20);
