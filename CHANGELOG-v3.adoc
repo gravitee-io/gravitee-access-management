@@ -1,5 +1,24 @@
 # Change Log
 
+==  - 3.21.21 (2024-03-28)
+
+== What's new !
+
+
+
+=== Gateway
+
+* Revert: Passwordless authentication doesn't take the IDP status into account (#9494) https://github.com/gravitee-io/issues/issues/9615[#9615]
+* Addition of WebAuthn Credentials info into the context https://github.com/gravitee-io/issues/issues/9620[#9620]
+
+
+=== Console
+
+* User-agent showing 'undefined' in audit logs https://github.com/gravitee-io/issues/issues/9459[#9459]
+* Fetch user group doesn't persist https://github.com/gravitee-io/issues/issues/9609[#9609]
+
+
+
 ==  - 3.20.21 (2024-03-28)
 
 == What's new !
