@@ -1,5 +1,17 @@
 # Change Log
 
+==  - 3.20.21 (2024-03-28)
+
+== What's new !
+
+
+
+=== Gateway
+
+* Addition of WebAuthn Credentials info into the context https://github.com/gravitee-io/issues/issues/9620[#9620]
+
+
+
 ==  - 3.21.20 (2024-03-15)
 
 == What's new !
