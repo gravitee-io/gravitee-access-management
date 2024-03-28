@@ -11,28 +11,17 @@
  * Do not edit the class manually.
  */
 
-import { exists, } from '../runtime';
+import { exists } from '../runtime';
+import { PatchChallengeSettings, PatchChallengeSettingsFromJSON, PatchChallengeSettingsToJSON } from './PatchChallengeSettings';
+import { PatchEnrollSettings, PatchEnrollSettingsFromJSON, PatchEnrollSettingsToJSON } from './PatchEnrollSettings';
+import { PatchEnrollmentSettings, PatchEnrollmentSettingsFromJSON, PatchEnrollmentSettingsToJSON } from './PatchEnrollmentSettings';
 import {
-    PatchChallengeSettings,
-    PatchChallengeSettingsFromJSON,
-    PatchChallengeSettingsToJSON,
-} from './PatchChallengeSettings';
-import {
-    PatchEnrollSettings,
-    PatchEnrollSettingsFromJSON,
-    PatchEnrollSettingsToJSON,
-} from './PatchEnrollSettings';
-import {
-    PatchEnrollmentSettings,
-    PatchEnrollmentSettingsFromJSON,
-    PatchEnrollmentSettingsToJSON,
-} from './PatchEnrollmentSettings';
-import {
-    PatchRememberDeviceSettings,
-    PatchRememberDeviceSettingsFromJSON,
-    PatchRememberDeviceSettingsToJSON,
+  PatchRememberDeviceSettings,
+  PatchRememberDeviceSettingsFromJSON,
+  PatchRememberDeviceSettingsToJSON,
 } from './PatchRememberDeviceSettings';
 import { PatchFactorSettings, PatchFactorSettingsFromJSON } from './PatchFactorSettings';
+import { PatchStepUpAuthSettings } from './PatchStepAuthSettings';
 
 /**
  *
@@ -40,85 +29,88 @@ import { PatchFactorSettings, PatchFactorSettingsFromJSON } from './PatchFactorS
  * @interface PatchMFASettings
  */
 export interface PatchMFASettings {
-    /**
-     *
-     * @type {string}
-     * @memberof PatchMFASettings
-     */
-    loginRule?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchMFASettings
+   */
+  loginRule?: string;
 
-    factor: PatchFactorSettings;
-    /**
-     *
-     * @type {string}
-     * @memberof PatchMFASettings
-     */
-    stepUpAuthenticationRule?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof PatchMFASettings
-     */
-    adaptiveAuthenticationRule?: string;
-    /**
-     *
-     * @type {PatchRememberDeviceSettings}
-     * @memberof PatchMFASettings
-     */
-    rememberDevice?: PatchRememberDeviceSettings;
-    /**
-     *
-     * @type {PatchEnrollmentSettings}
-     * @memberof PatchMFASettings
-     */
-    enrollment?: PatchEnrollmentSettings;
-    /**
-     *
-     * @type {PatchEnrollSettings}
-     * @memberof PatchMFASettings
-     */
-    enroll?: PatchEnrollSettings;
-    /**
-     *
-     * @type {PatchChallengeSettings}
-     * @memberof PatchMFASettings
-     */
-    challenge?: PatchChallengeSettings;
+  factor: PatchFactorSettings;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchMFASettings
+   * @deprecated
+   */
+  stepUpAuthenticationRule?: string;
+
+  stepUpAuthentication?: PatchStepUpAuthSettings;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchMFASettings
+   */
+  adaptiveAuthenticationRule?: string;
+  /**
+   *
+   * @type {PatchRememberDeviceSettings}
+   * @memberof PatchMFASettings
+   */
+  rememberDevice?: PatchRememberDeviceSettings;
+  /**
+   *
+   * @type {PatchEnrollmentSettings}
+   * @memberof PatchMFASettings
+   */
+  enrollment?: PatchEnrollmentSettings;
+  /**
+   *
+   * @type {PatchEnrollSettings}
+   * @memberof PatchMFASettings
+   */
+  enroll?: PatchEnrollSettings;
+  /**
+   *
+   * @type {PatchChallengeSettings}
+   * @memberof PatchMFASettings
+   */
+  challenge?: PatchChallengeSettings;
 }
 
 export function PatchMFASettingsFromJSON(json: any): PatchMFASettings {
-    return PatchMFASettingsFromJSONTyped(json, false);
+  return PatchMFASettingsFromJSONTyped(json, false);
 }
 
 export function PatchMFASettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchMFASettings {
-    if (json == null) {
-        return json;
-    }
-    return {
-        'loginRule': !exists(json, 'loginRule') ? undefined : json['loginRule'],
-        'factor': !exists(json, 'factor') ? undefined : PatchFactorSettingsFromJSON(json['factor']),
-        'stepUpAuthenticationRule': !exists(json, 'stepUpAuthenticationRule') ? undefined : json['stepUpAuthenticationRule'],
-        'adaptiveAuthenticationRule': !exists(json, 'adaptiveAuthenticationRule') ? undefined : json['adaptiveAuthenticationRule'],
-        'rememberDevice': !exists(json, 'rememberDevice') ? undefined : PatchRememberDeviceSettingsFromJSON(json['rememberDevice']),
-        'enrollment': !exists(json, 'enrollment') ? undefined : PatchEnrollmentSettingsFromJSON(json['enrollment']),
-        'enroll': !exists(json, 'enroll') ? undefined : PatchEnrollSettingsFromJSON(json['enroll']),
-        'challenge': !exists(json, 'challenge') ? undefined : PatchChallengeSettingsFromJSON(json['challenge']),
-    };
+  if (json == null) {
+    return json;
+  }
+  return {
+    loginRule: !exists(json, 'loginRule') ? undefined : json['loginRule'],
+    factor: !exists(json, 'factor') ? undefined : PatchFactorSettingsFromJSON(json['factor']),
+    stepUpAuthenticationRule: !exists(json, 'stepUpAuthenticationRule') ? undefined : json['stepUpAuthenticationRule'],
+    adaptiveAuthenticationRule: !exists(json, 'adaptiveAuthenticationRule') ? undefined : json['adaptiveAuthenticationRule'],
+    rememberDevice: !exists(json, 'rememberDevice') ? undefined : PatchRememberDeviceSettingsFromJSON(json['rememberDevice']),
+    enrollment: !exists(json, 'enrollment') ? undefined : PatchEnrollmentSettingsFromJSON(json['enrollment']),
+    enroll: !exists(json, 'enroll') ? undefined : PatchEnrollSettingsFromJSON(json['enroll']),
+    challenge: !exists(json, 'challenge') ? undefined : PatchChallengeSettingsFromJSON(json['challenge']),
+  };
 }
 
 export function PatchMFASettingsToJSON(value?: PatchMFASettings | null): any {
-    if (value == null) {
-        return value;
-    }
-    return {
-        'loginRule': value.loginRule,
-        'factor': value.factor,
-        'stepUpAuthenticationRule': value.stepUpAuthenticationRule,
-        'adaptiveAuthenticationRule': value.adaptiveAuthenticationRule,
-        'rememberDevice': PatchRememberDeviceSettingsToJSON(value.rememberDevice),
-        'enrollment': PatchEnrollmentSettingsToJSON(value.enrollment),
-        'enroll': PatchEnrollSettingsToJSON(value.enroll),
-        'challenge': PatchChallengeSettingsToJSON(value.challenge),
-    };
+  if (value == null) {
+    return value;
+  }
+  return {
+    loginRule: value.loginRule,
+    factor: value.factor,
+    stepUpAuthenticationRule: value.stepUpAuthenticationRule,
+    stepUpAuthentication: PatchStepUpAuthSettings(value.stepUpAuthentication),
+    adaptiveAuthenticationRule: value.adaptiveAuthenticationRule,
+    rememberDevice: PatchRememberDeviceSettingsToJSON(value.rememberDevice),
+    enrollment: PatchEnrollmentSettingsToJSON(value.enrollment),
+    enroll: PatchEnrollSettingsToJSON(value.enroll),
+    challenge: PatchChallengeSettingsToJSON(value.challenge),
+  };
 }
-

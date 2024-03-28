@@ -29,6 +29,8 @@ import { ThemeApi } from '@management-apis/ThemeApi';
 import { FormApi } from '@management-apis/FormApi';
 import { FactorApi } from '@management-apis/FactorApi';
 import { ResourceApi } from '@management-apis/ResourceApi';
+import { DevicesApi } from '@management-apis/DevicesApi';
+import { DeviceIdentifiersApi } from '@management-apis/DeviceIdentifiersApi';
 
 function createAccessTokenConfig(accessToken) {
   return new Configuration({ ...managementConf, apiKey: 'Bearer ' + accessToken });
@@ -93,4 +95,8 @@ export function getFactorApi(accessToken) {
 
 export function getResourceApi(accessToke) {
   return new ResourceApi(createAccessTokenConfig(accessToke));
+}
+
+export function getDeviceIdentifiersApi(accessToken) {
+  return new DeviceIdentifiersApi(createAccessTokenConfig(accessToken));
 }
