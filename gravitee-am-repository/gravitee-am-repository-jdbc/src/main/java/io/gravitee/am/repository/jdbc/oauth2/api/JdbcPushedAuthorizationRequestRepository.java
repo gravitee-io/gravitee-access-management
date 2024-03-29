@@ -78,6 +78,7 @@ public class JdbcPushedAuthorizationRequestRepository extends AbstractJdbcReposi
                 .doOnError(error -> LOGGER.error("Unable to delete PushedAuthorizationRequest with id {}", id, error));
     }
 
+    @Override
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
