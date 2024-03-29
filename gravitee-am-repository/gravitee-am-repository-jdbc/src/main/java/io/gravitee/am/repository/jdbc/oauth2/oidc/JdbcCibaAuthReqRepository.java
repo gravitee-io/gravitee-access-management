@@ -97,9 +97,10 @@ public class JdbcCibaAuthReqRepository extends AbstractJdbcRepository implements
         return monoToCompletable(template.delete(Query.query(where("id").is(id)), JdbcCibaAuthRequest.class));
     }
 
+    @Override
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(template.delete(Query.query(where("expire_at").lessThan(now)), JdbcRequestObject.class)).doOnError(error -> LOGGER.error("Unable to purge CibaAuthRequests", error));
+        return monoToCompletable(template.delete(Query.query(where("expire_at").lessThan(now)), JdbcCibaAuthRequest.class)).doOnError(error -> LOGGER.error("Unable to purge CibaAuthRequests", error));
     }
 }
