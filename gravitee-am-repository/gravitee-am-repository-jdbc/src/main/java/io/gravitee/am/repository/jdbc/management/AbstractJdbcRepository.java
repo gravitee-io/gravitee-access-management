@@ -54,10 +54,6 @@ public abstract class AbstractJdbcRepository {
 
     @Autowired
     protected MappingR2dbcConverter rowMapper;
-/*
-    protected <T> GenericInsertSpec<Map<String, Object>> addQuotedField(GenericInsertSpec<Map<String, Object>> spec, String name, Object value, Class<T> type) {
-        return value == null ? spec.nullValue(SqlIdentifier.quoted(name), type) : spec.value(SqlIdentifier.quoted(name), value);
-    }*/
 
     protected <T> DatabaseClient.GenericExecuteSpec addQuotedField(DatabaseClient.GenericExecuteSpec spec, String name, Object value, Class<T> type) {
         return value == null ? spec.bindNull(name, type) : spec.bind(name, value);
