@@ -16,6 +16,7 @@
 package io.gravitee.am.management.services.purge;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -35,7 +36,7 @@ public enum TableName {
     user_activities,
     devices;
 
-    public static TableName getValueOf(String value) {
-        return Arrays.stream(TableName.values()).filter(i -> i.name().equals(value)).findFirst().orElse(null);
+    public static Optional<TableName> getValueOf(String value) {
+        return Arrays.stream(TableName.values()).filter(tableName -> tableName.name().equals(value)).findFirst();
     }
 }
