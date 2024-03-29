@@ -134,6 +134,7 @@ public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implement
         return loginAttemptRepository.deleteById(id);
     }
 
+    @Override
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
