@@ -16,6 +16,7 @@
 package io.gravitee.am.management.services.purge;
 
 import io.gravitee.common.service.AbstractService;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,11 +88,10 @@ public class ScheduledPurgeService extends AbstractService implements Runnable {
      */
     private void doPurgeExpiredData() {
         logger.debug("Cleaning expired data #{} started at {}", counter.incrementAndGet(), Instant.now().toString());
-        this.purgeManager.purge(Arrays.asList(exclude.split(","))
-                .stream()
+        this.purgeManager.purge(Arrays.stream(exclude.split(","))
                 .map(String::trim)
                 .filter(value -> !value.isEmpty())
-                .map(TableName::valueOf)
+                .flatMap(value -> TableName.getValueOf(value).stream())
                 .collect(Collectors.toList()));
         logger.debug("Cleaning expired data #{} ended at {}", counter.get(), Instant.now().toString());
     }

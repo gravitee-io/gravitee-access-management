@@ -78,6 +78,7 @@ public class JdbcRequestObjectRepository extends AbstractJdbcRepository implemen
                 .doOnError(error -> LOGGER.error("Unable to delete RequestObject with id {}", id, error));
     }
 
+    @Override
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
