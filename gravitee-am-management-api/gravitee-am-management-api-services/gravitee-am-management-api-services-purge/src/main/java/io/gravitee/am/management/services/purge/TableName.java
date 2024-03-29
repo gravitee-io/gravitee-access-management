@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.management.services.purge;
 
+import java.util.Arrays;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -31,5 +33,9 @@ public enum TableName {
     pushed_authorization_requests,
     ciba_auth_requests,
     user_activities,
-    devices,
+    devices;
+
+    public static TableName getValueOf(String value) {
+        return Arrays.stream(TableName.values()).filter(i -> i.name().equals(value)).findFirst().orElse(null);
+    }
 }

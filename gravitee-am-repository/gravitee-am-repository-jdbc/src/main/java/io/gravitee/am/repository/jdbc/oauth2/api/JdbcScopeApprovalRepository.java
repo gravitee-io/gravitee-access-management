@@ -150,6 +150,7 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
         return scopeApprovalRepository.deleteById(id);
     }
 
+    @Override
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
