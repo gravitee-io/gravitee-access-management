@@ -146,6 +146,7 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
                 .doOnError(error -> LOGGER.error("Unable to retrieve AuthorizationCode with code {}", code));
     }
 
+    @Override
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);

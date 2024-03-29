@@ -179,6 +179,7 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
                         domainId, userId, error));
     }
 
+    @Override
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
