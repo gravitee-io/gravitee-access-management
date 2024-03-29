@@ -138,6 +138,7 @@ public class JdbcPermissionTicketRepository extends AbstractJdbcRepository imple
         return permissionTicketRepository.deleteById(id);
     }
 
+    @Override
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
