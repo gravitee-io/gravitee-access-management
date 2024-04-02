@@ -34,6 +34,11 @@ export class ApplicationSaml2Component implements OnInit {
   editMode: boolean;
   certificates: any[] = [];
   certificatePublicKeys: any[] = [];
+  bindings: any[] = [
+    { name: 'Initial-Request', value: 'urn:oasis:names:tc:SAML:2.0:bindings:custom:Initial-Request' },
+    { name: 'HTTP-POST', value: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' },
+    { name: 'HTTP-Redirect', value: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' },
+  ];
 
   constructor(
     private router: Router,
@@ -65,5 +70,10 @@ export class ApplicationSaml2Component implements OnInit {
       this.form.reset(this.application.settings.saml);
       this.snackbarService.open('Application updated');
     });
+  }
+
+  responseBindingChanged(value) {
+    this.applicationSamlSettings.responseBinding = value;
+    this.formChanged = true;
   }
 }
