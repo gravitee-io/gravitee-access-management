@@ -27,6 +27,7 @@ public class ApplicationSAMLSettingsMongo {
     private String certificate;
     private boolean wantResponseSigned = true;
     private boolean wantAssertionsSigned;
+    private String responseBinding;
 
     public String getEntityId() {
         return entityId;
@@ -74,5 +75,13 @@ public class ApplicationSAMLSettingsMongo {
 
     public void setWantAssertionsSigned(boolean wantAssertionsSigned) {
         this.wantAssertionsSigned = wantAssertionsSigned;
+    }
+
+    public String getResponseBinding() {
+        return responseBinding;
+    }
+
+    public void setResponseBinding(String responseBinding) {
+        this.responseBinding = responseBinding;
     }
 }
