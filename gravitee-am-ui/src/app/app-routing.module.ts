@@ -240,6 +240,7 @@ import { AmFeature } from './components/gio-license/gio-license-data';
 import { UserIdentitiesComponent } from './domain/settings/users/user/identities/identities.component';
 import { UserIdentitiesResolver } from './resolvers/user-identities.resolver';
 import { PasswordPoliciesComponent } from './domain/settings/password-policies/domain-password-policies.component';
+import { DomainPasswordPolicyComponent } from './domain/settings/password-policy/domain-password-policy.component';
 
 const applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -1727,12 +1728,7 @@ export const routes: Routes = [
                         ],
                       },
                       {
-                        path: 'password-policy',
-                        component: PasswordPoliciesComponent,
-                        resolve: {
-                          providers: ProvidersResolver,
-                          identities: IdentitiesResolver,
-                        },
+                        path: 'password-policies',
                         canActivate: [AuthGuard],
                         data: {
                           menu: {
@@ -1741,9 +1737,36 @@ export const routes: Routes = [
                             level: 'level2',
                           },
                           perms: {
-                            only: ['application_settings_read'],
+                            only: ['domain_settings_read'],
                           },
                         },
+                        children: [
+                          {
+                            path: '',
+                            pathMatch: 'full',
+                            component: PasswordPoliciesComponent,
+                            canActivate: [AuthGuard],
+                            resolve: {
+                              providers: ProvidersResolver,
+                              identities: IdentitiesResolver,
+                            },
+                            data: {
+                              perms: {
+                                only: ['domain_settings_read'],
+                              },
+                            },
+                          },
+                          {
+                            path: 'new',
+                            component: DomainPasswordPolicyComponent,
+                            canActivate: [AuthGuard],
+                            data: {
+                              perms: {
+                                only: ['domain_settings_update'],
+                              },
+                            },
+                          },
+                        ],
                       },
                       {
                         path: 'audits',
