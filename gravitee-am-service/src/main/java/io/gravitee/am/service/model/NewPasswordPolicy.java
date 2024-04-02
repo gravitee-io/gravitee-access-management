@@ -22,6 +22,8 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -86,4 +88,7 @@ public class NewPasswordPolicy {
      * How many passwords are preserved into the history
      */
     private Short oldPasswords;
+
+    private List<String> idpIds;
+    private String defaultIdpId;
 }

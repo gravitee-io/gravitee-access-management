@@ -15,10 +15,11 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.List;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -42,4 +43,6 @@ public class PasswordPolicyMongo extends Auditable {
     private Integer expiryDuration;
     private boolean passwordHistoryEnabled;
     private Short oldPasswords;
+    private List<String> idpIds;
+    private String defaultIdpId;
 }

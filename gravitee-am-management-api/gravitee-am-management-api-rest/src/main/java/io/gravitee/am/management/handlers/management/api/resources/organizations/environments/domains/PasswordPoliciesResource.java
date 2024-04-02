@@ -19,7 +19,6 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.PasswordPolicy;
-import io.gravitee.am.service.model.PasswordPolicyElement;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewPasswordPolicy;
@@ -61,7 +60,7 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
                     "or DOMAIN[READ] permission on the specified organization. ")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List registered password policies for a security domain",   content = @Content(mediaType =  "application/json",
-                    array = @ArraySchema(schema = @Schema(implementation = PasswordPolicyElement.class)))),
+                    array = @ArraySchema(schema = @Schema(implementation = PasswordPolicy.class)))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
@@ -72,7 +71,8 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .map(existingDomain -> List.of(new PasswordPolicyElement())))
+                        .map(__->new PasswordPolicy())
+                        .map(this::filterPasswordPolicy))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -109,5 +109,14 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
     @Path("{policy}")
     public PasswordPolicyResource getPasswordPolicy() {
         return resourceContext.getResource(PasswordPolicyResource.class);
+    }
+
+    private PasswordPolicy filterPasswordPolicy(PasswordPolicy passwordPolicy){
+        PasswordPolicy passwordPolicyShort = new PasswordPolicy();
+        passwordPolicyShort.setId(passwordPolicy.getId());
+        passwordPolicyShort.setName(passwordPolicy.getName());
+        passwordPolicyShort.setDefaultIdpId(passwordPolicy.getDefaultIdpId());
+        passwordPolicyShort.setIdpIds(passwordPolicy.getIdpIds());
+        return passwordPolicyShort;
     }
 }

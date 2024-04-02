@@ -60,11 +60,13 @@ public class JdbcPasswordPolicyRepository extends AbstractJdbcRepository impleme
     private static final String EXPIRY_DURATION = "expiry_duration";
     private static final String PWD_HISTORY_ENABLED = "password_history_enabled";
     private static final String OLD_PASSWORD = "old_passwords";
+    private static final String IDP_IDS = "idp_ids";
+    private static final String DEFAULT_IDP_ID = "default_idp_id";
 
     private String insertStatement;
     private String updateStatement;
 
-    private static final List<String> columns = List.of(
+    private static final List<String> columns = java.util.List.of(
             ID,
             REFERENCE_TYPE,
             REFERENCE_ID,
@@ -80,7 +82,9 @@ public class JdbcPasswordPolicyRepository extends AbstractJdbcRepository impleme
             EXCLUDE_USER_INFO_IN_PWD,
             EXPIRY_DURATION,
             PWD_HISTORY_ENABLED,
-            OLD_PASSWORD
+            OLD_PASSWORD,
+            IDP_IDS,
+            DEFAULT_IDP_ID
     );
 
     @Autowired

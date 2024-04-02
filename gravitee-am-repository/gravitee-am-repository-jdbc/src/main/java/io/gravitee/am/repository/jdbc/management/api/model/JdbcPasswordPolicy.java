@@ -22,6 +22,7 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -64,4 +65,8 @@ public class JdbcPasswordPolicy {
     private boolean passwordHistoryEnabled;
     @Column("old_passwords")
     private Short oldPasswords;
+    @Column("idp_ids")
+    private List<String> idpIds;
+    @Column("default_idp_ids")
+    private String defaultIdpId;
 }
