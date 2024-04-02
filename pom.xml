@@ -73,6 +73,7 @@
     </modules>
 
     <properties>
+        <awaitility.version>4.2.0</awaitility.version>
         <gravitee-bom.version>4.0.3</gravitee-bom.version>
         <gravitee-common.version>2.1.0</gravitee-common.version>
         <gravitee-plugin.version>1.26.1</gravitee-plugin.version>
@@ -407,6 +408,12 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>org.awaitility</groupId>
+                <artifactId>awaitility</artifactId>
+                <version>${awaitility.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.zapodot</groupId>
                 <artifactId>embedded-ldap-junit</artifactId>
                 <version>${embedded-ldap-junit.version}</version>
@@ -447,6 +454,11 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
