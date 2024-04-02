@@ -439,6 +439,7 @@ import { InfoBannerComponent } from './domain/applications/application/advanced/
 import { ExpressionInfoDialogComponent } from './domain/applications/application/advanced/factors/expression-info-dialog/expression-info-dialog.component';
 import { FactorsSelectDialogComponent } from './domain/applications/application/advanced/factors/mfa/factors-select-dialog/factors-select-dialog.component';
 import { SelectionRuleDialogComponent } from './domain/applications/application/advanced/factors/selection-rule-dialog/selection-rule-dialog.component';
+import { PasswordPoliciesComponent } from './domain/settings/password-policies/domain-password-policies.component';
 
 @NgModule({
   declarations: [
@@ -689,6 +690,7 @@ import { SelectionRuleDialogComponent } from './domain/applications/application/
     DisplayableItemPipe,
     MfaChallengeComponent,
     FactorsSelectDialogComponent,
+    PasswordPoliciesComponent,
   ],
   imports: [
     BrowserModule,

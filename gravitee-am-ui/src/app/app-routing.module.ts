@@ -136,7 +136,6 @@ import { ApplicationEmailComponent } from './domain/applications/application/des
 import { ApplicationAdvancedComponent } from './domain/applications/application/advanced/advanced.component';
 import { ApplicationGeneralComponent } from './domain/applications/application/advanced/general/general.component';
 import { PasswordPolicyComponent } from './domain/applications/application/advanced/password-policy/password-policy.component';
-import { DomainPasswordPolicyComponent } from './domain/settings/password-policy/domain-password-policy.component';
 import { ApplicationAccountSettingsComponent } from './domain/applications/application/advanced/account/account.component';
 import { ApplicationOAuth2Component } from './domain/applications/application/advanced/oauth2/oauth2.component';
 import { ApplicationSaml2Component } from './domain/applications/application/advanced/saml2/saml2.component';
@@ -240,6 +239,7 @@ import { LicenseGuard } from './guards/license-guard.service';
 import { AmFeature } from './components/gio-license/gio-license-data';
 import { UserIdentitiesComponent } from './domain/settings/users/user/identities/identities.component';
 import { UserIdentitiesResolver } from './resolvers/user-identities.resolver';
+import { PasswordPoliciesComponent } from './domain/settings/password-policies/domain-password-policies.component';
 
 const applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -1728,7 +1728,7 @@ export const routes: Routes = [
                       },
                       {
                         path: 'password-policy',
-                        component: DomainPasswordPolicyComponent,
+                        component: PasswordPoliciesComponent,
                         canActivate: [AuthGuard],
                         data: {
                           menu: {
