@@ -452,6 +452,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSAMLSettingsMongo.setCertificate(other.getCertificate());
         applicationSAMLSettingsMongo.setWantResponseSigned(other.isWantResponseSigned());
         applicationSAMLSettingsMongo.setWantAssertionsSigned(other.isWantAssertionsSigned());
+        applicationSAMLSettingsMongo.setResponseBinding(other.getResponseBinding());
         return applicationSAMLSettingsMongo;
     }
 
@@ -466,6 +467,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSAMLSettings.setCertificate(other.getCertificate());
         applicationSAMLSettings.setWantResponseSigned(other.isWantResponseSigned());
         applicationSAMLSettings.setWantAssertionsSigned(other.isWantAssertionsSigned());
+        applicationSAMLSettings.setResponseBinding(other.getResponseBinding());
         return applicationSAMLSettings;
     }
 
