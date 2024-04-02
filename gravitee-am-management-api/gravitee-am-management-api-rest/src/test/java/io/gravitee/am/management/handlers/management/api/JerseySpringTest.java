@@ -45,6 +45,7 @@ import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.OrganizationService;
+import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.RoleService;
@@ -250,6 +251,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected HttpServletRequest httpServletRequest;
+
+    @Autowired
+    protected PasswordPolicyService passwordPolicyService;
 
     @Before
     public void init() {
@@ -543,6 +547,11 @@ public abstract class JerseySpringTest {
         @Bean
         public HttpServletRequest httpServletRequest() {
             return mock(HttpServletRequest.class);
+        }
+
+        @Bean
+        public PasswordPolicyService passwordPolicyService() {
+            return mock(PasswordPolicyService.class);
         }
 
     }

@@ -19,7 +19,9 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.PasswordPolicy;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewPasswordPolicy;
 import io.gravitee.common.http.MediaType;
@@ -34,10 +36,17 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 import java.util.List;
@@ -48,16 +57,20 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 @Tag(name = "Password Policy")
+@Slf4j
 public class PasswordPoliciesResource extends AbstractDomainResource {
+
+    @Autowired
+    private PasswordPolicyService passwordPolicyService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             operationId = "listPasswordPolicies",
             summary = "List registered password policies for a security domain",
-            description = "User must have the DOMAIN[READ] permission on the specified domain " +
-                    "or DOMAIN[READ] permission on the specified environment " +
-                    "or DOMAIN[READ] permission on the specified organization. ")
+            description = "User must have the DOMAIN_SETTINGS[READ] permission on the specified domain " +
+                    "or DOMAIN_SETTINGS[READ] permission on the specified environment " +
+                    "or DOMAIN_SETTINGS[READ] permission on the specified organization. ")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List registered password policies for a security domain",   content = @Content(mediaType =  "application/json",
                     array = @ArraySchema(schema = @Schema(implementation = PasswordPolicy.class)))),
@@ -68,7 +81,7 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
             @PathParam("domain") String domain,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN, Acl.READ)
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_SETTINGS, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .map(__->new PasswordPolicy())
@@ -80,10 +93,10 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Operation(summary = "Create a password policy",
-            operationId = "createPasswordPolicies",
-            description = "User must have the DOMAIN[UPDATE] permission on the specified domain " +
-                    "or DOMAIN[UPDATE] permission on the specified environment " +
-                    "or DOMAIN[UPDATE] permission on the specified organization")
+            operationId = "createPasswordPolicy",
+            description = "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_SETTINGS[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_SETTINGS[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Password Policy successfully created"),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
@@ -93,15 +106,17 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
             @PathParam("domain") String domain,
             @Parameter(name = "passwordPolicy", required = true) @Valid @NotNull final NewPasswordPolicy newPasswordPolicy,
             @Suspended final AsyncResponse response) {
+        final var authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN, Acl.UPDATE)
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_SETTINGS, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .map(__ -> new PasswordPolicy())
+                        .flatMapSingle(__ -> passwordPolicyService.create(ReferenceType.DOMAIN, domain, newPasswordPolicy, authenticatedUser))
                         .map(pwdPolicy -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/password-policies/" + pwdPolicy.getId()))
                                 .entity(pwdPolicy)
                                 .build()))
+                .doOnError(error -> log.error("Create Password Policy fails: ", error))
                 .subscribe(response::resume, response::resume);
     }
 
