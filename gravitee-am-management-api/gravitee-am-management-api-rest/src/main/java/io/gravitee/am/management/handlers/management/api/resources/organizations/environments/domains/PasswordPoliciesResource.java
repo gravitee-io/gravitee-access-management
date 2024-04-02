@@ -115,8 +115,7 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
         PasswordPolicy passwordPolicyShort = new PasswordPolicy();
         passwordPolicyShort.setId(passwordPolicy.getId());
         passwordPolicyShort.setName(passwordPolicy.getName());
-        passwordPolicyShort.setDefaultIdpId(passwordPolicy.getDefaultIdpId());
-        passwordPolicyShort.setIdpIds(passwordPolicy.getIdpIds());
+        passwordPolicyShort.setDefaultPolicy(passwordPolicy.getDefaultPolicy());
         return passwordPolicyShort;
     }
 }

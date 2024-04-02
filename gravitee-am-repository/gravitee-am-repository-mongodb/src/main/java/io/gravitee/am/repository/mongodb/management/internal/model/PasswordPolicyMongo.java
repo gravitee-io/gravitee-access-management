@@ -43,6 +43,5 @@ public class PasswordPolicyMongo extends Auditable {
     private Integer expiryDuration;
     private boolean passwordHistoryEnabled;
     private Short oldPasswords;
-    private List<String> idpIds;
-    private String defaultIdpId;
+    private Boolean defaultPolicy;
 }

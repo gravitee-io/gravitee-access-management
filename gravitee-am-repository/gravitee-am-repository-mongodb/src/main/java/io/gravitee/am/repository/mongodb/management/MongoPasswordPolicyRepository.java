@@ -116,8 +116,7 @@ public class MongoPasswordPolicyRepository extends AbstractManagementMongoReposi
         policy.setExcludeUserProfileInfoInPassword(passwordPolicyMongo.getExcludeUserProfileInfoInPassword());
         policy.setMaxLength(passwordPolicyMongo.getMaxLength());
         policy.setIncludeSpecialCharacters(passwordPolicyMongo.getIncludeSpecialCharacters());
-        policy.setIdpIds(passwordPolicyMongo.getIdpIds());
-        policy.setDefaultIdpId(passwordPolicyMongo.getDefaultIdpId());
+        policy.setDefaultPolicy(passwordPolicyMongo.getDefaultPolicy());
 
         return policy;
     }
@@ -143,8 +142,7 @@ public class MongoPasswordPolicyRepository extends AbstractManagementMongoReposi
         policyMongo.setExcludeUserProfileInfoInPassword(passwordPolicy.getExcludeUserProfileInfoInPassword());
         policyMongo.setMaxLength(passwordPolicy.getMaxLength());
         policyMongo.setIncludeSpecialCharacters(passwordPolicy.getIncludeSpecialCharacters());
-        policyMongo.setIdpIds(passwordPolicy.getIdpIds());
-        policyMongo.setDefaultIdpId(policyMongo.getDefaultIdpId());
+        policyMongo.setDefaultPolicy(policyMongo.getDefaultPolicy());
 
         return policyMongo;
     }

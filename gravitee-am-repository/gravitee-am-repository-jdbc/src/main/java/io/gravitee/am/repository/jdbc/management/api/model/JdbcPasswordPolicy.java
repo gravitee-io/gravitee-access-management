@@ -65,8 +65,6 @@ public class JdbcPasswordPolicy {
     private boolean passwordHistoryEnabled;
     @Column("old_passwords")
     private Short oldPasswords;
-    @Column("idp_ids")
-    private List<String> idpIds;
-    @Column("default_idp_ids")
-    private String defaultIdpId;
+    @Column("default_policy")
+    private Boolean defaultPolicy;
 }

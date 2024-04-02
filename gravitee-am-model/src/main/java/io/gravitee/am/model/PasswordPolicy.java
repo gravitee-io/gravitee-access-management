@@ -91,6 +91,5 @@ public class PasswordPolicy implements Resource {
      */
     private Short oldPasswords;
 
-    private List<String> idpIds;
-    private String defaultIdpId;
+    private Boolean defaultPolicy;
 }

@@ -60,6 +60,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
     public static final String COL_DOMAIN_WHITELIST = "domain_whitelist";
     public static final String COL_MAPPERS = "mappers";
     public static final String COL_ROLE_MAPPER = "role_mapper";
+    public static final String COL_PASSWORD_POLICY = "password_policy";
 
     private static final List<String> columns = List.of(
             COL_ID,
@@ -74,7 +75,8 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
             COL_UPDATED_AT,
             COL_DOMAIN_WHITELIST,
             COL_MAPPERS,
-            COL_ROLE_MAPPER
+            COL_ROLE_MAPPER,
+            COL_PASSWORD_POLICY
     );
 
     private String INSERT_STATEMENT;

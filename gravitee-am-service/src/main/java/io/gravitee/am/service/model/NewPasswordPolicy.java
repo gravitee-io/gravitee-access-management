@@ -89,6 +89,5 @@ public class NewPasswordPolicy {
      */
     private Short oldPasswords;
 
-    private List<String> idpIds;
-    private String defaultIdpId;
+    private boolean defaultPolicy;
 }
