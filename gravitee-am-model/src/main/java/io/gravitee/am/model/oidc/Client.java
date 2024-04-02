@@ -233,6 +233,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private boolean wantAssertionsSigned;
 
+    private String responseBinding;
+
     // ----------- Refresh token Settings -----------
     private boolean disableRefreshTokenRotation;
 
@@ -322,6 +324,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.samlCertificate = other.samlCertificate;
         this.wantResponseSigned = other.wantResponseSigned;
         this.wantAssertionsSigned = other.wantAssertionsSigned;
+        this.responseBinding = other.responseBinding;
         this.disableRefreshTokenRotation = other.disableRefreshTokenRotation;
     }
 
@@ -1032,6 +1035,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setWantAssertionsSigned(boolean wantAssertionsSigned) {
         this.wantAssertionsSigned = wantAssertionsSigned;
+    }
+
+    public String getResponseBinding() {
+        return responseBinding;
+    }
+
+    public void setResponseBinding(String responseBinding) {
+        this.responseBinding = responseBinding;
     }
 
     public boolean isBackchannelUserCodeParameter() {
