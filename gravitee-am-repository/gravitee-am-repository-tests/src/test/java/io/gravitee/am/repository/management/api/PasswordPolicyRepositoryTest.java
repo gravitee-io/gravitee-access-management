@@ -16,7 +16,6 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.PasswordPolicy;
-import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -24,6 +23,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -142,7 +142,7 @@ public class PasswordPolicyRepositoryTest extends AbstractManagementTest {
         passwordPolicy.setName("a name");
         passwordPolicy.setCreatedAt(new Date());
         passwordPolicy.setUpdatedAt(new Date());
-        passwordPolicy.setOldPasswords((short)(Math.random()*100));
+        passwordPolicy.setOldPasswords((short) (Math.random() * 100));
         passwordPolicy.setExcludePasswordsInDictionary(Boolean.TRUE);
         passwordPolicy.setExcludeUserProfileInfoInPassword(Boolean.FALSE);
         passwordPolicy.setPasswordHistoryEnabled(Boolean.TRUE);
@@ -150,9 +150,11 @@ public class PasswordPolicyRepositoryTest extends AbstractManagementTest {
         passwordPolicy.setIncludeNumbers(Boolean.FALSE);
         passwordPolicy.setIncludeSpecialCharacters(Boolean.FALSE);
         passwordPolicy.setLettersInMixedCase(Boolean.FALSE);
-        passwordPolicy.setMaxConsecutiveLetters((int)(Math.random()*100));
-        passwordPolicy.setMinLength((int)(Math.random()*100));
-        passwordPolicy.setMaxLength((int)(Math.random()*100));
+        passwordPolicy.setMaxConsecutiveLetters((int) (Math.random() * 100));
+        passwordPolicy.setMinLength((int) (Math.random() * 100));
+        passwordPolicy.setMaxLength((int) (Math.random() * 100));
+        passwordPolicy.setDefaultIdpId("idp_id1");
+        passwordPolicy.setIdpIds(List.of("idp_id1", "idp_id2"));
         return passwordPolicy;
     }
 
@@ -170,5 +172,7 @@ public class PasswordPolicyRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(g -> g.getLettersInMixedCase().equals(expected.getLettersInMixedCase()));
         testObserver.assertValue(g -> g.getIncludeSpecialCharacters().equals(expected.getIncludeSpecialCharacters()));
         testObserver.assertValue(g -> g.getMaxConsecutiveLetters().equals(expected.getMaxConsecutiveLetters()));
+        testObserver.assertValue(g -> g.getDefaultIdpId().equals(expected.getDefaultIdpId()));
+        testObserver.assertValue(g -> g.getIdpIds().equals(expected.getIdpIds()));
     }
 }
