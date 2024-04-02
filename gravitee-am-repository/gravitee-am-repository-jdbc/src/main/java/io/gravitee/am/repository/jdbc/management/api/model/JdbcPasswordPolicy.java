@@ -61,7 +61,7 @@ public class JdbcPasswordPolicy {
     @Column("expiry_duration")
     private Integer expiryDuration;
     @Column("password_history_enabled")
-    private boolean passwordHistoryEnabled;
+    private Boolean passwordHistoryEnabled;
     @Column("old_passwords")
     private Short oldPasswords;
     @Column("default_policy")

@@ -107,7 +107,7 @@ public class MongoPasswordPolicyRepository extends AbstractManagementMongoReposi
         policy.setMinLength(passwordPolicyMongo.getMinLength());
         policy.setMaxConsecutiveLetters(passwordPolicyMongo.getMaxConsecutiveLetters());
         policy.setOldPasswords(passwordPolicyMongo.getOldPasswords());
-        policy.setPasswordHistoryEnabled(passwordPolicyMongo.isPasswordHistoryEnabled());
+        policy.setPasswordHistoryEnabled(passwordPolicyMongo.getPasswordHistoryEnabled());
         policy.setLettersInMixedCase(passwordPolicyMongo.getLettersInMixedCase());
         policy.setIncludeSpecialCharacters(passwordPolicyMongo.getIncludeSpecialCharacters());
         policy.setExpiryDuration(passwordPolicyMongo.getExpiryDuration());
@@ -133,7 +133,7 @@ public class MongoPasswordPolicyRepository extends AbstractManagementMongoReposi
         policyMongo.setMinLength(passwordPolicy.getMinLength());
         policyMongo.setMaxConsecutiveLetters(passwordPolicy.getMaxConsecutiveLetters());
         policyMongo.setOldPasswords(passwordPolicy.getOldPasswords());
-        policyMongo.setPasswordHistoryEnabled(passwordPolicy.isPasswordHistoryEnabled());
+        policyMongo.setPasswordHistoryEnabled(passwordPolicy.getPasswordHistoryEnabled());
         policyMongo.setLettersInMixedCase(passwordPolicy.getLettersInMixedCase());
         policyMongo.setIncludeSpecialCharacters(passwordPolicy.getIncludeSpecialCharacters());
         policyMongo.setExpiryDuration(passwordPolicy.getExpiryDuration());

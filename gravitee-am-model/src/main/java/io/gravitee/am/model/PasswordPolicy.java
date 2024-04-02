@@ -83,7 +83,7 @@ public class PasswordPolicy implements Resource {
     /**
      * Does the password history is enabled to prevent the usage of old password
      */
-    private boolean passwordHistoryEnabled;
+    private Boolean passwordHistoryEnabled;
 
     /**
      * How many passwords are preserved into the history

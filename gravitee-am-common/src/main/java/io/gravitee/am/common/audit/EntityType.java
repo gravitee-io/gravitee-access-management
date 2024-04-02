@@ -53,4 +53,5 @@ public interface EntityType {
     String I18N_DICTIONARY = "I18N_DICTIONARY";
     String THEME = "THEME";
     String MFA_FACTOR= "MFA_FACTOR";
+    String PASSWORD_POLICY= "PASSWORD_POLICY";
 }
