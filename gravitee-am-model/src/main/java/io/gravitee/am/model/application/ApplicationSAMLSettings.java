@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model.application;
 
+import io.gravitee.am.common.saml2.Binding;
 import io.gravitee.am.model.oidc.Client;
 
 /**
@@ -50,6 +51,11 @@ public class ApplicationSAMLSettings {
      */
     private boolean wantAssertionsSigned;
 
+    /**
+     * SP preferred response binding
+     */
+    private String responseBinding = Binding.INITIAL_REQUEST;
+
     public ApplicationSAMLSettings() {
     }
 
@@ -60,6 +66,7 @@ public class ApplicationSAMLSettings {
         this.certificate = other.certificate;
         this.wantResponseSigned = other.wantResponseSigned;
         this.wantAssertionsSigned = other.wantAssertionsSigned;
+        this.responseBinding = other.responseBinding;
     }
 
     public String getEntityId() {
@@ -110,6 +117,14 @@ public class ApplicationSAMLSettings {
         this.wantAssertionsSigned = wantAssertionsSigned;
     }
 
+    public String getResponseBinding() {
+        return responseBinding;
+    }
+
+    public void setResponseBinding(String responseBinding) {
+        this.responseBinding = responseBinding;
+    }
+
     public void copyTo(Client client) {
         client.setEntityId(this.entityId);
         client.setAttributeConsumeServiceUrl(this.attributeConsumeServiceUrl);
@@ -117,5 +132,6 @@ public class ApplicationSAMLSettings {
         client.setSamlCertificate(this.certificate);
         client.setWantResponseSigned(this.wantResponseSigned);
         client.setWantAssertionsSigned(this.wantAssertionsSigned);
+        client.setResponseBinding(this.responseBinding);
     }
 }
