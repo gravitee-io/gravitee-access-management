@@ -145,7 +145,9 @@ export class AuditsComponent implements OnInit {
 
     if (row.target.type !== 'DOMAIN') {
       if (row.target.type !== 'IDENTITY_PROVIDER') {
-        if (row.target.type === 'CLIENT') {
+        if (row.target.type === 'PASSWORD_POLICY') {
+          routerLink.push('password-policies');
+        } else if (row.target.type === 'CLIENT') {
           routerLink.push('applications');
         } else {
           routerLink.push(row.target.type.toLowerCase() + 's');
