@@ -17,15 +17,11 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 
-import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.resources.model.FilteredIdentityProviderInfo;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.PasswordPolicy;
+import io.gravitee.am.service.model.PasswordPolicyElement;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.model.NewDeviceIdentifier;
 import io.gravitee.am.service.model.NewPasswordPolicy;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
@@ -39,25 +35,17 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
-import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
-import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 import java.util.List;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * @author Rafal PODLES (rafal.podles at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Tag(name = "Password Policy")
@@ -73,7 +61,7 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
                     "or DOMAIN[READ] permission on the specified organization. ")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List registered password policies for a security domain",   content = @Content(mediaType =  "application/json",
-                    array = @ArraySchema(schema = @Schema(implementation = PasswordPolicy.class)))),
+                    array = @ArraySchema(schema = @Schema(implementation = PasswordPolicyElement.class)))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
@@ -84,7 +72,7 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .map(existingDomain -> List.of()))
+                        .map(existingDomain -> List.of(new PasswordPolicyElement())))
                 .subscribe(response::resume, response::resume);
     }
 
