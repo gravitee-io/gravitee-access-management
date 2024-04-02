@@ -153,8 +153,7 @@ public class PasswordPolicyRepositoryTest extends AbstractManagementTest {
         passwordPolicy.setMaxConsecutiveLetters((int) (Math.random() * 100));
         passwordPolicy.setMinLength((int) (Math.random() * 100));
         passwordPolicy.setMaxLength((int) (Math.random() * 100));
-        passwordPolicy.setDefaultIdpId("idp_id1");
-        passwordPolicy.setIdpIds(List.of("idp_id1", "idp_id2"));
+        passwordPolicy.setDefaultPolicy(Boolean.TRUE);
         return passwordPolicy;
     }
 
@@ -172,7 +171,6 @@ public class PasswordPolicyRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(g -> g.getLettersInMixedCase().equals(expected.getLettersInMixedCase()));
         testObserver.assertValue(g -> g.getIncludeSpecialCharacters().equals(expected.getIncludeSpecialCharacters()));
         testObserver.assertValue(g -> g.getMaxConsecutiveLetters().equals(expected.getMaxConsecutiveLetters()));
-        testObserver.assertValue(g -> g.getDefaultIdpId().equals(expected.getDefaultIdpId()));
-        testObserver.assertValue(g -> g.getIdpIds().equals(expected.getIdpIds()));
+        testObserver.assertValue(g -> g.getDefaultPolicy().equals(expected.getDefaultPolicy()));
     }
 }
