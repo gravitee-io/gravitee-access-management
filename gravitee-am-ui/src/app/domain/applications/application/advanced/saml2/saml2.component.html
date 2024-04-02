@@ -42,6 +42,19 @@
           <mat-checkbox name="wantAssertionsSigned" [(ngModel)]="applicationSamlSettings.wantAssertionsSigned" [disabled]="!editMode">Want Assertions Signed</mat-checkbox>
           <mat-hint style="font-size: 75%;">Optional. If the parameter is set to true, the assertions will be digitally signed.</mat-hint>
         </div>
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>Response binding</mat-label>
+          <mat-select
+            placeholder="Change the response binding"
+            name="responseBinding"
+            [(ngModel)]="applicationSamlSettings.responseBinding"
+            (ngModelChange)="responseBindingChanged($event)"
+            [disabled]="!editMode"
+          >
+            <mat-option *ngFor="let binding of bindings" [value]="binding.value">{{ binding.name }}</mat-option>
+          </mat-select>
+          <mat-hint>The SP preferred response binding. By default the initial SAML binding of the original request is used.</mat-hint>
+        </mat-form-field>
       </div>
       <div class="gv-form-section">
         <div class="gv-form-section-title">
