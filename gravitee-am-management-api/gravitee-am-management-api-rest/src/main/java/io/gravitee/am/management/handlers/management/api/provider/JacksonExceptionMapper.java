@@ -15,7 +15,8 @@
  */
 package io.gravitee.am.management.handlers.management.api.provider;
 
-import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JacksonException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.common.http.HttpStatusCode;
 import jakarta.ws.rs.core.MediaType;
@@ -24,18 +25,21 @@ import jakarta.ws.rs.ext.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Lukasz GAWEL (lukasz.gawel at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 @Provider
-public class JsonParseExceptionMapper extends AbstractExceptionMapper<JsonParseException> {
-    private static Logger LOGGER = LoggerFactory.getLogger(JsonParseExceptionMapper.class);
-
+public class JacksonExceptionMapper extends AbstractExceptionMapper<JacksonException> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JacksonException.class);
 
     @Override
-    public Response toResponse(JsonParseException e) {
-        LOGGER.debug("Malformed request body, msg={}", e.getMessage());
+    public Response toResponse(JacksonException e) {
+        LOGGER.debug("Malformed json, msg={}", e.getMessage());
         return Response
                 .status(Response.Status.BAD_REQUEST)
                 .type(MediaType.APPLICATION_JSON_TYPE)
-                .entity(new ErrorEntity("Malformed request body", HttpStatusCode.BAD_REQUEST_400))
+                .entity(new ErrorEntity("Malformed json", HttpStatusCode.BAD_REQUEST_400))
                 .build();
     }
 }
