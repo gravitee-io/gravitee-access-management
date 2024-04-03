@@ -23,6 +23,7 @@ import io.gravitee.am.management.handlers.management.api.resources.platform.Plat
 import io.gravitee.am.management.handlers.management.api.resources.swagger.GraviteeApiDefinition;
 import io.swagger.v3.jaxrs2.SwaggerSerializers;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
+import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.ServerProperties;
 
@@ -35,6 +36,9 @@ public class ManagementApplication extends ResourceConfig {
     public ManagementApplication() {
         packages("io.gravitee.am.management.handlers.management.api.resources");
 
+        register(JacksonFeature.withoutExceptionMappers());
+        register(JacksonExceptionMapper.class);
+
         register(OrganizationsResource.class);
         register(PlatformResource.class);
         register(CurrentUserResource.class);
@@ -46,10 +50,7 @@ public class ManagementApplication extends ResourceConfig {
         register(ClientErrorExceptionMapper.class);
         register(Oauth2ExceptionMapper.class);
         register(ValidationExceptionMapper.class);
-        register(JsonMappingExceptionMapper.class);
         register(WebApplicationExceptionMapper.class);
-        register(JsonParseExceptionMapper.class);
-
         register(UriBuilderRequestFilter.class);
         register(ByteArrayOutputStreamWriter.class);
 
