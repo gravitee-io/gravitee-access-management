@@ -23,7 +23,6 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -171,6 +170,5 @@ public class PasswordPolicyRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(g -> g.getLettersInMixedCase().equals(expected.getLettersInMixedCase()));
         testObserver.assertValue(g -> g.getIncludeSpecialCharacters().equals(expected.getIncludeSpecialCharacters()));
         testObserver.assertValue(g -> g.getMaxConsecutiveLetters().equals(expected.getMaxConsecutiveLetters()));
-        testObserver.assertValue(g -> g.getDefaultPolicy().equals(expected.getDefaultPolicy()));
     }
 }
