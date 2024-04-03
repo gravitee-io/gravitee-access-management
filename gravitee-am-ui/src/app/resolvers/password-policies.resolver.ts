@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {ActivatedRouteSnapshot} from '@angular/router';
-import {Injectable} from "@angular/core";
-import {Observable} from "rxjs";
-import {PasswordPoliciesService} from "../services/password-policies.service";
+import { ActivatedRouteSnapshot } from '@angular/router';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+
+import { PasswordPoliciesService } from '../services/password-policies.service';
 
 @Injectable()
 export class PasswordPoliciesResolver {
-  constructor(private passwordPoliciesService: PasswordPoliciesService) {
-  }
+  constructor(private passwordPoliciesService: PasswordPoliciesService) {}
 
   resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
     const domainId = route.parent.data['domain'].id;

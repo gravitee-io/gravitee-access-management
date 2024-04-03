@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+
+import { PasswordPoliciesService } from '../../../services/password-policies.service';
 
 import { PasswordPolicy } from './domain-password-policies.model';
-import {PasswordPoliciesService} from "../../../services/password-policies.service";
-import {ActivatedRoute} from "@angular/router";
 
 @Component({
   selector: 'domain-password-policies',
@@ -29,8 +30,8 @@ export class PasswordPoliciesComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private passwordPoliciesService: PasswordPoliciesService) {
-  }
+    private passwordPoliciesService: PasswordPoliciesService,
+  ) {}
   rows: PasswordPolicy[] = [];
 
   ngOnInit() {
@@ -43,7 +44,7 @@ export class PasswordPoliciesComponent implements OnInit {
   }
 
   private loadPasswordPolicies() {
-    this.passwordPoliciesService.getAll(this.domain.id).subscribe((policies)=>{
+    this.passwordPoliciesService.getAll(this.domain.id).subscribe((policies) => {
       this.rows = policies;
     });
   }

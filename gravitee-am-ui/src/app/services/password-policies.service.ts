@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import {AppConfig} from "../../config/app.config";
-import {HttpClient} from "@angular/common/http";
-import {Observable} from "rxjs";
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+import { AppConfig } from '../../config/app.config';
 
 @Injectable()
 export class PasswordPoliciesService {
-
   private providersURL = AppConfig.settings.domainBaseURL;
 
   constructor(private http: HttpClient) {}
