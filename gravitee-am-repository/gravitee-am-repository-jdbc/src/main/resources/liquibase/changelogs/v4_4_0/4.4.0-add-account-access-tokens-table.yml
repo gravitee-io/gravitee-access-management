@@ -1,0 +1,35 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.4.0-add-account-access-tokens-table
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: account_access_tokens
+      changes:
+        - createTable:
+            tableName: account_access_tokens
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: reference_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: user_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: issuer_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: name, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: token, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: false } }
+        - addPrimaryKey:
+            constraintName: pk_account_access_tokens
+            columnNames: id
+            tableName: account_access_tokens
+
+        - createIndex:
+            columns:
+              - column:
+                  name: user_id
+            indexName: idx_account_access_tokens_user_id
+            tableName: account_access_tokens
+            unique: false

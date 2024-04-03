@@ -454,4 +454,8 @@ export class OrganizationService {
       username: username,
     });
   }
+
+  createAccountToken(userId, tokenName) {
+    return this.http.post<any>(this.organizationURL + '/users/' + userId + '/tokens', { name: tokenName });
+  }
 }

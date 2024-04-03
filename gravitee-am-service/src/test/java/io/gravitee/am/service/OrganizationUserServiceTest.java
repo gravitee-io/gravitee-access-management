@@ -16,19 +16,18 @@
 package io.gravitee.am.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.model.AccountAccessToken;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.repository.management.api.AccountAccessTokenRepository;
 import io.gravitee.am.repository.management.api.OrganizationUserRepository;
-import io.gravitee.am.service.exception.EmailFormatInvalidException;
-import io.gravitee.am.service.exception.InvalidUserException;
-import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.exception.UserAlreadyExistsException;
-import io.gravitee.am.service.exception.UserInvalidException;
-import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.OrganizationUserServiceImpl;
+import io.gravitee.am.service.model.NewAccountAccessToken;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -42,28 +41,16 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatcher;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.Spy;
+import org.mockito.*;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
 import static io.gravitee.am.common.audit.EventType.USER_CREATED;
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
-import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_LAX_PATTERN;
-import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_STRICT_PATTERN;
-import static io.gravitee.am.service.validators.user.UserValidatorImpl.USERNAME_PATTERN;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.argThat;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -75,6 +62,9 @@ public class OrganizationUserServiceTest {
     @InjectMocks
     private OrganizationUserService userService = new OrganizationUserServiceImpl();
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     @Spy
     private UserValidator userValidator = new UserValidatorImpl(
             NAME_STRICT_PATTERN,
@@ -85,6 +75,8 @@ public class OrganizationUserServiceTest {
 
     @Mock
     private OrganizationUserRepository userRepository;
+    @Mock
+    private AccountAccessTokenRepository accessTokenRepository;
     @Mock
     private CredentialService credentialService;
 
@@ -332,5 +324,47 @@ public class OrganizationUserServiceTest {
         testObserver.assertNotComplete();
 
         verify(userRepository, never()).delete("my-user");
+    }
+
+    @Test
+    public void shouldGenerateAccountToken() {
+        User user = new User();
+        user.setId("my-user");
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        user.setReferenceId(ORG);
+
+        when(accessTokenRepository.create(any())).thenAnswer(invocation -> Single.just(invocation.getArguments()[0]));
+        when(accessTokenRepository.findByUserId(any(), any(), any())).thenAnswer(invocation -> Flowable.empty());
+
+        var newTokenRequest = new NewAccountAccessToken("test-token");
+        userService.generateAccountAccessToken(user, newTokenRequest, "issuer")
+                .test()
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(token -> user.getId().equals(token.userId()))
+                .assertValue(token -> user.getReferenceId().equals(token.referenceId()))
+                .assertValue(token -> ReferenceType.ORGANIZATION == token.referenceType());
+
+    }
+
+    @Test
+    public void shouldNotGenerateAccountToken_LimitReached() {
+        User user = new User();
+        user.setId("my-user");
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        user.setReferenceId(ORG);
+
+        when(accessTokenRepository.findByUserId(any(), any(), any()))
+                .thenAnswer(invocation -> Flowable.fromStream(IntStream.range(0, 20)
+                        .mapToObj(i -> AccountAccessToken.builder()
+                                .tokenId(""+i)
+                                .build())));
+
+        var newTokenRequest = new NewAccountAccessToken("test-token");
+        userService.generateAccountAccessToken(user, newTokenRequest, "issuer")
+                .test()
+                .assertError(TooManyAccountTokenException.class);
+        verify(accessTokenRepository, never()).create(any());
+
     }
 }

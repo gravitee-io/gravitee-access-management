@@ -18,12 +18,27 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NgForm } from '@angular/forms';
 import { filter, switchMap, tap } from 'rxjs/operators';
 import { isObject } from 'lodash';
+import { MatDialog } from '@angular/material/dialog';
+import { GIO_DIALOG_WIDTH } from '@gravitee/ui-particles-angular';
+import { Subject } from 'rxjs';
 
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { DialogService } from '../../../../../services/dialog.service';
 import { UserService } from '../../../../../services/user.service';
 import { UserClaimComponent } from '../../creation/user-claim.component';
 import { AuthService } from '../../../../../services/auth.service';
+import { OrganizationService } from '../../../../../services/organization.service';
+
+import {
+  AccountTokenCreationDialogComponent,
+  AccountTokenCreationDialogResult,
+  AccountTokenCreationDialogData,
+} from './token/account-token-creation-dialog.component';
+import {
+  AccountTokenCopyDialogComponent,
+  AccountTokenCopyDialogData,
+  AccountTokenCopyDialogResult,
+} from './token/account-token-copy-dialog.component';
 
 @Component({
   selector: 'app-user-profile',
@@ -42,6 +57,7 @@ export class UserProfileComponent implements OnInit {
   formChanged = false;
   canEdit: boolean;
   canDelete: boolean;
+  accountTokens: any[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -49,8 +65,10 @@ export class UserProfileComponent implements OnInit {
     private snackbarService: SnackbarService,
     private dialogService: DialogService,
     private userService: UserService,
+    private organizationService: OrganizationService,
     private authService: AuthService,
     private factoryResolver: ComponentFactoryResolver,
+    private readonly matDialog: MatDialog,
   ) {}
 
   ngOnInit() {
@@ -245,6 +263,52 @@ export class UserProfileComponent implements OnInit {
           this.unlockUser(this.user);
           this.snackbarService.open('Username updated');
         }),
+      )
+      .subscribe();
+  }
+
+  createToken() {
+    this.matDialog
+      .open<AccountTokenCreationDialogComponent, AccountTokenCreationDialogData, AccountTokenCreationDialogResult>(
+        AccountTokenCreationDialogComponent,
+        {
+          width: GIO_DIALOG_WIDTH.MEDIUM,
+          disableClose: true,
+          role: 'alertdialog',
+          id: 'accountTokenCreateDialog',
+        },
+      )
+      .afterClosed()
+      .pipe(
+        switchMap((result: AccountTokenCreationDialogResult) => {
+          // TODO apply flat switchMap
+          if (result) {
+            return this.organizationService.createAccountToken(this.user.id, result.name);
+          } else {
+            return new Subject();
+          }
+        }),
+        tap((data) => {
+          this.snackbarService.open('Account token generated');
+          return data;
+        }),
+        switchMap((data) =>
+          this.matDialog
+            .open<AccountTokenCopyDialogComponent, AccountTokenCopyDialogData, AccountTokenCopyDialogResult>(
+              AccountTokenCopyDialogComponent,
+              {
+                width: GIO_DIALOG_WIDTH.MEDIUM,
+                disableClose: true,
+                data: {
+                  token: data.token,
+                  orgId: this.user.referenceId,
+                },
+                role: 'alertdialog',
+                id: 'accountTokenCopyDialog',
+              },
+            )
+            .afterClosed(),
+        ),
       )
       .subscribe();
   }

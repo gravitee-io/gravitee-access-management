@@ -16,7 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.spring.security.filter;
 
 import io.gravitee.am.management.handlers.management.api.authentication.csrf.CookieCsrfSignedTokenRepository;
-import io.gravitee.am.management.handlers.management.api.authentication.filter.JWTAuthenticationFilter;
+import io.gravitee.am.management.handlers.management.api.authentication.filter.BearerAuthenticationFilter;
 import io.gravitee.am.management.handlers.management.api.authentication.web.Http401UnauthorizedEntryPoint;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -34,7 +34,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static io.gravitee.am.management.handlers.management.api.spring.security.SecurityConfiguration.*;
+import static io.gravitee.am.management.handlers.management.api.spring.security.SecurityConfiguration.DEFAULT_DEFAULT_SRC_CSP_DIRECTIVE;
+import static io.gravitee.am.management.handlers.management.api.spring.security.SecurityConfiguration.DEFAULT_FRAME_ANCESTOR_CSP_DIRECTIVE;
+import static io.gravitee.am.management.handlers.management.api.spring.security.SecurityConfiguration.HTTP_CSP_DIRECTIVES;
+import static io.gravitee.am.management.handlers.management.api.spring.security.SecurityConfiguration.HTTP_CSP_ENABLED;
 import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.joining;
 
@@ -52,11 +55,12 @@ public class ManagementSecurityConfiguration extends CsrfAwareConfiguration {
         this.http401UnauthorizedEntryPoint = http401UnauthorizedEntryPoint;
     }
 
+
     @Bean
     @Order(102)
     public SecurityFilterChain managementSecurityFilter(
             HttpSecurity http,
-            JWTAuthenticationFilter jwtAuthenticationFilter,
+            BearerAuthenticationFilter bearerAuthenticationFilter,
             CookieCsrfSignedTokenRepository csrfSignedTokenRepository
     ) throws Exception {
         var pathRequestMatchers = Arrays.stream(PATHS).map(AntPathRequestMatcher::antMatcher).toArray(AntPathRequestMatcher[]::new);
@@ -68,7 +72,7 @@ public class ManagementSecurityConfiguration extends CsrfAwareConfiguration {
                 })
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .exceptionHandling(exceptionHandling -> exceptionHandling.authenticationEntryPoint(http401UnauthorizedEntryPoint))
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterAfter(bearerAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return applyCsrf(csp(http), csrfSignedTokenRepository).build();
     }

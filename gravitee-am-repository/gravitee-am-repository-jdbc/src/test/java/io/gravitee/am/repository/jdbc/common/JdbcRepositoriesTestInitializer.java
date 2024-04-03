@@ -130,6 +130,7 @@ public class JdbcRepositoriesTestInitializer implements RepositoriesTestInitiali
         tables.add("verify_attempt");
 
         tables.add("password_policies");
+        tables.add("account_access_tokens");
 
         io.r2dbc.spi.Connection connection = Flowable.fromPublisher(connectionFactory.create()).blockingFirst();
         connection.beginTransaction();

@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.common.utils.SecureRandomString;
+import io.gravitee.am.model.AccountAccessToken;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Platform;
 import io.gravitee.am.model.ReferenceType;
@@ -22,23 +25,25 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.DefaultRole;
+import io.gravitee.am.repository.management.api.AccountAccessTokenRepository;
 import io.gravitee.am.repository.management.api.OrganizationUserRepository;
-import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.OrganizationUserService;
-import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.TooManyAccountTokenException;
 import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.model.NewAccountAccessToken;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import io.gravitee.am.repository.management.api.CommonUserRepository.UpdateActions;
 import java.util.Date;
 
 import static io.gravitee.am.model.ReferenceType.ORGANIZATION;
@@ -49,20 +54,25 @@ import static io.gravitee.am.model.ReferenceType.ORGANIZATION;
  * @author GraviteeSource Team
  */
 @Component
-public class OrganizationUserServiceImpl extends AbstractUserService implements OrganizationUserService {
+public class OrganizationUserServiceImpl extends AbstractUserService<OrganizationUserRepository> implements OrganizationUserService {
 
     @Lazy
     @Autowired
     private OrganizationUserRepository userRepository;
 
+    @Lazy
     @Autowired
-    private RoleService roleService;
+    private AccountAccessTokenRepository accessTokenRepository;
 
-    @Autowired
-    private GroupService groupService;
 
     @Autowired
     protected MembershipService membershipService;
+
+    @Autowired
+    private PasswordEncoder accountAccessTokenEncoder;
+
+    @Value("${security.accountAccessTokens.limit:20}")
+    private int tokensLimit = 20;
 
     @Override
     protected OrganizationUserRepository getUserRepository() {
@@ -80,7 +90,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService implements 
 
         if (principal != null && principal.getRoles() != null && !principal.getRoles().isEmpty()) {
             // We allow only one role in AM portal. Get the first (should not append).
-            String roleId =  principal.getRoles().get(0);
+            String roleId = principal.getRoles().get(0);
 
             roleObs = roleService.findById(user.getReferenceType(), user.getReferenceId(), roleId)
                     .toMaybe()
@@ -116,24 +126,24 @@ public class OrganizationUserServiceImpl extends AbstractUserService implements 
         return userValidator.validate(user).andThen(getUserRepository()
                 .findByUsernameAndSource(ORGANIZATION, user.getReferenceId(), user.getUsername(), user.getSource())
                 .switchIfEmpty(getUserRepository().findById(ORGANIZATION, user.getReferenceId(), user.getId()))
-                        .switchIfEmpty(Single.error(new UserNotFoundException(user.getId())))
+                .switchIfEmpty(Single.error(new UserNotFoundException(user.getId())))
                 .flatMap(oldUser -> {
 
-                        user.setId(oldUser.getId());
-                        user.setReferenceType(oldUser.getReferenceType());
-                        user.setReferenceId(oldUser.getReferenceId());
-                        if (user.getFirstName() != null) {
-                            user.setDisplayName(user.getFirstName() + (user.getLastName() != null ? " " + user.getLastName() : ""));
-                        }
-                        user.setSource(oldUser.getSource());
-                        user.setInternal(oldUser.isInternal());
-                        user.setUpdatedAt(new Date());
-                        if (user.getLoginsCount() < oldUser.getLoginsCount()) {
-                            user.setLoggedAt(oldUser.getLoggedAt());
-                            user.setLoginsCount(oldUser.getLoginsCount());
-                        }
+                    user.setId(oldUser.getId());
+                    user.setReferenceType(oldUser.getReferenceType());
+                    user.setReferenceId(oldUser.getReferenceId());
+                    if (user.getFirstName() != null) {
+                        user.setDisplayName(user.getFirstName() + (user.getLastName() != null ? " " + user.getLastName() : ""));
+                    }
+                    user.setSource(oldUser.getSource());
+                    user.setInternal(oldUser.isInternal());
+                    user.setUpdatedAt(new Date());
+                    if (user.getLoginsCount() < oldUser.getLoginsCount()) {
+                        user.setLoggedAt(oldUser.getLoggedAt());
+                        user.setLoginsCount(oldUser.getLoginsCount());
+                    }
 
-                        return getUserRepository().update(user);
+                    return getUserRepository().update(user);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -142,5 +152,38 @@ public class OrganizationUserServiceImpl extends AbstractUserService implements 
                     LOGGER.error("An error occurs while trying to update a user", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a user", ex));
                 }));
+    }
+
+    @Override
+    public Single<AccountAccessToken> generateAccountAccessToken(User user, NewAccountAccessToken newAccountToken, String issuer) {
+        var rawToken = SecureRandomString.generate();
+
+        var token = AccountAccessToken.builder()
+                .tokenId(RandomString.generate())
+                .referenceType(ORGANIZATION)
+                .referenceId(user.getReferenceId())
+                .userId(user.getId())
+                .issuerId(issuer)
+                .name(newAccountToken.name())
+                .token(accountAccessTokenEncoder.encode(rawToken))
+                .build();
+        return accessTokenRepository.findByUserId(ORGANIZATION, user.getReferenceId(), user.getId())
+                .count()
+                .flatMap(count -> {
+                    if (count >= tokensLimit) {
+                        LOGGER.debug("Limit of account token per user reached ({})", count);
+                        return Single.error(new TooManyAccountTokenException(tokensLimit));
+                    }
+                    return accessTokenRepository.create(token)
+                            .map(created -> created.toCreateResponse(rawToken));
+                });
+    }
+
+    @Override
+    public Single<User> findByAccessToken(String tokenId, String tokenValue) {
+        return accessTokenRepository.findById(tokenId)
+                .filter(token -> accountAccessTokenEncoder.matches(tokenValue, token.token()))
+                .flatMapSingle(token -> findById(token.referenceType(), token.referenceId(), token.userId()))
+                .toSingle();
     }
 }

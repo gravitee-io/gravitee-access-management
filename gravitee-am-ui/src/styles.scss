@@ -305,7 +305,7 @@ ngx-datatable {
     }
 
     span {
-      color: map.get(gio.$mat-space-palette, lighter40);
+      color: map.get(gio.$mat-space-palette, contrast[ 'default']);
     }
   }
 }

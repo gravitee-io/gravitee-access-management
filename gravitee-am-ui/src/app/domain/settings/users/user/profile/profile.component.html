@@ -174,6 +174,34 @@
           </div>
         </div>
 
+        <div class="gv-form-section" *ngIf="isOrganizationUserAction()">
+          <div fxLayout="row" class="gv-form-section-title">
+            <h5>Tokens</h5>
+            <button mat-raised-button color="primary" type="button" (click)="createToken()" style="margin-left: auto; color: white">
+              Generate Token
+            </button>
+          </div>
+          <div>
+            <ngx-datatable class="material" columnMode="flex" [headerHeight]="40" [rowHeight]="50" [rows]="accountTokens">
+              <ngx-datatable-column name="Name" [flexGrow]="1" [resizeable]="false">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.name }}
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="Date Created" [flexGrow]="1" [resizeable]="false" [sortable]="false">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <span matBadge="{{ row.createdAt }}"></span>
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="Created by" [flexGrow]="1" [resizeable]="false" [sortable]="false">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <span matBadge="{{ row.creator }}"></span>
+                </ng-template>
+              </ngx-datatable-column>
+            </ngx-datatable>
+          </div>
+        </div>
+
         <div class="gv-form-section" *ngIf="canEdit && user.referenceType === 'domain'">
           <div class="gv-form-section-title">
             <h5>Actions</h5>

@@ -285,6 +285,11 @@ security:
   # If true create on AM bootstrap an inline identity provider with an admin user (login: admin)
   # this is the legacy mode
   defaultAdmin: true
+  accountAccessTokens:
+    encoder:
+      settings:
+        ## BCrypt rounds. Default: 10
+        rounds: 10
   ## authentication providers
   ## currently, only "in memory" provider is supported
   providers:
