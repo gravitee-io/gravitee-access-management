@@ -20,6 +20,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -89,4 +90,6 @@ public class PasswordPolicy implements Resource {
      * How many passwords are preserved into the history
      */
     private Short oldPasswords;
+
+    private Boolean defaultPolicy;
 }

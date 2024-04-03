@@ -16,6 +16,9 @@
 package io.gravitee.am.service.model;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +26,8 @@ import java.util.Map;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public class UpdateIdentityProvider {
 
     @NotNull
@@ -36,46 +41,6 @@ public class UpdateIdentityProvider {
     private Map<String, String[]> roleMapper;
 
     private List<String> domainWhitelist;
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getConfiguration() {
-        return configuration;
-    }
-
-    public void setConfiguration(String configuration) {
-        this.configuration = configuration;
-    }
-
-    public Map<String, String> getMappers() {
-        return mappers;
-    }
-
-    public void setMappers(Map<String, String> mappers) {
-        this.mappers = mappers;
-    }
-
-    public Map<String, String[]> getRoleMapper() {
-        return roleMapper;
-    }
-
-    public void setRoleMapper(Map<String, String[]> roleMapper) {
-        this.roleMapper = roleMapper;
-    }
-
-    public List<String> getDomainWhitelist() {
-        return domainWhitelist;
-    }
-
-    public void setDomainWhitelist(List<String> domainWhitelist) {
-        this.domainWhitelist = domainWhitelist;
-    }
 
     @Override
     public String toString() {

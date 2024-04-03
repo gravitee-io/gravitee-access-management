@@ -16,15 +16,22 @@
 package io.gravitee.am.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
+@NoArgsConstructor
 public class IdentityProvider {
 
     private String id;
@@ -55,8 +62,7 @@ public class IdentityProvider {
     @Schema(type = "java.lang.Long")
     private Date updatedAt;
 
-    public IdentityProvider() {
-    }
+    private String passwordPolicy;
 
     public IdentityProvider(IdentityProvider other) {
         this.id = other.id;
@@ -72,110 +78,7 @@ public class IdentityProvider {
         this.domainWhitelist = other.domainWhitelist;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getConfiguration() {
-        return configuration;
-    }
-
-    public void setConfiguration(String configuration) {
-        this.configuration = configuration;
-    }
-
-    public Map<String, String> getMappers() {
-        return mappers;
-    }
-
-    public void setMappers(Map<String, String> mappers) {
-        this.mappers = mappers;
-    }
-
-    public Map<String, String[]> getRoleMapper() {
-        return roleMapper;
-    }
-
-    public void setRoleMapper(Map<String, String[]> roleMapper) {
-        this.roleMapper = roleMapper;
-    }
-
-    public ReferenceType getReferenceType() {
-        return referenceType;
-    }
-
-    public void setReferenceType(ReferenceType referenceType) {
-        this.referenceType = referenceType;
-    }
-
-    public String getReferenceId() {
-        return referenceId;
-    }
-
-    public void setReferenceId(String referenceId) {
-        this.referenceId = referenceId;
-    }
-
-    public boolean isExternal() {
-        return external;
-    }
-
-    public void setExternal(boolean external) {
-        this.external = external;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public List<String> getDomainWhitelist() {
-        return domainWhitelist;
-    }
-
-    public void setDomainWhitelist(List<String> domainWhitelist) {
-        this.domainWhitelist = domainWhitelist;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Date getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Date updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public boolean isSystem() {
-        return system;
-    }
-
-    public void setSystem(boolean system) {
-        this.system = system;
+        this.passwordPolicy = other.passwordPolicy;
     }
 
     @Override
@@ -185,7 +88,7 @@ public class IdentityProvider {
 
         IdentityProvider that = (IdentityProvider) o;
 
-        return id != null ? id.equals(that.id) : that.id == null;
+        return Objects.equals(id, that.id);
     }
 
     @Override
