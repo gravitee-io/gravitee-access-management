@@ -17,56 +17,60 @@ package io.gravitee.am.management.service.impl.commands;
 
 import io.gravitee.am.model.Installation;
 import io.gravitee.am.service.InstallationService;
-import io.gravitee.cockpit.api.command.Command;
-import io.gravitee.cockpit.api.command.CommandStatus;
-import io.gravitee.cockpit.api.command.goodbye.GoodbyeCommand;
-import io.gravitee.cockpit.api.command.goodbye.GoodbyeReply;
+import io.gravitee.exchange.api.command.CommandStatus;
+import io.gravitee.exchange.api.command.goodbye.GoodByeCommand;
+import io.gravitee.exchange.api.command.goodbye.GoodByeCommandPayload;
+import io.gravitee.exchange.api.command.goodbye.GoodByeReply;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import junit.framework.TestCase;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.management.service.impl.commands.GoodbyeCommandHandler.DELETED_STATUS;
 import static io.gravitee.am.model.Installation.COCKPIT_INSTALLATION_STATUS;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
-public class GoodbyeCommandHandlerTest extends TestCase {
+@ExtendWith(MockitoExtension.class)
+public class GoodByeCommandHandlerTest {
 
     @Mock
     private InstallationService installationService;
 
     public GoodbyeCommandHandler cut;
 
-    @Before
+    @BeforeEach
     public void before() {
         cut = new GoodbyeCommandHandler(installationService);
     }
 
     @Test
-    public void handleType() {
-        assertEquals(Command.Type.GOODBYE_COMMAND, cut.handleType());
+    public void supportType() {
+        assertEquals(GoodByeCommand.COMMAND_TYPE, cut.supportType());
     }
 
     @Test
     public void handle() {
-        GoodbyeCommand command = new GoodbyeCommand();
+        GoodByeCommand command = new GoodByeCommand(new GoodByeCommandPayload());
         final Installation installation = new Installation();
         when(installationService.addAdditionalInformation(any(Map.class))).thenReturn(Single.just(installation));
 
-        TestObserver<GoodbyeReply> obs = cut.handle(command).test();
+        TestObserver<GoodByeReply> obs = cut.handle(command).test();
 
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
@@ -79,11 +83,11 @@ public class GoodbyeCommandHandlerTest extends TestCase {
 
     @Test
     public void handleWithException() {
-        GoodbyeCommand command = new GoodbyeCommand();
+        GoodByeCommand command = new GoodByeCommand(new GoodByeCommandPayload());
 
         when(installationService.addAdditionalInformation(any(Map.class))).thenReturn(Single.error(new RuntimeException("Unexpected error")));
 
-        TestObserver<GoodbyeReply> obs = cut.handle(command).test();
+        TestObserver<GoodByeReply> obs = cut.handle(command).test();
 
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));

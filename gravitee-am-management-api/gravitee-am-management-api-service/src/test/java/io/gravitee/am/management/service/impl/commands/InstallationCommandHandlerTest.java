@@ -18,32 +18,35 @@ package io.gravitee.am.management.service.impl.commands;
 import io.gravitee.am.model.Installation;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.InstallationService;
-import io.gravitee.cockpit.api.command.Command;
-import io.gravitee.cockpit.api.command.CommandStatus;
-import io.gravitee.cockpit.api.command.installation.InstallationCommand;
-import io.gravitee.cockpit.api.command.installation.InstallationPayload;
-import io.gravitee.cockpit.api.command.installation.InstallationReply;
+import io.gravitee.cockpit.api.command.v1.CockpitCommandType;
+import io.gravitee.cockpit.api.command.v1.installation.InstallationCommand;
+import io.gravitee.cockpit.api.command.v1.installation.InstallationCommandPayload;
+import io.gravitee.cockpit.api.command.v1.installation.InstallationReply;
+import io.gravitee.exchange.api.command.CommandStatus;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import junit.framework.TestCase;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
-public class InstallationCommandHandlerTest extends TestCase {
+@ExtendWith(MockitoExtension.class)
+public class InstallationCommandHandlerTest {
 
     private static final String CUSTOM_VALUE = "customValue";
     private static final String CUSTOM_KEY = "customKey";
@@ -54,14 +57,14 @@ public class InstallationCommandHandlerTest extends TestCase {
 
     public InstallationCommandHandler cut;
 
-    @Before
+    @BeforeEach
     public void before() {
         cut = new InstallationCommandHandler(installationService);
     }
 
     @Test
-    public void handleType() {
-        assertEquals(Command.Type.INSTALLATION_COMMAND, cut.handleType());
+    public void supportType() {
+        assertEquals(CockpitCommandType.INSTALLATION.name(), cut.supportType());
     }
 
     @Test
@@ -70,11 +73,12 @@ public class InstallationCommandHandlerTest extends TestCase {
         installation.setId(INSTALLATION_ID);
         installation.getAdditionalInformation().put(CUSTOM_KEY, CUSTOM_VALUE);
 
-        InstallationPayload installationPayload = new InstallationPayload();
-        InstallationCommand command = new InstallationCommand(installationPayload);
-        installationPayload.setId(INSTALLATION_ID);
-        installationPayload.setStatus("ACCEPTED");
+        InstallationCommandPayload installationPayload = InstallationCommandPayload.builder()
+                .id(INSTALLATION_ID)
+                .status("ACCEPTED")
+                .build();
 
+        InstallationCommand command = new InstallationCommand(installationPayload);
         when(installationService.getOrInitialize()).thenReturn(Single.just(installation));
         when(installationService.setAdditionalInformation(anyMap())).thenAnswer(i -> Single.just(installation));
 
@@ -96,10 +100,12 @@ public class InstallationCommandHandlerTest extends TestCase {
         installation.setId(INSTALLATION_ID);
         installation.getAdditionalInformation().put(CUSTOM_KEY, CUSTOM_VALUE);
 
-        InstallationPayload installationPayload = new InstallationPayload();
+        InstallationCommandPayload installationPayload = InstallationCommandPayload.builder()
+                .id(INSTALLATION_ID)
+                .status("ACCEPTED")
+                .build();
+
         InstallationCommand command = new InstallationCommand(installationPayload);
-        installationPayload.setId(INSTALLATION_ID);
-        installationPayload.setStatus("ACCEPTED");
 
         when(installationService.getOrInitialize()).thenReturn(Single.just(installation));
         when(installationService.setAdditionalInformation(anyMap())).thenReturn(Single.error(new TechnicalException()));

@@ -17,49 +17,41 @@ package io.gravitee.am.management.service.impl.commands;
 
 import io.gravitee.am.model.Installation;
 import io.gravitee.am.service.InstallationService;
-import io.gravitee.cockpit.api.command.Command;
-import io.gravitee.cockpit.api.command.CommandHandler;
-import io.gravitee.cockpit.api.command.CommandStatus;
-import io.gravitee.cockpit.api.command.installation.InstallationCommand;
-import io.gravitee.cockpit.api.command.installation.InstallationPayload;
-import io.gravitee.cockpit.api.command.installation.InstallationReply;
+import io.gravitee.cockpit.api.command.v1.CockpitCommandType;
+import io.gravitee.cockpit.api.command.v1.installation.InstallationCommand;
+import io.gravitee.cockpit.api.command.v1.installation.InstallationCommandPayload;
+import io.gravitee.cockpit.api.command.v1.installation.InstallationReply;
+import io.gravitee.exchange.api.command.CommandHandler;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
+@RequiredArgsConstructor
 @Component
+@Slf4j
 public class InstallationCommandHandler implements CommandHandler<InstallationCommand, InstallationReply> {
-
-    private final Logger logger = LoggerFactory.getLogger(InstallationCommandHandler.class);
 
     private final InstallationService installationService;
 
-    public InstallationCommandHandler(InstallationService installationService) {
-
-        this.installationService = installationService;
-    }
-
     @Override
-    public Command.Type handleType() {
-        return Command.Type.INSTALLATION_COMMAND;
+    public String supportType() {
+        return CockpitCommandType.INSTALLATION.name();
     }
 
     @Override
     public Single<InstallationReply> handle(InstallationCommand command) {
-
-        InstallationPayload installationPayload = command.getPayload();
-
+        InstallationCommandPayload installationPayload = command.getPayload();
         return installationService.getOrInitialize().map(Installation::getAdditionalInformation)
-                .doOnSuccess(additionalInfos -> additionalInfos.put(Installation.COCKPIT_INSTALLATION_STATUS, installationPayload.getStatus()))
+                .doOnSuccess(additionalInfos -> additionalInfos.put(Installation.COCKPIT_INSTALLATION_STATUS, installationPayload.status()))
                 .flatMap(installationService::setAdditionalInformation)
-                .map(installation -> new InstallationReply(command.getId(), CommandStatus.SUCCEEDED))
-                .doOnSuccess(installation -> logger.info("Installation status is [{}].", installationPayload.getStatus()))
-                .doOnError(error -> logger.info("Error occurred when updating installation status.", error))
-                .onErrorReturn(throwable -> new InstallationReply(command.getId(), CommandStatus.ERROR));
+                .map(installation -> new InstallationReply(command.getId()))
+                .doOnSuccess(installation -> log.info("Installation status is [{}].", installationPayload.status()))
+                .doOnError(error -> log.info("Error occurred when updating installation status.", error))
+                .onErrorReturn(throwable -> new InstallationReply(command.getId(), throwable.getMessage()));
     }
 }
