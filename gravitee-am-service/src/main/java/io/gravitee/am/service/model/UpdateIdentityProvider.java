@@ -42,8 +42,6 @@ public class UpdateIdentityProvider {
 
     private List<String> domainWhitelist;
 
-    private String passwordPolicy;
-
     @Override
     public String toString() {
         return "UpdateIdentityProvider{" +
