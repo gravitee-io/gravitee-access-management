@@ -19,32 +19,37 @@ import io.gravitee.am.model.Organization;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.model.NewOrganization;
-import io.gravitee.cockpit.api.command.Command;
-import io.gravitee.cockpit.api.command.CommandStatus;
-import io.gravitee.cockpit.api.command.organization.OrganizationCommand;
-import io.gravitee.cockpit.api.command.organization.OrganizationPayload;
-import io.gravitee.cockpit.api.command.organization.OrganizationReply;
+import io.gravitee.cockpit.api.command.model.accesspoint.AccessPoint;
+import io.gravitee.cockpit.api.command.v1.CockpitCommandType;
+import io.gravitee.cockpit.api.command.v1.organization.OrganizationCommand;
+import io.gravitee.cockpit.api.command.v1.organization.OrganizationCommandPayload;
+import io.gravitee.cockpit.api.command.v1.organization.OrganizationReply;
+import io.gravitee.exchange.api.command.CommandStatus;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class OrganizationCommandHandlerTest {
 
     @Mock
@@ -52,33 +57,35 @@ public class OrganizationCommandHandlerTest {
 
     public OrganizationCommandHandler cut;
 
-    @Before
+    @BeforeEach
     public void before() {
         cut = new OrganizationCommandHandler(organizationService);
     }
 
     @Test
-    public void handleType() {
-        assertEquals(Command.Type.ORGANIZATION_COMMAND, cut.handleType());
+    public void supportType() {
+        assertEquals(CockpitCommandType.ORGANIZATION.name(), cut.supportType());
     }
 
     @Test
     public void handle() {
 
-        OrganizationPayload organizationPayload = new OrganizationPayload();
+        OrganizationCommandPayload organizationPayload = OrganizationCommandPayload.builder()
+                .id("orga#1")
+                .hrids(Collections.singletonList("orga-1"))
+                .description("Organization description")
+                .name("Organization name")
+                .accessPoints(List.of(AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("domain.restriction1.io").build(),
+                        AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("domain.restriction2.io").build()))
+                .build();
         OrganizationCommand command = new OrganizationCommand(organizationPayload);
 
-        organizationPayload.setId("orga#1");
-        organizationPayload.setHrids(Collections.singletonList("orga-1"));
-        organizationPayload.setDescription("Organization description");
-        organizationPayload.setName("Organization name");
-        organizationPayload.setDomainRestrictions(Arrays.asList("domain.restriction1.io", "domain.restriction2.io"));
-
         when(organizationService.createOrUpdate(eq("orga#1"),
-                argThat(newOrganization -> newOrganization.getHrids().equals(organizationPayload.getHrids())
-                        && newOrganization.getDescription().equals(organizationPayload.getDescription())
-                        && newOrganization.getName().equals(organizationPayload.getName())
-                        && newOrganization.getDomainRestrictions().equals(organizationPayload.getDomainRestrictions())),
+                argThat(newOrganization -> newOrganization.getHrids().equals(organizationPayload.hrids())
+                        && newOrganization.getDescription().equals(organizationPayload.description())
+                        && newOrganization.getName().equals(organizationPayload.name())
+                        && newOrganization.getDomainRestrictions().equals(organizationPayload.accessPoints().stream()
+                        .map(AccessPoint::getHost).collect(Collectors.toList()))),
                 isNull())).thenReturn(Single.just(new Organization()));
 
         TestObserver<OrganizationReply> obs = cut.handle(command).test();
@@ -90,13 +97,14 @@ public class OrganizationCommandHandlerTest {
     @Test
     public void handleWithException() {
 
-        OrganizationPayload organizationPayload = new OrganizationPayload();
+        OrganizationCommandPayload organizationPayload = OrganizationCommandPayload.builder()
+                .id("orga#1")
+                .description("Organization description")
+                .name("Organization name")
+                .accessPoints(List.of(AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("domain.restriction1.io").build(),
+                        AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("domain.restriction2.io").build()))
+                .build();
         OrganizationCommand command = new OrganizationCommand(organizationPayload);
-
-        organizationPayload.setId("orga#1");
-        organizationPayload.setDescription("Organization description");
-        organizationPayload.setName("Organization name");
-        organizationPayload.setDomainRestrictions(Arrays.asList("domain.restriction1.io", "domain.restriction2.io"));
 
         when(organizationService.createOrUpdate(eq("orga#1"), any(NewOrganization.class), isNull())).thenReturn(Single.error(new TechnicalException()));
 

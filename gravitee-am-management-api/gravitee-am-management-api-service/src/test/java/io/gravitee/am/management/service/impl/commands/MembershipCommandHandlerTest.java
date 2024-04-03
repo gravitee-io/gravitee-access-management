@@ -24,34 +24,37 @@ import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.OrganizationUserService;
 import io.gravitee.am.service.RoleService;
-import io.gravitee.cockpit.api.command.Command;
-import io.gravitee.cockpit.api.command.CommandStatus;
-import io.gravitee.cockpit.api.command.membership.MembershipCommand;
-import io.gravitee.cockpit.api.command.membership.MembershipPayload;
-import io.gravitee.cockpit.api.command.membership.MembershipReply;
+import io.gravitee.cockpit.api.command.v1.CockpitCommandType;
+import io.gravitee.cockpit.api.command.v1.membership.MembershipCommand;
+import io.gravitee.cockpit.api.command.v1.membership.MembershipCommandPayload;
+import io.gravitee.cockpit.api.command.v1.membership.MembershipReply;
 import io.gravitee.common.utils.UUID;
+import io.gravitee.exchange.api.command.CommandStatus;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class MembershipCommandHandlerTest {
 
     @Mock
@@ -65,25 +68,27 @@ public class MembershipCommandHandlerTest {
 
     public MembershipCommandHandler cut;
 
-    @Before
+    @BeforeEach
     public void before() {
         cut = new MembershipCommandHandler(userService, roleService, membershipService);
     }
 
     @Test
-    public void handleType() {
-        assertEquals(Command.Type.MEMBERSHIP_COMMAND, cut.handleType());
+    public void supportType() {
+        assertEquals(CockpitCommandType.MEMBERSHIP.name(), cut.supportType());
     }
 
     @Test
     public void handleWithSystemRole() {
 
-        MembershipPayload membershipPayload = new MembershipPayload();
-        membershipPayload.setUserId("user#1");
-        membershipPayload.setOrganizationId("orga#1");
-        membershipPayload.setReferenceType(ReferenceType.ENVIRONMENT.name());
-        membershipPayload.setReferenceId("env#1");
-        membershipPayload.setRole(SystemRole.ENVIRONMENT_PRIMARY_OWNER.name());
+        MembershipCommandPayload membershipPayload = MembershipCommandPayload
+                .builder()
+                .userId("user#1")
+                .organizationId("orga#1")
+                .referenceType(ReferenceType.ENVIRONMENT.name())
+                .referenceId("env#1")
+                .role(SystemRole.ENVIRONMENT_PRIMARY_OWNER.name())
+                .build();
 
         MembershipCommand command = new MembershipCommand(membershipPayload);
 
@@ -93,11 +98,11 @@ public class MembershipCommandHandlerTest {
         Role role = new Role();
         role.setId(UUID.random().toString());
 
-        when(userService.findByExternalIdAndSource(ReferenceType.ORGANIZATION, membershipPayload.getOrganizationId(), membershipPayload.getUserId(), "cockpit")).thenReturn(Maybe.just(user));
+        when(userService.findByExternalIdAndSource(ReferenceType.ORGANIZATION, membershipPayload.organizationId(), membershipPayload.userId(), "cockpit")).thenReturn(Maybe.just(user));
         when(roleService.findSystemRole(SystemRole.ENVIRONMENT_PRIMARY_OWNER, ReferenceType.ENVIRONMENT)).thenReturn(Maybe.just(role));
-        when(membershipService.addOrUpdate(eq(membershipPayload.getOrganizationId()),
+        when(membershipService.addOrUpdate(eq(membershipPayload.organizationId()),
                 argThat(membership -> membership.getReferenceType() == ReferenceType.ENVIRONMENT
-                        && membership.getReferenceId().equals(membershipPayload.getReferenceId())
+                        && membership.getReferenceId().equals(membershipPayload.referenceId())
                         && membership.getMemberType() == MemberType.USER
                         && membership.getMemberId().equals(user.getId())
                         && membership.getRoleId().equals(role.getId()))))
@@ -113,12 +118,14 @@ public class MembershipCommandHandlerTest {
     @Test
     public void handleWithDefaultRole() {
 
-        MembershipPayload membershipPayload = new MembershipPayload();
-        membershipPayload.setUserId("user#1");
-        membershipPayload.setOrganizationId("orga#1");
-        membershipPayload.setReferenceType(ReferenceType.ENVIRONMENT.name());
-        membershipPayload.setReferenceId("env#1");
-        membershipPayload.setRole(DefaultRole.ENVIRONMENT_OWNER.name());
+        MembershipCommandPayload membershipPayload = MembershipCommandPayload
+                .builder()
+                .userId("user#1")
+                .organizationId("orga#1")
+                .referenceType(ReferenceType.ENVIRONMENT.name())
+                .referenceId("env#1")
+                .role(DefaultRole.ENVIRONMENT_OWNER.name())
+                .build();
 
         MembershipCommand command = new MembershipCommand(membershipPayload);
 
@@ -128,11 +135,11 @@ public class MembershipCommandHandlerTest {
         Role role = new Role();
         role.setId(UUID.random().toString());
 
-        when(userService.findByExternalIdAndSource(ReferenceType.ORGANIZATION, membershipPayload.getOrganizationId(), membershipPayload.getUserId(), "cockpit")).thenReturn(Maybe.just(user));
-        when(roleService.findDefaultRole(membershipPayload.getOrganizationId(), DefaultRole.ENVIRONMENT_OWNER, ReferenceType.ENVIRONMENT)).thenReturn(Maybe.just(role));
-        when(membershipService.addOrUpdate(eq(membershipPayload.getOrganizationId()),
+        when(userService.findByExternalIdAndSource(ReferenceType.ORGANIZATION, membershipPayload.organizationId(), membershipPayload.userId(), "cockpit")).thenReturn(Maybe.just(user));
+        when(roleService.findDefaultRole(membershipPayload.organizationId(), DefaultRole.ENVIRONMENT_OWNER, ReferenceType.ENVIRONMENT)).thenReturn(Maybe.just(role));
+        when(membershipService.addOrUpdate(eq(membershipPayload.organizationId()),
                 argThat(membership -> membership.getReferenceType() == ReferenceType.ENVIRONMENT
-                        && membership.getReferenceId().equals(membershipPayload.getReferenceId())
+                        && membership.getReferenceId().equals(membershipPayload.referenceId())
                         && membership.getMemberType() == MemberType.USER
                         && membership.getMemberId().equals(user.getId())
                         && membership.getRoleId().equals(role.getId()))))
@@ -148,12 +155,14 @@ public class MembershipCommandHandlerTest {
     @Test
     public void handleWithUnknownRole() {
 
-        MembershipPayload membershipPayload = new MembershipPayload();
-        membershipPayload.setUserId("user#1");
-        membershipPayload.setOrganizationId("orga#1");
-        membershipPayload.setReferenceType(ReferenceType.ENVIRONMENT.name());
-        membershipPayload.setReferenceId("env#1");
-        membershipPayload.setRole("UNKNOWN");
+        MembershipCommandPayload membershipPayload = MembershipCommandPayload
+                .builder()
+                .userId("user#1")
+                .organizationId("orga#1")
+                .referenceType(ReferenceType.ENVIRONMENT.name())
+                .referenceId("env#1")
+                .role("UNKNOWN")
+                .build();
 
         MembershipCommand command = new MembershipCommand(membershipPayload);
 
@@ -164,8 +173,8 @@ public class MembershipCommandHandlerTest {
         role.setId(UUID.random().toString());
 
         // Need to switch to lenient because we can be sure of what method will be executed (cause it's reactive and executed in //).
-        lenient().when(userService.findByExternalIdAndSource(ReferenceType.ORGANIZATION, membershipPayload.getOrganizationId(), membershipPayload.getUserId(), "cockpit")).thenReturn(Maybe.just(user));
-        lenient().when(roleService.findDefaultRole(membershipPayload.getOrganizationId(), DefaultRole.ENVIRONMENT_OWNER, ReferenceType.ENVIRONMENT)).thenReturn(Maybe.just(role));
+        lenient().when(userService.findByExternalIdAndSource(ReferenceType.ORGANIZATION, membershipPayload.organizationId(), membershipPayload.userId(), "cockpit")).thenReturn(Maybe.just(user));
+        lenient().when(roleService.findDefaultRole(membershipPayload.organizationId(), DefaultRole.ENVIRONMENT_OWNER, ReferenceType.ENVIRONMENT)).thenReturn(Maybe.just(role));
 
         TestObserver<MembershipReply> obs = cut.handle(command).test();
 

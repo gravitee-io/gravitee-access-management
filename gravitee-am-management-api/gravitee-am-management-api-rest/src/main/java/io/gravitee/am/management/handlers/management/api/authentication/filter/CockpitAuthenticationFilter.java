@@ -161,27 +161,35 @@ public class CockpitAuthenticationFilter extends GenericFilterBean {
      * Cockpit keystore type for client certificate (mtls) and jwt signature verification.
      */
     private String keyStoreType() {
-        return configuration.getProperty("cockpit.keystore.type");
+        return getProperty("cockpit.connector.ws.ssl.keystore.type", "cockpit.keystore.type", null);
     }
 
     /**
      * Cockpit keystore path for client mtls and jwt.
      */
     private String keyStorePath() {
-        return configuration.getProperty("cockpit.keystore.path");
+        return getProperty("cockpit.connector.ws.ssl.keystore.path", "cockpit.keystore.path", null);
     }
 
     /**
      * Cockpit keystore password.
      */
     private String keyStorePassword() {
-        return configuration.getProperty("cockpit.keystore.password");
+        return getProperty("cockpit.connector.ws.ssl.keystore.password", "cockpit.keystore.password", null);
     }
 
     /**
      * Cockpit key alias.
      */
     private String keyAlias() {
-        return configuration.getProperty("cockpit.keystore.key.alias", "cockpit-client");
+        return getProperty("cockpit.connector.ws.ssl.keystore.key.alias", "cockpit.keystore.key.alias", "cockpit-client");
+    }
+
+    private String getProperty(final String property, final String fallback, final String defaultValue) {
+        String value = configuration.getProperty(property);
+        if (value == null) {
+            value = configuration.getProperty(fallback);
+        }
+        return value != null ? value : defaultValue;
     }
 }

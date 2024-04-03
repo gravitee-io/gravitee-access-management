@@ -19,32 +19,37 @@ import io.gravitee.am.model.Environment;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.model.NewEnvironment;
-import io.gravitee.cockpit.api.command.Command;
-import io.gravitee.cockpit.api.command.CommandStatus;
-import io.gravitee.cockpit.api.command.environment.EnvironmentCommand;
-import io.gravitee.cockpit.api.command.environment.EnvironmentPayload;
-import io.gravitee.cockpit.api.command.environment.EnvironmentReply;
+import io.gravitee.cockpit.api.command.model.accesspoint.AccessPoint;
+import io.gravitee.cockpit.api.command.v1.CockpitCommandType;
+import io.gravitee.cockpit.api.command.v1.environment.EnvironmentCommand;
+import io.gravitee.cockpit.api.command.v1.environment.EnvironmentCommandPayload;
+import io.gravitee.cockpit.api.command.v1.environment.EnvironmentReply;
+import io.gravitee.exchange.api.command.CommandStatus;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EnvironmentCommandHandlerTest {
 
     @Mock
@@ -52,34 +57,33 @@ public class EnvironmentCommandHandlerTest {
 
     public EnvironmentCommandHandler cut;
 
-    @Before
+    @BeforeEach
     public void before() {
         cut = new EnvironmentCommandHandler(environmentService);
     }
 
     @Test
-    public void handleType() {
-        assertEquals(Command.Type.ENVIRONMENT_COMMAND, cut.handleType());
+    public void supportType() {
+        assertEquals(CockpitCommandType.ENVIRONMENT.name(), cut.supportType());
     }
 
     @Test
     public void handle() {
 
-        EnvironmentPayload environmentPayload = new EnvironmentPayload();
+        EnvironmentCommandPayload environmentPayload = EnvironmentCommandPayload.builder()
+                .id("env#1")
+                .hrids(Collections.singletonList("env-1"))
+                .organizationId("orga#1")
+                .description("Environment description")
+                .name("Environment name")
+                .accessPoints(List.of(AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("domain.restriction1.io").build(), AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("domain.restriction2.io").build()))
+                .build();
         EnvironmentCommand command = new EnvironmentCommand(environmentPayload);
-
-        environmentPayload.setId("env#1");
-        environmentPayload.setHrids(Collections.singletonList("env-1"));
-        environmentPayload.setOrganizationId("orga#1");
-        environmentPayload.setDescription("Environment description");
-        environmentPayload.setName("Environment name");
-        environmentPayload.setDomainRestrictions(Arrays.asList("domain.restriction1.io", "domain.restriction2.io"));
-
         when(environmentService.createOrUpdate(eq("orga#1"), eq("env#1"),
-                argThat(newEnvironment -> newEnvironment.getHrids().equals(environmentPayload.getHrids())
-                        && newEnvironment.getDescription().equals(environmentPayload.getDescription())
-                        && newEnvironment.getName().equals(environmentPayload.getName())
-                        && newEnvironment.getDomainRestrictions().equals(environmentPayload.getDomainRestrictions())),
+                argThat(newEnvironment -> newEnvironment.getHrids().equals(environmentPayload.hrids())
+                        && newEnvironment.getDescription().equals(environmentPayload.description())
+                        && newEnvironment.getName().equals(environmentPayload.name())
+                        && newEnvironment.getDomainRestrictions().equals(environmentPayload.accessPoints().stream().map(AccessPoint::getHost).collect(Collectors.toList()))),
                 isNull())).thenReturn(Single.just(new Environment()));
 
         TestObserver<EnvironmentReply> obs = cut.handle(command).test();
@@ -90,16 +94,14 @@ public class EnvironmentCommandHandlerTest {
 
     @Test
     public void handleWithException() {
-
-        EnvironmentPayload environmentPayload = new EnvironmentPayload();
+        EnvironmentCommandPayload environmentPayload = EnvironmentCommandPayload.builder()
+                .id("env#1")
+                .organizationId("orga#1")
+                .description("Environment description")
+                .name("Environment name")
+                .accessPoints(List.of(AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("domain.restriction1.io").build(), AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("domain.restriction2.io").build()))
+                .build();
         EnvironmentCommand command = new EnvironmentCommand(environmentPayload);
-
-        environmentPayload.setId("env#1");
-        environmentPayload.setOrganizationId("orga#1");
-        environmentPayload.setDescription("Environment description");
-        environmentPayload.setName("Environment name");
-        environmentPayload.setDomainRestrictions(Arrays.asList("domain.restriction1.io", "domain.restriction2.io"));
-
         when(environmentService.createOrUpdate(eq("orga#1"), eq("env#1"), any(NewEnvironment.class), isNull())).thenReturn(Single.error(new TechnicalException()));
 
         TestObserver<EnvironmentReply> obs = cut.handle(command).test();

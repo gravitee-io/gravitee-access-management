@@ -17,54 +17,56 @@ package io.gravitee.am.management.service.impl.commands;
 
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.model.NewEnvironment;
-import io.gravitee.cockpit.api.command.Command;
-import io.gravitee.cockpit.api.command.CommandHandler;
-import io.gravitee.cockpit.api.command.CommandStatus;
-import io.gravitee.cockpit.api.command.environment.EnvironmentCommand;
-import io.gravitee.cockpit.api.command.environment.EnvironmentPayload;
-import io.gravitee.cockpit.api.command.environment.EnvironmentReply;
+import io.gravitee.cockpit.api.command.model.accesspoint.AccessPoint;
+import io.gravitee.cockpit.api.command.v1.CockpitCommandType;
+import io.gravitee.cockpit.api.command.v1.environment.EnvironmentCommand;
+import io.gravitee.cockpit.api.command.v1.environment.EnvironmentCommandPayload;
+import io.gravitee.cockpit.api.command.v1.environment.EnvironmentReply;
+import io.gravitee.exchange.api.command.CommandHandler;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
+@RequiredArgsConstructor
 @Component
+@Slf4j
 public class EnvironmentCommandHandler implements CommandHandler<EnvironmentCommand, EnvironmentReply> {
 
-    private final Logger logger = LoggerFactory.getLogger(EnvironmentCommandHandler.class);
 
     private final EnvironmentService environmentService;
 
-    public EnvironmentCommandHandler(EnvironmentService environmentService) {
-        this.environmentService = environmentService;
-    }
-
     @Override
-    public Command.Type handleType() {
-        return Command.Type.ENVIRONMENT_COMMAND;
+    public String supportType() {
+        return CockpitCommandType.ENVIRONMENT.name();
     }
 
     @Override
     public Single<EnvironmentReply> handle(EnvironmentCommand command) {
 
-        EnvironmentPayload environmentPayload = command.getPayload();
+        EnvironmentCommandPayload environmentPayload = command.getPayload();
         NewEnvironment newEnvironment = new NewEnvironment();
-        newEnvironment.setHrids(environmentPayload.getHrids());
-        newEnvironment.setName(environmentPayload.getName());
-        newEnvironment.setDescription(environmentPayload.getDescription());
-        newEnvironment.setDomainRestrictions(environmentPayload.getDomainRestrictions());
+        newEnvironment.setHrids(environmentPayload.hrids());
+        newEnvironment.setName(environmentPayload.name());
+        newEnvironment.setDescription(environmentPayload.description());
+        if (environmentPayload.accessPoints() != null) {
+            newEnvironment.setDomainRestrictions(environmentPayload.accessPoints()
+                    .stream()
+                    .filter(accessPoint -> accessPoint.getTarget() == AccessPoint.Target.GATEWAY)
+                    .map(AccessPoint::getHost)
+                    .collect(Collectors.toList()));
+        }
 
-        return environmentService.createOrUpdate(environmentPayload.getOrganizationId(), environmentPayload.getId(), newEnvironment, null)
-                .map(organization -> new EnvironmentReply(command.getId(), CommandStatus.SUCCEEDED))
-                .doOnSuccess(reply -> logger.info("Environment [{}] handled with id [{}].", environmentPayload.getName(), environmentPayload.getId()))
-                .doOnError(error -> logger.error("Error occurred when handling environment [{}] with id [{}].", environmentPayload.getName(), environmentPayload.getId(), error))
-                .onErrorReturn(throwable -> new EnvironmentReply(command.getId(), CommandStatus.ERROR));
+        return environmentService.createOrUpdate(environmentPayload.organizationId(), environmentPayload.id(), newEnvironment, null)
+                .map(organization -> new EnvironmentReply(command.getId()))
+                .doOnSuccess(reply -> log.info("Environment [{}] handled with id [{}].", environmentPayload.name(), environmentPayload.id()))
+                .doOnError(error -> log.error("Error occurred when handling environment [{}] with id [{}].", environmentPayload.name(), environmentPayload.id(), error))
+                .onErrorReturn(throwable -> new EnvironmentReply(command.getId(), throwable.getMessage()));
     }
 }

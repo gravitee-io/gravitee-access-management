@@ -15,16 +15,15 @@
  */
 package io.gravitee.am.management.service.impl.commands;
 
-import io.gravitee.am.model.Installation;
 import io.gravitee.am.service.InstallationService;
-import io.gravitee.cockpit.api.command.Command;
-import io.gravitee.cockpit.api.command.CommandHandler;
-import io.gravitee.cockpit.api.command.CommandStatus;
-import io.gravitee.cockpit.api.command.goodbye.GoodbyeCommand;
-import io.gravitee.cockpit.api.command.goodbye.GoodbyeReply;
+import io.gravitee.exchange.api.command.CommandHandler;
+import io.gravitee.exchange.api.command.goodbye.GoodByeCommand;
+import io.gravitee.exchange.api.command.goodbye.GoodByeReply;
+import io.gravitee.exchange.api.command.goodbye.GoodByeReplyPayload;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -36,29 +35,32 @@ import static io.gravitee.am.model.Installation.COCKPIT_INSTALLATION_STATUS;
  * @author GraviteeSource Team
  */
 @Component
-public class GoodbyeCommandHandler implements CommandHandler<GoodbyeCommand, GoodbyeReply> {
+@Slf4j
+@RequiredArgsConstructor
+public class GoodbyeCommandHandler implements CommandHandler<GoodByeCommand, GoodByeReply> {
 
     static final String DELETED_STATUS = "DELETED";
-    private final Logger logger = LoggerFactory.getLogger(GoodbyeCommandHandler.class);
-
     private final InstallationService installationService;
 
-    public GoodbyeCommandHandler(InstallationService installationService) {
-
-        this.installationService = installationService;
+    @Override
+    public String supportType() {
+        return GoodByeCommand.COMMAND_TYPE;
     }
 
     @Override
-    public Command.Type handleType() {
-        return Command.Type.GOODBYE_COMMAND;
-    }
-
-    @Override
-    public Single<GoodbyeReply> handle(GoodbyeCommand command) {
-        return installationService.addAdditionalInformation(Collections.singletonMap(COCKPIT_INSTALLATION_STATUS, DELETED_STATUS))
-                .flatMap(installation -> Single.just(new GoodbyeReply(command.getId(), CommandStatus.SUCCEEDED)))
-                .doOnSuccess(reply -> logger.info("Installation has been removed."))
-                .doOnError(error -> logger.error("Error occurred when deleting installation.", error))
-                .onErrorReturn(throwable -> new GoodbyeReply(command.getId(), CommandStatus.ERROR));
+    public Single<GoodByeReply> handle(GoodByeCommand command) {
+        return Single.just(command.getPayload().isReconnect())
+                .flatMapCompletable(isReconnect -> {
+                    if (Boolean.FALSE.equals(isReconnect)) {
+                        return installationService.addAdditionalInformation(Collections.singletonMap(COCKPIT_INSTALLATION_STATUS, DELETED_STATUS))
+                                .ignoreElement();
+                    } else {
+                        return Completable.complete();
+                    }
+                })
+                .andThen(Single.just(new GoodByeReply(command.getId(), new GoodByeReplyPayload())))
+                .doOnSuccess(reply -> log.info("Installation has been removed."))
+                .doOnError(error -> log.error("Error occurred when deleting installation.", error))
+                .onErrorReturn(throwable -> new GoodByeReply(command.getId(), throwable.getMessage()));
     }
 }
