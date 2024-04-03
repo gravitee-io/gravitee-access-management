@@ -22,38 +22,12 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.authentication.view.TemplateResolver;
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
 import io.gravitee.am.management.handlers.management.api.preview.PreviewService;
+import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.management.service.*;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
-import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.BotDetectionService;
-import io.gravitee.am.service.CertificatePluginService;
-import io.gravitee.am.service.CertificateService;
-import io.gravitee.am.service.CredentialService;
-import io.gravitee.am.service.DeviceIdentifierService;
-import io.gravitee.am.service.DeviceService;
-import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.EmailTemplateService;
-import io.gravitee.am.service.EntrypointService;
-import io.gravitee.am.service.EnvironmentService;
-import io.gravitee.am.service.ExtensionGrantService;
-import io.gravitee.am.service.FactorService;
-import io.gravitee.am.service.FlowService;
-import io.gravitee.am.service.FormService;
-import io.gravitee.am.service.GroupService;
-import io.gravitee.am.service.IdentityProviderService;
-import io.gravitee.am.service.MembershipService;
-import io.gravitee.am.service.OrganizationService;
-import io.gravitee.am.service.PasswordService;
-import io.gravitee.am.service.ReporterService;
-import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.ScopeApprovalService;
-import io.gravitee.am.service.ScopeService;
-import io.gravitee.am.service.TagService;
-import io.gravitee.am.service.ThemeService;
-import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.UserActivityService;
+import io.gravitee.am.service.*;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.validators.email.resource.EmailTemplateValidator;
 import io.gravitee.am.service.validators.flow.FlowValidator;
@@ -61,6 +35,14 @@ import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.Priority;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerRequestFilter;
+import jakarta.ws.rs.core.Application;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.After;
@@ -78,14 +60,6 @@ import org.springframework.test.context.support.AnnotationConfigContextLoader;
 import org.thymeleaf.TemplateEngine;
 
 import javax.inject.Named;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.container.ContainerRequestContext;
-import jakarta.ws.rs.container.ContainerRequestFilter;
-import jakarta.ws.rs.core.Application;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.SecurityContext;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
@@ -250,6 +224,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected HttpServletRequest httpServletRequest;
+
+    @Autowired
+    protected PasswordPolicyService passwordPolicyService;
 
     @Before
     public void init() {
@@ -543,6 +520,11 @@ public abstract class JerseySpringTest {
         @Bean
         public HttpServletRequest httpServletRequest() {
             return mock(HttpServletRequest.class);
+        }
+
+        @Bean
+        public PasswordPolicyService passwordPolicyService() {
+            return mock(PasswordPolicyService.class);
         }
 
     }

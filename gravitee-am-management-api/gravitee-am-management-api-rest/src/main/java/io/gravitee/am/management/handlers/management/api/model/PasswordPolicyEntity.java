@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.gravitee.am.management.handlers.management.api.model;
 
-package io.gravitee.am.service;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import io.gravitee.am.model.PasswordPolicy;
-import io.reactivex.rxjava3.core.Flowable;
-
-/**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface PasswordPolicyService {
-    Flowable<PasswordPolicy> findByDomain(String domain);
+@Getter
+@Setter
+@NoArgsConstructor
+public class PasswordPolicyEntity {
+    private String id;
+    private String name;
+    private Boolean isDefault;
+    private Integer idpCount;
 }

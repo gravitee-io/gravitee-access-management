@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { TestBed } from '@angular/core/testing';
 
-package io.gravitee.am.service;
+import { PasswordPoliciesService } from './password-policies.service';
 
-import io.gravitee.am.model.PasswordPolicy;
-import io.reactivex.rxjava3.core.Flowable;
+describe('PasswordPoliciesService', () => {
+  let service: PasswordPoliciesService;
 
-/**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface PasswordPolicyService {
-    Flowable<PasswordPolicy> findByDomain(String domain);
-}
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(PasswordPoliciesService);
+  });
+
+  it('should be created', () => {
+    expect(service).toBeTruthy();
+  });
+});

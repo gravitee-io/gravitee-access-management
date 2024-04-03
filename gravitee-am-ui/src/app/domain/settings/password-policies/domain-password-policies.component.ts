@@ -16,6 +16,8 @@
 import { Component, OnInit } from '@angular/core';
 
 import { PasswordPolicy } from './domain-password-policies.model';
+import {PasswordPoliciesService} from "../../../services/password-policies.service";
+import {ActivatedRoute} from "@angular/router";
 
 @Component({
   selector: 'domain-password-policies',
@@ -23,30 +25,26 @@ import { PasswordPolicy } from './domain-password-policies.model';
   styleUrls: ['./domain-password-policies.component.scss'],
 })
 export class PasswordPoliciesComponent implements OnInit {
+  domain: any = {};
+
+  constructor(
+    private route: ActivatedRoute,
+    private passwordPoliciesService: PasswordPoliciesService) {
+  }
   rows: PasswordPolicy[] = [];
 
   ngOnInit() {
-    this.init();
-  }
-
-  private init() {
-    this.rows = [
-      {
-        id: '1',
-        name: 'aaa',
-        idpCount: 0,
-        isDefault: false,
-      },
-      {
-        id: '2',
-        name: 'bb',
-        idpCount: 0,
-        isDefault: true,
-      },
-    ];
+    this.domain = this.route.snapshot.data['domain'];
+    this.loadPasswordPolicies();
   }
 
   isEmpty(): boolean {
     return this.rows.length === 0;
+  }
+
+  private loadPasswordPolicies() {
+    this.passwordPoliciesService.getAll(this.domain.id).subscribe((policies)=>{
+      this.rows = policies;
+    });
   }
 }

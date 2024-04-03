@@ -13,16 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.gravitee.am.service.impl;
 
 
+import io.gravitee.am.model.PasswordPolicy;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.repository.management.api.PasswordPolicyRepository;
 import io.gravitee.am.service.PasswordPolicyService;
+import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.reactivex.rxjava3.core.Flowable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Component
 public class PasswordPolicyServiceImpl implements PasswordPolicyService {
 
+    private final Logger LOGGER = LoggerFactory.getLogger(PasswordPolicyServiceImpl.class);
+
+    @Lazy
+    @Autowired
+    private PasswordPolicyRepository passwordPolicyRepository;
+
+
+    @Override
+    public Flowable<PasswordPolicy> findByDomain(String domain) {
+        LOGGER.debug("Find password policy by domain: {}", domain);
+        return passwordPolicyRepository.findByReference(ReferenceType.DOMAIN, domain)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find password policy by domain", ex);
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find password policy by domain", ex));
+                });
+    }
 }

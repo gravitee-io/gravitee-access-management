@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import {ActivatedRouteSnapshot} from '@angular/router';
+import {Injectable} from "@angular/core";
+import {Observable} from "rxjs";
+import {PasswordPoliciesService} from "../services/password-policies.service";
 
-package io.gravitee.am.service;
+@Injectable()
+export class PasswordPoliciesResolver {
+  constructor(private passwordPoliciesService: PasswordPoliciesService) {
+  }
 
-import io.gravitee.am.model.PasswordPolicy;
-import io.reactivex.rxjava3.core.Flowable;
-
-/**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface PasswordPolicyService {
-    Flowable<PasswordPolicy> findByDomain(String domain);
+  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+    const domainId = route.parent.data['domain'].id;
+    return this.passwordPoliciesService.getAll(domainId);
+  }
 }
