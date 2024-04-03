@@ -88,6 +88,4 @@ public class NewPasswordPolicy {
      * How many passwords are preserved into the history
      */
     private Short oldPasswords;
-
-    private boolean defaultPolicy;
 }
