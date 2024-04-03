@@ -15,28 +15,28 @@
  */
 package io.gravitee.am.management.handlers.management.api.authentication.filter;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.util.matcher.RequestMatcher;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.util.matcher.RequestMatcher;
+
 import java.io.IOException;
 
 /**
- * The built-in authentication filter rely on the {@link JWTAuthenticationFilter} to avoid code duplication and is exclusively used for the management user login phase.
+ * The built-in authentication filter rely on the {@link BearerAuthenticationFilter} to avoid code duplication and is exclusively used for the management user login phase.
  * This filter tries to extract the JWT Token and, if succeed, feeds the {@link SecurityContextHolder}.
- * Unlike {@link JWTAuthenticationFilter} which is made for REST calls and can throw {@link org.springframework.security.authentication.BadCredentialsException},
+ * Unlike {@link BearerAuthenticationFilter} which is made for REST calls and can throw {@link org.springframework.security.authentication.BadCredentialsException},
  * this filter ignores authentication errors and always processes the filter chain normally.
  *
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class BuiltInAuthenticationFilter extends JWTAuthenticationFilter {
+public class BuiltInAuthenticationFilter extends BearerAuthenticationFilter {
 
     public BuiltInAuthenticationFilter(RequestMatcher requiresAuthenticationRequestMatcher) {
         super(requiresAuthenticationRequestMatcher);

@@ -23,12 +23,14 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.management.service.impl.IdentityProviderManagerImpl;
+import io.gravitee.am.model.AccountAccessToken;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.UserInvalidException;
+import io.gravitee.am.service.model.NewAccountAccessToken;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
@@ -39,6 +41,8 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
@@ -48,8 +52,7 @@ import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.inject.Named;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
+import java.net.URI;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -112,9 +115,37 @@ public class UserResource extends AbstractResource {
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.UPDATE)
                 .andThen(organizationUserService.update(ReferenceType.ORGANIZATION, organizationId, user, updateUser, authenticatedUser)
-                    .map(UserEntity::new))
+                        .map(UserEntity::new))
                 .subscribe(response::resume, response::resume);
     }
+
+    @POST
+    @Path("/tokens")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Generate an account access token for a user",
+            operationId = "createAccountAccessToken",
+            description = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
+    @ApiResponse(responseCode = "201", description = "Account access token generated",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = AccountAccessToken.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
+    public void createAccountToken(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("user") String userId,
+            @Parameter(name = "name") NewAccountAccessToken newToken,
+            @Suspended final AsyncResponse response
+    ) {
+        final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.UPDATE)
+                .andThen(organizationUserService.createAccountAccessToken(organizationId, userId, newToken, authenticatedUser))
+                .map(accountToken -> Response
+                        .created(URI.create("/organizations/" + organizationId + "/users/" + userId + "/tokens/" + accountToken.tokenId()))
+                        .entity(accountToken)
+                        .build())
+                .subscribe(response::resume, response::resume);
+    }
+
 
     @PUT
     @Path("/status")
@@ -137,7 +168,7 @@ public class UserResource extends AbstractResource {
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.UPDATE)
                 .andThen(organizationUserService.updateStatus(ReferenceType.ORGANIZATION, organizationId, user, status.isEnabled(), authenticatedUser)
-                    .map(UserEntity::new))
+                        .map(UserEntity::new))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -209,6 +240,7 @@ public class UserResource extends AbstractResource {
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
 
     }
+
     private Single<UserEntity> enhanceIdentityProvider(UserEntity userEntity) {
         if (userEntity.getSource() != null) {
             return identityProviderService.findById(userEntity.getSource())

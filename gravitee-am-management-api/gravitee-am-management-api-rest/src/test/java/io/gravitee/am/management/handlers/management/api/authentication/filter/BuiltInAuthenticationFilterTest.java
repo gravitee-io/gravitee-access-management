@@ -23,12 +23,6 @@ import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.reactivex.rxjava3.core.Single;
-import java.awt.EventQueue;
-import java.io.IOException;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -40,15 +34,20 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.web.authentication.session.SessionAuthenticationException;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 import static io.gravitee.gateway.api.http.HttpHeaderNames.AUTHORIZATION;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
@@ -68,7 +67,7 @@ public class BuiltInAuthenticationFilterTest {
     private OrganizationUserService organizationUserService;
 
     @InjectMocks
-    private JWTAuthenticationFilter filter = new JWTAuthenticationFilter(new AntPathRequestMatcher("/**"));
+    private BearerAuthenticationFilter filter = new BearerAuthenticationFilter(new AntPathRequestMatcher("/**"));
 
 
     @Before

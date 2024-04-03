@@ -19,6 +19,7 @@ import com.google.common.base.Strings;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.management.service.OrganizationUserService;
+import io.gravitee.am.model.AccountAccessToken;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
@@ -26,7 +27,14 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.exception.InvalidParameterException;
+import io.gravitee.am.service.exception.InvalidPasswordException;
+import io.gravitee.am.service.exception.InvalidUserException;
+import io.gravitee.am.service.exception.NotImplementedException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserInvalidException;
+import io.gravitee.am.service.exception.UserProviderNotFoundException;
+import io.gravitee.am.service.model.NewAccountAccessToken;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
@@ -41,6 +49,7 @@ import java.util.Date;
 import java.util.function.BiFunction;
 
 import static io.gravitee.am.management.service.impl.IdentityProviderManagerImpl.IDP_GRAVITEE;
+import static org.springframework.util.StringUtils.hasText;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -102,7 +111,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
         }
         // Organization user are linked to the Gravitee Idp only
         if (!Strings.isNullOrEmpty(newUser.getSource()) && !IDP_GRAVITEE.equals(newUser.getSource())) {
-            return Single.error(new UserInvalidException("Invalid identity provider for ['"+newUser.getUsername()+"']"));
+            return Single.error(new UserInvalidException("Invalid identity provider for ['" + newUser.getUsername() + "']"));
         }
         // force the value to avoid null reference
         newUser.setSource(IDP_GRAVITEE);
@@ -139,22 +148,22 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                                     return userValidator.validate(userToPersist)
                                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)))
                                             .andThen(userProvider.create(convert(newUser))
-                                            .map(idpUser -> {
-                                                // Excepted for GraviteeIDP that manage Organization Users
-                                                // AM 'users' collection is not made for authentication (but only management stuff)
-                                                userToPersist.setPassword(PWD_ENCODER.encode(newUser.getPassword()));
-                                                // set external id
-                                                // id and external id are the same for GraviteeIdP users
-                                                userToPersist.setId(RandomString.generate());
-                                                userToPersist.setExternalId(userToPersist.getId());
-                                                return userToPersist;
-                                            })
-                                            .flatMap(newOrgUser -> {
-                                                return userService.create(newOrgUser)
-                                                        .flatMap(newlyCreatedUser -> userService.setRoles(newlyCreatedUser).andThen(Single.just(newlyCreatedUser)))
-                                                        .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
-                                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)));
-                                            }));
+                                                    .map(idpUser -> {
+                                                        // Excepted for GraviteeIDP that manage Organization Users
+                                                        // AM 'users' collection is not made for authentication (but only management stuff)
+                                                        userToPersist.setPassword(PWD_ENCODER.encode(newUser.getPassword()));
+                                                        // set external id
+                                                        // id and external id are the same for GraviteeIdP users
+                                                        userToPersist.setId(RandomString.generate());
+                                                        userToPersist.setExternalId(userToPersist.getId());
+                                                        return userToPersist;
+                                                    })
+                                                    .flatMap(newOrgUser -> {
+                                                        return userService.create(newOrgUser)
+                                                                .flatMap(newlyCreatedUser -> userService.setRoles(newlyCreatedUser).andThen(Single.just(newlyCreatedUser)))
+                                                                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
+                                                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)));
+                                                    }));
                                 });
 
                     }
@@ -190,5 +199,37 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                     user.setUpdatedAt(now);
                     return getUserService().update(user);
                 });
+    }
+
+
+    @Override
+    public Single<AccountAccessToken> createAccountAccessToken(String organizationId, String userId, NewAccountAccessToken newAccountToken, io.gravitee.am.identityprovider.api.User principal) {
+        if (!hasText(newAccountToken.name())) {
+            return Single.error(new InvalidParameterException("Token name is required"));
+        }
+
+        if (newAccountToken.name().length() > 254) {
+            return Single.error(new InvalidParameterException("Token name is too long"));
+        }
+
+        return getUserService().findById(ReferenceType.ORGANIZATION, organizationId, userId)
+                .flatMap(user -> getUserService().generateAccountAccessToken(user, newAccountToken, principal.getId())
+                        .doOnSuccess(token -> auditService.report(createAccountAccessTokenAudit(principal)
+                                .user(user)
+                                .accountToken(token)
+                        )))
+                .doOnError(throwable -> auditService.report(createAccountAccessTokenAudit(principal)
+                        .throwable(throwable)));
+    }
+
+    private UserAuditBuilder createAccountAccessTokenAudit(io.gravitee.am.identityprovider.api.User principal) {
+        return AuditBuilder.builder(UserAuditBuilder.class)
+                .principal(principal)
+                .type(EventType.ACCOUNT_ACCESS_TOKEN_CREATED);
+    }
+
+    @Override
+    public Single<User> findByAccessToken(String tokenId, String accountToken) {
+        return getUserService().findByAccessToken(tokenId, accountToken);
     }
 }

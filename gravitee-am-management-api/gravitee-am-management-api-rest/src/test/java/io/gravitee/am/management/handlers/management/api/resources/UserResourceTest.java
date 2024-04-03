@@ -19,26 +19,28 @@ import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.management.handlers.management.api.model.PasswordValue;
 import io.gravitee.am.management.handlers.management.api.model.StatusEntity;
 import io.gravitee.am.management.handlers.management.api.model.UsernameEntity;
+import io.gravitee.am.model.AccountAccessToken;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.model.NewAccountAccessToken;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.junit.Test;
-
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
+import org.junit.Test;
+
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import static jakarta.ws.rs.HttpMethod.PATCH;
 import static org.glassfish.jersey.client.HttpUrlConnectorProvider.SET_METHOD_WORKAROUND;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -425,6 +427,41 @@ public class UserResourceTest extends JerseySpringTest {
         assertEquals("firstname", user.getFirstName());
         assertEquals("userId", user.getId());
         assertNull(user.getPassword());
+    }
+
+    @Test
+    public void shouldCreateAccountToken() {
+        final String organization = "DEFAULT";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(organization);
+
+        final String userId = "userId";
+        final User mockUser = new User();
+        mockUser.setId(userId);
+        mockUser.setUsername("username");
+        mockUser.setFirstName("firstname");
+        mockUser.setReferenceType(ReferenceType.ORGANIZATION);
+        mockUser.setReferenceId(organization);
+        mockUser.setEnabled(true);
+
+        final NewAccountAccessToken newTokenRequest = new NewAccountAccessToken("test-token");
+        final AccountAccessToken mockToken = new AccountAccessToken("tokenId", ReferenceType.ORGANIZATION, organization, userId, "issuer", newTokenRequest.name(), "qwerty123", new Date(), new Date());
+
+        doReturn(Single.just(mockToken)).when(organizationUserService).createAccountAccessToken(eq(organization), eq(userId), any(), any());
+
+        final Response response = target("organizations")
+                .path(organization)
+                .path("users")
+                .path(userId)
+                .path("tokens")
+                .request()
+                .post(Entity.json(newTokenRequest));
+        assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
+
+        final AccountAccessToken token = readEntity(response, AccountAccessToken.class);
+        assertEquals(organization, token.referenceId());
+        assertEquals(userId, token.userId());
+        assertNotNull(token.token());
     }
 
 }

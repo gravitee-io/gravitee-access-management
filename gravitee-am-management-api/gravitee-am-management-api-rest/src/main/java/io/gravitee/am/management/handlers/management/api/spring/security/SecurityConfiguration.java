@@ -16,45 +16,38 @@
 package io.gravitee.am.management.handlers.management.api.spring.security;
 
 import io.gravitee.am.management.handlers.management.api.authentication.csrf.CookieCsrfSignedTokenRepository;
-import io.gravitee.am.management.handlers.management.api.authentication.filter.*;
-import io.gravitee.am.management.handlers.management.api.authentication.handler.*;
+import io.gravitee.am.management.handlers.management.api.authentication.filter.BearerAuthenticationFilter;
+import io.gravitee.am.management.handlers.management.api.authentication.handler.CustomRequestRejectedHandler;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.idp.IdentityProviderManager;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.JWTGenerator;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.RedirectCookieGenerator;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.ManagementAuthenticationProvider;
-import io.gravitee.am.management.handlers.management.api.authentication.web.*;
+import io.gravitee.am.management.handlers.management.api.authentication.web.WebAuthenticationDetails;
+import io.gravitee.am.management.handlers.management.api.authentication.web.WebAuthenticationDetailsSource;
 import io.gravitee.am.management.handlers.management.api.spring.security.filter.AuthSecurityConfiguration;
 import io.gravitee.am.management.handlers.management.api.spring.security.filter.ManagementSecurityConfiguration;
 import io.gravitee.am.management.handlers.management.api.spring.security.filter.TokenSecurityConfiguration;
+import jakarta.servlet.Filter;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import jakarta.servlet.Filter;
-import jakarta.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static io.gravitee.am.management.handlers.management.api.authentication.csrf.CookieCsrfSignedTokenRepository.DEFAULT_CSRF_HEADER_NAME;
 import static java.util.Arrays.asList;
-import static java.util.Objects.nonNull;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -109,9 +102,10 @@ public class SecurityConfiguration {
         return new WebAuthenticationDetailsSource();
     }
 
+
     @Bean
     public Filter jwtAuthenticationFilter() {
-        return new JWTAuthenticationFilter(new AntPathRequestMatcher("/**"));
+        return new BearerAuthenticationFilter(new AntPathRequestMatcher("/**"));
     }
 
     @Bean

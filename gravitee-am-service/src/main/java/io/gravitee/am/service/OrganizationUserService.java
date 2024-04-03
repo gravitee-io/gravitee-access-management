@@ -15,8 +15,11 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.AccountAccessToken;
 import io.gravitee.am.model.User;
+import io.gravitee.am.service.model.NewAccountAccessToken;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -38,4 +41,8 @@ public interface OrganizationUserService extends CommonUserService {
      * @return
      */
     Completable setRoles(io.gravitee.am.model.User user);
+
+    Single<AccountAccessToken> generateAccountAccessToken(User user, NewAccountAccessToken newAccountToken, String issuer);
+
+    Single<User> findByAccessToken(String token, String tokenValue);
 }
