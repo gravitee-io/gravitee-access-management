@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.endpoints.user;
 
+import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ResetPasswordEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.model.Domain;
@@ -50,7 +51,8 @@ public class ResetPasswordEndpointTest {
         final Buffer buffer = mock(Buffer.class);
         final ThymeleafTemplateEngine engine = mock(ThymeleafTemplateEngine.class);
         when(engine.render(anyMap(), anyString())).thenReturn(Single.just(buffer));
-        var registrationConfirmation = new ResetPasswordEndpoint(engine, domain);
+        final PasswordPolicyManager passwordPolicyManager = mock(PasswordPolicyManager.class);
+        var resetPassword = new ResetPasswordEndpoint(engine, domain, passwordPolicyManager);
 
         final SpyRoutingContext ctx = new SpyRoutingContext();
         ctx.setMethod(HttpMethod.GET);
@@ -59,7 +61,7 @@ public class ResetPasswordEndpointTest {
         final Client client = new Client();
         client.setClientId("some # clientId");
         routingContext.put(CLIENT_CONTEXT_KEY, client);
-        registrationConfirmation.handle(routingContext);
+        resetPassword.handle(routingContext);
 
 
         assertTrue(routingContext.<String>get(ACTION_KEY).contains("client_id=some+%23+clientId"));
@@ -74,7 +76,8 @@ public class ResetPasswordEndpointTest {
         final Buffer buffer = mock(Buffer.class);
         final ThymeleafTemplateEngine engine = mock(ThymeleafTemplateEngine.class);
         when(engine.render(anyMap(), anyString())).thenReturn(Single.just(buffer));
-        var resetPassword = new ResetPasswordEndpoint(engine, domain);
+        final PasswordPolicyManager passwordPolicyManager = mock(PasswordPolicyManager.class);
+        var resetPassword = new ResetPasswordEndpoint(engine, domain, passwordPolicyManager);
 
         final SpyRoutingContext ctx = new SpyRoutingContext();
         ctx.setMethod(HttpMethod.GET);

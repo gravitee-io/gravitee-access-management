@@ -17,8 +17,8 @@ package io.gravitee.am.gateway.handler.root.resources.handler.user;
 
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.PasswordService;
@@ -37,11 +37,11 @@ import java.util.Optional;
 public class PasswordPolicyRequestParseHandler extends UserRequestHandler {
 
     private final PasswordService passwordService;
-    private final Domain domain;
+    private final PasswordPolicyManager passwordPolicyManager;
 
-    public PasswordPolicyRequestParseHandler(PasswordService passwordService, Domain domain) {
+    public PasswordPolicyRequestParseHandler(PasswordService passwordService, PasswordPolicyManager passwordPolicyManager) {
+        this.passwordPolicyManager =passwordPolicyManager;
         this.passwordService = passwordService;
-        this.domain = domain;
     }
 
     @Override
@@ -50,12 +50,10 @@ public class PasswordPolicyRequestParseHandler extends UserRequestHandler {
         String password = request.getParam(ConstantKeys.PASSWORD_PARAM_KEY);
         MultiMap queryParams = RequestUtils.getCleanedQueryParams(request);
 
-        Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        Optional<PasswordSettings> passwordSettings = PasswordSettings.getInstance(client, this.domain);
-
         try {
+            Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
             User user = getUser(context, client);
-            passwordService.validate(password, passwordSettings.orElse(null), user);
+            passwordService.validate(password, passwordPolicyManager.getPolicy(client).orElse(null), user);
             context.next();
         } catch (InvalidPasswordException e) {
             Optional.ofNullable(context.request().getParam(Parameters.CLIENT_ID)).ifPresent(t -> queryParams.set(Parameters.CLIENT_ID, t));

@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.model;
 
-import java.util.Optional;
-
 /**
  * @author Boualem DJELAILI (boualem.djelaili at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -205,15 +203,19 @@ public class PasswordSettings {
         this.oldPasswords = oldPasswords;
     }
 
-    public static Optional<PasswordSettings> getInstance(PasswordSettingsAware passwordSettingsAware, Domain domain) {
-        if (passwordSettingsAware == null) {
-            return Optional.ofNullable(domain.getPasswordSettings());
-        }
-
-        PasswordSettings passwordSettings = passwordSettingsAware.getPasswordSettings();
-        if (passwordSettings != null && !passwordSettings.isInherited()) {
-            return Optional.of(passwordSettings);
-        }
-        return Optional.ofNullable(domain.getPasswordSettings());
+    public PasswordPolicy toPasswordPolicy() {
+        var policy = new PasswordPolicy();
+        policy.setMinLength(this.minLength);
+        policy.setMaxLength(this.maxLength);
+        policy.setIncludeNumbers(this.includeNumbers);
+        policy.setIncludeSpecialCharacters(this.includeSpecialCharacters);
+        policy.setLettersInMixedCase(this.lettersInMixedCase);
+        policy.setMaxConsecutiveLetters(this.maxConsecutiveLetters);
+        policy.setExcludePasswordsInDictionary(this.excludePasswordsInDictionary);
+        policy.setExcludeUserProfileInfoInPassword(this.excludeUserProfileInfoInPassword);
+        policy.setExpiryDuration(this.expiryDuration);
+        policy.setPasswordHistoryEnabled(this.passwordHistoryEnabled);
+        policy.setOldPasswords(this.oldPasswords);
+        return policy;
     }
 }

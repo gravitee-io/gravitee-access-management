@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
 import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationManagerImpl;
+import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.model.Domain;
@@ -82,6 +83,9 @@ public class UserAuthenticationManagerTest {
     private PasswordService passwordService;
 
     @Mock
+    private PasswordPolicyManager passwordPolicyManager;
+
+    @Mock
     private GatewayMetricProvider gatewayMetricProvider;
 
     @Test
@@ -122,7 +126,7 @@ public class UserAuthenticationManagerTest {
         identityProvider.setId("idp-1");
         when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
 
-        when(passwordService.checkAccountPasswordExpiry(any(), any(), any())).thenReturn(false);
+        when(passwordService.checkAccountPasswordExpiry(any(), any())).thenReturn(false);
 
         when(userAuthenticationService.connect(any(), any(), any(), eq(true))).then(invocation -> {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
@@ -176,7 +180,7 @@ public class UserAuthenticationManagerTest {
         identityProvider.setId("idp-1");
         when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
 
-        when(passwordService.checkAccountPasswordExpiry(any(), any(), any())).thenReturn(true);
+        when(passwordService.checkAccountPasswordExpiry(any(), any())).thenReturn(true);
 
         when(userAuthenticationService.connect(any(), any(), any(), eq(true))).then(invocation -> {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
@@ -278,7 +282,7 @@ public class UserAuthenticationManagerTest {
         IdentityProvider identityProvider2 = new IdentityProvider();
         identityProvider2.setId("idp-2");
 
-        when(passwordService.checkAccountPasswordExpiry(any(), any(), any())).thenReturn(false);
+        when(passwordService.checkAccountPasswordExpiry(any(), any())).thenReturn(false);
         when(userAuthenticationService.connect(any(), any(), any(), eq(true))).then(invocation -> {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
             User user = new User();
@@ -409,7 +413,7 @@ public class UserAuthenticationManagerTest {
         IdentityProvider identityProvider2 = new IdentityProvider();
         identityProvider2.setId("idp-2");
 
-        when(passwordService.checkAccountPasswordExpiry(any(), any(), any())).thenReturn(false);
+        when(passwordService.checkAccountPasswordExpiry(any(), any())).thenReturn(false);
         when(userAuthenticationService.connect(any(), any(), any(), eq(true))).then(invocation -> {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
             User user = new User();

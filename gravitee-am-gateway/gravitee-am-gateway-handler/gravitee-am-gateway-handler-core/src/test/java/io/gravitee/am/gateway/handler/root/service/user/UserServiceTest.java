@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
+import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.root.service.user.impl.UserServiceImpl;
 import io.gravitee.am.gateway.handler.root.service.user.model.ForgotPasswordParameters;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
@@ -125,6 +126,9 @@ public class UserServiceTest {
 
     @Mock
     private DomainService domainService;
+
+    @Mock
+    private PasswordPolicyManager passwordPolicyManager;
 
     @Before
     public void before() {

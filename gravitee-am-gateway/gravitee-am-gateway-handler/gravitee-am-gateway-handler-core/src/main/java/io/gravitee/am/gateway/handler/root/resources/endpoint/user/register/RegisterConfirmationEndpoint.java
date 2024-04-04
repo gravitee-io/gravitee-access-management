@@ -84,7 +84,6 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
 
         // retrieve client (if exists)
         Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        PasswordSettings.getInstance(client, domain).ifPresent(v -> routingContext.put(ConstantKeys.PASSWORD_SETTINGS_PARAM_KEY, v));
 
         // check if user has already completed its registration
         if (user != null && user.isPreRegistration() && user.isRegistrationCompleted()) {

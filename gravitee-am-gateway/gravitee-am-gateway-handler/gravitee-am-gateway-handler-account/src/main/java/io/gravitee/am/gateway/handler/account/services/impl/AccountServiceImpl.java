@@ -21,9 +21,15 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Credential;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Factor;
+import io.gravitee.am.model.PasswordPolicy;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oauth2.ScopeApproval;
@@ -31,8 +37,18 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.management.api.UserRepository;
-import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.FactorService;
+import io.gravitee.am.service.PasswordService;
+import io.gravitee.am.service.ScopeApprovalService;
+import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.exception.CredentialNotFoundException;
+import io.gravitee.am.service.exception.InvalidPasswordException;
+import io.gravitee.am.service.exception.ScopeApprovalNotFoundException;
+import io.gravitee.am.service.exception.UserInvalidException;
+import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.CredentialAuditBuilder;
 import io.gravitee.am.service.validators.user.UserValidator;
@@ -43,7 +59,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @author Donald Courtney (donald.courtney at graviteesource.com)
@@ -89,6 +111,9 @@ public class AccountServiceImpl implements AccountService {
 
     @Autowired
     private AuditService auditService;
+
+    @Autowired
+    private PasswordPolicyManager passwordPolicyManager;
 
     @Override
     public Maybe<User> get(String userId) {
@@ -140,8 +165,8 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public Single<ResetPasswordResponse> resetPassword(User user, Client client, String password, io.gravitee.am.identityprovider.api.User principal, Optional<String> olPassword) {
         return Single.defer(() -> {
-            PasswordSettings passwordSettings = PasswordSettings.getInstance(client, this.domain).orElse(null);
-            passwordService.validate(password, passwordSettings, user);
+            PasswordPolicy passwordPolicy = passwordPolicyManager.getPolicy(client).orElse(null);
+            passwordService.validate(password, passwordPolicy, user);
             user.setPassword(password);
 
             final boolean needOldPassword = domain.getSelfServiceAccountManagementSettings() != null && domain.getSelfServiceAccountManagementSettings().resetPasswordWithOldValue();

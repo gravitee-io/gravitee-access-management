@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
@@ -313,6 +314,9 @@ public class RootProvider extends AbstractProtocolProvider {
     @Autowired
     private RuleEngine ruleEngine;
 
+    @Autowired
+    private PasswordPolicyManager passwordPolicyManager;
+
     @Value("${http.cookie.rememberMe.name:"+ DEFAULT_REMEMBER_ME_COOKIE_NAME +"}")
     private String rememberMeCookieName;
 
@@ -349,7 +353,7 @@ public class RootProvider extends AbstractProtocolProvider {
         Handler<RoutingContext> userTokenRequestParseHandler = new UserTokenRequestParseHandler(userService);
         Handler<RoutingContext> clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService).setRequired(true);
         Handler<RoutingContext> clientRequestParseHandlerOptional = new ClientRequestParseHandler(clientSyncService);
-        Handler<RoutingContext> passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordService, domain);
+        Handler<RoutingContext> passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordService, passwordPolicyManager);
         Handler<RoutingContext> botDetectionHandler = new BotDetectionHandler(domain, botDetectionManager);
         Handler<RoutingContext> dataConsentHandler = new DataConsentHandler(environment);
         Handler<RoutingContext> geoIpHandler = new GeoIpHandler(userActivityService, vertx.eventBus());
@@ -557,7 +561,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_REGISTER))
                 .handler(localeHandler)
-                .handler(new RegisterEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
+                .handler(new RegisterEndpoint(thymeleafTemplateEngine, domain, botDetectionManager, passwordPolicyManager));
         rootRouter.route(HttpMethod.POST, PATH_REGISTER)
                 .handler(new RegisterSubmissionRequestParseHandler())
                 .handler(clientRequestParseHandlerOptional)
@@ -613,7 +617,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(new ResetPasswordOneTimeTokenHandler())
                 .handler(localeHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_RESET_PASSWORD))
-                .handler(new ResetPasswordEndpoint(thymeleafTemplateEngine, domain));
+                .handler(new ResetPasswordEndpoint(thymeleafTemplateEngine, domain, passwordPolicyManager));
         rootRouter.route(HttpMethod.POST, PATH_RESET_PASSWORD)
                 .handler(new ResetPasswordSubmissionRequestParseHandler())
                 .handler(userTokenRequestParseHandler)
@@ -626,11 +630,11 @@ public class RootProvider extends AbstractProtocolProvider {
 
         rootRouter.route(HttpMethod.POST, PASSWORD_HISTORY)
                   .handler(clientRequestParseHandlerOptional)
-                  .handler(new PasswordHistoryHandler(passwordHistoryService, userService, domain));
+                  .handler(new PasswordHistoryHandler(passwordHistoryService, userService, domain, passwordPolicyManager));
 
         rootRouter.route(HttpMethod.POST, "/passwordValidation")
                   .handler(clientRequestParseHandlerOptional)
-                  .handler(new PasswordValidationHandler(passwordService, userService, domain));
+                  .handler(new PasswordValidationHandler(passwordService, userService, passwordPolicyManager));
 
         // error route
         rootRouter.route(HttpMethod.GET, PATH_ERROR)

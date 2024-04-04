@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
@@ -36,21 +37,42 @@ import io.gravitee.am.identityprovider.api.DummyRequest;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.jwt.JWTParser;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.EnrollSettings;
+import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.PasswordHistory;
+import io.gravitee.am.model.PasswordPolicy;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
-import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.service.TokenService;
+import io.gravitee.am.service.exception.ClientNotFoundException;
+import io.gravitee.am.service.exception.EmailFormatInvalidException;
+import io.gravitee.am.service.exception.EnforceUserIdentityException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserAlreadyVerifiedException;
+import io.gravitee.am.service.exception.UserInvalidException;
+import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.validators.email.EmailValidator;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.annotations.NonNull;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.MaybeSource;
 import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.*;
+import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Function;
 import io.reactivex.rxjava3.functions.Predicate;
 import io.vertx.rxjava3.core.MultiMap;
@@ -60,15 +82,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ID_TOKEN;
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static io.gravitee.am.model.Template.REGISTRATION_VERIFY;
 import static io.gravitee.am.model.Template.RESET_PASSWORD;
-import static io.reactivex.rxjava3.core.Completable.*;
+import static io.reactivex.rxjava3.core.Completable.complete;
+import static io.reactivex.rxjava3.core.Completable.error;
+import static io.reactivex.rxjava3.core.Completable.fromRunnable;
 import static java.lang.Boolean.TRUE;
 import static java.util.Map.entry;
 import static java.util.Objects.isNull;
@@ -132,6 +162,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private PasswordHistoryService passwordHistoryService;
+
+    @Autowired
+    private PasswordPolicyManager passwordPolicyManager;
 
     @Override
     public Maybe<UserToken> verifyToken(String token) {
@@ -349,7 +382,7 @@ public class UserServiceImpl implements UserService {
                     return userProvider.findByUsername(user.getUsername())
                             .switchIfEmpty(Single.error(() -> new UserNotFoundException(user.getUsername())))
                             .flatMap(idpUser -> passwordHistoryService
-                                    .addPasswordToHistory(DOMAIN, domain.getId(), user, user.getPassword(), principal, getPasswordSettings(client))
+                                    .addPasswordToHistory(DOMAIN, domain.getId(), user, user.getPassword(), principal, getPasswordPolicy(client))
                                     .switchIfEmpty(Single.just(new PasswordHistory()))
                                     .flatMap(passwordHistory -> userProvider.updatePassword(idpUser, user.getPassword())))
                             .onErrorResumeNext(ex -> {
@@ -728,14 +761,14 @@ public class UserServiceImpl implements UserService {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     private Single<User> createPasswordHistory(Client client, User user, String rawPassword, io.gravitee.am.identityprovider.api.User principal) {
         passwordHistoryService
-                .addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword, principal, getPasswordSettings(client))
+                .addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword, principal, getPasswordPolicy(client))
                 .subscribe(passwordHistory -> logger.debug("Created password history for user {}", user.getUsername()),
                         throwable -> logger.debug("Failed to create password history", throwable));
         return Single.just(user);
     }
 
-    private PasswordSettings getPasswordSettings(Client client) {
-        return PasswordSettings.getInstance(client, domain).orElse(null);
+    private PasswordPolicy getPasswordPolicy(Client client) {
+        return passwordPolicyManager.getPolicy(client).orElse(null);
     }
 
     private static final class UserAuthentication {

@@ -15,21 +15,25 @@
  */
 package io.gravitee.am.service.impl;
 
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.User;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.password.dictionary.PasswordDictionary;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.validators.password.PasswordSettingsStatus;
 import io.gravitee.am.service.validators.password.PasswordValidator;
-import io.gravitee.am.service.validators.password.impl.*;
+import io.gravitee.am.service.validators.password.impl.ConsecutiveCharacterPasswordValidator;
+import io.gravitee.am.service.validators.password.impl.DictionaryPasswordValidator;
+import io.gravitee.am.service.validators.password.impl.IncludeNumbersPasswordValidator;
+import io.gravitee.am.service.validators.password.impl.IncludeSpecialCharactersPasswordValidator;
+import io.gravitee.am.service.validators.password.impl.MaxLengthPasswordValidator;
+import io.gravitee.am.service.validators.password.impl.MinLengthPasswordValidator;
+import io.gravitee.am.service.validators.password.impl.MixedCasePasswordValidator;
+import io.gravitee.am.service.validators.password.impl.UserProfilePasswordValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.Calendar;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import static java.lang.Boolean.FALSE;
@@ -56,23 +60,23 @@ public class PasswordServiceImpl implements PasswordService {
         this.passwordDictionary = passwordDictionary;
     }
 
-    public void validate(String password, PasswordSettings passwordSettings, User user) {
+    public void validate(String password, PasswordPolicy passwordPolicy, User user) {
         // fallback to default regex
-        if (passwordSettings == null) {
+        if (passwordPolicy == null) {
             if (FALSE.equals(defaultPasswordValidator.validate(password))) {
                 throw defaultPasswordValidator.getCause();
             }
         } else {
             // check password settings
             Stream.of(
-                    new MaxLengthPasswordValidator(passwordSettings.getMaxLength()),
-                    new MinLengthPasswordValidator(passwordSettings.getMinLength()),
-                    new IncludeNumbersPasswordValidator(passwordSettings.isIncludeNumbers()),
-                    new IncludeSpecialCharactersPasswordValidator(passwordSettings.isIncludeSpecialCharacters()),
-                    new MixedCasePasswordValidator(passwordSettings.getLettersInMixedCase()),
-                    new ConsecutiveCharacterPasswordValidator(passwordSettings.getMaxConsecutiveLetters()),
-                    new DictionaryPasswordValidator(passwordSettings.isExcludePasswordsInDictionary(), passwordDictionary),
-                    new UserProfilePasswordValidator(passwordSettings.isExcludeUserProfileInfoInPassword(), user)
+                    new MaxLengthPasswordValidator(passwordPolicy.getMaxLength()),
+                    new MinLengthPasswordValidator(passwordPolicy.getMinLength()),
+                    new IncludeNumbersPasswordValidator(TRUE.equals(passwordPolicy.getIncludeNumbers())),
+                    new IncludeSpecialCharactersPasswordValidator(TRUE.equals(passwordPolicy.getIncludeSpecialCharacters())),
+                    new MixedCasePasswordValidator(passwordPolicy.getLettersInMixedCase()),
+                    new ConsecutiveCharacterPasswordValidator(passwordPolicy.getMaxConsecutiveLetters()),
+                    new DictionaryPasswordValidator(TRUE.equals(passwordPolicy.getExcludePasswordsInDictionary()), passwordDictionary),
+                    new UserProfilePasswordValidator(TRUE.equals(passwordPolicy.getExcludeUserProfileInfoInPassword()), user)
             ).filter(not(passwordValidator -> passwordValidator.validate(password)))
             .findFirst().ifPresent(validator -> {
                 throw validator.getCause();
@@ -81,27 +85,27 @@ public class PasswordServiceImpl implements PasswordService {
     }
 
     @Override
-    public PasswordSettingsStatus evaluate(String password, PasswordSettings passwordSettings, User user) {
+    public PasswordSettingsStatus evaluate(String password, PasswordPolicy passwordPolicy, User user) {
         var result = new PasswordSettingsStatus();
-        if (password != null && passwordSettings != null) {
-            result.setMinLength(new MinLengthPasswordValidator(passwordSettings.getMinLength()).validate(password));
-            if (TRUE.equals(passwordSettings.isExcludePasswordsInDictionary())) {
-                result.setExcludePasswordsInDictionary(new DictionaryPasswordValidator(passwordSettings.isExcludePasswordsInDictionary(), passwordDictionary).validate(password));
+        if (password != null && passwordPolicy != null) {
+            result.setMinLength(new MinLengthPasswordValidator(passwordPolicy.getMinLength()).validate(password));
+            if (TRUE.equals(passwordPolicy.getExcludePasswordsInDictionary())) {
+                result.setExcludePasswordsInDictionary(new DictionaryPasswordValidator(passwordPolicy.getExcludePasswordsInDictionary(), passwordDictionary).validate(password));
             }
-            if (TRUE.equals(passwordSettings.isIncludeNumbers())) {
-                result.setIncludeNumbers(new IncludeNumbersPasswordValidator(passwordSettings.isIncludeNumbers()).validate(password));
+            if (TRUE.equals(passwordPolicy.getIncludeNumbers())) {
+                result.setIncludeNumbers(new IncludeNumbersPasswordValidator(passwordPolicy.getIncludeNumbers()).validate(password));
             }
-            if (TRUE.equals(passwordSettings.isIncludeSpecialCharacters())) {
-                result.setIncludeSpecialCharacters(new IncludeSpecialCharactersPasswordValidator(passwordSettings.isIncludeSpecialCharacters()).validate(password));
+            if (TRUE.equals(passwordPolicy.getIncludeSpecialCharacters())) {
+                result.setIncludeSpecialCharacters(new IncludeSpecialCharactersPasswordValidator(passwordPolicy.getIncludeSpecialCharacters()).validate(password));
             }
-            if (TRUE.equals(passwordSettings.getLettersInMixedCase())) {
-                result.setLettersInMixedCase(new MixedCasePasswordValidator(passwordSettings.getLettersInMixedCase()).validate(password));
+            if (TRUE.equals(passwordPolicy.getLettersInMixedCase())) {
+                result.setLettersInMixedCase(new MixedCasePasswordValidator(passwordPolicy.getLettersInMixedCase()).validate(password));
             }
-            if (passwordSettings.getMaxConsecutiveLetters() != null) {
-                result.setMaxConsecutiveLetters(new ConsecutiveCharacterPasswordValidator(passwordSettings.getMaxConsecutiveLetters()).validate(password));
+            if (passwordPolicy.getMaxConsecutiveLetters() != null) {
+                result.setMaxConsecutiveLetters(new ConsecutiveCharacterPasswordValidator(passwordPolicy.getMaxConsecutiveLetters()).validate(password));
             }
-            if (TRUE.equals(passwordSettings.isExcludeUserProfileInfoInPassword())) {
-                result.setExcludeUserProfileInfoInPassword(new UserProfilePasswordValidator(passwordSettings.isExcludeUserProfileInfoInPassword(), user).validate(password));
+            if (TRUE.equals(passwordPolicy.getExcludeUserProfileInfoInPassword())) {
+                result.setExcludeUserProfileInfoInPassword(new UserProfilePasswordValidator(passwordPolicy.getExcludeUserProfileInfoInPassword(), user).validate(password));
             }
         }
         return result;
@@ -110,23 +114,21 @@ public class PasswordServiceImpl implements PasswordService {
     /**
      * Check the user password status
      * @param user Authenticated user
-     * @param client Application
-     * @param domain current domain injected by Spring
+     * @param passwordPolicy password policy
      * @return True if the password has expired or False if not
      */
-    public boolean checkAccountPasswordExpiry(User user, Client client, Domain domain) {
-        Optional<PasswordSettings> passwordSettings = PasswordSettings.getInstance(client, domain);
+    public boolean checkAccountPasswordExpiry(User user, PasswordPolicy passwordPolicy) {
 
         /** If the expiryDate is null or set to 0 so it's disabled */
-        if (passwordSettings.isEmpty() ||
-                (passwordSettings.get().getExpiryDuration() == null
-                                || passwordSettings.get().getExpiryDuration() <= 0)) {
+        if (passwordPolicy == null ||
+                (passwordPolicy.getExpiryDuration() == null
+                                || passwordPolicy.getExpiryDuration() <= 0)) {
             return false;
         }
 
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(user.getLastPasswordReset());
-        calendar.add(Calendar.DAY_OF_MONTH, passwordSettings.get().getExpiryDuration());
+        calendar.add(Calendar.DAY_OF_MONTH, passwordPolicy.getExpiryDuration());
 
         return calendar.compareTo(Calendar.getInstance()) < 0;
     }

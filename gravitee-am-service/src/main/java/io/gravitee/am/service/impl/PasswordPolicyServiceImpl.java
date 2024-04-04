@@ -20,6 +20,8 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.PasswordPolicy;
+import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.PasswordSettingsAware;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.PasswordPolicyRepository;
 import io.gravitee.am.service.AuditService;
@@ -29,11 +31,17 @@ import io.gravitee.am.service.model.NewPasswordPolicy;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.PasswordPolicyAuditBuilder;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+
+import java.util.Comparator;
+import java.util.Optional;
+
+import static java.util.function.Predicate.not;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -76,5 +84,27 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
                 .doOnError(error -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
                         .principal(principal)
                         .type(EventType.PASSWORD_POLICY_CREATED).throwable(error)));
+    }
+
+    @Override
+    public Maybe<PasswordPolicy> retrievePasswordPolicy(io.gravitee.am.model.User user, PasswordSettingsAware passwordSettingsAware) {
+        // TODO this implementation will change once IDP will contains the policyId
+        //      as the rule will be to provide the Policy linked to the user.getSource IDP
+        //      and if no policy if found fallback to this implementation where app PasswordSettings
+        //      will have precedence on the default policy linked to the domain
+        return passwordSettingsAware == null ? defaultPasswordPolicy(user) : Optional.of(passwordSettingsAware)
+                .map(PasswordSettingsAware::getPasswordSettings)
+                .filter(not(PasswordSettings::isInherited))
+                .map(PasswordSettings::toPasswordPolicy)
+                .map(Maybe::just)
+                .orElse(Maybe.empty())
+                .switchIfEmpty(defaultPasswordPolicy(user));
+    }
+
+    private Maybe<PasswordPolicy> defaultPasswordPolicy(io.gravitee.am.model.User user) {
+        return passwordPolicyRepository.findByReference(user.getReferenceType(), user.getReferenceId())
+                // TODO replace this sort by a filter on default attribute during AM-2893
+                .sorted(Comparator.comparing(PasswordPolicy::getCreatedAt))
+                .firstElement();
     }
 }

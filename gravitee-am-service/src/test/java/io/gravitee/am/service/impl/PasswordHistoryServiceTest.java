@@ -17,7 +17,7 @@ package io.gravitee.am.service.impl;
 
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.PasswordHistory;
-import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.management.api.PasswordHistoryRepository;
@@ -28,9 +28,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -58,21 +56,6 @@ import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
-/**
- * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 @ExtendWith(MockitoExtension.class)
 class PasswordHistoryServiceTest {
 
@@ -101,7 +84,7 @@ class PasswordHistoryServiceTest {
     @Test
     @DisplayName("Should create a new password_histories entry with an encrypted password")
     void addPasswordToHistory() {
-        PasswordSettings passwordSettings = getPasswordSettings(5);
+        PasswordPolicy passwordSettings = getPasswordSettings(5);
 
         given(repository.findUserHistory(DOMAIN, REFERENCE_ID, userId)).willReturn(fromIterable(List.of()));
         given(repository.create(any(PasswordHistory.class))).willReturn(Single.just(new PasswordHistory()));
@@ -133,7 +116,7 @@ class PasswordHistoryServiceTest {
     @Test
     @DisplayName("Should return error when new password has already been used")
     void rejectUsedPassword() {
-        PasswordSettings passwordSettings = getPasswordSettings(0);
+        PasswordPolicy passwordSettings = getPasswordSettings(0);
 
         given(repository.findUserHistory(DOMAIN, REFERENCE_ID, userId)).willReturn(fromIterable(List.of(new PasswordHistory())));
         given(passwordEncoder.matches(any(), any())).willReturn(true);
@@ -148,7 +131,7 @@ class PasswordHistoryServiceTest {
     @Test
     @DisplayName("Should replace oldest entry when history count == settings.oldPasswords")
     void replaceOldestPassword() {
-        PasswordSettings passwordSettings = getPasswordSettings(0);
+        PasswordPolicy passwordSettings = getPasswordSettings(0);
 
         List<PasswordHistory> passwordHistories = new ArrayList<>();
         Calendar instance = Calendar.getInstance();
@@ -200,7 +183,7 @@ class PasswordHistoryServiceTest {
     @Test
     @DisplayName("Should return empty when password history disabled in settings")
     void historyDisabled() {
-        PasswordSettings passwordSettings = new PasswordSettings();
+        PasswordPolicy passwordSettings = new PasswordPolicy();
         passwordSettings.setPasswordHistoryEnabled(false);
 
         var testObserver = service
@@ -212,8 +195,8 @@ class PasswordHistoryServiceTest {
         testObserver.assertNoValues();
     }
 
-    private PasswordSettings getPasswordSettings(int oldPasswords) {
-        PasswordSettings passwordSettings = new PasswordSettings();
+    private PasswordPolicy getPasswordSettings(int oldPasswords) {
+        PasswordPolicy passwordSettings = new PasswordPolicy();
         passwordSettings.setPasswordHistoryEnabled(true);
         passwordSettings.setOldPasswords((short) oldPasswords);
         return passwordSettings;
@@ -222,7 +205,7 @@ class PasswordHistoryServiceTest {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     void checkPasswordInHistory(boolean matches) {
-        PasswordSettings passwordSettings = getPasswordSettings(0);
+        PasswordPolicy passwordSettings = getPasswordSettings(0);
 
         given(repository.findUserHistory(DOMAIN, REFERENCE_ID, userId)).willReturn(fromIterable(List.of(new PasswordHistory())));
         given(passwordEncoder.matches(any(), any())).willReturn(matches);
@@ -237,9 +220,9 @@ class PasswordHistoryServiceTest {
 
     @ParameterizedTest
     @MethodSource
-    void checkPasswordReturnsFalseWithNoSettings(PasswordSettings passwordSettings) {
+    void checkPasswordReturnsFalseWithNoSettings(PasswordPolicy passwordPolicy) {
         var testObserver = service
-                .passwordAlreadyUsed(ReferenceType.DOMAIN, REFERENCE_ID, userId, password, passwordSettings).test();
+                .passwordAlreadyUsed(ReferenceType.DOMAIN, REFERENCE_ID, userId, password, passwordPolicy).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -247,7 +230,7 @@ class PasswordHistoryServiceTest {
     }
 
     @SuppressWarnings("unused")
-    static Stream<PasswordSettings> checkPasswordReturnsFalseWithNoSettings() {
-        return Stream.of(null, new PasswordSettings());
+    static Stream<PasswordPolicy> checkPasswordReturnsFalseWithNoSettings() {
+        return Stream.of(null, new PasswordPolicy());
     }
 }

@@ -21,15 +21,35 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.UserService;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.PasswordHistory;
+import io.gravitee.am.model.PasswordPolicy;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
+import io.gravitee.am.model.Template;
+import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
-import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.service.PasswordPolicyService;
+import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.TokenService;
+import io.gravitee.am.service.exception.ClientNotFoundException;
+import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.InvalidPasswordException;
+import io.gravitee.am.service.exception.RoleNotFoundException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserInvalidException;
+import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -44,7 +64,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -88,6 +112,9 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
 
     @Autowired
     protected TokenService tokenService;
+
+    @Autowired
+    protected PasswordPolicyService passwordPolicyService;
 
 
     @Override
@@ -167,16 +194,21 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                                     newUser.setDomain(domain.getId());
                                                 }
                                                 final User transform = transform(newUser);
-                                                String password = newUser.getPassword();
-                                                if (password != null && isInvalidUserPassword(password, client, domain, transform)) {
-                                                    return Single.error(InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value"));
-                                                }
                                                 // store user in its identity provider:
                                                 // - perform first validation of user to avoid error status 500 when the IDP is based on relational databases
                                                 // - in case of error, trace the event otherwise continue the creation process
-                                                return userValidator.validate(transform)
+                                                return passwordPolicyService.retrievePasswordPolicy(transform, client)
+                                                        .map(Optional::ofNullable)
+                                                        .switchIfEmpty(Maybe.just(Optional.empty()))
+                                                        .flatMapSingle(optPolicy -> {
+                                                            var password = newUser.getPassword();
+                                                            if (password != null && isInvalidUserPassword(password, optPolicy.orElse(null), transform)) {
+                                                                return Single.error(InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value"));
+                                                            }
+                                                            return Single.just(transform);
+                                                        }).flatMapCompletable(user -> userValidator.validate(user))
                                                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)))
-                                                        .andThen(userProvider.create(convert(newUser)))
+                                                        .andThen(Single.defer(() -> userProvider.create(convert(newUser))))
                                                         .map(idpUser -> {
                                                             // AM 'users' collection is not made for authentication (but only management stuff)
                                                             // clear password
@@ -263,12 +295,13 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                             .map(Optional::ofNullable)
                             .defaultIfEmpty(Optional.empty())
                             .flatMap(optClient -> {
-                                // check user password
-                                if (isInvalidUserPassword(password, optClient.orElse(null), domain, user)) {
-                                    return Single.error(InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value"));
-                                }
                                 final Client client = optClient.map(Application::toClient).orElse(new Client());
-                                return passwordHistoryService.addPasswordToHistory(DOMAIN, domain.getId(), user, password , principal, PasswordSettings.getInstance(client, domain).orElse(null))
+                                return passwordPolicyService.retrievePasswordPolicy(user, client)
+                                        .map(Optional::ofNullable)
+                                        .switchIfEmpty(Maybe.just(Optional.empty()))
+                                        .filter(optPolicy -> !isInvalidUserPassword(password, optPolicy.orElse(null), user))
+                                        .switchIfEmpty(Maybe.error(() -> InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value")))
+                                        .flatMap(optPolicy -> passwordHistoryService.addPasswordToHistory(DOMAIN, domain.getId(), user, password , principal, optPolicy.orElse(null)))
                                         .isEmpty().flatMap(empty -> Single.just(new PasswordHistory()))
                                         .flatMap(passwordHistory -> identityProviderManager.getUserProvider(user.getSource())
                                                                                        .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(user.getSource())))
@@ -494,10 +527,8 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                 }).ignoreElement();
     }
 
-    private boolean isInvalidUserPassword(String password, Application application, Domain domain, User user) {
-        return PasswordSettings.getInstance(application, domain)
-                .map(ps -> !passwordService.isValid(password, ps, user))
-                .orElseGet(() -> !passwordService.isValid(password, null, user));
+    private boolean isInvalidUserPassword(String password, PasswordPolicy policy, User user) {
+        return !passwordService.isValid(password, policy, user);
     }
 
     private Maybe<String> getUserRegistrationToken(User user) {
@@ -525,8 +556,10 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     private void createPasswordHistory(Domain domain, Application client, User user, String rawPassword, io.gravitee.am.identityprovider.api.User principal) {
-        passwordHistoryService
-                .addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword , principal, PasswordSettings.getInstance(client, domain).orElse(null))
+        passwordPolicyService.retrievePasswordPolicy(user, client)
+                        .map(Optional::of)
+                        .switchIfEmpty(Maybe.just(Optional.empty()))
+                        .flatMap(optPolicy -> passwordHistoryService.addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword , principal, optPolicy.orElse(null)))
                 .subscribe(passwordHistory -> logger.debug("Created password history for user with ID {}", user),
                            throwable -> logger.debug("Failed to create password history", throwable));
     }

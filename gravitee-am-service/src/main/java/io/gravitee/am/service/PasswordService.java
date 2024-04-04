@@ -16,10 +16,8 @@
 
 package io.gravitee.am.service;
 
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.User;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.InvalidPasswordException;
 import io.gravitee.am.service.validators.password.PasswordSettingsStatus;
 
@@ -33,18 +31,18 @@ public interface PasswordService {
         return isValid(password, null, null);
     }
 
-    default boolean isValid(String password, PasswordSettings passwordSettings, User user) {
+    default boolean isValid(String password, PasswordPolicy passwordPolicy, User user) {
         try {
-            validate(password, passwordSettings, user);
+            validate(password, passwordPolicy, user);
             return true;
         } catch (InvalidPasswordException e) {
             return false;
         }
     }
 
-    void validate(String password, PasswordSettings passwordSettings, User user);
-    PasswordSettingsStatus evaluate(String password, PasswordSettings passwordSettings, User user);
+    void validate(String password, PasswordPolicy passwordPolicy, User user);
+    PasswordSettingsStatus evaluate(String password, PasswordPolicy passwordPolicy, User user);
 
-    boolean checkAccountPasswordExpiry(User user, Client client, Domain domain);
+    boolean checkAccountPasswordExpiry(User user, PasswordPolicy passwordPolicy);
 
 }

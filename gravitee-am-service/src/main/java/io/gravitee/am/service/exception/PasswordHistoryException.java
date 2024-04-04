@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.exception;
 
+import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.common.http.HttpStatusCode;
 
@@ -33,7 +34,7 @@ public class PasswordHistoryException extends AbstractManagementException {
         return new PasswordHistoryException("Password has already been used.");
     }
 
-    public static PasswordHistoryException passwordAlreadyInHistory(PasswordSettings passwordSettings) {
+    public static PasswordHistoryException passwordAlreadyInHistory(PasswordPolicy passwordSettings) {
         return new PasswordHistoryException(String.format("Password must not match the last %d passwords", passwordSettings.getOldPasswords()));
     }
 }

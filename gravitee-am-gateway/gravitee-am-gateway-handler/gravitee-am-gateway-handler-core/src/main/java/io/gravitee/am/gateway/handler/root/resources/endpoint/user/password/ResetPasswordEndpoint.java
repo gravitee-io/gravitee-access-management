@@ -17,10 +17,10 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
@@ -49,9 +49,12 @@ public class ResetPasswordEndpoint extends AbstractEndpoint implements Handler<R
 
     private final Domain domain;
 
-    public ResetPasswordEndpoint(TemplateEngine engine, Domain domain) {
+    private final PasswordPolicyManager passwordPolicyManager;
+
+    public ResetPasswordEndpoint(TemplateEngine engine, Domain domain, PasswordPolicyManager passwordPolicyManager) {
         super(engine);
         this.domain = domain;
+        this.passwordPolicyManager = passwordPolicyManager;
     }
 
     @Override
@@ -59,7 +62,7 @@ public class ResetPasswordEndpoint extends AbstractEndpoint implements Handler<R
         HttpServerRequest request = routingContext.request();
         // retrieve client (if exists)
         Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        PasswordSettings.getInstance(client, domain).ifPresent(v -> routingContext.put(ConstantKeys.PASSWORD_SETTINGS_PARAM_KEY, v));
+        passwordPolicyManager.getPolicy(client).ifPresent(v -> routingContext.put(ConstantKeys.PASSWORD_SETTINGS_PARAM_KEY, v));
 
         String error = request.getParam(ConstantKeys.ERROR_PARAM_KEY);
         routingContext.put(ConstantKeys.ERROR_PARAM_KEY, error);
