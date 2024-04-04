@@ -370,7 +370,7 @@ public class DomainServiceImpl implements DomainService {
                 .flatMap(oldDomain -> {
                     Domain toPatch = patchDomain.patch(oldDomain);
                     final AccountSettings accountSettings = toPatch.getAccountSettings();
-                    if (!accountSettingsValidator.validate(accountSettings)) {
+                    if (Boolean.FALSE.equals(accountSettingsValidator.validate(accountSettings))) {
                        return Single.error(new InvalidParameterException("Unexpected forgot password field"));
                     }
                     toPatch.setHrid(IdGenerator.generate(toPatch.getName()));
@@ -623,8 +623,8 @@ public class DomainServiceImpl implements DomainService {
             }
         }
 
-        if (hasAllowedOrigins(domain)) {
-            return Completable.error(new InvalidDomainException("CORS settings are invalid: allow origin is empty. Default value should be '*'"));
+        if (hasIncorrectOrigins(domain)) {
+            return Completable.error(new InvalidDomainException("CORS settings are invalid"));
         }
 
         if (domain.getWebAuthnSettings() != null) {
@@ -657,16 +657,26 @@ public class DomainServiceImpl implements DomainService {
                 });
     }
 
-    private boolean hasAllowedOrigins(Domain domain) {
+    private boolean hasIncorrectOrigins(Domain domain) {
         var corsSettings = ofNullable(domain.getCorsSettings());
         if (corsSettings.isPresent()){
-          return hasAllowedOrigins(corsSettings);
+          return hasIncorrectOrigins(corsSettings);
         }
         return false;
     }
 
-    private boolean hasAllowedOrigins(Optional<CorsSettings> corsSettings) {
-        return corsSettings.map(CorsSettings::getAllowedOrigins).map(Set::isEmpty).orElse(false);
+    private boolean hasIncorrectOrigins(Optional<CorsSettings> corsSettings) {
+        var origins = corsSettings.map(CorsSettings::getAllowedOrigins);
+        return origins.isEmpty() || origins.get().isEmpty() || origins.get().stream().anyMatch(origin -> {
+            if (!origin.equals("*")) {
+                try {
+                    Pattern.compile(origin);
+                } catch (Exception e) {
+                    return true;
+                }
+            }
+            return false;
+        });
     }
 
     private void validatePostLogoutRedirectUris(Domain domain) throws Exception {
