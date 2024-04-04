@@ -22,6 +22,7 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
@@ -36,7 +37,6 @@ import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordHistory;
-import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.Page;
@@ -67,12 +67,12 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import java.text.MessageFormat;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -145,6 +145,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private VerifyAttemptService verifyAttemptService;
 
+    @Autowired
+    private PasswordPolicyManager passwordPolicyManager;
+
     @Override
     public Single<ListResponse<User>> list(Filter filter, int page, int size, String baseUrl) {
         LOGGER.debug("Find users by domain: {}", domain.getId());
@@ -212,7 +215,7 @@ public class UserServiceImpl implements UserService {
         userModel.setUpdatedAt(userModel.getCreatedAt());
         userModel.setEnabled(userModel.getPassword() != null);
         // check password
-        if (isInvalidUserPassword(user.getPassword(), userModel)) {
+        if (isInvalidUserPassword(user.getPassword(), userModel, client)) {
             return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
         }
 
@@ -362,7 +365,7 @@ public class UserServiceImpl implements UserService {
                                 UserFactorUpdater.updateFactors(existingUser.getFactors(), existingUser, userToUpdate);
 
                                 // check password
-                                if (isInvalidUserPassword(userToUpdate.getPassword(), userToUpdate)) {
+                                if (isInvalidUserPassword(userToUpdate.getPassword(), userToUpdate, client)) {
                                     return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
                                 }
 
@@ -452,7 +455,7 @@ public class UserServiceImpl implements UserService {
                             objectMapper.treeToValue(node, User.class);
 
                     // check password
-                    if (isInvalidUserPassword(userToPatch.getPassword(), UserMapper.convert(userToPatch))) {
+                    if (isInvalidUserPassword(userToPatch.getPassword(), UserMapper.convert(userToPatch), client)) {
                         return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
                     }
 
@@ -500,11 +503,11 @@ public class UserServiceImpl implements UserService {
                 });
     }
 
-    private boolean isInvalidUserPassword(String password, io.gravitee.am.model.User user) {
+    private boolean isInvalidUserPassword(String password, io.gravitee.am.model.User user, Client client) {
         if (isNull(password)) {
             return false;
         }
-        return !passwordService.isValid(password, domain.getPasswordSettings(), user);
+        return !passwordService.isValid(password, passwordPolicyManager.getPolicy(client).orElse(null), user);
     }
 
     private Single<User> setGroups(User scimUser) {
@@ -545,7 +548,7 @@ public class UserServiceImpl implements UserService {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     private Maybe<PasswordHistory> createPasswordHistory(Domain domain, io.gravitee.am.model.User user, String rawPassword, io.gravitee.am.identityprovider.api.User principal, Client client) {
         return passwordHistoryService
-                .addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword , principal, PasswordSettings.getInstance(client, domain).orElse(null));
+                .addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword , principal, passwordPolicyManager.getPolicy(client).orElse(null));
     }
 
     private static class UserContainer {

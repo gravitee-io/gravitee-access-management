@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.user.password;
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.model.Domain;
@@ -51,6 +52,8 @@ class PasswordHistoryHandlerTest {
     @Mock
     private PasswordHistoryService passwordHistoryService;
     @Mock
+    private PasswordPolicyManager passwordPolicyManager;
+    @Mock
     private UserService userService;
 
     @ParameterizedTest
@@ -58,7 +61,7 @@ class PasswordHistoryHandlerTest {
     void shouldReturnAppropriateStatusCode(boolean passwordUsed, int statusCode) {
         var domain = new Domain();
         domain.setId(UUID.randomUUID().toString());
-        var handler = new PasswordHistoryHandler(passwordHistoryService, userService, domain);
+        var handler = new PasswordHistoryHandler(passwordHistoryService, userService, domain, passwordPolicyManager);
 
         var user = new User();
         user.setId(UUID.randomUUID().toString());

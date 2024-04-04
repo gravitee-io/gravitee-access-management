@@ -21,6 +21,7 @@ import { buildCreateAndTestUser, resetUserPassword } from '@management-commands/
 
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { ResponseError } from '../../api/management/runtime';
+import {createPasswordPolicy} from '@management-commands/password-policy-management-commands';
 
 global.fetch = fetch;
 jest.setTimeout(200000);
@@ -36,12 +37,13 @@ describe('Testing password history...', () => {
     domain = await createDomain(accessToken, 'domain-ph-users', faker.company.catchPhraseDescriptor()).then(async (createdDomain) => {
       return await startDomain(createdDomain.id, accessToken);
     });
-    domain = await patchDomain(domain.id, accessToken, {
-      passwordSettings: {
+
+    await createPasswordPolicy(domain.id, accessToken, {
+        name: "default",
         passwordHistoryEnabled: true,
         oldPasswords: 3,
-      },
-    });
+      });
+    
     user = await buildCreateAndTestUser(domain.id, accessToken, 0, false);
     await new Promise((r) => setTimeout(r, 1000));
   });

@@ -15,10 +15,8 @@
  */
 package io.gravitee.am.service;
 
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.User;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.password.dictionary.PasswordDictionaryImpl;
 import io.gravitee.am.service.impl.PasswordServiceImpl;
 import io.gravitee.am.service.validators.password.PasswordSettingsStatus;
@@ -27,10 +25,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import static org.mockito.Mockito.*;
 
 import java.util.Calendar;
 import java.util.HashMap;
@@ -48,9 +43,6 @@ public class PasswordServiceImplTest {
 
     private static final PasswordService passwordService = new PasswordServiceImpl(new DefaultPasswordValidatorImpl("default"), new PasswordDictionaryImpl(
     ).start(false));
-
-    @Mock
-    private Domain domain;
 
     @Test
     public void testPassword_min_8_characters_at_least_one_letter_one_number() {
@@ -97,10 +89,10 @@ public class PasswordServiceImplTest {
 
     @Test
     public void invalidMinLength() {
-        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, null, null, null, null);
-        Optional<String> result = getValidationErrorKey("AB", passwordSettings);
+        PasswordPolicy passwordPolicy = buildPasswordPolicy(3, null, null, null, null, null, null);
+        Optional<String> result = getValidationErrorKey("AB", passwordPolicy);
         Assertions.assertThat(result).hasValue("invalid password minimum length");
-        var statuses = callEvaluate("AB", passwordSettings, null);
+        var statuses = callEvaluate("AB", passwordPolicy, null);
         Assertions.assertThat(statuses).isNotNull();
         Assertions.assertThat(statuses.isValid()).isFalse();
         Assertions.assertThat(statuses.getMinLength()).isNotNull().isFalse();
@@ -114,42 +106,42 @@ public class PasswordServiceImplTest {
 
     @Test
     public void includeNumber() {
-        PasswordSettings passwordSettings = buildPasswordSettings(2, true, null, null, null, null, null);
-        Assertions.assertThat(getValidationErrorKey("ABC", passwordSettings)).hasValue("password must contains numbers");
+        PasswordPolicy passwordPolicy = buildPasswordPolicy(2, true, null, null, null, null, null);
+        Assertions.assertThat(getValidationErrorKey("ABC", passwordPolicy)).hasValue("password must contains numbers");
 
-        var statuses = callEvaluate("ABC", passwordSettings, null);
+        var statuses = callEvaluate("ABC", passwordPolicy, null);
         Assertions.assertThat(statuses).isNotNull();
         Assertions.assertThat(statuses.isValid()).isFalse();
         Assertions.assertThat(statuses.getMinLength()).isNotNull().isTrue();
         Assertions.assertThat(statuses.getIncludeNumbers()).isNotNull().isFalse();
 
-        Assertions.assertThat(getValidationErrorKey("A234", passwordSettings)).isEmpty();
+        Assertions.assertThat(getValidationErrorKey("A234", passwordPolicy)).isEmpty();
 
-        statuses = callEvaluate("A234", passwordSettings, null);
+        statuses = callEvaluate("A234", passwordPolicy, null);
         Assertions.assertThat(statuses).isNotNull();
         Assertions.assertThat(statuses.isValid()).isTrue();
         Assertions.assertThat(statuses.getMinLength()).isNotNull().isTrue();
         Assertions.assertThat(statuses.getIncludeNumbers()).isNotNull().isTrue();
 
-        Assertions.assertThat(getValidationErrorKey("1234", passwordSettings)).isEmpty();
+        Assertions.assertThat(getValidationErrorKey("1234", passwordPolicy)).isEmpty();
     }
 
     @Test
     public void includeSpecialCharacters() {
-        PasswordSettings passwordSettings = buildPasswordSettings(3, false, true, null, null, null, null);
-        Assertions.assertThat(getValidationErrorKey("AB12", passwordSettings)).hasValue("password must contains special characters");
-        Assertions.assertThat(getValidationErrorKey("1234", passwordSettings)).hasValue("password must contains special characters");
-        Assertions.assertThat(getValidationErrorKey("ABCD", passwordSettings)).hasValue("password must contains special characters");
-        Assertions.assertThat(getValidationErrorKey("A$12", passwordSettings)).isEmpty();
+        PasswordPolicy passwordPolicy = buildPasswordPolicy(3, false, true, null, null, null, null);
+        Assertions.assertThat(getValidationErrorKey("AB12", passwordPolicy)).hasValue("password must contains special characters");
+        Assertions.assertThat(getValidationErrorKey("1234", passwordPolicy)).hasValue("password must contains special characters");
+        Assertions.assertThat(getValidationErrorKey("ABCD", passwordPolicy)).hasValue("password must contains special characters");
+        Assertions.assertThat(getValidationErrorKey("A$12", passwordPolicy)).isEmpty();
 
-        var statuses = callEvaluate("AB12", passwordSettings, null);
+        var statuses = callEvaluate("AB12", passwordPolicy, null);
         Assertions.assertThat(statuses).isNotNull();
         Assertions.assertThat(statuses.isValid()).isFalse();
         Assertions.assertThat(statuses.getMinLength()).isTrue();
         Assertions.assertThat(statuses.getIncludeNumbers()).isNull();
         Assertions.assertThat(statuses.getIncludeSpecialCharacters()).isFalse();
 
-        statuses = callEvaluate("A$12", passwordSettings, null);
+        statuses = callEvaluate("A$12", passwordPolicy, null);
         Assertions.assertThat(statuses).isNotNull();
         Assertions.assertThat(statuses.isValid()).isTrue();
         Assertions.assertThat(statuses.getMinLength()).isTrue();
@@ -159,18 +151,18 @@ public class PasswordServiceImplTest {
 
     @Test
     public void lettersInMixedCase() {
-        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, true, null, null, null);
-        Assertions.assertThat(getValidationErrorKey("ABCD", passwordSettings)).hasValue("password must contains letters in mixed case");
-        Assertions.assertThat(getValidationErrorKey("abcd", passwordSettings)).hasValue("password must contains letters in mixed case");
-        Assertions.assertThat(getValidationErrorKey("ABcd", passwordSettings)).isEmpty();
+        PasswordPolicy passwordPolicy = buildPasswordPolicy(3, null, null, true, null, null, null);
+        Assertions.assertThat(getValidationErrorKey("ABCD", passwordPolicy)).hasValue("password must contains letters in mixed case");
+        Assertions.assertThat(getValidationErrorKey("abcd", passwordPolicy)).hasValue("password must contains letters in mixed case");
+        Assertions.assertThat(getValidationErrorKey("ABcd", passwordPolicy)).isEmpty();
 
-        var statuses = callEvaluate("ABCD", passwordSettings, null);
+        var statuses = callEvaluate("ABCD", passwordPolicy, null);
         Assertions.assertThat(statuses).isNotNull();
         Assertions.assertThat(statuses.isValid()).isFalse();
         Assertions.assertThat(statuses.getMinLength()).isTrue();
         Assertions.assertThat(statuses.getLettersInMixedCase()).isFalse();
 
-        statuses = callEvaluate("AbcD", passwordSettings, null);
+        statuses = callEvaluate("AbcD", passwordPolicy, null);
         Assertions.assertThat(statuses).isNotNull();
         Assertions.assertThat(statuses.isValid()).isTrue();
         Assertions.assertThat(statuses.getMinLength()).isTrue();
@@ -179,17 +171,17 @@ public class PasswordServiceImplTest {
 
     @Test
     public void maxConsecutiveLetters() {
-        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, 3, null, null);
-        Assertions.assertThat(getValidationErrorKey("ABBBBCD", passwordSettings)).hasValue("invalid max consecutive letters");
-        Assertions.assertThat(getValidationErrorKey("ABBBcd", passwordSettings)).isEmpty();
+        PasswordPolicy passwordPolicy = buildPasswordPolicy(3, null, null, false, 3, null, null);
+        Assertions.assertThat(getValidationErrorKey("ABBBBCD", passwordPolicy)).hasValue("invalid max consecutive letters");
+        Assertions.assertThat(getValidationErrorKey("ABBBcd", passwordPolicy)).isEmpty();
 
-        var statuses = callEvaluate("ABBBBCD", passwordSettings, null);
+        var statuses = callEvaluate("ABBBBCD", passwordPolicy, null);
         Assertions.assertThat(statuses).isNotNull();
         Assertions.assertThat(statuses.isValid()).isFalse();
         Assertions.assertThat(statuses.getMinLength()).isTrue();
         Assertions.assertThat(statuses.getMaxConsecutiveLetters()).isFalse();
 
-        statuses = callEvaluate("ABBBcd", passwordSettings, null);
+        statuses = callEvaluate("ABBBcd", passwordPolicy, null);
         Assertions.assertThat(statuses).isNotNull();
         Assertions.assertThat(statuses.isValid()).isTrue();
         Assertions.assertThat(statuses.getMinLength()).isTrue();
@@ -198,17 +190,17 @@ public class PasswordServiceImplTest {
 
     @Test
     public void passwordInDictionary() {
-        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, null, true, null);
-        Assertions.assertThat(getValidationErrorKey("trustno1", passwordSettings)).hasValue("invalid password, try something else");
-        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordSettings)).isEmpty();
+        PasswordPolicy passwordPolicy = buildPasswordPolicy(3, null, null, false, null, true, null);
+        Assertions.assertThat(getValidationErrorKey("trustno1", passwordPolicy)).hasValue("invalid password, try something else");
+        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordPolicy)).isEmpty();
 
-        var statuses = callEvaluate("trustno1", passwordSettings, null);
+        var statuses = callEvaluate("trustno1", passwordPolicy, null);
         Assertions.assertThat(statuses).isNotNull();
         Assertions.assertThat(statuses.isValid()).isFalse();
         Assertions.assertThat(statuses.getMinLength()).isTrue();
         Assertions.assertThat(statuses.getExcludePasswordsInDictionary()).isFalse();
 
-        statuses = callEvaluate("mY5tR0N9P@SsWoRd!", passwordSettings, null);
+        statuses = callEvaluate("mY5tR0N9P@SsWoRd!", passwordPolicy, null);
         Assertions.assertThat(statuses).isNotNull();
         Assertions.assertThat(statuses.isValid()).isTrue();
         Assertions.assertThat(statuses.getMinLength()).isTrue();
@@ -217,19 +209,19 @@ public class PasswordServiceImplTest {
 
     @Test
     public void userProfileInPassword_username() {
-        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, null, null, true);
+        PasswordPolicy passwordPolicy = buildPasswordPolicy(3, null, null, false, null, null, true);
         User user = new User();
         user.setUsername("myUsername");
-        Assertions.assertThat(getValidationErrorKey("MyUsErNaMe-and-a-suffix@@@", passwordSettings, user)).hasValue("invalid password user profile");
-        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordSettings, user)).isEmpty();
+        Assertions.assertThat(getValidationErrorKey("MyUsErNaMe-and-a-suffix@@@", passwordPolicy, user)).hasValue("invalid password user profile");
+        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordPolicy, user)).isEmpty();
 
-        var statuses = callEvaluate("MyUsErNaMe-and-a-suffix@@@", passwordSettings, user);
+        var statuses = callEvaluate("MyUsErNaMe-and-a-suffix@@@", passwordPolicy, user);
         Assertions.assertThat(statuses).isNotNull();
         Assertions.assertThat(statuses.isValid()).isFalse();
         Assertions.assertThat(statuses.getMinLength()).isTrue();
         Assertions.assertThat(statuses.getExcludeUserProfileInfoInPassword()).isFalse();
 
-        statuses = callEvaluate("mY5tR0N9P@SsWoRd!", passwordSettings, user);
+        statuses = callEvaluate("mY5tR0N9P@SsWoRd!", passwordPolicy, user);
         Assertions.assertThat(statuses).isNotNull();
         Assertions.assertThat(statuses.isValid()).isTrue();
         Assertions.assertThat(statuses.getMinLength()).isTrue();
@@ -238,171 +230,139 @@ public class PasswordServiceImplTest {
 
     @Test
     public void userProfileInPassword_firstname() {
-        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, null, null, true);
+        PasswordPolicy passwordPolicy = buildPasswordPolicy(3, null, null, false, null, null, true);
         User user = new User();
         user.setFirstName("myFirstname");
-        Assertions.assertThat(getValidationErrorKey("SomePaSSwordWith-myFiRsTnAmE", passwordSettings, user)).hasValue("invalid password user profile");
-        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordSettings, user)).isEmpty();
+        Assertions.assertThat(getValidationErrorKey("SomePaSSwordWith-myFiRsTnAmE", passwordPolicy, user)).hasValue("invalid password user profile");
+        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordPolicy, user)).isEmpty();
     }
 
     @Test
     public void userProfileInPassword_lastname() {
-        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, null, null, true);
+        PasswordPolicy passwordPolicy = buildPasswordPolicy(3, null, null, false, null, null, true);
         User user = new User();
         user.setLastName("myLastName");
-        Assertions.assertThat(getValidationErrorKey("SomePasswordWith-myLaStNaMe", passwordSettings, user)).hasValue("invalid password user profile");
-        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordSettings, user)).isEmpty();
+        Assertions.assertThat(getValidationErrorKey("SomePasswordWith-myLaStNaMe", passwordPolicy, user)).hasValue("invalid password user profile");
+        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordPolicy, user)).isEmpty();
     }
 
     @Test
     public void userProfileInPassword_nickname() {
-        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, null, null, true);
+        PasswordPolicy passwordPolicy = buildPasswordPolicy(3, null, null, false, null, null, true);
         User user = new User();
         user.setNickName("myNickName");
-        Assertions.assertThat(getValidationErrorKey("SomePasswordWith-myNiCkNaMe", passwordSettings, user)).hasValue("invalid password user profile");
-        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordSettings, user)).isEmpty();
+        Assertions.assertThat(getValidationErrorKey("SomePasswordWith-myNiCkNaMe", passwordPolicy, user)).hasValue("invalid password user profile");
+        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordPolicy, user)).isEmpty();
     }
 
     @Test
     public void userProfileInPassword_middlename() {
-        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, null, null, true);
+        PasswordPolicy passwordPolicy = buildPasswordPolicy(3, null, null, false, null, null, true);
         User user = new User();
         user.setAdditionalInformation(new HashMap<>());
         user.setMiddleName("myMiddleName");
-        Assertions.assertThat(getValidationErrorKey("myMiDdLeNaMe-withsomething", passwordSettings, user)).hasValue("invalid password user profile");
-        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordSettings, user)).isEmpty();
+        Assertions.assertThat(getValidationErrorKey("myMiDdLeNaMe-withsomething", passwordPolicy, user)).hasValue("invalid password user profile");
+        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordPolicy, user)).isEmpty();
     }
 
 
     @Test
     public void userProfileInPassword_email() {
-        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, null, null, true);
+        PasswordPolicy passwordPolicy = buildPasswordPolicy(3, null, null, false, null, null, true);
         User user = new User();
         user.setEmail("user@email.com");
-        Assertions.assertThat(getValidationErrorKey("uSeR@eMaIl.com", passwordSettings, user)).hasValue("invalid password user profile");
-        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordSettings, user)).isEmpty();
+        Assertions.assertThat(getValidationErrorKey("uSeR@eMaIl.com", passwordPolicy, user)).hasValue("invalid password user profile");
+        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordPolicy, user)).isEmpty();
     }
 
     @Test
     public void userProfileInPassword_emails() {
-        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, null, null, true);
+        PasswordPolicy passwordPolicy = buildPasswordPolicy(3, null, null, false, null, null, true);
         User user = new User();
         user.setAdditionalInformation(new HashMap<>());
         user.putAdditionalInformation(EMAIL, "email1@email.com");
         user.putAdditionalInformation(EMAIL, "email2@email.com");
-        Assertions.assertThat(getValidationErrorKey("somePassword-email2@email.com", passwordSettings, user)).hasValue("invalid password user profile");
-        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordSettings, user)).isEmpty();
+        Assertions.assertThat(getValidationErrorKey("somePassword-email2@email.com", passwordPolicy, user)).hasValue("invalid password user profile");
+        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordPolicy, user)).isEmpty();
     }
 
     @Test
     public void userProfileInPassword_phonenumbers() {
-        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, null, null, true);
+        PasswordPolicy passwordPolicy = buildPasswordPolicy(3, null, null, false, null, null, true);
         User user = new User();
         user.setAdditionalInformation(new HashMap<>());
         user.putAdditionalInformation(PHONE_NUMBER, "0712345678");
         user.putAdditionalInformation(PHONE_NUMBER, "0798765432");
-        Assertions.assertThat(getValidationErrorKey("somePassword-0798765432", passwordSettings, user)).hasValue("invalid password user profile");
-        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordSettings, user)).isEmpty();
+        Assertions.assertThat(getValidationErrorKey("somePassword-0798765432", passwordPolicy, user)).hasValue("invalid password user profile");
+        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordPolicy, user)).isEmpty();
     }
 
     @Test
     public void userProfileInPassword_phonenumber() {
-        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, null, null, true);
+        PasswordPolicy passwordPolicy = buildPasswordPolicy(3, null, null, false, null, null, true);
         User user = new User();
         user.setAdditionalInformation(new HashMap<>());
         user.setPhoneNumber("0712345678");
-        Assertions.assertThat(getValidationErrorKey("somePassword-0712345678", passwordSettings, user)).hasValue("invalid password user profile");
-        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordSettings, user)).isEmpty();
+        Assertions.assertThat(getValidationErrorKey("somePassword-0712345678", passwordPolicy, user)).hasValue("invalid password user profile");
+        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordPolicy, user)).isEmpty();
     }
 
     @Test
-    public void checkAccountPasswordExpiry_clientNull_shouldReturnExpired() {
-        PasswordSettings passwordSettings = new PasswordSettings();
-        passwordSettings.setExpiryDuration(5);
+    public void checkAccountPasswordExpiry_shouldReturnExpired() {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DAY_OF_MONTH, -6);
         User user = new User();
         user.setLastPasswordReset(calendar.getTime());
-        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
-        Assertions.assertThat(passwordService.checkAccountPasswordExpiry(user, null, domain)).isTrue();
+        PasswordPolicy passwordSettings = new PasswordPolicy();
+        passwordSettings.setExpiryDuration(5);
+
+        Assertions.assertThat(passwordService.checkAccountPasswordExpiry(user, passwordSettings)).isTrue();
     }
 
     @Test
-    public void checkAccountPasswordExpiry_clientNull_shouldNotReturnExpired() {
-        PasswordSettings passwordSettings = new PasswordSettings();
-        passwordSettings.setExpiryDuration(5);
+    public void checkAccountPasswordExpiry_shouldNotReturnExpired() {
         Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_MONTH, -4);
+        calendar.add(Calendar.DAY_OF_MONTH, -6);
         User user = new User();
         user.setLastPasswordReset(calendar.getTime());
-        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
-        Assertions.assertThat(passwordService.checkAccountPasswordExpiry(user, null, domain)).isFalse();
-    }
-
-    @Test
-    public void checkAccountPasswordExpiry_clientNotNull_shouldReturnExpired() {
-        PasswordSettings passwordSettings = new PasswordSettings();
+        PasswordPolicy passwordSettings = new PasswordPolicy();
         passwordSettings.setExpiryDuration(10);
-        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_MONTH, -6);
-        User user = new User();
-        user.setLastPasswordReset(calendar.getTime());
-        Client client = new Client();
-        passwordSettings.setExpiryDuration(5);
-        client.setPasswordSettings(passwordSettings);
 
-        Assertions.assertThat(passwordService.checkAccountPasswordExpiry(user, client, domain)).isTrue();
+        Assertions.assertThat(passwordService.checkAccountPasswordExpiry(user, passwordSettings)).isFalse();
     }
 
     @Test
-    public void checkAccountPasswordExpiry_clientNotNull_shouldNotReturnExpired() {
-        PasswordSettings passwordSettings = new PasswordSettings();
-        passwordSettings.setExpiryDuration(5);
-        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_MONTH, -6);
+    public void checkAccountPasswordExpiry_noExpirationDefined_shouldNotReturnExpired() {
         User user = new User();
-        user.setLastPasswordReset(calendar.getTime());
-        Client client = new Client();
-        passwordSettings.setExpiryDuration(10);
-        client.setPasswordSettings(passwordSettings);
-
-        Assertions.assertThat(passwordService.checkAccountPasswordExpiry(user, client, domain)).isFalse();
+        Assertions.assertThat(passwordService.checkAccountPasswordExpiry(user, null)).isFalse();
     }
 
-    @Test
-    public void checkAccountPasswordExpiry_noExirationDefined_shouldNotReturnExpired() {
-        User user = new User();
-        Assertions.assertThat(passwordService.checkAccountPasswordExpiry(user, null, domain)).isFalse();
-    }
-
-    private Optional<String> getValidationErrorKey(String password, PasswordSettings passwordSettings) {
+    private Optional<String> getValidationErrorKey(String password, PasswordPolicy passwordSettings) {
         return getValidationErrorKey(password, passwordSettings, null);
     }
 
-    private Optional<String> getValidationErrorKey(String password, PasswordSettings passwordSettings, User user) {
+    private Optional<String> getValidationErrorKey(String password, PasswordPolicy passwordPolicy, User user) {
         try {
-            passwordService.validate(password, passwordSettings, user);
+            passwordService.validate(password, passwordPolicy, user);
             return Optional.empty();
         } catch (Exception e) {
             return Optional.of(e.getMessage());
         }
     }
 
-    private PasswordSettingsStatus callEvaluate(String password, PasswordSettings passwordSettings, User user) {
+    private PasswordSettingsStatus callEvaluate(String password, PasswordPolicy passwordSettings, User user) {
         return passwordService.evaluate(password, passwordSettings, user);
     }
 
-    private static PasswordSettings buildPasswordSettings(Integer minLength,
-                                                          Boolean includeNumbers,
-                                                          Boolean includeSpecialCharacters,
-                                                          Boolean lettersInMixedCase,
-                                                          Integer maxConsecutiveLetters,
-                                                          Boolean excludePasswordInDictionary,
-                                                          Boolean excludeUserProfile
+    private static PasswordPolicy buildPasswordPolicy(Integer minLength,
+                                                      Boolean includeNumbers,
+                                                      Boolean includeSpecialCharacters,
+                                                      Boolean lettersInMixedCase,
+                                                      Integer maxConsecutiveLetters,
+                                                      Boolean excludePasswordInDictionary,
+                                                      Boolean excludeUserProfile
     ) {
-        PasswordSettings passwordSettings = new PasswordSettings();
+        PasswordPolicy passwordSettings = new PasswordPolicy();
         passwordSettings.setMinLength(minLength);
         passwordSettings.setIncludeNumbers(includeNumbers);
         passwordSettings.setIncludeSpecialCharacters(includeSpecialCharacters);

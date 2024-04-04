@@ -41,6 +41,7 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
 import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionTokenServiceImpl;
+import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManagerImpl;
 import io.gravitee.am.gateway.handler.common.policy.DefaultRulesEngine;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
@@ -58,6 +59,7 @@ import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.context.TemplateVariableProviderFactory;
 import io.gravitee.am.gateway.handler.context.spring.ContextConfiguration;
 import io.gravitee.am.gateway.policy.spring.PolicyConfiguration;
+import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
@@ -66,7 +68,6 @@ import java.util.concurrent.TimeUnit;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -240,5 +241,10 @@ public class CommonConfiguration {
     @Bean
     public RulesEngine rulesEngine() {
         return new DefaultRulesEngine();
+    }
+
+    @Bean
+    public PasswordPolicyManager passwordPolicyManager() {
+        return new PasswordPolicyManagerImpl();
     }
 }

@@ -18,7 +18,7 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.PasswordHistory;
-import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.PasswordHistoryRepository;
 import io.gravitee.am.service.AuditService;
@@ -31,17 +31,19 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import jakarta.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import jakarta.inject.Named;
 import java.util.Date;
 import java.util.List;
 
+import static java.lang.Boolean.FALSE;
 import static java.util.Comparator.comparing;
+import static java.util.Objects.isNull;
 
 /**
  * Service providing password history.
@@ -70,12 +72,12 @@ public class PasswordHistoryService {
      * @param user           id of user for this password
      * @param rawPassword      unencrypted password provided by the user. Passed separate from the user object as its password is nulled after creation to avoid leakage.
      * @param principal        user performing this action
-     * @param passwordSettings domain/application password settings
+     * @param passwordPolicy domain/application password policy
      * @return Single containing {@link PasswordHistory} or an error if the password was already in the history.
      */
-    public Maybe<PasswordHistory> addPasswordToHistory(ReferenceType referenceType, String referenceId, io.gravitee.am.model.User user, String rawPassword, User principal, PasswordSettings passwordSettings) {
+    public Maybe<PasswordHistory> addPasswordToHistory(ReferenceType referenceType, String referenceId, io.gravitee.am.model.User user, String rawPassword, User principal, PasswordPolicy passwordPolicy) {
         LOGGER.debug("Adding password history entry for user {}", user);
-        if (rawPassword == null || passwordSettings == null || !passwordSettings.isPasswordHistoryEnabled()) {
+        if (rawPassword == null || passwordPolicy == null || isNull(passwordPolicy.getPasswordHistoryEnabled()) || FALSE.equals(passwordPolicy.getPasswordHistoryEnabled())) {
             LOGGER.debug("Password history not added for user {} due to null password or settings, or because paswword history is disabled.", user.getUsername());
             return Maybe.empty();
         }
@@ -83,10 +85,10 @@ public class PasswordHistoryService {
                          .toList()
                          .flatMap(passwordHistories -> {
                              if (passwordAlreadyUsed(rawPassword, passwordHistories)) {
-                                 return Single.error(() -> PasswordHistoryException.passwordAlreadyInHistory(passwordSettings));
+                                 return Single.error(() -> PasswordHistoryException.passwordAlreadyInHistory(passwordPolicy));
                              }
                              int passwordCount = passwordHistories.size();
-                             if (passwordCount >= passwordSettings.getOldPasswords()) {
+                             if (passwordCount >= passwordPolicy.getOldPasswords()) {
                                  passwordHistories.sort(comparing(PasswordHistory::getCreatedAt));
                                  return repository.delete(passwordHistories.get(0).getId())
                                                   .andThen(repository.create(getPasswordHistory(referenceType, referenceId, user, rawPassword)));
@@ -113,12 +115,12 @@ public class PasswordHistoryService {
      * @param referenceId      id of the reference
      * @param userId           id of user for this password
      * @param password         the password to add
-     * @param passwordSettings domain/application password settings
+     * @param passwordPolicy domain/application password settings
      * @return Single containing a {@link Boolean} {@code true} if the password is already present the allotted number of previous passwords.
      */
-    public Single<Boolean> passwordAlreadyUsed(ReferenceType referenceType, String referenceId, String userId, String password, PasswordSettings passwordSettings) {
+    public Single<Boolean> passwordAlreadyUsed(ReferenceType referenceType, String referenceId, String userId, String password, PasswordPolicy passwordPolicy) {
         LOGGER.debug("Checking password history for user {}", userId);
-        if (passwordSettings == null || !passwordSettings.isPasswordHistoryEnabled()) {
+        if (passwordPolicy == null || isNull(passwordPolicy.getPasswordHistoryEnabled()) || FALSE.equals(passwordPolicy.getPasswordHistoryEnabled())) {
             return Single.just(false);
         }
         return repository.findUserHistory(referenceType, referenceId, userId)

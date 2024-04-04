@@ -37,6 +37,7 @@ import cheerio from 'cheerio';
 import { createUser } from '@management-commands/user-management-commands';
 import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
+import {createPasswordPolicy} from '@management-commands/password-policy-management-commands';
 
 global.fetch = fetch;
 
@@ -86,17 +87,18 @@ const settings = [
         autoLoginAfterResetPassword: true,
         redirectUriAfterResetPassword: 'http://localhost:4000',
       },
-      passwordSettings: {
-        minLength: 5,
-        maxLength: 24,
-        includeNumbers: true,
-        includeSpecialCharacters: true,
-        lettersInMixedCase: true,
-        maxConsecutiveLetters: 5,
-        expiryDuration: 9,
-        passwordHistoryEnabled: true,
-        oldPasswords: 3,
-      },
+    },
+    passwordPolicy: {
+      name: "default",
+      minLength: 5,
+      maxLength: 24,
+      includeNumbers: true,
+      includeSpecialCharacters: true,
+      lettersInMixedCase: true,
+      maxConsecutiveLetters: 5,
+      expiryDuration: 9,
+      passwordHistoryEnabled: true,
+      oldPasswords: 3,
     },
   },
   {
@@ -119,18 +121,19 @@ const settings = [
         resetPasswordConfirmIdentity: true,
         resetPasswordInvalidateTokens: true,
       },
-      passwordSettings: {
-        minLength: 5,
-        maxLength: 64,
-        includeNumbers: true,
-        includeSpecialCharacters: true,
-        lettersInMixedCase: true,
-        maxConsecutiveLetters: 5,
-        expiryDuration: 9,
-        passwordHistoryEnabled: true,
-        oldPasswords: 3,
-      },
     },
+    passwordPolicy: {
+      name: "default",
+      minLength: 5,
+      maxLength: 64,
+      includeNumbers: true,
+      includeSpecialCharacters: true,
+      lettersInMixedCase: true,
+      maxConsecutiveLetters: 5,
+      expiryDuration: 9,
+      passwordHistoryEnabled: true,
+      oldPasswords: 3,
+    }
   },
 ];
 
@@ -143,6 +146,19 @@ const expectedMsg = (setting) => {
     ? selectSetting(setting).accountSettings.redirectUriAfterResetPassword
     : 'success=reset_password_completed';
 };
+
+
+const getPasswordSettingsAttribute = (setting, selectedSetting, attrName) => {
+  if (!setting.inherited) {
+    return selectedSetting.passwordSettings[attrName];
+  }
+
+  if (setting.passwordPolicy) {
+    return setting.passwordPolicy[attrName];
+  }
+
+  return null;
+}
 
 settings.forEach((setting) => {
   const selectedSetting = selectSetting(setting);
@@ -165,8 +181,11 @@ settings.forEach((setting) => {
           forgotPasswordEnabled: true,
         },
         accountSettings: setting.inherited ? selectedSetting.accountSettings : {},
-        passwordSettings: setting.inherited ? selectedSetting.passwordSettings : {},
       });
+
+      if (setting.passwordPolicy) {
+        await createPasswordPolicy(domain.id, accessToken, setting.passwordPolicy);
+      }
 
       application = await createApplication(domain.id, accessToken, {
         name: faker.company.bsBuzz(),
@@ -254,8 +273,8 @@ settings.forEach((setting) => {
       },
     ];
 
-    if (selectedSetting.passwordSettings.passwordHistoryEnabled) {
-      describe(`when password history is enabled for ${selectedSetting.passwordSettings.oldPasswords} passwords`, () => {
+    if (getPasswordSettingsAttribute(setting, selectedSetting, 'passwordHistoryEnabled')) {
+      describe(`when password history is enabled for ${getPasswordSettingsAttribute(setting, selectedSetting, 'oldPasswords')} passwords`, () => {
         passwordHistoryTests.forEach(({ password, expectedMsg }) => {
           describe(`when resetting password with ${password}`, () => {
             it('should redirect to forgot password form', async () => {
@@ -284,19 +303,19 @@ settings.forEach((setting) => {
         await retrieveEmailLinkForReset();
       });
 
-      if (selectedSetting.passwordSettings.minLength) {
-        describe(`when a password is shorter than the minimum length of ${selectedSetting.passwordSettings.minLength}`, () => {
-          const minLength = 'SomeP@ssw0rd99'.substring(0, selectedSetting.passwordSettings.minLength - 1);
+      if (getPasswordSettingsAttribute(setting, selectedSetting, 'minLength')) {
+        describe(`when a password is shorter than the minimum length of ${getPasswordSettingsAttribute(setting, selectedSetting, 'minLength')}`, () => {
+          const minLength = 'SomeP@ssw0rd99'.substring(0, getPasswordSettingsAttribute(setting, selectedSetting, 'minLength') - 1);
           it(`reset password should fail with ${invalidPasswordValue}`, async () => {
             await resetPassword(minLength, invalidPasswordValue, selectedSetting);
           });
         });
       }
 
-      if (selectedSetting.passwordSettings.maxLength) {
-        describe(`when a password is longer than the maximum length of ${selectedSetting.passwordSettings.maxLength}`, () => {
+      if (getPasswordSettingsAttribute(setting, selectedSetting, 'maxLength')) {
+        describe(`when a password is longer than the maximum length of ${getPasswordSettingsAttribute(setting, selectedSetting, 'maxLength')}`, () => {
           let maxLength = 'SomeP@ssw0rd99';
-          while (maxLength.length <= selectedSetting.passwordSettings.maxLength) {
+          while (maxLength.length <= getPasswordSettingsAttribute(setting, selectedSetting, 'maxLength')) {
             maxLength += maxLength;
           }
           it(`reset password should fail with ${invalidPasswordValue}`, async () => {
@@ -305,7 +324,7 @@ settings.forEach((setting) => {
         });
       }
 
-      if (selectedSetting.passwordSettings.includeNumbers) {
+      if (getPasswordSettingsAttribute(setting, selectedSetting, 'includeNumbers')) {
         describe("when 'includeNumbers' is enabled and a password does not contain numbers", () => {
           it(`reset password should fail with ${invalidPasswordValue}`, async () => {
             await resetPassword('SomeP@ssword', invalidPasswordValue, selectedSetting);
@@ -313,9 +332,9 @@ settings.forEach((setting) => {
         });
       }
 
-      if (selectedSetting.passwordSettings.includeSpecialCharacters) {
+      if (getPasswordSettingsAttribute(setting, selectedSetting, 'includeSpecialCharacters')) {
         describe("when 'includeSpecialCharacters' is enabled and a password does not contain special characters", () => {
-          if (selectedSetting.passwordSettings.includeSpecialCharacters) {
+          if (getPasswordSettingsAttribute(setting, selectedSetting, 'includeSpecialCharacters')) {
             it(`reset password should fail with ${invalidPasswordValue}`, async () => {
               await resetPassword('SomePassw0rd99', invalidPasswordValue, selectedSetting);
             });
@@ -323,7 +342,7 @@ settings.forEach((setting) => {
         });
       }
 
-      if (selectedSetting.passwordSettings.lettersInMixedCase) {
+      if (getPasswordSettingsAttribute(setting, selectedSetting, 'lettersInMixedCase')) {
         describe("when 'lettersInMixedCase' is enabled and a password is not mixed case", () => {
           it(`reset password should fail with ${invalidPasswordValue}`, async () => {
             await resetPassword('somepassw0rd99', invalidPasswordValue, selectedSetting);
@@ -331,11 +350,11 @@ settings.forEach((setting) => {
         });
       }
 
-      if (selectedSetting.passwordSettings.maxConsecutiveLetters) {
-        describe(`when password contains sequence exceeding ${selectedSetting.passwordSettings.maxConsecutiveLetters} consecutive letters`, () => {
+      if (getPasswordSettingsAttribute(setting, selectedSetting, 'maxConsecutiveLetters')) {
+        describe(`when password contains sequence exceeding ${getPasswordSettingsAttribute(setting, selectedSetting, 'maxConsecutiveLetters')} consecutive letters`, () => {
           it(`reset password should fail with ${invalidPasswordValue}`, async () => {
             let letters = '';
-            for (let i = 0; i <= selectedSetting.passwordSettings.maxConsecutiveLetters; i++) {
+            for (let i = 0; i <= getPasswordSettingsAttribute(setting, selectedSetting, 'maxConsecutiveLetters'); i++) {
               letters += 'a';
             }
             let maxConsecutiveLetters = 'SomeP@ssw0rd99' + letters;
@@ -344,7 +363,7 @@ settings.forEach((setting) => {
         });
       }
 
-      if (selectedSetting.passwordSettings.excludePasswordsInDictionary) {
+      if (getPasswordSettingsAttribute(setting, selectedSetting, 'excludePasswordsInDictionary')) {
         ['password', 'passw0rd', 'pass123', 'passwd', 'gravity'].forEach((password) => {
           describe(`when 'excludePasswordsInDictionary' is enabled and '${password}' from the dictionary is used`, () => {
             it(`reset password should fail with ${invalidPasswordValue}`, async () => {
@@ -354,7 +373,7 @@ settings.forEach((setting) => {
         });
       }
 
-      if (selectedSetting.passwordSettings.excludeUserProfileInfoInPassword) {
+      if (getPasswordSettingsAttribute(setting, selectedSetting, 'excludeUserProfileInfoInPassword')) {
         Object.entries(userProps)
           .filter(([key]) => key !== 'password')
           .forEach(([propName, value]) => {

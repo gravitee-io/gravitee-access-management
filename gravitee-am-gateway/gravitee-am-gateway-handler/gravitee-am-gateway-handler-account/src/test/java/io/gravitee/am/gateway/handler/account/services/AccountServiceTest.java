@@ -19,6 +19,7 @@ import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.account.services.impl.AccountServiceImpl;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -89,6 +90,9 @@ public class AccountServiceTest {
 
     @Mock
     private PasswordService passwordService;
+
+    @Mock
+    private PasswordPolicyManager passwordPolicyManager;
 
     @InjectMocks
     private AccountService accountService = new AccountServiceImpl();
