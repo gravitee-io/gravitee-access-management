@@ -35,6 +35,7 @@ import io.gravitee.am.repository.management.api.search.AlertTriggerCriteria;
 import io.gravitee.am.repository.management.api.search.DomainCriteria;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.InvalidDomainException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.InvalidWebAuthnConfigurationException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -57,6 +58,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import static org.mockito.Mockito.never;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -856,12 +858,7 @@ public class DomainServiceTest {
         domain.setName("my-domain");
         domain.setPath("/test");
 
-        final CorsSettings corsSettings = new CorsSettings();
-        corsSettings.setEnabled(true);
-        corsSettings.setMaxAge(50);
-        corsSettings.setAllowedMethods(Set.of("GET", "POST"));
-        corsSettings.setAllowedOrigins(Set.of("*"));
-        domain.setCorsSettings(corsSettings);
+        domain.setCorsSettings(getCorsSettings(Set.of("*")));
 
         when(patchDomain.patch(any())).thenReturn(domain);
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
@@ -879,6 +876,86 @@ public class DomainServiceTest {
         verify(domainRepository, times(1)).findById(anyString());
         verify(domainRepository, times(1)).update(any(Domain.class));
         verify(eventService, times(1)).create(any());
+    }
+
+    @Test
+    public void shouldPatchCorsSettingsWithMultipleAllowedOrigins() {
+        final PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+        final Domain domain = new Domain();
+        domain.setId("my-domain");
+        domain.setHrid("my-domain");
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName("my-domain");
+        domain.setPath("/test");
+
+        domain.setCorsSettings(getCorsSettings(Set.of("https://mydomain.com", "(http|https).*.mydomain.com")));
+
+        when(patchDomain.patch(any())).thenReturn(domain);
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
+        when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, domain.getHrid())).thenReturn(Maybe.just(domain));
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainRepository.findAll()).thenReturn(Flowable.empty());
+        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
+        doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+        doReturn(true).when(accountSettingsValidator).validate(any());
+
+        domainService.patch("my-domain", patchDomain).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
+
+        verify(domainRepository, times(1)).findById(anyString());
+        verify(domainRepository, times(1)).update(any(Domain.class));
+        verify(eventService, times(1)).create(any());
+    }
+
+    @Test
+    public void shouldThrowOnPathDomainWithEmptyAllowedOrigins() {
+        final PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+        final Domain domain = new Domain();
+        domain.setId("my-domain");
+        domain.setHrid("my-domain");
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName("my-domain");
+        domain.setPath("/test");
+
+        domain.setCorsSettings(getCorsSettings(Set.of()));
+
+        when(patchDomain.patch(any())).thenReturn(domain);
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
+        doReturn(true).when(accountSettingsValidator).validate(any());
+
+        domainService.patch("my-domain", patchDomain).test().awaitDone(10, TimeUnit.SECONDS)
+                .assertFailure(InvalidDomainException.class);
+
+        verify(domainRepository, times(1)).findById(anyString());
+        verify(domainRepository, never()).update(any(Domain.class));
+        verify(eventService, never()).create(any());
+    }
+
+    @Test
+    public void shouldThrowOnPathDomainWithIncorrectAllowedOriginPattern() {
+        final PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+        final Domain domain = new Domain();
+        domain.setId("my-domain");
+        domain.setHrid("my-domain");
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName("my-domain");
+        domain.setPath("/test");
+
+        domain.setCorsSettings(getCorsSettings(Set.of("[")));
+
+        when(patchDomain.patch(any())).thenReturn(domain);
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
+
+        domainService.patch("my-domain", patchDomain).test().awaitDone(10, TimeUnit.SECONDS)
+                .assertFailure(InvalidDomainException.class);
+
+        verify(domainRepository, times(1)).findById(anyString());
+        verify(domainRepository, never()).update(any(Domain.class));
+        verify(eventService, never()).create(any());
     }
 
     @Test
@@ -927,5 +1004,14 @@ public class DomainServiceTest {
         domainService.update("any-id", domain).test().assertComplete().assertNoErrors();
 
         verify(domainRepository, times(1)).update(any(Domain.class));
+    }
+
+    private static CorsSettings getCorsSettings(Set<String> allowedOrigins) {
+        final CorsSettings corsSettings = new CorsSettings();
+        corsSettings.setEnabled(true);
+        corsSettings.setMaxAge(50);
+        corsSettings.setAllowedMethods(Set.of("GET", "POST"));
+        corsSettings.setAllowedOrigins(allowedOrigins);
+        return corsSettings;
     }
 }
