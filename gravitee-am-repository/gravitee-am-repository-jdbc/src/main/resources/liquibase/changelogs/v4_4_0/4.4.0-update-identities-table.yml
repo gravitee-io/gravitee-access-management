@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.4.0-update-identities-table
+      author: GraviteeSource Team
+      changes:
+        #############################
+        # identities #
+        ############################
+        - addColumn:
+            tableName: identities
+            columns:
+              - column: { name: password_policy, type: nvarchar(64), constraints: { nullable: true } }
