@@ -76,7 +76,7 @@ public class GeoIpHandler implements Handler<RoutingContext> {
     private void getGeoIpData(RoutingContext routingContext, String ip) {
         eventBus.<JsonObject>request(GEOIP_SERVICE, ip)
                 .doOnSuccess(jsonObjectMessage -> routingContext.data().put(GEOIP_KEY, jsonObjectMessage.body().getMap()))
-                .doOnError(error -> logger.warn("Plugin GeoIp is not available, message: {}", error.getMessage()))
+                .doOnError(error -> logger.debug("Plugin GeoIp is not available, message: {}", error.getMessage()))
                 .onErrorComplete()
                 .doFinally(routingContext::next)
                 .subscribe();
