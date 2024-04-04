@@ -15,12 +15,11 @@
  */
 import {Component, OnInit, ViewChild} from '@angular/core';
 import { MatInput } from '@angular/material/input';
-import {ActivatedRoute, Router} from '@angular/router';
-import {DomainService} from '../../../services/domain.service';
-import {DialogService} from '../../../services/dialog.service';
-import {SnackbarService} from '../../../services/snackbar.service';
-import {AuthService} from '../../../services/auth.service';
-import {FormControl} from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
+
+import { DomainService } from '../../../services/domain.service';
+import { SnackbarService } from '../../../services/snackbar.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-general',
@@ -51,13 +50,12 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
     allowCredentials: false
   };
 
-  constructor(private domainService: DomainService,
-              private dialogService: DialogService,
-              private snackbarService: SnackbarService,
-              private router: Router,
-              private route: ActivatedRoute,
-              private authService: AuthService) {
-  }
+  constructor(
+    private domainService: DomainService,
+    private snackbarService: SnackbarService,
+    private route: ActivatedRoute,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
 
@@ -90,11 +88,8 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
     this.domainRestrictions.forEach(hostOption => this.domainRegexList.push(new RegExp('\\.?' + hostOption + '$', 'i')));
   }
 
-  update() {
-    if (!this.domain.corsSettings.allowedOrigins.length) {
-      this.domain.corsSettings.allowedOrigins.push('*');
-    }
-    this.domainService.patchEntrypoints(this.domain.id, this.domain).subscribe(response => {
+  update(): void {
+    this.domainService.patchEntrypoints(this.domain.id, this.domain).subscribe((response) => {
       this.domain = response;
       if (this.domain.corsSettings.maxAge === 0) {
         this.domain.corsSettings.maxAge = null;
@@ -105,13 +100,13 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
     });
   }
 
-  switchMode() {
+  switchMode(): void {
     this.domain.vhostMode = !this.domain.vhostMode;
     this.changeSwitchModeLabel();
     this.formChanged = true;
   }
 
-  addVhost() {
+  addVhost(): void {
     if (this.domain.vhosts.length === 0) {
       this.domain.vhosts.push({host: '', path: this.domain.path, overrideEntrypoint: true});
     } else {
@@ -119,12 +114,12 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
     }
   }
 
-  remove(vhost: any) {
-    this.domain.vhosts = this.domain.vhosts.filter(v => v !== vhost);
+  remove(vhost: any): void {
+    this.domain.vhosts = this.domain.vhosts.filter((v) => v !== vhost);
     this.formChanged = true;
   }
 
-  changeSwitchModeLabel() {
+  changeSwitchModeLabel(): void {
     if (this.domain.vhostMode === true) {
       this.switchModeLabel = 'context-path';
     } else {
@@ -132,8 +127,8 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
     }
   }
 
-  overrideEntrypointChange(vhost: any) {
-    this.domain.vhosts.filter(v => v !== vhost).forEach(v => v.overrideEntrypoint = false);
+  overrideEntrypointChange(vhost: any): void {
+    this.domain.vhosts.filter((v) => v !== vhost).forEach((v) => (v.overrideEntrypoint = false));
     vhost.overrideEntrypoint = true;
     this.formChanged = true;
   }
@@ -162,13 +157,12 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
     return this.domainRestrictions;
   }
 
-  hostSelected(input: HTMLInputElement) {
+  hostSelected(input: HTMLInputElement): void {
     input.blur();
     this.formChanged = true;
   }
 
-
-  addHeader(event) {
+  addHeader(event: Event): void {
     event.preventDefault();
     if (this.headerValue) {
       if (!this.domain.corsSettings.allowedHeaders.some(el => el === this.headerValue)) {
@@ -182,7 +176,7 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
     }
   }
 
-  removeHeader(dwPattern) {
+  removeHeader(dwPattern: string): void {
     const index = this.domain.corsSettings.allowedHeaders.indexOf(dwPattern);
     if (index > -1) {
       this.domain.corsSettings.allowedHeaders.splice(index, 1);
@@ -190,7 +184,7 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
     }
   }
 
-  addOrigin(event) {
+  addOrigin(event: Event): void {
     event.preventDefault();
     if (this.originValue) {
       if (!this.domain.corsSettings.allowedOrigins.some(el => el === this.originValue)) {
@@ -204,7 +198,7 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
     }
   }
 
-  removeOrigin(dwPattern) {
+  removeOrigin(dwPattern: string): void {
     const index = this.domain.corsSettings.allowedOrigins.indexOf(dwPattern);
     if (index > -1) {
       this.domain.corsSettings.allowedOrigins.splice(index, 1);
@@ -212,30 +206,30 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
     }
   }
 
-  updateAllowedMethod(event) {
+  updateAllowedMethod(event: any): void {
     this.domain.corsSettings.allowedMethods = event.value;
     this.formChanged = true;
   }
 
-  enableCorsSettings(event) {
-    this.domain.corsSettings.enabled = event.checked
+  enableCorsSettings(event: any): void {
+    this.domain.corsSettings.enabled = event.checked;
     this.formChanged = true;
   }
 
-  isCorsSettingsEnabled() {
-    return this.domain.corsSettings && this.domain.corsSettings.enabled;
+  isCorsSettingsEnabled(): boolean {
+    return this.domain.corsSettings?.enabled;
   }
 
-  enableAllowCredentials(event) {
-    this.domain.corsSettings.allowCredentials = event.checked
+  enableAllowCredentials(event: any): void {
+    this.domain.corsSettings.allowCredentials = event.checked;
     this.formChanged = true;
   }
 
-  isAllowCredentialsEnabled() {
-    return this.domain.corsSettings && this.domain.corsSettings.allowCredentials;
+  isAllowCredentialsEnabled(): boolean {
+    return this.domain.corsSettings?.allowCredentials;
   }
 
-  updateFormState() {
+  updateFormState(): void {
     this.formChanged = true;
   }
 }
