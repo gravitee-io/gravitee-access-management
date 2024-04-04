@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 import { PasswordPolicy } from './domain-password-policies.model';
+import {
+  DialogCallback,
+  PasswordPoliciesIdpSelectDialogFactory,
+} from './password-policies-idp-select-dialog/password-policies-idp-select-dialog.factory';
+import { IdpDataModel } from './password-policies-idp-select-dialog/password-policies-idp-select-table/password-policies-idp-select-table.component';
 
 @Component({
   selector: 'domain-password-policies',
@@ -24,6 +30,11 @@ import { PasswordPolicy } from './domain-password-policies.model';
 })
 export class PasswordPoliciesComponent implements OnInit {
   rows: PasswordPolicy[] = [];
+
+  constructor(
+    private route: ActivatedRoute,
+    public dialogFactory: PasswordPoliciesIdpSelectDialogFactory,
+  ) {}
 
   ngOnInit() {
     this.init();
@@ -48,5 +59,61 @@ export class PasswordPoliciesComponent implements OnInit {
 
   isEmpty(): boolean {
     return this.rows.length === 0;
+  }
+
+  private getDomainIdentityProviders(): any[] {
+    const providers = this.route.snapshot.data['providers'] as any[];
+    return providers.map((provider) => {
+      return {
+        id: provider.id,
+        name: provider.name,
+        typeName: this.getIdentityProviderDetails(provider.type)?.displayName,
+        typeIcon: this.getIdentityProviderDetails(provider.type)?.icon,
+      };
+    });
+  }
+
+  private getIdentityProviderDetails(type: string) {
+    const identities = this.route.snapshot.data['identities'];
+    if (identities && identities[type]) {
+      return identities[type];
+    }
+    return null;
+  }
+
+  public openDialog() {
+    const idps = this.getDomainIdentityProviders();
+    const unlinked = idps.map((idp) => {
+      return {
+        id: idp.id,
+        name: idp.name,
+        association: null,
+        type: {
+          name: idp.typeName,
+          icon: idp.typeIcon,
+        },
+      } as IdpDataModel;
+    });
+    const linked = idps.map((idp) => {
+      return {
+        id: idp.id,
+        name: idp.name,
+        association: 'Password Policy',
+        type: {
+          name: idp.typeName,
+          icon: idp.typeIcon,
+        },
+      } as IdpDataModel;
+    });
+    const callback: DialogCallback = (result) => {
+      console.log(result);
+    };
+    this.dialogFactory.openDialog(
+      {
+        unlinkedIdps: unlinked,
+        linkedIdps: linked,
+      },
+      callback,
+    );
   }
 }
