@@ -1729,6 +1729,10 @@ export const routes: Routes = [
                       {
                         path: 'password-policy',
                         component: PasswordPoliciesComponent,
+                        resolve: {
+                          providers: ProvidersResolver,
+                          identities: IdentitiesResolver,
+                        },
                         canActivate: [AuthGuard],
                         data: {
                           menu: {

@@ -440,6 +440,7 @@ import { ExpressionInfoDialogComponent } from './domain/applications/application
 import { FactorsSelectDialogComponent } from './domain/applications/application/advanced/factors/mfa/factors-select-dialog/factors-select-dialog.component';
 import { SelectionRuleDialogComponent } from './domain/applications/application/advanced/factors/selection-rule-dialog/selection-rule-dialog.component';
 import { PasswordPoliciesComponent } from './domain/settings/password-policies/domain-password-policies.component';
+import { PasswordPoliciesIdpSelectDialogFactory } from './domain/settings/password-policies/password-policies-idp-select-dialog/password-policies-idp-select-dialog.factory';
 import { PasswordPoliciesResolver } from './resolvers/password-policies.resolver';
 import { PasswordPoliciesService } from './services/password-policies.service';
 
@@ -876,6 +877,7 @@ import { PasswordPoliciesService } from './services/password-policies.service';
     I18nDictionaryService,
     ThemesResolver,
     ThemeService,
+    PasswordPoliciesIdpSelectDialogFactory,
     PasswordPoliciesResolver,
     PasswordPoliciesService,
     {
