@@ -2397,20 +2397,28 @@
 									"listen": "test",
 									"script": {
 										"exec": [
-											"pm.test(\"Status code is 302\", function () {",
-											"    pm.response.to.have.status(302);",
+											"",
+											"",
+											"var maxNumberOfTries = 5;",
+											"var sleepBetweenTries = 5000;",
+											"",
+											"Utils.withRetry(this, 302, maxNumberOfTries, sleepBetweenTries, function(){ }, function(){",
+											"    pm.test(\"Status code is 302\", function () {",
+											"        pm.response.to.have.status(302);",
+											"    });",
+											"",
+											"    pm.test(\"Should be redirected to login page invalid account\", function () {",
+											"        pm.response.to.be.redirection;",
+											"        pm.response.to.have.header('Location');",
+											"",
+											"        var location = postman.getResponseHeader(\"Location\");",
+											"        pm.environment.set('redirection', location);",
+											"        // if login was ok, we replay the authorize flow",
+											"        tests['Redirect to consent page'] = location.includes('/login') && ",
+											"            location.includes('error_code=invalid_user&error_description=Invalid+or+unknown+user');",
+											"    });",
 											"});",
-											"",
-											"pm.test(\"Should be redirected to login page invalid account\", function () {",
-											"    pm.response.to.be.redirection;",
-											"    pm.response.to.have.header('Location');",
-											"",
-											"    var location = postman.getResponseHeader(\"Location\");",
-											"    pm.environment.set('redirection', location);",
-											"    // if login was ok, we replay the authorize flow",
-											"    tests['Redirect to consent page'] = location.includes('/login') && ",
-											"        location.includes('error_code=invalid_user&error_description=Invalid+or+unknown+user');",
-											"});"
+											""
 										],
 										"type": "text/javascript"
 									}
@@ -16106,6 +16114,53 @@
 				}
 			},
 			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"Utils = {",
+					"    wait: function (that, sleepDuration){",
+					"        that.setTimeout(() => {}, sleepDuration);",
+					"    },",
+					"    withRetry: function(that, expectedHttpStatus, maxNumberOfTries, sleepBetweenTries, businessRetryConditionCallBack, endRetryCallback){",
+					"",
+					"        if (!that.pm.environment.get(\"collection_tries\")) {",
+					"            that.pm.environment.set(\"collection_tries\", 1);",
+					"        }",
+					"",
+					"        if (((that.pm.response.code != expectedHttpStatus) || businessRetryConditionCallBack())",
+					"            && (that.pm.environment.get(\"collection_tries\") <= maxNumberOfTries)) {",
+					"            var tries = parseInt(that.pm.environment.get(\"collection_tries\"), 10);",
+					"            that.pm.environment.set(\"collection_tries\", tries + 1);",
+					"            Utils.wait(that, sleepBetweenTries, maxNumberOfTries);",
+					"            that.postman.setNextRequest(that.request.name);",
+					"        } else {",
+					"            if(businessRetryConditionCallBack()){",
+					"                that.postman.setNextRequest(null);",
+					"            }",
+					"",
+					"            that.pm.environment.unset(\"collection_tries\");",
+					"",
+					"            endRetryCallback();",
+					"        } ",
+					"    }",
+					"};",
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
 		}
 	]
 }
