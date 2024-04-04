@@ -91,7 +91,7 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
         return ofNullable(domain.getCorsSettings())
                 .filter(CorsSettings::isEnabled)
                 .map(corsSettings -> {
-                    if (corsSettings.getAllowedOrigins().isEmpty()) {
+                    if (corsSettings.getAllowedOrigins().isEmpty() || corsSettings.getAllowedOrigins().stream().anyMatch(origin -> origin.equals("*"))) {
                         corsSettings.setAllowedOrigins(Set.of(DEFAULT_ORIGIN_VALUE));
                     }
                     return corsSettings;
