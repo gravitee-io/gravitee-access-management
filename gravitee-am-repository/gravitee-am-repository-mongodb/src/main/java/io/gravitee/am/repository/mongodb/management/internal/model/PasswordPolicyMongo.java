@@ -19,7 +19,6 @@ import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.List;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
