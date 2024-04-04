@@ -159,6 +159,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_DOMAIN_WHITELIST, ofNullable(item.getDomainWhitelist()).orElse(List.of()));
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_MAPPERS, item.getMappers());
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_ROLE_MAPPER, item.getRoleMapper());
+        insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_PASSWORD_POLICY, item.getPasswordPolicy());
 
         Mono<Long> action = insertSpec.fetch().rowsUpdated();
 
@@ -184,6 +185,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         update = databaseDialectHelper.addJsonField(update, COL_DOMAIN_WHITELIST, ofNullable(item.getDomainWhitelist()).orElse(List.of()));
         update = databaseDialectHelper.addJsonField(update, COL_MAPPERS, item.getMappers());
         update = databaseDialectHelper.addJsonField(update, COL_ROLE_MAPPER, item.getRoleMapper());
+        update = databaseDialectHelper.addJsonField(update, COL_PASSWORD_POLICY, item.getPasswordPolicy());
 
         Mono<Long> action = update.fetch().rowsUpdated();
 
