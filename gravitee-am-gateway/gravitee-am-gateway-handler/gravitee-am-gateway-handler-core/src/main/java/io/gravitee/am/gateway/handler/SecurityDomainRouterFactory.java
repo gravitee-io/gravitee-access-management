@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.gateway.handler;
 
-import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
-import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.common.alert.AlertEventProcessor;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -26,6 +24,9 @@ import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.gateway.handler.common.email.EmailManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.flow.FlowManager;
+import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
+import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
+import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.manager.dictionary.I18nDictionaryManager;
 import io.gravitee.am.gateway.handler.manager.domain.CrossDomainManager;
@@ -118,6 +119,7 @@ public class SecurityDomainRouterFactory {
         components.add(AuthenticationDeviceNotifierManager.class);
         components.add(I18nDictionaryManager.class);
         components.add(ThemeManager.class);
+        components.add(PasswordPolicyManager.class);
 
         components.forEach(componentClass -> {
             LifecycleComponent lifecyclecomponent = applicationContext.getBean(componentClass);

@@ -17,100 +17,10 @@
 package io.gravitee.am.service.model;
 
 
-import io.gravitee.am.model.PasswordPolicy;
-import io.gravitee.am.model.PasswordSettings;
-import io.gravitee.am.model.ReferenceType;
-import jakarta.validation.constraints.NotBlank;
-import lombok.Getter;
-import lombok.Setter;
-
-import java.util.Date;
-
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Getter
-@Setter
-public class NewPasswordPolicy {
+public class NewPasswordPolicy extends AbstractPasswordPolicy {
 
-    @NotBlank
-    private String name;
-    /**
-     * Password min length
-     */
-    private Integer minLength = PasswordSettings.PASSWORD_MIN_LENGTH;
-
-    /**
-     * Password max length
-     */
-    private Integer maxLength = PasswordSettings.PASSWORD_MAX_LENGTH;
-
-    /**
-     * Must include numbers
-     */
-    private Boolean includeNumbers;
-
-    /**
-     * Must include special characters
-     */
-    private Boolean includeSpecialCharacters;
-
-    /**
-     * letters in mixed case
-     */
-    private Boolean lettersInMixedCase;
-
-    /**
-     * Max consecutive letters
-     */
-    private Integer maxConsecutiveLetters;
-
-    /**
-     * Excludes passwords contained within password dictionary
-     */
-    private Boolean excludePasswordsInDictionary;
-
-    /**
-     * Excludes user profile information from password
-     */
-    private Boolean excludeUserProfileInfoInPassword;
-
-    /**
-     * The Expiration duration (in days) of a password
-     */
-    private Integer expiryDuration;
-
-    /**
-     * Does the password history is enabled to prevent the usage of old password
-     */
-    private Boolean passwordHistoryEnabled;
-
-    /**
-     * How many passwords are preserved into the history
-     */
-    private Short oldPasswords;
-
-    public PasswordPolicy toPasswordPolicy(ReferenceType referenceType, String referenceId) {
-        final var policy = new PasswordPolicy();
-        final var now = new Date();
-        policy.setCreatedAt(now);
-        policy.setUpdatedAt(now);
-        policy.setReferenceId(referenceId);
-        policy.setReferenceType(referenceType);
-
-        policy.setName(this.getName());
-        policy.setMaxLength(this.getMaxLength());
-        policy.setMinLength(this.getMinLength());
-        policy.setOldPasswords(this.getOldPasswords());
-        policy.setExpiryDuration(this.getExpiryDuration());
-        policy.setIncludeNumbers(this.getIncludeNumbers());
-        policy.setLettersInMixedCase(this.getLettersInMixedCase());
-        policy.setMaxConsecutiveLetters(this.getMaxConsecutiveLetters());
-        policy.setPasswordHistoryEnabled(this.getPasswordHistoryEnabled());
-        policy.setIncludeSpecialCharacters(this.getIncludeSpecialCharacters());
-        policy.setExcludePasswordsInDictionary(this.getExcludePasswordsInDictionary());
-        policy.setExcludeUserProfileInfoInPassword(this.getExcludeUserProfileInfoInPassword());
-        return policy;
-    }
 }

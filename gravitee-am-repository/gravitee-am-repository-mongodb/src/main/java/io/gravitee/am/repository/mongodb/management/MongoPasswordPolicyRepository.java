@@ -85,6 +85,11 @@ public class MongoPasswordPolicyRepository extends AbstractManagementMongoReposi
     }
 
     @Override
+    public Maybe<PasswordPolicy> findByReferenceAndId(ReferenceType referenceType, String referenceId, String id) {
+        return Maybe.fromPublisher(mongoCollection.find(and(eq(FIELD_ID, id), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name())))).map(this::convert);
+    }
+
+    @Override
     public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
         return Completable.fromPublisher(
                 mongoCollection.deleteMany(

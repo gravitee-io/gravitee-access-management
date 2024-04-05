@@ -17,6 +17,7 @@ package io.gravitee.am.repository.jdbc.management.api.spring;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcPasswordPolicy;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.reactive.RxJava3CrudRepository;
@@ -24,4 +25,7 @@ import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 public interface SpringPasswordPolicyRepository extends RxJava3CrudRepository<JdbcPasswordPolicy, String> {
     @Query("SELECT * FROM password_policies ph WHERE ph.reference_id = :refId AND ph.reference_type = :refType")
     Flowable<JdbcPasswordPolicy> findByReference(@Param("refId") String referenceId, @Param("refType") String referenceType);
+
+    @Query("SELECT * FROM password_policies ph WHERE ph.id = :id AND ph.reference_id = :refId AND ph.reference_type = :refType")
+    Maybe<JdbcPasswordPolicy> findByReference(@Param("refId") String referenceId, @Param("refType") String referenceType, @Param("id") String id);
 }

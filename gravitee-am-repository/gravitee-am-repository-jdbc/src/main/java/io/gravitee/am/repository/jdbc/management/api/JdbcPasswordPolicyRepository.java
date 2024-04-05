@@ -126,6 +126,11 @@ public class JdbcPasswordPolicyRepository extends AbstractJdbcRepository impleme
     }
 
     @Override
+    public Maybe<PasswordPolicy> findByReferenceAndId(ReferenceType referenceType, String referenceId, String id) {
+        return passwordPolicyRepository.findByReference(referenceId, referenceType.name(), id).map(this::toEntity);
+    }
+
+    @Override
     public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("delete password policy by reference {} / {}", referenceType.name(), referenceId);
         return monoToCompletable(getTemplate().delete(JdbcPasswordPolicy.class)

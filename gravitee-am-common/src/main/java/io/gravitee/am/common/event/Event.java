@@ -69,6 +69,8 @@ public abstract class Event {
                 return I18nDictionaryEvent.actionOf(action);
             case THEME:
                 return ThemeEvent.actionOf(action);
+            case PASSWORD_POLICY:
+                return PasswordPolicyEvent.actionOf(action);
             default:
                 return null;
         }
