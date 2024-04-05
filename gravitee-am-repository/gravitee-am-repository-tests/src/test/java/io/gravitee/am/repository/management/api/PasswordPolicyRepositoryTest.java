@@ -134,6 +134,17 @@ public class PasswordPolicyRepositoryTest extends AbstractManagementTest {
         assertEqualsTo(PasswordPolicy, testObserver);
     }
 
+    @Test
+    public void shouldFindByReferenceAndId() {
+        var passwordPolicy = repository.create(buildPasswordPolicy()).blockingGet();
+        var otherPasswordPolicy = repository.create(buildPasswordPolicy()).blockingGet();
+        var testObserver = repository.findByReferenceAndId(passwordPolicy.getReferenceType(), passwordPolicy.getReferenceId(), passwordPolicy.getId()).toObservable().test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        assertEqualsTo(passwordPolicy, testObserver);
+    }
+
     private PasswordPolicy buildPasswordPolicy() {
         var passwordPolicy = new PasswordPolicy();
         passwordPolicy.setReferenceId(REF_ID);

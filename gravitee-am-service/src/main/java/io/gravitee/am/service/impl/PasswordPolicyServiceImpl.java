@@ -18,16 +18,23 @@ package io.gravitee.am.service.impl;
 
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.PasswordSettingsAware;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.PasswordPolicyRepository;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.PasswordPolicyService;
+import io.gravitee.am.service.exception.PasswordPolicyNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewPasswordPolicy;
+import io.gravitee.am.service.model.UpdatePasswordPolicy;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.PasswordPolicyAuditBuilder;
 import io.reactivex.rxjava3.core.Flowable;
@@ -55,8 +62,12 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
     @Lazy
     @Autowired
     private PasswordPolicyRepository passwordPolicyRepository;
+
     @Autowired
     private AuditService auditService;
+
+    @Autowired
+    private EventService eventService;
 
     @Override
     public Flowable<PasswordPolicy> findByDomain(String domain) {
@@ -77,6 +88,10 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
         // TODO during AM-2893, check if there is existing policies, if not set this one as default
 
         return passwordPolicyRepository.create(entity)
+                .flatMap(createdPolicy -> {
+                    Event event = new Event(Type.PASSWORD_POLICY, new Payload(createdPolicy.getId(), referenceType, referenceId, Action.CREATE));
+                    return eventService.create(event).flatMap(__ -> Single.just(createdPolicy));
+                })
                 .doOnSuccess(createdPolicy -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
                         .principal(principal)
                         .type(EventType.PASSWORD_POLICY_CREATED)
@@ -84,6 +99,41 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
                 .doOnError(error -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
                         .principal(principal)
                         .type(EventType.PASSWORD_POLICY_CREATED).throwable(error)));
+    }
+
+    @Override
+    public Maybe<PasswordPolicy> findByReferenceAndId(ReferenceType referenceType, String referenceId, String policyId) {
+        log.debug("Update password policy id '{}' for {} {}", policyId, referenceType, referenceId);
+        return passwordPolicyRepository.findByReferenceAndId(referenceType, referenceId, policyId);
+    }
+
+    @Override
+    public Single<PasswordPolicy> update(ReferenceType referenceType, String referenceId, String policyId, UpdatePasswordPolicy policy, User principal) {
+        log.debug("Update password policy id '{}' for {} {}", policyId, referenceType, referenceId);
+        return passwordPolicyRepository.findByReferenceAndId(referenceType, referenceId, policyId)
+                .switchIfEmpty(Single.error(() -> new PasswordPolicyNotFoundException(policyId)))
+                .flatMap(existingPolicy -> {
+                    final var entityToUpdate = policy.toPasswordPolicy(referenceType, referenceId);
+                    // override immutable attributes
+                    entityToUpdate.setId(existingPolicy.getId());
+                    entityToUpdate.setCreatedAt(existingPolicy.getCreatedAt());
+                    entityToUpdate.setReferenceType(existingPolicy.getReferenceType());
+                    entityToUpdate.setReferenceId(existingPolicy.getReferenceId());
+
+                    return passwordPolicyRepository.update(entityToUpdate)
+                            .flatMap(updatedPolicy -> {
+                                Event event = new Event(Type.PASSWORD_POLICY, new Payload(updatedPolicy.getId(), referenceType, referenceId, Action.UPDATE));
+                                return eventService.create(event).flatMap(__ -> Single.just(updatedPolicy));
+                            })
+                            .doOnSuccess(updatedPolicy -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
+                                    .principal(principal)
+                                    .type(EventType.PASSWORD_POLICY_UPDATED)
+                                    .policy(updatedPolicy)
+                                    .oldValue(existingPolicy)));
+                })
+                .doOnError(error -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.PASSWORD_POLICY_UPDATED).throwable(error)));
     }
 
     @Override

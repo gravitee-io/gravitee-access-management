@@ -17,6 +17,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.PasswordPolicy;
+import io.gravitee.am.service.model.UpdatePasswordPolicy;
 import io.reactivex.rxjava3.core.Flowable;
 
 import io.gravitee.am.identityprovider.api.User;
@@ -52,6 +53,20 @@ public interface PasswordPolicyService {
      * @return PasswordPolicy
      */
     Single<PasswordPolicy> create(ReferenceType referenceType, String referenceId, NewPasswordPolicy policy, User principal);
+
+    /**
+     * Update a password policy linked to the reference entity (domain for example)
+     *
+     * @param referenceType the type of reference
+     * @param referenceId the identifier of the reference
+     * @param policyId the policy id to update
+     * @param policy the new policy settings
+     * @param principal
+     * @return
+     */
+    Single<PasswordPolicy> update(ReferenceType referenceType, String referenceId, String policyId, UpdatePasswordPolicy policy, User principal);
+
+    Maybe<PasswordPolicy> findByReferenceAndId(ReferenceType referenceType, String referenceId, String policyId);
 
     Maybe<PasswordPolicy> retrievePasswordPolicy(io.gravitee.am.model.User user, PasswordSettingsAware passwordSettingsAware);
 }

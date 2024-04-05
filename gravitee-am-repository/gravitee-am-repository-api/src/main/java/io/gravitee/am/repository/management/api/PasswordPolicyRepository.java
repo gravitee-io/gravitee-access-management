@@ -20,10 +20,13 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 
 public interface PasswordPolicyRepository extends CrudRepository<PasswordPolicy, String> {
 
     Flowable<PasswordPolicy> findByReference(ReferenceType referenceType, String referenceId);
+
+    Maybe<PasswordPolicy> findByReferenceAndId(ReferenceType referenceType, String referenceId, String id);
 
     Completable deleteByReference(ReferenceType referenceType, String referenceId);
 }

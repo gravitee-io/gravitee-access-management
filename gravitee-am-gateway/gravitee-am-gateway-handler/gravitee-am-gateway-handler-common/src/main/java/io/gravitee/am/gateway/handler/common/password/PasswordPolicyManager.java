@@ -18,11 +18,11 @@ package io.gravitee.am.gateway.handler.common.password;
 
 import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.oidc.Client;
-import io.reactivex.rxjava3.core.Maybe;
+import io.gravitee.common.service.Service;
 
 import java.util.Optional;
 
-public interface PasswordPolicyManager {
+public interface PasswordPolicyManager extends Service {
 
     Optional<PasswordPolicy> getPolicy(String policyId);
     Optional<PasswordPolicy> getDefaultPolicy();

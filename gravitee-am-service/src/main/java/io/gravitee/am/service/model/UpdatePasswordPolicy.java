@@ -13,38 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.common.event;
+
+package io.gravitee.am.service.model;
+
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum Type {
+public class UpdatePasswordPolicy extends AbstractPasswordPolicy {
 
-    DOMAIN,
-    CLIENT,
-    APPLICATION,
-    IDENTITY_PROVIDER,
-    CERTIFICATE,
-    EXTENSION_GRANT,
-    SCOPE,
-    ROLE,
-    FORM,
-    EMAIL,
-    REPORTER,
-    POLICY,
-    USER,
-    MEMBERSHIP,
-    GROUP,
-    FACTOR,
-    RESOURCE,
-    FLOW,
-    ALERT_TRIGGER,
-    ALERT_NOTIFIER,
-    BOT_DETECTION,
-    AUTH_DEVICE_NOTIFIER,
-    DEVICE_IDENTIFIER,
-    I18N_DICTIONARY,
-    THEME,
-    PASSWORD_POLICY,
 }

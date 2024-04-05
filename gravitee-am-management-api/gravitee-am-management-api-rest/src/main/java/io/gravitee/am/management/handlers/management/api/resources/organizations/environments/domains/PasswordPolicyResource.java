@@ -17,13 +17,94 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.service.PasswordPolicyService;
+import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.PasswordPolicyNotFoundException;
+import io.gravitee.am.service.model.UpdatePasswordPolicy;
+import io.gravitee.common.http.MediaType;
+import io.reactivex.rxjava3.core.Maybe;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.container.AsyncResponse;
+import jakarta.ws.rs.container.Suspended;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 @Tag(name = "Password Policy")
 public class PasswordPolicyResource extends AbstractDomainResource {
+
+    @Autowired
+    private PasswordPolicyService passwordPolicyService;
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Read a password policy",
+            operationId = "getPasswordPolicy",
+            description = "User must have the DOMAIN_SETTINGS[READ] permission on the specified domain " +
+                    "or DOMAIN_SETTINGS[READ] permission on the specified environment " +
+                    "or DOMAIN_SETTINGS[READ] permission on the specified organization")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Password Policy description"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void update(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("policy") String policy,
+            @Suspended final AsyncResponse response) {
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_SETTINGS, Acl.READ)
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(() -> new DomainNotFoundException(domain)))
+                        .flatMap(__ ->
+                                passwordPolicyService.findByReferenceAndId(ReferenceType.DOMAIN, domain, policy)
+                                .switchIfEmpty(Maybe.error(() -> new PasswordPolicyNotFoundException(policy)))))
+                .subscribe(response::resume, response::resume);
+    }
+
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Update a password policy",
+            operationId = "updatePasswordPolicy",
+            description = "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_SETTINGS[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_SETTINGS[UPDATE] permission on the specified organization")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Password Policy successfully updated"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void update(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("policy") String policy,
+            @Parameter(name = "passwordPolicy", required = true) @Valid @NotNull final UpdatePasswordPolicy updatePasswordPolicy,
+            @Suspended final AsyncResponse response) {
+        final var authenticatedUser = getAuthenticatedUser();
+
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_SETTINGS, Acl.UPDATE)
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(() -> new DomainNotFoundException(domain)))
+                        .flatMapSingle(__ -> passwordPolicyService.update(ReferenceType.DOMAIN, domain, policy, updatePasswordPolicy, authenticatedUser))
+                .doOnError(error -> log.error("Update Password Policy fails: ", error)))
+                .subscribe(response::resume, response::resume);
+    }
 
 }

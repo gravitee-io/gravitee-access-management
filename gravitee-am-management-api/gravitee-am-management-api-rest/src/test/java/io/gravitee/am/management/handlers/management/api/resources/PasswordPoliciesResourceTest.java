@@ -77,10 +77,6 @@ public class PasswordPoliciesResourceTest extends JerseySpringTest {
         newPasswordPolicy.setExcludePasswordsInDictionary(true);
         newPasswordPolicy.setMaxLength(34);
 
-        var policy = new PasswordPolicy();
-        policy.setName("name");
-        policy.setMaxLength(34);
-
         doReturn(Single.just(false)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
 
         final Response response = target("domains")
