@@ -1,5 +1,29 @@
 # Change Log
 
+==  - 3.21.22 (2024-04-05)
+
+== What's new !
+
+
+
+=== Gateway
+
+* Disable Application https://github.com/gravitee-io/issues/issues/9584[#9584]
+
+=== Management API
+
+
+
+=== Console
+
+
+
+=== Other
+
+* Expired records present in table ciba_auth_requests. Cron is not taken into acoount. https://github.com/gravitee-io/issues/issues/9499[#9499]
+* Logs too verbose in AM when GeoIP plugin is not available https://github.com/gravitee-io/issues/issues/9633[#9633]
+
+
 ==  - 3.21.21 (2024-03-28)
 
 == What's new !
