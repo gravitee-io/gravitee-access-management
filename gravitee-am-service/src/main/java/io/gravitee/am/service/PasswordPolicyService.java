@@ -19,10 +19,29 @@ package io.gravitee.am.service;
 import io.gravitee.am.model.PasswordPolicy;
 import io.reactivex.rxjava3.core.Flowable;
 
+import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.service.model.NewPasswordPolicy;
+import io.reactivex.rxjava3.core.Single;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface PasswordPolicyService {
+
+
     Flowable<PasswordPolicy> findByDomain(String domain);
+
+    /**
+     * Create a new password policy linked to the reference entity (domain for example)
+     *
+     * @param referenceType
+     * @param referenceId
+     * @param policy
+     * @param principal
+     * @return
+     */
+    Single<PasswordPolicy> create(ReferenceType referenceType, String referenceId, NewPasswordPolicy policy, User principal);
+
 }
