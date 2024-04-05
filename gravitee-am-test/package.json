@@ -33,7 +33,7 @@
     "cypress-terminal-report": "3.4.1",
     "har-validator": "5.1.5",
     "jest": "28.0.3",
-    "license-check-and-add": "4.0.3",
+    "license-check-and-add": "4.0.5",
     "prettier": "2.5.1",
     "supertest": "6.2.3",
     "test-jest": "1.0.1",
