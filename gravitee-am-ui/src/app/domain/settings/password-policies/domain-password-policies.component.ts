@@ -16,6 +16,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
+import { PasswordPolicyService } from '../../../services/password-policy.service';
+
 import { PasswordPolicy } from './domain-password-policies.model';
 import {
   DialogCallback,
@@ -29,36 +31,28 @@ import { IdpDataModel } from './password-policies-idp-select-dialog/password-pol
   styleUrls: ['./domain-password-policies.component.scss'],
 })
 export class PasswordPoliciesComponent implements OnInit {
-  rows: PasswordPolicy[] = [];
+  domain: any = {};
 
   constructor(
     private route: ActivatedRoute,
+    private passwordPolicyService: PasswordPolicyService,
     public dialogFactory: PasswordPoliciesIdpSelectDialogFactory,
   ) {}
+  rows: PasswordPolicy[] = [];
 
   ngOnInit() {
-    this.init();
-  }
-
-  private init() {
-    this.rows = [
-      {
-        id: '1',
-        name: 'aaa',
-        idpCount: 0,
-        isDefault: false,
-      },
-      {
-        id: '2',
-        name: 'bb',
-        idpCount: 0,
-        isDefault: true,
-      },
-    ];
+    this.domain = this.route.snapshot.data['domain'];
+    this.loadPasswordPolicies();
   }
 
   isEmpty(): boolean {
     return this.rows.length === 0;
+  }
+
+  private loadPasswordPolicies() {
+    this.passwordPolicyService.list(this.domain.id).subscribe((policies) => {
+      this.rows = policies;
+    });
   }
 
   private getDomainIdentityProviders(): any[] {

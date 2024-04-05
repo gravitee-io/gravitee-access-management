@@ -13,23 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { inject, TestBed } from '@angular/core/testing';
 
-import { AppConfig } from '../../config/app.config';
+import { PasswordPolicyResolver } from './password-policy-resolver.service';
 
-@Injectable()
-export class PasswordPolicyService {
-  private domainsURL: string = AppConfig.settings.domainBaseURL;
+describe('PasswordPolicyResolver', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [PasswordPolicyResolver],
+      teardown: { destroyAfterEach: false },
+    });
+  });
 
-  constructor(private http: HttpClient) {}
-
-  list(domainId): Observable<any> {
-    return this.http.get<any>(this.domainsURL + domainId);
-  }
-
-  create(domainId, policy): Observable<any> {
-    return this.http.post<any>(this.domainsURL + domainId + '/password-policies', policy);
-  }
-}
+  it('should ...', inject([PasswordPolicyResolver], (service: PasswordPolicyResolver) => {
+    expect(service).toBeTruthy();
+  }));
+});

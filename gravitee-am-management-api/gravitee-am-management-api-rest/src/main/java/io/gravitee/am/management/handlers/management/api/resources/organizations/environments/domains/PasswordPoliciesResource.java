@@ -17,6 +17,7 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 
+import io.gravitee.am.management.handlers.management.api.model.PasswordPolicyEntity;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.ReferenceType;
@@ -36,12 +37,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
@@ -49,7 +45,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
-import java.util.List;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -72,8 +67,8 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
                     "or DOMAIN_SETTINGS[READ] permission on the specified environment " +
                     "or DOMAIN_SETTINGS[READ] permission on the specified organization. ")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List registered password policies for a security domain",   content = @Content(mediaType =  "application/json",
-                    array = @ArraySchema(schema = @Schema(implementation = PasswordPolicy.class)))),
+            @ApiResponse(responseCode = "200", description = "List registered password policies for a security domain", content = @Content(mediaType = "application/json",
+                    array = @ArraySchema(schema = @Schema(implementation = PasswordPolicyEntity.class)))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
@@ -84,8 +79,9 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_SETTINGS, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .map(__->new PasswordPolicy())
-                        .map(this::filterPasswordPolicy))
+                        .flatMapPublisher(___ -> passwordPolicyService.findByDomain(domain))
+                        .map(this::toEntity)
+                        .toList())
                 .subscribe(response::resume, response::resume);
     }
 
@@ -126,11 +122,13 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
         return resourceContext.getResource(PasswordPolicyResource.class);
     }
 
-    private PasswordPolicy filterPasswordPolicy(PasswordPolicy passwordPolicy){
-        PasswordPolicy passwordPolicyShort = new PasswordPolicy();
-        passwordPolicyShort.setId(passwordPolicy.getId());
-        passwordPolicyShort.setName(passwordPolicy.getName());
-        passwordPolicyShort.setDefaultPolicy(passwordPolicy.getDefaultPolicy());
-        return passwordPolicyShort;
+    private PasswordPolicyEntity toEntity(PasswordPolicy passwordPolicy) {
+        PasswordPolicyEntity entity = new PasswordPolicyEntity();
+        entity.setId(passwordPolicy.getId());
+        entity.setName(passwordPolicy.getName());
+        entity.setIsDefault(passwordPolicy.getDefaultPolicy());
+        //TODO: Set with correct value AM-2892
+        entity.setIdpCount(0);
+        return entity;
     }
 }
