@@ -15,34 +15,31 @@
  */
 package io.gravitee.am.service;
 
-import io.gravitee.am.model.PasswordPolicy;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.repository.management.api.PasswordPolicyRepository;
-import io.gravitee.am.service.impl.PasswordPolicyServiceImpl;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.subscribers.TestSubscriber;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.PasswordPolicy;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.repository.management.api.PasswordPolicyRepository;
+import io.gravitee.am.service.impl.PasswordPolicyServiceImpl;
 import io.gravitee.am.service.model.NewPasswordPolicy;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
-
-
 import static org.mockito.Mockito.when;
 
 /**
@@ -73,7 +70,7 @@ public class PasswordPolicyServiceTest {
         newPasswordPolicy.setName(UUID.randomUUID().toString());
         newPasswordPolicy.setMaxLength(18);
         newPasswordPolicy.setMinLength(8);
-        newPasswordPolicy.setOldPasswords((short)5);
+        newPasswordPolicy.setOldPasswords((short) 5);
         newPasswordPolicy.setExcludePasswordsInDictionary(Boolean.FALSE);
         newPasswordPolicy.setExcludeUserProfileInfoInPassword(Boolean.TRUE);
         newPasswordPolicy.setExpiryDuration(456);
@@ -91,21 +88,21 @@ public class PasswordPolicyServiceTest {
         observer.assertComplete();
         observer.assertValue(passwordPolicy ->
                 passwordPolicy.getCreatedAt() != null &&
-                passwordPolicy.getUpdatedAt() != null &&
-                passwordPolicy.getReferenceId().equals(DOMAIN_ID) &&
-                passwordPolicy.getReferenceType().equals(ReferenceType.DOMAIN) &&
-                passwordPolicy.getName().equals(newPasswordPolicy.getName()) &&
-                passwordPolicy.getMaxLength().equals(newPasswordPolicy.getMaxLength()) &&
-                passwordPolicy.getMinLength().equals(newPasswordPolicy.getMinLength()) &&
-                passwordPolicy.getOldPasswords().equals(newPasswordPolicy.getOldPasswords()) &&
-                passwordPolicy.getExcludePasswordsInDictionary().equals(newPasswordPolicy.getExcludePasswordsInDictionary()) &&
-                passwordPolicy.getExcludeUserProfileInfoInPassword().equals(newPasswordPolicy.getExcludeUserProfileInfoInPassword()) &&
-                passwordPolicy.getExpiryDuration().equals(newPasswordPolicy.getExpiryDuration()) &&
-                passwordPolicy.getIncludeNumbers().equals(newPasswordPolicy.getIncludeNumbers()) &&
-                passwordPolicy.getIncludeSpecialCharacters().equals(newPasswordPolicy.getIncludeSpecialCharacters()) &&
-                passwordPolicy.getLettersInMixedCase().equals(newPasswordPolicy.getLettersInMixedCase()) &&
-                passwordPolicy.getMaxConsecutiveLetters().equals(newPasswordPolicy.getMaxConsecutiveLetters()) &&
-                passwordPolicy.getPasswordHistoryEnabled().equals(newPasswordPolicy.getPasswordHistoryEnabled()));
+                        passwordPolicy.getUpdatedAt() != null &&
+                        passwordPolicy.getReferenceId().equals(DOMAIN_ID) &&
+                        passwordPolicy.getReferenceType().equals(ReferenceType.DOMAIN) &&
+                        passwordPolicy.getName().equals(newPasswordPolicy.getName()) &&
+                        passwordPolicy.getMaxLength().equals(newPasswordPolicy.getMaxLength()) &&
+                        passwordPolicy.getMinLength().equals(newPasswordPolicy.getMinLength()) &&
+                        passwordPolicy.getOldPasswords().equals(newPasswordPolicy.getOldPasswords()) &&
+                        passwordPolicy.getExcludePasswordsInDictionary().equals(newPasswordPolicy.getExcludePasswordsInDictionary()) &&
+                        passwordPolicy.getExcludeUserProfileInfoInPassword().equals(newPasswordPolicy.getExcludeUserProfileInfoInPassword()) &&
+                        passwordPolicy.getExpiryDuration().equals(newPasswordPolicy.getExpiryDuration()) &&
+                        passwordPolicy.getIncludeNumbers().equals(newPasswordPolicy.getIncludeNumbers()) &&
+                        passwordPolicy.getIncludeSpecialCharacters().equals(newPasswordPolicy.getIncludeSpecialCharacters()) &&
+                        passwordPolicy.getLettersInMixedCase().equals(newPasswordPolicy.getLettersInMixedCase()) &&
+                        passwordPolicy.getMaxConsecutiveLetters().equals(newPasswordPolicy.getMaxConsecutiveLetters()) &&
+                        passwordPolicy.getPasswordHistoryEnabled().equals(newPasswordPolicy.getPasswordHistoryEnabled()));
 
         Mockito.verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.SUCCESS)));
     }
@@ -126,10 +123,10 @@ public class PasswordPolicyServiceTest {
     }
 
     @Test
-    public void shouldFindByDomain(){
-        when(passwordPolicyRepository.findByReference(ReferenceType.DOMAIN,"domain"))
+    public void shouldFindByDomain() {
+        when(passwordPolicyRepository.findByReference(ReferenceType.DOMAIN, DOMAIN_ID))
                 .thenReturn(Flowable.just(new PasswordPolicy()));
-        TestSubscriber<PasswordPolicy> testObserver = cut.findByDomain("domain").test();
+        TestSubscriber<PasswordPolicy> testObserver = cut.findByDomain(DOMAIN_ID).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();

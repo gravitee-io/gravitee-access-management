@@ -16,7 +16,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { PasswordPoliciesService } from '../../../services/password-policies.service';
+import { PasswordPolicyService } from '../../../services/password-policy.service';
 
 import { PasswordPolicy } from './domain-password-policies.model';
 import {
@@ -24,7 +24,6 @@ import {
   PasswordPoliciesIdpSelectDialogFactory,
 } from './password-policies-idp-select-dialog/password-policies-idp-select-dialog.factory';
 import { IdpDataModel } from './password-policies-idp-select-dialog/password-policies-idp-select-table/password-policies-idp-select-table.component';
-
 
 @Component({
   selector: 'domain-password-policies',
@@ -36,7 +35,7 @@ export class PasswordPoliciesComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private passwordPoliciesService: PasswordPoliciesService,
+    private passwordPolicyService: PasswordPolicyService,
     public dialogFactory: PasswordPoliciesIdpSelectDialogFactory,
   ) {}
   rows: PasswordPolicy[] = [];
@@ -51,7 +50,7 @@ export class PasswordPoliciesComponent implements OnInit {
   }
 
   private loadPasswordPolicies() {
-    this.passwordPoliciesService.getAll(this.domain.id).subscribe((policies) => {
+    this.passwordPolicyService.list(this.domain.id).subscribe((policies) => {
       this.rows = policies;
     });
   }

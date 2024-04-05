@@ -37,12 +37,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
@@ -53,6 +48,7 @@ import java.net.URI;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * @author Rafal PODLES (rafal.podles at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Tag(name = "Password Policy")
@@ -86,14 +82,7 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
                         .flatMapPublisher(___ -> passwordPolicyService.findByDomain(domain))
                         .map(this::toEntity)
                         .toList())
-                .subscribe(policies -> {
-                            if (policies == null || policies.isEmpty()) {
-                                response.resume(Response.noContent().build());
-                            } else {
-                                response.resume(policies);
-                            }
-                        },
-                        response::resume);
+                .subscribe(response::resume, response::resume);
     }
 
     @POST

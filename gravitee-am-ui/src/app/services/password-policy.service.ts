@@ -21,15 +21,16 @@ import { AppConfig } from '../../config/app.config';
 
 @Injectable()
 export class PasswordPolicyService {
-  private domainsURL: string = AppConfig.settings.domainBaseURL;
+  private domainsURL = AppConfig.settings.domainBaseURL;
+  private passwordPolicyURL = '/password-policies';
 
   constructor(private http: HttpClient) {}
 
-  list(domainId): Observable<any> {
-    return this.http.get<any>(this.domainsURL + domainId);
+  list(domainId: string): Observable<any> {
+    return this.http.get<any>(this.domainsURL + domainId + this.passwordPolicyURL);
   }
 
-  create(domainId, policy): Observable<any> {
-    return this.http.post<any>(this.domainsURL + domainId + '/password-policies', policy);
+  create(domainId: string, policy): Observable<any> {
+    return this.http.post<any>(this.domainsURL + domainId + this.passwordPolicyURL, policy);
   }
 }

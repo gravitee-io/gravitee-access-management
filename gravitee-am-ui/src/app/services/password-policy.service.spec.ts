@@ -15,14 +15,14 @@
  */
 import { TestBed } from '@angular/core/testing';
 
-import { PasswordPoliciesService } from './password-policies.service';
+import { PasswordPolicyService } from './password-policy.service';
 
-describe('PasswordPoliciesService', () => {
-  let service: PasswordPoliciesService;
+describe('PasswordPolicyService', () => {
+  let service: PasswordPolicyService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(PasswordPoliciesService);
+    service = TestBed.inject(PasswordPolicyService);
   });
 
   it('should be created', () => {

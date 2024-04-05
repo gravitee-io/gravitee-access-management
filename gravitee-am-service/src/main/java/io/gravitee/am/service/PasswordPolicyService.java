@@ -26,21 +26,28 @@ import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * @author Rafal PODLES (rafal.podles at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface PasswordPolicyService {
 
+    /**
+     * Get all password policies by domain
+     *
+     * @param domain the domain
+     * @return list of PasswordPolicy
+     */
 
     Flowable<PasswordPolicy> findByDomain(String domain);
 
     /**
      * Create a new password policy linked to the reference entity (domain for example)
      *
-     * @param referenceType
-     * @param referenceId
-     * @param policy
-     * @param principal
-     * @return
+     * @param referenceType the type of reference
+     * @param referenceId the identifier of the reference
+     * @param policy the new password policy
+     * @param principal the user performing the action
+     * @return PasswordPolicy
      */
     Single<PasswordPolicy> create(ReferenceType referenceType, String referenceId, NewPasswordPolicy policy, User principal);
 

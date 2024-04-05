@@ -15,17 +15,17 @@
  */
 import { inject, TestBed } from '@angular/core/testing';
 
-import { PasswordPoliciesResolver } from './password-policies.resolver';
+import { PasswordPolicyResolver } from './password-policy-resolver.service';
 
-describe('PasswordPoliciesResolver', () => {
+describe('PasswordPolicyResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [PasswordPoliciesResolver],
+      providers: [PasswordPolicyResolver],
       teardown: { destroyAfterEach: false },
     });
   });
 
-  it('should ...', inject([PasswordPoliciesResolver], (service: PasswordPoliciesResolver) => {
+  it('should ...', inject([PasswordPolicyResolver], (service: PasswordPolicyResolver) => {
     expect(service).toBeTruthy();
   }));
 });

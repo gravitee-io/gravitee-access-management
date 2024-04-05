@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-import { AppConfig } from '../../config/app.config';
+import { PasswordPolicyService } from '../services/password-policy.service';
 
 @Injectable()
-export class PasswordPoliciesService {
-  private providersURL = AppConfig.settings.domainBaseURL;
+export class PasswordPolicyResolver {
+  constructor(private passwordPolicyService: PasswordPolicyService) {}
 
-  constructor(private http: HttpClient) {}
-
-  getAll(domainId: string): Observable<any> {
-    return this.http.get<any>(this.providersURL + domainId + '/password-policies');
+  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+    const domainId = route.parent.data['domain'].id;
+    return this.passwordPolicyService.list(domainId);
   }
 }

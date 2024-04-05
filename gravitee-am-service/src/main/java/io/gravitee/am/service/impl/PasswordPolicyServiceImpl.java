@@ -24,19 +24,20 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.PasswordPolicyRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordPolicyService;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewPasswordPolicy;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.PasswordPolicyAuditBuilder;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * @author Rafal PODLES (rafal.podles at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Slf4j
@@ -46,7 +47,8 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
     @Lazy
     @Autowired
     private PasswordPolicyRepository passwordPolicyRepository;
-
+    @Autowired
+    private AuditService auditService;
 
     @Override
     public Flowable<PasswordPolicy> findByDomain(String domain) {
@@ -58,8 +60,6 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
                 });
     }
 
-    @Autowired
-    private AuditService auditService;
 
     @Override
     public Single<PasswordPolicy> create(ReferenceType referenceType, String referenceId, NewPasswordPolicy policy, User principal) {

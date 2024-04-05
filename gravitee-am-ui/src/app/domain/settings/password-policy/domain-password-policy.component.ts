@@ -18,7 +18,7 @@ import { ActivatedRoute } from '@angular/router';
 
 import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
-import { PasswordPolicyService } from '../../../services/passwordPolicy.service';
+import { PasswordPolicyService } from '../../../services/password-policy.service';
 
 import { DomainPasswordPolicy } from './domain-password-policy.model';
 

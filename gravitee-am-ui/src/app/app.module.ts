@@ -441,9 +441,8 @@ import { FactorsSelectDialogComponent } from './domain/applications/application/
 import { SelectionRuleDialogComponent } from './domain/applications/application/advanced/factors/selection-rule-dialog/selection-rule-dialog.component';
 import { PasswordPoliciesComponent } from './domain/settings/password-policies/domain-password-policies.component';
 import { PasswordPoliciesIdpSelectDialogFactory } from './domain/settings/password-policies/password-policies-idp-select-dialog/password-policies-idp-select-dialog.factory';
-import { PasswordPolicyService } from './services/passwordPolicy.service';
-import { PasswordPoliciesResolver } from './resolvers/password-policies.resolver';
-import { PasswordPoliciesService } from './services/password-policies.service';
+import { PasswordPolicyResolver } from './resolvers/password-policy-resolver.service';
+import { PasswordPolicyService } from './services/password-policy.service';
 
 @NgModule({
   declarations: [
@@ -879,8 +878,7 @@ import { PasswordPoliciesService } from './services/password-policies.service';
     ThemesResolver,
     ThemeService,
     PasswordPoliciesIdpSelectDialogFactory,
-    PasswordPoliciesResolver,
-    PasswordPoliciesService,
+    PasswordPolicyResolver,
     PasswordPolicyService,
     {
       provide: HTTP_INTERCEPTORS,
