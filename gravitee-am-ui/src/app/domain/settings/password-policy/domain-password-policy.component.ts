@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
@@ -33,11 +33,13 @@ export class DomainPasswordPolicyComponent implements OnInit {
   domain: any;
   formChanged = false;
   editMode: boolean;
+  policyId: string;
 
   @Input() passwordPolicy: DomainPasswordPolicy;
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private authService: AuthService,
     private snackbarService: SnackbarService,
     private passwordPolicyService: PasswordPolicyService,
@@ -46,7 +48,12 @@ export class DomainPasswordPolicyComponent implements OnInit {
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
     this.domainId = this.domain.id;
-    this.passwordPolicy = {};
+    const policy = this.route.snapshot.data['policy'];
+    if (policy) {
+      this.refreshPolicyData(policy);
+    } else {
+      this.passwordPolicy = {};
+    }
     this.editMode = this.authService.hasPermissions(['domain_settings_update']);
   }
 
@@ -95,11 +102,28 @@ export class DomainPasswordPolicyComponent implements OnInit {
       this.snackbarService.open('Max length must be greater than zero');
       return;
     }
-    this.passwordPolicyService.create(this.domainId, this.passwordPolicy).subscribe((response) => {
-      this.passwordPolicy = response;
+
+    let request = null;
+    if (this.policyId) {
+      request = this.passwordPolicyService.update(this.domainId, this.policyId, this.passwordPolicy);
+    } else {
+      request = this.passwordPolicyService.create(this.domainId, this.passwordPolicy);
+    }
+    request.subscribe((response) => {
+      this.refreshPolicyData({ ...response });
       this.form.reset(this.passwordPolicy);
       this.formChanged = false;
       this.snackbarService.open('Password settings configuration updated');
+      this.router.navigate(['..', response.id], { relativeTo: this.route });
     });
+  }
+  private refreshPolicyData(policy) {
+    this.policyId = policy.id;
+    delete policy['id'];
+    delete policy['referenceId'];
+    delete policy['referenceType'];
+    delete policy['createdAt'];
+    delete policy['updatedAt'];
+    this.passwordPolicy = { ...policy };
   }
 }
