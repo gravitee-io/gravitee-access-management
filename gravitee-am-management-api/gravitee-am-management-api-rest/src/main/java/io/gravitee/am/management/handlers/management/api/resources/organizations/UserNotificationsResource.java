@@ -87,7 +87,6 @@ public class UserNotificationsResource extends AbstractResource {
 
     @POST
     @Path("/{notificationId}/acknowledge")
-    @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Mark User notification as read")
     @ApiResponses({
             @ApiResponse(code = 204, message = "User notification has been marked as read"),
@@ -101,6 +100,6 @@ public class UserNotificationsResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
         notificationService.markAsRead(authenticatedUser, notificationId)
-                .subscribe(() -> response.resume(Response.noContent()), response::resume);
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }
