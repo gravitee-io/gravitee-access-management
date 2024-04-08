@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { inject, TestBed } from '@angular/core/testing';
+import { ActivatedRouteSnapshot } from '@angular/router';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
 
-import { PasswordPolicyResolver } from './password-policy-resolver.service';
+import { PasswordPolicyService } from '../services/password-policy.service';
 
-describe('PasswordPolicyResolver', () => {
-  beforeEach(() => {
-    TestBed.configureTestingModule({
-      providers: [PasswordPolicyResolver],
-      teardown: { destroyAfterEach: false },
-    });
-  });
+@Injectable()
+export class PasswordPoliciesResolver {
+  constructor(private passwordPolicyService: PasswordPolicyService) {}
 
-  it('should ...', inject([PasswordPolicyResolver], (service: PasswordPolicyResolver) => {
-    expect(service).toBeTruthy();
-  }));
-});
+  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+    const domainId = route.parent.data['domain'].id;
+    return this.passwordPolicyService.list(domainId);
+  }
+}

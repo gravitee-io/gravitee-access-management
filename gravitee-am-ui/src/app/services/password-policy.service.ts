@@ -30,7 +30,15 @@ export class PasswordPolicyService {
     return this.http.get<any>(this.domainsURL + domainId + this.passwordPolicyURL);
   }
 
-  create(domainId: string, policy): Observable<any> {
+  get(domainId: string, policyId: string): Observable<any> {
+    return this.http.get<any>(this.domainsURL + domainId + this.passwordPolicyURL + '/' + policyId);
+  }
+
+  create(domainId: string, policy: any): Observable<any> {
     return this.http.post<any>(this.domainsURL + domainId + this.passwordPolicyURL, policy);
+  }
+
+  update(domainId: string, policyId: string, policy: any): Observable<any> {
+    return this.http.put<any>(this.domainsURL + domainId + this.passwordPolicyURL + '/' + policyId, policy);
   }
 }

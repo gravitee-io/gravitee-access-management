@@ -241,6 +241,7 @@ import { UserIdentitiesComponent } from './domain/settings/users/user/identities
 import { UserIdentitiesResolver } from './resolvers/user-identities.resolver';
 import { PasswordPoliciesComponent } from './domain/settings/password-policies/domain-password-policies.component';
 import { DomainPasswordPolicyComponent } from './domain/settings/password-policy/domain-password-policy.component';
+import { PasswordPolicyResolver } from './resolvers/password-policy-resolver';
 
 const applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -1763,6 +1764,19 @@ export const routes: Routes = [
                             data: {
                               perms: {
                                 only: ['domain_settings_update'],
+                              },
+                            },
+                          },
+                          {
+                            path: ':policyId',
+                            component: DomainPasswordPolicyComponent,
+                            canActivate: [AuthGuard],
+                            resolve: {
+                              policy: PasswordPolicyResolver,
+                            },
+                            data: {
+                              perms: {
+                                only: ['domain_settings_read'],
                               },
                             },
                           },
