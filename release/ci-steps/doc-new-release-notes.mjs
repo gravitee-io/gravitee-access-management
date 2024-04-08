@@ -62,19 +62,24 @@ const otherIssues = issues
 
 const whatsNewChangelogSection =
   features.length > 0
-    ? `<details>
+    ? `
+<details>
+
 <summary>What's new !</summary>
+
 ${getChangelogFor("=**What's new!**", features)}
-</details>`
-    : '';
+
+</details>
+
+` : '';
 
 let changelogPatchTemplate = `
 ## Gravitee Access Management ${releasingVersion} - ${new Date().toLocaleDateString('en-US', dateOptions)}
-
 ${whatsNewChangelogSection}
-
 <details>
+
 <summary>Bug fixes</summary>
+
 ${getChangelogFor('**Gateway**', gatewayIssues)}
 
 ${getChangelogFor('**Management API**', managementAPIIssues)}
@@ -82,6 +87,7 @@ ${getChangelogFor('**Management API**', managementAPIIssues)}
 ${getChangelogFor('**Console**', consoleIssues)}
 
 ${getChangelogFor('**Other**', otherIssues)}
+
 </details>
 `;
 
