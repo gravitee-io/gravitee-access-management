@@ -34,30 +34,34 @@ import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Single;
+import io.vertx.core.Handler;
+import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
+import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import io.vertx.rxjava3.ext.web.handler.SessionHandler;
 import io.vertx.rxjava3.ext.web.sstore.LocalSessionStore;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.context.ApplicationContext;
-
-import java.util.Collections;
-import java.util.Set;
-import java.util.UUID;
-
-import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
-import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static org.mockito.ArgumentMatchers.any;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import static org.mockito.Mockito.anyMap;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.context.ApplicationContext;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -136,6 +140,39 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                 REQUEST_PATH,
                 200,
                 "OK");
+    }
+
+    @Test
+    public void shouldNotRenderPageWhenFactorEnrolled() throws Exception {
+        final var ENROLL_FACTOR_ID = UUID.randomUUID().toString();
+        router.route(REQUEST_PATH)
+                .handler(ctx -> {
+                    User user = new User();
+
+                    EnrolledFactor enrolledFactor = new EnrolledFactor();
+                    EnrolledFactorSecurity enrolledFactorSecurity = new EnrolledFactorSecurity();
+                    enrolledFactor.setFactorId(ENROLL_FACTOR_ID);
+                    enrolledFactor.setStatus(FactorStatus.ACTIVATED);
+                    enrolledFactor.setSecurity(enrolledFactorSecurity);
+                    user.setFactors(Collections.singletonList(enrolledFactor));
+
+                    Client client = new Client();
+                    client.setFactors(Collections.singleton(ENROLL_FACTOR_ID));
+                    ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+                    ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+                    ctx.next();
+                })
+                .handler(mfaEnrollEndpoint)
+                .handler(rc -> rc.response().end());
+
+        Factor factor = mock(Factor.class);
+        when(factor.getFactorType()).thenReturn(FactorType.EMAIL);
+        when(factorManager.getFactor(any())).thenReturn(factor);
+
+        testRequest(HttpMethod.GET,
+                REQUEST_PATH,
+                302,
+                "Found");
     }
 
     @Test
@@ -255,6 +292,7 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                 302,
                 "Found", null);
     }
+
     public void shouldAcceptEnrollment_IgnoreRecoveryCode() throws Exception {
         final var RECOVERY_FACTOR_ID = UUID.randomUUID().toString();
         final var ENROLL_FACTOR_ID = UUID.randomUUID().toString();
