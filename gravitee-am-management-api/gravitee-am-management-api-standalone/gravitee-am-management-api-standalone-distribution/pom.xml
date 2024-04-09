@@ -360,6 +360,12 @@
             <version>${gravitee-cockpit-connectors.version}</version>
             <type>zip</type>
             <scope>runtime</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.gravitee.ae</groupId>
