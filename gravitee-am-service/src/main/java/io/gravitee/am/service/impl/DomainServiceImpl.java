@@ -701,7 +701,7 @@ public class DomainServiceImpl implements DomainService {
     private boolean hasIncorrectOrigins(Domain domain) {
         var corsSettings = ofNullable(domain.getCorsSettings());
         if (corsSettings.isPresent()){
-          return hasIncorrectOrigins(corsSettings);
+          return corsSettings.get().isEnabled() && hasIncorrectOrigins(corsSettings);
         }
         return false;
     }
