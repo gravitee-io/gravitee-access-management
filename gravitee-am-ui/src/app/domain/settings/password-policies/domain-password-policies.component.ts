@@ -54,6 +54,13 @@ export class PasswordPoliciesComponent implements OnInit {
       this.rows = policies;
     });
   }
+  protected getTooltipText(id: string): string {
+    const idpsNames = this.rows.find((pp) => pp.id === id).idpsNames;
+    if (idpsNames === undefined || idpsNames.length === 0) {
+      return null;
+    }
+    return 'Used in following Identity Providers: ' + idpsNames.join(', ');
+  }
 
   private getDomainIdentityProviders(): any[] {
     const providers = this.route.snapshot.data['providers'] as any[];

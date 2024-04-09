@@ -37,4 +37,7 @@ public interface SpringIdentityProviderRepository extends RxJava3CrudRepository<
 
     @Query("select * from identities i where i.reference_type = :refType and i.reference_id = :refId and i.id = :id")
     Maybe<JdbcIdentityProvider> findById(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("id") String id);
+
+    @Query("select * from identities i where i.reference_type = :refType and i.reference_id = :refId and i.password_policy = :pp")
+    Flowable<JdbcIdentityProvider> findAllByPasswordPolicy(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("pp") String passwordPolicy);
 }

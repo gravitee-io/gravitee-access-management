@@ -135,6 +135,11 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
         return identityProviderService.delete(referenceType, referenceId, identityProviderId, principal);
     }
 
+    @Override
+    public Flowable<IdentityProvider> findWithPasswordPolicy(ReferenceType referenceType, String referenceId, String passwordPolicy) {
+        return identityProviderService.findWithPasswordPolicy(referenceType, referenceId, passwordPolicy);
+    }
+
     private Single<IdentityProvider> filterSensitiveData(IdentityProvider idp) {
         return identityProviderPluginService.getSchema(idp.getType())
                 .map(Optional::ofNullable)

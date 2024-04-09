@@ -16,6 +16,6 @@
 export interface PasswordPolicy {
   id: string;
   name: string;
-  idpCount: number;
+  idpsNames: string[];
   isDefault: boolean;
 }

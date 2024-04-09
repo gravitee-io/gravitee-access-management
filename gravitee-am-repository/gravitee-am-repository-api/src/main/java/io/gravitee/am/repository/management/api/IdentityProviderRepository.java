@@ -20,9 +20,6 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
-
-import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -37,4 +34,6 @@ public interface IdentityProviderRepository extends CrudRepository<IdentityProvi
     Flowable<IdentityProvider> findAll();
 
     Maybe<IdentityProvider> findById(ReferenceType referenceType, String referenceId, String identityProviderId);
+
+    Flowable<IdentityProvider> findAllByPasswordPolicy(ReferenceType referenceType, String referenceId, String passwordPolicy);
 }

@@ -50,6 +50,8 @@ public interface IdentityProviderService {
 
     Completable delete(ReferenceType referenceType, String referenceId, String identityProviderId, User principal);
 
+    Flowable<IdentityProvider> findWithPasswordPolicy(ReferenceType referenceType, String referenceId, String passwordPolicy);
+
     default Single<IdentityProvider> create(String domain, NewIdentityProvider identityProvider) {
         return create(domain, identityProvider, null);
     }

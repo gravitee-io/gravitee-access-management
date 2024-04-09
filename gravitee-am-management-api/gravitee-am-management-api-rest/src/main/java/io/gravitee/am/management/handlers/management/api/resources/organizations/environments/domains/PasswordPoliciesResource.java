@@ -19,14 +19,17 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.management.handlers.management.api.model.PasswordPolicyEntity;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewPasswordPolicy;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -37,7 +40,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
@@ -45,6 +53,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
+import java.util.List;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -57,6 +66,9 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
 
     @Autowired
     private PasswordPolicyService passwordPolicyService;
+
+    @Autowired
+    private IdentityProviderService identityProviderService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -79,9 +91,17 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_SETTINGS, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(() -> new DomainNotFoundException(domain)))
-                        .flatMapPublisher(___ -> passwordPolicyService.findByDomain(domain))
-                        .map(this::toEntity)
-                        .toList())
+                        .flatMapPublisher(___ ->
+                                passwordPolicyService.findByDomain(domain)
+                                        .flatMapSingle(pp ->
+                                                identityProviderService.findWithPasswordPolicy(ReferenceType.DOMAIN, domain, pp.getId())
+                                                        .map(IdentityProvider::getName)
+                                                        .toList()
+                                                        .flatMap(idps -> toEntity(pp, idps))
+                                        )
+                        )
+                        .toList()
+                )
                 .subscribe(response::resume, response::resume);
     }
 
@@ -122,13 +142,12 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
         return resourceContext.getResource(PasswordPolicyResource.class);
     }
 
-    private PasswordPolicyEntity toEntity(PasswordPolicy passwordPolicy) {
+    private Single<PasswordPolicyEntity> toEntity(PasswordPolicy passwordPolicy, List<String> idpsNames) {
         PasswordPolicyEntity entity = new PasswordPolicyEntity();
         entity.setId(passwordPolicy.getId());
         entity.setName(passwordPolicy.getName());
         entity.setIsDefault(passwordPolicy.getDefaultPolicy());
-        //TODO: Set with correct value AM-2892
-        entity.setIdpCount(0);
-        return entity;
+        entity.setIdpsNames(idpsNames);
+        return Single.just(entity);
     }
 }

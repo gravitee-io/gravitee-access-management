@@ -19,6 +19,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -26,5 +28,5 @@ public class PasswordPolicyEntity {
     private String id;
     private String name;
     private Boolean isDefault;
-    private Integer idpCount;
+    private List<String> idpsNames;
 }

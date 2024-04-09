@@ -19,38 +19,7 @@ package io.gravitee.am.management.handlers.management.api.resources.model;
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class FilteredIdentityProviderInfo {
-    private final String id;
-    private final String name;
-    private final String type;
-    private final boolean system;
-    private final boolean external;
 
-    public FilteredIdentityProviderInfo(String id, String name, String type, boolean system, boolean external) {
-        this.id = id;
-        this.name = name;
-        this.type = type;
-        this.system = system;
-        this.external = external;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public boolean isSystem() {
-        return system;
-    }
-
-    public boolean isExternal() {
-        return external;
-    }
+public record FilteredIdentityProviderInfo(String id, String name, String type, boolean system, boolean external,
+                                           String passwordPolicy) {
 }

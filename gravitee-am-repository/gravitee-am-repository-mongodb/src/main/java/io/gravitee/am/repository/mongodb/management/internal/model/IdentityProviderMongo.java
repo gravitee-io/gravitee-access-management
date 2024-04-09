@@ -17,6 +17,8 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
+import lombok.Getter;
+import lombok.Setter;
 import org.bson.BsonArray;
 import org.bson.Document;
 import org.bson.codecs.pojo.annotations.BsonId;
@@ -25,6 +27,8 @@ import org.bson.codecs.pojo.annotations.BsonId;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public class IdentityProviderMongo extends Auditable {
 
     @BsonId
@@ -56,93 +60,7 @@ public class IdentityProviderMongo extends Auditable {
 
     private boolean external;
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public boolean isSystem() {
-        return system;
-    }
-
-    public void setSystem(boolean system) {
-        this.system = system;
-    }
-
-    public String getConfiguration() {
-        return configuration;
-    }
-
-    public void setConfiguration(String configuration) {
-        this.configuration = configuration;
-    }
-
-    public Document getMappers() {
-        return mappers;
-    }
-
-    public void setMappers(Document mappers) {
-        this.mappers = mappers;
-    }
-
-    public Document getRoleMapper() {
-        return roleMapper;
-    }
-
-    public void setRoleMapper(Document roleMapper) {
-        this.roleMapper = roleMapper;
-    }
-
-    public ReferenceType getReferenceType() {
-        return referenceType;
-    }
-
-    public void setReferenceType(ReferenceType referenceType) {
-        this.referenceType = referenceType;
-    }
-
-    public String getReferenceId() {
-        return referenceId;
-    }
-
-    public void setReferenceId(String referenceId) {
-        this.referenceId = referenceId;
-    }
-
-    public boolean isExternal() {
-        return external;
-    }
-
-    public void setExternal(boolean external) {
-        this.external = external;
-    }
-
-    public BsonArray getDomainWhitelist() {
-        return domainWhitelist;
-    }
-
-    public void setDomainWhitelist(BsonArray domainWhitelist) {
-        this.domainWhitelist = domainWhitelist;
-    }
+    private String passwordPolicy;
 
     @Override
     public boolean equals(Object o) {
