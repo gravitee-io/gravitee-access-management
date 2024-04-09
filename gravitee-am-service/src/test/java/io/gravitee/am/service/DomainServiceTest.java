@@ -930,6 +930,35 @@ public class DomainServiceTest {
     }
 
     @Test
+    public void shouldPathDomainWithEmptyAllowedOriginsWhenCorsIsDisabled() {
+        final PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+        final Domain domain = new Domain();
+        domain.setId("my-domain");
+        domain.setHrid("my-domain");
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName("my-domain");
+        domain.setCorsSettings(getCorsSettings(Set.of(""), false));
+
+        when(patchDomain.patch(any())).thenReturn(domain);
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
+        when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, domain.getHrid())).thenReturn(Maybe.just(domain));
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainRepository.findAll()).thenReturn(Flowable.empty());
+        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
+        doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+        doReturn(true).when(accountSettingsValidator).validate(any());
+
+        domainService.patch("my-domain", patchDomain).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
+
+        verify(domainRepository, times(1)).findById(anyString());
+        verify(domainRepository, times(1)).update(any(Domain.class));
+        verify(eventService, times(1)).create(any());
+    }
+
+    @Test
     public void shouldThrowOnPathDomainWithEmptyAllowedOrigins() {
         final PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
         final Domain domain = new Domain();
@@ -1035,8 +1064,12 @@ public class DomainServiceTest {
     }
 
     private static CorsSettings getCorsSettings(Set<String> allowedOrigins) {
+        return getCorsSettings(allowedOrigins, true);
+    }
+
+    private static CorsSettings getCorsSettings(Set<String> allowedOrigins, boolean enabled) {
         final CorsSettings corsSettings = new CorsSettings();
-        corsSettings.setEnabled(true);
+        corsSettings.setEnabled(enabled);
         corsSettings.setMaxAge(50);
         corsSettings.setAllowedMethods(Set.of("GET", "POST"));
         corsSettings.setAllowedOrigins(allowedOrigins);
