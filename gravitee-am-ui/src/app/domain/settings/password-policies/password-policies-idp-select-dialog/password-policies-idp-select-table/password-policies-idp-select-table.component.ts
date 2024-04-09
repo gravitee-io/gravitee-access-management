@@ -50,7 +50,7 @@ export class PasswordPoliciesIdpSelectTableComponent implements OnInit {
   selectionModel: Map<string, boolean>;
 
   ngOnInit() {
-    const selection = this.rows.map((idp): [string, boolean] => [idp.id, false]);
+    const selection = this.rows.map((idp): [string, boolean] => [idp.id, !!idp.association]);
     this.selectionModel = new Map<string, boolean>(selection);
   }
 

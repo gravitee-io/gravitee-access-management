@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import {Component, Input, OnInit, ViewChild} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { AuthService } from '../../../services/auth.service';
@@ -21,6 +21,14 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { PasswordPolicyService } from '../../../services/password-policy.service';
 
 import { DomainPasswordPolicy } from './domain-password-policy.model';
+import {
+  IdpDataModel
+} from "../password-policies/password-policies-idp-select-dialog/password-policies-idp-select-table/password-policies-idp-select-table.component";
+import {
+  DialogCallback, PasswordPoliciesIdpSelectDialogFactory
+} from "../password-policies/password-policies-idp-select-dialog/password-policies-idp-select-dialog.factory";
+import {ProviderService} from "../../../services/provider.service";
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'password-policy',
@@ -34,6 +42,7 @@ export class DomainPasswordPolicyComponent implements OnInit {
   formChanged = false;
   editMode: boolean;
   policyId: string;
+  providers: any[];
 
   @Input() passwordPolicy: DomainPasswordPolicy;
 
@@ -43,7 +52,10 @@ export class DomainPasswordPolicyComponent implements OnInit {
     private authService: AuthService,
     private snackbarService: SnackbarService,
     private passwordPolicyService: PasswordPolicyService,
-  ) {}
+    private dialogFactory: PasswordPoliciesIdpSelectDialogFactory,
+    private providerService: ProviderService
+  ) {
+  }
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
@@ -55,6 +67,7 @@ export class DomainPasswordPolicyComponent implements OnInit {
       this.passwordPolicy = {};
     }
     this.editMode = this.authService.hasPermissions(['domain_settings_update']);
+    this.providerService.findByDomain(this.domainId).subscribe((response) => (this.providers = response));
   }
 
   formChange(): void {
@@ -103,7 +116,7 @@ export class DomainPasswordPolicyComponent implements OnInit {
       return;
     }
 
-    let request = null;
+    let request: Observable<any>;
     if (this.policyId) {
       request = this.passwordPolicyService.update(this.domainId, this.policyId, this.passwordPolicy);
     } else {
@@ -125,5 +138,44 @@ export class DomainPasswordPolicyComponent implements OnInit {
     delete policy['createdAt'];
     delete policy['updatedAt'];
     this.passwordPolicy = { ...policy };
+  }
+
+  public openDialog():void {
+    this.providerService.findByDomain(this.domainId).subscribe((response) => {
+      this.providers = response
+      console.log(this.providers)
+      const unlinked = this.providers.filter(idp=>idp.passwordPolicy===undefined || idp.passwordPolicy===this.policyId).map((idp) => {
+        return {
+          id: idp.id,
+          name: idp.name,
+          association: idp.passwordPolicy,
+          type: {
+            name: idp.typeName,
+            icon: idp.typeIcon,
+          },
+        } as IdpDataModel;
+      });
+      const linked = this.providers.filter(idp=>idp.passwordPolicy!=undefined || idp.passwordPolicy!=this.policyId).map((idp) => {
+        return {
+          id: idp.id,
+          name: idp.name,
+          association: 'Password Policy',
+          type: {
+            name: idp.typeName,
+            icon: idp.typeIcon,
+          },
+        } as IdpDataModel;
+      });
+      const callback: DialogCallback = (result) => {
+        console.log(result);
+      };
+      this.dialogFactory.openDialog(
+        {
+          unlinkedIdps: unlinked,
+          linkedIdps: linked,
+        },
+        callback,
+      );
+    });
   }
 }
