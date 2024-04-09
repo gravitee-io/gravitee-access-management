@@ -119,6 +119,12 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                 routingContext.fail(401);
                 return;
             }
+            var context = new MfaFilterContext(routingContext, routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY), factorManager, ruleEngine);
+            if (context.userHasMatchingActivatedFactors()) {
+                logger.warn("User already has a factor.");
+                redirectToAuthorize(routingContext);
+                return;
+            }
 
             final io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
             final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
