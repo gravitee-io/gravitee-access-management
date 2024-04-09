@@ -23,7 +23,13 @@ import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -206,4 +212,26 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoErrors();
     }
 
+    @Test
+    public void findByPasswordPolicy() {
+        // create idp
+        IdentityProvider identityProvider = buildIdentityProvider();
+        identityProvider.setReferenceId("testDomain");
+        identityProvider.setPasswordPolicy("passwordPolicy1");
+        identityProviderRepository.create(identityProvider).blockingGet();
+
+        IdentityProvider identityProvider2 = buildIdentityProvider();
+        identityProvider2.setReferenceId("testDomain");
+        identityProvider.setPasswordPolicy("passwordPolicy2");
+        identityProviderRepository.create(identityProvider2).blockingGet();
+
+        // fetch idps
+        TestObserver<List<IdentityProvider>> testObserver = identityProviderRepository.findAllByPasswordPolicy(ReferenceType.DOMAIN, "testDomain", "passwordPolicy1").toList().test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(idps -> idps.size() == 1);
+        testObserver.assertValue(idp -> idp.get(0).getName().equals(identityProvider.getName()));
+    }
 }

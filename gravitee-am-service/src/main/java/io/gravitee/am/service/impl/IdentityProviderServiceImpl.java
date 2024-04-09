@@ -172,13 +172,14 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                 .flatMap(oldIdentity -> {
                     IdentityProvider identityToUpdate = new IdentityProvider(oldIdentity);
                     identityToUpdate.setName(updateIdentityProvider.getName());
-                    if (!identityToUpdate.isSystem() || isUpgrader){
+                    if (!identityToUpdate.isSystem() || isUpgrader) {
                         identityToUpdate.setConfiguration(updateIdentityProvider.getConfiguration());
                     }
                     identityToUpdate.setMappers(updateIdentityProvider.getMappers());
                     identityToUpdate.setRoleMapper(updateIdentityProvider.getRoleMapper());
                     identityToUpdate.setDomainWhitelist(ofNullable(updateIdentityProvider.getDomainWhitelist()).orElse(List.of()));
                     identityToUpdate.setUpdatedAt(new Date());
+                    identityToUpdate.setPasswordPolicy(updateIdentityProvider.getPasswordPolicy());
 
                     return identityProviderRepository.update(identityToUpdate)
                             .flatMap(identityProvider1 -> {
@@ -230,4 +231,14 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                             String.format("An error occurs while trying to delete identity provider: %s", identityProviderId), ex));
                 });
     }
-}
+
+    @Override
+    public Flowable<IdentityProvider> findWithPasswordPolicy(ReferenceType referenceType, String referenceId, String passwordPolicy) {
+        LOGGER.debug("Find identity provider with assigned password policy: {}", passwordPolicy);
+            return identityProviderRepository.findAllByPasswordPolicy(referenceType, referenceId, passwordPolicy)
+                    .onErrorResumeNext(ex -> {
+                        LOGGER.error("An error occurs while trying to find identity providers by password policy: {}", passwordPolicy, ex);
+                        return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find identity providers by password policy: %s", passwordPolicy), ex));
+                    });
+        }
+    }

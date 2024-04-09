@@ -125,6 +125,7 @@ public class DefaultIdentityProviderUpgraderTest {
         identityProvider.setConfiguration("{\"attribute\":\"existing attribute\", \"passwordEncoder\":\"existing passwordEncoder\", \"passwordEncoderOptions\":{\"options\":\"existing options\"}}");
         identityProvider.setReferenceId("domain-id");
         identityProvider.setExternal(false);
+        identityProvider.setPasswordPolicy("password-policy-id");
 
         return identityProvider;
     }

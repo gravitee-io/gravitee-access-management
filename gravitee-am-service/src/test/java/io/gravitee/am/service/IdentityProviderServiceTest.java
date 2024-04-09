@@ -44,7 +44,12 @@ import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -359,5 +364,40 @@ public class IdentityProviderServiceTest {
 
         verify(identityProviderRepository, times(1)).delete("my-identity-provider");
         verify(eventService, times(1)).create(any());
+    }
+
+    @Test
+    public void shouldFindByPasswordPolicy() {
+        final String passwordPolicy = "password-policy";
+        IdentityProvider identityProvider = new IdentityProvider();
+        identityProvider.setPasswordPolicy(passwordPolicy);
+        when(identityProviderRepository.findAllByPasswordPolicy(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq(passwordPolicy))).thenReturn(Flowable.just(identityProvider));
+        TestSubscriber<IdentityProvider> testObserver = identityProviderService.findWithPasswordPolicy(ReferenceType.DOMAIN, DOMAIN, passwordPolicy).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValueCount(1);
+    }
+
+    @Test
+    public void shouldFindByPasswordPolicy_empty() {
+        when(identityProviderRepository.findAllByPasswordPolicy(eq(ReferenceType.DOMAIN), eq(DOMAIN), any())).thenReturn(Flowable.empty());
+        TestSubscriber<IdentityProvider> testObserver = identityProviderService.findWithPasswordPolicy(ReferenceType.DOMAIN, DOMAIN, "password").test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValueCount(0);
+    }
+
+    @Test
+    public void shouldFindByPasswordPolicy_technicalException() {
+        when(identityProviderRepository.findAllByPasswordPolicy(eq(ReferenceType.DOMAIN), eq(DOMAIN), any())).thenReturn(Flowable.error(TechnicalException::new));
+
+        TestSubscriber<IdentityProvider> testSubscriber = identityProviderService.findWithPasswordPolicy(ReferenceType.DOMAIN, DOMAIN, "password").test();
+
+        testSubscriber.assertError(TechnicalManagementException.class);
+        testSubscriber.assertNotComplete();
     }
 }

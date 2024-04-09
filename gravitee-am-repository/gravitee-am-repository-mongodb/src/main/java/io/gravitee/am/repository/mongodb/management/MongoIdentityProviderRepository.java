@@ -23,16 +23,24 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.IdentityProviderMongo;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.*;
+import io.reactivex.rxjava3.core.Single;
+import jakarta.annotation.PostConstruct;
 import org.bson.BsonArray;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.PostConstruct;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -48,6 +56,8 @@ import static java.util.stream.Collectors.toList;
  */
 @Component
 public class MongoIdentityProviderRepository extends AbstractManagementMongoRepository implements IdentityProviderRepository {
+
+    public static final String FIELD_PASSWORD_POLICY = "passwordPolicy";
 
     private MongoCollection<IdentityProviderMongo> identitiesCollection;
 
@@ -86,12 +96,21 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
     }
 
     @Override
+    public Flowable<IdentityProvider> findAllByPasswordPolicy(ReferenceType referenceType, String referenceId, String passwordPolicy) {
+        return Flowable.fromPublisher(withMaxTime(identitiesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_PASSWORD_POLICY, passwordPolicy)))))
+                .map(this::convert);
+    }
+
+    @Override
     public Single<IdentityProvider> create(IdentityProvider item) {
         Optional<IdentityProviderMongo> optionalIdp = convert(item);
         if (optionalIdp.isPresent()) {
             var identityProvider = optionalIdp.get();
             identityProvider.setId(identityProvider.getId() == null ? RandomString.generate() : identityProvider.getId());
-            return Single.fromPublisher(identitiesCollection.insertOne(identityProvider)).flatMap(success -> { item.setId(identityProvider.getId()); return Single.just(item); });
+            return Single.fromPublisher(identitiesCollection.insertOne(identityProvider)).flatMap(success -> {
+                item.setId(identityProvider.getId());
+                return Single.just(item);
+            });
         }
         return Single.error(new TechnicalException("Identity provider must be present for create"));
     }
@@ -144,6 +163,7 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
                         .collect(toList()));
         identityProvider.setCreatedAt(identityProviderMongo.getCreatedAt());
         identityProvider.setUpdatedAt(identityProviderMongo.getUpdatedAt());
+        identityProvider.setPasswordPolicy(identityProviderMongo.getPasswordPolicy());
         return identityProvider;
     }
 
@@ -168,6 +188,7 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
                     ofNullable(identityProvider.getDomainWhitelist()).orElse(List.of()).stream()
                             .map(BsonString::new)
                             .collect(toCollection(BsonArray::new)));
+            identityProviderMongo.setPasswordPolicy(identityProvider.getPasswordPolicy());
             return identityProviderMongo;
         });
     }

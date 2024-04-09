@@ -133,6 +133,13 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
     }
 
     @Override
+    public Flowable<IdentityProvider> findAllByPasswordPolicy(ReferenceType referenceType, String referenceId, String passwordPolicy) {
+        LOGGER.debug("findAllByPasswordPolicy({},{},{})", referenceType, referenceId, passwordPolicy);
+        return this.identityProviderRepository.findAllByPasswordPolicy(referenceType.name(), referenceId, passwordPolicy)
+                .map(this::toEntity);
+    }
+
+    @Override
     public Maybe<IdentityProvider> findById(String id) {
         LOGGER.debug("findById({})", id);
         return this.identityProviderRepository.findById(id)
@@ -160,6 +167,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_MAPPERS, item.getMappers());
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_ROLE_MAPPER, item.getRoleMapper());
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_PASSWORD_POLICY, item.getPasswordPolicy());
+        insertSpec = addQuotedField(insertSpec, COL_PASSWORD_POLICY, item.getPasswordPolicy(), String.class);
 
         Mono<Long> action = insertSpec.fetch().rowsUpdated();
 
@@ -185,7 +193,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         update = databaseDialectHelper.addJsonField(update, COL_DOMAIN_WHITELIST, ofNullable(item.getDomainWhitelist()).orElse(List.of()));
         update = databaseDialectHelper.addJsonField(update, COL_MAPPERS, item.getMappers());
         update = databaseDialectHelper.addJsonField(update, COL_ROLE_MAPPER, item.getRoleMapper());
-        update = databaseDialectHelper.addJsonField(update, COL_PASSWORD_POLICY, item.getPasswordPolicy());
+        update = addQuotedField(update, COL_PASSWORD_POLICY, item.getPasswordPolicy(), String.class);
 
         Mono<Long> action = update.fetch().rowsUpdated();
 
