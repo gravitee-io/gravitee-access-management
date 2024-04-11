@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 import { Component, Input, OnInit } from '@angular/core';
-import { forkJoin, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { forkJoin, Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import * as Highcharts from 'highcharts';
 import moment from 'moment';
 import { find, isNil, map as _map } from 'lodash';
@@ -69,9 +69,8 @@ export class DashboardComponent implements OnInit {
     this.fetch();
   }
 
-  private query(widget): Observable<Widget> {
+  private query(widget: Widget): Observable<Widget> {
     const selectedTimeRange = find(this.timeRanges, { id: this.selectedTimeRange });
-
     const analyticsQuery = {
       type: widget.chart.request.type,
       field: widget.chart.request.field,
@@ -90,11 +89,13 @@ export class DashboardComponent implements OnInit {
         widget.chart.response = response;
         return widget;
       }),
+      catchError(() => of(widget)),
     );
   }
 
   private fetch() {
     const dashboard: DashboardData = Object.assign({}, this.dashboard);
+    this.widgets?.forEach((w) => (w.chart.response = null));
     this.widgets = [];
     this.isLoading = true;
     forkJoin(_map(dashboard.widgets, (widget) => this.query(widget))).subscribe((widgets) => {
