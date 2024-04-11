@@ -23,7 +23,7 @@ import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.PasswordHistory;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
@@ -197,7 +197,8 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                                 // store user in its identity provider:
                                                 // - perform first validation of user to avoid error status 500 when the IDP is based on relational databases
                                                 // - in case of error, trace the event otherwise continue the creation process
-                                                return passwordPolicyService.retrievePasswordPolicy(transform, client)
+                                                final var identityProvider = identityProviderManager.getIdentityProvider(newUser.getSource());
+                                                return passwordPolicyService.retrievePasswordPolicy(transform, client, identityProvider.orElse(null))
                                                         .map(Optional::ofNullable)
                                                         .switchIfEmpty(Maybe.just(Optional.empty()))
                                                         .flatMapSingle(optPolicy -> {
@@ -265,7 +266,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                                             if (TRUE.equals(newUser.isPreRegistration()) && (accountSettings == null || !accountSettings.isDynamicUserRegistration())) {
                                                                 return sendRegistrationConfirmation(user.getReferenceId(), user.getId(), principal).toSingleDefault(user);
                                                             } else {
-                                                                createPasswordHistory(domain, client, user, rawPassword, principal);
+                                                                createPasswordHistory(domain, client, user, rawPassword, principal, identityProvider.orElse(null));
                                                                 return Single.just(user);
                                                             }
                                                         });
@@ -296,52 +297,51 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                             .defaultIfEmpty(Optional.empty())
                             .flatMap(optClient -> {
                                 final Client client = optClient.map(Application::toClient).orElse(new Client());
-                                return passwordPolicyService.retrievePasswordPolicy(user, client)
-                                        .map(Optional::ofNullable)
-                                        .switchIfEmpty(Maybe.just(Optional.empty()))
-                                        .filter(optPolicy -> !isInvalidUserPassword(password, optPolicy.orElse(null), user))
-                                        .switchIfEmpty(Maybe.error(() -> InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value")))
-                                        .flatMap(optPolicy -> passwordHistoryService.addPasswordToHistory(DOMAIN, domain.getId(), user, password , principal, optPolicy.orElse(null)))
-                                        .isEmpty().flatMap(empty -> Single.just(new PasswordHistory()))
-                                        .flatMap(passwordHistory -> identityProviderManager.getUserProvider(user.getSource())
-                                                                                       .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(user.getSource())))
-                                                                                       .flatMap(userProvider -> {
-                                                                          // update idp user
-                                                                          return userProvider.findByUsername(user.getUsername())
-                                                                                             .switchIfEmpty(Single.error(() -> new UserNotFoundException(user.getUsername())))
-                                                                                             .flatMap(idpUser -> userProvider.updatePassword(idpUser, password))
-                                                                                             .onErrorResumeNext(ex -> {
-                                                                                                 if (ex instanceof UserNotFoundException) {
-                                                                                                     // idp user not found, create its account
-                                                                                                     user.setPassword(password);
-                                                                                                     return userProvider.create(convert(user));
-                                                                                                 }
-                                                                                                 return Single.error(ex);
-                                                                                             });
-                                                                      })
-                                                                                       .flatMap(idpUser -> {
-                                                                          // update 'users' collection for management and audit purpose
-                                                                          // if user was in pre-registration mode, end the registration process
-                                                                          if (user.isPreRegistration()) {
-                                                                              user.setRegistrationCompleted(true);
-                                                                              user.setEnabled(true);
-                                                                          }
-                                                                          user.setPassword(null);
-                                                                          user.setExternalId(idpUser.getId());
-                                                                          user.setLastPasswordReset(new Date());
-                                                                          user.setUpdatedAt(new Date());
-                                                                          return userService.update(user);
-                                                                      })// after audit, invalidate tokens whatever is the domain or app settings
-                                                                                       // as it is an admin action here, we want to force the user to login
-                                                                                       .flatMap(updatedUser -> Single.defer(() -> tokenService.deleteByUser(updatedUser)
-                                                                                                                             .toSingleDefault(updatedUser)
-                                                                                                                             .onErrorResumeNext(err -> {
-                                                                                                                                 logger.warn("Tokens not invalidated for user {} due to : {}", userId, err.getMessage());
-                                                                                                                                 return Single.just(updatedUser);
-                                                                                                                             })))
-                                                                                       .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user)))
-                                                                                       .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user).throwable(throwable))))
-                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user).throwable(throwable)));
+                                return identityProviderManager.getUserProvider(user.getSource())
+                                        .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(user.getSource())))
+                                        .flatMap(userProvider -> {
+                                            final var identityProvider = identityProviderManager.getIdentityProvider(user.getSource());
+                                            return passwordPolicyService.retrievePasswordPolicy(user, client, identityProvider.orElse(null))
+                                                    .map(Optional::ofNullable)
+                                                    .switchIfEmpty(Maybe.just(Optional.empty()))
+                                                    .filter(optPolicy -> !isInvalidUserPassword(password, optPolicy.orElse(null), user))
+                                                    .switchIfEmpty(Maybe.error(() -> InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value")))
+                                                    .flatMap(optPolicy -> passwordHistoryService.addPasswordToHistory(DOMAIN, domain.getId(), user, password, principal, optPolicy.orElse(null)))
+                                                    .ignoreElement()
+                                                    .andThen(Single.defer(() -> userProvider.findByUsername(user.getUsername())
+                                                            .switchIfEmpty(Single.error(() -> new UserNotFoundException(user.getUsername())))
+                                                            .flatMap(idpUser -> userProvider.updatePassword(idpUser, password))
+                                                            .onErrorResumeNext(ex -> {
+                                                                if (ex instanceof UserNotFoundException) {
+                                                                    // idp user not found, create its account
+                                                                    user.setPassword(password);
+                                                                    return userProvider.create(convert(user));
+                                                                }
+                                                                return Single.error(ex);
+                                                            })));
+                                        }).flatMap(idpUser -> {
+                                              // update 'users' collection for management and audit purpose
+                                              // if user was in pre-registration mode, end the registration process
+                                              if (user.isPreRegistration()) {
+                                                  user.setRegistrationCompleted(true);
+                                                  user.setEnabled(true);
+                                              }
+                                              user.setPassword(null);
+                                              user.setExternalId(idpUser.getId());
+                                              user.setLastPasswordReset(new Date());
+                                              user.setUpdatedAt(new Date());
+                                              return userService.update(user);
+                                          })
+                                        // after audit, invalidate tokens whatever is the domain or app settings
+                                       // as it is an admin action here, we want to force the user to login
+                                       .flatMap(updatedUser -> Single.defer(() -> tokenService.deleteByUser(updatedUser)
+                                                                             .toSingleDefault(updatedUser)
+                                                                             .onErrorResumeNext(err -> {
+                                                                                 logger.warn("Tokens not invalidated for user {} due to : {}", userId, err.getMessage());
+                                                                                 return Single.just(updatedUser);
+                                                                             })))
+                                       .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user)))
+                                       .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user).throwable(throwable)));
                             });
                 }).flatMapCompletable(user -> {
                     // reset login attempts in case of reset password action
@@ -555,8 +555,8 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    private void createPasswordHistory(Domain domain, Application client, User user, String rawPassword, io.gravitee.am.identityprovider.api.User principal) {
-        passwordPolicyService.retrievePasswordPolicy(user, client)
+    private void createPasswordHistory(Domain domain, Application client, User user, String rawPassword, io.gravitee.am.identityprovider.api.User principal, IdentityProvider provider) {
+        passwordPolicyService.retrievePasswordPolicy(user, client, provider)
                         .map(Optional::of)
                         .switchIfEmpty(Maybe.just(Optional.empty()))
                         .flatMap(optPolicy -> passwordHistoryService.addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword , principal, optPolicy.orElse(null)))

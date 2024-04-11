@@ -17,9 +17,13 @@ package io.gravitee.am.gateway.handler.root.resources.handler.user;
 
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
+import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.exception.InvalidPasswordException;
@@ -36,12 +40,16 @@ import java.util.Optional;
  */
 public class PasswordPolicyRequestParseHandler extends UserRequestHandler {
 
+    private final Domain domain;
     private final PasswordService passwordService;
     private final PasswordPolicyManager passwordPolicyManager;
+    private final IdentityProviderManager identityProviderManager;
 
-    public PasswordPolicyRequestParseHandler(PasswordService passwordService, PasswordPolicyManager passwordPolicyManager) {
-        this.passwordPolicyManager =passwordPolicyManager;
+    public PasswordPolicyRequestParseHandler(PasswordService passwordService, PasswordPolicyManager passwordPolicyManager, IdentityProviderManager identityProviderManager, Domain domain) {
+        this.identityProviderManager = identityProviderManager;
+        this.passwordPolicyManager = passwordPolicyManager;
         this.passwordService = passwordService;
+        this.domain = domain;
     }
 
     @Override
@@ -53,12 +61,23 @@ public class PasswordPolicyRequestParseHandler extends UserRequestHandler {
         try {
             Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
             User user = getUser(context, client);
-            passwordService.validate(password, passwordPolicyManager.getPolicy(client).orElse(null), user);
+            Optional<IdentityProvider> provider = Optional.ofNullable(user.getSource())
+                    .or(() -> getDefaultIdentityProviderForRegister(request, client))
+                    .map(identityProviderManager::getIdentityProvider);
+
+            passwordService.validate(password, passwordPolicyManager.getPolicy(client, provider.orElse(null)).orElse(null), user);
             context.next();
         } catch (InvalidPasswordException e) {
             Optional.ofNullable(context.request().getParam(Parameters.CLIENT_ID)).ifPresent(t -> queryParams.set(Parameters.CLIENT_ID, t));
             warningRedirection(context, queryParams, e.getErrorKey());
         }
+    }
+
+    private Optional<String> getDefaultIdentityProviderForRegister(HttpServerRequest request, Client client) {
+        if (request.path().endsWith(RootProvider.PATH_REGISTER) || request.path().endsWith(RootProvider.PATH_CONFIRM_REGISTRATION)) {
+            return AccountSettings.getInstance(client, domain).map(AccountSettings::getDefaultIdentityProviderForRegistration);
+        }
+        return Optional.empty();
     }
 
     private User getUser(RoutingContext context, Client client) {

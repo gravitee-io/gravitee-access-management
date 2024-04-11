@@ -15,10 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.root.endpoints.user;
 
+import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ResetPasswordEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
@@ -29,6 +31,7 @@ import org.mockito.Mockito;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -52,7 +55,8 @@ public class ResetPasswordEndpointTest {
         final ThymeleafTemplateEngine engine = mock(ThymeleafTemplateEngine.class);
         when(engine.render(anyMap(), anyString())).thenReturn(Single.just(buffer));
         final PasswordPolicyManager passwordPolicyManager = mock(PasswordPolicyManager.class);
-        var resetPassword = new ResetPasswordEndpoint(engine, domain, passwordPolicyManager);
+        final IdentityProviderManager identityProviderManager = mock(IdentityProviderManager.class);
+        var resetPassword = new ResetPasswordEndpoint(engine, domain, passwordPolicyManager, identityProviderManager);
 
         final SpyRoutingContext ctx = new SpyRoutingContext();
         ctx.setMethod(HttpMethod.GET);
@@ -61,6 +65,7 @@ public class ResetPasswordEndpointTest {
         final Client client = new Client();
         client.setClientId("some # clientId");
         routingContext.put(CLIENT_CONTEXT_KEY, client);
+        routingContext.put(USER_CONTEXT_KEY, new User());
         resetPassword.handle(routingContext);
 
 
@@ -77,7 +82,8 @@ public class ResetPasswordEndpointTest {
         final ThymeleafTemplateEngine engine = mock(ThymeleafTemplateEngine.class);
         when(engine.render(anyMap(), anyString())).thenReturn(Single.just(buffer));
         final PasswordPolicyManager passwordPolicyManager = mock(PasswordPolicyManager.class);
-        var resetPassword = new ResetPasswordEndpoint(engine, domain, passwordPolicyManager);
+        final IdentityProviderManager identityProviderManager = mock(IdentityProviderManager.class);
+        var resetPassword = new ResetPasswordEndpoint(engine, domain, passwordPolicyManager, identityProviderManager);
 
         final SpyRoutingContext ctx = new SpyRoutingContext();
         ctx.setMethod(HttpMethod.GET);
@@ -85,6 +91,7 @@ public class ResetPasswordEndpointTest {
         final Client client = new Client();
         client.setClientId("some__clientId");
         routingContext.put(CLIENT_CONTEXT_KEY, client);
+        routingContext.put(USER_CONTEXT_KEY, new User());
         resetPassword.handle(routingContext);
 
         assertTrue(routingContext.<String>get(ACTION_KEY).contains("client_id=some__clientId"));

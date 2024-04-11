@@ -16,6 +16,7 @@
 
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.service.model.UpdatePasswordPolicy;
 import io.reactivex.rxjava3.core.Flowable;
@@ -68,5 +69,5 @@ public interface PasswordPolicyService {
 
     Maybe<PasswordPolicy> findByReferenceAndId(ReferenceType referenceType, String referenceId, String policyId);
 
-    Maybe<PasswordPolicy> retrievePasswordPolicy(io.gravitee.am.model.User user, PasswordSettingsAware passwordSettingsAware);
+    Maybe<PasswordPolicy> retrievePasswordPolicy(io.gravitee.am.model.User user, PasswordSettingsAware passwordSettingsAware, IdentityProvider provider);
 }

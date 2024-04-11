@@ -20,6 +20,7 @@ package io.gravitee.am.gateway.handler.common.password;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.PasswordPolicyEvent;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.ReferenceType;
@@ -131,14 +132,13 @@ public class PasswordPolicyManagerImpl extends AbstractService implements Passwo
     }
 
     @Override
-    public Optional<PasswordPolicy> getPolicy(Client client) {
-        // TODO this implementation will change once IDP will contains the policyId
-        //      as the rule will be to provide the Policy linked to the user.getSource IDP
-        //      and if no policy if found fallback to this implementation where app PasswordSettings
-        //      will have precedence on the default policy linked to the domain
-        return ofNullable(client).map(Client::getPasswordSettings)
-                .filter(not(PasswordSettings::isInherited))
-                .map(PasswordSettings::toPasswordPolicy)
-                .or(this::getDefaultPolicy);
+    public Optional<PasswordPolicy> getPolicy(Client client, IdentityProvider identityProvider) {
+        return ofNullable(identityProvider)
+                .map(IdentityProvider::getPasswordPolicy)
+                .map(policyId -> this.policies.get(policyId))
+                .or(() -> ofNullable(client).map(Client::getPasswordSettings)
+                        .filter(not(PasswordSettings::isInherited))
+                        .map(PasswordSettings::toPasswordPolicy)
+                        .or(this::getDefaultPolicy));
     }
 }

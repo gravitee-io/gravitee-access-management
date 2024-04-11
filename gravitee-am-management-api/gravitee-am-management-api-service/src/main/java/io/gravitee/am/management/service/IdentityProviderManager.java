@@ -25,6 +25,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -33,6 +34,8 @@ import java.util.Map;
 public interface IdentityProviderManager extends Service<IdentityProviderManager> {
 
     Maybe<UserProvider> getUserProvider(String userProvider);
+
+    Optional<IdentityProvider> getIdentityProvider(String providerId);
 
     Single<IdentityProvider> create(ReferenceType referenceType, String referenceId);
 

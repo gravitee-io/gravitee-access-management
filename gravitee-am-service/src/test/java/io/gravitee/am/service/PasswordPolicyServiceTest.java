@@ -20,8 +20,13 @@ import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordPolicy;
+import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.PasswordSettingsAware;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.PasswordPolicyRepository;
@@ -49,7 +54,9 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -214,6 +221,7 @@ public class PasswordPolicyServiceTest {
         Mockito.verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.SUCCESS)));
         Mockito.verify(eventService).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.UPDATE)));
     }
+
     @Test
     public void shouldNotUpdate_UnknownPolicy() {
         var updatePasswordPolicy = new UpdatePasswordPolicy();
@@ -230,5 +238,146 @@ public class PasswordPolicyServiceTest {
         observer.assertError(PasswordPolicyNotFoundException.class);
         Mockito.verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.FAILURE)));
         Mockito.verify(eventService, never()).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.UPDATE)));
+    }
+
+    @Test
+    public void shouldNotRetrieve_PasswordPolicy_noPolicyDefined() {
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setSource("idp-id");
+
+        innerShouldNotRetrieve_PasswordPolicy_noPolicyDefined(user, null, null); // no app, no provider
+        innerShouldNotRetrieve_PasswordPolicy_noPolicyDefined(user, null, new IdentityProvider()); // empty policy id
+        innerShouldNotRetrieve_PasswordPolicy_noPolicyDefined(user, new Application(), new IdentityProvider()); // empty policy id & null app settings
+    }
+
+    private void innerShouldNotRetrieve_PasswordPolicy_noPolicyDefined(io.gravitee.am.model.User user, PasswordSettingsAware passwordSettingsAware, IdentityProvider provider) {
+        when(passwordPolicyRepository.findByReference(any(), any())).thenReturn(Flowable.empty());
+
+        var policyObserver = cut.retrievePasswordPolicy(user, passwordSettingsAware, provider).test();
+
+        verify(passwordPolicyRepository, never()).findByReferenceAndId(any(), any(), any());
+
+        policyObserver.awaitDone(5, TimeUnit.SECONDS);
+        policyObserver.assertNoValues();
+    }
+
+    @Test
+    public void shouldRetrieve_DefaultPasswordPolicy_noPolicyDefined_atApp() {
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setSource("idp-id");
+
+        when(passwordPolicyRepository.findByReference(any(), any())).thenReturn(Flowable.empty());
+
+        var policyObserver = cut.retrievePasswordPolicy(user, null, null).test();
+
+        verify(passwordPolicyRepository, never()).findByReferenceAndId(any(), any(), any());
+
+        policyObserver.awaitDone(5, TimeUnit.SECONDS);
+        policyObserver.assertNoValues();
+    }
+
+    @Test
+    public void shouldRetrieve_DefaultPasswordPolicy_noPolicyDefined_atApplication() {
+        var user = new io.gravitee.am.model.User();
+        user.setSource("idp-id");
+        var app = new Application();
+        var idp = new IdentityProvider();
+
+        var policy = new PasswordPolicy();
+        policy.setId(UUID.randomUUID().toString());
+
+        when(passwordPolicyRepository.findByReference(any(), any())).thenReturn(Flowable.just(policy));
+
+        var policyObserver = cut.retrievePasswordPolicy(user, app, idp).test();
+
+        verify(passwordPolicyRepository, never()).findByReferenceAndId(any(), any(), any());
+
+        policyObserver.awaitDone(5, TimeUnit.SECONDS);
+        policyObserver.assertValue(result -> result.getId().equals(policy.getId()));
+    }
+
+    @Test
+    public void shouldRetrieve_DefaultPasswordPolicy_appSettings_inherite() {
+        var user = new io.gravitee.am.model.User();
+        user.setSource("idp-id");
+
+        var app = new Application();
+        var settings = new ApplicationSettings();
+        var passwordSettings = new PasswordSettings();
+        passwordSettings.setInherited(true);
+        settings.setPasswordSettings(passwordSettings);
+        app.setSettings(settings);
+
+        var idp = new IdentityProvider();
+
+        var policy = new PasswordPolicy();
+        policy.setId(UUID.randomUUID().toString());
+
+        when(passwordPolicyRepository.findByReference(any(), any())).thenReturn(Flowable.just(policy));
+
+        var policyObserver = cut.retrievePasswordPolicy(user, app, idp).test();
+
+        verify(passwordPolicyRepository, never()).findByReferenceAndId(any(), any(), any());
+
+        policyObserver.awaitDone(5, TimeUnit.SECONDS);
+        policyObserver.assertValue(result -> result.getId().equals(policy.getId()));
+    }
+
+    @Test
+    public void shouldRetrieve_appSettings() {
+        var user = new io.gravitee.am.model.User();
+        user.setSource("idp-id");
+
+        var app = new Application();
+        var settings = new ApplicationSettings();
+        var passwordSettings = new PasswordSettings();
+        passwordSettings.setInherited(false);
+        passwordSettings.setMaxLength(64);
+        settings.setPasswordSettings(passwordSettings);
+        app.setSettings(settings);
+
+        var idp = new IdentityProvider();
+
+        var policy = new PasswordPolicy();
+        policy.setMaxLength(128);
+
+        when(passwordPolicyRepository.findByReference(any(), any())).thenReturn(Flowable.just(policy));
+
+        var policyObserver = cut.retrievePasswordPolicy(user, app, idp).test();
+
+        verify(passwordPolicyRepository, never()).findByReferenceAndId(any(), any(), any());
+
+        policyObserver.awaitDone(5, TimeUnit.SECONDS);
+        policyObserver.assertValue(result -> result.getMaxLength() == passwordSettings.getMaxLength());
+    }
+
+    @Test
+    public void shouldRetrieve_idpPolicy() {
+        var user = new io.gravitee.am.model.User();
+        user.setSource("idp-id");
+
+        var app = new Application();
+        var settings = new ApplicationSettings();
+        var passwordSettings = new PasswordSettings();
+        passwordSettings.setInherited(false);
+        passwordSettings.setMaxLength(64);
+        settings.setPasswordSettings(passwordSettings);
+        app.setSettings(settings);
+
+        var policy = new PasswordPolicy();
+        policy.setMaxLength(128);
+        policy.setId(UUID.randomUUID().toString());
+
+        var idp = new IdentityProvider();
+        idp.setPasswordPolicy(policy.getId());
+
+        when(passwordPolicyRepository.findByReferenceAndId(any(), any(), eq(policy.getId()))).thenReturn(Maybe.just(policy));
+
+        var policyObserver = cut.retrievePasswordPolicy(user, app, idp).test();
+
+        verify(passwordPolicyRepository, never()).findByReference(any(), any());
+
+        policyObserver.awaitDone(5, TimeUnit.SECONDS);
+        policyObserver.assertValue(result -> result.getMaxLength() == policy.getMaxLength());
     }
 }

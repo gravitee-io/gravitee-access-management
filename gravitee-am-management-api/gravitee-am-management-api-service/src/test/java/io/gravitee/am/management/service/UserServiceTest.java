@@ -137,10 +137,14 @@ public class UserServiceTest {
             new EmailValidatorImpl(EMAIL_PATTERN)
     );
 
+    @Mock
+    private IdentityProvider identityProvider;
+
     @BeforeEach
     public void setUp() {
         ((UserServiceImpl) userService).setExpireAfter(24 * 3600);
         lenient().when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.never());
+        lenient().when(identityProviderManager.getIdentityProvider(any())).thenReturn(Optional.of(new IdentityProvider()));
     }
 
     @Test
@@ -191,7 +195,7 @@ public class UserServiceTest {
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
         when(userProvider.create(any())).thenReturn(Single.just(idpUser));
         when(commonUserService.create(any())).thenReturn(Single.just(new User()));
-        when(passwordPolicyService.retrievePasswordPolicy(any(), any())).thenReturn(Maybe.empty());
+        when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
 
         userService.create(domain, newUser, null)
                 .test()
@@ -302,7 +306,7 @@ public class UserServiceTest {
 
         Application client = new Application();
         client.setDomain("domain");
-        when(passwordPolicyService.retrievePasswordPolicy(any(), any())).thenReturn(Maybe.empty());
+        when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
         when(domainService.findById(domainId)).thenReturn(Maybe.just(domain));
         when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
@@ -358,7 +362,7 @@ public class UserServiceTest {
         when(commonUserService.create(any())).thenReturn(Single.just(new User()));
         when(domainService.buildUrl(any(Domain.class), eq("/confirmRegistration"))).thenReturn("http://localhost:8092/test/confirmRegistration");
         when(emailService.getEmailTemplate(eq(Template.REGISTRATION_CONFIRMATION), any())).thenReturn(Maybe.just(new Email()));
-        when(passwordPolicyService.retrievePasswordPolicy(any(), any())).thenReturn(Maybe.empty());
+        when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
 
         userService.create(domain, newUser, null)
                 .test()
@@ -410,7 +414,7 @@ public class UserServiceTest {
         when(commonUserService.create(any())).thenReturn(Single.just(new User()));
         when(domainService.buildUrl(any(Domain.class), eq("/confirmRegistration"))).thenReturn("http://localhost:8092/test/confirmRegistration");
         when(emailService.getEmailTemplate(eq(Template.REGISTRATION_CONFIRMATION), any())).thenReturn(Maybe.just(new Email()));
-        when(passwordPolicyService.retrievePasswordPolicy(any(), any())).thenReturn(Maybe.empty());
+        when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
 
         userService.create(domain, newUser, null)
                 .test()
@@ -450,7 +454,7 @@ public class UserServiceTest {
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
         when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
-        when(passwordPolicyService.retrievePasswordPolicy(any(), any())).thenReturn(Maybe.empty());
+        when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
 
 
         userService.resetPassword(domain, user.getId(), PASSWORD, null)
@@ -484,7 +488,7 @@ public class UserServiceTest {
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
         when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
-        when(passwordPolicyService.retrievePasswordPolicy(any(), any())).thenReturn(Maybe.empty());
+        when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
 
         userService.resetPassword(domain, user.getId(), PASSWORD, null)
                 .test()
@@ -593,7 +597,7 @@ public class UserServiceTest {
         newUser.setSource("source");
         newUser.setPassword(password);
 
-        when(passwordPolicyService.retrievePasswordPolicy(any(), any())).thenReturn(Maybe.empty());
+        when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
         doReturn(Maybe.empty()).when(commonUserService).findByDomainAndUsernameAndSource(anyString(), anyString(), anyString());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
         userService.create(domain, newUser, null)
@@ -615,8 +619,9 @@ public class UserServiceTest {
         user.setSource("idp-id");
 
         when(commonUserService.findById(eq(DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
-        when(passwordPolicyService.retrievePasswordPolicy(any(), any())).thenReturn(Maybe.empty());
-
+        when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
+        
         userService.resetPassword(domain, user.getId(), PASSWORD, null)
                 .test()
                 .assertNotComplete()
@@ -633,10 +638,11 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
 
-        when(passwordPolicyService.retrievePasswordPolicy(any(), any())).thenReturn(Maybe.empty());
+        when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
         when(passwordService.isValid(eq(PASSWORD), eq(null), any())).thenReturn(true);
         when(commonUserService.findById(DOMAIN, domain.getId(), "user-id")).thenReturn(Single.just(user));
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.error(PasswordHistoryException::passwordAlreadyInHistory));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
 
         var observer = userService.resetPassword(domain, user.getId(), PASSWORD, null)
                 .test();

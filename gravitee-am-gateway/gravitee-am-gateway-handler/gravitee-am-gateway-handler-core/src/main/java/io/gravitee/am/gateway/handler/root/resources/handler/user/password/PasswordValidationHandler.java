@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.handler.user.password;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.oidc.Client;
@@ -32,11 +33,13 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
  */
 public class PasswordValidationHandler implements Handler<RoutingContext> {
 
+    private final IdentityProviderManager identityProviderManager;
     private final PasswordPolicyManager passwordPolicyManager;
     private final PasswordService passwordService;
     private final UserService userService;
 
-    public PasswordValidationHandler(PasswordService passwordService, UserService userService, PasswordPolicyManager passwordPolicyManager) {
+    public PasswordValidationHandler(PasswordService passwordService, UserService userService, PasswordPolicyManager passwordPolicyManager, IdentityProviderManager identityProviderManager) {
+        this.identityProviderManager = identityProviderManager;
         this.passwordPolicyManager = passwordPolicyManager;
         this.passwordService = passwordService;
         this.userService = userService;
@@ -52,8 +55,9 @@ public class PasswordValidationHandler implements Handler<RoutingContext> {
         userService.verifyToken(accessToken)
                 .switchIfEmpty(Single.error(() -> new InvalidRequestException("No user found for given access_token")))
                 .map(userToken -> {
-                    var user = userToken.getUser();
-                    return this.passwordService.evaluate(password, passwordPolicyManager.getPolicy(client).orElse(null), user);
+                    final var user = userToken.getUser();
+                    final var provider = identityProviderManager.getIdentityProvider(user.getSource());
+                    return this.passwordService.evaluate(password, passwordPolicyManager.getPolicy(client, provider).orElse(null), user);
 
                 })
                 .doOnError(throwable -> context.fail(HttpStatusCode.INTERNAL_SERVER_ERROR_500, throwable))

@@ -507,7 +507,8 @@ public class UserServiceImpl implements UserService {
         if (isNull(password)) {
             return false;
         }
-        return !passwordService.isValid(password, passwordPolicyManager.getPolicy(client).orElse(null), user);
+        final var provider = identityProviderManager.getIdentityProvider(user.getSource());
+        return !passwordService.isValid(password, passwordPolicyManager.getPolicy(client, provider).orElse(null), user);
     }
 
     private Single<User> setGroups(User scimUser) {
@@ -547,8 +548,9 @@ public class UserServiceImpl implements UserService {
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     private Maybe<PasswordHistory> createPasswordHistory(Domain domain, io.gravitee.am.model.User user, String rawPassword, io.gravitee.am.identityprovider.api.User principal, Client client) {
+        final var provider = identityProviderManager.getIdentityProvider(user.getSource());
         return passwordHistoryService
-                .addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword , principal, passwordPolicyManager.getPolicy(client).orElse(null));
+                .addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword , principal, passwordPolicyManager.getPolicy(client, provider).orElse(null));
     }
 
     private static class UserContainer {
