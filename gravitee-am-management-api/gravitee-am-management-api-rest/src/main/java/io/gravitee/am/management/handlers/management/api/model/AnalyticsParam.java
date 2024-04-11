@@ -24,6 +24,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
+import java.time.temporal.ChronoUnit;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -113,31 +115,31 @@ public class AnalyticsParam {
                     .build());
         }
 
-        if (from == -1) {
+        if (from == -1L) {
             throw new WebApplicationException(Response
                     .status(Response.Status.BAD_REQUEST)
                     .entity("Query parameter 'from' is not valid")
                     .build());
         }
 
-        if (to == -1) {
+        if (to == -1L) {
             throw new WebApplicationException(Response
                     .status(Response.Status.BAD_REQUEST)
                     .entity("Query parameter 'to' is not valid")
                     .build());
         }
 
-        if (interval == -1) {
+        if (interval == -1L) {
             throw new WebApplicationException(Response
                     .status(Response.Status.BAD_REQUEST)
                     .entity("Query parameter 'interval' is not valid")
                     .build());
         }
 
-        if (interval < 1_000 || interval > 1_000_000_000) {
+        if (interval <  ChronoUnit.MILLIS.getDuration().toMillis() || interval > ChronoUnit.YEARS.getDuration().toMillis()) {
             throw new WebApplicationException(Response
                     .status(Response.Status.BAD_REQUEST)
-                    .entity("Query parameter 'interval' is not valid. 'interval' must be >= 1000 and <= 1000000000")
+                    .entity("Query parameter 'interval' is not valid. 'interval' must be >= 1000000 (millis) and <= 31556952 (years)")
                     .build());
         }
 

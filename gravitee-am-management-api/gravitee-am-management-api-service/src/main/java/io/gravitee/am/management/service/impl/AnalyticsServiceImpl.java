@@ -109,7 +109,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                         .flatMap(analyticsResponse -> fetchMetadata((AnalyticsGroupByResponse) analyticsResponse));
             case Field.USER_STATUS:
             case Field.USER_REGISTRATION:
-                return userService.statistics(query).map(value -> new AnalyticsGroupByResponse(value));
+                return userService.statistics(query).map(AnalyticsGroupByResponse::new);
             default :
                 return executeGroupBy(query.getDomain(), queryBuilder.build(), query.getType());
         }
@@ -117,7 +117,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
     private Single<AnalyticsResponse> fetchMetadata(AnalyticsGroupByResponse analyticsGroupByResponse) {
         Map<Object, Object> values = analyticsGroupByResponse.getValues();
-        if (values == null && values.isEmpty()) {
+        if (values == null || values.isEmpty()) {
             return Single.just(analyticsGroupByResponse);
         }
         return Observable.fromIterable(values.keySet())
@@ -150,17 +150,17 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
         switch (query.getField()) {
             case Field.APPLICATION:
-                return applicationService.countByDomain(query.getDomain()).map(value -> new AnalyticsCountResponse(value));
+                return applicationService.countByDomain(query.getDomain()).map(AnalyticsCountResponse::new);
             case Field.USER:
-                return userService.countByDomain(query.getDomain()).map(value -> new AnalyticsCountResponse(value));
+                return userService.countByDomain(query.getDomain()).map(AnalyticsCountResponse::new);
             default :
                 return auditService.aggregate(query.getDomain(), queryBuilder.build(), query.getType())
-                        .map(values -> values.values().isEmpty() ? new AnalyticsCountResponse(0l) : new AnalyticsCountResponse((Long) values.values().iterator().next()));
+                        .map(values -> values.values().isEmpty() ? new AnalyticsCountResponse(0L) : new AnalyticsCountResponse((Long) values.values().iterator().next()));
         }
     }
 
     private Single<AnalyticsResponse> executeGroupBy(String domain, AuditReportableCriteria criteria, Type type) {
-        return auditService.aggregate(domain, criteria, type).map(values -> new AnalyticsGroupByResponse(values));
+        return auditService.aggregate(domain, criteria, type).map(AnalyticsGroupByResponse::new);
     }
 
     private Map<String, Object> getGenericMetadata(String value, boolean deleted) {

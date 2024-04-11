@@ -20,7 +20,17 @@
     <mat-card-title>{{widget.title}}</mat-card-title>
     <mat-card-subtitle>{{widget.subhead}}</mat-card-subtitle>
   </mat-card-header>
-  <mat-card-content>
+  <mat-card-content
+    class="no-data-card"
+    *ngIf="!widget.chart.response"
+    matTooltip="The data for this category could not be fetched. This could be related to the amount of data to process. Try to change the Time Range filter to see results."
+  >
+    <div class="no-data-text-block">
+      <mat-icon style="margin-right: 5px">info_outline</mat-icon>
+      <span>Failed to fetch data</span>
+    </div>
+  </mat-card-content>
+  <mat-card-content *ngIf="widget.chart.response">
     <gv-widget-chart-line *ngIf="widget.chart.type === 'line'" [chart]="widget.chart" [Highcharts]="Highcharts"></gv-widget-chart-line>
     <gv-widget-chart-pie *ngIf="widget.chart.type === 'pie'" [chart]="widget.chart" [Highcharts]="Highcharts"></gv-widget-chart-pie>
     <gv-widget-chart-gauge *ngIf="widget.chart.type === 'gauge'" [chart]="widget.chart" [Highcharts]="Highcharts"></gv-widget-chart-gauge>
