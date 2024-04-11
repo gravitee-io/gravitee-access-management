@@ -382,7 +382,7 @@ public class UserServiceImpl implements UserService {
                     return userProvider.findByUsername(user.getUsername())
                             .switchIfEmpty(Single.error(() -> new UserNotFoundException(user.getUsername())))
                             .flatMap(idpUser -> passwordHistoryService
-                                    .addPasswordToHistory(DOMAIN, domain.getId(), user, user.getPassword(), principal, getPasswordPolicy(client))
+                                    .addPasswordToHistory(DOMAIN, domain.getId(), user, user.getPassword(), principal, getPasswordPolicy(client, identityProviderManager.getIdentityProvider(user.getSource())))
                                     .switchIfEmpty(Single.just(new PasswordHistory()))
                                     .flatMap(passwordHistory -> userProvider.updatePassword(idpUser, user.getPassword())))
                             .onErrorResumeNext(ex -> {
@@ -760,15 +760,16 @@ public class UserServiceImpl implements UserService {
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     private Single<User> createPasswordHistory(Client client, User user, String rawPassword, io.gravitee.am.identityprovider.api.User principal) {
+        final var provider = identityProviderManager.getIdentityProvider(user.getSource());
         passwordHistoryService
-                .addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword, principal, getPasswordPolicy(client))
+                .addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword, principal, getPasswordPolicy(client, provider))
                 .subscribe(passwordHistory -> logger.debug("Created password history for user {}", user.getUsername()),
                         throwable -> logger.debug("Failed to create password history", throwable));
         return Single.just(user);
     }
 
-    private PasswordPolicy getPasswordPolicy(Client client) {
-        return passwordPolicyManager.getPolicy(client).orElse(null);
+    private PasswordPolicy getPasswordPolicy(Client client, IdentityProvider provider) {
+        return passwordPolicyManager.getPolicy(client, provider).orElse(null);
     }
 
     private static final class UserAuthentication {

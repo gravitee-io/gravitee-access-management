@@ -353,7 +353,7 @@ public class RootProvider extends AbstractProtocolProvider {
         Handler<RoutingContext> userTokenRequestParseHandler = new UserTokenRequestParseHandler(userService);
         Handler<RoutingContext> clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService).setRequired(true);
         Handler<RoutingContext> clientRequestParseHandlerOptional = new ClientRequestParseHandler(clientSyncService);
-        Handler<RoutingContext> passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordService, passwordPolicyManager);
+        Handler<RoutingContext> passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordService, passwordPolicyManager, identityProviderManager, domain);
         Handler<RoutingContext> botDetectionHandler = new BotDetectionHandler(domain, botDetectionManager);
         Handler<RoutingContext> dataConsentHandler = new DataConsentHandler(environment);
         Handler<RoutingContext> geoIpHandler = new GeoIpHandler(userActivityService, vertx.eventBus());
@@ -561,7 +561,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_REGISTER))
                 .handler(localeHandler)
-                .handler(new RegisterEndpoint(thymeleafTemplateEngine, domain, botDetectionManager, passwordPolicyManager));
+                .handler(new RegisterEndpoint(thymeleafTemplateEngine, domain, botDetectionManager, passwordPolicyManager, identityProviderManager));
         rootRouter.route(HttpMethod.POST, PATH_REGISTER)
                 .handler(new RegisterSubmissionRequestParseHandler())
                 .handler(clientRequestParseHandlerOptional)
@@ -617,7 +617,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(new ResetPasswordOneTimeTokenHandler())
                 .handler(localeHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_RESET_PASSWORD))
-                .handler(new ResetPasswordEndpoint(thymeleafTemplateEngine, domain, passwordPolicyManager));
+                .handler(new ResetPasswordEndpoint(thymeleafTemplateEngine, domain, passwordPolicyManager, identityProviderManager));
         rootRouter.route(HttpMethod.POST, PATH_RESET_PASSWORD)
                 .handler(new ResetPasswordSubmissionRequestParseHandler())
                 .handler(userTokenRequestParseHandler)
@@ -630,11 +630,11 @@ public class RootProvider extends AbstractProtocolProvider {
 
         rootRouter.route(HttpMethod.POST, PASSWORD_HISTORY)
                   .handler(clientRequestParseHandlerOptional)
-                  .handler(new PasswordHistoryHandler(passwordHistoryService, userService, domain, passwordPolicyManager));
+                  .handler(new PasswordHistoryHandler(passwordHistoryService, userService, domain, passwordPolicyManager, identityProviderManager));
 
         rootRouter.route(HttpMethod.POST, "/passwordValidation")
                   .handler(clientRequestParseHandlerOptional)
-                  .handler(new PasswordValidationHandler(passwordService, userService, passwordPolicyManager));
+                  .handler(new PasswordValidationHandler(passwordService, userService, passwordPolicyManager, identityProviderManager));
 
         // error route
         rootRouter.route(HttpMethod.GET, PATH_ERROR)

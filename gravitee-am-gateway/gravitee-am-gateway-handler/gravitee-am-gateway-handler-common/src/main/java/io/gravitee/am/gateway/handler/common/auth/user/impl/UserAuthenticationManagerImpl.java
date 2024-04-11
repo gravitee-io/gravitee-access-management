@@ -35,7 +35,6 @@ import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
@@ -278,8 +277,9 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     }
 
     private Single<User> checkAccountPasswordExpiry(Client client, User connectedUser) {
-        if (passwordService.checkAccountPasswordExpiry(connectedUser, passwordPolicyManager.getPolicy(client).orElse(null))) {
-            return Single.error(new AccountPasswordExpiredException("Account's password is expired "));
+        final var idp = identityProviderManager.getIdentityProvider(connectedUser.getLastIdentityUsed());
+        if (passwordService.checkAccountPasswordExpiry(connectedUser, passwordPolicyManager.getPolicy(client, idp).orElse(null))) {
+            return Single.error(new AccountPasswordExpiredException("Account's password is expired"));
         }
         return Single.just(connectedUser);
     }

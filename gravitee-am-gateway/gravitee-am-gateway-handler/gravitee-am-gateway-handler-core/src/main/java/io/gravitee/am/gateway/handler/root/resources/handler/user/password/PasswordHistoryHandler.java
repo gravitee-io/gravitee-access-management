@@ -16,9 +16,11 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.user.password;
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oidc.Client;
@@ -33,12 +35,14 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
  */
 public class PasswordHistoryHandler implements Handler<RoutingContext> {
 
+    private final IdentityProviderManager identityProviderManager;
     private final PasswordHistoryService passwordHistoryService;
     private final PasswordPolicyManager passwordPolicyManager;
     private final UserService userService;
     private final Domain domain;
 
-    public PasswordHistoryHandler(PasswordHistoryService passwordHistoryService, UserService userService, Domain domain, PasswordPolicyManager passwordPolicyManager) {
+    public PasswordHistoryHandler(PasswordHistoryService passwordHistoryService, UserService userService, Domain domain, PasswordPolicyManager passwordPolicyManager, IdentityProviderManager identityProviderManager) {
+        this.identityProviderManager = identityProviderManager;
         this.passwordHistoryService = passwordHistoryService;
         this.passwordPolicyManager = passwordPolicyManager;
         this.userService = userService;
@@ -52,9 +56,10 @@ public class PasswordHistoryHandler implements Handler<RoutingContext> {
         var password = context.request().getFormAttribute(ConstantKeys.PASSWORD_PARAM_KEY);
         userService.verifyToken(accessToken)
                    .flatMapSingle(userToken -> {
-                       var user = userToken.getUser();
+                       final var user = userToken.getUser();
+                       final var provider = identityProviderManager.getIdentityProvider(user.getSource());
                        return passwordHistoryService
-                               .passwordAlreadyUsed(ReferenceType.DOMAIN, domain.getId(), user.getId(), password, getPasswordPolicy(context));
+                               .passwordAlreadyUsed(ReferenceType.DOMAIN, domain.getId(), user.getId(), password, getPasswordPolicy(context, provider));
 
                    })
                    .doOnError(throwable -> context.fail(HttpStatusCode.INTERNAL_SERVER_ERROR_500, throwable))
@@ -68,8 +73,8 @@ public class PasswordHistoryHandler implements Handler<RoutingContext> {
 
     }
 
-    private PasswordPolicy getPasswordPolicy(RoutingContext context) {
+    private PasswordPolicy getPasswordPolicy(RoutingContext context, IdentityProvider provider) {
         Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        return passwordPolicyManager.getPolicy(client).orElse(null);
+        return passwordPolicyManager.getPolicy(client, provider).orElse(null);
     }
 }

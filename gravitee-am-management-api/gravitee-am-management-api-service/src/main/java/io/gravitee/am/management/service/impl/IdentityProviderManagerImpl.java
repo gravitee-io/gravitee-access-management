@@ -62,6 +62,7 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.management.service.impl.utils.InlineOrganizationProviderConfiguration.MEMORY_TYPE;
 import static io.gravitee.am.service.utils.BackendConfigurationUtils.getMongoDatabaseName;
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -213,6 +214,11 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
                         return this.loadUserProvider(persistedUserProvider);
                     }
                 });
+    }
+
+    @Override
+    public Optional<IdentityProvider> getIdentityProvider(String providerId) {
+        return ofNullable(identityProviders.get(providerId));
     }
 
     @Override

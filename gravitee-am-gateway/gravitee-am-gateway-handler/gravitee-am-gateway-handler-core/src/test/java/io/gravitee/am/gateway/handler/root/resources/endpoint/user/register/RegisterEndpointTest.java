@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
@@ -26,7 +27,6 @@ import io.vertx.core.buffer.impl.BufferImpl;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
-import java.util.Map;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,6 +34,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -58,13 +60,15 @@ public class RegisterEndpointTest {
     private BotDetectionManager botDetectionManager;
     @Mock
     private PasswordPolicyManager passwordPolicyManager;
+    @Mock
+    private IdentityProviderManager identityProviderManager;
     private RegisterEndpoint registerEndpoint;
     private SpyRoutingContext context;
 
     @BeforeEach
     public void setup() {
         when(botDetectionManager.getTemplateVariables(any(), any())).thenReturn(Map.of());
-        registerEndpoint = new RegisterEndpoint(templateEngine, domain, botDetectionManager, passwordPolicyManager);
+        registerEndpoint = new RegisterEndpoint(templateEngine, domain, botDetectionManager, passwordPolicyManager, identityProviderManager);
         context = new SpyRoutingContext();
         context.setMethod(HttpMethod.GET);
     }

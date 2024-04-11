@@ -27,7 +27,6 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
-import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
@@ -165,7 +164,8 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public Single<ResetPasswordResponse> resetPassword(User user, Client client, String password, io.gravitee.am.identityprovider.api.User principal, Optional<String> olPassword) {
         return Single.defer(() -> {
-            PasswordPolicy passwordPolicy = passwordPolicyManager.getPolicy(client).orElse(null);
+            final var idp = identityProviderManager.getIdentityProvider(user.getSource());
+            final var passwordPolicy = passwordPolicyManager.getPolicy(client, idp).orElse(null);
             passwordService.validate(password, passwordPolicy, user);
             user.setPassword(password);
 

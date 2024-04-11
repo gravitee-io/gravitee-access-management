@@ -17,11 +17,13 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
@@ -49,12 +51,14 @@ public class ResetPasswordEndpoint extends AbstractEndpoint implements Handler<R
 
     private final Domain domain;
 
+    private final IdentityProviderManager identityProviderManager;
     private final PasswordPolicyManager passwordPolicyManager;
 
-    public ResetPasswordEndpoint(TemplateEngine engine, Domain domain, PasswordPolicyManager passwordPolicyManager) {
+    public ResetPasswordEndpoint(TemplateEngine engine, Domain domain, PasswordPolicyManager passwordPolicyManager, IdentityProviderManager providerManager) {
         super(engine);
         this.domain = domain;
         this.passwordPolicyManager = passwordPolicyManager;
+        this.identityProviderManager = providerManager;
     }
 
     @Override
@@ -62,7 +66,9 @@ public class ResetPasswordEndpoint extends AbstractEndpoint implements Handler<R
         HttpServerRequest request = routingContext.request();
         // retrieve client (if exists)
         Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        passwordPolicyManager.getPolicy(client).ifPresent(v -> routingContext.put(ConstantKeys.PASSWORD_SETTINGS_PARAM_KEY, v));
+        User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
+        final var provider = identityProviderManager.getIdentityProvider(user.getSource());
+        passwordPolicyManager.getPolicy(client, provider).ifPresent(v -> routingContext.put(ConstantKeys.PASSWORD_SETTINGS_PARAM_KEY, v));
 
         String error = request.getParam(ConstantKeys.ERROR_PARAM_KEY);
         routingContext.put(ConstantKeys.ERROR_PARAM_KEY, error);

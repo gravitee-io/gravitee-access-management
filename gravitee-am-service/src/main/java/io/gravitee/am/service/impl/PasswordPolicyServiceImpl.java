@@ -21,6 +21,7 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.PasswordSettingsAware;
@@ -48,6 +49,7 @@ import org.springframework.stereotype.Component;
 import java.util.Comparator;
 import java.util.Optional;
 
+import static java.util.Optional.ofNullable;
 import static java.util.function.Predicate.not;
 
 /**
@@ -137,18 +139,24 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
     }
 
     @Override
-    public Maybe<PasswordPolicy> retrievePasswordPolicy(io.gravitee.am.model.User user, PasswordSettingsAware passwordSettingsAware) {
-        // TODO this implementation will change once IDP will contains the policyId
-        //      as the rule will be to provide the Policy linked to the user.getSource IDP
-        //      and if no policy if found fallback to this implementation where app PasswordSettings
-        //      will have precedence on the default policy linked to the domain
-        return passwordSettingsAware == null ? defaultPasswordPolicy(user) : Optional.of(passwordSettingsAware)
-                .map(PasswordSettingsAware::getPasswordSettings)
-                .filter(not(PasswordSettings::isInherited))
-                .map(PasswordSettings::toPasswordPolicy)
-                .map(Maybe::just)
-                .orElse(Maybe.empty())
-                .switchIfEmpty(defaultPasswordPolicy(user));
+    public Maybe<PasswordPolicy> retrievePasswordPolicy(io.gravitee.am.model.User user, PasswordSettingsAware passwordSettingsAware, IdentityProvider provider) {
+        // IDP with policy always take precedence
+        // If policy linked to the IDP is missing or if IDP doesn't reference a policy
+        // then fallback to the application password settings
+        // if the app doesn't have such settings,
+        // look for default policy linked to the domain
+        return ofNullable(provider)
+                .map(IdentityProvider::getPasswordPolicy)
+                .map(policyId -> passwordPolicyRepository.findByReferenceAndId(user.getReferenceType(), user.getReferenceId(), policyId))
+                .orElseGet(() ->
+                        passwordSettingsAware == null ? defaultPasswordPolicy(user) : Optional.of(passwordSettingsAware)
+                            .map(PasswordSettingsAware::getPasswordSettings)
+                            .filter(not(PasswordSettings::isInherited))
+                            .map(PasswordSettings::toPasswordPolicy)
+                            .map(Maybe::just)
+                            .orElse(Maybe.empty())
+                            .switchIfEmpty(defaultPasswordPolicy(user))
+                );
     }
 
     private Maybe<PasswordPolicy> defaultPasswordPolicy(io.gravitee.am.model.User user) {
