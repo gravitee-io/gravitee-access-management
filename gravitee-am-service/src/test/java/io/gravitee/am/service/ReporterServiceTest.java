@@ -59,7 +59,7 @@ public class ReporterServiceTest {
         final var reporter = new NewReporter();
         reporter.setEnabled(true);
         reporter.setName("Test");
-        reporter.setType(ReporterServiceImpl.REPORTER_AM_FILE);
+        reporter.setType("reporter-am-file");
         reporter.setConfiguration("{\"filename\":\"9f4bdf97-5481-4420-8bdf-9754818420f3\"}");
 
         when(reporterRepository.findByDomain(any())).thenReturn(Flowable.empty());
@@ -78,7 +78,7 @@ public class ReporterServiceTest {
         final var reporter = new NewReporter();
         reporter.setEnabled(true);
         reporter.setName("Test");
-        reporter.setType(ReporterServiceImpl.REPORTER_AM_FILE);
+        reporter.setType("reporter-am-file");
         reporter.setConfiguration("{\"filename\":\"../9f4bdf97-5481-4420-8bdf-9754818420f3\"}");
 
         final TestObserver<Reporter> observer = reporterService.create("domain", reporter).test();
