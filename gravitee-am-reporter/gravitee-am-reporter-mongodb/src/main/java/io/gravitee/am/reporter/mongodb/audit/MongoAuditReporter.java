@@ -16,6 +16,7 @@
 package io.gravitee.am.reporter.mongodb.audit;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.Accumulators;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.CountOptions;
@@ -101,6 +102,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
     private static final String FIELD_ACCESS_POINT_ID = "accessPoint.id";
     private static final String INDEX_REFERENCE_TIMESTAMP_NAME = "ref_1_time_-1";
     private static final String INDEX_REFERENCE_TYPE_TIMESTAMP_NAME = "ref_1_type_1_time_-1";
+    private static final String INDEX_REFERENCE_TYPE_STATUS_SUCCESS_TIMESTAMP_NAME = "r1ty1s1t_1";
     private static final String INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME = "ref_1_actor_1_time_-1";
     private static final String INDEX_REFERENCE_TARGET_TIMESTAMP_NAME = "ref_1_target_1_time_-1";
     private static final String INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME = "ref_1_actor_1_target_1_time_-1";
@@ -253,6 +255,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
             Map<Document, IndexOptions> indexes = new HashMap<>();
             indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TIMESTAMP_NAME));
             indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TYPE, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TYPE_TIMESTAMP_NAME));
+            indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TYPE, 1).append(FIELD_STATUS, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TYPE_STATUS_SUCCESS_TIMESTAMP_NAME).partialFilterExpression(new Document(FIELD_STATUS, new Document("$eq", "SUCCESS"))));
             indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME));
             indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TARGET, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TARGET_TIMESTAMP_NAME));
             indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR, 1).append(FIELD_TARGET, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME));
@@ -275,39 +278,32 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
         Map<Long, Long> intervals = intervals(criteria);
         String fieldSuccess = (criteria.types().get(0) + "_" + Status.SUCCESS).toLowerCase();
         String fieldFailure = (criteria.types().get(0) + "_" + Status.FAILURE).toLowerCase();
+        BasicDBObject subTractTimestamp = new BasicDBObject("$subtract", Arrays.asList("$timestamp", new Date(0)));
         return Observable.fromPublisher(withMaxTimeout(reportableCollection.aggregate(Arrays.asList(
-                Aggregates.match(query),
-                Aggregates.group(
-                        new BasicDBObject("_id",
-                                new BasicDBObject("$subtract",
-                                        Arrays.asList(
-                                                new BasicDBObject("$subtract", Arrays.asList("$timestamp", new Date(0))),
-                                                new BasicDBObject("$mod", Arrays.asList(new BasicDBObject("$subtract", Arrays.asList("$timestamp", new Date(0))), criteria.interval()))
-                                        ))),
-                        Accumulators.sum(fieldSuccess, new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$outcome.status", Status.SUCCESS)), 1, 0))),
-                        Accumulators.sum(fieldFailure, new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$outcome.status", Status.FAILURE)), 1, 0))))), Document.class))
+                        Aggregates.match(query),
+                        Aggregates.group(
+                                new BasicDBObject("_id",
+                                        new BasicDBObject("$subtract",
+                                                Arrays.asList(subTractTimestamp, new BasicDBObject("$mod", Arrays.asList(subTractTimestamp, criteria.interval()))))),
+                                Accumulators.sum(fieldSuccess, new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$outcome.status", Status.SUCCESS)), 1, 0))),
+                                Accumulators.sum(fieldFailure, new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$outcome.status", Status.FAILURE)), 1, 0))))), Document.class))
                 ).toList()
                 .map(docs -> {
                     Map<Long, Long> successResult = new HashMap<>();
                     Map<Long, Long> failureResult = new HashMap<>();
                     docs.forEach(document -> {
                         Long timestamp = ((Number) ((Document) document.get("_id")).get("_id")).longValue();
-                        Long successAttempts = ((Number) document.get(fieldSuccess)).longValue();
-                        Long failureAttempts = ((Number) document.get(fieldFailure)).longValue();
-                        successResult.put(timestamp, successAttempts);
-                        failureResult.put(timestamp, failureAttempts);
+                        successResult.put(timestamp, ((Number) document.get(fieldSuccess)).longValue());
+                        failureResult.put(timestamp, ((Number) document.get(fieldFailure)).longValue());
                     });
                     // complete result with remaining intervals
                     intervals.forEach((k, v) -> {
                         successResult.putIfAbsent(k, v);
                         failureResult.putIfAbsent(k, v);
                     });
-                    List<Long> successData = successResult.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(e -> e.getValue()).collect(Collectors.toList());
-                    List<Long> failureData = failureResult.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(e -> e.getValue()).collect(Collectors.toList());
-                    Map<Object, Object> result = new HashMap<>();
-                    result.put(fieldSuccess, successData);
-                    result.put(fieldFailure, failureData);
-                    return result;
+                    return Map.of(
+                            fieldSuccess, successResult.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue).collect(Collectors.toList()),
+                            fieldFailure, failureResult.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue).collect(Collectors.toList()));
                 });
     }
 
@@ -326,7 +322,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
         return Observable.fromPublisher(reportableCollection.countDocuments(query, new CountOptions().maxTime(cursorMaxTimeInMs, TimeUnit.MILLISECONDS))).first(0l).map(data -> Collections.singletonMap("data", data));
     }
 
-    private Flowable bulk(List<Audit> audits) {
+    private Flowable<BulkWriteResult> bulk(List<Audit> audits) {
         if (audits == null || audits.isEmpty()) {
             return Flowable.empty();
         }
@@ -376,8 +372,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
         }
 
         // build query
-        Bson query = (filters.isEmpty()) ? new BasicDBObject() : and(filters);
-        return query;
+        return and(filters);
     }
 
     private List<WriteModel<AuditMongo>> convert(List<Audit> audits) {
@@ -507,20 +502,20 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
         Instant endDate = Instant.ofEpochMilli(criteria.to()).truncatedTo(unit);
 
         Map<Long, Long> intervals = new HashMap<>();
-        intervals.put(startDate.toEpochMilli(), 0l);
+        intervals.put(startDate.toEpochMilli(), 0L);
         while (startDate.isBefore(endDate)) {
             startDate = startDate.plus(criteria.interval(), ChronoUnit.MILLIS);
-            intervals.put(startDate.toEpochMilli(), 0l);
+            intervals.put(startDate.toEpochMilli(), 0L);
         }
         return intervals;
     }
 
     private ChronoUnit convert(long millisecondsInterval) {
-        if (millisecondsInterval >= 0 && millisecondsInterval < 60 * 1000) {
+        if (millisecondsInterval >= 0 && millisecondsInterval < ChronoUnit.MINUTES.getDuration().toMillis()) {
             return ChronoUnit.SECONDS;
-        } else if (millisecondsInterval >= 60 * 1000 && millisecondsInterval < 60 * 60 * 1000) {
+        } else if (millisecondsInterval >= ChronoUnit.MINUTES.getDuration().toMillis() && millisecondsInterval < ChronoUnit.HOURS.getDuration().toMillis()) {
             return ChronoUnit.MINUTES;
-        } else if (millisecondsInterval >= 60 * 60 * 1000 && millisecondsInterval < 24 * 60 * 60 * 1000) {
+        } else if (millisecondsInterval >= ChronoUnit.HOURS.getDuration().toMillis() && millisecondsInterval < ChronoUnit.DAYS.getDuration().toMillis()) {
             return ChronoUnit.HOURS;
         } else {
             return ChronoUnit.DAYS;
