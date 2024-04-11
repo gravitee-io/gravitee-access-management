@@ -73,14 +73,14 @@ import static io.gravitee.am.service.utils.BackendConfigurationUtils.getMongoDat
 public class ReporterServiceImpl implements ReporterService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReporterServiceImpl.class);
-    public static final int TABLE_SUFFIX_MAX_LENGTH = 30;
-    public static final String REPORTER_AM_JDBC = "reporter-am-jdbc";
-    public static final String REPORTER_AM_FILE= "reporter-am-file";
-    public static final String REPORTER_CONFIG_FILENAME = "filename";
-    public static final String ADMIN_DOMAIN = "admin";
+    private static final int TABLE_SUFFIX_MAX_LENGTH = 30;
+    private static final String REPORTER_AM_JDBC = "reporter-am-jdbc";
+    private static final String REPORTER_AM_FILE= "reporter-am-file";
+    private static final String REPORTER_CONFIG_FILENAME = "filename";
+    private static final String ADMIN_DOMAIN = "admin";
     // Regex as defined into the Reporter plugin schema in order to apply the same validation rule
     // when a REST call is performed and not only check on the UI
-    public static final String FILENAME_REGEX = "^([A-Za-z0-9][A-Za-z0-9\\-_.]*)$";
+    private final Pattern filenamePattern = Pattern.compile("^([A-Za-z0-9][A-Za-z0-9\\-_.]*)$");
 
     @Autowired
     private Environment environment;
@@ -95,7 +95,6 @@ public class ReporterServiceImpl implements ReporterService {
     @Autowired
     private AuditService auditService;
 
-    private Pattern filenamePattern = Pattern.compile(FILENAME_REGEX);
 
     @Override
     public Flowable<Reporter> findAll() {
@@ -212,13 +211,13 @@ public class ReporterServiceImpl implements ReporterService {
                                     }));
                 })
                 .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
-                    }
                     LOGGER.error("An error occurs while trying to update a reporter", ex);
                     String message = "An error occurs while trying to update a reporter. ";
                     if (ex instanceof ReporterConfigurationException) {
                         message += ex.getMessage();
+                    }
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
                     }
                     return Single.error(new TechnicalManagementException(message, ex));
                 });
@@ -314,7 +313,7 @@ public class ReporterServiceImpl implements ReporterService {
             Optional<String> mongoServers = getMongoServers(environment);
             String mongoHost = null;
             String mongoPort = null;
-            if (!mongoServers.isPresent()) {
+            if (mongoServers.isEmpty()) {
                 mongoHost = environment.getProperty("management.mongodb.host", "localhost");
                 mongoPort = environment.getProperty("management.mongodb.port", "27017");
             }
@@ -324,7 +323,7 @@ public class ReporterServiceImpl implements ReporterService {
             String mongoDBName = getMongoDatabaseName(environment);
 
             String defaultMongoUri = "mongodb://";
-            if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
+            if (StringUtils.hasLength(username) && StringUtils.hasLength(password)) {
                 defaultMongoUri += username +":"+ password +"@";
             }
             defaultMongoUri += mongoServers.orElse(mongoHost+":"+mongoPort) + "/" + mongoDBName;
@@ -347,7 +346,7 @@ public class ReporterServiceImpl implements ReporterService {
             // dash are forbidden in table name, replace them in domainName by underscore
             String tableSuffix = null;
             if (domain != null) {
-                tableSuffix = domain.replaceAll("-", "_");
+                tableSuffix = domain.replace("-", "_");
                 if (tableSuffix.length() > TABLE_SUFFIX_MAX_LENGTH) {
                     try {
                         LOGGER.info("Table name 'reporter_audits_access_points_{}' will be too long, compute shortest unique name", tableSuffix);
