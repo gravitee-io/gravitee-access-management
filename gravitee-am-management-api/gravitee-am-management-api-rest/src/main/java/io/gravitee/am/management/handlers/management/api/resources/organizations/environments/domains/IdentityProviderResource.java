@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.IdentityProvider;
@@ -25,6 +26,7 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
+import io.gravitee.am.service.model.AssignPasswordPolicy;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
@@ -34,16 +36,22 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.ws.rs.*;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -61,6 +69,9 @@ public class IdentityProviderResource extends AbstractResource {
     @Autowired
     private DomainService domainService;
 
+    @Autowired
+    private IdentityProviderManager identityProviderManager;
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
@@ -72,7 +83,7 @@ public class IdentityProviderResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Identity provider",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation =IdentityProvider.class))),
+                            schema = @Schema(implementation = IdentityProvider.class))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
@@ -116,7 +127,7 @@ public class IdentityProviderResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Identity provider successfully updated",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation =IdentityProvider.class))),
+                            schema = @Schema(implementation = IdentityProvider.class))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
@@ -132,7 +143,43 @@ public class IdentityProviderResource extends AbstractResource {
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> identityProviderService.update(domain, identity, updateIdentityProvider, authenticatedUser, false)))
-                        .map(idp -> hideConfiguration(idp))
+                .map(idp -> hideConfiguration(idp))
+                .subscribe(response::resume, response::resume);
+    }
+
+
+    @PUT
+    @Path("/password-policy")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Assign password policy to identity provider",
+            description = "User must have the DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified organization")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Password Policy successfully assigned to  Identity provider",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = AssignPasswordPolicy.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void updatePasswordPolicy(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("identity") String identity,
+            @Parameter(name = "passwordPolicy", required = true) @Valid @NotNull AssignPasswordPolicy assignPasswordPolicy,
+            @Suspended final AsyncResponse response) {
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.UPDATE)
+
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMap(__ -> identityProviderService.findById(identity))
+                        .flatMap(identityProvider ->
+                            // only IDP with a UserProvider can contain password policy assigned
+                            identityProviderManager.getUserProvider(identityProvider.getId())
+                                    .switchIfEmpty(Maybe.error(new IdentityProviderNotFoundException(identity)))
+                        )
+                        .flatMapSingle(__ -> identityProviderService.updatePasswordPolicy(domain, identity, assignPasswordPolicy)))
+                .map(this::hideConfiguration)
                 .subscribe(response::resume, response::resume);
     }
 

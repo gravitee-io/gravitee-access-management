@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.service.model.AssignPasswordPolicy;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.reactivex.rxjava3.core.Completable;
@@ -51,6 +52,8 @@ public interface IdentityProviderService {
     Completable delete(ReferenceType referenceType, String referenceId, String identityProviderId, User principal);
 
     Flowable<IdentityProvider> findWithPasswordPolicy(ReferenceType referenceType, String referenceId, String passwordPolicy);
+
+    Single<IdentityProvider> updatePasswordPolicy(String domain, String id, AssignPasswordPolicy assignPasswordPolicy);
 
     default Single<IdentityProvider> create(String domain, NewIdentityProvider identityProvider) {
         return create(domain, identityProvider, null);

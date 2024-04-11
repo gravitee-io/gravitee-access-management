@@ -66,6 +66,13 @@ export class ProviderService {
       domainWhitelist: provider.domainWhitelist,
       mappers: provider.mappers,
       roleMapper: provider.roleMapper,
+      passwordPolicy: provider.passwordPolicy,
+    });
+  }
+
+  assignPasswordPolicy(domainId, id, passwordPolicyId): Observable<any> {
+    return this.http.put<any>(this.providersURL + domainId + '/identities/' + id + '/password-policy', {
+      passwordPolicy: passwordPolicyId,
     });
   }
 

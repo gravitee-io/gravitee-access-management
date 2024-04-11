@@ -27,6 +27,7 @@ export interface IdpDataModel {
   id: string;
   name: string;
   association: string;
+  selected: boolean;
   type: {
     icon: string;
     name: string;
@@ -50,7 +51,7 @@ export class PasswordPoliciesIdpSelectTableComponent implements OnInit {
   selectionModel: Map<string, boolean>;
 
   ngOnInit() {
-    const selection = this.rows.map((idp): [string, boolean] => [idp.id, !!idp.association]);
+    const selection = this.rows.map((idp): [string, boolean] => [idp.id, idp.selected]);
     this.selectionModel = new Map<string, boolean>(selection);
   }
 

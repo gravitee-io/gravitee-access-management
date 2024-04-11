@@ -33,6 +33,7 @@ import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderWithApplicationsException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.model.AssignPasswordPolicy;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -179,7 +180,6 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     identityToUpdate.setRoleMapper(updateIdentityProvider.getRoleMapper());
                     identityToUpdate.setDomainWhitelist(ofNullable(updateIdentityProvider.getDomainWhitelist()).orElse(List.of()));
                     identityToUpdate.setUpdatedAt(new Date());
-                    identityToUpdate.setPasswordPolicy(updateIdentityProvider.getPasswordPolicy());
 
                     return identityProviderRepository.update(identityToUpdate)
                             .flatMap(identityProvider1 -> {
@@ -207,7 +207,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                 .flatMapSingle(identityProvider -> applicationService.findByIdentityProvider(identityProviderId).count()
                         .flatMap(applications -> {
                             if (applications > 0) {
-                                throw new IdentityProviderWithApplicationsException();
+                                return Single.error(new IdentityProviderWithApplicationsException());
                             }
                             return Single.just(identityProvider);
                         }))
@@ -217,7 +217,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProviderId, referenceType, referenceId, Action.DELETE));
 
                     return Completable.fromSingle(identityProviderRepository.delete(identityProviderId)
-                            .andThen(eventService.create(event)))
+                                    .andThen(eventService.create(event)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_DELETED).identityProvider(identityProvider)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_DELETED).throwable(throwable)));
                 })
@@ -235,10 +235,37 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     @Override
     public Flowable<IdentityProvider> findWithPasswordPolicy(ReferenceType referenceType, String referenceId, String passwordPolicy) {
         LOGGER.debug("Find identity provider with assigned password policy: {}", passwordPolicy);
-            return identityProviderRepository.findAllByPasswordPolicy(referenceType, referenceId, passwordPolicy)
-                    .onErrorResumeNext(ex -> {
-                        LOGGER.error("An error occurs while trying to find identity providers by password policy: {}", passwordPolicy, ex);
-                        return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find identity providers by password policy: %s", passwordPolicy), ex));
-                    });
-        }
+        return identityProviderRepository.findAllByPasswordPolicy(referenceType, referenceId, passwordPolicy)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find identity providers by password policy: {}", passwordPolicy, ex);
+                    return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find identity providers by password policy: %s", passwordPolicy), ex));
+                });
     }
+
+    @Override
+    public Single<IdentityProvider> updatePasswordPolicy(String domain, String id, AssignPasswordPolicy assignPasswordPolicy) {
+        LOGGER.debug("Assigning Password Policy {} to IdentityProvider {} for domain {}", assignPasswordPolicy.getPasswordPolicy(), id, domain);
+
+        return identityProviderRepository.findById(ReferenceType.DOMAIN, domain, id)
+                .switchIfEmpty(Single.error(new IdentityProviderNotFoundException(id)))
+                .flatMap(oldIdentity -> {
+                    IdentityProvider identityToUpdate = new IdentityProvider(oldIdentity);
+                    identityToUpdate.setUpdatedAt(new Date());
+                    identityToUpdate.setPasswordPolicy(assignPasswordPolicy.getPasswordPolicy());
+
+                    return identityProviderRepository.update(identityToUpdate)
+                            .flatMap(ip -> {
+                                Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(ip.getId(), ip.getReferenceType(), ip.getReferenceId(), Action.UPDATE));
+                                return eventService.create(event).flatMap(__ -> Single.just(ip));
+                            });
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+
+                    LOGGER.error("An error occurs while trying to assign password policy to identity provider", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to assign password policy to identity provider", ex));
+                });
+    }
+}

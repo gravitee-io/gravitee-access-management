@@ -25,6 +25,7 @@ import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderWithApplicationsException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.IdentityProviderServiceImpl;
+import io.gravitee.am.service.model.AssignPasswordPolicy;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.reactivex.rxjava3.core.Completable;
@@ -399,5 +400,40 @@ public class IdentityProviderServiceTest {
 
         testSubscriber.assertError(TechnicalManagementException.class);
         testSubscriber.assertNotComplete();
+    }
+
+    @Test
+    public void shouldUpdatePasswordPolicy(){
+        AssignPasswordPolicy assignPasswordPolicy = Mockito.mock(AssignPasswordPolicy.class);
+        assignPasswordPolicy.setPasswordPolicy("newPP");
+        IdentityProvider idp = new IdentityProvider();
+        idp.setReferenceType(ReferenceType.DOMAIN);
+        idp.setReferenceId("domain#1");
+        idp.setPasswordPolicy("pp");
+
+        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(new IdentityProvider()));
+        when(identityProviderRepository.update(any(IdentityProvider.class))).thenReturn(Single.just(idp));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = identityProviderService.updatePasswordPolicy(DOMAIN, "my-identity-provider", assignPasswordPolicy).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(identityProviderRepository, times(1)).update(any(IdentityProvider.class));
+        verify(eventService, times(1)).create(any());
+    }
+
+    @Test
+    public void shouldUpdatePasswordPolicy_technicalException() {
+        AssignPasswordPolicy assignPasswordPolicy = Mockito.mock(AssignPasswordPolicy.class);
+        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.error(TechnicalException::new));
+
+        TestObserver<IdentityProvider> testObserver = new TestObserver<>();
+        identityProviderService.updatePasswordPolicy(DOMAIN, "my-identity-provider", assignPasswordPolicy).subscribe(testObserver);
+
+        testObserver.assertError(TechnicalManagementException.class);
+        testObserver.assertNotComplete();
     }
 }

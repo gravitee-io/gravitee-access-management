@@ -16,10 +16,10 @@
 import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 
-import { DialogData, DialogResult, PasswordPoliciesIdpSelectDialogComponent } from './password-policies-idp-select-dialog.component';
+import { DialogData, PasswordPoliciesIdpSelectDialogComponent } from './password-policies-idp-select-dialog.component';
 
 export interface DialogCallback {
-  (data: DialogResult): void;
+  (data: Map<string, boolean>): void;
 }
 
 @Injectable()
@@ -32,6 +32,6 @@ export class PasswordPoliciesIdpSelectDialogFactory {
       width: '740px',
     };
     const dialogRef = this.dialog.open(PasswordPoliciesIdpSelectDialogComponent, cfg);
-    dialogRef.afterClosed().subscribe((result: DialogResult) => callback(result));
+    dialogRef.afterClosed().subscribe((result: Map<string, boolean>) => callback(result));
   }
 }
