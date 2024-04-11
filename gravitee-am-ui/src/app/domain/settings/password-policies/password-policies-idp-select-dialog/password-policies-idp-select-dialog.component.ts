@@ -33,11 +33,6 @@ export interface DialogData {
   unlinkedIdps: IdpDataModel[];
 }
 
-export interface DialogResult {
-  idpsToLink: string[];
-  idpsToUnlink: string[];
-}
-
 @Component({
   selector: 'app-password-policies-idp-select-dialog',
   standalone: true,
@@ -55,10 +50,9 @@ export interface DialogResult {
   styleUrl: './password-policies-idp-select-dialog.component.scss',
 })
 export class PasswordPoliciesIdpSelectDialogComponent {
-  result: DialogResult = {
-    idpsToLink: [],
-    idpsToUnlink: [],
-  };
+  unlinkedResult = new Map<string, boolean>();
+  linkedResult = new Map<string, boolean>();
+
   constructor(
     private dialogRef: MatDialogRef<PasswordPoliciesIdpSelectDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: DialogData,
@@ -69,17 +63,10 @@ export class PasswordPoliciesIdpSelectDialogComponent {
   }
 
   confirmSelection(): void {
-    this.dialogRef.close(this.result);
+    this.dialogRef.close(this.unlinkedResult);
   }
 
-  handleEvent(event: { id: string; selected: boolean }, array: string[]) {
-    if (event.selected) {
-      array.push(event.id);
-    } else {
-      const index = array.indexOf(event.id);
-      if (index !== -1) {
-        array.splice(index, 1);
-      }
-    }
+  handleEvent(event: { id: string; selected: boolean }): void {
+    this.unlinkedResult.set(event.id, event.selected);
   }
 }

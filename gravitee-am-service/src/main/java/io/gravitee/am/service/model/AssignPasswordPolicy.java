@@ -13,22 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.exception;
+package io.gravitee.am.service.model;
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public class PolicyNotFoundException extends AbstractNotFoundException {
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-    private final String policy;
-
-    public PolicyNotFoundException(String policy) {
-        this.policy = policy;
-    }
-
-    @Override
-    public String getMessage() {
-        return "Policy [" + policy + "] can not be found.";
-    }
+@Getter
+@Setter
+@NoArgsConstructor
+public class AssignPasswordPolicy {
+    private String passwordPolicy;
 }
