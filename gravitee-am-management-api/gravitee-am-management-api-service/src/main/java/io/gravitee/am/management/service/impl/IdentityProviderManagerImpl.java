@@ -55,7 +55,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -69,7 +68,7 @@ import static io.gravitee.am.service.utils.BackendConfigurationUtils.getMongoDat
  */
 @Component
 public class IdentityProviderManagerImpl extends AbstractService<IdentityProviderManager> implements IdentityProviderManager, EventListener<IdentityProviderEvent, Payload> {
-    private static final Set SUPPORTED_PASSWORD_ENCODER = Set.of("BCrypt", "SHA-256", "SHA-384", "SHA-512", "SHA-256+MD5");
+    private static final Set<String> SUPPORTED_PASSWORD_ENCODER = Set.of("BCrypt", "SHA-256", "SHA-384", "SHA-512", "SHA-256+MD5");
     public static final String IDP_GRAVITEE = "gravitee";
 
     private static final Logger logger = LoggerFactory.getLogger(IdentityProviderManagerImpl.class);
@@ -79,7 +78,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     private static final String DEFAULT_JDBC_IDP_TYPE = "jdbc-am-idp";
     // For postgres table name length is 63 (MySQL : 64 / SQL Server : 128) but the domain is prefixed by 'idp_users_' of length 10
     // set to 50 in order to also check the length of the ID field (max 64 with prefix of 12)
-    public static final int TABLE_NAME_MAX_LENGTH = 50;
+    private static final int TABLE_NAME_MAX_LENGTH = 50;
 
     private final ConcurrentMap<String, UserProvider> userProviders = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, IdentityProvider> identityProviders = new ConcurrentHashMap<>();
@@ -254,13 +253,12 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             throw new IllegalArgumentException("Invalid password encoder value '" + encoder + "'");
         }
 
-        String providerConfig = null;
         String lowerCaseId = referenceId.toLowerCase();
         if (useMongoRepositories()) {
             Optional<String> mongoServers = getMongoServers();
             String mongoHost = null;
             String mongoPort = null;
-            if (!mongoServers.isPresent()) {
+            if (mongoServers.isEmpty()) {
                 mongoHost = environment.getProperty("management.mongodb.host", "localhost");
                 mongoPort = environment.getProperty("management.mongodb.port", "27017");
             }
@@ -270,7 +268,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             final String mongoDBName = getMongoDatabaseName(environment);
 
             String defaultMongoUri = "mongodb://";
-            if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
+            if (StringUtils.hasLength(username) && StringUtils.hasLength(password)) {
                 defaultMongoUri += username + ":" + password + "@";
             }
             defaultMongoUri += addOptionsToURI(mongoServers.orElse(mongoHost + ":" + mongoPort));
@@ -293,7 +291,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             }
 
         } else if (useJdbcRepositories()) {
-            String tableSuffix = lowerCaseId.replaceAll("-", "_");
+            String tableSuffix = lowerCaseId.replace("-", "_");
             if ((tableSuffix).length() > TABLE_NAME_MAX_LENGTH) {
                 try {
                     logger.info("Table name 'idp_users_{}' will be too long, compute shortest unique name", tableSuffix);
