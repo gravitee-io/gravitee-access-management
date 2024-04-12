@@ -1,5 +1,30 @@
 # Change Log
 
+==  - 3.21.23 (2024-04-12)
+
+== What's new !
+
+
+
+=== Gateway
+
+
+
+=== Management API
+
+
+
+=== Console
+
+
+
+=== Other
+
+* Enrollment Flow Logic Bug https://github.com/gravitee-io/issues/issues/9518[#9518]
+* Improve CORS Domain settings and replace default value https://github.com/gravitee-io/issues/issues/9531[#9531]
+* Support SAML mixing response binding protocol https://github.com/gravitee-io/issues/issues/9648[#9648]
+
+
 ==  - 3.21.22 (2024-04-05)
 
 == What's new !
