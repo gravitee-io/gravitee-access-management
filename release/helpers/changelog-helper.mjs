@@ -31,7 +31,7 @@ export function getChangelogFor(title, issues) {
       let publicIssueContent = '';
       if (githubIssue) {
         const githubLink = `https://github.com/gravitee-io/issues/issues/${githubIssue}`;
-        publicIssueContent = ` ${githubLink}[#${githubIssue}]`;
+        publicIssueContent = ` [#${githubIssue}](${githubLink})`;
       }
       return `* ${issue.summary}${publicIssueContent}`;
     })
