@@ -110,7 +110,7 @@
         <ldaptive.version>1.2.4</ldaptive.version>
         <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
         <thymeleaf.version>3.1.2.RELEASE</thymeleaf.version>
-        <bouncycastle.version>1.77</bouncycastle.version>
+        <bouncycastle.version>1.78</bouncycastle.version>
         <wiremock.version>2.6.0</wiremock.version>
         <embedded-ldap-junit.version>0.7</embedded-ldap-junit.version>
         <json-smart.version>2.4.10</json-smart.version>
