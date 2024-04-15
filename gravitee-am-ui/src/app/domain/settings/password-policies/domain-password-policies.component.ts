@@ -21,7 +21,6 @@ import { PasswordPolicyService } from '../../../services/password-policy.service
 import { AuthService } from '../../../services/auth.service';
 import { DialogService } from '../../../services/dialog.service';
 import { SnackbarService } from '../../../services/snackbar.service';
-
 import { PasswordPolicy } from './domain-password-policies.model';
 
 @Component({
@@ -38,7 +37,7 @@ export class PasswordPoliciesComponent implements OnInit {
     private authService: AuthService,
     private dialogService: DialogService,
     private snackbarService: SnackbarService,
-    private passwordPolicyService: PasswordPolicyService,
+    private passwordPolicyService: PasswordPolicyService
   ) {}
 
   rows: PasswordPolicy[] = [];
