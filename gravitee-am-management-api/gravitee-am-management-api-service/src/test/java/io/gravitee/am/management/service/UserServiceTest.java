@@ -34,6 +34,7 @@ import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.model.NewUser;
+import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.gravitee.am.service.validators.user.UserValidatorImpl;
@@ -41,6 +42,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import java.io.IOException;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -986,6 +988,147 @@ public class UserServiceTest {
                 MovingFactorUtils.generateInitialMovingFactor(user.getId()),
                 user.getFactors().get(0).getSecurity().getAdditionalData().get(FactorDataKeys.KEY_MOVING_FACTOR)
         );
+    }
+
+    @Test
+    public void must_update_user_with_user_provider() {
+        var domain = new Domain();
+        domain.setId("domain");
+
+
+        var user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
+        user.setUsername(USERNAME);
+
+        var updatedUser = new UpdateUser();
+        updatedUser.setFirstName("New firstName");
+        updatedUser.setLastName("New lastName");
+        updatedUser.setEmail("john@doe.com");
+
+        var additionalInformation = new HashMap<String, Object>();
+        additionalInformation.put("customClaim", "claim");
+        updatedUser.setAdditionalInformation(additionalInformation);
+
+        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
+                .thenReturn(Single.just(user));
+        when(commonUserService.update(DOMAIN, domain.getId(), user.getId(), updatedUser)).thenReturn(Single.just(user));
+
+        final UserProvider userProvider = mock(UserProvider.class);
+
+        final var defaultUser = new DefaultUser(user.getUsername());
+        defaultUser.setId("idp-user-id");
+
+        final var idpUserUpdated = new DefaultUser(NEW_USERNAME);
+        defaultUser.setId("idp-user-id");
+
+        when(userProvider.findByUsername(anyString())).thenReturn(Maybe.just(defaultUser));
+        when(userProvider.update(any(), any())).thenReturn(Single.just(idpUserUpdated));
+
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        var observer = userService.update(domain.getId(), user.getId(), updatedUser).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+
+        verify(commonUserService, times(1)).update(DOMAIN, domain.getId(), user.getId(), updatedUser);
+        verify(userProvider, times(1)).update(any(), any());
+    }
+
+    @Test
+    public void must_update_user_with_user_provider_even_if_user_absent() {
+        var domain = new Domain();
+        domain.setId("domain");
+
+        var user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
+        user.setUsername(USERNAME);
+
+        var updatedUser = new UpdateUser();
+        updatedUser.setSource("idp-user-id");
+
+        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
+                .thenReturn(Single.just(user));
+        when(commonUserService.update(DOMAIN, domain.getId(), user.getId(), updatedUser)).thenReturn(Single.just(user));
+
+        final UserProvider userProvider = mock(UserProvider.class);
+
+        final var defaultUser = new DefaultUser(user.getUsername());
+        defaultUser.setId("idp-user-id");
+
+        when(userProvider.findByUsername(anyString())).thenReturn(Maybe.error(new UserNotFoundException("User not found in idp")));
+
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        var observer = userService.update(domain.getId(), user.getId(), updatedUser).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+
+        verify(commonUserService, times(1)).update(DOMAIN, domain.getId(), user.getId(), updatedUser);
+    }
+
+    @Test
+    public void must_update_user_without_provider() {
+        var domain = new Domain();
+        domain.setId("domain");
+
+        var user = new User();
+        user.setId("user-id");
+        user.setSource("idp-user-id");
+
+
+        var updatedUser = new UpdateUser();
+        updatedUser.setSource("idp-user-id");
+
+        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
+                .thenReturn(Single.just(user));
+        when(commonUserService.update(DOMAIN, domain.getId(), user.getId(), updatedUser))
+                .thenReturn(Single.just(user));
+
+        final UserProvider userProvider = mock(UserProvider.class);
+
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
+        var observer = userService.update(domain.getId(), user.getId(), updatedUser).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+
+        verify(commonUserService, times(1)).update(DOMAIN, domain.getId(), user.getId(), updatedUser);
+        verify(userProvider, times(0)).update(any(), any());
+    }
+
+    @Test
+    public void must_not_update_user_with_user_with_unexpected_error() {
+        var domain = new Domain();
+        domain.setId("domain");
+
+        var user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
+        user.setUsername(USERNAME);
+
+        var updatedUser = new UpdateUser();
+        user.setId("user-id");
+        user.setSource("idp-user-id");
+        user.setUsername(USERNAME);
+
+        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
+                .thenReturn(Single.just(user));
+
+        final UserProvider userProvider = mock(UserProvider.class);
+
+        final var defaultUser = new DefaultUser(user.getUsername());
+        defaultUser.setId("idp-user-id");
+
+        when(userProvider.findByUsername(anyString()))
+                .thenReturn(Maybe.error(new IOException("Other issue")));
+
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        var observer = userService.update(domain.getId(), user.getId(), updatedUser).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertError(IOException.class);
     }
 
     @Test
