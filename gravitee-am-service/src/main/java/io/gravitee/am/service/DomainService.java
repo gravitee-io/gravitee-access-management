@@ -44,7 +44,14 @@ public interface DomainService {
 
     Single<Domain> findByHrid(String environmentId, String hrid);
 
+    /**
+     * User {@link #listAll()} instead
+     * @return
+     */
+    @Deprecated
     Single<List<Domain>> findAll();
+
+    Flowable<Domain> listAll();
 
     Flowable<Domain> findAllByCriteria(DomainCriteria criteria);
 

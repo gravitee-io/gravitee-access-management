@@ -16,15 +16,13 @@
 
 package io.gravitee.am.service;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordPolicy;
-import io.gravitee.am.service.model.UpdatePasswordPolicy;
-import io.reactivex.rxjava3.core.Flowable;
-
-import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.PasswordSettingsAware;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.service.model.NewPasswordPolicy;
+import io.gravitee.am.service.model.UpdatePasswordPolicy;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
@@ -47,13 +45,11 @@ public interface PasswordPolicyService {
     /**
      * Create a new password policy linked to the reference entity (domain for example)
      *
-     * @param referenceType the type of reference
-     * @param referenceId the identifier of the reference
      * @param policy the new password policy
      * @param principal the user performing the action
      * @return PasswordPolicy
      */
-    Single<PasswordPolicy> create(ReferenceType referenceType, String referenceId, NewPasswordPolicy policy, User principal);
+    Single<PasswordPolicy> create(PasswordPolicy policy, User principal);
 
     /**
      * Update a password policy linked to the reference entity (domain for example)

@@ -127,7 +127,7 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_SETTINGS, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(() -> new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> passwordPolicyService.create(ReferenceType.DOMAIN, domain, newPasswordPolicy, authenticatedUser))
+                        .flatMapSingle(__ -> passwordPolicyService.create(newPasswordPolicy.toPasswordPolicy(ReferenceType.DOMAIN, domain), authenticatedUser))
                         .map(pwdPolicy -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/password-policies/" + pwdPolicy.getId()))
                                 .entity(pwdPolicy)
