@@ -17,6 +17,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 import { PasswordPolicyService } from '../../../services/password-policy.service';
+import { SnackbarService } from '../../../services/snackbar.service';
 
 import { PasswordPolicy } from './domain-password-policies.model';
 
@@ -31,7 +32,9 @@ export class PasswordPoliciesComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private passwordPolicyService: PasswordPolicyService,
+    private snackbarService: SnackbarService,
   ) {}
+
   rows: PasswordPolicy[] = [];
 
   ngOnInit() {
@@ -48,11 +51,19 @@ export class PasswordPoliciesComponent implements OnInit {
       this.rows = policies;
     });
   }
+
   protected getTooltipText(id: string): string {
     const idpsNames = this.rows.find((pp) => pp.id === id).idpsNames;
     if (idpsNames === undefined || idpsNames.length === 0) {
       return null;
     }
     return 'Used in following Identity Providers: ' + idpsNames.join(', ');
+  }
+
+  protected selectDefault(id: string): void {
+    this.passwordPolicyService.setDefaultPolicy(this.domain.id, id).subscribe({
+      complete: () => this.snackbarService.open('Updated default Password policy'),
+      error: () => this.snackbarService.open("Couldn't set default Password policy"),
+    });
   }
 }
