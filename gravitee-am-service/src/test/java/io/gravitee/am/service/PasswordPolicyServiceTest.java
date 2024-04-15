@@ -59,8 +59,8 @@ import java.util.concurrent.TimeUnit;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
 /**
@@ -517,6 +517,91 @@ public class PasswordPolicyServiceTest {
 
         policyObserver.awaitDone(5, TimeUnit.SECONDS);
         policyObserver.assertValue(result -> Objects.equals(result.getMaxLength(), policy.getMaxLength()));
+        verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.FAILURE)));
+        verify(eventService, never()).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.UPDATE)));
+    }
+
+    @Test
+    public void shouldDeletePolicyAndUpdateIdp() {
+        PasswordPolicy passwordPolicy = new PasswordPolicy();
+        passwordPolicy.setId(UUID.randomUUID().toString());
+
+        when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.just(passwordPolicy));
+        when(identityProviderService.findWithPasswordPolicy(any(), any(), any())).thenReturn(Flowable.just(new IdentityProvider(), new IdentityProvider()));
+        when(identityProviderService.updatePasswordPolicy(any(), any(), any())).thenReturn(Single.just(new IdentityProvider()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(passwordPolicyRepository.delete(any())).thenReturn(Completable.complete());
+
+        final var observer = cut.delete(ReferenceType.DOMAIN, DOMAIN_ID, passwordPolicy.getId(), principal).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+
+        verify(passwordPolicyRepository).delete(any());
+        verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.SUCCESS)));
+        verify(eventService).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.DELETE)));
+    }
+
+    @Test
+    public void shouldDeletePolicy_NoIdp_ToUpdate() {
+        PasswordPolicy passwordPolicy = new PasswordPolicy();
+        passwordPolicy.setId(UUID.randomUUID().toString());
+
+        when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.just(passwordPolicy));
+        when(identityProviderService.findWithPasswordPolicy(any(), any(), any())).thenReturn(Flowable.empty());
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(passwordPolicyRepository.delete(any())).thenReturn(Completable.complete());
+
+        final var observer = cut.delete(ReferenceType.DOMAIN, DOMAIN_ID, passwordPolicy.getId(), principal).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+
+        verify(passwordPolicyRepository).delete(any());
+        verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.SUCCESS)));
+        verify(eventService).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.DELETE)));
+        verify(identityProviderService, never()).updatePasswordPolicy(any(), any(), any());
+
+    }
+
+    @Test
+    public void shouldIgnoreDeletePolicy_unknownPolicy() {
+        PasswordPolicy passwordPolicy = new PasswordPolicy();
+        passwordPolicy.setId(UUID.randomUUID().toString());
+
+        when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.empty());
+
+        final var observer = cut.delete(ReferenceType.DOMAIN, DOMAIN_ID, passwordPolicy.getId(), principal).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+
+        verify(passwordPolicyRepository, never()).delete(any());
+        verify(auditService, never()).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.SUCCESS)));
+        verify(eventService, never()).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.DELETE)));
+        verify(identityProviderService, never()).updatePasswordPolicy(any(), any(), any());
+    }
+
+    @Test
+    public void shouldNotDeletePolicyIfIdpNotUpdated() {
+        PasswordPolicy passwordPolicy = new PasswordPolicy();
+        passwordPolicy.setId(UUID.randomUUID().toString());
+
+        when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.just(passwordPolicy));
+        when(identityProviderService.findWithPasswordPolicy(any(), any(), any())).thenReturn(Flowable.just(new IdentityProvider()));
+        when(identityProviderService.updatePasswordPolicy(any(), any(), any())).thenReturn(Single.error(new TechnicalException()));
+
+        final var observer = cut.delete(ReferenceType.DOMAIN, DOMAIN_ID, passwordPolicy.getId(), principal).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertError(TechnicalException.class);
+
+        verify(passwordPolicyRepository, never()).delete(any());
+        verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.FAILURE)));
+        verify(eventService, never()).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.DELETE)));
     }
 
     @Test
