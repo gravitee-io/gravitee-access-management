@@ -32,9 +32,9 @@ import io.gravitee.am.repository.management.api.PasswordPolicyRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.PasswordPolicyService;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.PasswordPolicyNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.model.NewPasswordPolicy;
 import io.gravitee.am.service.model.UpdatePasswordPolicy;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.PasswordPolicyAuditBuilder;
@@ -47,10 +47,12 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
+import java.util.Date;
 import java.util.Optional;
 
 import static java.util.Optional.ofNullable;
 import static java.util.function.Predicate.not;
+import static org.springframework.util.StringUtils.hasLength;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -81,17 +83,22 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
                 });
     }
 
-
     @Override
-    public Single<PasswordPolicy> create(ReferenceType referenceType, String referenceId, NewPasswordPolicy policy, User principal) {
-        log.debug("Create a new password policy named '{}' for {} {}", policy.getName(), referenceType, referenceId);
-
-        final var entity = policy.toPasswordPolicy(referenceType, referenceId);
+    public Single<PasswordPolicy> create(PasswordPolicy policy, User principal) {
+        log.debug("Create a new password policy named '{}' for {} {}", policy.getName(), policy.getReferenceType(), policy.getReferenceId());
         // TODO during AM-2893, check if there is existing policies, if not set this one as default
 
-        return passwordPolicyRepository.create(entity)
+        if (!hasLength(policy.getReferenceId()) && !ReferenceType.DOMAIN.equals(policy.getReferenceType())) {
+            return Single.error(new InvalidParameterException("Password policy requires a reference type and a reference ID"));
+        }
+
+        final var now = new Date();
+        policy.setCreatedAt(now);
+        policy.setUpdatedAt(now);
+
+        return passwordPolicyRepository.create(policy)
                 .flatMap(createdPolicy -> {
-                    Event event = new Event(Type.PASSWORD_POLICY, new Payload(createdPolicy.getId(), referenceType, referenceId, Action.CREATE));
+                    Event event = new Event(Type.PASSWORD_POLICY, new Payload(createdPolicy.getId(), policy.getReferenceType(), policy.getReferenceId(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(createdPolicy));
                 })
                 .doOnSuccess(createdPolicy -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)

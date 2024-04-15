@@ -43,7 +43,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -86,7 +85,7 @@ public class PasswordPoliciesResourceTest extends JerseySpringTest {
 
         assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
         assertNull(response.getHeaderString(HttpHeaders.LOCATION));
-        verify(passwordPolicyService, never()).create(any(), any(), any(), any());
+        verify(passwordPolicyService, never()).create(any(), any());
     }
 
     @Test
@@ -105,7 +104,7 @@ public class PasswordPoliciesResourceTest extends JerseySpringTest {
         policy.setExcludePasswordsInDictionary(true);
         policy.setReferenceType(ReferenceType.DOMAIN);
 
-        doReturn(Single.just(policy)).when(passwordPolicyService).create(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any(NewPasswordPolicy.class), any());
+        doReturn(Single.just(policy)).when(passwordPolicyService).create(any(PasswordPolicy.class), any());
 
         final Response response = target("domains")
                 .path(DOMAIN_ID)
@@ -122,7 +121,7 @@ public class PasswordPoliciesResourceTest extends JerseySpringTest {
 
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
         assertTrue(response.getHeaderString(HttpHeaders.LOCATION).endsWith("/password-policies/" + policy.getId()));
-        verify(passwordPolicyService).create(any(), any(), any(), any());
+        verify(passwordPolicyService).create(any(), any());
     }
 
     @Test
@@ -139,7 +138,7 @@ public class PasswordPoliciesResourceTest extends JerseySpringTest {
 
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
         assertNull(response.getHeaderString(HttpHeaders.LOCATION));
-        verify(passwordPolicyService, never()).create(any(), any(), any(), any());
+        verify(passwordPolicyService, never()).create(any(), any());
     }
 
     @Test

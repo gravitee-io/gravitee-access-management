@@ -241,12 +241,16 @@ public class DomainServiceImpl implements DomainService {
 
     @Override
     public Single<List<Domain>> findAll() {
-        LOGGER.debug("Find all domains");
+        return this.listAll().toList();
+    }
+
+    @Override
+    public Flowable<Domain> listAll() {
+        LOGGER.debug("List all domains");
         return domainRepository.findAll()
-                .toList()
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurred while trying to find all domains", ex);
-                    return Single.error(new TechnicalManagementException("An error occurred while trying to find all domains", ex));
+                    LOGGER.error("An error occurred while trying to list all domains", ex);
+                    return Flowable.error(new TechnicalManagementException("An error occurred while trying to list all domains", ex));
                 });
     }
 

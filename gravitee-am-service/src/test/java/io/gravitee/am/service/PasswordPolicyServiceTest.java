@@ -30,9 +30,9 @@ import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.PasswordPolicyRepository;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.PasswordPolicyNotFoundException;
 import io.gravitee.am.service.impl.PasswordPolicyServiceImpl;
-import io.gravitee.am.service.model.NewPasswordPolicy;
 import io.gravitee.am.service.model.UpdatePasswordPolicy;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -86,7 +86,7 @@ public class PasswordPolicyServiceTest {
 
     @Test
     public void shouldCreate() {
-        var newPasswordPolicy = new NewPasswordPolicy();
+        var newPasswordPolicy = new PasswordPolicy();
         newPasswordPolicy.setName(UUID.randomUUID().toString());
         newPasswordPolicy.setMaxLength(18);
         newPasswordPolicy.setMinLength(8);
@@ -99,11 +99,13 @@ public class PasswordPolicyServiceTest {
         newPasswordPolicy.setLettersInMixedCase(Boolean.TRUE);
         newPasswordPolicy.setMaxConsecutiveLetters(3);
         newPasswordPolicy.setPasswordHistoryEnabled(Boolean.FALSE);
+        newPasswordPolicy.setReferenceType(ReferenceType.DOMAIN);
+        newPasswordPolicy.setReferenceId(DOMAIN_ID);
 
         Mockito.when(passwordPolicyRepository.create(any())).thenAnswer(answer -> Single.just(answer.getArguments()[0]));
         Mockito.when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
-        TestObserver<PasswordPolicy> observer = cut.create(ReferenceType.DOMAIN, DOMAIN_ID, newPasswordPolicy, principal).test();
+        TestObserver<PasswordPolicy> observer = cut.create(newPasswordPolicy, principal).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
@@ -128,15 +130,41 @@ public class PasswordPolicyServiceTest {
         Mockito.verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.SUCCESS)));
         Mockito.verify(eventService).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.CREATE)));
     }
+    @Test
+    public void shouldRejectCreate_MissingReference() {
+        var newPasswordPolicy = new PasswordPolicy();
+        newPasswordPolicy.setName(UUID.randomUUID().toString());
+        newPasswordPolicy.setMaxLength(18);
+        newPasswordPolicy.setMinLength(8);
+        newPasswordPolicy.setOldPasswords((short) 5);
+        newPasswordPolicy.setExcludePasswordsInDictionary(Boolean.FALSE);
+        newPasswordPolicy.setExcludeUserProfileInfoInPassword(Boolean.TRUE);
+        newPasswordPolicy.setExpiryDuration(456);
+        newPasswordPolicy.setIncludeNumbers(Boolean.TRUE);
+        newPasswordPolicy.setIncludeSpecialCharacters(Boolean.FALSE);
+        newPasswordPolicy.setLettersInMixedCase(Boolean.TRUE);
+        newPasswordPolicy.setMaxConsecutiveLetters(3);
+        newPasswordPolicy.setPasswordHistoryEnabled(Boolean.FALSE);
+
+        TestObserver<PasswordPolicy> observer = cut.create(newPasswordPolicy, principal).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertError(InvalidParameterException.class);
+        Mockito.verify(passwordPolicyRepository, never()).create(any());
+        Mockito.verify(auditService, never()).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.SUCCESS)));
+        Mockito.verify(eventService, never()).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.CREATE)));
+    }
 
     @Test
     public void shouldLogFailure_Audit_on_CreationError() {
-        var newPasswordPolicy = new NewPasswordPolicy();
+        var newPasswordPolicy = new PasswordPolicy();
         newPasswordPolicy.setName(UUID.randomUUID().toString());
+        newPasswordPolicy.setReferenceType(ReferenceType.DOMAIN);
+        newPasswordPolicy.setReferenceId(DOMAIN_ID);
 
         Mockito.when(passwordPolicyRepository.create(any())).thenReturn(Single.error(new TechnicalException()));
 
-        TestObserver<PasswordPolicy> observer = cut.create(ReferenceType.DOMAIN, DOMAIN_ID, newPasswordPolicy, principal).test();
+        TestObserver<PasswordPolicy> observer = cut.create(newPasswordPolicy, principal).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(TechnicalException.class);
