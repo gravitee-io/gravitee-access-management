@@ -15,8 +15,11 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { filter, switchMap, tap } from 'rxjs/operators';
 
 import { PasswordPolicyService } from '../../../services/password-policy.service';
+import { AuthService } from '../../../services/auth.service';
+import { DialogService } from '../../../services/dialog.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 
 import { PasswordPolicy } from './domain-password-policies.model';
@@ -28,11 +31,14 @@ import { PasswordPolicy } from './domain-password-policies.model';
 })
 export class PasswordPoliciesComponent implements OnInit {
   domainId: string;
+  canDelete = false;
 
   constructor(
     private route: ActivatedRoute,
-    private passwordPolicyService: PasswordPolicyService,
+    private authService: AuthService,
+    private dialogService: DialogService,
     private snackbarService: SnackbarService,
+    private passwordPolicyService: PasswordPolicyService,
   ) {}
 
   rows: PasswordPolicy[] = [];
@@ -40,6 +46,7 @@ export class PasswordPoliciesComponent implements OnInit {
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain'].id;
     this.loadPasswordPolicies();
+    this.canDelete = this.authService.hasPermissions(['domain_settings_update']);
   }
 
   isEmpty(): boolean {
@@ -65,5 +72,20 @@ export class PasswordPoliciesComponent implements OnInit {
       complete: () => this.snackbarService.open('Updated default Password policy'),
       error: () => this.snackbarService.open("Couldn't set default Password policy"),
     });
+  }
+
+  deletePolicy(event: Event, policyId: string): void {
+    event.preventDefault();
+    this.dialogService
+      .confirm('Delete Password Policy', 'Are you sure you want to delete this password policy?')
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.passwordPolicyService.delete(this.domainId, policyId)),
+        tap(() => {
+          this.snackbarService.open('Policy ' + policyId + ' deleted');
+          this.loadPasswordPolicies();
+        }),
+      )
+      .subscribe();
   }
 }
