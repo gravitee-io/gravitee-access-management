@@ -42,6 +42,10 @@ export class PasswordPolicyService {
     return this.http.put<any>(this.domainsURL + domainId + this.passwordPolicyURL + '/' + policyId, policy);
   }
 
+  delete(domainId: string, policyId: any): Observable<any> {
+    return this.http.delete<any>(this.domainsURL + domainId + this.passwordPolicyURL + '/' + policyId);
+  }
+
   setDefaultPolicy(domainId: string, policyId: string): Observable<any> {
     return this.http.post<any>(`${this.domainsURL}${domainId}${this.passwordPolicyURL}/${policyId}/default`, null);
   }
