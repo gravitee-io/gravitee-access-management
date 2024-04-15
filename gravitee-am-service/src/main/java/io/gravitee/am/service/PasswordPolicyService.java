@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.service.model.UpdatePasswordPolicy;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 
 import io.gravitee.am.identityprovider.api.User;
@@ -69,4 +70,15 @@ public interface PasswordPolicyService {
     Maybe<PasswordPolicy> findByReferenceAndId(ReferenceType referenceType, String referenceId, String policyId);
 
     Maybe<PasswordPolicy> retrievePasswordPolicy(io.gravitee.am.model.User user, PasswordSettingsAware passwordSettingsAware);
+
+    /**
+     * Update the password policy and reset the policyId for each IDP linked to it
+     *
+     * @param referenceType
+     * @param referenceId
+     * @param policyId
+     * @param principal
+     * @return
+     */
+    Completable delete(ReferenceType referenceType, String referenceId, String policyId, User principal);
 }
