@@ -24,9 +24,11 @@ import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.exception.PasswordPolicyNotFoundException;
 import io.gravitee.am.service.model.UpdatePasswordPolicy;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.client.Entity;
@@ -222,5 +224,47 @@ public class PasswordPolicyResourceTest extends JerseySpringTest {
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
         verify(passwordPolicyService).setDefaultPasswordPolicy(any(), any(), any(), any());
+    }
+
+    @Test
+    public void shouldNotDelete_NotPermitted() {
+        doReturn(Single.just(false)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+
+        final Response response = target("domains")
+                .path(DOMAIN_ID)
+                .path("password-policies")
+                .path(POLICY_ID)
+                .request().delete();
+
+        assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
+        verify(passwordPolicyService, never()).delete(any(), any(), any(), any());
+    }
+
+    @Test
+    public void shouldDelete_Policy() {
+        doReturn(Completable.complete()).when(passwordPolicyService).delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(POLICY_ID), any());
+        doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+
+        final Response response = target("domains")
+                .path(DOMAIN_ID)
+                .path("password-policies")
+                .path(POLICY_ID)
+                .request().delete();
+
+        assertEquals(HttpStatusCode.NO_CONTENT_204, response.getStatus());
+    }
+
+    @Test
+    public void deleteShould_Propagate_Exception() {
+        doReturn(Completable.error(new TechnicalException())).when(passwordPolicyService).delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(POLICY_ID), any());
+        doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+
+        final Response response = target("domains")
+                .path(DOMAIN_ID)
+                .path("password-policies")
+                .path(POLICY_ID)
+                .request().delete();
+
+        assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
     }
 }

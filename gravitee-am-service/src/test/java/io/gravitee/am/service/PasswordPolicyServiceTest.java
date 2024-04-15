@@ -34,6 +34,7 @@ import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.PasswordPolicyNotFoundException;
 import io.gravitee.am.service.impl.PasswordPolicyServiceImpl;
 import io.gravitee.am.service.model.UpdatePasswordPolicy;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -46,7 +47,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.time.Instant;
@@ -87,15 +87,18 @@ public class PasswordPolicyServiceTest {
     private EventService eventService;
 
     @Mock
+    private IdentityProviderService identityProviderService;
+
+    @Mock
     private User principal;
 
     @Test
     public void shouldCreate_noDefaultPolicy() {
         PasswordPolicy newPasswordPolicy = createPolicy();
 
-        Mockito.when(passwordPolicyRepository.create(any())).thenAnswer(answer -> Single.just(answer.getArguments()[0]));
-        Mockito.when(passwordPolicyRepository.findByDefaultPolicy(any(), any())).thenReturn(Maybe.empty());
-        Mockito.when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(passwordPolicyRepository.create(any())).thenAnswer(answer -> Single.just(answer.getArguments()[0]));
+        when(passwordPolicyRepository.findByDefaultPolicy(any(), any())).thenReturn(Maybe.empty());
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver<PasswordPolicy> observer = cut.create(newPasswordPolicy, principal).test();
 
@@ -128,9 +131,9 @@ public class PasswordPolicyServiceTest {
     public void shouldCreate_withDefaultPolicy() {
         var newPasswordPolicy = createPolicy();
 
-        Mockito.when(passwordPolicyRepository.create(any())).thenAnswer(answer -> Single.just(answer.getArguments()[0]));
-        Mockito.when(passwordPolicyRepository.findByDefaultPolicy(any(), any())).thenReturn(Maybe.just(new PasswordPolicy()));
-        Mockito.when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(passwordPolicyRepository.create(any())).thenAnswer(answer -> Single.just(answer.getArguments()[0]));
+        when(passwordPolicyRepository.findByDefaultPolicy(any(), any())).thenReturn(Maybe.just(new PasswordPolicy()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver<PasswordPolicy> observer = cut.create(newPasswordPolicy, principal).test();
 
@@ -178,9 +181,9 @@ public class PasswordPolicyServiceTest {
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidParameterException.class);
-        Mockito.verify(passwordPolicyRepository, never()).create(any());
-        Mockito.verify(auditService, never()).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.SUCCESS)));
-        Mockito.verify(eventService, never()).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.CREATE)));
+        verify(passwordPolicyRepository, never()).create(any());
+        verify(auditService, never()).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.SUCCESS)));
+        verify(eventService, never()).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.CREATE)));
     }
 
     @Test
@@ -190,8 +193,8 @@ public class PasswordPolicyServiceTest {
         newPasswordPolicy.setReferenceType(ReferenceType.DOMAIN);
         newPasswordPolicy.setReferenceId(DOMAIN_ID);
 
-        Mockito.when(passwordPolicyRepository.create(any())).thenReturn(Single.error(new TechnicalException()));
-        Mockito.when(passwordPolicyRepository.findByDefaultPolicy(any(), any())).thenReturn(Maybe.just(new PasswordPolicy()));
+        when(passwordPolicyRepository.create(any())).thenReturn(Single.error(new TechnicalException()));
+        when(passwordPolicyRepository.findByDefaultPolicy(any(), any())).thenReturn(Maybe.just(new PasswordPolicy()));
 
         TestObserver<PasswordPolicy> observer = cut.create(newPasswordPolicy, principal).test();
 
@@ -230,9 +233,9 @@ public class PasswordPolicyServiceTest {
         updatePasswordPolicy.setMaxConsecutiveLetters(4);
         updatePasswordPolicy.setPasswordHistoryEnabled(Boolean.FALSE);
 
-        Mockito.when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.just(existingPolicy));
-        Mockito.when(passwordPolicyRepository.update(any())).thenAnswer(answer -> Single.just(answer.getArguments()[0]));
-        Mockito.when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.just(existingPolicy));
+        when(passwordPolicyRepository.update(any())).thenAnswer(answer -> Single.just(answer.getArguments()[0]));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver<PasswordPolicy> observer = cut.update(ReferenceType.DOMAIN, DOMAIN_ID, existingPolicy.getId(), updatePasswordPolicy, principal).test();
 
@@ -270,7 +273,7 @@ public class PasswordPolicyServiceTest {
         updatePasswordPolicy.setMaxConsecutiveLetters(4);
         updatePasswordPolicy.setPasswordHistoryEnabled(Boolean.FALSE);
 
-        Mockito.when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.empty());
+        when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.empty());
         TestObserver<PasswordPolicy> observer = cut.update(ReferenceType.DOMAIN, DOMAIN_ID, UUID.randomUUID().toString(), updatePasswordPolicy, principal).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
@@ -281,17 +284,17 @@ public class PasswordPolicyServiceTest {
 
     @Test
     public void shouldSetDefaultPasswordPolicy_lackOfDefaultPolicy() {
-        Mockito.when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        Mockito.when(passwordPolicyRepository.findByDefaultPolicy(any(), any())).thenReturn(Maybe.empty());
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(passwordPolicyRepository.findByDefaultPolicy(any(), any())).thenReturn(Maybe.empty());
 
         PasswordPolicy existingPolicy = createPasswordPolicy();
         existingPolicy.setDefaultPolicy(Boolean.FALSE);
 
-        Mockito.when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.just(existingPolicy));
+        when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.just(existingPolicy));
 
         existingPolicy.setDefaultPolicy(Boolean.TRUE);
 
-        Mockito.when(passwordPolicyRepository.update(any())).thenReturn(Single.just(existingPolicy));
+        when(passwordPolicyRepository.update(any())).thenReturn(Single.just(existingPolicy));
 
         TestObserver<PasswordPolicy> observer = cut.setDefaultPasswordPolicy(ReferenceType.DOMAIN, DOMAIN_ID, UUID.randomUUID().toString(), principal).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
@@ -302,21 +305,21 @@ public class PasswordPolicyServiceTest {
 
     @Test
     public void shouldSetDefaultPasswordPolicy_changeDefaultPolicy() {
-        Mockito.when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         PasswordPolicy existingPolicy = createPasswordPolicy();
         existingPolicy.setName("existingDefault");
         existingPolicy.setDefaultPolicy(Boolean.FALSE);
 
-        Mockito.when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.just(existingPolicy));
+        when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.just(existingPolicy));
 
         PasswordPolicy defaultPolicy = createPasswordPolicy();
         defaultPolicy.setName("newDefault");
         defaultPolicy.setDefaultPolicy(Boolean.TRUE);
 
-        Mockito.when(passwordPolicyRepository.findByDefaultPolicy(any(), any())).thenReturn(Maybe.just(defaultPolicy));
+        when(passwordPolicyRepository.findByDefaultPolicy(any(), any())).thenReturn(Maybe.just(defaultPolicy));
 
-        Mockito.when(
+        when(
                 passwordPolicyRepository.update(any())).thenReturn(Single.just(defaultPolicy), Single.just(existingPolicy));
 
         TestObserver<PasswordPolicy> observer = cut.setDefaultPasswordPolicy(ReferenceType.DOMAIN, DOMAIN_ID, UUID.randomUUID().toString(), principal).test();
@@ -514,5 +517,88 @@ public class PasswordPolicyServiceTest {
 
         policyObserver.awaitDone(5, TimeUnit.SECONDS);
         policyObserver.assertValue(result -> Objects.equals(result.getMaxLength(), policy.getMaxLength()));
+    }
+
+    @Test
+    public void shouldDeletePolicyAndUpdateIdp() {
+        PasswordPolicy passwordPolicy = new PasswordPolicy();
+        passwordPolicy.setId(UUID.randomUUID().toString());
+
+        when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.just(passwordPolicy));
+        when(identityProviderService.findWithPasswordPolicy(any(), any(), any())).thenReturn(Flowable.just(new IdentityProvider(), new IdentityProvider()));
+        when(identityProviderService.updatePasswordPolicy(any(), any(), any())).thenReturn(Single.just(new IdentityProvider()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(passwordPolicyRepository.delete(any())).thenReturn(Completable.complete());
+
+        final var observer = cut.delete(ReferenceType.DOMAIN, DOMAIN_ID, passwordPolicy.getId(), principal).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+
+        verify(passwordPolicyRepository).delete(any());
+        verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.SUCCESS)));
+        verify(eventService).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.DELETE)));
+    }
+
+    @Test
+    public void shouldDeletePolicy_NoIdp_ToUpdate() {
+        PasswordPolicy passwordPolicy = new PasswordPolicy();
+        passwordPolicy.setId(UUID.randomUUID().toString());
+
+        when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.just(passwordPolicy));
+        when(identityProviderService.findWithPasswordPolicy(any(), any(), any())).thenReturn(Flowable.empty());
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(passwordPolicyRepository.delete(any())).thenReturn(Completable.complete());
+
+        final var observer = cut.delete(ReferenceType.DOMAIN, DOMAIN_ID, passwordPolicy.getId(), principal).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+
+        verify(passwordPolicyRepository).delete(any());
+        verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.SUCCESS)));
+        verify(eventService).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.DELETE)));
+        verify(identityProviderService, never()).updatePasswordPolicy(any(), any(), any());
+
+    }
+
+    @Test
+    public void shouldIgnoreDeletePolicy_unknownPolicy() {
+        PasswordPolicy passwordPolicy = new PasswordPolicy();
+        passwordPolicy.setId(UUID.randomUUID().toString());
+
+        when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.empty());
+
+        final var observer = cut.delete(ReferenceType.DOMAIN, DOMAIN_ID, passwordPolicy.getId(), principal).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+
+        verify(passwordPolicyRepository, never()).delete(any());
+        verify(auditService, never()).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.SUCCESS)));
+        verify(eventService, never()).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.DELETE)));
+        verify(identityProviderService, never()).updatePasswordPolicy(any(), any(), any());
+    }
+
+    @Test
+    public void shouldNotDeletePolicyIfIdpNotUpdated() {
+        PasswordPolicy passwordPolicy = new PasswordPolicy();
+        passwordPolicy.setId(UUID.randomUUID().toString());
+
+        when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.just(passwordPolicy));
+        when(identityProviderService.findWithPasswordPolicy(any(), any(), any())).thenReturn(Flowable.just(new IdentityProvider()));
+        when(identityProviderService.updatePasswordPolicy(any(), any(), any())).thenReturn(Single.error(new TechnicalException()));
+
+        final var observer = cut.delete(ReferenceType.DOMAIN, DOMAIN_ID, passwordPolicy.getId(), principal).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertError(TechnicalException.class);
+
+        verify(passwordPolicyRepository, never()).delete(any());
+        verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.FAILURE)));
+        verify(eventService, never()).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.DELETE)));
     }
 }

@@ -34,6 +34,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -42,6 +43,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
+import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -134,6 +136,32 @@ public class PasswordPolicyResource extends AbstractDomainResource {
                         .flatMapSingle(__ -> passwordPolicyService.setDefaultPasswordPolicy(ReferenceType.DOMAIN, domain, policy, authenticatedUser))
                         .doOnError(error -> log.error("Update Default Password Policy fails: ", error)))
                 .subscribe(response::resume, response::resume);
+    }
+
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Delete a password policy",
+            operationId = "deletePasswordPolicy",
+            description = "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_SETTINGS[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_SETTINGS[UPDATE] permission on the specified organization")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Password Policy successfully deleted"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void delete(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("policy") String policy,
+            @Suspended final AsyncResponse response) {
+        final var authenticatedUser = getAuthenticatedUser();
+
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_SETTINGS, Acl.UPDATE)
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(() -> new DomainNotFoundException(domain)))
+                        .flatMapCompletable(d -> passwordPolicyService.delete(ReferenceType.DOMAIN, d.getId(), policy, authenticatedUser))
+                .doOnError(error -> log.error("Delete Password Policy fails: ", error)))
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
 }
