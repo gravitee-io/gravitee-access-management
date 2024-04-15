@@ -75,6 +75,17 @@ public interface PasswordPolicyService {
     Maybe<PasswordPolicy> findByReferenceAndId(ReferenceType referenceType, String referenceId, String policyId);
 
     /**
+     * Delete the password policy and reset the policyId for each IDP linked to it
+     *
+     * @param referenceType
+     * @param referenceId
+     * @param policyId
+     * @param principal
+     * @return
+     */
+    Completable delete(ReferenceType referenceType, String referenceId, String policyId, User principal);
+
+    /**
      * Retrieve the password policy associated with a user, based on the user's password settings awareness.
      *
      * @param user the user for whom to retrieve the password policy
@@ -94,15 +105,4 @@ public interface PasswordPolicyService {
      * @return a Single emitting the updated PasswordPolicy that has been set as default
      */
     Single<PasswordPolicy> setDefaultPasswordPolicy(ReferenceType referenceType, String referenceId, String policyId, User principal);
-
-    /**
-     * Update the password policy and reset the policyId for each IDP linked to it
-     *
-     * @param referenceType
-     * @param referenceId
-     * @param policyId
-     * @param principal
-     * @return
-     */
-    Completable delete(ReferenceType referenceType, String referenceId, String policyId, User principal);
 }
