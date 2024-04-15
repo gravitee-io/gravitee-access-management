@@ -41,4 +41,8 @@ export class PasswordPolicyService {
   update(domainId: string, policyId: string, policy: any): Observable<any> {
     return this.http.put<any>(this.domainsURL + domainId + this.passwordPolicyURL + '/' + policyId, policy);
   }
+
+  delete(domainId: string, policyId: any): Observable<any> {
+    return this.http.delete<any>(this.domainsURL + domainId + this.passwordPolicyURL + '/' + policyId);
+  }
 }
