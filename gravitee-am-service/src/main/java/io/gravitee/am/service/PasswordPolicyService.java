@@ -22,6 +22,7 @@ import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.PasswordSettingsAware;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.model.UpdatePasswordPolicy;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -93,4 +94,15 @@ public interface PasswordPolicyService {
      * @return a Single emitting the updated PasswordPolicy that has been set as default
      */
     Single<PasswordPolicy> setDefaultPasswordPolicy(ReferenceType referenceType, String referenceId, String policyId, User principal);
+
+    /**
+     * Update the password policy and reset the policyId for each IDP linked to it
+     *
+     * @param referenceType
+     * @param referenceId
+     * @param policyId
+     * @param principal
+     * @return
+     */
+    Completable delete(ReferenceType referenceType, String referenceId, String policyId, User principal);
 }
