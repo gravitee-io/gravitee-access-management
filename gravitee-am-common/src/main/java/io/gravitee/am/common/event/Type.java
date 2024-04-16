@@ -47,4 +47,5 @@ public enum Type {
     I18N_DICTIONARY,
     THEME,
     PASSWORD_POLICY,
+    UNKNOWN // used during unmarshalling to avoid Exception which will block the sync process
 }
