@@ -22,6 +22,8 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.jdbc.common.JSONMapper;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 
@@ -30,6 +32,7 @@ import java.util.HashMap;
  * @author GraviteeSource Team
  */
 public class EventConverter extends DozerConverter<Event, JdbcEvent> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EventConverter.class);
     private static final LocalDateConverter dateConverter = new LocalDateConverter();
 
     public EventConverter() {
@@ -56,7 +59,6 @@ public class EventConverter extends DozerConverter<Event, JdbcEvent> {
         if (jdbcEvent != null) {
             result = new Event();
             result.setId(jdbcEvent.getId());
-            result.setType(jdbcEvent.getType() == null ? null : Type.valueOf(jdbcEvent.getType()));
             final HashMap payload = JSONMapper.toBean(jdbcEvent.getPayload(), HashMap.class);
             if (payload != null) {
                 final String action = (String) payload.get("action");
@@ -65,6 +67,12 @@ public class EventConverter extends DozerConverter<Event, JdbcEvent> {
             }
             result.setCreatedAt(dateConverter.convertFrom(jdbcEvent.getCreatedAt(), null));
             result.setUpdatedAt(dateConverter.convertFrom(jdbcEvent.getUpdatedAt(), null));
+            try {
+                result.setType(jdbcEvent.getType() == null ? null : Type.valueOf(jdbcEvent.getType()));
+            } catch (IllegalArgumentException e) {
+                LOGGER.info("Invalid event type '{}', the event will be ignored by synchronization process.", jdbcEvent.getType());
+                result.setType(Type.UNKNOWN);
+            }
         }
         return result;
     }
