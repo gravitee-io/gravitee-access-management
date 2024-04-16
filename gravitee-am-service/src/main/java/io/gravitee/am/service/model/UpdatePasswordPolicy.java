@@ -17,10 +17,25 @@
 package io.gravitee.am.service.model;
 
 
+import io.gravitee.am.model.PasswordPolicy;
+import io.gravitee.am.model.ReferenceType;
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public class UpdatePasswordPolicy extends AbstractPasswordPolicy {
+
+    private Boolean defaultPolicy;
+
+    public PasswordPolicy toPasswordPolicy(ReferenceType referenceType, String referenceId) {
+        PasswordPolicy passwordPolicy = super.toPasswordPolicy(referenceType, referenceId);
+        passwordPolicy.setDefaultPolicy(defaultPolicy);
+        return passwordPolicy;
+    }
 
 }

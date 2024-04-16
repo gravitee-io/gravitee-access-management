@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 
@@ -157,7 +156,7 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
         PasswordPolicyEntity entity = new PasswordPolicyEntity();
         entity.setId(passwordPolicy.getId());
         entity.setName(passwordPolicy.getName());
-        entity.setIsDefault(passwordPolicy.getDefaultPolicy());
+        entity.setIsDefault(passwordPolicy.getDefaultPolicy() != null ? passwordPolicy.getDefaultPolicy() : false);
         entity.setIdpsNames(idpsNames);
         return Single.just(entity);
     }

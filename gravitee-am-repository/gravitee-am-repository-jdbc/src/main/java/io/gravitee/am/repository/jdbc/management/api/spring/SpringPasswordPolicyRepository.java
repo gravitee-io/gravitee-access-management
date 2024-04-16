@@ -28,4 +28,8 @@ public interface SpringPasswordPolicyRepository extends RxJava3CrudRepository<Jd
 
     @Query("SELECT * FROM password_policies ph WHERE ph.id = :id AND ph.reference_id = :refId AND ph.reference_type = :refType")
     Maybe<JdbcPasswordPolicy> findByReference(@Param("refId") String referenceId, @Param("refType") String referenceType, @Param("id") String id);
+
+    @Query("SELECT * FROM password_policies ph WHERE ph.reference_id = :refId AND ph.reference_type = :refType AND ph.default_policy = true")
+    Maybe<JdbcPasswordPolicy> findByDefaultPolicy(@Param("refId") String referenceId, @Param("refType") String referenceType);
+
 }

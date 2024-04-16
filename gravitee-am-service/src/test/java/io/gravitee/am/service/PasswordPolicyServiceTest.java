@@ -40,7 +40,9 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -50,12 +52,14 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -65,6 +69,7 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
+@SuppressWarnings("unchecked")
 public class PasswordPolicyServiceTest {
     private static final String DOMAIN_ID = UUID.randomUUID().toString();
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -85,22 +90,43 @@ public class PasswordPolicyServiceTest {
     private User principal;
 
     @Test
-    public void shouldCreate() {
-        var newPasswordPolicy = new PasswordPolicy();
-        newPasswordPolicy.setName(UUID.randomUUID().toString());
-        newPasswordPolicy.setMaxLength(18);
-        newPasswordPolicy.setMinLength(8);
-        newPasswordPolicy.setOldPasswords((short) 5);
-        newPasswordPolicy.setExcludePasswordsInDictionary(Boolean.FALSE);
-        newPasswordPolicy.setExcludeUserProfileInfoInPassword(Boolean.TRUE);
-        newPasswordPolicy.setExpiryDuration(456);
-        newPasswordPolicy.setIncludeNumbers(Boolean.TRUE);
-        newPasswordPolicy.setIncludeSpecialCharacters(Boolean.FALSE);
-        newPasswordPolicy.setLettersInMixedCase(Boolean.TRUE);
-        newPasswordPolicy.setMaxConsecutiveLetters(3);
-        newPasswordPolicy.setPasswordHistoryEnabled(Boolean.FALSE);
-        newPasswordPolicy.setReferenceType(ReferenceType.DOMAIN);
-        newPasswordPolicy.setReferenceId(DOMAIN_ID);
+    public void shouldCreate_noDefaultPolicy() {
+        NewPasswordPolicy newPasswordPolicy = createNewPolicy();
+
+        Mockito.when(passwordPolicyRepository.create(any())).thenAnswer(answer -> Single.just(answer.getArguments()[0]));
+        Mockito.when(passwordPolicyRepository.findByDefaultPolicy(any(), any())).thenReturn(Maybe.empty());
+        Mockito.when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<PasswordPolicy> observer = cut.create(ReferenceType.DOMAIN, DOMAIN_ID, newPasswordPolicy, principal).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertValue(passwordPolicy ->
+                passwordPolicy.getCreatedAt() != null &&
+                        passwordPolicy.getUpdatedAt() != null &&
+                        passwordPolicy.getReferenceId().equals(DOMAIN_ID) &&
+                        passwordPolicy.getReferenceType().equals(ReferenceType.DOMAIN) &&
+                        passwordPolicy.getName().equals(newPasswordPolicy.getName()) &&
+                        passwordPolicy.getMaxLength().equals(newPasswordPolicy.getMaxLength()) &&
+                        passwordPolicy.getMinLength().equals(newPasswordPolicy.getMinLength()) &&
+                        passwordPolicy.getOldPasswords().equals(newPasswordPolicy.getOldPasswords()) &&
+                        passwordPolicy.getExcludePasswordsInDictionary().equals(newPasswordPolicy.getExcludePasswordsInDictionary()) &&
+                        passwordPolicy.getExcludeUserProfileInfoInPassword().equals(newPasswordPolicy.getExcludeUserProfileInfoInPassword()) &&
+                        passwordPolicy.getExpiryDuration().equals(newPasswordPolicy.getExpiryDuration()) &&
+                        passwordPolicy.getIncludeNumbers().equals(newPasswordPolicy.getIncludeNumbers()) &&
+                        passwordPolicy.getIncludeSpecialCharacters().equals(newPasswordPolicy.getIncludeSpecialCharacters()) &&
+                        passwordPolicy.getLettersInMixedCase().equals(newPasswordPolicy.getLettersInMixedCase()) &&
+                        passwordPolicy.getMaxConsecutiveLetters().equals(newPasswordPolicy.getMaxConsecutiveLetters()) &&
+                        passwordPolicy.getPasswordHistoryEnabled().equals(newPasswordPolicy.getPasswordHistoryEnabled()) &&
+                        passwordPolicy.getDefaultPolicy().equals(Boolean.TRUE));
+
+        verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.SUCCESS)));
+        verify(eventService).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.CREATE)));
+    }
+
+    @Test
+    public void shouldCreate_withDefaultPolicy() {
+        var newPasswordPolicy = createNewPolicy();
 
         Mockito.when(passwordPolicyRepository.create(any())).thenAnswer(answer -> Single.just(answer.getArguments()[0]));
         Mockito.when(eventService.create(any())).thenReturn(Single.just(new Event()));
@@ -125,10 +151,11 @@ public class PasswordPolicyServiceTest {
                         passwordPolicy.getIncludeSpecialCharacters().equals(newPasswordPolicy.getIncludeSpecialCharacters()) &&
                         passwordPolicy.getLettersInMixedCase().equals(newPasswordPolicy.getLettersInMixedCase()) &&
                         passwordPolicy.getMaxConsecutiveLetters().equals(newPasswordPolicy.getMaxConsecutiveLetters()) &&
-                        passwordPolicy.getPasswordHistoryEnabled().equals(newPasswordPolicy.getPasswordHistoryEnabled()));
+                        passwordPolicy.getPasswordHistoryEnabled().equals(newPasswordPolicy.getPasswordHistoryEnabled()) &&
+                        passwordPolicy.getDefaultPolicy().equals(Boolean.FALSE));
 
-        Mockito.verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.SUCCESS)));
-        Mockito.verify(eventService).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.CREATE)));
+        verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.SUCCESS)));
+        verify(eventService).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.CREATE)));
     }
     @Test
     public void shouldRejectCreate_MissingReference() {
@@ -163,14 +190,15 @@ public class PasswordPolicyServiceTest {
         newPasswordPolicy.setReferenceId(DOMAIN_ID);
 
         Mockito.when(passwordPolicyRepository.create(any())).thenReturn(Single.error(new TechnicalException()));
+        Mockito.when(passwordPolicyRepository.findByDefaultPolicy(any(), any())).thenReturn(Maybe.just(new PasswordPolicy()));
 
         TestObserver<PasswordPolicy> observer = cut.create(newPasswordPolicy, principal).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(TechnicalException.class);
 
-        Mockito.verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.FAILURE)));
-        Mockito.verify(eventService, never()).create(any());
+        verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.FAILURE)));
+        verify(eventService, never()).create(any());
     }
 
     @Test
@@ -186,25 +214,7 @@ public class PasswordPolicyServiceTest {
 
     @Test
     public void shouldUpdate() {
-        var existingPolicy = new PasswordPolicy();
-        existingPolicy.setId(UUID.randomUUID().toString());
-        existingPolicy.setCreatedAt(new Date(Instant.now().minus(1, ChronoUnit.HOURS).toEpochMilli()));
-        existingPolicy.setUpdatedAt(new Date(Instant.now().minus(1, ChronoUnit.HOURS).toEpochMilli()));
-        existingPolicy.setReferenceId(DOMAIN_ID);
-        existingPolicy.setReferenceType(ReferenceType.DOMAIN);
-        existingPolicy.setName(UUID.randomUUID().toString());
-        existingPolicy.setMaxLength(18);
-        existingPolicy.setMinLength(8);
-        existingPolicy.setOldPasswords((short) 5);
-        existingPolicy.setExcludePasswordsInDictionary(Boolean.FALSE);
-        existingPolicy.setExcludeUserProfileInfoInPassword(Boolean.TRUE);
-        existingPolicy.setExpiryDuration(456);
-        existingPolicy.setIncludeNumbers(Boolean.TRUE);
-        existingPolicy.setIncludeSpecialCharacters(Boolean.FALSE);
-        existingPolicy.setLettersInMixedCase(Boolean.TRUE);
-        existingPolicy.setMaxConsecutiveLetters(3);
-        existingPolicy.setPasswordHistoryEnabled(Boolean.FALSE);
-
+        var existingPolicy = createPasswordPolicy();
         var updatePasswordPolicy = new UpdatePasswordPolicy();
         updatePasswordPolicy.setName(UUID.randomUUID().toString());
         updatePasswordPolicy.setMaxLength(17);
@@ -246,8 +256,8 @@ public class PasswordPolicyServiceTest {
                         passwordPolicy.getMaxConsecutiveLetters().equals(updatePasswordPolicy.getMaxConsecutiveLetters()) &&
                         passwordPolicy.getPasswordHistoryEnabled().equals(updatePasswordPolicy.getPasswordHistoryEnabled()));
 
-        Mockito.verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.SUCCESS)));
-        Mockito.verify(eventService).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.UPDATE)));
+        verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.SUCCESS)));
+        verify(eventService).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.UPDATE)));
     }
 
     @Test
@@ -264,8 +274,97 @@ public class PasswordPolicyServiceTest {
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(PasswordPolicyNotFoundException.class);
-        Mockito.verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.FAILURE)));
-        Mockito.verify(eventService, never()).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.UPDATE)));
+        verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.FAILURE)));
+        verify(eventService, never()).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.UPDATE)));
+    }
+
+    @Test
+    public void shouldSetDefaultPasswordPolicy_lackOfDefaultPolicy() {
+        Mockito.when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        Mockito.when(passwordPolicyRepository.findByDefaultPolicy(any(), any())).thenReturn(Maybe.empty());
+
+        PasswordPolicy existingPolicy = createPasswordPolicy();
+        existingPolicy.setDefaultPolicy(Boolean.FALSE);
+
+        Mockito.when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.just(existingPolicy));
+
+        existingPolicy.setDefaultPolicy(Boolean.TRUE);
+
+        Mockito.when(passwordPolicyRepository.update(any())).thenReturn(Single.just(existingPolicy));
+
+        TestObserver<PasswordPolicy> observer = cut.setDefaultPasswordPolicy(ReferenceType.DOMAIN, DOMAIN_ID, UUID.randomUUID().toString(), principal).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+
+        verify(passwordPolicyRepository).update(ArgumentMatchers.argThat(pp -> pp.getDefaultPolicy().equals(Boolean.TRUE)));
+        verify(eventService).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.UPDATE)));
+    }
+
+    @Test
+    public void shouldSetDefaultPasswordPolicy_changeDefaultPolicy() {
+        Mockito.when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        PasswordPolicy defaultPolicy = createPasswordPolicy();
+        defaultPolicy.setDefaultPolicy(Boolean.TRUE);
+
+        Mockito.when(passwordPolicyRepository.findByDefaultPolicy(any(), any())).thenReturn(Maybe.just(defaultPolicy));
+
+        PasswordPolicy existingPolicy = createPasswordPolicy();
+        existingPolicy.setDefaultPolicy(Boolean.FALSE);
+
+        Mockito.when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.just(existingPolicy));
+
+        defaultPolicy.setDefaultPolicy(Boolean.FALSE);
+        existingPolicy.setDefaultPolicy(Boolean.TRUE);
+
+        Mockito.when(
+                passwordPolicyRepository.update(any())).thenReturn(Single.just(defaultPolicy), Single.just(existingPolicy));
+
+        TestObserver<PasswordPolicy> observer = cut.setDefaultPasswordPolicy(ReferenceType.DOMAIN, DOMAIN_ID, UUID.randomUUID().toString(), principal).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        ArgumentCaptor<PasswordPolicy> argument = ArgumentCaptor.forClass(PasswordPolicy.class);
+        verify(passwordPolicyRepository, times(2)).update(argument.capture());
+        argument.getAllValues();
+        Assertions.assertFalse(argument.getAllValues().get(0).getDefaultPolicy());
+        Assertions.assertTrue(argument.getAllValues().get(1).getDefaultPolicy());
+        verify(eventService,times(2)).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.UPDATE)));
+    }
+
+    private NewPasswordPolicy createNewPolicy() {
+        var newPasswordPolicy = new NewPasswordPolicy();
+        newPasswordPolicy.setName(UUID.randomUUID().toString());
+        newPasswordPolicy.setMaxLength(18);
+        newPasswordPolicy.setMinLength(8);
+        newPasswordPolicy.setOldPasswords((short) 5);
+        newPasswordPolicy.setExcludePasswordsInDictionary(Boolean.FALSE);
+        newPasswordPolicy.setExcludeUserProfileInfoInPassword(Boolean.TRUE);
+        newPasswordPolicy.setExpiryDuration(456);
+        newPasswordPolicy.setIncludeNumbers(Boolean.TRUE);
+        newPasswordPolicy.setIncludeSpecialCharacters(Boolean.FALSE);
+        newPasswordPolicy.setLettersInMixedCase(Boolean.TRUE);
+        newPasswordPolicy.setMaxConsecutiveLetters(3);
+        newPasswordPolicy.setPasswordHistoryEnabled(Boolean.FALSE);
+        return newPasswordPolicy;
+    }
+
+    private PasswordPolicy createPasswordPolicy() {
+        var passwordPolicy = new PasswordPolicy();
+        passwordPolicy.setId(UUID.randomUUID().toString());
+        passwordPolicy.setCreatedAt(new Date(Instant.now().minus(1, ChronoUnit.HOURS).toEpochMilli()));
+        passwordPolicy.setUpdatedAt(new Date(Instant.now().minus(1, ChronoUnit.HOURS).toEpochMilli()));
+        passwordPolicy.setReferenceId(DOMAIN_ID);
+        passwordPolicy.setReferenceType(ReferenceType.DOMAIN);
+        passwordPolicy.setName(UUID.randomUUID().toString());
+        passwordPolicy.setMaxLength(18);
+        passwordPolicy.setMinLength(8);
+        passwordPolicy.setOldPasswords((short) 5);
+        passwordPolicy.setExcludePasswordsInDictionary(Boolean.FALSE);
+        passwordPolicy.setExcludeUserProfileInfoInPassword(Boolean.TRUE);
+        passwordPolicy.setExpiryDuration(456);
+        passwordPolicy.setIncludeNumbers(Boolean.TRUE);
+        passwordPolicy.setIncludeSpecialCharacters(Boolean.FALSE);
+        passwordPolicy.setLettersInMixedCase(Boolean.TRUE);
+        passwordPolicy.setMaxConsecutiveLetters(3);
+        passwordPolicy.setPasswordHistoryEnabled(Boolean.FALSE);
+        return passwordPolicy;
     }
 
     @Test
@@ -406,6 +505,6 @@ public class PasswordPolicyServiceTest {
         verify(passwordPolicyRepository, never()).findByReference(any(), any());
 
         policyObserver.awaitDone(5, TimeUnit.SECONDS);
-        policyObserver.assertValue(result -> result.getMaxLength() == policy.getMaxLength());
+        policyObserver.assertValue(result -> Objects.equals(result.getMaxLength(), policy.getMaxLength()));
     }
 }
