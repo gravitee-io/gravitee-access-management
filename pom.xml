@@ -92,7 +92,7 @@
         <jsoup.version>1.16.1</jsoup.version>
         <snakeyaml.version>2.0</snakeyaml.version>
         <angus-mail.version>2.0.2</angus-mail.version>
-        <angus-activation.version>2.0.1</angus-activation.version>
+        <angus-activation.version>2.0.2</angus-activation.version>
         <mongodb-driver-reactivestreams.version>4.11.1</mongodb-driver-reactivestreams.version>
         <embed.mongo.version>4.7.1</embed.mongo.version>
         <json-patch.version>1.9</json-patch.version>
