@@ -31,6 +31,8 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -51,6 +53,7 @@ import static com.mongodb.client.model.Filters.lte;
 @Component
 public class MongoEventRepository extends AbstractManagementMongoRepository implements EventRepository {
 
+    private static final Logger log = LoggerFactory.getLogger(MongoEventRepository.class);
     private MongoCollection<EventMongo> eventsCollection;
 
     @PostConstruct
@@ -114,10 +117,16 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
 
         Event event = new Event();
         event.setId(eventMongo.getId());
-        event.setType(Type.valueOf(eventMongo.getType()));
         event.setPayload(convert(eventMongo.getPayload()));
         event.setCreatedAt(eventMongo.getCreatedAt());
         event.setUpdatedAt(eventMongo.getUpdatedAt());
+        try {
+            event.setType(Type.valueOf(eventMongo.getType()));
+        } catch (IllegalArgumentException e) {
+            log.info("Invalid event type '{}', the event will be ignored by synchronization process.", eventMongo.getType());
+            event.setType(Type.UNKNOWN);
+        }
+
         return event;
     }
 

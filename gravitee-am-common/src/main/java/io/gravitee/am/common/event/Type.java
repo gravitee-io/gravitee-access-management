@@ -45,5 +45,6 @@ public enum Type {
     AUTH_DEVICE_NOTIFIER,
     DEVICE_IDENTIFIER,
     I18N_DICTIONARY,
-    THEME
+    THEME,
+    UNKNOWN // used during unmarshalling to avoid Exception which will block the sync process
 }
