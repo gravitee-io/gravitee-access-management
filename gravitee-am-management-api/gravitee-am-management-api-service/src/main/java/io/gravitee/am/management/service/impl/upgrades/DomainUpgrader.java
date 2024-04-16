@@ -20,7 +20,6 @@ import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.am.service.model.openid.PatchClientRegistrationSettings;
 import io.gravitee.am.service.model.openid.PatchOIDCSettings;
-import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,8 +49,7 @@ public class DomainUpgrader implements Upgrader, Ordered {
     @Override
     public boolean upgrade() {
         LOGGER.info("Applying domain upgrade");
-        domainService.findAll()
-                .flatMapObservable(domains -> Observable.fromIterable(domains))
+        domainService.listAll()
                 .flatMapSingle(this::upgradeDomain)
                 .toList()
                 .subscribe();

@@ -54,8 +54,7 @@ public class OpenIDScopeUpgrader implements Upgrader, Ordered {
     @Override
     public boolean upgrade() {
         logger.info("Applying OIDC scope upgrade");
-        domainService.findAll()
-                .flatMapObservable(Observable::fromIterable)
+        domainService.listAll()
                 .flatMapSingle(this::createOrUpdateSystemScopes)
                 .subscribe();
         return true;

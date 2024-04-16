@@ -34,7 +34,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.eq;
@@ -119,7 +118,7 @@ public class SystemCertificateUpgraderTest {
 
         when(certificateRepository.update(any())).thenReturn(Single.just(new Certificate()));
 
-        when(domainService.findAll()).thenReturn(Single.just(List.of(domain1, domain2)));
+        when(domainService.listAll()).thenReturn(Flowable.just(domain1, domain2));
 
         when(systemTaskRepository.updateIf(any(), anyString())).thenAnswer((args) -> {
             SystemTask sysTask = args.getArgument(0);

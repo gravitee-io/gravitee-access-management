@@ -30,7 +30,10 @@ import io.gravitee.am.service.model.NewTag;
 import io.gravitee.am.service.model.UpdateTag;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.TagAuditBuilder;
-import io.reactivex.rxjava3.core.*;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +42,6 @@ import org.springframework.stereotype.Component;
 
 import java.text.Normalizer;
 import java.util.Date;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -149,8 +151,7 @@ public class TagServiceImpl implements TagService {
         return tagRepository.findById(tagId, orgaizationId)
                 .switchIfEmpty(Maybe.error(new TagNotFoundException(tagId)))
                 .flatMapCompletable(tag -> tagRepository.delete(tagId)
-                        .andThen(domainService.findAll()
-                                .flatMapObservable(domains -> Observable.fromIterable(domains))
+                        .andThen(domainService.listAll()
                                 .flatMapCompletable(domain -> {
                                     if (domain.getTags() != null) {
                                         domain.getTags().remove(tagId);

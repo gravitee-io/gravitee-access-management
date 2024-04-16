@@ -15,13 +15,13 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
-import io.gravitee.am.management.service.impl.upgrades.OpenIDScopeUpgrader;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.UpdateSystemScope;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.junit.Before;
@@ -31,11 +31,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.Arrays;
-import java.util.HashSet;
-
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -61,7 +63,7 @@ public class OpenIDScopeUpgraderTest {
     @Before
     public void setUp() {
         when(domain.getId()).thenReturn(DOMAIN_ID);
-        when(domainService.findAll()).thenReturn(Single.just(Arrays.asList(domain)));
+        when(domainService.listAll()).thenReturn(Flowable.just(domain));
     }
 
     @Test

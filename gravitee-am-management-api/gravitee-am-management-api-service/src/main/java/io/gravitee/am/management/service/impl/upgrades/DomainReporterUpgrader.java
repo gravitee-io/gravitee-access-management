@@ -19,7 +19,6 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ReporterService;
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Observable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,8 +45,7 @@ public class DomainReporterUpgrader implements Upgrader, Ordered {
     @Override
     public boolean upgrade() {
         logger.info("Applying domain reporter upgrade");
-        domainService.findAll()
-                .flatMapObservable(Observable::fromIterable)
+        domainService.listAll()
                 .flatMapCompletable(this::updateDefaultReporter)
                 .subscribe();
         return true;
