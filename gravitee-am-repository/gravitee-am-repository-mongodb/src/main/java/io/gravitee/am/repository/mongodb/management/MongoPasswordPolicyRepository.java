@@ -41,6 +41,7 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoPasswordPolicyRepository extends AbstractManagementMongoRepository implements PasswordPolicyRepository {
     private static final String COLLECTION_NAME = "password_policies";
+    public static final String FIELD_DEFAULT_POLICY = "defaultPolicy";
     private MongoCollection<PasswordPolicyMongo> mongoCollection;
 
     @PostConstruct
@@ -87,6 +88,11 @@ public class MongoPasswordPolicyRepository extends AbstractManagementMongoReposi
     @Override
     public Maybe<PasswordPolicy> findByReferenceAndId(ReferenceType referenceType, String referenceId, String id) {
         return Maybe.fromPublisher(mongoCollection.find(and(eq(FIELD_ID, id), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name())))).map(this::convert);
+    }
+
+    @Override
+    public Maybe<PasswordPolicy> findByDefaultPolicy(ReferenceType referenceType, String referenceId) {
+        return Maybe.fromPublisher(mongoCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_DEFAULT_POLICY, true)))).map(this::convert);
     }
 
     @Override
@@ -147,7 +153,7 @@ public class MongoPasswordPolicyRepository extends AbstractManagementMongoReposi
         policyMongo.setExcludeUserProfileInfoInPassword(passwordPolicy.getExcludeUserProfileInfoInPassword());
         policyMongo.setMaxLength(passwordPolicy.getMaxLength());
         policyMongo.setIncludeSpecialCharacters(passwordPolicy.getIncludeSpecialCharacters());
-        policyMongo.setDefaultPolicy(policyMongo.getDefaultPolicy());
+        policyMongo.setDefaultPolicy(passwordPolicy.getDefaultPolicy());
 
         return policyMongo;
     }

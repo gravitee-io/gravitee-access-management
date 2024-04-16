@@ -35,7 +35,9 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
@@ -104,6 +106,33 @@ public class PasswordPolicyResource extends AbstractDomainResource {
                         .switchIfEmpty(Maybe.error(() -> new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> passwordPolicyService.update(ReferenceType.DOMAIN, domain, policy, updatePasswordPolicy, authenticatedUser))
                 .doOnError(error -> log.error("Update Password Policy fails: ", error)))
+                .subscribe(response::resume, response::resume);
+    }
+
+    @POST
+    @Path("/default")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Set default policy",
+            operationId = "setDefaultPolicy",
+            description = "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_SETTINGS[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_SETTINGS[UPDATE] permission on the specified organization")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Default policy updated"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void setDefaultPolicy(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("policy") String policy,
+            @Suspended final AsyncResponse response) {
+        final var authenticatedUser = getAuthenticatedUser();
+
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_SETTINGS, Acl.UPDATE)
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(() -> new DomainNotFoundException(domain)))
+                        .flatMapSingle(__ -> passwordPolicyService.setDefaultPasswordPolicy(ReferenceType.DOMAIN, domain, policy, authenticatedUser))
+                        .doOnError(error -> log.error("Update Default Password Policy fails: ", error)))
                 .subscribe(response::resume, response::resume);
     }
 
