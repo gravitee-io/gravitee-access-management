@@ -167,7 +167,7 @@ public class PasswordPolicyResourceTest extends JerseySpringTest {
     }
 
     @Test
-    public void updateShould_Propagate_Exception() throws JsonProcessingException {
+    public void updateShould_Propagate_Exception() {
         var updatePasswordPolicy = new UpdatePasswordPolicy();
         updatePasswordPolicy.setName("name");
         updatePasswordPolicy.setExcludePasswordsInDictionary(true);

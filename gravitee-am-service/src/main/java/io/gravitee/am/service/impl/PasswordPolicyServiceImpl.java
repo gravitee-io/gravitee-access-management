@@ -46,7 +46,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.util.Comparator;
+import java.util.Date;
 import java.util.Optional;
 
 import static java.util.Optional.ofNullable;
@@ -87,20 +87,28 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
         log.debug("Create a new password policy named '{}' for {} {}", policy.getName(), referenceType, referenceId);
 
         final var entity = policy.toPasswordPolicy(referenceType, referenceId);
-        // TODO during AM-2893, check if there is existing policies, if not set this one as default
 
-        return passwordPolicyRepository.create(entity)
-                .flatMap(createdPolicy -> {
-                    Event event = new Event(Type.PASSWORD_POLICY, new Payload(createdPolicy.getId(), referenceType, referenceId, Action.CREATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(createdPolicy));
+        return passwordPolicyRepository.findByDefaultPolicy(referenceType, referenceId)
+                .flatMap(__ -> {
+                    entity.setDefaultPolicy(Boolean.FALSE);
+                    return Maybe.just(entity);
                 })
-                .doOnSuccess(createdPolicy -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
-                        .principal(principal)
-                        .type(EventType.PASSWORD_POLICY_CREATED)
-                        .policy(createdPolicy)))
-                .doOnError(error -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
-                        .principal(principal)
-                        .type(EventType.PASSWORD_POLICY_CREATED).throwable(error)));
+                .switchIfEmpty(Single.fromCallable(() -> {
+                    entity.setDefaultPolicy(Boolean.TRUE);
+                    return entity;
+                }))
+                .flatMap(e -> passwordPolicyRepository.create(e)
+                        .flatMap(createdPolicy -> {
+                            Event event = new Event(Type.PASSWORD_POLICY, new Payload(createdPolicy.getId(), referenceType, referenceId, Action.CREATE));
+                            return eventService.create(event).flatMap(___ -> Single.just(createdPolicy));
+                        })
+                        .doOnSuccess(createdPolicy -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
+                                .principal(principal)
+                                .type(EventType.PASSWORD_POLICY_CREATED)
+                                .policy(createdPolicy)))
+                        .doOnError(error -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
+                                .principal(principal)
+                                .type(EventType.PASSWORD_POLICY_CREATED).throwable(error))));
     }
 
     @Override
@@ -121,21 +129,25 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
                     entityToUpdate.setCreatedAt(existingPolicy.getCreatedAt());
                     entityToUpdate.setReferenceType(existingPolicy.getReferenceType());
                     entityToUpdate.setReferenceId(existingPolicy.getReferenceId());
-
-                    return passwordPolicyRepository.update(entityToUpdate)
-                            .flatMap(updatedPolicy -> {
-                                Event event = new Event(Type.PASSWORD_POLICY, new Payload(updatedPolicy.getId(), referenceType, referenceId, Action.UPDATE));
-                                return eventService.create(event).flatMap(__ -> Single.just(updatedPolicy));
-                            })
-                            .doOnSuccess(updatedPolicy -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
-                                    .principal(principal)
-                                    .type(EventType.PASSWORD_POLICY_UPDATED)
-                                    .policy(updatedPolicy)
-                                    .oldValue(existingPolicy)));
+                    return updatePasswordPolicy(referenceType, referenceId, entityToUpdate, existingPolicy, principal);
                 })
                 .doOnError(error -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
                         .principal(principal)
                         .type(EventType.PASSWORD_POLICY_UPDATED).throwable(error)));
+    }
+
+    @Override
+    public Single<PasswordPolicy> setDefaultPasswordPolicy(ReferenceType referenceType, String referenceId, String policyId, User principal) {
+        log.debug("Setting default policy for id {} for {} {}", policyId, referenceType, referenceId);
+        return passwordPolicyRepository.findByDefaultPolicy(referenceType, referenceId)
+                .flatMapSingle(defaultPolicy -> {
+                    PasswordPolicy nonDefaultPasswordPolicy = new PasswordPolicy(defaultPolicy);
+                    nonDefaultPasswordPolicy.setUpdatedAt(new Date());
+                    nonDefaultPasswordPolicy.setDefaultPolicy(Boolean.FALSE);
+                    return updatePasswordPolicy(referenceType, referenceId, nonDefaultPasswordPolicy, defaultPolicy, principal)
+                            .doOnError((err) -> Single.just(new PasswordPolicy()))
+                            .flatMap(__ -> setNewDefaultPolicy(referenceType, referenceId, policyId, principal));
+                }).switchIfEmpty(setNewDefaultPolicy(referenceType, referenceId, policyId, principal));
     }
 
     @Override
@@ -160,9 +172,30 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
     }
 
     private Maybe<PasswordPolicy> defaultPasswordPolicy(io.gravitee.am.model.User user) {
-        return passwordPolicyRepository.findByReference(user.getReferenceType(), user.getReferenceId())
-                // TODO replace this sort by a filter on default attribute during AM-2893
-                .sorted(Comparator.comparing(PasswordPolicy::getCreatedAt))
-                .firstElement();
+        return passwordPolicyRepository.findByDefaultPolicy(user.getReferenceType(), user.getReferenceId());
+    }
+
+    private Single<PasswordPolicy> setNewDefaultPolicy(ReferenceType referenceType, String referenceId, String policyId, User principal) {
+        return passwordPolicyRepository.findByReferenceAndId(referenceType, referenceId, policyId)
+                .switchIfEmpty(Single.error(() -> new PasswordPolicyNotFoundException(policyId)))
+                .flatMap(existingPolicy -> {
+                    PasswordPolicy updatedPasswordPolicy = new PasswordPolicy(existingPolicy);
+                    updatedPasswordPolicy.setUpdatedAt(new Date());
+                    updatedPasswordPolicy.setDefaultPolicy(Boolean.TRUE);
+                    return updatePasswordPolicy(referenceType, referenceId, updatedPasswordPolicy, existingPolicy, principal);
+                });
+    }
+
+    private Single<PasswordPolicy> updatePasswordPolicy(ReferenceType referenceType, String referenceId, PasswordPolicy updatedPasswordPolicy, PasswordPolicy oldPasswordPolicy, User principal) {
+        return passwordPolicyRepository.update(updatedPasswordPolicy)
+                .flatMap(updatedPolicy -> {
+                    Event event = new Event(Type.PASSWORD_POLICY, new Payload(updatedPolicy.getId(), referenceType, referenceId, Action.UPDATE));
+                    return eventService.create(event).flatMap(__ -> Single.just(updatedPolicy));
+                })
+                .doOnSuccess(updatedPolicy -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.PASSWORD_POLICY_UPDATED)
+                        .policy(updatedPolicy)
+                        .oldValue(oldPasswordPolicy)));
     }
 }

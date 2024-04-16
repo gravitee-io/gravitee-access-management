@@ -90,5 +90,29 @@ public class PasswordPolicy implements Resource {
      */
     private Short oldPasswords;
 
+    /**
+     * If Password Policy is the default one
+     */
     private Boolean defaultPolicy;
+
+    public PasswordPolicy(PasswordPolicy other) {
+        this.id = other.id;
+        this.referenceId = other.referenceId;
+        this.referenceType = other.referenceType;
+        this.createdAt = other.createdAt;
+        this.updatedAt = other.updatedAt;
+        this.name = other.name;
+        this.minLength = other.minLength;
+        this.maxLength = other.maxLength;
+        this.includeNumbers = other.includeNumbers;
+        this.includeSpecialCharacters = other.includeSpecialCharacters;
+        this.lettersInMixedCase = other.lettersInMixedCase;
+        this.maxConsecutiveLetters = other.maxConsecutiveLetters;
+        this.excludePasswordsInDictionary = other.excludePasswordsInDictionary;
+        this.excludeUserProfileInfoInPassword = other.excludeUserProfileInfoInPassword;
+        this.expiryDuration = other.expiryDuration;
+        this.passwordHistoryEnabled = other.passwordHistoryEnabled;
+        this.oldPasswords = other.oldPasswords;
+        this.defaultPolicy = other.defaultPolicy;
+    }
 }

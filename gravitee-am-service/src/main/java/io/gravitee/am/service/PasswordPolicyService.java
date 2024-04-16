@@ -16,15 +16,14 @@
 
 package io.gravitee.am.service;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordPolicy;
-import io.gravitee.am.service.model.UpdatePasswordPolicy;
-import io.reactivex.rxjava3.core.Flowable;
-
-import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.PasswordSettingsAware;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.model.NewPasswordPolicy;
+import io.gravitee.am.service.model.UpdatePasswordPolicy;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
@@ -62,12 +61,39 @@ public interface PasswordPolicyService {
      * @param referenceId the identifier of the reference
      * @param policyId the policy id to update
      * @param policy the new policy settings
-     * @param principal
-     * @return
+     * @param principal the user
+     * @return Password Policy
      */
     Single<PasswordPolicy> update(ReferenceType referenceType, String referenceId, String policyId, UpdatePasswordPolicy policy, User principal);
 
+    /**
+     * Retrieve a password policy by its reference type, reference ID, and policy ID.
+     *
+     * @param referenceType the type of reference (e.g., DOMAIN)
+     * @param referenceId the identifier of the reference
+     * @param policyId the ID of the password policy to retrieve
+     * @return a Maybe emitting the retrieved PasswordPolicy, if found; otherwise, completes
+     */
     Maybe<PasswordPolicy> findByReferenceAndId(ReferenceType referenceType, String referenceId, String policyId);
 
+    /**
+     * Retrieve the password policy associated with a user, based on the user's password settings awareness.
+     *
+     * @param user the user for whom to retrieve the password policy
+     * @param passwordSettingsAware the object that is aware of the password settings
+     * @param provider the identity provider
+     * @return a Maybe emitting the retrieved PasswordPolicy, if found; otherwise, completes
+     */
     Maybe<PasswordPolicy> retrievePasswordPolicy(io.gravitee.am.model.User user, PasswordSettingsAware passwordSettingsAware, IdentityProvider provider);
+
+    /**
+     * Set a password policy as the default policy for a reference entity (e.g., domain).
+     *
+     * @param referenceType the type of reference (e.g., DOMAIN)
+     * @param referenceId the identifier of the reference
+     * @param policyId the ID of the password policy to set as default
+     * @param principal the principal user performing the operation
+     * @return a Single emitting the updated PasswordPolicy that has been set as default
+     */
+    Single<PasswordPolicy> setDefaultPasswordPolicy(ReferenceType referenceType, String referenceId, String policyId, User principal);
 }
