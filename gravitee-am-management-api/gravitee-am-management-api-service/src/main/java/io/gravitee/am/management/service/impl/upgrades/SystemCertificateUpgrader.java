@@ -19,14 +19,12 @@ import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.model.SystemTaskStatus;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.service.DomainService;
-import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-
 
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.SYSTEM_CERTIFICATE_UPGRADER;
 
@@ -77,8 +75,7 @@ public class SystemCertificateUpgrader extends SystemTaskUpgrader {
     }
 
     private Single<Boolean> flagSystemCertificates(SystemTask task) {
-        return domainService.findAll()
-                .flatMapPublisher(Flowable::fromIterable)
+        return domainService.listAll()
                 .flatMap(domain -> certificateRepository.findByDomain(domain.getId())
                         .filter(cert ->
                                 // look for the certificates named "Default" and with a creation & update date close to the domain creation

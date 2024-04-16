@@ -756,7 +756,8 @@ public class DomainServiceImpl implements DomainService {
 
         // Get environment domain restrictions and validate all data are correctly defined.
         return domainValidator.validate(domain, environment.getDomainRestrictions())
-                .andThen(findAll()
+                .andThen(listAll()
+                        .toList()
                         .flatMapCompletable(domains -> virtualHostValidator.validateDomainVhosts(domain, domains)));
     }
 

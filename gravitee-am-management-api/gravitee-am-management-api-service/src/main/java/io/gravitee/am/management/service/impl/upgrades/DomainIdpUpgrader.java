@@ -20,7 +20,6 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
-import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,8 +53,7 @@ public class DomainIdpUpgrader implements Upgrader, Ordered {
     @Override
     public boolean upgrade() {
         logger.info("Applying domain idp upgrade");
-        domainService.findAll()
-                .flatMapObservable(Observable::fromIterable)
+        domainService.listAll()
                 .flatMapSingle(this::updateDefaultIdp)
                 .subscribe();
         return true;
