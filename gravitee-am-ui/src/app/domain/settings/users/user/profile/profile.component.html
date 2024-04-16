@@ -73,28 +73,28 @@
                 matInput
                 type="text"
                 placeholder="First name"
-                [disabled]="!editMode() || !canEdit"
+                [disabled]="!canEdit"
                 #firstName="ngModel"
                 name="firstName"
                 [(ngModel)]="user.firstName"
                 required
               />
-              <mat-hint *ngIf="editMode()">The first name of the User.</mat-hint>
+              <mat-hint>The first name of the User.</mat-hint>
               <mat-error *ngIf="firstName.errors?.required">Enter first name</mat-error>
             </mat-form-field>
-            <mat-form-field *ngIf="user.lastName || user.internal" appearance="outline" floatLabel="always">
+            <mat-form-field *ngIf="user.lastName" appearance="outline" floatLabel="always">
               <mat-label>Last name</mat-label>
               <input
                 matInput
                 type="text"
                 placeholder="Last name"
-                [disabled]="!editMode() || !canEdit"
+                [disabled]="!canEdit"
                 #lastName="ngModel"
                 name="lastName"
                 [(ngModel)]="user.lastName"
                 required
               />
-              <mat-hint *ngIf="editMode()">The last name of the User.</mat-hint>
+              <mat-hint>The last name of the User.</mat-hint>
               <mat-error *ngIf="lastName.errors?.required">Enter last name</mat-error>
             </mat-form-field>
           </div>
@@ -104,19 +104,19 @@
               <input
                 matInput
                 placeholder="Email"
-                [disabled]="!editMode() || !canEdit"
+                [disabled]="!canEdit"
                 #email="ngModel"
                 name="email"
                 [(ngModel)]="user.email"
                 [email]="user.email !== ''"
                 required
               />
-              <mat-hint *ngIf="editMode()">Email address for the User.</mat-hint>
+              <mat-hint>Email address for the User.</mat-hint>
               <mat-error *ngIf="email.errors?.required">Enter email</mat-error>
               <mat-error *ngIf="user.email && email.errors?.email">Not a valid email</mat-error>
             </mat-form-field>
           </div>
-          <div *ngIf="!isOrganizationUserAction() && editMode() && canEdit">
+          <div *ngIf="!isOrganizationUserAction() && canEdit">
             <app-select-applications
               [selectedApp]="user.applicationEntity"
               (onSelectApp)="onAppSelectionChanged($event)"
@@ -124,14 +124,14 @@
             ></app-select-applications>
           </div>
         </div>
-        <div class="gv-form-section" *ngIf="!isEmptyObject(user.additionalInformation) || editMode()">
+        <div class="gv-form-section" *ngIf="!isEmptyObject(user.additionalInformation)">
           <div class="gv-form-section-title">
             <h5>Additional information</h5>
             <small>Custom information about the user. These details are available in the user's profile.</small>
             <mat-divider></mat-divider>
           </div>
           <div>
-            <a (click)="addDynamicComponent()" class="gv-accent-link" *ngIf="editMode() && canEdit">(+) add user attribute</a>
+            <a (click)="addDynamicComponent()" class="gv-accent-link" *ngIf="canEdit">(+) add user attribute</a>
             <template #dynamic></template>
             <div *ngFor="let keyValuePair of user.additionalInformation | mapToIterable">
               <div *ngIf="keyValuePair.value && !asObject(keyValuePair.value)" fxLayout="row">
@@ -145,10 +145,9 @@
                     [name]="'claimValue' + keyValuePair.key"
                     [(ngModel)]="user.additionalInformation[keyValuePair.key]"
                     (change)="formChanged = true"
-                    [disabled]="!editMode()"
                   />
                 </mat-form-field>
-                <button mat-icon-button *ngIf="editMode()" (click)="removeExistingClaim(keyValuePair.key, $event)">
+                <button mat-icon-button (click)="removeExistingClaim(keyValuePair.key, $event)">
                   <mat-icon>clear</mat-icon>
                 </button>
               </div>
@@ -166,7 +165,7 @@
                     disabled
                   />
                 </mat-form-field>
-                <button mat-icon-button *ngIf="editMode()" (click)="removeExistingClaim(keyValuePair.key, $event)">
+                <button mat-icon-button (click)="removeExistingClaim(keyValuePair.key, $event)">
                   <mat-icon>clear</mat-icon>
                 </button>
               </div>
@@ -264,7 +263,7 @@
             </div>
           </div>
         </div>
-        <div fxLayout="row" *ngIf="editMode() && canEdit">
+        <div fxLayout="row" *ngIf="canEdit">
           <button mat-raised-button color="primary" [disabled]="(!userForm.valid || userForm.pristine) && !formChanged" type="submit">
             SAVE
           </button>
