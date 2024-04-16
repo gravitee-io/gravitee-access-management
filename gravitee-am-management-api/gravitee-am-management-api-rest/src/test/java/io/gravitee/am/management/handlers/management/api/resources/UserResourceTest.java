@@ -23,11 +23,13 @@ import io.gravitee.am.model.AccountAccessToken;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
+import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewAccountAccessToken;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.client.Entity;
@@ -36,11 +38,15 @@ import org.junit.Test;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static jakarta.ws.rs.HttpMethod.PATCH;
 import static org.glassfish.jersey.client.HttpUrlConnectorProvider.SET_METHOD_WORKAROUND;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -242,7 +248,7 @@ public class UserResourceTest extends JerseySpringTest {
         final String userId = "userId";
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Completable.complete()).when(userService).delete(eq(ReferenceType.DOMAIN), eq(domainId), eq(userId), any());
-        doReturn(Completable.complete()).when(userActivityService).deleteByDomainAndUser(eq(domainId), eq(userId));
+        doReturn(Completable.complete()).when(userActivityService).deleteByDomainAndUser(domainId, userId);
 
         final Response response = target("domains").path(domainId).path("users").path(userId).request().delete();
         assertEquals(HttpStatusCode.NO_CONTENT_204, response.getStatus());
@@ -342,16 +348,7 @@ public class UserResourceTest extends JerseySpringTest {
     @Test
     public void shouldNotUpdateUser_domainNotFound() {
         final String domainId = "domain-id";
-        final Domain mockDomain = new Domain();
-        mockDomain.setId(domainId);
-
         final String userId = "userId";
-        final User mockUser = new User();
-        mockUser.setId(userId);
-        mockUser.setUsername("user-username");
-        mockUser.setReferenceType(ReferenceType.DOMAIN);
-        mockUser.setReferenceId(domainId);
-        mockUser.setEnabled(false);
 
         doReturn(Maybe.empty()).when(domainService).findById(domainId);
 
@@ -395,8 +392,6 @@ public class UserResourceTest extends JerseySpringTest {
     @Test
     public void shouldUpdateUser_organization() {
         final String organization = "DEFAULT";
-        final Domain mockDomain = new Domain();
-        mockDomain.setId(organization);
 
         final String userId = "userId";
         final User mockUser = new User();
@@ -432,17 +427,7 @@ public class UserResourceTest extends JerseySpringTest {
     @Test
     public void shouldCreateAccountToken() {
         final String organization = "DEFAULT";
-        final Domain mockDomain = new Domain();
-        mockDomain.setId(organization);
-
         final String userId = "userId";
-        final User mockUser = new User();
-        mockUser.setId(userId);
-        mockUser.setUsername("username");
-        mockUser.setFirstName("firstname");
-        mockUser.setReferenceType(ReferenceType.ORGANIZATION);
-        mockUser.setReferenceId(organization);
-        mockUser.setEnabled(true);
 
         final NewAccountAccessToken newTokenRequest = new NewAccountAccessToken("test-token");
         final AccountAccessToken mockToken = new AccountAccessToken("tokenId", ReferenceType.ORGANIZATION, organization, userId, "issuer", newTokenRequest.name(), "qwerty123", new Date(), new Date());
@@ -463,5 +448,31 @@ public class UserResourceTest extends JerseySpringTest {
         assertEquals(userId, token.userId());
         assertNotNull(token.token());
     }
+
+    @Test
+    public void shouldGetUserTokens() {
+        final String domainId = "domain-id";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        final String userId = "user-id";
+        doReturn(Maybe.empty()).when(identityProviderService).findById(any());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+
+        var accessToken1 = new AccessToken();
+        accessToken1.setId("1");
+        var accessToken2 = new AccessToken();
+        accessToken2.setId("2");
+
+        doReturn(Flowable.just(List.of(accessToken1, accessToken2))).when(organizationUserService).findAccountAccessTokens("DEFAULT", userId);
+
+        final Response response = target("domains").path(domainId).path("users").path(userId).path("tokens").request().get();
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        final List<AccountAccessToken> tokens = readListEntity(response, AccountAccessToken.class);
+        assertEquals(2, tokens.size());
+        assertTrue(tokens.stream().allMatch(i -> i.tokenId().equals("1") || i.tokenId().equals("2")));
+    }
+
 
 }

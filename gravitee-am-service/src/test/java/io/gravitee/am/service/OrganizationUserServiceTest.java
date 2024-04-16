@@ -39,6 +39,11 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
+
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
+
+import java.util.List;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.*;
@@ -235,7 +240,7 @@ public class OrganizationUserServiceTest {
     @Test
     public void shouldUpdate_technicalException() {
         UpdateUser updateUser = Mockito.mock(UpdateUser.class);
-        when(userRepository.findById(eq(ReferenceType.ORGANIZATION), eq(ORG), eq("my-user"))).thenReturn(Maybe.just(new User()));
+        when(userRepository.findById(ReferenceType.ORGANIZATION, ORG, "my-user")).thenReturn(Maybe.just(new User()));
 
         TestObserver testObserver = new TestObserver();
         userService.update(ReferenceType.ORGANIZATION, ORG, "my-user", updateUser).subscribe(testObserver);
@@ -247,7 +252,7 @@ public class OrganizationUserServiceTest {
     @Test
     public void shouldUpdate_userNotFound() {
         UpdateUser updateUser = Mockito.mock(UpdateUser.class);
-        when(userRepository.findById(eq(ReferenceType.ORGANIZATION), eq(ORG), eq("my-user"))).thenReturn(Maybe.empty());
+        when(userRepository.findById(ReferenceType.ORGANIZATION, ORG, "my-user")).thenReturn(Maybe.empty());
 
         TestObserver testObserver = new TestObserver();
         userService.update(ReferenceType.ORGANIZATION, ORG, "my-user", updateUser).subscribe(testObserver);
@@ -345,6 +350,23 @@ public class OrganizationUserServiceTest {
                 .assertValue(token -> user.getReferenceId().equals(token.referenceId()))
                 .assertValue(token -> ReferenceType.ORGANIZATION == token.referenceType());
 
+    }
+
+    @Test
+    public void shouldFindTokensByUser() {
+        var accessToken1 = AccountAccessToken.builder().tokenId("1").build();
+        var accessToken2 = AccountAccessToken.builder().tokenId("2").build();
+        var userId = "userId";
+        var organizationId = "organizationId";
+        when(accessTokenRepository.findByUserId(ReferenceType.ORGANIZATION, organizationId, userId)).thenReturn(Flowable.just(accessToken2, accessToken1));
+
+        TestObserver<List<AccountAccessToken>> testObserver = userService.findUserAccessTokens(organizationId, userId).toList().test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(tokens -> tokens.size() == 2);
+        testObserver.assertValue(tokens -> tokens.stream().allMatch(i -> i.tokenId().equals("1") || i.tokenId().equals("2")));
+
+        verify(accessTokenRepository, times(1)).findByUserId(any(), any(), any());
     }
 
     @Test

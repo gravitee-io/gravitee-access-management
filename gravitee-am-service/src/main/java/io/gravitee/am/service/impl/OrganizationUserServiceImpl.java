@@ -37,8 +37,12 @@ import io.gravitee.am.service.exception.TooManyAccountTokenException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.model.NewAccountAccessToken;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -177,6 +181,11 @@ public class OrganizationUserServiceImpl extends AbstractUserService<Organizatio
                     return accessTokenRepository.create(token)
                             .map(created -> created.toCreateResponse(rawToken));
                 });
+    }
+
+    @Override
+    public Flowable<AccountAccessToken> findUserAccessTokens(String organisationId, String userId) {
+        return accessTokenRepository.findByUserId(ORGANIZATION, organisationId, userId);
     }
 
     @Override

@@ -39,8 +39,12 @@ import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -201,6 +205,10 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                 });
     }
 
+    @Override
+    public Flowable<AccountAccessToken> findAccountAccessTokens(String organizationId, String userId) {
+        return userService.findUserAccessTokens(organizationId, userId);
+    }
 
     @Override
     public Single<AccountAccessToken> createAccountAccessToken(String organizationId, String userId, NewAccountAccessToken newAccountToken, io.gravitee.am.identityprovider.api.User principal) {
