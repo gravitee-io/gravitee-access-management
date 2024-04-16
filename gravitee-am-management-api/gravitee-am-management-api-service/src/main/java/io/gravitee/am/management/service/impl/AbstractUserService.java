@@ -21,6 +21,7 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.MovingFactorUtils;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.management.service.CommonUserService;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.Application;
@@ -119,27 +120,36 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
     private Single<User> updateUser(ReferenceType referenceType, String referenceId, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal) {
         return userValidator.validate(updateUser).andThen(
                 getUserService().findById(referenceType, referenceId, id)
-                        .flatMap(user -> identityProviderManager.getUserProvider(user.getSource())
-                                .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(user.getSource())))
-                                // update the idp user
-                                .flatMap(userProvider -> userProvider.findByUsername(user.getUsername())
-                                        .switchIfEmpty(Single.error(() -> new UserNotFoundException(user.getUsername())))
-                                        .flatMap(idpUser -> userProvider.update(idpUser.getId(), convert(user.getUsername(), updateUser))))
-                                .flatMap(idpUser -> {
-                                    // set external id
-                                    updateUser.setExternalId(idpUser.getId());
-                                    return getUserService().update(referenceType, referenceId, id, updateUser);
-                                })
-                                .onErrorResumeNext(ex -> {
-                                    if (ex instanceof UserNotFoundException) {
-                                        // idp user does not exist, only update AM user
-                                        return getUserService().update(referenceType, referenceId, id, updateUser);
-                                    }
-                                    return Single.error(ex);
-                                })
+                        .flatMap(user -> updateWithProviderIfNecessary(updateUser, user))
+                        .flatMap(user -> getUserService().update(referenceType, referenceId, id, user)
                                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).oldValue(user).user(user1)))
                                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).throwable(throwable)))
-                        ));
+                        )
+        );
+    }
+
+    private Single<UpdateUser> updateWithProviderIfNecessary(UpdateUser updateUser, User user) {
+        final Maybe<UserProvider> userProvider = identityProviderManager.getUserProvider(user.getSource());
+        return userProvider.isEmpty().flatMap(noProvider -> noProvider ?
+                Single.just(updateUser) :
+                updateWithUserProvider(updateUser, user, userProvider.toSingle())
+        );
+    }
+
+    private Single<UpdateUser> updateWithUserProvider(UpdateUser updateUser, User user, Single<UserProvider> userProvider) {
+        return userProvider.flatMap(provider -> provider.findByUsername(user.getUsername())
+                .switchIfEmpty(Single.error(() -> new UserNotFoundException(user.getUsername())))
+                .flatMap(idpUser -> provider.update(idpUser.getId(), convert(user.getUsername(), updateUser)))
+                .map(idpUser -> {
+                    updateUser.setExternalId(idpUser.getId());
+                    return updateUser;
+                })).onErrorResumeNext(ex -> {
+            if (ex instanceof UserNotFoundException) {
+                // idp user does not exist, return the updated user to save in AM
+                return Single.just(updateUser);
+            }
+            return Single.error(ex);
+        });
     }
 
     @Override
@@ -322,7 +332,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
             additionalInformation.put(StandardClaims.EMAIL, updateUser.getEmail());
         }
         if (updateUser.getAdditionalInformation() != null) {
-            updateUser.getAdditionalInformation().forEach((k, v) -> additionalInformation.putIfAbsent(k, v));
+            updateUser.getAdditionalInformation().forEach(additionalInformation::putIfAbsent);
         }
         user.setAdditionalInformation(additionalInformation);
         return user;
@@ -352,7 +362,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
         return idpUser;
     }
 
-    private LoginAttemptCriteria createLoginAttemptCriteria(String domainId, String username){
+    private LoginAttemptCriteria createLoginAttemptCriteria(String domainId, String username) {
         return new LoginAttemptCriteria.Builder()
                 .domain(domainId)
                 .username(username)
@@ -379,21 +389,21 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
 
         Optional.ofNullable(user.getFactors()).ifPresent(enrolledFactors ->
 
-            user.getFactors()
-                    .stream()
-                    .filter(enrolledFactor -> Optional.ofNullable(enrolledFactor.getSecurity()).isPresent())
-                    .forEach(enrolledFactor -> {
+                user.getFactors()
+                        .stream()
+                        .filter(enrolledFactor -> Optional.ofNullable(enrolledFactor.getSecurity()).isPresent())
+                        .forEach(enrolledFactor -> {
 
-                        final var additionalData = enrolledFactor.getSecurity().getAdditionalData();
+                            final var additionalData = enrolledFactor.getSecurity().getAdditionalData();
 
-                        if (additionalData.containsKey(FactorDataKeys.KEY_MOVING_FACTOR)) {
-                            additionalData.put(
-                                    FactorDataKeys.KEY_MOVING_FACTOR,
-                                    MovingFactorUtils.generateInitialMovingFactor(user.getId())
-                            );
-                            enrolledFactor.setUpdatedAt(new Date());
-                        }
-                    })
+                            if (additionalData.containsKey(FactorDataKeys.KEY_MOVING_FACTOR)) {
+                                additionalData.put(
+                                        FactorDataKeys.KEY_MOVING_FACTOR,
+                                        MovingFactorUtils.generateInitialMovingFactor(user.getId())
+                                );
+                                enrolledFactor.setUpdatedAt(new Date());
+                            }
+                        })
         );
     }
 }
