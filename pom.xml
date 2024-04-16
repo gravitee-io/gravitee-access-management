@@ -72,7 +72,7 @@
     </modules>
 
     <properties>
-        <awaitility.version>4.2.0</awaitility.version>
+        <awaitility.version>4.2.1</awaitility.version>
         <gravitee-bom.version>7.0.23</gravitee-bom.version>
         <gravitee-common.version>4.2.0</gravitee-common.version>
         <gravitee-plugin.version>4.0.3</gravitee-plugin.version>
