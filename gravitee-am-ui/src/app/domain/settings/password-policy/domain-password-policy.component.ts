@@ -16,6 +16,7 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, Observable } from 'rxjs';
+import _ from 'lodash';
 
 import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
@@ -42,6 +43,9 @@ export class DomainPasswordPolicyComponent implements OnInit {
   editMode: boolean;
   policyId: string;
   idpToUpdate = new Map<string, boolean>();
+  providers = [];
+  linkedProviders = [];
+  displayLinkedProviders = false;
 
   @Input() passwordPolicy: DomainPasswordPolicy;
 
@@ -63,6 +67,7 @@ export class DomainPasswordPolicyComponent implements OnInit {
     } else {
       this.passwordPolicy = {};
     }
+    this.buildLinkedIdentityProviders(false);
     this.editMode = this.authService.hasPermissions(['domain_settings_update']);
   }
 
@@ -140,6 +145,30 @@ export class DomainPasswordPolicyComponent implements OnInit {
     this.passwordPolicy = { ...policy };
   }
 
+  private buildLinkedIdentityProviders(areProvidersLoaded: boolean): void {
+    if (areProvidersLoaded) {
+      // rebuild the list of selected IDP based on the modal result
+      // add new idp into the list
+      this.linkedProviders = this.linkedProviders.concat(
+        this.providers.filter((prov) => this.idpToUpdate.get(prov.id)).map((prov) => this.constructDataModel(prov)),
+      );
+      // exclude from the list IDP which has been unselected
+      // keep the IDP if missing from the idpToUpdate list
+      this.linkedProviders = this.linkedProviders.filter(
+        (prov) => this.idpToUpdate.get(prov.id) === undefined || this.idpToUpdate.get(prov.id),
+      );
+    } else {
+      this.providerService.findUserProvidersByDomain(this.domainId).subscribe((result) => {
+        this.providers = result;
+        this.linkedProviders = result
+          .filter((idp) => idp.passwordPolicy !== undefined && idp.passwordPolicy === this.policyId)
+          .map((prov) => this.constructDataModel(prov));
+      });
+    }
+    // remove duplicates if any
+    this.linkedProviders = _.uniqBy(this.linkedProviders, 'id');
+  }
+
   private getIdentityProviderDetails(type: string) {
     const identities = this.route.snapshot.data['identities'];
     if (identities && identities[type]) {
@@ -193,9 +222,21 @@ export class DomainPasswordPolicyComponent implements OnInit {
           });
           this.idpUpdated = true;
           this.formChanged = true;
+          this.buildLinkedIdentityProviders(true);
         }
       };
       this.dialogFactory.openDialog(unlinked, callback);
     });
+  }
+
+  switchDisplayProviders(): void {
+    this.displayLinkedProviders = !this.displayLinkedProviders;
+  }
+
+  removeIpd(id: string): void {
+    this.idpToUpdate.set(id, false);
+    this.idpUpdated = true;
+    this.formChanged = true;
+    this.buildLinkedIdentityProviders(true);
   }
 }
