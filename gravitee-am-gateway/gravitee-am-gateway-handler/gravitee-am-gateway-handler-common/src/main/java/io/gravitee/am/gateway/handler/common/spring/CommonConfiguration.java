@@ -209,7 +209,7 @@ public class CommonConfiguration {
         final String mfaChallengeSubject = environment.getProperty("user.mfaChallenge.email.subject", String.class, "Verification Code");
         final int mfaChallengeExpireAfter = environment.getProperty("user.mfaChallenge.token.expire-after", Integer.class, 300);
         final String mfaVerifyAttemptSubject = environment.getProperty("user.mfaVerifyAttempt.email.subject", String.class, "${msg('email.verify_attempt.subject')}");
-        final String registrationVerifySubject = environment.getProperty("user.registration.verify.email.subject", String.class, "${msg('email.registration_verify.subject')");
+        final String registrationVerifySubject = environment.getProperty("user.registration.verify.email.subject", String.class, "${msg('email.registration_verify.subject')}");
         final int userRegistrationVerifyTimeValue = environment.getProperty("user.registration.verify.time.value", Integer.class, 7);
         final TimeUnit userRegistrationVerifyTimeUnit = environment.getProperty("user.registration.verify.time.unit", TimeUnit.class, TimeUnit.DAYS);
 
