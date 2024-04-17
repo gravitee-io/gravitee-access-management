@@ -93,7 +93,7 @@ public class PasswordPolicy implements Resource {
     /**
      * If Password Policy is the default one
      */
-    private Boolean defaultPolicy;
+    private Boolean defaultPolicy = Boolean.FALSE;
 
     public PasswordPolicy(PasswordPolicy other) {
         this.id = other.id;

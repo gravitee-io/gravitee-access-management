@@ -132,7 +132,7 @@ public class JdbcPasswordPolicyRepository extends AbstractJdbcRepository impleme
 
     @Override
     public Maybe<PasswordPolicy> findByDefaultPolicy(ReferenceType referenceType, String referenceId) {
-        return passwordPolicyRepository.findByDefaultPolicy(referenceId, referenceType.name()).map(this::toEntity);
+        return passwordPolicyRepository.findByDefaultPolicy(referenceId, referenceType.name(), Boolean.TRUE).map(this::toEntity);
     }
 
     @Override
