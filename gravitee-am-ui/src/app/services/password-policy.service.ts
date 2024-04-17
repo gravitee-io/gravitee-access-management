@@ -42,7 +42,7 @@ export class PasswordPolicyService {
     return this.http.put<any>(this.domainsURL + domainId + this.passwordPolicyURL + '/' + policyId, policy);
   }
 
-  setDefaultPolicy(domainId: string, policyId: string): Observable<any>{
-    return this.http.post<any>(`${this.domainsURL}${domainId}${this.passwordPolicyURL}/${policyId}/default`,null);
+  setDefaultPolicy(domainId: string, policyId: string): Observable<any> {
+    return this.http.post<any>(`${this.domainsURL}${domainId}${this.passwordPolicyURL}/${policyId}/default`, null);
   }
 }

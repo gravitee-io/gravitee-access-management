@@ -61,7 +61,7 @@ export class PasswordPoliciesComponent implements OnInit {
   }
 
   protected selectDefault(id: string): void {
-    this.passwordPolicyService.setDefaultPolicy(this.domain.id, id).subscribe({
+    this.passwordPolicyService.setDefaultPolicy(this.domainId, id).subscribe({
       complete: () => this.snackbarService.open('Updated default Password policy'),
       error: () => this.snackbarService.open("Couldn't set default Password policy"),
     });

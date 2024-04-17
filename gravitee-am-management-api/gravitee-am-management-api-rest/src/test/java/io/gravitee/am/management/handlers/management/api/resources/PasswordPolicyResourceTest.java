@@ -184,4 +184,43 @@ public class PasswordPolicyResourceTest extends JerseySpringTest {
 
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
+
+    @Test
+    public void shouldSetDefault() throws JsonProcessingException {
+        var updatePasswordPolicy = new UpdatePasswordPolicy();
+        updatePasswordPolicy.setName("name");
+        updatePasswordPolicy.setExcludePasswordsInDictionary(true);
+        updatePasswordPolicy.setMaxLength(34);
+
+        var policy = new PasswordPolicy();
+        policy.setId(POLICY_ID);
+        policy.setName("name");
+        policy.setMaxLength(34);
+        policy.setReferenceId(DOMAIN_ID);
+        policy.setExcludePasswordsInDictionary(true);
+        policy.setReferenceType(ReferenceType.DOMAIN);
+        policy.setDefaultPolicy(Boolean.TRUE);
+
+        doReturn(Single.just(policy)).when(passwordPolicyService).setDefaultPasswordPolicy(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(POLICY_ID), any());
+        doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+
+        final Response response = target("domains")
+                .path(DOMAIN_ID)
+                .path("password-policies")
+                .path(POLICY_ID)
+                .path("default")
+                .request().post(Entity.json(null));
+
+        var result = objectMapper.readValue(response.readEntity(String.class), PasswordPolicy.class);
+        assertEquals(result.getId(), policy.getId());
+        assertEquals(result.getName(), policy.getName());
+        assertEquals(result.getMaxLength(), policy.getMaxLength());
+        assertEquals(result.getReferenceId(), policy.getReferenceId());
+        assertEquals(result.getReferenceType(), policy.getReferenceType());
+        assertEquals(result.getExcludePasswordsInDictionary(), policy.getExcludePasswordsInDictionary());
+        assertEquals(result.getDefaultPolicy(), policy.getDefaultPolicy());
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        verify(passwordPolicyService).setDefaultPasswordPolicy(any(), any(), any(), any());
+    }
 }
