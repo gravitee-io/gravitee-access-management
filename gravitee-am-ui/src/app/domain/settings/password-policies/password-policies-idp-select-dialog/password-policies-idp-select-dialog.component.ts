@@ -75,13 +75,6 @@ export class PasswordPoliciesIdpSelectDialogComponent implements OnInit {
     this.dialogRef.close(this.result);
   }
 
-  getIcon(idp: IdpDataModel): string {
-    if (idp?.type?.icon) {
-      return `<img width="24" height="24" ngSrc="${idp.type.icon}" alt="${idp.type.name} image" title="${idp.type.name}"/>`;
-    }
-    return `<span class="material-icons">storage</span>`;
-  }
-
   select(rowId: string): void {
     const value: boolean = this.selectionModel.get(rowId);
     this.selectionModel.set(rowId, !value);
