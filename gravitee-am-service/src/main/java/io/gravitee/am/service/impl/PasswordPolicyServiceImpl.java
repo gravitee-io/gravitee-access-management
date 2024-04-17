@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.gravitee.am.service.impl;
 
 
@@ -89,26 +88,23 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
         final var entity = policy.toPasswordPolicy(referenceType, referenceId);
 
         return passwordPolicyRepository.findByDefaultPolicy(referenceType, referenceId)
-                .flatMap(__ -> {
-                    entity.setDefaultPolicy(Boolean.FALSE);
-                    return Maybe.just(entity);
-                })
+                .flatMap(__ -> Maybe.just(entity))
                 .switchIfEmpty(Single.fromCallable(() -> {
                     entity.setDefaultPolicy(Boolean.TRUE);
                     return entity;
                 }))
-                .flatMap(e -> passwordPolicyRepository.create(e)
-                        .flatMap(createdPolicy -> {
-                            Event event = new Event(Type.PASSWORD_POLICY, new Payload(createdPolicy.getId(), referenceType, referenceId, Action.CREATE));
-                            return eventService.create(event).flatMap(___ -> Single.just(createdPolicy));
-                        })
-                        .doOnSuccess(createdPolicy -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
-                                .principal(principal)
-                                .type(EventType.PASSWORD_POLICY_CREATED)
-                                .policy(createdPolicy)))
-                        .doOnError(error -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
-                                .principal(principal)
-                                .type(EventType.PASSWORD_POLICY_CREATED).throwable(error))));
+                .flatMap(e -> passwordPolicyRepository.create(e))
+                .flatMap(createdPolicy -> {
+                    Event event = new Event(Type.PASSWORD_POLICY, new Payload(createdPolicy.getId(), referenceType, referenceId, Action.CREATE));
+                    return eventService.create(event).flatMap(__ -> Single.just(createdPolicy));
+                })
+                .doOnSuccess(createdPolicy -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.PASSWORD_POLICY_CREATED)
+                        .policy(createdPolicy)))
+                .doOnError(error -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.PASSWORD_POLICY_CREATED).throwable(error)));
     }
 
     @Override
@@ -139,15 +135,22 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
     @Override
     public Single<PasswordPolicy> setDefaultPasswordPolicy(ReferenceType referenceType, String referenceId, String policyId, User principal) {
         log.debug("Setting default policy for id {} for {} {}", policyId, referenceType, referenceId);
-        return passwordPolicyRepository.findByDefaultPolicy(referenceType, referenceId)
-                .flatMapSingle(defaultPolicy -> {
-                    PasswordPolicy nonDefaultPasswordPolicy = new PasswordPolicy(defaultPolicy);
-                    nonDefaultPasswordPolicy.setUpdatedAt(new Date());
-                    nonDefaultPasswordPolicy.setDefaultPolicy(Boolean.FALSE);
-                    return updatePasswordPolicy(referenceType, referenceId, nonDefaultPasswordPolicy, defaultPolicy, principal)
-                            .doOnError((err) -> Single.just(new PasswordPolicy()))
-                            .flatMap(__ -> setNewDefaultPolicy(referenceType, referenceId, policyId, principal));
-                }).switchIfEmpty(setNewDefaultPolicy(referenceType, referenceId, policyId, principal));
+        return passwordPolicyRepository.findByReferenceAndId(referenceType, referenceId, policyId)
+                .switchIfEmpty(Single.error(() -> new PasswordPolicyNotFoundException(policyId)))
+                .flatMap(policyToUpdate -> passwordPolicyRepository.findByDefaultPolicy(referenceType, referenceId)
+                        .flatMapSingle(defaultPolicy -> {
+                            PasswordPolicy nonDefaultPasswordPolicy = new PasswordPolicy(defaultPolicy);
+                            nonDefaultPasswordPolicy.setUpdatedAt(new Date());
+                            nonDefaultPasswordPolicy.setDefaultPolicy(Boolean.FALSE);
+                            return updatePasswordPolicy(referenceType, referenceId, nonDefaultPasswordPolicy, defaultPolicy, principal)
+                                    .flatMap(__ -> setNewDefaultPolicy(referenceType, referenceId, policyToUpdate, principal));
+                        })
+                        .switchIfEmpty(Single.defer(()->setNewDefaultPolicy(referenceType, referenceId, policyToUpdate, principal)))
+                )
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to set default policy", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to set default policy", ex));
+                });
     }
 
     @Override
@@ -162,12 +165,12 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
                 .map(policyId -> passwordPolicyRepository.findByReferenceAndId(user.getReferenceType(), user.getReferenceId(), policyId))
                 .orElseGet(() ->
                         passwordSettingsAware == null ? defaultPasswordPolicy(user) : Optional.of(passwordSettingsAware)
-                            .map(PasswordSettingsAware::getPasswordSettings)
-                            .filter(not(PasswordSettings::isInherited))
-                            .map(PasswordSettings::toPasswordPolicy)
-                            .map(Maybe::just)
-                            .orElse(Maybe.empty())
-                            .switchIfEmpty(defaultPasswordPolicy(user))
+                                .map(PasswordSettingsAware::getPasswordSettings)
+                                .filter(not(PasswordSettings::isInherited))
+                                .map(PasswordSettings::toPasswordPolicy)
+                                .map(Maybe::just)
+                                .orElse(Maybe.empty())
+                                .switchIfEmpty(defaultPasswordPolicy(user))
                 );
     }
 
@@ -175,15 +178,11 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
         return passwordPolicyRepository.findByDefaultPolicy(user.getReferenceType(), user.getReferenceId());
     }
 
-    private Single<PasswordPolicy> setNewDefaultPolicy(ReferenceType referenceType, String referenceId, String policyId, User principal) {
-        return passwordPolicyRepository.findByReferenceAndId(referenceType, referenceId, policyId)
-                .switchIfEmpty(Single.error(() -> new PasswordPolicyNotFoundException(policyId)))
-                .flatMap(existingPolicy -> {
-                    PasswordPolicy updatedPasswordPolicy = new PasswordPolicy(existingPolicy);
-                    updatedPasswordPolicy.setUpdatedAt(new Date());
-                    updatedPasswordPolicy.setDefaultPolicy(Boolean.TRUE);
-                    return updatePasswordPolicy(referenceType, referenceId, updatedPasswordPolicy, existingPolicy, principal);
-                });
+    private Single<PasswordPolicy> setNewDefaultPolicy(ReferenceType referenceType, String referenceId, PasswordPolicy policyToUpdate, User principal) {
+        PasswordPolicy updatedPasswordPolicy = new PasswordPolicy(policyToUpdate);
+        updatedPasswordPolicy.setUpdatedAt(new Date());
+        updatedPasswordPolicy.setDefaultPolicy(Boolean.TRUE);
+        return updatePasswordPolicy(referenceType, referenceId, updatedPasswordPolicy, policyToUpdate, principal);
     }
 
     private Single<PasswordPolicy> updatePasswordPolicy(ReferenceType referenceType, String referenceId, PasswordPolicy updatedPasswordPolicy, PasswordPolicy oldPasswordPolicy, User principal) {

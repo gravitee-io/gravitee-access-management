@@ -41,7 +41,7 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoPasswordPolicyRepository extends AbstractManagementMongoRepository implements PasswordPolicyRepository {
     private static final String COLLECTION_NAME = "password_policies";
-    public static final String FIELD_DEFAULT_POLICY = "defaultPolicy";
+    private static final String FIELD_DEFAULT_POLICY = "defaultPolicy";
     private MongoCollection<PasswordPolicyMongo> mongoCollection;
 
     @PostConstruct
