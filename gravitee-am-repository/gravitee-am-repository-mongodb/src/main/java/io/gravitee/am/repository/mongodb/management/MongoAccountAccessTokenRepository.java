@@ -96,7 +96,6 @@ public class MongoAccountAccessTokenRepository extends AbstractManagementMongoRe
                 .referenceType(ReferenceType.valueOf(mongo.getReferenceType()))
                 .referenceId(mongo.getReferenceId())
                 .userId(mongo.getUserId())
-                .issuerUsername(mongo.getIssuerUsername())
                 .issuerId(mongo.getIssuerId())
                 .name(mongo.getName())
                 .token(mongo.getToken())
@@ -109,7 +108,6 @@ public class MongoAccountAccessTokenRepository extends AbstractManagementMongoRe
         var now = Date.from(Instant.now());
         mongo.setId(Objects.requireNonNullElseGet(entity.tokenId(), RandomString::generate));
         mongo.setUserId(entity.userId());
-        mongo.setIssuerUsername(entity.issuerUsername());
         mongo.setIssuerId(entity.issuerId());
         mongo.setReferenceType(entity.referenceType().name());
         mongo.setReferenceId(entity.referenceId());

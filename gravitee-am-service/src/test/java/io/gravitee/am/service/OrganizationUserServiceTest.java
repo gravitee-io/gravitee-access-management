@@ -25,7 +25,13 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.AccountAccessTokenRepository;
 import io.gravitee.am.repository.management.api.OrganizationUserRepository;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.exception.EmailFormatInvalidException;
+import io.gravitee.am.service.exception.InvalidUserException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.TooManyAccountTokenException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserInvalidException;
+import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.impl.OrganizationUserServiceImpl;
 import io.gravitee.am.service.model.NewAccountAccessToken;
 import io.gravitee.am.service.model.NewUser;
@@ -39,23 +45,33 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
-
-import io.reactivex.rxjava3.subscribers.TestSubscriber;
-
-import java.util.List;
-
 import org.junit.Test;
+import org.junit.platform.commons.util.StringUtils;
 import org.junit.runner.RunWith;
-import org.mockito.*;
+import org.mockito.ArgumentMatcher;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 import static io.gravitee.am.common.audit.EventType.USER_CREATED;
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
-import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
-import static org.mockito.Mockito.*;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_LAX_PATTERN;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_STRICT_PATTERN;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.USERNAME_PATTERN;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -338,11 +354,16 @@ public class OrganizationUserServiceTest {
         user.setReferenceType(ReferenceType.ORGANIZATION);
         user.setReferenceId(ORG);
 
+        var issuerUserId = "issuerUserId";
+        var issuerUser = new User();
+        issuerUser.setId(issuerUserId);
+        when(userRepository.findById(issuerUserId)).thenReturn(Maybe.just(issuerUser));
+
         when(accessTokenRepository.create(any())).thenAnswer(invocation -> Single.just(invocation.getArguments()[0]));
         when(accessTokenRepository.findByUserId(any(), any(), any())).thenAnswer(invocation -> Flowable.empty());
 
         var newTokenRequest = new NewAccountAccessToken("test-token");
-        userService.generateAccountAccessToken(user, newTokenRequest, "issuer")
+        userService.generateAccountAccessToken(user, newTokenRequest, issuerUserId)
                 .test()
                 .assertComplete()
                 .assertNoErrors()
@@ -354,9 +375,9 @@ public class OrganizationUserServiceTest {
 
     @Test
     public void shouldFindTokensByUser() {
-        var accessToken1 = AccountAccessToken.builder().tokenId("1").build();
-        var accessToken2 = AccountAccessToken.builder().tokenId("2").build();
         var userId = "userId";
+        var accessToken1 = AccountAccessToken.builder().tokenId("1").userId(userId).build();
+        var accessToken2 = AccountAccessToken.builder().tokenId("2").userId(userId).build();
         var organizationId = "organizationId";
         when(accessTokenRepository.findByUserId(ReferenceType.ORGANIZATION, organizationId, userId)).thenReturn(Flowable.just(accessToken2, accessToken1));
 
@@ -364,7 +385,47 @@ public class OrganizationUserServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(tokens -> tokens.size() == 2);
-        testObserver.assertValue(tokens -> tokens.stream().allMatch(i -> i.tokenId().equals("1") || i.tokenId().equals("2")));
+        testObserver.assertValue(tokens -> tokens.stream().allMatch(i -> i.tokenId().equals("1") || i.tokenId().equals("2") && StringUtils.isBlank(i.issuerId())));
+
+        verify(accessTokenRepository, times(1)).findByUserId(any(), any(), any());
+    }
+
+    @Test
+    public void shouldFindTokensByUserWithTokenIssuer() {
+        var userId = "userId";
+        var issuerUserId = "issuerUserId";
+        var organizationId = "organizationId";
+        var accessToken1 = AccountAccessToken.builder().tokenId("1").userId(userId).issuerId(issuerUserId).build();
+        var accessToken2 = AccountAccessToken.builder().tokenId("2").userId(userId).issuerId(issuerUserId).build();
+        var issuerUser = new User();
+        issuerUser.setId(issuerUserId);
+        when(accessTokenRepository.findByUserId(ReferenceType.ORGANIZATION, organizationId, userId)).thenReturn(Flowable.just(accessToken2, accessToken1));
+        when(userRepository.findById(issuerUserId)).thenReturn(Maybe.just(issuerUser));
+
+        TestObserver<List<AccountAccessToken>> testObserver = userService.findUserAccessTokens(organizationId, userId).toList().test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(tokens -> tokens.size() == 2);
+        testObserver.assertValue(tokens -> tokens.stream().allMatch(i -> i.tokenId().equals("1") || i.tokenId().equals("2") && i.issuerId().equals(issuerUserId)));
+
+        verify(accessTokenRepository, times(1)).findByUserId(any(), any(), any());
+    }
+
+    @Test
+    public void shouldFindTokensByUserWithTokenIssuerNotFound() {
+        var userId = "userId";
+        var issuerUserId = "issuerUserId";
+        var organizationId = "organizationId";
+        var accessToken1 = AccountAccessToken.builder().tokenId("1").userId(userId).issuerId(issuerUserId).build();
+        var accessToken2 = AccountAccessToken.builder().tokenId("2").userId(userId).issuerId(issuerUserId).build();
+        when(accessTokenRepository.findByUserId(ReferenceType.ORGANIZATION, organizationId, userId)).thenReturn(Flowable.just(accessToken2, accessToken1));
+        when(userRepository.findById(issuerUserId)).thenReturn(Maybe.empty());
+
+        TestObserver<List<AccountAccessToken>> testObserver = userService.findUserAccessTokens(organizationId, userId).toList().test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(tokens -> tokens.size() == 2);
+        testObserver.assertValue(tokens -> tokens.stream().allMatch(i -> (i.tokenId().equals("1") || i.tokenId().equals("2")) && StringUtils.isBlank(i.issuerUsername())));
 
         verify(accessTokenRepository, times(1)).findByUserId(any(), any(), any());
     }
