@@ -28,6 +28,7 @@ public class AccountAccessTokenMongo extends Auditable {
     private String referenceType;
     private String referenceId;
     private String userId;
+    private String issuerUsername;
     private String issuerId;
     private String name;
     private String token;

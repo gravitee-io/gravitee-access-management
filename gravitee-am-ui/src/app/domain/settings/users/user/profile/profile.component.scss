@@ -29,3 +29,22 @@ a.gv-accent-link {
   color: #00000061;
   font-size: 12px;
 }
+
+:host ::ng-deep .ngx-datatable.material {
+  .datatable-header {
+    .datatable-header-cell {
+      padding: 10px 10px 10px 19px;
+      border-width: 1px 0;
+      border-style: solid;
+      border-color: #d3d5dc;
+      background-color: #f7f8fd;
+      color: #606274;
+      font-size: 12px;
+      font-weight: 700;
+    }
+  }
+}
+
+table.dataTable tbody td {
+  vertical-align: top;
+}

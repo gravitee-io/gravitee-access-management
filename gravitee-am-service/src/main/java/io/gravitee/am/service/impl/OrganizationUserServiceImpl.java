@@ -167,6 +167,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<Organizatio
                 .referenceType(ORGANIZATION)
                 .referenceId(user.getReferenceId())
                 .userId(user.getId())
+                .issuerUsername(user.getUsername())
                 .issuerId(issuer)
                 .name(newAccountToken.name())
                 .token(accountAccessTokenEncoder.encode(rawToken))

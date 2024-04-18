@@ -55,9 +55,9 @@ export class AccountTokenCopyDialogComponent {
     this.snackbarService.open(message);
   }
 
-  curlCommand(copy: boolean = false) {
+  curlCommand(copy: boolean = false): string {
     if (copy) {
-      return `curl  ${AppConfig.settings.organizationBaseURL.replace(':organizationId', this.orgId)}/environments -H'Authorization: Bearer ${this.token}' `;
+      return `curl  ${AppConfig.settings.organizationBaseURL.replace(':organizationId', this.orgId)}/environments -H 'Authorization: Bearer ${this.token}' `;
     } else {
       return `curl  ${AppConfig.settings.organizationBaseURL.replace(':organizationId', this.orgId)}/environments \n -H'Authorization: Bearer ${this.token}' `;
     }

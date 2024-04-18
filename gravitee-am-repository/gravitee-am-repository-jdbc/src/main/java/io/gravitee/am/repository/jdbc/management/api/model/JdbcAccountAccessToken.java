@@ -39,6 +39,8 @@ public class JdbcAccountAccessToken extends Auditable {
     private String referenceId;
     @Column("user_id")
     private String userId;
+    @Column("issuer_username")
+    private String issuerUsername;
     @Column("issuer_id")
     private String issuerId;
     @Column("name")
