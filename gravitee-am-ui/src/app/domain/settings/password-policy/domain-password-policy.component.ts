@@ -20,12 +20,12 @@ import { forkJoin, Observable } from 'rxjs';
 import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { PasswordPolicyService } from '../../../services/password-policy.service';
-import { IdpDataModel } from '../password-policies/password-policies-idp-select-dialog/password-policies-idp-select-table/password-policies-idp-select-table.component';
 import {
   DialogCallback,
   PasswordPoliciesIdpSelectDialogFactory,
 } from '../password-policies/password-policies-idp-select-dialog/password-policies-idp-select-dialog.factory';
 import { ProviderService } from '../../../services/provider.service';
+import { IdpDataModel } from '../password-policies/password-policies-idp-select-dialog/password-policies-idp-select-dialog.component';
 
 import { DomainPasswordPolicy } from './domain-password-policy.model';
 
@@ -147,11 +147,6 @@ export class DomainPasswordPolicyComponent implements OnInit {
     }
   }
 
-  private getAssociatedPolicyName(id: string): string {
-    const policies = this.route.snapshot.data['policies'];
-    return policies.find((pp) => pp.id === id)?.name;
-  }
-
   private updateIdps() {
     const observables: Observable<any>[] = [];
     this.idpToUpdate.forEach((checked: boolean, id: string) => {
@@ -164,12 +159,11 @@ export class DomainPasswordPolicyComponent implements OnInit {
     });
   }
 
-  private constructDataModel(idp: any, externalLinked: boolean): IdpDataModel {
+  private constructDataModel(idp: any): IdpDataModel {
     return {
       id: idp.id,
       name: idp.name,
-      association: externalLinked ? this.getAssociatedPolicyName(idp.passwordPolicy) : undefined,
-      selected: externalLinked ? false : this.determinateSelected(idp),
+      selected: this.determinateSelected(idp),
       type: {
         name: this.getIdentityProviderDetails(idp.type)?.displayName,
         icon: this.getIdentityProviderDetails(idp.type)?.icon,
@@ -191,10 +185,7 @@ export class DomainPasswordPolicyComponent implements OnInit {
     this.providerService.findUserProvidersByDomain(this.domainId).subscribe((providers) => {
       const unlinked = providers
         .filter((idp) => idp.passwordPolicy === undefined || idp.passwordPolicy === this.policyId)
-        .map((idp) => this.constructDataModel(idp, false));
-      const linked = providers
-        .filter((idp) => idp.passwordPolicy !== undefined && idp.passwordPolicy !== this.policyId)
-        .map((idp) => this.constructDataModel(idp, true));
+        .map((idp) => this.constructDataModel(idp));
       const callback: DialogCallback = (result: Map<string, boolean>) => {
         if (result && result.size > 0) {
           result.forEach((value: boolean, key: string) => {
@@ -204,13 +195,7 @@ export class DomainPasswordPolicyComponent implements OnInit {
           this.formChanged = true;
         }
       };
-      this.dialogFactory.openDialog(
-        {
-          unlinkedIdps: unlinked,
-          linkedIdps: linked,
-        },
-        callback,
-      );
+      this.dialogFactory.openDialog(unlinked, callback);
     });
   }
 }
