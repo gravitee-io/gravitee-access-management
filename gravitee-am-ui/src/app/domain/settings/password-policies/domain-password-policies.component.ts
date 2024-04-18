@@ -46,7 +46,7 @@ export class PasswordPoliciesComponent implements OnInit {
 
   private loadPasswordPolicies(): void {
     this.passwordPolicyService.list(this.domainId).subscribe((policies) => {
-      this.rows = policies;
+      this.rows = policies ? policies : [];
     });
   }
 

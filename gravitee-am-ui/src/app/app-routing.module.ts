@@ -1763,7 +1763,6 @@ export const routes: Routes = [
                             component: DomainPasswordPolicyComponent,
                             canActivate: [AuthGuard],
                             resolve: {
-                              policies: PasswordPoliciesResolver,
                               identities: IdentitiesResolver,
                             },
                             data: {

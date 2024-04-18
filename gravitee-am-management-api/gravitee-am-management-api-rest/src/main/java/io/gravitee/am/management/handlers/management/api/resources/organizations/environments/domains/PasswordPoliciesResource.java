@@ -18,12 +18,12 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 
 import io.gravitee.am.management.handlers.management.api.model.PasswordPolicyEntity;
+import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewPasswordPolicy;
@@ -55,6 +55,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.net.URI;
 import java.util.List;
 
+import static java.util.Comparator.comparing;
+import static java.util.Comparator.naturalOrder;
+import static java.util.Comparator.nullsLast;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author Rafal PODLES (rafal.podles at graviteesource.com)
@@ -68,7 +72,7 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
     private PasswordPolicyService passwordPolicyService;
 
     @Autowired
-    private IdentityProviderService identityProviderService;
+    private IdentityProviderServiceProxy identityProviderService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -93,7 +97,8 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
                         .switchIfEmpty(Maybe.error(() -> new DomainNotFoundException(domain)))
                         .flatMapPublisher(___ ->
                                 passwordPolicyService.findByDomain(domain)
-                                        .flatMapSingle(pp ->
+                                        .sorted(comparing(PasswordPolicy::getCreatedAt, nullsLast(naturalOrder())))
+                                        .concatMapSingle(pp ->
                                                 identityProviderService.findWithPasswordPolicy(ReferenceType.DOMAIN, domain, pp.getId())
                                                         .map(IdentityProvider::getName)
                                                         .toList()
@@ -102,7 +107,13 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
                         )
                         .toList()
                 )
-                .subscribe(response::resume, response::resume);
+                .subscribe(policies -> {
+                    if (policies.isEmpty()) {
+                        response.resume(Response.noContent().build());
+                    } else {
+                        response.resume(policies);
+                    }
+                }, response::resume);
     }
 
     @POST
