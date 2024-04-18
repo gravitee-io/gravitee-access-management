@@ -430,7 +430,7 @@ public class UserResourceTest extends JerseySpringTest {
         final String userId = "userId";
 
         final NewAccountAccessToken newTokenRequest = new NewAccountAccessToken("test-token");
-        final AccountAccessToken mockToken = new AccountAccessToken("tokenId", ReferenceType.ORGANIZATION, organization, userId, "issuer", newTokenRequest.name(), "qwerty123", new Date(), new Date());
+        final AccountAccessToken mockToken = new AccountAccessToken("tokenId", ReferenceType.ORGANIZATION, organization, userId, "issuer", "123", newTokenRequest.name(), "qwerty123", new Date(), new Date());
 
         doReturn(Single.just(mockToken)).when(organizationUserService).createAccountAccessToken(eq(organization), eq(userId), any(), any());
 
@@ -459,10 +459,8 @@ public class UserResourceTest extends JerseySpringTest {
         doReturn(Maybe.empty()).when(identityProviderService).findById(any());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
 
-        var accessToken1 = new AccessToken();
-        accessToken1.setId("1");
-        var accessToken2 = new AccessToken();
-        accessToken2.setId("2");
+        var accessToken1 = AccountAccessToken.builder().tokenId("1").build();
+        var accessToken2 = AccountAccessToken.builder().tokenId("2").build();
 
         doReturn(Flowable.just(List.of(accessToken1, accessToken2))).when(organizationUserService).findAccountAccessTokens("DEFAULT", userId);
 

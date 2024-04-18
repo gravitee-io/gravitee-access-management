@@ -20,7 +20,6 @@ import { filter, switchMap, tap } from 'rxjs/operators';
 import { isObject } from 'lodash';
 import { MatDialog } from '@angular/material/dialog';
 import { GIO_DIALOG_WIDTH } from '@gravitee/ui-particles-angular';
-import { Subject } from 'rxjs';
 
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { DialogService } from '../../../../../services/dialog.service';
@@ -82,6 +81,9 @@ export class UserProfileComponent implements OnInit {
       this.canDelete = this.authService.hasPermissions(['domain_user_delete']);
     }
     this.user = this.route.snapshot.data['user'];
+    this.organizationService.getAccountTokens(this.route.snapshot.data['user'].id).subscribe((tokens) => {
+      this.accountTokens = tokens;
+    });
   }
 
   update() {
@@ -281,14 +283,16 @@ export class UserProfileComponent implements OnInit {
       .afterClosed()
       .pipe(
         switchMap((result: AccountTokenCreationDialogResult) => {
-          // TODO apply flat switchMap
           if (result) {
             return this.organizationService.createAccountToken(this.user.id, result.name);
           } else {
-            return new Subject();
+            const message = 'Failed to generate account token';
+            this.snackbarService.open(message);
+            throw new Error(message);
           }
         }),
         tap((data) => {
+          this.accountTokens = [...this.accountTokens, data];
           this.snackbarService.open('Account token generated');
           return data;
         }),
