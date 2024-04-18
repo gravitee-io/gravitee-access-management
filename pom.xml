@@ -72,7 +72,7 @@
     </modules>
 
     <properties>
-        <awaitility.version>4.2.0</awaitility.version>
+        <awaitility.version>4.2.1</awaitility.version>
         <gravitee-bom.version>8.0.4</gravitee-bom.version>
         <gravitee-common.version>4.2.0</gravitee-common.version>
         <gravitee-plugin.version>4.0.3</gravitee-plugin.version>
@@ -91,8 +91,8 @@
         <freemarker.version>2.3.32</freemarker.version>
         <jsoup.version>1.16.1</jsoup.version>
         <snakeyaml.version>2.0</snakeyaml.version>
-        <angus-mail.version>2.0.2</angus-mail.version>
-        <angus-activation.version>2.0.1</angus-activation.version>
+        <angus-mail.version>2.0.3</angus-mail.version>
+        <angus-activation.version>2.0.2</angus-activation.version>
         <mongodb-driver-reactivestreams.version>4.11.1</mongodb-driver-reactivestreams.version>
         <embed.mongo.version>4.7.1</embed.mongo.version>
         <json-patch.version>1.9</json-patch.version>
