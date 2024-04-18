@@ -40,9 +40,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -167,7 +164,6 @@ public class OrganizationUserServiceImpl extends AbstractUserService<Organizatio
                 .referenceType(ORGANIZATION)
                 .referenceId(user.getReferenceId())
                 .userId(user.getId())
-                .issuerUsername(user.getUsername())
                 .issuerId(issuer)
                 .name(newAccountToken.name())
                 .token(accountAccessTokenEncoder.encode(rawToken))
@@ -180,13 +176,21 @@ public class OrganizationUserServiceImpl extends AbstractUserService<Organizatio
                         return Single.error(new TooManyAccountTokenException(tokensLimit));
                     }
                     return accessTokenRepository.create(token)
-                            .map(created -> created.toCreateResponse(rawToken));
+                            .map(created -> created.toCreateResponse(rawToken))
+                            .flatMap(this::getAccountAccessTokenWithIssuerUsername);
                 });
     }
 
     @Override
     public Flowable<AccountAccessToken> findUserAccessTokens(String organisationId, String userId) {
-        return accessTokenRepository.findByUserId(ORGANIZATION, organisationId, userId);
+        return accessTokenRepository.findByUserId(ORGANIZATION, organisationId, userId)
+                .flatMap(token -> getAccountAccessTokenWithIssuerUsername(token).toFlowable());
+    }
+
+    private Single<AccountAccessToken> getAccountAccessTokenWithIssuerUsername(AccountAccessToken token) {
+        return token.issuerId() == null ? Single.just(token) :
+                userRepository.findById(token.issuerId()).defaultIfEmpty(new User())
+                        .map(user -> token.toBuilder().issuerUsername(user.getUsername()).build());
     }
 
     @Override
