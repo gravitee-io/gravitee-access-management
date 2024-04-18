@@ -36,9 +36,12 @@ import jakarta.ws.rs.core.Response;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import static java.time.temporal.ChronoUnit.HOURS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -144,16 +147,23 @@ public class PasswordPoliciesResourceTest extends JerseySpringTest {
     @Test
     public void shouldGetPasswordPolicies() {
 
+        PasswordPolicy passwordPolicyNoDate = new PasswordPolicy();
+        passwordPolicyNoDate.setId("policyIdNoDate");
+        passwordPolicyNoDate.setName("policyNoDate");
+        passwordPolicyNoDate.setDefaultPolicy(Boolean.TRUE);
         PasswordPolicy passwordPolicy1 = new PasswordPolicy();
         passwordPolicy1.setId("policyId1");
         passwordPolicy1.setName("policy1");
         passwordPolicy1.setDefaultPolicy(Boolean.TRUE);
+        passwordPolicy1.setCreatedAt(new Date(Instant.now().toEpochMilli()));
         PasswordPolicy passwordPolicy2 = new PasswordPolicy();
         passwordPolicy2.setId("policyId2");
         passwordPolicy2.setName("policy2");
+        passwordPolicy2.setCreatedAt(new Date(Instant.now().minus(1, HOURS).toEpochMilli()));
         passwordPolicy2.setDefaultPolicy(Boolean.FALSE);
 
-        doReturn(Flowable.just(passwordPolicy1, passwordPolicy2)).when(passwordPolicyService).findByDomain(DOMAIN_ID);
+        doReturn(Flowable.just(passwordPolicy1, passwordPolicyNoDate, passwordPolicy2)).when(passwordPolicyService).findByDomain(DOMAIN_ID);
+        when(identityProviderService.findWithPasswordPolicy(any(), any(), any())).thenReturn(Flowable.empty());
 
         final Response response = target("domains")
                 .path(DOMAIN_ID)
@@ -163,13 +173,17 @@ public class PasswordPoliciesResourceTest extends JerseySpringTest {
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
         List<PasswordPolicyEntity> policies = readListEntity(response, PasswordPolicyEntity.class);
-        assertEquals(2, policies.size());
+        assertEquals(3, policies.size());
+        assertEquals(passwordPolicy2.getId(), policies.get(0).getId());
+        assertEquals(passwordPolicy1.getId(), policies.get(1).getId());
+        assertEquals(passwordPolicyNoDate.getId(), policies.get(2).getId());
     }
 
     @Test
     public void shouldGetPasswordPoliciesReturnNoContent() {
 
         doReturn(Flowable.empty()).when(passwordPolicyService).findByDomain(DOMAIN_ID);
+        when(identityProviderService.findWithPasswordPolicy(any(), any(), any())).thenReturn(Flowable.empty());
 
         final Response response = target("domains")
                 .path(DOMAIN_ID)
