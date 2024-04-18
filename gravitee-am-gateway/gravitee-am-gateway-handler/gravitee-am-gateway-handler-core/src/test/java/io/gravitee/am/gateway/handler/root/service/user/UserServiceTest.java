@@ -619,19 +619,24 @@ public class UserServiceTest {
         when(identityProviderManager.getIdentityProvider(localClientId)).thenReturn(provider);
 
         User user = mock(User.class);
+        when(user.getUsername()).thenReturn("username");
         when(user.getEmail()).thenReturn("test@test.com");
         when(user.getSource()).thenReturn(localClientId);
         User user2 = mock(User.class);
         when(user2.getSource()).thenReturn("other-idp-client-id");
-        when(user.isEnabled()).thenReturn(true);
 
         when(domain.getId()).thenReturn("domain-id");
         when(commonUserService.findByDomainAndCriteria(eq(domain.getId()),any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList(user, user2)));
 
         UserProvider userProvider = mock(UserProvider.class);
-        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
-        when(userProvider.findByUsername(any())).thenReturn(Maybe.just(new DefaultUser("username")));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+
+        final DefaultUser defaultUser = new DefaultUser("username");
+        defaultUser.setEmail(user.getEmail());
+
+        when(userProvider.findByEmail(any())).thenReturn(Maybe.just(defaultUser));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
+        when(commonUserService.findByDomainAndUsernameAndSource(any(), any(), any())).thenReturn(Maybe.just(user));
 
         TestObserver testObserver = userService.forgotPassword(
                 new ForgotPasswordParameters(user.getEmail(), true, true),
@@ -950,49 +955,23 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldNotForgotPassword_client_has_no_Idp() {
+    public void shouldNotForgotPassword_user_has_no_idp() {
         Client client = mock(Client.class);
         User user = mock(User.class);
 
         when(client.getIdentityProviders()).thenReturn(new TreeSet<>());
         when(domain.getId()).thenReturn("domain-id");
         when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
+        when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.empty());
 
 
         var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertNotComplete();
-        testObserver.assertError(UserNotFoundException.class);
+        testObserver.assertError(UserInvalidException.class);
     }
 
     @Test
-    public void shouldNotForgotPassword_client_Idp_not_match_user_Idp() {
-        when(domain.getId()).thenReturn("domain-id");
-
-        Client client = mock(Client.class);
-        when(client.getIdentityProviders()).thenReturn(new TreeSet<>());
-
-        User user = mock(User.class);
-        when(user.getSource()).thenReturn("idp-id");
-
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
-
-        IdentityProvider identityProvider = mock(IdentityProvider.class);
-        when(identityProvider.getId()).thenReturn("id-that-does-not-match");
-        ApplicationIdentityProvider applicationIdentityProvider = mock(ApplicationIdentityProvider.class);
-        when(applicationIdentityProvider.getIdentity()).thenReturn("some-id");
-        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(identityProvider);
-        TreeSet<ApplicationIdentityProvider> applicationIdentityProviders = new TreeSet<>();
-        applicationIdentityProviders.add(applicationIdentityProvider);
-        when(client.getIdentityProviders()).thenReturn(applicationIdentityProviders);
-
-
-        var testObserver = userService.forgotPassword(user.getEmail(), client).test();
-        testObserver.assertNotComplete();
-        testObserver.assertError(UserNotFoundException.class);
-    }
-
-    @Test
-    public void shouldForgotPassword_client_Idp_match_user_idp() {
+    public void shouldForgotPassword_client_idp_match_user_idp() {
         Client client = mock(Client.class);
         UserProvider userProvider = mock(UserProvider.class);
         User user = mock(User.class);
@@ -1004,21 +983,19 @@ public class UserServiceTest {
 
         when(user.getUsername()).thenReturn("username");
         when(user.getEmail()).thenReturn("test@test.com");
-        when(user.isInactive()).thenReturn(true);
-        when(user.isEnabled()).thenReturn(true);
         when(user.getSource()).thenReturn("idp-id");
-        when(accountSettings.isCompleteRegistrationWhenResetPassword()).thenReturn(true);
         when(domain.getId()).thenReturn("domain-id");
-        when(domain.getAccountSettings()).thenReturn(accountSettings);
         when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
-        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
-        when(userProvider.findByUsername("username")).thenReturn(Maybe.just(new DefaultUser("username")));
+        when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.just(userProvider));
+        final DefaultUser defaultUser = new DefaultUser("username");
+        defaultUser.setEmail(user.getEmail());
+        when(userProvider.findByEmail(anyString())).thenReturn(Maybe.just(defaultUser));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(identityProvider.getId()).thenReturn("some-id");
         when(applicationIdentityProvider.getIdentity()).thenReturn("some-id");
         when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(identityProvider);
         when(client.getIdentityProviders()).thenReturn(applicationIdentityProviders);
-
+        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.just(user));
 
         var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertComplete();

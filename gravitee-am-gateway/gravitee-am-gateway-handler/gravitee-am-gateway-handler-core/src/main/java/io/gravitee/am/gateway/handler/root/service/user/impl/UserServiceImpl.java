@@ -85,6 +85,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.Boolean.FALSE;
@@ -94,12 +95,6 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ID_TOKEN;
 
@@ -234,7 +229,7 @@ public class UserServiceImpl implements UserService {
                             }
                             return userService.create(user);
                         })
-                        .flatMap( amUser -> {
+                        .flatMap(amUser -> {
                             createPasswordHistory(client, amUser, rawPassword, principal);
                             return userService.enhance(amUser);
                         })
@@ -283,7 +278,7 @@ public class UserServiceImpl implements UserService {
                     }
                     return userService.update(user);
                 })
-                .flatMap( amUser -> {
+                .flatMap(amUser -> {
                     createPasswordHistory(client, amUser, rawPassword, principal);
                     return userService.enhance(amUser);
                 })
@@ -302,7 +297,7 @@ public class UserServiceImpl implements UserService {
                 .switchIfEmpty(Maybe.error(() -> new UserProviderNotFoundException(user.getSource())))
                 .flatMap(userProvider -> identityProviderManager.get(user.getSource())
                         .flatMap(provider -> provider.loadUserByUsername(new EndUserAuthentication(user.getUsername(), password, new SimpleAuthenticationContext(new DummyRequest())))))
-                        .ignoreElement();
+                .ignoreElement();
     }
 
     @SuppressWarnings({"ReactiveStreamsUnusedPublisher", "ResultOfMethodCallIgnored"})
@@ -327,7 +322,7 @@ public class UserServiceImpl implements UserService {
                     return userProvider.findByUsername(user.getUsername())
                             .switchIfEmpty(Single.error(() -> new UserNotFoundException(user.getUsername())))
                             .flatMap(idpUser -> passwordHistoryService
-                                    .addPasswordToHistory(DOMAIN, domain.getId(), user, user.getPassword() , principal, getPasswordSettings(client))
+                                    .addPasswordToHistory(DOMAIN, domain.getId(), user, user.getPassword(), principal, getPasswordSettings(client))
                                     .switchIfEmpty(Single.just(new PasswordHistory()))
                                     .flatMap(passwordHistory -> userProvider.updatePassword(idpUser, user.getPassword())))
                             .onErrorResumeNext(ex -> {
@@ -438,43 +433,42 @@ public class UserServiceImpl implements UserService {
                         User user = foundUsers.get(0);
 
                         //fixes https://graviteecommunity.atlassian.net/browse/AM-71
+                        boolean clientHasUserIdp = false;
                         if (client.getIdentityProviders() != null) {
                             final IdentityProvider identityProvider = identityProviderManager.getIdentityProvider(user.getSource());
-                            final boolean isClientHasUserIdp = client.getIdentityProviders()
+                            clientHasUserIdp = client.getIdentityProviders()
                                     .stream()
                                     .anyMatch(applicationIdentityProvider -> applicationIdentityProvider.getIdentity().equals(identityProvider.getId()));
 
-                            if (!isClientHasUserIdp) {
-                                return Single.error(new UserNotFoundException(email));
-                            }
                         }
+                        if (!clientHasUserIdp) {
+                            // check if user can update its password according to its identity provider type
+                            return identityProviderManager.getUserProvider(user.getSource())
+                                    .switchIfEmpty(Single.error(() -> new UserInvalidException("User [ " + user.getUsername() + " ] cannot be updated because its identity provider does not support user provisioning")))
+                                    .flatMap(userProvider -> {
+                                        // if user registration is not completed and force registration option is disabled throw invalid account exception
+                                        AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
 
-                        // check if user can update its password according to its identity provider type
-                        return identityProviderManager.getUserProvider(user.getSource())
-                                .switchIfEmpty(Single.error(() -> new UserInvalidException("User [ " + user.getUsername() + " ] cannot be updated because its identity provider does not support user provisioning")))
-                                .flatMap(userProvider -> {
-                                    // if user registration is not completed and force registration option is disabled throw invalid account exception
-                                    AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
+                                        if (user.isInactive() && !forceUserRegistration(accountSettings)) {
+                                            return Single.error(new AccountInactiveException("User [ " + user.getUsername() + " ] needs to complete the activation process"));
+                                        }
 
-                                    if (user.isInactive() && !forceUserRegistration(accountSettings)) {
-                                        return Single.error(new AccountInactiveException("User [ " + user.getUsername() + " ] needs to complete the activation process"));
-                                    }
+                                        if (!user.isEnabled() && !user.isInactive()) {
+                                            return Single.error(new AccountInactiveException("User [ " + user.getUsername() + " ] is disabled."));
+                                        }
 
-                                    if (!user.isEnabled() && !user.isInactive()) {
-                                        return Single.error(new AccountInactiveException("User [ " + user.getUsername() + " ] is disabled."));
-                                    }
-
-                                    // fetch latest information from the identity provider and return the user
-                                    return userProvider.findByUsername(user.getUsername())
-                                            .map(Optional::ofNullable)
-                                            .defaultIfEmpty(Optional.empty())
-                                            .flatMap(optUser -> {
-                                                if (optUser.isEmpty()) {
-                                                    return Single.just(user);
-                                                }
-                                                return userService.update(enhanceUser(user, optUser.get()));
-                                            });
-                                });
+                                        // fetch latest information from the identity provider and return the user
+                                        return userProvider.findByUsername(user.getUsername())
+                                                .map(Optional::ofNullable)
+                                                .defaultIfEmpty(Optional.empty())
+                                                .flatMap(optUser -> {
+                                                    if (optUser.isEmpty()) {
+                                                        return Single.just(user);
+                                                    }
+                                                    return userService.update(enhanceUser(user, optUser.get()));
+                                                });
+                                    });
+                        }
                     }
 
                     if (foundUsers.size() > 1) {
@@ -529,7 +523,7 @@ public class UserServiceImpl implements UserService {
                                             return userService.update(enhanceUser(optEndUser.get(), idpUser.getUser()));
                                         });
                             })
-                            .onErrorResumeNext(exception-> Single.error(new UserNotFoundException(email != null ? email : params.getUsername())));
+                            .onErrorResumeNext(exception -> Single.error(new UserNotFoundException(email != null ? email : params.getUsername())));
                 })
                 .doOnSuccess(user -> new Thread(() -> emailService.send(Template.RESET_PASSWORD, user, client)).start())
                 .doOnSuccess(user1 -> {
@@ -708,9 +702,9 @@ public class UserServiceImpl implements UserService {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     private void createPasswordHistory(Client client, User user, String rawPassword, io.gravitee.am.identityprovider.api.User principal) {
         passwordHistoryService
-                .addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword , principal, getPasswordSettings(client))
+                .addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword, principal, getPasswordSettings(client))
                 .subscribe(passwordHistory -> logger.debug("Created password history for user {}", user.getUsername()),
-                           throwable -> logger.debug("Failed to create password history", throwable));
+                        throwable -> logger.debug("Failed to create password history", throwable));
     }
 
     private PasswordSettings getPasswordSettings(Client client) {
