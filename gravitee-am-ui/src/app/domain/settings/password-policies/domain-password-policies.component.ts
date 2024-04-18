@@ -26,16 +26,17 @@ import { PasswordPolicy } from './domain-password-policies.model';
   styleUrls: ['./domain-password-policies.component.scss'],
 })
 export class PasswordPoliciesComponent implements OnInit {
-  domain: any = {};
+  domainId: string;
 
   constructor(
     private route: ActivatedRoute,
     private passwordPolicyService: PasswordPolicyService,
   ) {}
+
   rows: PasswordPolicy[] = [];
 
-  ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
+  ngOnInit(): void {
+    this.domainId = this.route.snapshot.data['domain'].id;
     this.loadPasswordPolicies();
   }
 
@@ -43,16 +44,17 @@ export class PasswordPoliciesComponent implements OnInit {
     return this.rows.length === 0;
   }
 
-  private loadPasswordPolicies() {
-    this.passwordPolicyService.list(this.domain.id).subscribe((policies) => {
+  private loadPasswordPolicies(): void {
+    this.passwordPolicyService.list(this.domainId).subscribe((policies) => {
       this.rows = policies;
     });
   }
+
   protected getTooltipText(id: string): string {
     const idpsNames = this.rows.find((pp) => pp.id === id).idpsNames;
     if (idpsNames === undefined || idpsNames.length === 0) {
       return null;
     }
-    return 'Used in following Identity Providers: ' + idpsNames.join(', ');
+    return idpsNames.join('\n');
   }
 }

@@ -16,7 +16,7 @@
 import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 
-import { DialogData, PasswordPoliciesIdpSelectDialogComponent } from './password-policies-idp-select-dialog.component';
+import { IdpDataModel, PasswordPoliciesIdpSelectDialogComponent } from './password-policies-idp-select-dialog.component';
 
 export interface DialogCallback {
   (data: Map<string, boolean>): void;
@@ -26,7 +26,7 @@ export interface DialogCallback {
 export class PasswordPoliciesIdpSelectDialogFactory {
   constructor(private dialog: MatDialog) {}
 
-  public openDialog(data: DialogData, callback: DialogCallback): void {
+  public openDialog(data: IdpDataModel[], callback: DialogCallback): void {
     const cfg = {
       data: data,
       width: '740px',
