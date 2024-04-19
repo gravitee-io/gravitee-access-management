@@ -20,6 +20,7 @@ import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.am.service.validators.email.EmailValidator;
 import io.reactivex.rxjava3.core.Completable;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -60,8 +61,22 @@ public class UserValidatorImpl implements UserValidator {
     }
 
     public Completable validate(IUser user) {
+        return this.validate(user, true);
+    }
+
+    private boolean isValid(String userInfo, Pattern pattern) {
+        return userInfo == null || pattern.matcher(userInfo).matches();
+    }
+
+    @Override
+    public Completable validateUsername(String username) {
+        return privateValidateUsername(username).onErrorResumeNext(Completable::error);
+    }
+
+    @Override
+    public Completable validate(IUser user, boolean validateEmail) {
         return validateUsername(user.getUsername()).andThen(Completable.defer(() -> {
-            if (!emailValidator.validate(user.getEmail())) {
+            if (validateEmail && !emailValidator.validate(user.getEmail())) {
                 return Completable.error(new EmailFormatInvalidException(user.getEmail()));
             }
 
@@ -87,15 +102,6 @@ public class UserValidatorImpl implements UserValidator {
 
             return Completable.complete();
         }));
-    }
-
-    private boolean isValid(String userInfo, Pattern pattern) {
-        return userInfo == null || pattern.matcher(userInfo).matches();
-    }
-
-    @Override
-    public Completable validateUsername(String username) {
-        return privateValidateUsername(username).onErrorResumeNext(Completable::error);
     }
 
     private Completable privateValidateUsername(String username) {
