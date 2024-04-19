@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.AdaptiveMfaFilter;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.ClientNullFilter;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.MfaChallengeCompleteFilter;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.MfaSkipUserSilentAuthFilter;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.MfaSkipUserStronglyAuthFilter;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.NoFactorFilter;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.RememberDeviceFilter;
@@ -52,6 +53,7 @@ public class MFAChallengeStep extends MFAStep {
 
         // Rules that makes you skip MFA challenge
         var mfaFilterChain = new MfaFilterChain(
+                new MfaSkipUserSilentAuthFilter(context),
                 new ClientNullFilter(client),
                 new NoFactorFilter(client.getFactors(), factorManager),
                 new MfaChallengeCompleteFilter(context),
