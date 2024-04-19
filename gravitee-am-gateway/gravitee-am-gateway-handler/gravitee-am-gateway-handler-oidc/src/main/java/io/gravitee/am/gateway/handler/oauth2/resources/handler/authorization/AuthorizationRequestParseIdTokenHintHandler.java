@@ -105,7 +105,7 @@ public class AuthorizationRequestParseIdTokenHintHandler implements Handler<Rout
             io.gravitee.am.model.User endUser = h.result();
             if (routingContext.user() == null) {
                 routingContext.setUser(User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser)));
-                routingContext.next();
+                succeeded(routingContext);
                 return;
             }
 
@@ -115,7 +115,7 @@ public class AuthorizationRequestParseIdTokenHintHandler implements Handler<Rout
                 logger.debug("The End-User identified by the ID Token is not the same as the logged in End-User.");
                 routingContext.fail(new LoginRequiredException("Login required"));
             } else {
-                routingContext.next();
+                succeeded(routingContext);
             }
         });
     }
@@ -127,4 +127,10 @@ public class AuthorizationRequestParseIdTokenHintHandler implements Handler<Rout
                         error -> handler.handle(Future.failedFuture(error))
                 );
     }
+
+    private void succeeded(RoutingContext ctx) {
+        ctx.put(ConstantKeys.SILENT_AUTH_CONTEXT_KEY, true);
+        ctx.next();
+    }
+
 }
