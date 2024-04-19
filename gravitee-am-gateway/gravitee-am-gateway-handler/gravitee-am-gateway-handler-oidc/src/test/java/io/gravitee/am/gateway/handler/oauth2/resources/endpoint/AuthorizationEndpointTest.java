@@ -36,6 +36,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
+import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.root.resources.handler.common.RedirectUriValidationHandler;
 import io.gravitee.am.model.Domain;
@@ -53,7 +54,10 @@ import io.vertx.rxjava3.ext.web.handler.SessionHandler;
 import io.vertx.rxjava3.ext.web.sstore.LocalSessionStore;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -105,10 +109,15 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
     private PushedAuthorizationRequestService parService;
 
     @Mock
+    private IDTokenService idTokenService;
+
+    @Mock
     private ScopeManager scopeManager;
 
     @Mock
     private Environment environment;
+
+    private RoutingContext finalRoutingContext;
 
     @Override
     public void setUp() throws Exception {
@@ -150,10 +159,15 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(new AuthorizationRequestParseRequiredParametersHandler())
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
+                .handler(new AuthorizationRequestParseIdTokenHintHandler(idTokenService))
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
                 .handler(new RedirectUriValidationHandler(domain))
                 .handler(new AuthorizationRequestResolveHandler(scopeManager))
-                .handler(authorizationEndpointHandler);
+                .handler(ctx -> {
+                    authorizationEndpointHandler.handle(ctx);
+                    finalRoutingContext = ctx;
+                });
+
         router.route()
                 .failureHandler(new AuthorizationRequestFailureHandler(openIDDiscoveryService, jwtService, jweService, environment));
 
@@ -978,6 +992,37 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                     assertEquals("http://localhost:9999/callback?code=test-code", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldInvokeAuthorizationEndpoint_on_silent_auth() throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setSilentReAuthentication(true);
+        client.setScopeSettings(Collections.singletonList(new ApplicationScopeSettings("read")));
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setApproved(true);
+        authorizationRequest.setResponseType(ResponseType.CODE);
+        authorizationRequest.setRedirectUri("http://localhost:9999/callback");
+
+        AuthorizationResponse authorizationResponse = new AuthorizationCodeResponse();
+        authorizationResponse.setRedirectUri(authorizationRequest.getRedirectUri());
+        ((AuthorizationCodeResponse) authorizationResponse).setCode("test-code");
+
+        when(idTokenService.extractUser(eq("hint"), any())).thenReturn(Single.just(new io.gravitee.am.model.User()));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback&prompt=none&id_token_hint=hint",
+                HttpStatusCode.FOUND_302,
+                "Found");
+
+        Assertions.assertEquals(finalRoutingContext.get(ConstantKeys.SILENT_AUTH_CONTEXT_KEY), true);
     }
 
     @Test
