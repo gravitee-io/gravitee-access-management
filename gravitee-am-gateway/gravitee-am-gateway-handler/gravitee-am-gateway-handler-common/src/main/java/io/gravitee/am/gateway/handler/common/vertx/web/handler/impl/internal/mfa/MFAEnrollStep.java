@@ -52,6 +52,10 @@ public class MFAEnrollStep extends MFAStep {
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final MfaFilterContext context = new MfaFilterContext(routingContext, client, factorManager, ruleEngine);
+        if (context.isUserSilentAuth()) {
+            stop(context, flow);
+            return;
+        }
         if (hasFactors(client, factorManager)) {
             if (context.isFactorSelected() && !context.checkSelectedFactor()) {
                 enrollment(context, flow);
