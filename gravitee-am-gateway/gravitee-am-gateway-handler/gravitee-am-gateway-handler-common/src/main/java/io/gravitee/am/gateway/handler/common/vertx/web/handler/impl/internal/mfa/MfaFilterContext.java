@@ -15,29 +15,18 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
-import static io.gravitee.am.common.factor.FactorType.RECOVERY_CODE;
-import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS;
-import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;
-
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
-
-import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
-
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
 import io.gravitee.am.gateway.handler.context.EvaluableExecutionContext;
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
+import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.User;
-import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
-
-import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
-
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.risk.assessment.api.assessment.settings.AssessmentSettings;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
@@ -45,19 +34,23 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 import org.jsoup.internal.StringUtil;
 
-import static java.lang.Boolean.TRUE;
-
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-
-import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
-import static java.util.Optional.ofNullable;
-
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.common.factor.FactorType.RECOVERY_CODE;
+import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS;
+import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;
+import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
+import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
+import static java.lang.Boolean.TRUE;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+import static java.util.Optional.ofNullable;
 import static org.springframework.util.StringUtils.hasText;
 
 /**
@@ -207,5 +200,9 @@ public class MfaFilterContext {
     private boolean isNotRecoveryCodeType(String factorId) {
         var factor = factorManager.getFactor(factorId);
         return nonNull(factor) && !RECOVERY_CODE.equals(factor.getFactorType());
+    }
+
+    public boolean isUserSilentAuth() {
+        return TRUE.equals(routingContext.get(ConstantKeys.SILENT_AUTH_CONTEXT_KEY));
     }
 }

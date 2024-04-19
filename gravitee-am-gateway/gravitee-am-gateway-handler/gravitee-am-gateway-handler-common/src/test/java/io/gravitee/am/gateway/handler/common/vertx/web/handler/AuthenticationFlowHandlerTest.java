@@ -19,12 +19,6 @@ import io.gravitee.am.common.factor.FactorSecurityType;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
-import static io.gravitee.am.common.utils.ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.RISK_ASSESSMENT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.STRONG_AUTH_COMPLETED_KEY;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
@@ -50,6 +44,14 @@ import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.StepUpAuthenticationSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
+
+import static io.gravitee.am.common.utils.ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.RISK_ASSESSMENT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.STRONG_AUTH_COMPLETED_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.SILENT_AUTH_CONTEXT_KEY;
 import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
 import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
 import io.gravitee.am.model.oidc.Client;
@@ -64,17 +66,19 @@ import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import java.util.ArrayList;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import org.mockito.Mock;
 import static org.mockito.Mockito.when;
-import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -303,6 +307,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             mfaSettings.setRememberDevice(rememberDevice);
             rc.session().put(DEVICE_ALREADY_EXISTS_KEY, false);
             client.setMfaSettings(mfaSettings);
+
             // set user
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             rc.getDelegate().setUser(new User(endUser));
@@ -318,6 +323,33 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
                     assertTrue(location.endsWith("/mfa/enroll"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldSkipEnrollmentPage_silent_auth() throws Exception {
+        router.route().order(-1).handler(rc -> {
+            // set client
+            Client client = new Client();
+            client.setFactors(Collections.singleton("factor-1"));
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+
+            MFASettings mfaSettings = new MFASettings();
+            client.setMfaSettings(mfaSettings);
+
+            // set user
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            rc.getDelegate().setUser(new User(endUser));
+
+            // silent auth
+            rc.put(SILENT_AUTH_CONTEXT_KEY, true);
+
+            rc.next();
+        });
+
+        testRequest(
+                HttpMethod.GET,
+                "/login",
+                HttpStatusCode.OK_200, "OK");
     }
 
     @Test
@@ -992,6 +1024,35 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
                 HttpStatusCode.FOUND_302, "Found", null);
     }
 
+    @Test
+    public void shouldSkipMFAChallengePage_silent_auth() throws Exception {
+        router.route().order(-1).handler(rc -> {
+            // set client
+            Client client = new Client();
+            client.setFactors(Collections.singleton("factor-1"));
+
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            MFASettings mfaSettings = new MFASettings();
+            client.setMfaSettings(mfaSettings);
+
+            // set user
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setStatus(ACTIVATED);
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            endUser.setFactors(Collections.singletonList(enrolledFactor));
+            rc.getDelegate().setUser(new User(endUser));
+
+            // silent auth
+            rc.put(SILENT_AUTH_CONTEXT_KEY, true);
+
+            rc.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/login",
+                HttpStatusCode.OK_200, "OK");
+    }
 
     @Test
     public void shouldContinue_rememberDevice_with_device_assessment_enabled() throws Exception {
