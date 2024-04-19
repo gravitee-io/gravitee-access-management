@@ -16,7 +16,7 @@
 
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
-import io.gravitee.am.common.factor.FactorType;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
@@ -31,10 +31,10 @@ import io.gravitee.risk.assessment.api.assessment.settings.AssessmentSettings;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
+
 import java.util.Map;
 
 import java.util.Date;
-import java.util.Objects;
 import java.util.Optional;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
@@ -192,5 +192,9 @@ public class MfaFilterContext {
     private boolean isNotRecoveryCodeType(String factorId) {
         var factor = factorManager.getFactor(factorId);
         return nonNull(factor) && !RECOVERY_CODE.equals(factor.getFactorType());
+    }
+
+    public boolean isUserSilentAuth() {
+        return TRUE.equals(routingContext.get(ConstantKeys.SILENT_AUTH_CONTEXT_KEY));
     }
 }
