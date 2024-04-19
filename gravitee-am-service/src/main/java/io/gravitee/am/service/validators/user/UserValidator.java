@@ -19,6 +19,7 @@ package io.gravitee.am.service.validators.user;
 import io.gravitee.am.model.IUser;
 import io.gravitee.am.service.validators.Validator;
 import io.reactivex.rxjava3.core.Completable;
+import java.util.Map;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -27,4 +28,6 @@ import io.reactivex.rxjava3.core.Completable;
 public interface UserValidator extends Validator<IUser, Completable> {
 
     Completable validateUsername(String username);
+
+    Completable validate(IUser user, boolean validateEmail);
 }
