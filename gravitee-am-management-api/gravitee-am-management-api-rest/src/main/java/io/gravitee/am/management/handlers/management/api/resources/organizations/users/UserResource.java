@@ -43,7 +43,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PATCH;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
@@ -116,6 +124,26 @@ public class UserResource extends AbstractResource {
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.UPDATE)
                 .andThen(organizationUserService.update(ReferenceType.ORGANIZATION, organizationId, user, updateUser, authenticatedUser)
                         .map(UserEntity::new))
+                .subscribe(response::resume, response::resume);
+    }
+
+    @GET
+    @Path("/tokens")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Get tokens of a user",
+            description = "User must have the ORGANIZATION_USER[READ] permission on the specified organization")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "User tokens successfully fetched",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = AccountAccessToken.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void getUserActiveTokens(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("user") String user,
+            @Suspended final AsyncResponse response) {
+
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.READ)
+                .andThen(organizationUserService.findAccountAccessTokens(organizationId, user).toList())
                 .subscribe(response::resume, response::resume);
     }
 

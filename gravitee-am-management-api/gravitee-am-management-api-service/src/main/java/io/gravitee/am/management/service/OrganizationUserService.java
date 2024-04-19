@@ -22,7 +22,10 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.service.model.NewAccountAccessToken;
 import io.gravitee.am.service.model.NewUser;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
+
+import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -37,6 +40,8 @@ public interface OrganizationUserService extends CommonUserService {
     Completable resetPassword(String organizationId, User user, String password, io.gravitee.am.identityprovider.api.User principal);
 
     Single<User> updateLogoutDate(ReferenceType referenceType, String referenceId, String id);
+
+    Flowable<AccountAccessToken> findAccountAccessTokens(String organizationId, String userId);
 
     Single<AccountAccessToken> createAccountAccessToken(String organizationId, String userId, NewAccountAccessToken newAccountAccessToken, io.gravitee.am.identityprovider.api.User principal);
 

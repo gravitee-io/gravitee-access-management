@@ -37,6 +37,7 @@ import io.gravitee.am.service.exception.TooManyAccountTokenException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.model.NewAccountAccessToken;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -175,8 +176,21 @@ public class OrganizationUserServiceImpl extends AbstractUserService<Organizatio
                         return Single.error(new TooManyAccountTokenException(tokensLimit));
                     }
                     return accessTokenRepository.create(token)
-                            .map(created -> created.toCreateResponse(rawToken));
+                            .map(created -> created.toCreateResponse(rawToken))
+                            .flatMap(this::getAccountAccessTokenWithIssuerUsername);
                 });
+    }
+
+    @Override
+    public Flowable<AccountAccessToken> findUserAccessTokens(String organisationId, String userId) {
+        return accessTokenRepository.findByUserId(ORGANIZATION, organisationId, userId)
+                .flatMap(token -> getAccountAccessTokenWithIssuerUsername(token).toFlowable());
+    }
+
+    private Single<AccountAccessToken> getAccountAccessTokenWithIssuerUsername(AccountAccessToken token) {
+        return token.issuerId() == null ? Single.just(token) :
+                userRepository.findById(token.issuerId()).defaultIfEmpty(new User())
+                        .map(user -> token.toBuilder().issuerUsername(user.getUsername()).build());
     }
 
     @Override

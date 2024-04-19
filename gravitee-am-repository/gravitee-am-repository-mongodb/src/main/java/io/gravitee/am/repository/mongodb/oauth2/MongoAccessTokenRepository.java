@@ -16,8 +16,6 @@
 package io.gravitee.am.repository.mongodb.oauth2;
 
 import com.mongodb.client.model.IndexOptions;
-import com.mongodb.client.model.InsertOneModel;
-import com.mongodb.client.model.WriteModel;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.AccessTokenMongo;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
@@ -27,15 +25,17 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.PostConstruct;
+
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.client.model.Filters.*;
-import static java.util.stream.Collectors.toList;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.gt;
+import static com.mongodb.client.model.Filters.or;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -137,12 +137,6 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     @Override
     public Completable deleteByDomainIdAndUserId(String domainId, String userId) {
         return Completable.fromPublisher(accessTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_SUBJECT, userId))));
-    }
-
-    private List<WriteModel<AccessTokenMongo>> convert(List<AccessToken> accessTokens) {
-        return accessTokens.stream().map(this::convert)
-                .map(InsertOneModel<AccessTokenMongo>::new)
-                .collect(toList());
     }
 
     private AccessTokenMongo convert(AccessToken accessToken) {

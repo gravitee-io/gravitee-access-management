@@ -455,7 +455,11 @@ export class OrganizationService {
     });
   }
 
-  createAccountToken(userId, tokenName) {
+  createAccountToken(userId: string, tokenName: string): Observable<any> {
     return this.http.post<any>(this.organizationURL + '/users/' + userId + '/tokens', { name: tokenName });
+  }
+
+  getAccountTokens(userId: string): Observable<any> {
+    return this.http.get<any>(this.organizationURL + '/users/' + userId + '/tokens');
   }
 }
