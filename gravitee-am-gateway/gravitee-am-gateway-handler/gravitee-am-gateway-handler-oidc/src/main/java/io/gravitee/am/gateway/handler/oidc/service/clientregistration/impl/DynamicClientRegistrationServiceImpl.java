@@ -221,6 +221,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         template.setDomain(domain.getId());
         template.setId(null);
         template.setClientSecret(null);
+        template.setSecretSettings(new ArrayList<>());
+        template.setClientSecrets(new ArrayList<>());
         template.setClientName(ClientServiceImpl.DEFAULT_CLIENT_NAME);
         template.setRedirectUris(null);
         template.setSectorIdentifierUri(null);

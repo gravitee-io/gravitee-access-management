@@ -35,6 +35,8 @@ import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
+import io.gravitee.am.model.application.ApplicationSecretSettings;
+import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.OIDCSettings;
@@ -898,6 +900,8 @@ public class DynamicClientRegistrationServiceTest {
         template.setClientName("shouldBeRemoved");
         template.setClientId("shouldBeReplaced");
         template.setClientSecret("shouldBeRemoved");
+        template.setSecretSettings(List.of(new ApplicationSecretSettings()));
+        template.setClientSecrets(List.of(new ClientSecret()));
         template.setRedirectUris(Arrays.asList("shouldBeRemoved"));
         template.setSectorIdentifierUri("shouldBeRemoved");
         template.setJwks(new JWKSet());
@@ -925,7 +929,7 @@ public class DynamicClientRegistrationServiceTest {
                         client.getJwks() == null &&
                         client.getSectorIdentifierUri() == null
         );
-        verify(clientService, times(1)).create(any());
+        verify(clientService, times(1)).create(argThat(duplicateClient -> duplicateClient.getClientSecrets().isEmpty() && duplicateClient.getSecretSettings().isEmpty()));
     }
 
     @Test
