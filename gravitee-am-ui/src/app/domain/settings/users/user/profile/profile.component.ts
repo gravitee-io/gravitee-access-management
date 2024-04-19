@@ -100,7 +100,7 @@ export class UserProfileComponent implements OnInit {
     });
   }
 
-  delete(event) {
+  delete(event: Event): void {
     event.preventDefault();
     this.dialogService
       .confirm('Delete User', 'Are you sure you want to delete this user ?')
@@ -115,7 +115,7 @@ export class UserProfileComponent implements OnInit {
       .subscribe();
   }
 
-  resendConfirmationRegistration(event) {
+  resendConfirmationRegistration(event: Event): void {
     event.preventDefault();
     this.dialogService
       .confirm('Send Email', 'Are you sure you want to send the confirmation registration email ?')
@@ -129,7 +129,7 @@ export class UserProfileComponent implements OnInit {
       .subscribe();
   }
 
-  resetPassword() {
+  resetPassword(): void {
     this.dialogService
       .confirm('Reset Password', 'Are you sure you want to reset the password ?')
       .pipe(
@@ -148,7 +148,7 @@ export class UserProfileComponent implements OnInit {
       .subscribe();
   }
 
-  unlock(event) {
+  unlock(event: Event): void {
     event.preventDefault();
     this.dialogService
       .confirm('Unlock User', 'Are you sure you want to unlock the user ?')
@@ -163,19 +163,19 @@ export class UserProfileComponent implements OnInit {
       .subscribe();
   }
 
-  isOrganizationUserAction() {
+  isOrganizationUserAction(): boolean {
     return this.organizationContext;
   }
 
-  editMode() {
+  editMode(): any {
     return this.user.internal;
   }
 
-  isEmptyObject(obj) {
+  isEmptyObject(obj: any): boolean {
     return obj && Object.keys(obj).length === 0;
   }
 
-  enableUser(event) {
+  enableUser(event: any): void {
     // TODO we should be able to update platform users
     this.dialogService
       .confirm(
@@ -198,15 +198,15 @@ export class UserProfileComponent implements OnInit {
       .subscribe();
   }
 
-  asObject(value) {
+  asObject(value: any): boolean {
     return value && isObject(value);
   }
 
-  isUserEnabled() {
+  isUserEnabled(): boolean {
     return this.user.enabled;
   }
 
-  addDynamicComponent() {
+  addDynamicComponent(): void {
     const factory = this.factoryResolver.resolveComponentFactory(UserClaimComponent);
     const component = this.viewContainerRef.createComponent(factory);
 
@@ -225,7 +225,7 @@ export class UserProfileComponent implements OnInit {
     });
   }
 
-  removeExistingClaim(claimKey, event) {
+  removeExistingClaim(claimKey: string, event: Event): void {
     event.preventDefault();
     this.user.additionalInformation = Object.keys(this.user.additionalInformation).reduce((obj, key) => {
       if (key !== claimKey) {
@@ -236,12 +236,12 @@ export class UserProfileComponent implements OnInit {
     this.formChanged = true;
   }
 
-  onAppSelectionChanged(event) {
+  onAppSelectionChanged(event: any): void {
     this.user.client = event.id;
     this.formChanged = true;
   }
 
-  onAppDeleted() {
+  onAppDeleted(): void {
     this.user.client = null;
     this.formChanged = true;
   }
@@ -250,11 +250,11 @@ export class UserProfileComponent implements OnInit {
     return this.user.applicationEntity != null ? this.user.applicationEntity.name : '';
   }
 
-  accountLocked(user) {
+  accountLocked(user: any): boolean {
     return !user.accountNonLocked && (user.accountLockedUntil === null || !user.accountLockedUntil || user.accountLockedUntil > new Date());
   }
 
-  updateUsername() {
+  updateUsername(): void {
     this.dialogService
       .confirm('Update Username', 'Are you sure you want to update this username?')
       .pipe(
@@ -269,12 +269,12 @@ export class UserProfileComponent implements OnInit {
       .subscribe();
   }
 
-  createToken() {
+  createToken(): void {
     this.matDialog
       .open<AccountTokenCreationDialogComponent, AccountTokenCreationDialogData, AccountTokenCreationDialogResult>(
         AccountTokenCreationDialogComponent,
         {
-          width: GIO_DIALOG_WIDTH.MEDIUM,
+          width: GIO_DIALOG_WIDTH.LARGE,
           disableClose: true,
           role: 'alertdialog',
           id: 'accountTokenCreateDialog',
@@ -301,7 +301,7 @@ export class UserProfileComponent implements OnInit {
             .open<AccountTokenCopyDialogComponent, AccountTokenCopyDialogData, AccountTokenCopyDialogResult>(
               AccountTokenCopyDialogComponent,
               {
-                width: GIO_DIALOG_WIDTH.MEDIUM,
+                width: GIO_DIALOG_WIDTH.LARGE,
                 disableClose: true,
                 data: {
                   token: data.token,
@@ -317,7 +317,7 @@ export class UserProfileComponent implements OnInit {
       .subscribe();
   }
 
-  private unlockUser(user) {
+  private unlockUser(user: any): void {
     user.accountNonLocked = true;
     user.accountLockedAt = null;
     user.accountLockedUntil = null;
