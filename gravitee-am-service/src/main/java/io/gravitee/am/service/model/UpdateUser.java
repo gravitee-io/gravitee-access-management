@@ -32,7 +32,6 @@ import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_M
  */
 public class UpdateUser implements IUser {
 
-    @NotBlank
     @Size(max = EMAIL_MAX_LENGTH,  message = "must not be greater than "+ EMAIL_MAX_LENGTH)
     private String email;
 
