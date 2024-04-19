@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.ClientNullFilter;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.EndUserEnrolledFilter;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.MfaSkipFilter;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.MfaSkipUserSilentAuthFilter;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.NoFactorFilter;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
@@ -50,6 +51,7 @@ public class MFAEnrollStep extends MFAStep {
 
         // Rules that makes you skip MFA enroll
         var mfaFilterChain = new MfaFilterChain(
+                new MfaSkipUserSilentAuthFilter(context),
                 new ClientNullFilter(client),
                 new NoFactorFilter(client.getFactors(), factorManager),
                 new EndUserEnrolledFilter(context),
