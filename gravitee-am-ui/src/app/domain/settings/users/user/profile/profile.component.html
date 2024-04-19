@@ -187,7 +187,7 @@
                   {{ row.name }}
                 </ng-template>
               </ngx-datatable-column>
-              <ngx-datatable-column name="Date Created" [flexGrow]="1" [resizeable]="false" [sortable]="false">
+              <ngx-datatable-column name="Date created" [flexGrow]="1" [resizeable]="false" [sortable]="false">
                 <ng-template let-row="row" ngx-datatable-cell-template>
                   {{ row.createdAt | date: 'medium' }}
                 </ng-template>
