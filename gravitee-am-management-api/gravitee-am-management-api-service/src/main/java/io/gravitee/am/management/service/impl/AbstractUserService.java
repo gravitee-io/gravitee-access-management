@@ -60,6 +60,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 
 /**
@@ -118,14 +119,15 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
     }
 
     private Single<User> updateUser(ReferenceType referenceType, String referenceId, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal) {
-        return userValidator.validate(updateUser).andThen(
-                getUserService().findById(referenceType, referenceId, id)
-                        .flatMap(user -> updateWithProviderIfNecessary(updateUser, user))
-                        .flatMap(user -> getUserService().update(referenceType, referenceId, id, user)
-                                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).oldValue(user).user(user1)))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).throwable(throwable)))
-                        )
-        );
+        return getUserService().findById(referenceType, referenceId, id).flatMap(user -> {
+                    // This handles identity providers not enforcing email
+                    final boolean validateEmailIfNecessary = !(isNullOrEmpty(user.getEmail()) && isNullOrEmpty(updateUser.getEmail()));
+                    return userValidator.validate(updateUser, validateEmailIfNecessary).andThen(Single.just(user));
+                })
+                .flatMap(user -> updateWithProviderIfNecessary(updateUser, user))
+                .flatMap(user -> getUserService().update(referenceType, referenceId, id, user)
+                        .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).oldValue(user).user(user1)))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).throwable(throwable))));
     }
 
     private Single<UpdateUser> updateWithProviderIfNecessary(UpdateUser updateUser, User user) {
@@ -136,7 +138,8 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
         );
     }
 
-    private Single<UpdateUser> updateWithUserProvider(UpdateUser updateUser, User user, Single<UserProvider> userProvider) {
+    private Single<UpdateUser> updateWithUserProvider(UpdateUser updateUser, User
+            user, Single<UserProvider> userProvider) {
         return userProvider.flatMap(provider -> provider.findByUsername(user.getUsername())
                 .switchIfEmpty(Single.error(() -> new UserNotFoundException(user.getUsername())))
                 .flatMap(idpUser -> provider.update(idpUser.getId(), convert(user.getUsername(), updateUser)))
@@ -153,7 +156,8 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
     }
 
     @Override
-    public Single<User> updateStatus(ReferenceType referenceType, String referenceId, String id, boolean status, io.gravitee.am.identityprovider.api.User principal) {
+    public Single<User> updateStatus(ReferenceType referenceType, String referenceId, String id, boolean status, io.
+            gravitee.am.identityprovider.api.User principal) {
         return getUserService().findById(referenceType, referenceId, id)
                 .flatMap(user -> {
                     user.setEnabled(status);
@@ -164,7 +168,8 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
     }
 
     @Override
-    public Single<User> updateUsername(ReferenceType referenceType, String referenceId, String id, String username, io.gravitee.am.identityprovider.api.User principal) {
+    public Single<User> updateUsername(ReferenceType referenceType, String referenceId, String id, String
+            username, io.gravitee.am.identityprovider.api.User principal) {
         final AtomicReference<String> oldUsername = new AtomicReference<>();
         return userValidator.validateUsername(username).andThen(Single.defer(() ->
                 getUserService().findById(referenceType, referenceId, id).flatMap(user -> getUserService()
@@ -221,7 +226,8 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
 
     @SuppressWarnings("ReactiveStreamsUnusedPublisher")
     @Override
-    public Completable delete(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal) {
+    public Completable delete(ReferenceType referenceType, String referenceId, String
+            userId, io.gravitee.am.identityprovider.api.User principal) {
         return getUserService().findById(referenceType, referenceId, userId)
                 .flatMapCompletable(user -> identityProviderManager.getUserProvider(user.getSource())
                         .map(Optional::ofNullable)
@@ -369,12 +375,14 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                 .build();
     }
 
-    private Single<io.gravitee.am.identityprovider.api.User> updateCredentialUsername(ReferenceType referenceType, String referenceId, String oldUsername, io.gravitee.am.identityprovider.api.User user) {
+    private Single<io.gravitee.am.identityprovider.api.User> updateCredentialUsername(ReferenceType
+                                                                                              referenceType, String referenceId, String oldUsername, io.gravitee.am.identityprovider.api.User user) {
         return updateCredentialUsername(referenceType, referenceId, oldUsername, user.getUsername())
                 .flatMap(__ -> Single.just(user));
     }
 
-    private Single<String> updateCredentialUsername(ReferenceType referenceType, String referenceId, String oldUsername, String newUsername) {
+    private Single<String> updateCredentialUsername(ReferenceType referenceType, String referenceId, String
+            oldUsername, String newUsername) {
         return credentialService.findByUsername(referenceType, referenceId, oldUsername)
                 .map(credential -> {
                     credential.setUsername(newUsername);
