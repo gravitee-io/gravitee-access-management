@@ -22,6 +22,7 @@ import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -146,7 +147,7 @@ public class PasswordPolicyRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void shouldFindByDefaultPolicy(){
+    public void shouldFindByDefaultPolicy() {
         PasswordPolicy defaultPP = buildPasswordPolicy();
         defaultPP.setDefaultPolicy(Boolean.TRUE);
         PasswordPolicy nonDefaultPP = buildPasswordPolicy();
@@ -158,6 +159,39 @@ public class PasswordPolicyRepositoryTest extends AbstractManagementTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         assertEqualsTo(defaultPasswordPolicy, testObserver);
+    }
+
+    @Test
+    public void shouldFindByOldest() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date());
+        calendar.add(Calendar.HOUR, -1);
+        Date oneHourAgo = calendar.getTime();
+
+        PasswordPolicy pp1 = buildPasswordPolicy();
+        pp1.setDefaultPolicy(Boolean.FALSE);
+        pp1.setCreatedAt(oneHourAgo);
+        pp1.setUpdatedAt(oneHourAgo);
+        repository.create(pp1).blockingGet();
+
+        PasswordPolicy pp2 = buildPasswordPolicy();
+        pp2.setDefaultPolicy(Boolean.TRUE);
+        repository.create(pp2).blockingGet();
+        TestObserver<PasswordPolicy> test = repository.findByOldest(ReferenceType.DOMAIN, REF_ID).toObservable().test();
+        test.awaitDone(10, TimeUnit.SECONDS);
+        test.assertComplete();
+        test.assertNoErrors();
+        test.assertValueCount(1);
+        assertEqualsTo(pp1, test);
+    }
+
+    @Test
+    public void shouldNotFindByOldest(){
+        TestObserver<PasswordPolicy> test = repository.findByOldest(ReferenceType.DOMAIN, REF_ID).toObservable().test();
+        test.awaitDone(10, TimeUnit.SECONDS);
+        test.assertComplete();
+        test.assertNoErrors();
+        test.assertValueCount(0);
     }
 
     private PasswordPolicy buildPasswordPolicy() {
