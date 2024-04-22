@@ -177,20 +177,25 @@ public class OrganizationUserServiceImpl extends AbstractUserService<Organizatio
                     }
                     return accessTokenRepository.create(token)
                             .map(created -> created.toCreateResponse(rawToken))
-                            .flatMap(this::getAccountAccessTokenWithIssuerUsername);
+                            .flatMap(i -> prepareTokenToGet(i, true));
                 });
     }
 
     @Override
     public Flowable<AccountAccessToken> findUserAccessTokens(String organisationId, String userId) {
         return accessTokenRepository.findByUserId(ORGANIZATION, organisationId, userId)
-                .flatMap(token -> getAccountAccessTokenWithIssuerUsername(token).toFlowable());
+                .flatMap(token -> prepareTokenToGet(token).toFlowable());
     }
 
-    private Single<AccountAccessToken> getAccountAccessTokenWithIssuerUsername(AccountAccessToken token) {
-        return token.issuerId() == null ? Single.just(token) :
+    private Single<AccountAccessToken> prepareTokenToGet(AccountAccessToken token) {
+        return prepareTokenToGet(token, false);
+    }
+
+    private Single<AccountAccessToken> prepareTokenToGet(AccountAccessToken token, boolean showToken) {
+        var tokenValue = showToken ? token.token() : null;
+        return token.issuerId() == null ? Single.just(token.toBuilder().token(tokenValue).build()) :
                 userRepository.findById(token.issuerId()).defaultIfEmpty(new User())
-                        .map(user -> token.toBuilder().issuerUsername(user.getUsername()).build());
+                        .map(user -> token.toBuilder().token(tokenValue).issuerUsername(user.getUsername()).build());
     }
 
     @Override

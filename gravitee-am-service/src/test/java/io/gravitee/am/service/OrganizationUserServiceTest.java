@@ -55,7 +55,6 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
@@ -126,7 +125,7 @@ public class OrganizationUserServiceTest {
 
         verify(userRepository, times(1)).create(any(User.class));
         verify(auditService, times(1)).report(argThat(
-            (ArgumentMatcher<AuditBuilder<Audit>>) audit -> USER_CREATED.equals(audit.build(new ObjectMapper()).getType())
+                (ArgumentMatcher<AuditBuilder<Audit>>) audit -> USER_CREATED.equals(audit.build(new ObjectMapper()).getType())
         ));
     }
 
@@ -311,7 +310,7 @@ public class OrganizationUserServiceTest {
         when(userRepository.findById("my-user")).thenReturn(Maybe.just(user));
         when(userRepository.delete("my-user")).thenReturn(Completable.complete());
         when(credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())).thenReturn(Flowable.just(credential));
-        when(credentialService.delete(credential.getId(),false)).thenReturn(Completable.complete());
+        when(credentialService.delete(credential.getId(), false)).thenReturn(Completable.complete());
 
         TestObserver testObserver = userService.delete("my-user").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -369,23 +368,26 @@ public class OrganizationUserServiceTest {
                 .assertNoErrors()
                 .assertValue(token -> user.getId().equals(token.userId()))
                 .assertValue(token -> user.getReferenceId().equals(token.referenceId()))
-                .assertValue(token -> ReferenceType.ORGANIZATION == token.referenceType());
+                .assertValue(token -> ReferenceType.ORGANIZATION == token.referenceType())
+                .assertValue(token -> token.token() != null);
 
     }
 
     @Test
     public void shouldFindTokensByUser() {
         var userId = "userId";
-        var accessToken1 = AccountAccessToken.builder().tokenId("1").userId(userId).build();
-        var accessToken2 = AccountAccessToken.builder().tokenId("2").userId(userId).build();
+        var accessToken1 = AccountAccessToken.builder().tokenId("1").token("12345").userId(userId).build();
+        var accessToken2 = AccountAccessToken.builder().tokenId("2").token("678912").userId(userId).build();
         var organizationId = "organizationId";
         when(accessTokenRepository.findByUserId(ReferenceType.ORGANIZATION, organizationId, userId)).thenReturn(Flowable.just(accessToken2, accessToken1));
 
-        TestObserver<List<AccountAccessToken>> testObserver = userService.findUserAccessTokens(organizationId, userId).toList().test();
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(tokens -> tokens.size() == 2);
-        testObserver.assertValue(tokens -> tokens.stream().allMatch(i -> i.tokenId().equals("1") || i.tokenId().equals("2") && StringUtils.isBlank(i.issuerId())));
+        userService.findUserAccessTokens(organizationId, userId).toList().test()
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(tokens -> tokens.size() == 2)
+                .assertValue(tokens -> tokens.stream().allMatch(i -> i.tokenId().equals("1") || i.tokenId().equals("2")))
+                .assertValue(tokens -> tokens.stream().allMatch(i -> StringUtils.isBlank(i.issuerId())))
+                .assertValue(tokens -> tokens.stream().allMatch(i -> i.token() == null));
 
         verify(accessTokenRepository, times(1)).findByUserId(any(), any(), any());
     }
@@ -395,18 +397,21 @@ public class OrganizationUserServiceTest {
         var userId = "userId";
         var issuerUserId = "issuerUserId";
         var organizationId = "organizationId";
-        var accessToken1 = AccountAccessToken.builder().tokenId("1").userId(userId).issuerId(issuerUserId).build();
-        var accessToken2 = AccountAccessToken.builder().tokenId("2").userId(userId).issuerId(issuerUserId).build();
+        var accessToken1 = AccountAccessToken.builder().tokenId("1").token("12345").userId(userId).issuerId(issuerUserId).build();
+        var accessToken2 = AccountAccessToken.builder().tokenId("2").token("678912").userId(userId).issuerId(issuerUserId).build();
         var issuerUser = new User();
         issuerUser.setId(issuerUserId);
         when(accessTokenRepository.findByUserId(ReferenceType.ORGANIZATION, organizationId, userId)).thenReturn(Flowable.just(accessToken2, accessToken1));
         when(userRepository.findById(issuerUserId)).thenReturn(Maybe.just(issuerUser));
 
-        TestObserver<List<AccountAccessToken>> testObserver = userService.findUserAccessTokens(organizationId, userId).toList().test();
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(tokens -> tokens.size() == 2);
-        testObserver.assertValue(tokens -> tokens.stream().allMatch(i -> i.tokenId().equals("1") || i.tokenId().equals("2") && i.issuerId().equals(issuerUserId)));
+        userService.findUserAccessTokens(organizationId, userId).toList()
+                .test()
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(tokens -> tokens.size() == 2)
+                .assertValue(tokens -> tokens.stream().allMatch(i -> i.tokenId().equals("1") || i.tokenId().equals("2")))
+                .assertValue(tokens -> tokens.stream().allMatch(i -> i.issuerId().equals(issuerUserId)))
+                .assertValue(tokens -> tokens.stream().allMatch(i -> i.token() == null));
 
         verify(accessTokenRepository, times(1)).findByUserId(any(), any(), any());
     }
@@ -416,16 +421,19 @@ public class OrganizationUserServiceTest {
         var userId = "userId";
         var issuerUserId = "issuerUserId";
         var organizationId = "organizationId";
-        var accessToken1 = AccountAccessToken.builder().tokenId("1").userId(userId).issuerId(issuerUserId).build();
-        var accessToken2 = AccountAccessToken.builder().tokenId("2").userId(userId).issuerId(issuerUserId).build();
+        var accessToken1 = AccountAccessToken.builder().tokenId("1").token("12345").userId(userId).issuerId(issuerUserId).build();
+        var accessToken2 = AccountAccessToken.builder().tokenId("2").token("678912").userId(userId).issuerId(issuerUserId).build();
         when(accessTokenRepository.findByUserId(ReferenceType.ORGANIZATION, organizationId, userId)).thenReturn(Flowable.just(accessToken2, accessToken1));
         when(userRepository.findById(issuerUserId)).thenReturn(Maybe.empty());
 
-        TestObserver<List<AccountAccessToken>> testObserver = userService.findUserAccessTokens(organizationId, userId).toList().test();
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(tokens -> tokens.size() == 2);
-        testObserver.assertValue(tokens -> tokens.stream().allMatch(i -> (i.tokenId().equals("1") || i.tokenId().equals("2")) && StringUtils.isBlank(i.issuerUsername())));
+        userService.findUserAccessTokens(organizationId, userId).toList()
+                .test()
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(tokens -> tokens.size() == 2)
+                .assertValue(tokens -> tokens.stream().allMatch(i -> i.tokenId().equals("1") || i.tokenId().equals("2")))
+                .assertValue(tokens -> tokens.stream().allMatch(i -> StringUtils.isBlank(i.issuerUsername())))
+                .assertValue(tokens -> tokens.stream().allMatch(i -> i.token() == null));
 
         verify(accessTokenRepository, times(1)).findByUserId(any(), any(), any());
     }
@@ -440,7 +448,7 @@ public class OrganizationUserServiceTest {
         when(accessTokenRepository.findByUserId(any(), any(), any()))
                 .thenAnswer(invocation -> Flowable.fromStream(IntStream.range(0, 20)
                         .mapToObj(i -> AccountAccessToken.builder()
-                                .tokenId(""+i)
+                                .tokenId("" + i)
                                 .build())));
 
         var newTokenRequest = new NewAccountAccessToken("test-token");
