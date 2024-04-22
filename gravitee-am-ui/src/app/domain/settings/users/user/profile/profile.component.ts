@@ -19,7 +19,6 @@ import { NgForm } from '@angular/forms';
 import { filter, switchMap, tap } from 'rxjs/operators';
 import { isObject } from 'lodash';
 import { MatDialog } from '@angular/material/dialog';
-import { GIO_DIALOG_WIDTH } from '@gravitee/ui-particles-angular';
 
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { DialogService } from '../../../../../services/dialog.service';
@@ -274,7 +273,7 @@ export class UserProfileComponent implements OnInit {
       .open<AccountTokenCreationDialogComponent, AccountTokenCreationDialogData, AccountTokenCreationDialogResult>(
         AccountTokenCreationDialogComponent,
         {
-          width: GIO_DIALOG_WIDTH.LARGE,
+          width: '640px',
           disableClose: true,
           role: 'alertdialog',
           id: 'accountTokenCreateDialog',
@@ -301,7 +300,7 @@ export class UserProfileComponent implements OnInit {
             .open<AccountTokenCopyDialogComponent, AccountTokenCopyDialogData, AccountTokenCopyDialogResult>(
               AccountTokenCopyDialogComponent,
               {
-                width: GIO_DIALOG_WIDTH.LARGE,
+                width: '640px',
                 disableClose: true,
                 data: {
                   token: data.token,
