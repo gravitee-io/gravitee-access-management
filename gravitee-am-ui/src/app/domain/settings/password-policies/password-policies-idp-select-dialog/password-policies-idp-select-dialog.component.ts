@@ -56,6 +56,7 @@ export interface IdpDataModel {
 export class PasswordPoliciesIdpSelectDialogComponent implements OnInit {
   result: Map<string, boolean> = new Map<string, boolean>();
   selectionModel: Map<string, boolean>;
+  initialSelected: Map<string, boolean>;
 
   constructor(
     private dialogRef: MatDialogRef<PasswordPoliciesIdpSelectDialogComponent>,
@@ -65,6 +66,7 @@ export class PasswordPoliciesIdpSelectDialogComponent implements OnInit {
   ngOnInit(): void {
     const selection: [string, boolean][] = this.rows.map((idp: IdpDataModel): [string, boolean] => [idp.id, idp.selected]);
     this.selectionModel = new Map<string, boolean>(selection);
+    this.initialSelected = new Map<string, boolean>(selection);
   }
 
   closeDialog(): void {
@@ -79,5 +81,20 @@ export class PasswordPoliciesIdpSelectDialogComponent implements OnInit {
     const value: boolean = this.selectionModel.get(rowId);
     this.selectionModel.set(rowId, !value);
     this.result.set(rowId, !value);
+  }
+
+  disabledAdd(): boolean {
+    if (this.selectionModel.size !== this.initialSelected.size) {
+      return true;
+    }
+    for (const [key, value] of this.selectionModel) {
+      if (!this.initialSelected.has(key)) {
+        return true;
+      }
+      if (this.initialSelected.get(key) !== value) {
+        return false;
+      }
+    }
+    return true;
   }
 }
