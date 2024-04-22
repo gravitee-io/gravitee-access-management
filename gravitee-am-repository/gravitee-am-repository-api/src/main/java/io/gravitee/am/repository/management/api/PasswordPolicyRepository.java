@@ -30,5 +30,7 @@ public interface PasswordPolicyRepository extends CrudRepository<PasswordPolicy,
 
     Completable deleteByReference(ReferenceType referenceType, String referenceId);
 
+    Maybe<PasswordPolicy> findByOldest(ReferenceType referenceType, String referenceId);
+
     Maybe<PasswordPolicy> findByDefaultPolicy(ReferenceType referenceType, String referenceId);
 }
