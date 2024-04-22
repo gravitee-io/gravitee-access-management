@@ -77,11 +77,11 @@ public interface PasswordPolicyService {
     /**
      * Delete the password policy and reset the policyId for each IDP linked to it
      *
-     * @param referenceType
-     * @param referenceId
-     * @param policyId
-     * @param principal
-     * @return
+     * @param referenceType the type of reference (e.g., DOMAIN)
+     * @param referenceId the identifier of the reference
+     * @param policyId the ID of the password policy to set as default
+     * @param principal the principal user performing the operation
+     * @return a Completable
      */
     Completable delete(ReferenceType referenceType, String referenceId, String policyId, User principal);
 

@@ -36,7 +36,6 @@ import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.PasswordPolicyNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.AssignPasswordPolicy;
-import io.gravitee.am.service.model.NewPasswordPolicy;
 import io.gravitee.am.service.model.UpdatePasswordPolicy;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.PasswordPolicyAuditBuilder;
@@ -153,26 +152,25 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
                 .flatMapSingle(policy -> resetPolicyOnIdentityProviders(referenceType, referenceId, policyId)
                         .andThen(Completable.defer(() -> passwordPolicyRepository.delete(policy.getId())))
                         .andThen(Single.defer(() -> {
-                            Event event = new Event(Type.PASSWORD_POLICY, new Payload(policy.getId(), referenceType, referenceId, Action.DELETE));
-                            return eventService.create(event).map(__ -> policy);
-                        }
+                                    Event event = new Event(Type.PASSWORD_POLICY, new Payload(policy.getId(), referenceType, referenceId, Action.DELETE));
+                                    return eventService.create(event).map(__ -> policy);
+                                }
                         )))
                 .doOnSuccess(policy -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
-                                        .principal(principal)
-                                        .type(EventType.PASSWORD_POLICY_DELETED)
-                                        .oldValue(policy)))
+                        .principal(principal)
+                        .type(EventType.PASSWORD_POLICY_DELETED)
+                        .oldValue(policy)))
                 .doOnError(error -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
                         .principal(principal)
                         .type(EventType.PASSWORD_POLICY_DELETED)
                         .throwable(error)))
+                .flatMap(policy -> {
+                    if (policy.getDefaultPolicy().equals(Boolean.TRUE)) {
+                        return setOldestPolicyDefault(referenceType, referenceId, principal);
+                    }
+                    return Maybe.empty();
+                })
                 .ignoreElement();
-                // TODO Add here a reset default policy if we are deleting the default one (AM-3008)
-    }
-
-    private Completable resetPolicyOnIdentityProviders(ReferenceType referenceType, String referenceId, String policyId) {
-        return identityProviderService.findWithPasswordPolicy(referenceType, referenceId, policyId)
-                .flatMapSingle(provider -> identityProviderService.updatePasswordPolicy(referenceId, provider.getId(), new AssignPasswordPolicy()))
-                .ignoreElements();
     }
 
     @Override
@@ -215,6 +213,18 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
                                 .orElse(Maybe.empty())
                                 .switchIfEmpty(defaultPasswordPolicy(user))
                 );
+    }
+
+    private Completable resetPolicyOnIdentityProviders(ReferenceType referenceType, String referenceId, String policyId) {
+        return identityProviderService.findWithPasswordPolicy(referenceType, referenceId, policyId)
+                .flatMapSingle(provider -> identityProviderService.updatePasswordPolicy(referenceId, provider.getId(), new AssignPasswordPolicy()))
+                .ignoreElements();
+    }
+
+    private Maybe<PasswordPolicy> setOldestPolicyDefault(ReferenceType referenceType, String referenceId, User principal) {
+        return passwordPolicyRepository.findByOldest(referenceType, referenceId)
+                .flatMapSingle(p -> setNewDefaultPolicy(referenceType, referenceId, p, principal));
+
     }
 
     private Maybe<PasswordPolicy> defaultPasswordPolicy(io.gravitee.am.model.User user) {

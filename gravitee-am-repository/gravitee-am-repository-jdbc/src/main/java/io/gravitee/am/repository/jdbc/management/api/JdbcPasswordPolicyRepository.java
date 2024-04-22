@@ -143,6 +143,11 @@ public class JdbcPasswordPolicyRepository extends AbstractJdbcRepository impleme
                 .all());
     }
 
+    @Override
+    public Maybe<PasswordPolicy> findByOldest(ReferenceType referenceType, String referenceId) {
+        return passwordPolicyRepository.findByOldest(referenceId, referenceType.name()).map(this::toEntity);
+    }
+
     protected PasswordPolicy toEntity(JdbcPasswordPolicy entity) {
         return mapper.map(entity, PasswordPolicy.class);
     }

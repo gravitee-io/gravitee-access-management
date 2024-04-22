@@ -33,6 +33,7 @@ import org.springframework.stereotype.Component;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Sorts.ascending;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -41,6 +42,7 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoPasswordPolicyRepository extends AbstractManagementMongoRepository implements PasswordPolicyRepository {
     private static final String COLLECTION_NAME = "password_policies";
+    private static final String CREATED_AT = "createdAt";
     private static final String FIELD_DEFAULT_POLICY = "defaultPolicy";
     private MongoCollection<PasswordPolicyMongo> mongoCollection;
 
@@ -104,6 +106,11 @@ public class MongoPasswordPolicyRepository extends AbstractManagementMongoReposi
                                 eq(FIELD_REFERENCE_TYPE, referenceType.name())
                         )
                 ));
+    }
+
+    @Override
+    public Maybe<PasswordPolicy> findByOldest(ReferenceType referenceType, String referenceId) {
+        return Maybe.fromPublisher(mongoCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()))).sort(ascending(CREATED_AT)).limit(1)).map(this::convert);
     }
 
     private PasswordPolicy convert(PasswordPolicyMongo passwordPolicyMongo) {
