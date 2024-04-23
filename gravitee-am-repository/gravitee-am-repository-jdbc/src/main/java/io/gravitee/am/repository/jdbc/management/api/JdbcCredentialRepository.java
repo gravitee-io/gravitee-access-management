@@ -66,6 +66,14 @@ public class JdbcCredentialRepository extends AbstractJdbcRepository implements 
     }
 
     @Override
+    public Flowable<Credential> findByUsername(ReferenceType referenceType, String referenceId, String username, int limit) {
+        LOGGER.debug("findByUsername({},{},{},{})", referenceType, referenceId, username, limit);
+        return credentialRepository.findByUsernameOrderByCreatedAt(referenceType.name(), referenceId, username)
+                .take(limit)
+                .map(this::toEntity);
+    }
+
+    @Override
     public Flowable<Credential> findByCredentialId(ReferenceType referenceType, String referenceId, String credentialId) {
         LOGGER.debug("findByCredentialId({},{},{})", referenceType, referenceId, credentialId);
         return credentialRepository.findByCredentialId(referenceType.name(), referenceId, credentialId)
