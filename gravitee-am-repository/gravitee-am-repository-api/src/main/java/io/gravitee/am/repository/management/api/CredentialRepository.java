@@ -34,6 +34,8 @@ public interface CredentialRepository extends CrudRepository<Credential, String>
 
     Flowable<Credential> findByUsername(ReferenceType referenceType, String referenceId, String username);
 
+    Flowable<Credential> findByUsername(ReferenceType referenceType, String referenceId, String username, int limit);
+
     Flowable<Credential> findByCredentialId(ReferenceType referenceType, String referenceId, String credentialId);
 
     Completable deleteByUserId(ReferenceType referenceType, String referenceId, String userId);
