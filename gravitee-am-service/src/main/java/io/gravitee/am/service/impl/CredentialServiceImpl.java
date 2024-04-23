@@ -91,6 +91,17 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @Override
+    public Flowable<Credential> findByUsername(ReferenceType referenceType, String referenceId, String username, int limit) {
+        LOGGER.debug("Find credentials by {} {} and username: {}, returning {}", referenceType, referenceId, username, limit);
+        return credentialRepository.findByUsername(referenceType, referenceId, username, limit)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find a credential using {} {} and username: {} and limit: {}", referenceType, referenceId, username, limit, ex);
+                    return Flowable.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a credential using %s %s and username: %s", referenceType, referenceId, username), ex));
+                });
+    }
+
+    @Override
     public Flowable<Credential> findByCredentialId(ReferenceType referenceType, String referenceId, String credentialId) {
         LOGGER.debug("Find credentials by {} {} and credential ID: {}", referenceType, referenceId, credentialId);
         return credentialRepository.findByCredentialId(referenceType, referenceId, credentialId)
