@@ -42,6 +42,8 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
     private static final String FIELD_USERNAME = "username";
     private static final String FIELD_CREDENTIAL_ID = "credentialId";
     private static final String FIELD_AAGUID = "aaguid";
+    private static final String FIELD_CREATED_AT = "createdAt";
+
     private MongoCollection<CredentialMongo> credentialsCollection;
 
     @PostConstruct
@@ -78,6 +80,20 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
                                 eq(FIELD_USERNAME, username)
                         )
                 ))
+                .map(this::convert);
+    }
+
+    @Override
+    public Flowable<Credential> findByUsername(ReferenceType referenceType, String referenceId, String username, int limit) {
+        return Flowable.fromPublisher(
+                        credentialsCollection.find(
+                                and(
+                                        eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                                        eq(FIELD_REFERENCE_ID, referenceId),
+                                        eq(FIELD_USERNAME, username)
+                                )).sort(
+                                    new Document(FIELD_CREATED_AT, -1))
+                                .limit(limit))
                 .map(this::convert);
     }
 

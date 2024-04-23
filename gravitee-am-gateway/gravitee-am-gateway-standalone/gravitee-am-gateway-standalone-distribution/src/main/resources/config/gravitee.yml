@@ -310,6 +310,8 @@ user:
   mfaVerifyAttempt:
     email:
       #subject: Multiple verification attempt detected
+  webAuthn:
+    #maxAllowCredentials: 20 # number of credentials sent back to perform passwordless authentication. Keep in mind, Firefox handles max 20
 
 handlers:
   request:
