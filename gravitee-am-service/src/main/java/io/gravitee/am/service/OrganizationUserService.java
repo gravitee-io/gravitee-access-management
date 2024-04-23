@@ -22,8 +22,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 
-import java.util.List;
-
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -50,4 +48,6 @@ public interface OrganizationUserService extends CommonUserService {
     Single<AccountAccessToken> generateAccountAccessToken(User user, NewAccountAccessToken newAccountToken, String issuer);
 
     Single<User> findByAccessToken(String token, String tokenValue);
+
+    Single<AccountAccessToken> revokeToken(String tokenId, String userId, String id);
 }

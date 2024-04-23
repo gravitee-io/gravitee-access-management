@@ -174,6 +174,25 @@ public class UserResource extends AbstractResource {
                 .subscribe(response::resume, response::resume);
     }
 
+    @DELETE
+    @Path("/tokens/{tokenId}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Revoke an account access token",
+            operationId = "revokeAccountAccessToken",
+            description = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
+    @ApiResponse(responseCode = "200", description = "Account access token revoked")
+    public void revokeAccountToken(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("user") String userId,
+            @PathParam("tokenId") String tokenId,
+            @Suspended final AsyncResponse response
+    ) {
+        final var authenticatedUser = getAuthenticatedUser();
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.UPDATE)
+                .andThen(organizationUserService.revokeToken(organizationId, userId, tokenId, authenticatedUser))
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
+    }
 
     @PUT
     @Path("/status")

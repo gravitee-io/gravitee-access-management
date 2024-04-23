@@ -205,4 +205,14 @@ public class OrganizationUserServiceImpl extends AbstractUserService<Organizatio
                 .flatMapSingle(token -> findById(token.referenceType(), token.referenceId(), token.userId()))
                 .toSingle();
     }
+
+    @Override
+    public Single<AccountAccessToken> revokeToken(String organizationId, String userId, String tokenId) {
+        return accessTokenRepository.findById(tokenId)
+                .filter(token -> token.referenceId().equals(organizationId))
+                .filter(token -> token.userId().equals(userId))
+                .flatMapSingle(token -> accessTokenRepository.delete(token.tokenId())
+                        .andThen(Single.just(token)))
+                .toSingle();
+    }
 }

@@ -42,9 +42,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-
-import java.util.List;
-
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -239,5 +236,19 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
     @Override
     public Single<User> findByAccessToken(String tokenId, String accountToken) {
         return getUserService().findByAccessToken(tokenId, accountToken);
+    }
+
+    @Override
+    public Completable revokeToken(String organizationId, String userId, String tokenId, io.gravitee.am.identityprovider.api.User principal) {
+        return getUserService().revokeToken(organizationId, userId, tokenId)
+                .doOnSuccess(revoked -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.ACCOUNT_ACCESS_TOKEN_REVOKED)
+                        .accountToken(revoked)))
+                .doOnError(x -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.ACCOUNT_ACCESS_TOKEN_REVOKED)
+                        .throwable(x)))
+                .ignoreElement();
     }
 }
