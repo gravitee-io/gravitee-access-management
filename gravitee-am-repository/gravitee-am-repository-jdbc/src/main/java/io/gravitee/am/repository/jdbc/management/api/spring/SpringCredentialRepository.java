@@ -34,6 +34,9 @@ public interface SpringCredentialRepository extends RxJava3CrudRepository<JdbcCr
     @Query("Select * from webauthn_credentials c where c.reference_id = :refId and c.reference_type = :refType and username = :username")
     Flowable<JdbcCredential> findByUsername(@Param("refType") String referenceType, @Param("refId")String referenceId, @Param("username") String username);
 
+    @Query("Select * from webauthn_credentials c where c.reference_id = :refId and c.reference_type = :refType and username = :username ORDER BY c.created_at DESC")
+    Flowable<JdbcCredential> findByUsernameOrderByCreatedAt(@Param("refType") String referenceType, @Param("refId")String referenceId, @Param("username") String username);
+
     @Query("Select * from webauthn_credentials c where c.reference_id = :refId and c.reference_type = :refType and credential_id = :credId")
     Flowable<JdbcCredential> findByCredentialId(@Param("refType") String referenceType, @Param("refId")String referenceId, @Param("credId")String credentialId);
 }

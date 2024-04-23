@@ -34,6 +34,8 @@ public interface CredentialService {
 
     Flowable<Credential> findByUsername(ReferenceType referenceType, String referenceId, String username);
 
+    Flowable<Credential> findByUsername(ReferenceType referenceType, String referenceId, String username, int limit);
+
     Flowable<Credential> findByCredentialId(ReferenceType referenceType, String referenceId, String credentialId);
 
     Single<Credential> create(Credential credential);
