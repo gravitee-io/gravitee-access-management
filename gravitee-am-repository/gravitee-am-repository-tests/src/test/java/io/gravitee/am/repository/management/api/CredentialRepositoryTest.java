@@ -70,6 +70,25 @@ public class CredentialRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void findByUsernameWithLimit() throws TechnicalException {
+        // create credential
+        Credential credential1 = buildCredential();
+        Credential credential2 = buildCredential();
+
+        credentialRepository.create(credential1).blockingGet();
+        credentialRepository.create(credential2).blockingGet();
+
+        // fetch credentials
+        TestSubscriber<Credential> testSubscriber = credentialRepository
+                .findByUsername(credential1.getReferenceType(), credential1.getReferenceId(), credential1.getUsername(), 1).test();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
+
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
+    }
+
+    @Test
     public void findByCredentialId() throws TechnicalException {
         // create credential
         Credential credential = buildCredential();

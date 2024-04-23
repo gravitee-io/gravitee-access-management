@@ -127,6 +127,17 @@ public class CredentialServiceTest {
     }
 
     @Test
+    public void shouldFindLatestElementsByUsername() {
+        when(credentialRepository.findByUsername(ReferenceType.DOMAIN, DOMAIN, "username", 15)).thenReturn(Flowable.just(new Credential()));
+        TestSubscriber<Credential> testObserver = credentialService.findByUsername(ReferenceType.DOMAIN, DOMAIN, "username", 15).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValueCount(1);
+    }
+
+    @Test
     public void shouldFindByUsername_technicalException() {
         when(credentialRepository.findByUsername(ReferenceType.DOMAIN, DOMAIN, "username")).thenReturn(Flowable.error(TechnicalException::new));
 
