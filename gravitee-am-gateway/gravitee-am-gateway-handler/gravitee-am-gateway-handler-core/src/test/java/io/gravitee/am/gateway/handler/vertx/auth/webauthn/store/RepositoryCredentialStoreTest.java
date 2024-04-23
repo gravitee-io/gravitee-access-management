@@ -55,11 +55,13 @@ public class RepositoryCredentialStoreTest {
 
     @Test
     public void shouldFetchAuthenticator_byUsername_emptyList() {
+        repositoryCredentialStore.maxAllowCredentials = 5;
+
         Authenticator query = new Authenticator();
         query.setUserName("username");
 
         when(domain.getId()).thenReturn("domain-id");
-        when(credentialService.findByUsername(ReferenceType.DOMAIN, domain.getId(), query.getUserName())).thenReturn(Flowable.empty());
+        when(credentialService.findByUsername(eq(ReferenceType.DOMAIN), eq("domain-id"), eq(query.getUserName()), intThat(i -> i == 5))).thenReturn(Flowable.empty());
         when(jwtBuilder.sign(any())).thenReturn("part1.part2.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c");
 
         List<Authenticator> authenticators = repositoryCredentialStore.fetch(query).blockingGet();
@@ -75,6 +77,8 @@ public class RepositoryCredentialStoreTest {
 
     @Test
     public void shouldFetchAuthenticator_byUsername_emptyList_different_users() {
+        repositoryCredentialStore.maxAllowCredentials = 5;
+
         Authenticator query = new Authenticator();
         query.setUserName("username");
 
@@ -82,8 +86,8 @@ public class RepositoryCredentialStoreTest {
         query2.setUserName("username2");
 
         when(domain.getId()).thenReturn("domain-id");
-        when(credentialService.findByUsername(ReferenceType.DOMAIN, domain.getId(), query.getUserName())).thenReturn(Flowable.empty());
-        when(credentialService.findByUsername(ReferenceType.DOMAIN, domain.getId(), query2.getUserName())).thenReturn(Flowable.empty());
+        when(credentialService.findByUsername(eq(ReferenceType.DOMAIN), eq("domain-id"), eq(query.getUserName()), anyInt())).thenReturn(Flowable.empty());
+        when(credentialService.findByUsername(eq(ReferenceType.DOMAIN), eq("domain-id"), eq(query2.getUserName()), anyInt())).thenReturn(Flowable.empty());
         when(jwtBuilder.sign(any())).thenReturn("part1.part2.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c").thenReturn("part1.part2.-sVkXqTOhFeJwQXyH3WhuNJfAfnRkVM6llEu6k46iqY");
 
         List<Authenticator> authenticators = repositoryCredentialStore.fetch(query).blockingGet();
@@ -99,6 +103,8 @@ public class RepositoryCredentialStoreTest {
 
     @Test
     public void shouldFetchAuthenticator_byUsername_withValues() {
+        repositoryCredentialStore.maxAllowCredentials = 5;
+
         Authenticator query = new Authenticator();
         query.setUserName("username");
 
@@ -107,7 +113,29 @@ public class RepositoryCredentialStoreTest {
         credential.setCredentialId("credID");
 
         when(domain.getId()).thenReturn("domain-id");
-        when(credentialService.findByUsername(ReferenceType.DOMAIN, domain.getId(), query.getUserName())).thenReturn(Flowable.just(credential));
+        when(credentialService.findByUsername(eq(ReferenceType.DOMAIN), eq("domain-id"), eq(query.getUserName()), anyInt())).thenReturn(Flowable.just(credential));
+        List<Authenticator> authenticators = repositoryCredentialStore.fetch(query).blockingGet();
+
+        Assert.assertNotNull(authenticators);
+        Assert.assertEquals(1, authenticators.size());
+        Assert.assertEquals("credID", authenticators.get(0).getCredID());
+        Assert.assertEquals(authenticators.get(0).getUserName(), query.getUserName());
+        verify(jwtBuilder, never()).sign(any());
+    }
+
+    @Test
+    public void shouldFetchAllValuesWhenMaxAllowCredentialsLessLEQ0() {
+        repositoryCredentialStore.maxAllowCredentials = -1;
+
+        Authenticator query = new Authenticator();
+        query.setUserName("username");
+
+        Credential credential = new Credential();
+        credential.setUsername(query.getUserName());
+        credential.setCredentialId("credID");
+
+        when(domain.getId()).thenReturn("domain-id");
+        when(credentialService.findByUsername(eq(ReferenceType.DOMAIN), eq("domain-id"), eq(query.getUserName()))).thenReturn(Flowable.just(credential));
         List<Authenticator> authenticators = repositoryCredentialStore.fetch(query).blockingGet();
 
         Assert.assertNotNull(authenticators);

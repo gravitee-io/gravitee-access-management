@@ -31,6 +31,7 @@ import io.vertx.ext.auth.webauthn.Authenticator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -55,13 +56,11 @@ public class RepositoryCredentialStore {
     @Autowired
     private Domain domain;
 
+    @Value("${user.webAuthn.maxAllowCredentials:-1}")
+    protected int maxAllowCredentials;
+
     public Single<List<Authenticator>> fetch(Authenticator query) {
-
-        Single<List<Credential>> fetchCredentials = query.getUserName() != null ?
-                credentialService.findByUsername(ReferenceType.DOMAIN, domain.getId(), query.getUserName()).toList() :
-                credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), query.getCredID()).toList();
-
-        return fetchCredentials
+        return fetchCredentials(query)
                 .flatMap(credentials -> {
                     if (credentials.isEmpty() && query.getUserName() != null) {
                         // If, when initiating an authentication ceremony, there is no account matching the provided username,
@@ -114,6 +113,18 @@ public class RepositoryCredentialStore {
                                 .collect(Collectors.toList()));
                     }
                 });
+    }
+
+    private Single<List<Credential>> fetchCredentials(Authenticator query){
+        if (query.getUserName() != null) {
+            if (maxAllowCredentials > 0) {
+                return credentialService.findByUsername(ReferenceType.DOMAIN, domain.getId(), query.getUserName(), maxAllowCredentials).toList();
+            } else {
+                return credentialService.findByUsername(ReferenceType.DOMAIN, domain.getId(), query.getUserName()).toList();
+            }
+        } else {
+            return credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), query.getCredID()).toList();
+        }
     }
 
     public Completable store(Authenticator authenticator) {
