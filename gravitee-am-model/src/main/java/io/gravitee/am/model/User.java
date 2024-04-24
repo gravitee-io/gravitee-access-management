@@ -149,7 +149,10 @@ public class User implements IUser {
     @Schema(type = "java.lang.Long")
     private Date updatedAt;
 
+    private Boolean forceResetPassword = Boolean.FALSE;
+
     public User() {
+
     }
 
     public User(boolean withDefaultValues) {
@@ -163,6 +166,7 @@ public class User implements IUser {
             this.registrationCompleted = null;
             this.preRegistration = null;
             this.loginsCount = null;
+            this.forceResetPassword = null;
         }
     }
 
@@ -220,6 +224,7 @@ public class User implements IUser {
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
         this.lastUsernameReset = other.lastUsernameReset;
+        this.forceResetPassword = other.forceResetPassword;
     }
 
     public String getId() {
@@ -823,5 +828,13 @@ public class User implements IUser {
         setAccountNonLocked(true);
         setAccountLockedAt(null);
         setAccountLockedUntil(null);
+    }
+
+    public Boolean getForceResetPassword() {
+        return forceResetPassword;
+    }
+
+    public void setForceResetPassword(Boolean forceResetPassword) {
+        this.forceResetPassword = forceResetPassword;
     }
 }

@@ -18,11 +18,13 @@ package io.gravitee.am.service.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.gravitee.am.model.IUser;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.util.Date;
 import java.util.Map;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_MAX_LENGTH;
 
@@ -30,6 +32,9 @@ import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_M
  * @author Titouan COMPIEGNE (titouan.compisegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@ToString
+@Getter
+@Setter
 public class UpdateUser implements IUser {
 
     @Size(max = EMAIL_MAX_LENGTH,  message = "must not be greater than "+ EMAIL_MAX_LENGTH)
@@ -40,7 +45,7 @@ public class UpdateUser implements IUser {
     private String lastName;
 
     private String displayName;
-
+    @ToString.Exclude
     private String externalId;
 
     private boolean accountNonExpired = true;
@@ -74,187 +79,17 @@ public class UpdateUser implements IUser {
     @Schema(type = "java.lang.Long")
     private Date updatedAt;
 
+    private Boolean forceResetPassword;
+
     @Override
     @JsonIgnore
     public String getUsername() {
         return null;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
     @Override
     @JsonIgnore
     public String getNickName() {
         return null;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    @Override
-    public String getDisplayName() {
-        return displayName;
-    }
-
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
-    }
-
-    public String getExternalId() {
-        return externalId;
-    }
-
-    public void setExternalId(String externalId) {
-        this.externalId = externalId;
-    }
-
-    public Boolean isAccountNonExpired() {
-        return accountNonExpired;
-    }
-
-    public void setAccountNonExpired(boolean accountNonExpired) {
-        this.accountNonExpired = accountNonExpired;
-    }
-
-    public Boolean isAccountNonLocked() {
-        return accountNonLocked;
-    }
-
-    public void setAccountNonLocked(boolean accountNonLocked) {
-        this.accountNonLocked = accountNonLocked;
-    }
-
-    public Boolean isCredentialsNonExpired() {
-        return credentialsNonExpired;
-    }
-
-    public void setCredentialsNonExpired(boolean credentialsNonExpired) {
-        this.credentialsNonExpired = credentialsNonExpired;
-    }
-
-    public Boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public Boolean isPreRegistration() {
-        return preRegistration;
-    }
-
-    public void setPreRegistration(boolean preRegistration) {
-        this.preRegistration = preRegistration;
-    }
-
-    public Boolean isRegistrationCompleted() {
-        return registrationCompleted;
-    }
-
-    public void setRegistrationCompleted(boolean registrationCompleted) {
-        this.registrationCompleted = registrationCompleted;
-    }
-
-    public String getSource() {
-        return source;
-    }
-
-    public void setSource(String source) {
-        this.source = source;
-    }
-
-    public String getClient() {
-        return client;
-    }
-
-    public void setClient(String client) {
-        this.client = client;
-    }
-
-    public Long getLoginsCount() {
-        return loginsCount;
-    }
-
-    public void setLoginsCount(long loginsCount) {
-        this.loginsCount = loginsCount;
-    }
-
-    public Date getLoggedAt() {
-        return loggedAt;
-    }
-
-    public void setLoggedAt(Date loggedAt) {
-        this.loggedAt = loggedAt;
-    }
-
-    public String getPreferredLanguage() {
-        return preferredLanguage;
-    }
-
-    public void setPreferredLanguage(String preferredLanguage) {
-        this.preferredLanguage = preferredLanguage;
-    }
-
-    public Map<String, Object> getAdditionalInformation() {
-        return additionalInformation;
-    }
-
-    public void setAdditionalInformation(Map<String, Object> additionalInformation) {
-        this.additionalInformation = additionalInformation;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Date getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Date updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    @Override
-    public String toString() {
-        return "UpdateUser{" +
-                ", email='" + email + '\'' +
-                ", firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
-                ", accountNonExpired=" + accountNonExpired +
-                ", accountNonLocked=" + accountNonLocked +
-                ", credentialsNonExpired=" + credentialsNonExpired +
-                ", enabled=" + enabled +
-                ", source='" + source + '\'' +
-                ", loginsCount=" + loginsCount +
-                ", loggedAt=" + loggedAt +
-                ", additionalInformation=" + additionalInformation +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
-                '}';
     }
 }

@@ -308,6 +308,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
         user.setRegistrationCompleted(newUser.isRegistrationCompleted());
         user.setPreferredLanguage(newUser.getPreferredLanguage());
         user.setAdditionalInformation(newUser.getAdditionalInformation());
+        user.setForceResetPassword(newUser.getForceResetPassword());
         user.setCreatedAt(new Date());
         user.setUpdatedAt(user.getCreatedAt());
         user.setLastPasswordReset(user.getCreatedAt());
@@ -341,6 +342,9 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
             updateUser.getAdditionalInformation().forEach(additionalInformation::putIfAbsent);
         }
         user.setAdditionalInformation(additionalInformation);
+        if(updateUser.getForceResetPassword()!=null){
+            user.setForceResetPassword(updateUser.getForceResetPassword());
+        }
         return user;
     }
 
@@ -365,6 +369,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
             user.getAdditionalInformation().forEach((k, v) -> additionalInformation.putIfAbsent(k, v));
         }
         idpUser.setAdditionalInformation(additionalInformation);
+        idpUser.setForceResetPassword(Boolean.FALSE);
         return idpUser;
     }
 

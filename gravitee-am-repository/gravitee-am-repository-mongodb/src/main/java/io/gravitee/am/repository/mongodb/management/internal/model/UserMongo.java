@@ -80,6 +80,7 @@ public class UserMongo extends Auditable {
     private List<String> dynamicRoles;
     private List<UserIdentity> identities;
     private String lastIdentityUsed;
+    private Boolean forceResetPassword;
     /**
      * Map codec support is planned for version 3.7 jira.mongodb.org issue: JAVA-2695
      */
@@ -474,5 +475,13 @@ public class UserMongo extends Auditable {
     @Override
     public int hashCode() {
         return id != null ? id.hashCode() : 0;
+    }
+
+    public Boolean getForceResetPassword() {
+        return forceResetPassword;
+    }
+
+    public void setForceResetPassword(Boolean forceResetPassword) {
+        this.forceResetPassword = forceResetPassword;
     }
 }

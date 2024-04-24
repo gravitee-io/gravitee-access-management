@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.4.0-update-users-table
+      author: GraviteeSource Team
+      changes:
+        #############################
+        # users #
+        ############################
+        - addColumn:
+            tableName: users
+            columns:
+              - column: { name: force_reset_password, type: boolean, constraints: { nullable: true} }

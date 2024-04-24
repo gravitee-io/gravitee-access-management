@@ -274,6 +274,7 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
                     }
                     oldUser.setUpdatedAt(new Date());
                     oldUser.setAdditionalInformation(updateUser.getAdditionalInformation());
+                    oldUser.setForceResetPassword(updateUser.getForceResetPassword());
 
                     return update(oldUser);
                 })
