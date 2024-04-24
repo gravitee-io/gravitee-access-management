@@ -140,6 +140,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     public static final String USER_COL_IDENTITY_ID = "identity_id";
     public static final String USER_COL_PROVIDER_ID = "provider_id";
     public static final String USER_COL_LINKED_AT = "linked_at";
+    public static final String USER_COL_FORCE_RESET_PASSWORD = "force_reset_password";
     private static final List<String> USER_COLUMNS = List.of(
             USER_COL_ID,
             USER_COL_EXTERNAL_ID,
@@ -180,7 +181,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
             USER_COL_X_509_CERTIFICATES,
             USER_COL_FACTORS,
             USER_COL_LAST_IDENTITY_USED,
-            USER_COL_ADDITIONAL_INFORMATION
+            USER_COL_ADDITIONAL_INFORMATION,
+            USER_COL_FORCE_RESET_PASSWORD
     );
 
 
@@ -310,6 +312,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         result.setFactors(enrolledFactorsConverter.convertFrom(entity.getFactors(), null));
         result.setAdditionalInformation(mapToStringConverter.convertFrom(entity.getAdditionalInformation(), null));
         result.setX509Certificates(x509Converter.convertFrom(entity.getX509Certificates(), null));
+        result.setForceResetPassword(entity.getForceResetPassword());
 
         return result;
     }
@@ -379,6 +382,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         result.setFactors(enrolledFactorsConverter.convertTo(entity.getFactors(), null));
         result.setAdditionalInformation(mapToStringConverter.convertTo(entity.getAdditionalInformation(), null));
         result.setX509Certificates(x509Converter.convertTo(entity.getX509Certificates(), null));
+        result.setForceResetPassword(entity.getForceResetPassword());
 
         return result;
     }
@@ -681,6 +685,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, USER_COL_X_509_CERTIFICATES, item.getX509Certificates());
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, USER_COL_FACTORS, item.getFactors());
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, USER_COL_ADDITIONAL_INFORMATION, item.getAdditionalInformation());
+        insertSpec = addQuotedField(insertSpec, USER_COL_FORCE_RESET_PASSWORD, item.getForceResetPassword(), Boolean.class);
 
         Mono<Long> insertAction = insertSpec.fetch().rowsUpdated();
 
@@ -742,6 +747,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         update = databaseDialectHelper.addJsonField(update, USER_COL_X_509_CERTIFICATES, item.getX509Certificates());
         update = databaseDialectHelper.addJsonField(update, USER_COL_FACTORS, item.getFactors());
         update = databaseDialectHelper.addJsonField(update, USER_COL_ADDITIONAL_INFORMATION, item.getAdditionalInformation());
+        update = addQuotedField(update, USER_COL_FORCE_RESET_PASSWORD, item.getForceResetPassword(), Boolean.class);
 
         Mono<Long> action = update.fetch().rowsUpdated();
 

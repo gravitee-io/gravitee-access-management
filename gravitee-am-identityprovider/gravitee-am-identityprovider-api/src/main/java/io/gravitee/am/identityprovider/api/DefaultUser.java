@@ -52,6 +52,8 @@ public class DefaultUser implements User {
 
     private Date updatedAt;
 
+    private Boolean forceResetPassword = false;
+
     public DefaultUser() {}
 
     public DefaultUser(String username) {
@@ -221,5 +223,13 @@ public class DefaultUser implements User {
     @Override
     public String toString() {
         return this.username;
+    }
+
+    public Boolean getForceResetPassword() {
+        return forceResetPassword;
+    }
+
+    public void setForceResetPassword(Boolean forceResetPassword) {
+        this.forceResetPassword = forceResetPassword;
     }
 }

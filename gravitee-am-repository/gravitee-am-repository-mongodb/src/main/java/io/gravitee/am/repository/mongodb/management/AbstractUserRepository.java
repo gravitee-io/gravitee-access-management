@@ -315,6 +315,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         }
         // TODO manage update Actions
         updateFields.add(Updates.set("identities", item.getIdentities()));
+        updateFields.add(Updates.set("forceResetPassword", item.getForceResetPassword()));
         return updateFields;
     }
 
@@ -383,6 +384,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         user.setAdditionalInformation(userMongo.getAdditionalInformation());
         user.setCreatedAt(userMongo.getCreatedAt());
         user.setUpdatedAt(userMongo.getUpdatedAt());
+        user.setForceResetPassword(userMongo.getForceResetPassword());
         return user;
     }
 
@@ -442,6 +444,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         userMongo.setAdditionalInformation(user.getAdditionalInformation() != null ? new Document(user.getAdditionalInformation()) : new Document());
         userMongo.setCreatedAt(user.getCreatedAt());
         userMongo.setUpdatedAt(user.getUpdatedAt());
+        userMongo.setForceResetPassword(user.getForceResetPassword());
         return userMongo;
     }
 
