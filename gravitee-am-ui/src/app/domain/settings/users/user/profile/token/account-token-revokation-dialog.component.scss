@@ -3,14 +3,13 @@
 
   .account-token-dialog-title {
     display: flex;
-    justify-content: space-between;
     align-items: stretch;
+    justify-content: space-between;
 
     :first-child {
-      flex: 1
+      flex: 1;
     }
   }
-
 
   button.revoke-token {
     width: 100%;
@@ -27,11 +26,10 @@
 
   table {
     width: 100%;
-    border-collapse: collapse;
     margin-bottom: 2em;
+    border-collapse: collapse;
 
     th {
-      text-align: left;
       padding: 10px 10px 10px 19px;
       border-width: 1px 0;
       border-style: solid;
@@ -40,6 +38,7 @@
       color: #606274;
       font-size: 12px;
       font-weight: 700;
+      text-align: left;
     }
 
     td {

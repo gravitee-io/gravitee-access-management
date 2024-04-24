@@ -19,19 +19,19 @@ import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {AbstractControl, FormControl, ValidationErrors, ValidatorFn, Validators} from '@angular/forms';
 
 export interface AccountTokenRevokationDialogData {
-  tokenId: string,
-  name: string,
-  createdAt: string
+  tokenId: string;
+  name: string;
+  createdAt: string;
 }
 
 export interface AccountTokenRevokationDialogResult {
   tokenId: string;
 }
 
-function valueEquals(expectedValue:string): ValidatorFn {
+function valueEquals(expectedValue: string): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
-    const matches = control.value == expectedValue
-    return matches ? null : {"valueEquals": {value: control.value}}
+    const matches = control.value == expectedValue;
+    return matches ? null : { valueEquals: { value: control.value } };
   };
 }
 
@@ -41,15 +41,16 @@ function valueEquals(expectedValue:string): ValidatorFn {
   styleUrls: ['./account-token-revokation-dialog.component.scss'],
 })
 export class AccountTokenRevokationDialogComponent {
-  tokenControl: FormControl<string>
+  tokenControl: FormControl<string>;
 
-  constructor(public dialogRef: MatDialogRef<AccountTokenRevokationDialogData, AccountTokenRevokationDialogResult>,
-              @Inject(MAT_DIALOG_DATA) public data: AccountTokenRevokationDialogData) {
+  constructor(
+    public dialogRef: MatDialogRef<AccountTokenRevokationDialogData, AccountTokenRevokationDialogResult>,
+    @Inject(MAT_DIALOG_DATA) public data: AccountTokenRevokationDialogData,
+  ) {
     this.tokenControl = new FormControl<string>('', [Validators.required, valueEquals(data.name)]);
-    console.log("data: ", data)
   }
 
-  onSubmit() {
+  onSubmit(): void {
     this.dialogRef.close({ tokenId: this.data.tokenId });
   }
 }

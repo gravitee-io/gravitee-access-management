@@ -43,11 +43,18 @@
     <p>Please type the Account Token name to confirm the removal of this token.</p>
     <mat-form-field appearance="outline" floatLabel="always">
       <input matInput type="text" name="tokenName" placeholder="Token name" maxlength="254"
-             [formControl]="tokenControl"/>
+             [formControl]="tokenControl" />
       <mat-error *ngIf="tokenControl.getError('required')">This field is required</mat-error>
     </mat-form-field>
-    <button class="revoke-token" mat-raised-button color="warn" type="button" [mat-dialog-close]=""
-            [disabled]="tokenControl.invalid" (click)="onSubmit()">
+    <button
+      class="revoke-token"
+      mat-raised-button
+      color="warn"
+      type="button"
+      [mat-dialog-close]=""
+      [disabled]="tokenControl.invalid"
+      (click)="onSubmit()"
+    >
       I understand the consequences, revoke this token
     </button>
   </mat-dialog-content>

@@ -29,7 +29,7 @@ import {OrganizationService} from '../../../../../services/organization.service'
 
 import {AccountTokenCreationDialogComponent, AccountTokenCreationDialogData, AccountTokenCreationDialogResult, } from './token/account-token-creation-dialog.component';
 import {AccountTokenCopyDialogComponent, AccountTokenCopyDialogData, AccountTokenCopyDialogResult, } from './token/account-token-copy-dialog.component';
-import {AccountTokenRevokationDialogComponent, AccountTokenRevokationDialogData, AccountTokenRevokationDialogResult} from "./token/account-token-revokation-dialog.component";
+import {AccountTokenRevokationDialogComponent, AccountTokenRevokationDialogData, AccountTokenRevokationDialogResult, } from './token/account-token-revokation-dialog.component';
 
 @Component({
   selector: 'app-user-profile',
@@ -89,7 +89,6 @@ export class UserProfileComponent implements OnInit {
       this.viewContainerRef.clear();
       this.formChanged = false;
       this.snackbarService.open('User updated');
-      console.log("user updated via update()")
     });
   }
 
@@ -315,29 +314,30 @@ export class UserProfileComponent implements OnInit {
     user.accountLockedAt = null;
     user.accountLockedUntil = null;
   }
-  revokeToken(token:any) {
-    this.matDialog.open<AccountTokenRevokationDialogComponent, AccountTokenRevokationDialogData, AccountTokenRevokationDialogResult>(
-      AccountTokenRevokationDialogComponent,
-      {
-        data: token,
-        width: '600px',
-        role: 'alertdialog',
-        id: 'accountTokenRevokeDialog',
-      })
+
+  revokeToken(token: any): void {
+    this.matDialog
+      .open<AccountTokenRevokationDialogComponent, AccountTokenRevokationDialogData, AccountTokenRevokationDialogResult>(
+        AccountTokenRevokationDialogComponent,
+        {
+          data: token,
+          width: '600px',
+          role: 'alertdialog',
+          id: 'accountTokenRevokeDialog',
+        },
+      )
       .afterClosed()
       .pipe(
         switchMap((result: AccountTokenRevokationDialogResult) => {
-          console.log("result: ", result)
           if (result.tokenId) {
-            return this.organizationService.revokeAccountToken(this.user.id, result.tokenId)
-              .pipe(map(_ => result.tokenId))
+            return this.organizationService.revokeAccountToken(this.user.id, result.tokenId).pipe(map((_) => result.tokenId));
           }
         }),
         tap((revokedTokenId: string) => {
-          let idx = this.accountTokens.map(t=>t.tokenId).indexOf(revokedTokenId)
+          const idx = this.accountTokens.map((t) => t.tokenId).indexOf(revokedTokenId);
           this.accountTokens.splice(idx, 1);
         }),
       )
-      .subscribe()
+      .subscribe();
   }
 }

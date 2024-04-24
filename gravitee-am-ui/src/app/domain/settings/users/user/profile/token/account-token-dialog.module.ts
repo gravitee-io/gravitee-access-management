@@ -26,12 +26,12 @@ import {MatTooltipModule} from '@angular/material/tooltip';
 import {MatDivider} from '@angular/material/divider';
 import {FlexModule} from '@angular/flex-layout';
 import {GioBannerModule} from '@gravitee/ui-particles-angular';
+import {NgxDatatableModule} from '@swimlane/ngx-datatable';
+import {MatColumnDef, MatHeaderCell, MatHeaderCellDef, MatTable} from '@angular/material/table';
 
 import {AccountTokenCopyDialogComponent} from './account-token-copy-dialog.component';
 import {AccountTokenCreationDialogComponent} from './account-token-creation-dialog.component';
-import {AccountTokenRevokationDialogComponent} from "./account-token-revokation-dialog.component";
-import {NgxDatatableModule} from "@swimlane/ngx-datatable";
-import {MatColumnDef, MatHeaderCell, MatHeaderCellDef, MatTable} from "@angular/material/table";
+import {AccountTokenRevokationDialogComponent} from './account-token-revokation-dialog.component';
 
 @NgModule({
   declarations: [AccountTokenCreationDialogComponent, AccountTokenCopyDialogComponent, AccountTokenRevokationDialogComponent],
@@ -49,12 +49,12 @@ import {MatColumnDef, MatHeaderCell, MatHeaderCellDef, MatTable} from "@angular/
     MatTooltipModule,
     MatDivider,
     FlexModule,
-    GioBannerModule ,
-NgxDatatableModule ,
-MatTable ,
-MatHeaderCell ,
-MatColumnDef ,
-MatHeaderCellDef,
+    GioBannerModule,
+    NgxDatatableModule,
+    MatTable,
+    MatHeaderCell,
+    MatColumnDef,
+    MatHeaderCellDef,
   ],
 })
 export class AccountTokenDialogModule {}
