@@ -1,0 +1,54 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form autocomplete="off" class="revoke-account-token-dialog">
+  <div mat-dialog-title class="account-token-dialog-title">
+    <h2>Revoke token</h2>
+    <button mat-button class="close-icon" [mat-dialog-close]="">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content>
+    <p>Are you sure you want to revoke the following token? You will need to update all places where this token was
+      used.</p>
+    <table aria-label="token details">
+      <thead>
+      <tr>
+        <th>Name</th>
+        <th>Created at</th>
+      </tr>
+      </thead>
+      <tr>
+        <td>{{ data.name }}</td>
+        <td>{{ data.createdAt | date: 'medium' }}</td>
+      </tr>
+    </table>
+
+    <p>All access with this token will be revoked immediately and permanently.</p>
+    <p>Please type the Account Token name to confirm the removal of this token.</p>
+    <mat-form-field appearance="outline" floatLabel="always">
+      <input matInput type="text" name="tokenName" placeholder="Token name" maxlength="254"
+             [formControl]="tokenControl"/>
+      <mat-error *ngIf="tokenControl.getError('required')">This field is required</mat-error>
+    </mat-form-field>
+    <button class="revoke-token" mat-raised-button color="warn" type="button" [mat-dialog-close]=""
+            [disabled]="tokenControl.invalid" (click)="onSubmit()">
+      I understand the consequences, revoke this token
+    </button>
+  </mat-dialog-content>
+</form>

@@ -1,0 +1,52 @@
+.revoke-account-token-dialog {
+  padding-top: 20px;
+
+  .account-token-dialog-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+
+    :first-child {
+      flex: 1
+    }
+  }
+
+
+  button.revoke-token {
+    width: 100%;
+    height: 3em;
+    margin-top: 1em;
+    text-transform: uppercase;
+  }
+
+  .token-info {
+    header .row {
+      display: flex;
+    }
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2em;
+
+    th {
+      text-align: left;
+      padding: 10px 10px 10px 19px;
+      border-width: 1px 0;
+      border-style: solid;
+      border-color: #d3d5dc;
+      background-color: #f7f8fd;
+      color: #606274;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    td {
+      padding: 10px 10px 10px 19px;
+      border-width: 1px 0;
+      border-style: solid;
+      border-color: #d3d5dc;
+    }
+  }
+}

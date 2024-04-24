@@ -13,26 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { MatDialogModule } from '@angular/material/dialog';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { ReactiveFormsModule } from '@angular/forms';
-import { ClipboardModule } from 'ngx-clipboard';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDivider } from '@angular/material/divider';
-import { FlexModule } from '@angular/flex-layout';
-import { GioBannerModule } from '@gravitee/ui-particles-angular';
+import {NgModule} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {MatDialogModule} from '@angular/material/dialog';
+import {MatButtonModule} from '@angular/material/button';
+import {MatFormFieldModule} from '@angular/material/form-field';
+import {MatInputModule} from '@angular/material/input';
+import {ReactiveFormsModule} from '@angular/forms';
+import {ClipboardModule} from 'ngx-clipboard';
+import {MatIconModule} from '@angular/material/icon';
+import {MatTooltipModule} from '@angular/material/tooltip';
+import {MatDivider} from '@angular/material/divider';
+import {FlexModule} from '@angular/flex-layout';
+import {GioBannerModule} from '@gravitee/ui-particles-angular';
 
-import { AccountTokenCopyDialogComponent } from './account-token-copy-dialog.component';
-import { AccountTokenCreationDialogComponent } from './account-token-creation-dialog.component';
+import {AccountTokenCopyDialogComponent} from './account-token-copy-dialog.component';
+import {AccountTokenCreationDialogComponent} from './account-token-creation-dialog.component';
+import {AccountTokenRevokationDialogComponent} from "./account-token-revokation-dialog.component";
+import {NgxDatatableModule} from "@swimlane/ngx-datatable";
+import {MatColumnDef, MatHeaderCell, MatHeaderCellDef, MatTable} from "@angular/material/table";
 
 @NgModule({
-  declarations: [AccountTokenCreationDialogComponent, AccountTokenCopyDialogComponent],
-  exports: [AccountTokenCreationDialogComponent, AccountTokenCopyDialogComponent],
+  declarations: [AccountTokenCreationDialogComponent, AccountTokenCopyDialogComponent, AccountTokenRevokationDialogComponent],
+  exports: [AccountTokenCreationDialogComponent, AccountTokenCopyDialogComponent, AccountTokenRevokationDialogComponent],
   imports: [
     CommonModule,
     ReactiveFormsModule,
@@ -46,7 +49,12 @@ import { AccountTokenCreationDialogComponent } from './account-token-creation-di
     MatTooltipModule,
     MatDivider,
     FlexModule,
-    GioBannerModule,
+    GioBannerModule ,
+NgxDatatableModule ,
+MatTable ,
+MatHeaderCell ,
+MatColumnDef ,
+MatHeaderCellDef,
   ],
 })
 export class AccountTokenDialogModule {}
