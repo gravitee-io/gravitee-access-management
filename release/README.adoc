@@ -8,7 +8,7 @@ It will allow you to run these pipeline on CircleCI to:
 
 * Launch git release and maven artifact deployment to our local artifactory
 * Launch deploy maven artifact to maven central (sonatype)
-* Launche the build and publish of docker images
+* Launch the build and publish of docker images
 * Launch the build and publish the RPM of AM
 * Launch the helm release and publish
 * Launch the changelog generation (open a PR pre-filled)
@@ -49,7 +49,7 @@ export CIRCLECI_TOKEN="[YOUR_TOKEN]"
 npm install
 ----
 
-== 🏁 Usage[[Usage]]
+== 🏁 Run a single job[[Usage]]
 
 Thanks to link:package.json[package.json], you can run those scripts as simple `npm` commands (do not forget to use `npm i` before starting).
 
@@ -124,3 +124,67 @@ flowchart LR
 ----
 
 Note that the configuration of CircleCI *disallow* multiple build on the same branch (a new build cancel the previous one). It means that we have to run one step at a time.
+
+
+== 🏁 Run release alpha version pipeline
+
+Lunch only required steps in one CircleCI pipeline to release an alpha version. There are two methods available:
+
+* npm run
+[source, shell]
+----
+npm run am-release -- \
+  --branch 4.3.x --gio-version 4.3.3-alpha.1 \
+  --dry-run \
+  release-alpha-version
+----
+* curl HTTP
+[source, shell]
+----
+curl --location --request POST 'https://circleci.com/api/v2/project/gh/gravitee-io/gravitee-access-management/pipeline' \
+--header 'Content-Type: application/json' \
+--header "Circle-Token: $CIRCLECI_TOKEN" \
+--data-raw '{
+    "branch": "4.3.x",
+    "parameters": {
+        "gio_action": "release-alpha-version",
+        "dry_run": true,
+        "rc_requested": true,
+        "graviteeio_version": "4.3.3-alpha.1",
+        "run-container-test": false
+    }
+}'
+----
+
+== 🏁 Run release version pipeline
+
+Lunch all steps in one CircleCI pipeline to release a new version. There are two methods available:
+
+* npm run
+[source, shell]
+----
+npm run am-release -- \
+  --branch master --gio-version 4.4.0 \
+  --dry-run \
+  release-version
+----
+
+* curl HTTP
+[source, shell]
+----
+curl --location --request POST 'https://circleci.com/api/v2/project/gh/gravitee-io/gravitee-access-management/pipeline' \
+--header 'Content-Type: application/json' \
+--header "Circle-Token: $CIRCLECI_TOKEN" \
+--data-raw '{
+    "branch": "master",
+    "parameters": {
+        "gio_action": "release-version",
+        "dry_run": true,
+        "rc_requested": false,
+        "graviteeio_version": "4.4.0",
+        "run-container-test": false,
+        "tag_latest": false,
+        "tag_latest_support": true
+    }
+}'
+----
