@@ -126,6 +126,17 @@
 
       <div class="gv-form-section">
         <div class="gv-form-section-title">
+          <h3 style="margin-bottom: 8px">Force Password Reset</h3>
+          <p style="font-size: 12px">Ask this user to reset their password at first sign in.</p>
+          <mat-divider></mat-divider>
+        </div>
+        <div>
+          <mat-slide-toggle [checked]="forceResetPassword" (change)="setForceResetPassword($event)"> Force Password Reset</mat-slide-toggle>
+        </div>
+      </div>
+
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
           <h5>Additional information</h5>
           <small>Custom information about the user. These details will be available in the user's profile.</small>
           <mat-divider></mat-divider>

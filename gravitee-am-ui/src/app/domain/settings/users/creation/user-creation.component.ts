@@ -33,9 +33,10 @@ import { UserClaimComponent } from './user-claim.component';
 })
 export class UserCreationComponent implements OnInit {
   private domainId: string;
-  preRegistration = false;
-  hidePassword = true;
-  useEmailAsUsername = false;
+  preRegistration: boolean = false;
+  hidePassword: boolean = true;
+  useEmailAsUsername: boolean = false;
+  forceResetPassword: boolean = false;
   user: any = {};
   userClaims: any = {};
   userProviders: any[];
@@ -73,6 +74,8 @@ export class UserCreationComponent implements OnInit {
       });
       this.user.additionalInformation = additionalInformation;
     }
+    // set force reset
+    this.user.forceResetPassword = this.forceResetPassword;
     // set pre-registration
     this.user.preRegistration = this.preRegistration;
 
@@ -89,7 +92,7 @@ export class UserCreationComponent implements OnInit {
     }
   }
 
-  onEmailChange(email) {
+  onEmailChange(email: string) {
     if (this.useEmailAsUsername) {
       if (!email || email === '') {
         this.useEmailAsUsername = false;
@@ -100,22 +103,22 @@ export class UserCreationComponent implements OnInit {
     }
   }
 
-  toggleUseEmailAsUsername(event) {
+  toggleUseEmailAsUsername(event: any): void {
     this.useEmailAsUsername = event.checked;
     this.user.username = this.useEmailAsUsername ? this.user.email : '';
   }
 
-  addDynamicComponent() {
+  addDynamicComponent(): void {
     const factory = this.factoryResolver.resolveComponentFactory(UserClaimComponent);
     const component = this.viewContainerRef.createComponent(factory);
 
-    component.instance.addClaimChange.subscribe((claim) => {
+    component.instance.addClaimChange.subscribe((claim): void => {
       if (claim.name && claim.value) {
         this.userClaims[claim.id] = { claimName: claim.name, claimValue: claim.value };
       }
     });
 
-    component.instance.removeClaimChange.subscribe((claim) => {
+    component.instance.removeClaimChange.subscribe((claim): void => {
       delete this.userClaims[claim.id];
       this.viewContainerRef.remove(this.viewContainerRef.indexOf(component.hostView));
       if (claim.name && claim.value) {
@@ -124,11 +127,15 @@ export class UserCreationComponent implements OnInit {
     });
   }
 
-  onAppSelectionChanged(event) {
+  onAppSelectionChanged(event: any): void {
     this.user.client = event.id;
   }
 
-  onAppDeleted() {
+  onAppDeleted(): void {
     this.user.client = null;
+  }
+
+  setForceResetPassword(e: any): void {
+    this.forceResetPassword = e.checked;
   }
 }
