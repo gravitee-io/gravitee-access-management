@@ -52,6 +52,7 @@ export class UserService {
       enabled: user.enabled,
       client: user.client,
       additionalInformation: user.additionalInformation,
+      forceResetPassword: user.forceResetPassword,
     };
 
     if (organizationContext) {

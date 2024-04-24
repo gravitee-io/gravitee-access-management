@@ -52,7 +52,7 @@ export class UserProfileComponent implements OnInit {
   user: any;
   userClaims: any = {};
   password: any;
-  formChanged = false;
+  formChanged: boolean = false;
   canEdit: boolean;
   canDelete: boolean;
   accountTokens: any[] = [];
@@ -93,7 +93,7 @@ export class UserProfileComponent implements OnInit {
     this.userService.update(this.domainId, this.user.id, this.user, this.organizationContext).subscribe((data) => {
       this.user = data;
       this.userClaims = {};
-      this.viewContainerRef.clear();
+      this.viewContainerRef?.clear();
       this.formChanged = false;
       this.snackbarService.open('User updated');
     });
@@ -320,5 +320,10 @@ export class UserProfileComponent implements OnInit {
     user.accountNonLocked = true;
     user.accountLockedAt = null;
     user.accountLockedUntil = null;
+  }
+
+  setForceResetPassword(e: any): void {
+    this.user.forceResetPassword = e.checked;
+    this.formChanged = true;
   }
 }
