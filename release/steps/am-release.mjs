@@ -8,6 +8,8 @@ import { ReleaseDocker } from './3-step-release-docker.mjs';
 import { ReleaseRPM } from './4-step-release-rpm.mjs';
 import { ReleaseHelm } from './5-step-release-helm.mjs';
 import { ReleaseNotes } from './6-step-release-notes.mjs';
+import { ReleaseVersion } from "./am-release-pipeline.mjs";
+import { ReleaseAlphaVersion } from "./am-release-alpha-pipeline.mjs";
 
 function changeLogLevel(newLevel, defaultLevel) {
   logger.level = newLevel;
@@ -55,6 +57,8 @@ async function main() {
   new ReleaseRPM().buildCommand(program);
   new ReleaseHelm().buildCommand(program);
   new ReleaseNotes().buildCommand(program);
+  new ReleaseVersion().buildCommand(program);
+  new ReleaseAlphaVersion().buildCommand(program);
 
   await checkCircleCIToken();
   // This parse call will trigger action needed.

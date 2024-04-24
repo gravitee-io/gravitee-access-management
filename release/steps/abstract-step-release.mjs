@@ -11,6 +11,10 @@ export class AbstractStepRelease {
       });
   }
 
+  computePipelineParameters(options) {
+    return {}; // to override
+  }
+
   async action(options) {
     logger.debug('options: %o', options);
 
