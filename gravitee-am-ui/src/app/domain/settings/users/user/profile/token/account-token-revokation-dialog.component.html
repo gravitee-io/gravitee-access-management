@@ -24,14 +24,13 @@
   </div>
 
   <mat-dialog-content>
-    <p>Are you sure you want to revoke the following token? You will need to update all places where this token was
-      used.</p>
+    <p>Are you sure you want to revoke the following token? You will need to update all places where this token was used.</p>
     <table aria-label="token details">
       <thead>
-      <tr>
-        <th>Name</th>
-        <th>Created at</th>
-      </tr>
+        <tr>
+          <th>Name</th>
+          <th>Created at</th>
+        </tr>
       </thead>
       <tr>
         <td>{{ data.name }}</td>
@@ -42,8 +41,7 @@
     <p>All access with this token will be revoked immediately and permanently.</p>
     <p>Please type the Account Token name to confirm the removal of this token.</p>
     <mat-form-field appearance="outline" floatLabel="always">
-      <input matInput type="text" name="tokenName" placeholder="Token name" maxlength="254"
-             [formControl]="tokenControl" />
+      <input matInput type="text" name="tokenName" placeholder="Token name" maxlength="254" [formControl]="tokenControl" />
       <mat-error *ngIf="tokenControl.getError('required')">This field is required</mat-error>
     </mat-form-field>
     <button

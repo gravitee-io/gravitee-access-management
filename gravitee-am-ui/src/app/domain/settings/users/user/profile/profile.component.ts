@@ -13,23 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, ComponentFactoryResolver, OnInit, ViewChild, ViewContainerRef} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {NgForm} from '@angular/forms';
-import {filter, map, switchMap, tap} from 'rxjs/operators';
-import {isObject} from 'lodash';
-import {MatDialog} from '@angular/material/dialog';
+import { Component, ComponentFactoryResolver, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { NgForm } from '@angular/forms';
+import { filter, map, switchMap, tap } from 'rxjs/operators';
+import { isObject } from 'lodash';
+import { MatDialog } from '@angular/material/dialog';
 
-import {SnackbarService} from '../../../../../services/snackbar.service';
-import {DialogService} from '../../../../../services/dialog.service';
-import {UserService} from '../../../../../services/user.service';
-import {UserClaimComponent} from '../../creation/user-claim.component';
-import {AuthService} from '../../../../../services/auth.service';
-import {OrganizationService} from '../../../../../services/organization.service';
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { DialogService } from '../../../../../services/dialog.service';
+import { UserService } from '../../../../../services/user.service';
+import { UserClaimComponent } from '../../creation/user-claim.component';
+import { AuthService } from '../../../../../services/auth.service';
+import { OrganizationService } from '../../../../../services/organization.service';
 
-import {AccountTokenCreationDialogComponent, AccountTokenCreationDialogData, AccountTokenCreationDialogResult, } from './token/account-token-creation-dialog.component';
-import {AccountTokenCopyDialogComponent, AccountTokenCopyDialogData, AccountTokenCopyDialogResult, } from './token/account-token-copy-dialog.component';
-import {AccountTokenRevokationDialogComponent, AccountTokenRevokationDialogData, AccountTokenRevokationDialogResult, } from './token/account-token-revokation-dialog.component';
+import {
+  AccountTokenCreationDialogComponent,
+  AccountTokenCreationDialogData,
+  AccountTokenCreationDialogResult,
+} from './token/account-token-creation-dialog.component';
+import {
+  AccountTokenCopyDialogComponent,
+  AccountTokenCopyDialogData,
+  AccountTokenCopyDialogResult,
+} from './token/account-token-copy-dialog.component';
+import {
+  AccountTokenRevokationDialogComponent,
+  AccountTokenRevokationDialogData,
+  AccountTokenRevokationDialogResult,
+} from './token/account-token-revokation-dialog.component';
 
 @Component({
   selector: 'app-user-profile',
@@ -37,7 +49,6 @@ import {AccountTokenRevokationDialogComponent, AccountTokenRevokationDialogData,
   styleUrls: ['./profile.component.scss'],
 })
 export class UserProfileComponent implements OnInit {
-  private domainId: string;
   organizationContext: boolean;
   @ViewChild('passwordForm') passwordForm: any;
   @ViewChild('usernameForm') usernameForm: NgForm;
@@ -49,6 +60,7 @@ export class UserProfileComponent implements OnInit {
   canEdit: boolean;
   canDelete: boolean;
   accountTokens: any[] = [];
+  private domainId: string;
 
   constructor(
     private route: ActivatedRoute,
@@ -309,12 +321,6 @@ export class UserProfileComponent implements OnInit {
       .subscribe();
   }
 
-  private unlockUser(user: any): void {
-    user.accountNonLocked = true;
-    user.accountLockedAt = null;
-    user.accountLockedUntil = null;
-  }
-
   revokeToken(token: any): void {
     this.matDialog
       .open<AccountTokenRevokationDialogComponent, AccountTokenRevokationDialogData, AccountTokenRevokationDialogResult>(
@@ -339,5 +345,11 @@ export class UserProfileComponent implements OnInit {
         }),
       )
       .subscribe();
+  }
+
+  private unlockUser(user: any): void {
+    user.accountNonLocked = true;
+    user.accountLockedAt = null;
+    user.accountLockedUntil = null;
   }
 }
