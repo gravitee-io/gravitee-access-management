@@ -64,7 +64,7 @@ executors:
 parameters:
   gio_action:
     type: enum
-    enum: [ release, publish_maven_central, publish_rpms, publish_docker_images, pull_requests, release_notes_am, release_helm , publish-images-azure-registry]
+    enum: [ release, publish_maven_central, publish_rpms, publish_docker_images, pull_requests, release_notes_am, release_helm , publish-images-azure-registry, release-version, release-alpha-version ]
     default: pull_requests
   gio_product:
     type: enum
@@ -1596,6 +1596,110 @@ jobs:
 
 workflows:
   version: 2.1
+  # Workflow triggered by CircleCI API HTTP call or "Trigger Pipeline" button in the CircleCI website
+  release-version:
+    when:
+      and:
+        - equal: [ release-version, << pipeline.parameters.gio_action >> ]
+    jobs:
+      - setup:
+          name: setup
+          context: cicd-orchestrator
+      - release:
+          name: release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
+          context: cicd-orchestrator
+          dry_run: << pipeline.parameters.dry_run >>
+          rc_requested: << pipeline.parameters.rc_requested >>
+          requires:
+            - setup
+      - build_n_push_am_ce_job:
+          name: publish docker images
+          context: cicd-orchestrator
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          dry_run: << pipeline.parameters.dry_run >>
+          tag_latest: << pipeline.parameters.tag_latest >>
+          tag_latest_support: << pipeline.parameters.tag_latest_support >>
+          requires:
+            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
+      - add-docker-images-in-snyk:
+          name: add docker images to Snyk
+          context: cicd-orchestrator
+          requires:
+            - publish docker images
+      - publish_am_rpms:
+          name: publish RPM packages
+          context: cicd-orchestrator
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          requires:
+            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
+      - job-test-am-charts:
+          name: helm tests
+          requires:
+            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
+      - job-release_helm:
+          name: publish helm charts
+          context: cicd-orchestrator
+          requires:
+            - helm tests
+      - release_notes_am:
+          name: release notes
+          context: cicd-orchestrator
+          requires:
+            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
+      - publish_maven_packages_to_maven_central:
+          name: publish maven packages
+          context: cicd-orchestrator
+          dry_run: << pipeline.parameters.dry_run >>
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          requires:
+            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
+
+  release-alpha-version:
+    when:
+      and:
+        - equal: [ release-alpha-version, << pipeline.parameters.gio_action >> ]
+    jobs:
+      - setup:
+          name: setup
+          context: cicd-orchestrator
+      - release:
+          name: release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
+          context: cicd-orchestrator
+          dry_run: << pipeline.parameters.dry_run >>
+          rc_requested: << pipeline.parameters.rc_requested >>
+          requires:
+            - setup
+      - build_n_push_am_ce_job:
+          name: publish docker images
+          context: cicd-orchestrator
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          dry_run: << pipeline.parameters.dry_run >>
+          tag_latest: false
+          tag_latest_support: false
+          requires:
+            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
+      - add-docker-images-in-snyk:
+          name: add docker images to Snyk
+          context: cicd-orchestrator
+          requires:
+            - publish docker images
+      - job-test-am-charts:
+          name: helm tests
+          requires:
+            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
+      - job-release_helm:
+          name: publish helm charts
+          context: cicd-orchestrator
+          requires:
+            - helm tests
+      - publish_maven_packages_to_maven_central:
+          name: publish maven packages
+          context: cicd-orchestrator
+          dry_run: << pipeline.parameters.dry_run >>
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          requires:
+            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
+
   # -- typically this workflow is executed on pull requests events for Community Edition Gravitee Repositories
   pull_requests:
     when:
