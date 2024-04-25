@@ -19,17 +19,23 @@ import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.utils.SetterUtils;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import static org.springframework.util.StringUtils.hasText;
 
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class PatchFactorSettings {
     private Optional<String> defaultFactorId;
     private Optional<List<PatchApplicationFactorSettings>> applicationFactors;

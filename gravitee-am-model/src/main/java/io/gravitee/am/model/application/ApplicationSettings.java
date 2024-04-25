@@ -24,12 +24,23 @@ import io.gravitee.am.model.oidc.Client;
 
 import io.gravitee.risk.assessment.api.assessment.settings.AssessmentSettings;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.util.Optional;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class ApplicationSettings {
     /**
      * OAuth 2.0/OIDC Client settings
@@ -74,9 +85,6 @@ public class ApplicationSettings {
     private RiskAssessmentSettings riskAssessment;
 
 
-    public ApplicationSettings() {
-    }
-
     public ApplicationSettings(ApplicationSettings other) {
         this.oauth = other.oauth != null ? new ApplicationOAuthSettings(other.oauth) : null;
         this.saml = other.saml != null ? new ApplicationSAMLSettings(other.saml) : null;
@@ -87,78 +95,6 @@ public class ApplicationSettings {
         this.mfa = other.mfa != null ? new MFASettings(other.mfa) : null;
         this.cookieSettings = other.cookieSettings != null ? new CookieSettings(other.cookieSettings) : null;
         this.riskAssessment = other.riskAssessment != null ? getRiskAssessment(other.riskAssessment) : null;
-    }
-
-    public ApplicationOAuthSettings getOauth() {
-        return oauth;
-    }
-
-    public void setOauth(ApplicationOAuthSettings oauth) {
-        this.oauth = oauth;
-    }
-
-    public ApplicationSAMLSettings getSaml() {
-        return saml;
-    }
-
-    public void setSaml(ApplicationSAMLSettings saml) {
-        this.saml = saml;
-    }
-
-    public AccountSettings getAccount() {
-        return account;
-    }
-
-    public void setAccount(AccountSettings account) {
-        this.account = account;
-    }
-
-    public LoginSettings getLogin() {
-        return login;
-    }
-
-    public void setLogin(LoginSettings login) {
-        this.login = login;
-    }
-
-    public ApplicationAdvancedSettings getAdvanced() {
-        return advanced != null ? advanced : new ApplicationAdvancedSettings();
-    }
-
-    public void setAdvanced(ApplicationAdvancedSettings advanced) {
-        this.advanced = advanced;
-    }
-
-    public PasswordSettings getPasswordSettings() {
-        return passwordSettings;
-    }
-
-    public void setPasswordSettings(PasswordSettings passwordSettings) {
-        this.passwordSettings = passwordSettings;
-    }
-
-    public MFASettings getMfa() {
-        return mfa;
-    }
-
-    public void setMfa(MFASettings mfa) {
-        this.mfa = mfa;
-    }
-
-    public CookieSettings getCookieSettings() {
-        return cookieSettings;
-    }
-
-    public void setCookieSettings(CookieSettings cookieSettings) {
-        this.cookieSettings = cookieSettings;
-    }
-
-    public RiskAssessmentSettings getRiskAssessment() {
-        return riskAssessment;
-    }
-
-    public void setRiskAssessment(RiskAssessmentSettings riskAssessment) {
-        this.riskAssessment = riskAssessment;
     }
 
     public void copyTo(Client client) {

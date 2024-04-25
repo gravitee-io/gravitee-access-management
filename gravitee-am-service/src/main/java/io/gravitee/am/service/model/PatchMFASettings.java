@@ -17,12 +17,15 @@ package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.service.utils.SetterUtils;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.Optional;
 
 import static java.util.Objects.nonNull;
-import lombok.Getter;
-import lombok.Setter;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -30,6 +33,9 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PatchMFASettings {
     private Optional<String> loginRule;
     private Optional<PatchFactorSettings> factor;
