@@ -276,6 +276,7 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
                         }
                     }
                     return update(user)
+                            .doOnSuccess(user1 -> LOGGER.debug("Factor {} upserted for user {}", enrolledFactor.getFactorId(), user1.getId()))
                             .doOnSuccess(user1 -> {
                                 if (needToAuditUserFactorsOperation(user1, oldUser)) {
                                     // remove sensitive data about factors
