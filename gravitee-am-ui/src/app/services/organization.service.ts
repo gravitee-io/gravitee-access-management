@@ -459,6 +459,10 @@ export class OrganizationService {
     return this.http.post<any>(this.organizationURL + '/users/' + userId + '/tokens', { name: tokenName });
   }
 
+  revokeAccountToken(userId: string, tokenId: string): Observable<any> {
+    return this.http.delete(`${this.organizationURL}/users/${userId}/tokens/${tokenId}`);
+  }
+
   getAccountTokens(userId: string): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/users/' + userId + '/tokens');
   }

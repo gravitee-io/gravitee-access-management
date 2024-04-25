@@ -25,8 +25,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 
-import java.util.List;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -46,4 +44,6 @@ public interface OrganizationUserService extends CommonUserService {
     Single<AccountAccessToken> createAccountAccessToken(String organizationId, String userId, NewAccountAccessToken newAccountAccessToken, io.gravitee.am.identityprovider.api.User principal);
 
     Single<User> findByAccessToken(String tokenId, String tokenValue);
+
+    Completable revokeToken(String organizationId, String userId, String tokenId, io.gravitee.am.identityprovider.api.User authenticatedUser);
 }

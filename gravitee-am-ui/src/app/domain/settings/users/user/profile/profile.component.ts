@@ -16,7 +16,7 @@
 import { Component, ComponentFactoryResolver, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgForm } from '@angular/forms';
-import { filter, switchMap, tap } from 'rxjs/operators';
+import { filter, map, switchMap, tap } from 'rxjs/operators';
 import { isObject } from 'lodash';
 import { MatDialog } from '@angular/material/dialog';
 
@@ -29,14 +29,19 @@ import { OrganizationService } from '../../../../../services/organization.servic
 
 import {
   AccountTokenCreationDialogComponent,
-  AccountTokenCreationDialogResult,
   AccountTokenCreationDialogData,
+  AccountTokenCreationDialogResult,
 } from './token/account-token-creation-dialog.component';
 import {
   AccountTokenCopyDialogComponent,
   AccountTokenCopyDialogData,
   AccountTokenCopyDialogResult,
 } from './token/account-token-copy-dialog.component';
+import {
+  AccountTokenRevokationDialogComponent,
+  AccountTokenRevokationDialogData,
+  AccountTokenRevokationDialogResult,
+} from './token/account-token-revokation-dialog.component';
 
 @Component({
   selector: 'app-user-profile',
@@ -44,7 +49,6 @@ import {
   styleUrls: ['./profile.component.scss'],
 })
 export class UserProfileComponent implements OnInit {
-  private domainId: string;
   organizationContext: boolean;
   @ViewChild('passwordForm') passwordForm: any;
   @ViewChild('usernameForm') usernameForm: NgForm;
@@ -56,6 +60,7 @@ export class UserProfileComponent implements OnInit {
   canEdit: boolean;
   canDelete: boolean;
   accountTokens: any[] = [];
+  private domainId: string;
 
   constructor(
     private route: ActivatedRoute,
@@ -312,6 +317,32 @@ export class UserProfileComponent implements OnInit {
             )
             .afterClosed(),
         ),
+      )
+      .subscribe();
+  }
+
+  revokeToken(token: any): void {
+    this.matDialog
+      .open<AccountTokenRevokationDialogComponent, AccountTokenRevokationDialogData, AccountTokenRevokationDialogResult>(
+        AccountTokenRevokationDialogComponent,
+        {
+          data: token,
+          width: '600px',
+          role: 'alertdialog',
+          id: 'accountTokenRevokeDialog',
+        },
+      )
+      .afterClosed()
+      .pipe(
+        switchMap((result: AccountTokenRevokationDialogResult) => {
+          if (result.tokenId) {
+            return this.organizationService.revokeAccountToken(this.user.id, result.tokenId).pipe(map((_) => result.tokenId));
+          }
+        }),
+        tap((revokedTokenId: string) => {
+          const idx = this.accountTokens.map((t) => t.tokenId).indexOf(revokedTokenId);
+          this.accountTokens.splice(idx, 1);
+        }),
       )
       .subscribe();
   }

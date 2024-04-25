@@ -55,6 +55,7 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
@@ -457,5 +458,33 @@ public class OrganizationUserServiceTest {
                 .assertError(TooManyAccountTokenException.class);
         verify(accessTokenRepository, never()).create(any());
 
+    }
+
+    @Test
+    public void shouldRevokeToken() {
+        var tokenToDelete = new AccountAccessToken("tokenId", ReferenceType.ORGANIZATION, "orgId", "userId", "testIssuer", "testIssuerId", "testToken", null, null, null);
+        when(accessTokenRepository.findById("tokenId")).thenReturn(Maybe.just(tokenToDelete));
+        when(accessTokenRepository.delete(anyString())).thenReturn(Completable.complete());
+        userService.revokeToken("orgId", "userId", "tokenId")
+                .test()
+                .assertComplete();
+    }
+
+    @Test
+    public void wrongOrg_shouldNotRevokeToken() {
+        var tokenToDelete = new AccountAccessToken("tokenId", ReferenceType.ORGANIZATION, "orgId", "userId", "testIssuer", "testIssuerId", "testToken", null, null, null);
+        when(accessTokenRepository.findById("tokenId")).thenReturn(Maybe.just(tokenToDelete));
+        userService.revokeToken("wrongOrgId", "userId", "tokenId")
+                .test()
+                .assertError(NoSuchElementException.class);
+    }
+
+    @Test
+    public void wrongUser_shouldNotRevokeToken() {
+        var tokenToDelete = new AccountAccessToken("tokenId", ReferenceType.ORGANIZATION, "orgId", "userId", "testIssuer", "testIssuerId", "testToken", null, null, null);
+        when(accessTokenRepository.findById("tokenId")).thenReturn(Maybe.just(tokenToDelete));
+        userService.revokeToken("orgId", "wrongUserId", "tokenId")
+                .test()
+                .assertError(NoSuchElementException.class);
     }
 }

@@ -26,13 +26,16 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDivider } from '@angular/material/divider';
 import { FlexModule } from '@angular/flex-layout';
 import { GioBannerModule } from '@gravitee/ui-particles-angular';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { MatColumnDef, MatHeaderCell, MatHeaderCellDef, MatTable } from '@angular/material/table';
 
 import { AccountTokenCopyDialogComponent } from './account-token-copy-dialog.component';
 import { AccountTokenCreationDialogComponent } from './account-token-creation-dialog.component';
+import { AccountTokenRevokationDialogComponent } from './account-token-revokation-dialog.component';
 
 @NgModule({
-  declarations: [AccountTokenCreationDialogComponent, AccountTokenCopyDialogComponent],
-  exports: [AccountTokenCreationDialogComponent, AccountTokenCopyDialogComponent],
+  declarations: [AccountTokenCreationDialogComponent, AccountTokenCopyDialogComponent, AccountTokenRevokationDialogComponent],
+  exports: [AccountTokenCreationDialogComponent, AccountTokenCopyDialogComponent, AccountTokenRevokationDialogComponent],
   imports: [
     CommonModule,
     ReactiveFormsModule,
@@ -47,6 +50,11 @@ import { AccountTokenCreationDialogComponent } from './account-token-creation-di
     MatDivider,
     FlexModule,
     GioBannerModule,
+    NgxDatatableModule,
+    MatTable,
+    MatHeaderCell,
+    MatColumnDef,
+    MatHeaderCellDef,
   ],
 })
 export class AccountTokenDialogModule {}
