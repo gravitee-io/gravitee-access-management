@@ -9,4 +9,8 @@ databaseChangeLog:
         - addColumn:
             tableName: users
             columns:
-              - column: { name: force_reset_password, type: boolean, constraints: { nullable: true} }
+              - column: { name: force_reset_password, type: boolean, constraints: { nullable: true } }
+        - addColumn:
+            tableName: organization_users
+            columns:
+              - column: { name: force_reset_password, type: boolean, constraints: { nullable: true } }

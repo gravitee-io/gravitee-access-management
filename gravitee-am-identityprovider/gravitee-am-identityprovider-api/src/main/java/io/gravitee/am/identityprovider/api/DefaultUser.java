@@ -52,7 +52,7 @@ public class DefaultUser implements User {
 
     private Date updatedAt;
 
-    private Boolean forceResetPassword = false;
+    private Boolean forceResetPassword = Boolean.FALSE;
 
     public DefaultUser() {}
 

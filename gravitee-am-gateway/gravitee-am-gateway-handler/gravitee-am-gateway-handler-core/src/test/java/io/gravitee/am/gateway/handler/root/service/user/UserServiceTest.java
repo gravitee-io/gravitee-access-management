@@ -44,8 +44,18 @@ import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
-import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.service.TokenService;
+import io.gravitee.am.service.exception.EnforceUserIdentityException;
+import io.gravitee.am.service.exception.PasswordHistoryException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserAlreadyVerifiedException;
+import io.gravitee.am.service.exception.UserInvalidException;
+import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.validators.email.EmailValidator;
 import io.gravitee.am.service.validators.user.UserValidator;
@@ -53,7 +63,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
-import java.util.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -61,6 +70,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -158,6 +173,37 @@ public class UserServiceTest {
         var testObserver = userService.resetPassword(mock(Client.class), user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(PasswordHistoryException.class);
+    }
+
+    @Test
+    public void shouldResetPassword_setForceResetPasswordToFalse() {
+        Client client = mock(Client.class);
+
+        User user = mock(User.class);
+        when(user.getUsername()).thenReturn("username");
+        when(user.isInactive()).thenReturn(false);
+        when(user.getSource()).thenReturn("default-idp");
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+        when(idpUser.getId()).thenReturn("idp-id");
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
+        when(userProvider.updatePassword(any(), any())).thenReturn(Single.just(idpUser));
+
+        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
+        when(commonUserService.update(any())).thenReturn(Single.just(user));
+        when(commonUserService.enhance(any())).thenReturn(Single.just(user));
+        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+
+        var testObserver = userService.resetPassword(client, user).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(pr -> pr.getUser().getForceResetPassword().equals(Boolean.FALSE));
+
+        verify(user,times(1)).setForceResetPassword(eq(Boolean.FALSE));
+        verify(credentialService, never()).deleteByUserId(any(), any(), any());
+        verify(tokenService, never()).deleteByUser(any());
     }
 
     @Test

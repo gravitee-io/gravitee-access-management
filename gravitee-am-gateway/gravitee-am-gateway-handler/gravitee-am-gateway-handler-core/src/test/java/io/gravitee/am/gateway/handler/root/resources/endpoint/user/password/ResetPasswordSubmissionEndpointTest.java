@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
-import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.RegisterSubmissionEndpoint;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.User;
@@ -63,6 +63,79 @@ public class ResetPasswordSubmissionEndpointTest extends RxWebTestBase {
                 .handler(BodyHandler.create())
                 .handler(resetPasswordSubmissionEndpoint)
                 .failureHandler(new ErrorHandler());
+    }
+
+
+    @Test
+    public void shouldRedirectToClaimAfterForcePasswordReset() throws Exception {
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+
+        User user = new User();
+        user.setId("user-id");
+        String redirectUrl = "/authorize?client_id=client-id&response_type=code&redirect_uri=https%3A%2F%2Fwebapp";
+
+        JWT jwt = new JWT();
+        jwt.setSub(user.getId());
+        jwt.setAud(client.getId());
+        jwt.setIat(System.currentTimeMillis());
+        jwt.setClaimsRequestParameter(redirectUrl);
+
+        String jwtToken = "eyJraWQiOiJkZWZhdWx0LWdyYXZpdGVlLUFNLWtleSIsInR5cCI6IkpXVCIsImFsZyI6IkhTMjU2In0.eyJzdWIiOiJ1c2VyLWlkIiwiYXVkIjoiY2xpZW50LWlkIiwiaWF0IjoxNzE0MTMxODE1NjI0LCJjbGFpbXNfcmVxdWVzdF9wYXJhbWV0ZXIiOiIvYXV0aG9yaXplP2NsaWVudF9pZD1jbGllbnQtaWQmcmVzcG9uc2VfdHlwZT1jb2RlJnJlZGlyZWN0X3VyaT1odHRwcyUzQSUyRiUyRndlYmFwcCJ9.-D_OeGamCN3xciwUUKwZYBvmsk1-zPjFUz_FD2GPHGE";
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.put("user", user);
+            routingContext.put("token", jwt);
+            routingContext.next();
+        });
+
+        when(userService.resetPassword(eq(client), eq(user), any())).thenReturn(Single.just(new ResetPasswordResponse()));
+
+        testRequest(
+                HttpMethod.POST, "/resetPassword?client_id=client-id&token=" + jwtToken,
+                this::postPassword,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("authorize?client_id=client-id&response_type=code&redirect_uri=https%3A%2F%2Fwebapp"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldNOTRedirectToAuthorizationAfterForcePasswordReset_missingClaim() throws Exception {
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+
+        User user = new User();
+        user.setId("user-id");
+
+        JWT jwt = new JWT();
+        jwt.setSub(user.getId());
+        jwt.setAud(client.getId());
+        jwt.setIat(System.currentTimeMillis());
+
+        String jwtToken = "eyJraWQiOiJkZWZhdWx0LWdyYXZpdGVlLUFNLWtleSIsInR5cCI6IkpXVCIsImFsZyI6IkhTMjU2In0.eyJzdWIiOiJ1c2VyLWlkIiwiYXVkIjoiY2xpZW50LWlkIiwiaWF0IjoxNzE0MTMxODE1NjI0fQ.UuqhK0mg_378I7-r7GkNvwkr9MYiaQGwuCYKx8zEFAw";
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.put("user", user);
+            routingContext.put("token", jwt);
+            routingContext.next();
+        });
+
+        when(userService.resetPassword(eq(client), eq(user), any())).thenReturn(Single.just(new ResetPasswordResponse()));
+
+        testRequest(
+                HttpMethod.POST, "/resetPassword?client_id=client-id&token=" + jwtToken,
+                this::postPassword,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/resetPassword?client_id=client-id&success=reset_password_completed"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
     }
 
     @Test

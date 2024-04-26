@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.utils.StaticEnvironmentProvider;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
@@ -64,6 +65,10 @@ public class RedirectHandlerImpl implements Handler<RoutingContext> {
                         && login_hint.contains("+")) {
                     queryParams.set(LOGIN_HINT, StaticEnvironmentProvider.sanitizeParametersEncoding() ? UriBuilder.encodeURIComponent(login_hint) : login_hint);
                 }
+            }
+
+            if (context.get(ConstantKeys.TOKEN_CONTEXT_KEY) != null) {
+                queryParams.add(ConstantKeys.TOKEN_CONTEXT_KEY, (String) context.get(ConstantKeys.TOKEN_CONTEXT_KEY));
             }
 
             // client_id can be added dynamically via external protocol

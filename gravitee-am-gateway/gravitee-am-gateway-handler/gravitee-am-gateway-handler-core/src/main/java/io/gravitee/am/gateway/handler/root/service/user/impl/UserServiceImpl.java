@@ -99,6 +99,7 @@ import static io.gravitee.am.model.Template.RESET_PASSWORD;
 import static io.reactivex.rxjava3.core.Completable.complete;
 import static io.reactivex.rxjava3.core.Completable.error;
 import static io.reactivex.rxjava3.core.Completable.fromRunnable;
+import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.util.Map.entry;
 import static java.util.Objects.isNull;
@@ -254,6 +255,7 @@ public class UserServiceImpl implements UserService {
         final String redirectUri = noSendVerifyRegistration.map(AccountSettings::getRedirectUriAfterRegistration).orElse(null);
         return new RegistrationResponse(user, redirectUri, isAutoLogin);
     }
+
     private Single<User> registerUser(User user, Optional<AccountSettings> accountSettings, String source, io.gravitee.am.identityprovider.api.User idpUser, MultiMap queryParams) {
         // AM 'users' collection is not made for authentication (but only management stuff)
         // clear password
@@ -408,6 +410,7 @@ public class UserServiceImpl implements UserService {
                     user.setExternalId(idpUser.getId());
                     user.setLastPasswordReset(new Date());
                     user.setUpdatedAt(new Date());
+                    user.setForceResetPassword(FALSE);
                     // additional information
                     extractAdditionalInformation(user, idpUser.getAdditionalInformation());
                     // set login information

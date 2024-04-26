@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
-import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_REMEMBER_ME_COOKIE_NAME;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlo
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.RedirectHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChainHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowStep;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.ForceResetPasswordStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.FormIdentifierFirstLoginStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.FormLoginStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.RememberMeStep;
@@ -39,10 +40,13 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.CredentialService;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import java.util.LinkedList;
-import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+
+import java.util.LinkedList;
+import java.util.List;
+
+import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_REMEMBER_ME_COOKIE_NAME;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -74,6 +78,9 @@ public class AuthenticationFlowHandlerImpl implements AuthenticationFlowHandler 
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private CertificateManager certificateManager;
+
     @Value("${http.cookie.rememberMe.name:" + DEFAULT_REMEMBER_ME_COOKIE_NAME + "}")
     private String rememberMeCookieName;
 
@@ -86,6 +93,7 @@ public class AuthenticationFlowHandlerImpl implements AuthenticationFlowHandler 
         steps.add(new WebAuthnLoginStep(RedirectHandler.create("/webauthn/login"), domain, webAuthnCookieService));
         steps.add(new FormLoginStep(RedirectHandler.create("/login")));
         steps.add(new WebAuthnRegisterStep(domain, RedirectHandler.create("/webauthn/register"), factorManager, credentialService));
+        steps.add(new ForceResetPasswordStep(RedirectHandler.create("/resetPassword"), jwtService, certificateManager));
         steps.add(new MFAEnrollStep(RedirectHandler.create("/mfa/enroll"), ruleEngine, factorManager));
         steps.add(new MFAChallengeStep(RedirectHandler.create("/mfa/challenge"), ruleEngine, factorManager));
         steps.add(new MFARecoveryCodeStep(RedirectHandler.create("/mfa/recovery_code"), ruleEngine, factorManager));

@@ -22,7 +22,12 @@ import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 

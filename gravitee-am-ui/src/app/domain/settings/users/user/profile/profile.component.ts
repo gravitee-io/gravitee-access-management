@@ -29,8 +29,8 @@ import { OrganizationService } from '../../../../../services/organization.servic
 
 import {
   AccountTokenCreationDialogComponent,
-  AccountTokenCreationDialogResult,
   AccountTokenCreationDialogData,
+  AccountTokenCreationDialogResult,
 } from './token/account-token-creation-dialog.component';
 import {
   AccountTokenCopyDialogComponent,
@@ -325,5 +325,15 @@ export class UserProfileComponent implements OnInit {
   setForceResetPassword(e: any): void {
     this.user.forceResetPassword = e.checked;
     this.formChanged = true;
+  }
+
+  passwordReset(): boolean {
+    //Sometimes time differ by 1 millisecond
+    if (!this.user.lastPasswordReset) {
+      return false;
+    }
+    const lastPasswordResetSeconds = Math.floor(this.user.lastPasswordReset / 1000);
+    const createdAtSeconds = Math.floor(this.user.createdAt / 1000);
+    return lastPasswordResetSeconds !== createdAtSeconds;
   }
 }
