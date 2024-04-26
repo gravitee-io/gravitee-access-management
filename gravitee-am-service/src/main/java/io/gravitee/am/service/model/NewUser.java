@@ -72,6 +72,7 @@ public class NewUser implements IUser {
 
     private String source;
 
+    @ToString.Exclude
     private String client;
 
     private Long loginsCount;

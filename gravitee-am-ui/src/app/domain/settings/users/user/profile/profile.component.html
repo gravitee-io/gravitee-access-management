@@ -126,22 +126,18 @@
         </div>
         <div class="gv-form-section" *ngIf="canEdit && user.referenceType === 'domain'">
           <div class="gv-form-section-title">
-            <h3 style="margin-bottom: 8px">Force Password Reset</h3>
+            <h5 style="margin-bottom: 8px">Force Password Reset</h5>
             <p style="font-size: 12px">Ask this user to reset their password at next sign in.</p>
             <mat-divider></mat-divider>
           </div>
           <div>
-            <mat-slide-toggle
-              [checked]="user.forceResetPassword ? user.forceResetPassword : false"
-              (change)="setForceResetPassword($event)"
-            >
+            <mat-slide-toggle [checked]="user?.forceResetPassword" (change)="setForceResetPassword($event)">
               Force Password Reset
             </mat-slide-toggle>
           </div>
           <div style="margin-top: 4px">
-            <small *ngIf="user.lastPasswordReset ? user.lastPasswordReset : 'Password has not been reset'"
-              >Password has not been reset</small
-            >
+            <small *ngIf="passwordReset(); else notReset">Password reset on: {{ user.lastPasswordReset | date: 'shortDate' }}</small>
+            <ng-template #notReset><small>Password has not been reset</small></ng-template>
           </div>
         </div>
         <div class="gv-form-section" *ngIf="!isEmptyObject(user.additionalInformation)">

@@ -45,6 +45,7 @@ public class UpdateUser implements IUser {
     private String lastName;
 
     private String displayName;
+
     @ToString.Exclude
     private String externalId;
 
@@ -62,6 +63,7 @@ public class UpdateUser implements IUser {
 
     private String source;
 
+    @ToString.Exclude
     private String client;
 
     private long loginsCount;

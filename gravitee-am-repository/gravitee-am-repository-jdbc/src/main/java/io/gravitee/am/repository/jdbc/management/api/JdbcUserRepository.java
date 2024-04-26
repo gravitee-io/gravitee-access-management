@@ -132,6 +132,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     private static final String USER_COL_X_509_CERTIFICATES = "x509_certificates";
     private static final String USER_COL_FACTORS = "factors";
     private static final String USER_COL_ADDITIONAL_INFORMATION = "additional_information";
+    private static final String USER_COL_FORCE_RESET_PASSWORD = "force_reset_password";
 
     public static final String USER_COL_LAST_PASSWORD_RESET = "last_password_reset";
     public static final String USER_COL_LAST_USERNAME_RESET = "last_username_reset";
@@ -140,7 +141,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     public static final String USER_COL_IDENTITY_ID = "identity_id";
     public static final String USER_COL_PROVIDER_ID = "provider_id";
     public static final String USER_COL_LINKED_AT = "linked_at";
-    public static final String USER_COL_FORCE_RESET_PASSWORD = "force_reset_password";
+
     private static final List<String> USER_COLUMNS = List.of(
             USER_COL_ID,
             USER_COL_EXTERNAL_ID,

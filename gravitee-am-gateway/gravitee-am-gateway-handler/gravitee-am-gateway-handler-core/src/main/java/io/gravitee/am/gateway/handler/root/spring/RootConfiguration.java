@@ -20,11 +20,6 @@ import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.impl.UserServiceImpl;
-import java.net.InetAddress;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.Temporal;
-import java.util.concurrent.TimeUnit;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

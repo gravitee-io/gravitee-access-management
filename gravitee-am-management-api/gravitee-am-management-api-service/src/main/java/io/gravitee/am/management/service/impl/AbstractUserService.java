@@ -342,7 +342,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
             updateUser.getAdditionalInformation().forEach(additionalInformation::putIfAbsent);
         }
         user.setAdditionalInformation(additionalInformation);
-        if(updateUser.getForceResetPassword()!=null){
+        if (updateUser.getForceResetPassword() != null) {
             user.setForceResetPassword(updateUser.getForceResetPassword());
         }
         return user;

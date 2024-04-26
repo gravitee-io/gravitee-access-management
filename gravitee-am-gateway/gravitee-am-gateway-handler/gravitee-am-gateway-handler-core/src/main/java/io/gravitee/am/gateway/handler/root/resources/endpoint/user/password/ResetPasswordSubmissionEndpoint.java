@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
@@ -28,7 +30,9 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import org.jsoup.internal.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -44,6 +48,7 @@ public class ResetPasswordSubmissionEndpoint extends UserRequestHandler {
     private final UserService userService;
 
     private final boolean keepParams;
+
     public ResetPasswordSubmissionEndpoint(UserService userService, Environment environment) {
         this.userService = userService;
         this.keepParams = environment.getProperty(GATEWAY_ENDPOINT_RESET_PWD_KEEP_PARAMS, boolean.class, true);
@@ -79,6 +84,23 @@ public class ResetPasswordSubmissionEndpoint extends UserRequestHandler {
             if (resetPasswordResponse.isAutoLogin()) {
                 context.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(resetPasswordResponse.getUser())));
             }
+            // do on force password reset
+            if (context.get(ConstantKeys.TOKEN_CONTEXT_KEY) != null) {
+                JWT jwt = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
+                String claimsRequestParameter = (String) jwt.getClaimsRequestParameter();
+                if (!StringUtil.isBlank(claimsRequestParameter)) {
+                    final HttpServerRequest request = context.request();
+                    RequestUtils.getCleanedQueryParams(request);
+                    String uri = UriBuilderRequest.resolveProxyRequest(request, claimsRequestParameter);
+                    context.response()
+                            .putHeader(io.vertx.core.http.HttpHeaders.LOCATION, uri)
+                            .setStatusCode(302)
+                            .end();
+                    return;
+                }
+                queryParams.remove(ConstantKeys.TOKEN_CONTEXT_KEY);
+            }
+
             // no redirect uri has been set, redirect to the default page
             if (resetPasswordResponse.getRedirectUri() == null || resetPasswordResponse.getRedirectUri().isEmpty()) {
                 queryParams.set(ConstantKeys.SUCCESS_PARAM_KEY, "reset_password_completed");

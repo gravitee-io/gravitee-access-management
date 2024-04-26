@@ -33,10 +33,10 @@ import { UserClaimComponent } from './user-claim.component';
 })
 export class UserCreationComponent implements OnInit {
   private domainId: string;
-  preRegistration: boolean = false;
-  hidePassword: boolean = true;
-  useEmailAsUsername: boolean = false;
-  forceResetPassword: boolean = false;
+  preRegistration = false;
+  hidePassword = true;
+  useEmailAsUsername = false;
+  forceResetPassword = false;
   user: any = {};
   userClaims: any = {};
   userProviders: any[];
@@ -92,7 +92,7 @@ export class UserCreationComponent implements OnInit {
     }
   }
 
-  onEmailChange(email: string) {
+  onEmailChange(email: string): void {
     if (this.useEmailAsUsername) {
       if (!email || email === '') {
         this.useEmailAsUsername = false;
@@ -112,13 +112,13 @@ export class UserCreationComponent implements OnInit {
     const factory = this.factoryResolver.resolveComponentFactory(UserClaimComponent);
     const component = this.viewContainerRef.createComponent(factory);
 
-    component.instance.addClaimChange.subscribe((claim): void => {
+    component.instance.addClaimChange.subscribe((claim) => {
       if (claim.name && claim.value) {
         this.userClaims[claim.id] = { claimName: claim.name, claimValue: claim.value };
       }
     });
 
-    component.instance.removeClaimChange.subscribe((claim): void => {
+    component.instance.removeClaimChange.subscribe((claim) => {
       delete this.userClaims[claim.id];
       this.viewContainerRef.remove(this.viewContainerRef.indexOf(component.hostView));
       if (claim.name && claim.value) {

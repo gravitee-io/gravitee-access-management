@@ -41,7 +41,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.relational.core.query.Query;
-import org.springframework.data.relational.core.sql.In;
 import org.springframework.data.util.StreamUtils;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
@@ -126,6 +125,8 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
     private static final String USER_COL_X_509_CERTIFICATES = "x509_certificates";
     private static final String USER_COL_FACTORS = "factors";
     private static final String USER_COL_ADDITIONAL_INFORMATION = "additional_information";
+    private static final String USER_COL_FORCE_RESET_PASSWORD = "force_reset_password";
+
 
     private static final List<String> USER_COLUMNS = List.of(
             USER_COL_ID,
@@ -164,7 +165,8 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
             USER_COL_UPDATED_AT,
             USER_COL_X_509_CERTIFICATES,
             USER_COL_FACTORS,
-            USER_COL_ADDITIONAL_INFORMATION
+            USER_COL_ADDITIONAL_INFORMATION,
+            USER_COL_FORCE_RESET_PASSWORD
     );
 
 
@@ -420,6 +422,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, USER_COL_X_509_CERTIFICATES, item.getX509Certificates());
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, USER_COL_FACTORS, item.getFactors());
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, USER_COL_ADDITIONAL_INFORMATION, item.getAdditionalInformation());
+        insertSpec = addQuotedField(insertSpec, USER_COL_FORCE_RESET_PASSWORD, item.getForceResetPassword(), Boolean.class);
 
         Mono<Long> insertAction = insertSpec.fetch().rowsUpdated();
         insertAction = persistChildEntities(insertAction, item, UpdateActions.updateAll());
@@ -478,6 +481,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         update = databaseDialectHelper.addJsonField(update, USER_COL_X_509_CERTIFICATES, item.getX509Certificates());
         update = databaseDialectHelper.addJsonField(update, USER_COL_FACTORS, item.getFactors());
         update = databaseDialectHelper.addJsonField(update, USER_COL_ADDITIONAL_INFORMATION, item.getAdditionalInformation());
+        update = addQuotedField(update, USER_COL_FORCE_RESET_PASSWORD, item.getForceResetPassword(), Boolean.class);
 
         Mono<Long> action = update.fetch().rowsUpdated();
 
