@@ -753,10 +753,10 @@ gateway:
       - am.example.com
     annotations:
       kubernetes.io/ingress.class: nginx
-      nginx.ingress.kubernetes.io/ssl-redirect: "false"
       nginx.ingress.kubernetes.io/enable-rewrite-log: "true"
       kubernetes.io/app-root: /auth
       kubernetes.io/rewrite-target: /auth
+      # nginx.ingress.kubernetes.io/ssl-redirect: "false"
       # ingress.kubernetes.io/configuration-snippet: "etag on;\nproxy_pass_header ETag;\nproxy_set_header if-match \"\";\n"
       # kubernetes.io/tls-acme: "true"
     #tls:
