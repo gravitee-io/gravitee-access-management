@@ -38,6 +38,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
@@ -596,15 +597,25 @@ public class PasswordPolicyServiceTest {
         when(identityProviderService.findWithPasswordPolicy(any(), any(), any())).thenReturn(Flowable.just(new IdentityProvider()));
         when(identityProviderService.updatePasswordPolicy(any(), any(), any())).thenReturn(Single.error(new TechnicalException()));
 
+        Completable deleteResponse = Completable.create(co -> co.setDisposable(Disposable.empty()));
+        Single<Event> eventResponse = Single.unsafeCreate(co -> co.onSubscribe(Disposable.empty()));
+
+        when(passwordPolicyRepository.delete(any())).thenReturn(deleteResponse);
+        when(eventService.create(any())).thenReturn(eventResponse);
+
         final var observer = cut.delete(ReferenceType.DOMAIN, DOMAIN_ID, passwordPolicy.getId(), principal).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(TechnicalException.class);
+        observer.assertNotComplete();
 
-        verify(passwordPolicyRepository, never()).delete(any());
+        deleteResponse.test().assertNotComplete();
+        eventResponse.test().assertNotComplete();
+
+        verify(passwordPolicyRepository).delete(any());
         verify(passwordPolicyRepository, never()).findByOldest(any(), any());
         verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.FAILURE)));
-        verify(eventService, never()).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.DELETE)));
+        verify(eventService).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.DELETE)));
     }
 
     @Test

@@ -32,6 +32,7 @@ import { PasswordPolicy } from './domain-password-policies.model';
 export class PasswordPoliciesComponent implements OnInit {
   domainId: string;
   canDelete = false;
+  rows: PasswordPolicy[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -40,8 +41,6 @@ export class PasswordPoliciesComponent implements OnInit {
     private snackbarService: SnackbarService,
     private passwordPolicyService: PasswordPolicyService,
   ) {}
-
-  rows: PasswordPolicy[] = [];
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain'].id;
@@ -69,7 +68,13 @@ export class PasswordPoliciesComponent implements OnInit {
 
   protected selectDefault(id: string): void {
     this.passwordPolicyService.setDefaultPolicy(this.domainId, id).subscribe({
-      complete: () => this.snackbarService.open('Updated default Password policy'),
+      complete: () => {
+        this.rows.forEach((i) => {
+          i.isDefault = i.id === id;
+        });
+        this.rows = [...this.rows];
+        this.snackbarService.open('Updated default Password policy');
+      },
       error: () => this.snackbarService.open("Couldn't set default Password policy"),
     });
   }
