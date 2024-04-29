@@ -244,6 +244,9 @@ data:
             keystore:
               type: {{ .Values.gateway.services.core.http.ssl.keystore.type }}
               path: {{ .Values.gateway.services.core.http.ssl.keystore.path }}
+              {{- if .Values.gateway.services.core.http.ssl.keystore.password }}
+              password: {{ .Values.gateway.services.core.http.ssl.keystore.password }}
+              {{- end }}
           {{- end }}
 
       # Gateway monitoring service.
