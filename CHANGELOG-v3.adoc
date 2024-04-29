@@ -1,5 +1,29 @@
 # Change Log
 
+==  - 3.21.24 (2024-04-29)
+
+== What's new !
+
+
+
+=== Gateway
+
+* Issue with MFA and silent refresh token https://github.com/gravitee-io/issues/issues/9622[#9622]
+* [WebAuthn] Problèmatique Authenticator "SecurityError : The operation is insecure." https://github.com/gravitee-io/issues/issues/9686[#9686]
+
+=== Management API
+
+* AM - Application Analytics Timeout https://github.com/gravitee-io/issues/issues/9405[#9405]
+
+=== Console
+
+
+
+=== Other
+
+
+
+
 ==  - 3.21.23 (2024-04-12)
 
 == What's new !
