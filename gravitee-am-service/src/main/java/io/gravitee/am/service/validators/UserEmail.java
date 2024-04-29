@@ -43,6 +43,8 @@ public @interface UserEmail {
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 
+    String PROPERTY_USER_EMAIL_REQUIRED = "user.email.required";
+
     @Component
     @Slf4j
     class UserEmailValidator implements ConstraintValidator<UserEmail, String> {
@@ -50,7 +52,7 @@ public @interface UserEmail {
         private final boolean emailRequired;
 
         public UserEmailValidator(Environment environment) {
-            this.emailRequired = environment.getProperty("user.email.required", boolean.class, true);
+            this.emailRequired = environment.getProperty(PROPERTY_USER_EMAIL_REQUIRED, boolean.class, true);
             log.debug("Validating user emails as {}", this.emailRequired ? "required" : "optional" );
         }
 
