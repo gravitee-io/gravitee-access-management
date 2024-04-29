@@ -62,7 +62,13 @@ public class CertificateUtils {
         LOGGER.debug("extractPeerCertificate certHeaderValue {}", certHeaderValue);
         if (certHeaderValue != null) {
             try {
-                certHeaderValue = URLEncoder.encode(certHeaderValue);
+                certHeaderValue = certHeaderValue
+                        .replaceAll("/+","%2B")
+                        .replaceAll("//","%2F")
+                        .replaceAll("=","%3D");
+
+                LOGGER.debug("extractPeerCertificate encode certHeaderValue {}", certHeaderValue);
+
                 certHeaderValue = URLDecoder.decode(certHeaderValue.replaceAll("\t", "\n"), Charset.defaultCharset());
                 LOGGER.debug("extractPeerCertificate decode certHeaderValue {}", certHeaderValue);
 
