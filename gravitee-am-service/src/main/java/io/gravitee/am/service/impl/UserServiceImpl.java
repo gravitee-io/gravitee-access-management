@@ -277,7 +277,7 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
                     }
                     return update(user)
                             .doOnSuccess(user1 -> {
-                                if (needToAuditUserFactorsOperation(user1, oldUser)) {
+                               if (needToAuditUserFactorsOperation(user1, oldUser)) {
                                     // remove sensitive data about factors
                                     removeSensitiveFactorsData(user1.getFactors());
                                     removeSensitiveFactorsData(oldUser.getFactors());

@@ -150,12 +150,9 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
         log.debug("Delete password policy with id '{}' for {} {}", policyId, referenceType, referenceId);
         return passwordPolicyRepository.findByReferenceAndId(referenceType, referenceId, policyId)
                 .flatMapSingle(policy -> resetPolicyOnIdentityProviders(referenceType, referenceId, policyId)
-                        .andThen(Completable.defer(() -> passwordPolicyRepository.delete(policy.getId())))
-                        .andThen(Single.defer(() -> {
-                                    Event event = new Event(Type.PASSWORD_POLICY, new Payload(policy.getId(), referenceType, referenceId, Action.DELETE));
-                                    return eventService.create(event).map(__ -> policy);
-                                }
-                        )))
+                        .andThen(passwordPolicyRepository.delete(policy.getId()))
+                        .andThen(eventService.create(new Event(Type.PASSWORD_POLICY, new Payload(policy.getId(), referenceType, referenceId, Action.DELETE))))
+                        .map(__ -> policy))
                 .doOnSuccess(policy -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
                         .principal(principal)
                         .type(EventType.PASSWORD_POLICY_DELETED)
