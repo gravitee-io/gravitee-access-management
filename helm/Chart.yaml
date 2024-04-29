@@ -23,10 +23,5 @@ annotations:
   # List of changes for the release in artifacthub.io
   # https://artifacthub.io/packages/helm/graviteeio/am?modal=changelog
   artifacthub.io/changes: |
-
-    - 'Added kubernetes secret configuration'
-    - 'Added application client secret hash'
-    - 'refactoring of email configuration now `smtp.email` and `api.notifiers.email` transpose helm values to `gravitee.yml` with some process to be backward compatible'
-    - 'fix: license deleted after helm upgrade'
-    - 'add networkPolicy'
+    - BREAKING CHANGE: In gateway ingress controller, change ssl-redirect option from "false" to default. More info here: https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#server-side-https-enforcement-through-redirect
 
