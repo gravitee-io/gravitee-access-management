@@ -25,11 +25,16 @@ import { OrganizationService } from './organization.service';
 @Injectable()
 export class UserService {
   private usersURL = AppConfig.settings.domainBaseURL;
+  private platformURL = AppConfig.settings.baseURL + '/platform';
 
   constructor(
     private http: HttpClient,
     private organizationService: OrganizationService,
   ) {}
+
+  isEmailRequired(): Observable<boolean> {
+    return this.http.get<any>(this.platformURL + '/configuration/users/emailRequired');
+  }
 
   findByDomain(domainId, page, size): Observable<any> {
     return this.http.get<any>(this.usersURL + domainId + '/users?page=' + page + '&size=' + size);

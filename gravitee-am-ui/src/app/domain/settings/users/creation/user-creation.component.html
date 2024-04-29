@@ -55,7 +55,7 @@
               [(ngModel)]="user.email"
               [email]="user.email !== ''"
               (input)="onEmailChange($any($event.target).value)"
-              required
+              [required]="emailRequired"
             />
             <mat-hint>Email address for the User.</mat-hint>
             <mat-error *ngIf="email.errors?.required">Enter email</mat-error>
