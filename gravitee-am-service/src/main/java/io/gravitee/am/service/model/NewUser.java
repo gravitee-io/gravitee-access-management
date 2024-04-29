@@ -17,17 +17,15 @@ package io.gravitee.am.service.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.gravitee.am.model.IUser;
+import io.gravitee.am.service.validators.UserEmail;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
 import java.util.Date;
 import java.util.Map;
-
-import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_MAX_LENGTH;
 
 
 /**
@@ -44,8 +42,7 @@ public class NewUser implements IUser {
     @ToString.Exclude
     private String password;
 
-    @NotBlank
-    @Size(max = EMAIL_MAX_LENGTH, message = "must not be greater than " + EMAIL_MAX_LENGTH)
+    @UserEmail
     private String email;
 
     private String firstName;
