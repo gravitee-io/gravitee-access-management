@@ -1082,7 +1082,7 @@ jobs:
     steps:
       - checkout
       - restore-maven-job-cache:
-          jobName: release
+          jobName: releaseV2
       - attach_workspace:
           at: /tmp
       - prepare-gpg
@@ -1135,7 +1135,7 @@ jobs:
                 command: |
                   mvn -s /tmp/.gravitee.settings.xml -B -U -P gio-artifactory-release,gio-release clean install
       - save-maven-job-cache:
-          jobName: release
+          jobName: releaseV2
 
       # ---
       # Package Bundle Must succeed, before nexus staging is done : Package bundle is idempotnent and non immutable, whereas NExus staging and Git release are immutable
@@ -1283,7 +1283,7 @@ jobs:
     steps:
       - checkout
       - restore-maven-job-cache:
-          jobName: release
+          jobName: releaseV2
       - attach_workspace:
           at: /tmp
       - prepare-gpg
