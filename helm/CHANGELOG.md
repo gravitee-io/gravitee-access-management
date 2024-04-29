@@ -2,6 +2,11 @@
 
 This file documents all notable changes to [Gravitee.io Access Management 3.x](https://github.com/gravitee-io/helm-charts/tree/master/am/) Helm Chart. The release numbering uses [semantic versioning](http://semver.org).
 
+
+### 4.2.14
+
+- BREAKING CHANGE: In gateway ingress controller, change ssl-redirect option from "false" to default. More info [here](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#server-side-https-enforcement-through-redirect)
+
 ### 4.2.0
 
 - [X] Added kubernetes secret configuration
