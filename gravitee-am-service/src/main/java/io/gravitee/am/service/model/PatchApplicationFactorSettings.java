@@ -17,14 +17,19 @@ package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.service.utils.SetterUtils;
-import java.util.Optional;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Optional;
+
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class PatchApplicationFactorSettings {
     private Optional<String> id;
     private Optional<String> selectionRule;

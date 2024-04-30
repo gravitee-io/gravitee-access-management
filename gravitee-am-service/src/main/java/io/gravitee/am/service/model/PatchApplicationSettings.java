@@ -23,6 +23,10 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.utils.PermissionSettingUtils;
 import io.gravitee.am.service.utils.SetterUtils;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
+
 import java.util.Optional;
 import java.util.Set;
 
@@ -30,6 +34,9 @@ import java.util.Set;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PatchApplicationSettings {
 
     private Optional<AccountSettings> account;

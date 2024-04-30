@@ -15,17 +15,27 @@
  */
 package io.gravitee.am.model;
 
-import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+import java.util.Objects;
+
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class FactorSettings {
     private String defaultFactorId;
     private List<ApplicationFactorSettings> applicationFactors = List.of();
+
+    public List<ApplicationFactorSettings> getApplicationFactors() {
+        return Objects.requireNonNullElseGet(applicationFactors, List::of);
+    }
 
     public FactorSettings(FactorSettings factorSettings) {
         this.defaultFactorId = factorSettings.defaultFactorId;
