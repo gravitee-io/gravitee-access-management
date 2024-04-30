@@ -47,7 +47,7 @@ class UserEmailConstraintValidator implements ConstraintValidator<UserEmail, Str
             return false;
         }
         if (value != null && value.length() > EmailValidatorImpl.EMAIL_MAX_LENGTH) {
-            context.buildConstraintViolationWithTemplate("size must be between 0 and " + EmailValidatorImpl.EMAIL_MAX_LENGTH)
+            context.buildConstraintViolationWithTemplate("must not be greater than " + EmailValidatorImpl.EMAIL_MAX_LENGTH)
                     .addConstraintViolation();
             return false;
 
