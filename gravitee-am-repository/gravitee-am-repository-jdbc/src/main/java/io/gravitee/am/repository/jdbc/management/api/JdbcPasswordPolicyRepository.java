@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Comparator;
 import java.util.List;
 
 import static io.gravitee.am.common.utils.RandomString.generate;
@@ -145,7 +146,10 @@ public class JdbcPasswordPolicyRepository extends AbstractJdbcRepository impleme
 
     @Override
     public Maybe<PasswordPolicy> findByOldest(ReferenceType referenceType, String referenceId) {
-        return passwordPolicyRepository.findByOldest(referenceId, referenceType.name()).map(this::toEntity);
+        return passwordPolicyRepository.findByReference(referenceId, referenceType.name())
+                .sorted(Comparator.comparing(JdbcPasswordPolicy::getCreatedAt))
+                .firstElement()
+                .map(this::toEntity);
     }
 
     protected PasswordPolicy toEntity(JdbcPasswordPolicy entity) {
