@@ -17,11 +17,13 @@
 FROM graviteeio/java:17
 LABEL maintainer="contact@graviteesource.com"
 
-ARG GRAVITEEAM_VERSION=0
+ARG GRAVITEEAM_VERSION=4.2.3
 ENV GRAVITEEIO_HOME /opt/graviteeio-am-gateway
 
 RUN addgroup -g 1000 graviteeio \
     && adduser -D -H -u 1001 graviteeio --ingroup graviteeio
+
+ADD ./gravitee-am-gateway-handler-oidc-${GRAVITEEAM_VERSION}.zip /tmp/gravitee-am-gateway-handler-oidc-${GRAVITEEAM_VERSION}.zip
 
 RUN apk update \
 	&& apk add --update --no-cache zip unzip netcat-openbsd wget \
@@ -29,6 +31,8 @@ RUN apk update \
     && unzip /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
 	&& apk del zip unzip netcat-openbsd wget \
     && mv /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION} ${GRAVITEEIO_HOME} \
+    && rm -rf ${GRAVITEEIO_HOME}/plugins/gravitee-am-gateway-handler-oidc-${GRAVITEEAM_VERSION}.zip \
+    && mv /tmp/gravitee-am-gateway-handler-oidc-${GRAVITEEAM_VERSION}.zip ${GRAVITEEIO_HOME}/plugins/ \
     && rm -rf /tmp/* \
 	&& chgrp -R graviteeio ${GRAVITEEIO_HOME} \
     && chmod -R g=u ${GRAVITEEIO_HOME}
