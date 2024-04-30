@@ -17,7 +17,7 @@ package io.gravitee.am.service.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.gravitee.am.model.IUser;
-import io.gravitee.am.service.validators.UserEmail;
+import io.gravitee.am.service.validators.email.UserEmail;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;

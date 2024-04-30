@@ -19,7 +19,7 @@ import io.gravitee.am.management.handlers.management.api.model.AlertServiceStatu
 import io.gravitee.am.management.service.AlertService;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.SpelService;
-import io.gravitee.am.service.validators.UserEmail;
+import io.gravitee.am.service.validators.email.UserEmail;
 import io.gravitee.common.http.MediaType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
