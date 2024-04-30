@@ -22,6 +22,11 @@ import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -37,6 +42,11 @@ import java.util.stream.Collectors;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class Application implements Resource, PasswordSettingsAware {
 
     /**
@@ -105,9 +115,6 @@ public class Application implements Resource, PasswordSettingsAware {
 
     private List<ClientSecret> secrets;
 
-    public Application() {
-    }
-
     public Application(Application other) {
         this.id = other.id;
         this.name = other.name;
@@ -127,135 +134,11 @@ public class Application implements Resource, PasswordSettingsAware {
         this.secrets = other.getSecrets().stream().map(ClientSecret::new).collect(Collectors.toList());
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public ApplicationType getType() {
-        return type;
-    }
-
-    public void setType(ApplicationType type) {
-        this.type = type;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getDomain() {
-        return domain;
-    }
-
-    public void setDomain(String domain) {
-        this.domain = domain;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public boolean isTemplate() {
-        return template;
-    }
-
-    public void setTemplate(boolean template) {
-        this.template = template;
-    }
-
-    public Set<String> getFactors() {
-        return factors;
-    }
-
-    public void setFactors(Set<String> factors) {
-        this.factors = factors;
-    }
-
-    public String getCertificate() {
-        return certificate;
-    }
-
-    public void setCertificate(String certificate) {
-        this.certificate = certificate;
-    }
-
-    public Map<String, Object> getMetadata() {
-        return metadata;
-    }
-
-    public void setMetadata(Map<String, Object> metadata) {
-        this.metadata = metadata;
-    }
-
-    public ApplicationSettings getSettings() {
-        return settings;
-    }
-
-    public void setSettings(ApplicationSettings settings) {
-        this.settings = settings;
-    }
-
-    public SortedSet<ApplicationIdentityProvider> getIdentityProviders() {
-        return identityProviders;
-    }
-
-    public void setIdentityProviders(SortedSet<ApplicationIdentityProvider> identityProviders) {
-        this.identityProviders = identityProviders;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Date getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Date updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public List<ApplicationSecretSettings> getSecretSettings() {
-        return secretSettings;
-    }
-
-    public void setSecretSettings(List<ApplicationSecretSettings> secretSettings) {
-        this.secretSettings = secretSettings;
-    }
-
     public List<ClientSecret> getSecrets() {
         if (secrets == null) {
             this.secrets = new ArrayList<>();
         }
         return secrets;
-    }
-
-    public void setSecrets(List<ClientSecret> secrets) {
-        this.secrets = secrets;
     }
 
     public Client toClient() {

@@ -20,6 +20,9 @@ import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.utils.PermissionSettingUtils;
 import io.gravitee.am.service.utils.SetterUtils;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 import java.util.*;
 
@@ -29,6 +32,9 @@ import static java.util.stream.Collectors.toCollection;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PatchApplication {
 
     private Optional<String> name;
