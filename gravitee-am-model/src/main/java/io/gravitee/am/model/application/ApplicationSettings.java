@@ -85,6 +85,10 @@ public class ApplicationSettings {
     private RiskAssessmentSettings riskAssessment;
 
 
+    public ApplicationAdvancedSettings getAdvanced() {
+        return advanced != null ? advanced : new ApplicationAdvancedSettings();
+    }
+
     public ApplicationSettings(ApplicationSettings other) {
         this.oauth = other.oauth != null ? new ApplicationOAuthSettings(other.oauth) : null;
         this.saml = other.saml != null ? new ApplicationSAMLSettings(other.saml) : null;
