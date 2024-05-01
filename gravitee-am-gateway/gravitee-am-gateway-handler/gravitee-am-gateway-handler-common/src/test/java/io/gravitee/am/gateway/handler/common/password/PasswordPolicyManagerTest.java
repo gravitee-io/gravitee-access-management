@@ -29,6 +29,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -40,8 +41,8 @@ import static org.junit.Assert.assertTrue;
  */
 public class PasswordPolicyManagerTest {
     private final String POLICY_ID_1 = "policyId1";
+    private final String DEFAULT_POLICY_ID = "defaultPolicyId";
     private final String POLICY_ID_2 = "policyId2";
-    private final String POLICY_ID_3 = "policyId3";
 
     private PasswordPolicyManager passwordPolicyManager = new PasswordPolicyManagerImpl();
 
@@ -56,17 +57,17 @@ public class PasswordPolicyManagerTest {
         policy1.setDefaultPolicy(false);
         policy1.setCreatedAt(new Date(Instant.now().minus(1, ChronoUnit.MINUTES).toEpochMilli()));
 
+        final var defaultPolicy = new PasswordPolicy();
+        defaultPolicy.setId(DEFAULT_POLICY_ID);
+        defaultPolicy.setDefaultPolicy(true);
+        defaultPolicy.setCreatedAt(new Date(Instant.now().minus(4, ChronoUnit.MINUTES).toEpochMilli()));
+
         final var policy2 = new PasswordPolicy();
         policy2.setId(POLICY_ID_2);
-        policy2.setDefaultPolicy(true);
-        policy2.setCreatedAt(new Date(Instant.now().minus(15, ChronoUnit.MINUTES).toEpochMilli()));
+        policy2.setDefaultPolicy(false);
+        policy2.setCreatedAt(new Date(Instant.now().minus(5, ChronoUnit.MINUTES).toEpochMilli()));
 
-        final var policy3 = new PasswordPolicy();
-        policy3.setId(POLICY_ID_3);
-        policy3.setDefaultPolicy(false);
-        policy3.setCreatedAt(new Date(Instant.now().minus(5, ChronoUnit.MINUTES).toEpochMilli()));
-
-        policies.putAll(Map.of(POLICY_ID_1, policy1, POLICY_ID_2, policy2, POLICY_ID_3, policy3));
+        policies.putAll(Map.of(POLICY_ID_1, policy1, DEFAULT_POLICY_ID, defaultPolicy, POLICY_ID_2, policy2));
     }
 
     private void resetPolicies() {
@@ -78,7 +79,14 @@ public class PasswordPolicyManagerTest {
     public void shouldGetDefaultPolicy_whenClientAndIdp_notDefined() {
         var optPolicy = passwordPolicyManager.getPolicy(new Client(), new IdentityProvider());
         assertTrue(optPolicy.isPresent());
-        assertEquals(POLICY_ID_2, optPolicy.get().getId());
+        assertEquals(DEFAULT_POLICY_ID, optPolicy.get().getId());
+    }
+
+    @Test
+    public void shouldGetDefaultPolicy_whenClient_notDefined_and_Idp_IsNull() {
+        var optPolicy = passwordPolicyManager.getPolicy(new Client(), null);
+        assertTrue(optPolicy.isPresent());
+        assertEquals(DEFAULT_POLICY_ID, optPolicy.get().getId());
     }
 
     @Test
@@ -101,7 +109,7 @@ public class PasswordPolicyManagerTest {
     @Test
     public void shouldGetIdpPolicy_evenIf_appDefineSettings() {
         var identityProvider = new IdentityProvider();
-        identityProvider.setPasswordPolicy(POLICY_ID_3);
+        identityProvider.setPasswordPolicy(POLICY_ID_2);
 
         var client = new Client();
         var passwordSettings = new PasswordSettings();
@@ -110,7 +118,7 @@ public class PasswordPolicyManagerTest {
 
         var optPolicy = passwordPolicyManager.getPolicy(client, identityProvider);
         assertTrue(optPolicy.isPresent());
-        assertEquals(POLICY_ID_3, optPolicy.get().getId());
+        assertEquals(POLICY_ID_2, optPolicy.get().getId());
     }
 
     @Test
@@ -124,7 +132,7 @@ public class PasswordPolicyManagerTest {
 
         var optPolicy = passwordPolicyManager.getPolicy(client, identityProvider);
         assertTrue(optPolicy.isPresent());
-        assertEquals(POLICY_ID_2, optPolicy.get().getId());
+        assertEquals(DEFAULT_POLICY_ID, optPolicy.get().getId());
     }
 
     @Test
@@ -142,4 +150,14 @@ public class PasswordPolicyManagerTest {
         assertNull(optPolicy.get().getId());
         assertEquals(passwordSettings.getMaxLength(), optPolicy.get().getMaxLength());
     }
+
+    @Test
+    public void shouldGetDefaultPolicy(){
+        Optional<PasswordPolicy> defaultPolicy = passwordPolicyManager.getDefaultPolicy();
+
+        assertTrue(defaultPolicy.isPresent());
+        assertEquals(DEFAULT_POLICY_ID, defaultPolicy.get().getId());
+    }
+
+
 }
