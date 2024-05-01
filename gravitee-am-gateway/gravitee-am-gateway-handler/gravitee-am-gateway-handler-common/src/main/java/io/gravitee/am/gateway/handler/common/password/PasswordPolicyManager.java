@@ -27,7 +27,6 @@ public interface PasswordPolicyManager extends Service {
 
     Optional<PasswordPolicy> getPolicy(String policyId);
     Optional<PasswordPolicy> getDefaultPolicy();
-
     Optional<PasswordPolicy> getPolicy(Client client, IdentityProvider identityProvider);
 
 }

@@ -20,10 +20,10 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.root.RootProvider;
+import io.gravitee.am.gateway.handler.root.service.user.UserRegistrationIdpResolver;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.User;
-import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.exception.InvalidPasswordException;
@@ -61,23 +61,16 @@ public class PasswordPolicyRequestParseHandler extends UserRequestHandler {
         try {
             Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
             User user = getUser(context, client);
-            Optional<IdentityProvider> provider = Optional.ofNullable(user.getSource())
-                    .or(() -> getDefaultIdentityProviderForRegister(request, client))
-                    .map(identityProviderManager::getIdentityProvider);
+            String source =  Optional.ofNullable(user.getSource())
+                    .orElseGet(() -> UserRegistrationIdpResolver.getRegistrationIdp(domain, client));
+            IdentityProvider provider = identityProviderManager.getIdentityProvider(source);
 
-            passwordService.validate(password, passwordPolicyManager.getPolicy(client, provider.orElse(null)).orElse(null), user);
+            passwordService.validate(password, passwordPolicyManager.getPolicy(client, provider).orElse(null), user);
             context.next();
         } catch (InvalidPasswordException e) {
             Optional.ofNullable(context.request().getParam(Parameters.CLIENT_ID)).ifPresent(t -> queryParams.set(Parameters.CLIENT_ID, t));
             warningRedirection(context, queryParams, e.getErrorKey());
         }
-    }
-
-    private Optional<String> getDefaultIdentityProviderForRegister(HttpServerRequest request, Client client) {
-        if (request.path().endsWith(RootProvider.PATH_REGISTER) || request.path().endsWith(RootProvider.PATH_CONFIRM_REGISTRATION)) {
-            return AccountSettings.getInstance(client, domain).map(AccountSettings::getDefaultIdentityProviderForRegistration);
-        }
-        return Optional.empty();
     }
 
     private User getUser(RoutingContext context, Client client) {
