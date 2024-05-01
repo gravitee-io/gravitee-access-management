@@ -29,6 +29,7 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
+import io.gravitee.am.gateway.handler.root.service.user.UserRegistrationIdpResolver;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.ForgotPasswordParameters;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
@@ -226,8 +227,7 @@ public class UserServiceImpl implements UserService {
     public Single<RegistrationResponse> register(Client client, User user, io.gravitee.am.identityprovider.api.User principal, MultiMap queryParams) {
         // set user idp source
         var accountSettings = AccountSettings.getInstance(client, domain);
-        final String source = accountSettings.map(AccountSettings::getDefaultIdentityProviderForRegistration)
-                .orElse(user.getSource() == null ? DEFAULT_IDP_PREFIX + domain.getId() : user.getSource());
+        final String source = UserRegistrationIdpResolver.getRegistrationIdpForUser(domain, client, user);
         final var rawPassword = user.getPassword();
         // validate user and then check user uniqueness
         return userValidator.validate(user)

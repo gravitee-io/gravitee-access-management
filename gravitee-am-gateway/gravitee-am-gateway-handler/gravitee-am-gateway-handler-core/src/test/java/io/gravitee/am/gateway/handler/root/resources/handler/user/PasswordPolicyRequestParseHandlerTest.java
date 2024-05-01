@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.exception.InvalidPasswordException;
 import io.vertx.core.http.HttpMethod;
@@ -32,9 +33,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -70,7 +71,8 @@ public class PasswordPolicyRequestParseHandlerTest extends RxWebTestBase {
                 .handler(passwordPolicyRequestParseHandler)
                 .handler(rc -> rc.response().end());
 
-        doThrow(InvalidPasswordException.class).when(passwordValidator).validate(anyString(), eq(null), any());
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        doThrow(InvalidPasswordException.class).when(passwordValidator).validate(anyString(), any(), any());
 
         testRequest(HttpMethod.POST, "/", req -> {
             Buffer buffer = Buffer.buffer();
@@ -91,8 +93,8 @@ public class PasswordPolicyRequestParseHandlerTest extends RxWebTestBase {
                 .handler(passwordPolicyRequestParseHandler)
                 .handler(rc -> rc.response().end());
 
-
-        doNothing().when(passwordValidator).validate(anyString(), eq(null), any());
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        doNothing().when(passwordValidator).validate(anyString(), any(), any());
 
         testRequest(HttpMethod.POST, "/", req -> {
             Buffer buffer = Buffer.buffer();

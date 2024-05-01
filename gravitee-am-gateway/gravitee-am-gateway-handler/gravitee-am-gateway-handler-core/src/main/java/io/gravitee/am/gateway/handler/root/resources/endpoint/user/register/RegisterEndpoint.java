@@ -21,7 +21,9 @@ import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
+import io.gravitee.am.gateway.handler.root.service.user.UserRegistrationIdpResolver;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
@@ -36,7 +38,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
@@ -59,7 +60,6 @@ public class RegisterEndpoint extends AbstractEndpoint implements Handler<Routin
     private final BotDetectionManager botDetectionManager;
     private final PasswordPolicyManager passwordPolicyManager;
     private final IdentityProviderManager identityProviderManager;
-
     public RegisterEndpoint(TemplateEngine engine, Domain domain, BotDetectionManager botDetectionManager, PasswordPolicyManager passwordPolicyManager, IdentityProviderManager identityProviderManager) {
         super(engine);
         this.domain = domain;
@@ -75,13 +75,13 @@ public class RegisterEndpoint extends AbstractEndpoint implements Handler<Routin
         copyValue(request, routingContext, ConstantKeys.WARNING_PARAM_KEY);
         Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
 
-        final var optAccountSettings = AccountSettings.getInstance(client, domain);
-        optAccountSettings.ifPresent(accountSettings ->
-                routingContext.put(ConstantKeys.TEMPLATE_VERIFY_REGISTRATION_ACCOUNT_KEY, accountSettings.isSendVerifyRegistrationAccountEmail())
-        );
+        AccountSettings.getInstance(client, domain)
+                .ifPresent(accountSettings -> routingContext.put(ConstantKeys.TEMPLATE_VERIFY_REGISTRATION_ACCOUNT_KEY, accountSettings.isSendVerifyRegistrationAccountEmail()));
 
-        final var optProvider = optAccountSettings.map(AccountSettings::getDefaultIdentityProviderForRegistration).map(identityProviderManager::getIdentityProvider);
-        passwordPolicyManager.getPolicy(client, optProvider.orElse(null)).ifPresent(v -> routingContext.put(ConstantKeys.PASSWORD_SETTINGS_PARAM_KEY, v));
+        String registrationIdp = UserRegistrationIdpResolver.getRegistrationIdp(domain, client);
+        IdentityProvider identityProvider = identityProviderManager.getIdentityProvider(registrationIdp);
+
+        passwordPolicyManager.getPolicy(client, identityProvider).ifPresent(v -> routingContext.put(ConstantKeys.PASSWORD_SETTINGS_PARAM_KEY, v));
         String error = request.getParam(ConstantKeys.ERROR_PARAM_KEY);
         String errorDescription = request.getParam(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY);
 
