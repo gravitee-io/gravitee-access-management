@@ -126,8 +126,7 @@ public class PasswordPolicyManagerImpl extends AbstractService implements Passwo
     public Optional<PasswordPolicy> getDefaultPolicy() {
         return policies.values()
                 .stream()
-                // TODO replace this sort by a filter on default attribute during AM-2893
-                .sorted(Comparator.comparing(PasswordPolicy::getCreatedAt))
+                .filter(PasswordPolicy::getDefaultPolicy)
                 .findFirst();
     }
 
