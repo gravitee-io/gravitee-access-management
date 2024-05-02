@@ -28,6 +28,7 @@ import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.repository.management.api.CommonUserRepository.UpdateActions;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -68,6 +69,9 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
 
     @Autowired
     private AuditService auditService;
+
+    @Autowired
+    protected TokenService tokenService;
 
     @Override
     protected UserRepository getUserRepository() {
@@ -145,6 +149,12 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
                     LOGGER.error("An error occurs while trying to update a user", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a user", ex));
                 }));
+    }
+
+    @Override
+    public Single<User> delete(String userId) {
+        return super.delete(userId)
+                .flatMap(user -> tokenService.deleteByUser((User) user).toSingleDefault(user));
     }
 
     @Override

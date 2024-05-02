@@ -28,6 +28,7 @@ import io.gravitee.am.service.CommonUserService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -40,7 +41,6 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.utils.UserFactorUpdater;
 import io.gravitee.am.service.validators.user.UserValidator;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -289,24 +289,25 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
     }
 
     @Override
-    public Completable delete(String userId) {
+    public Single<User> delete(String userId) {
         LOGGER.debug("Delete user {}", userId);
 
         return getUserRepository().findById(userId)
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
-                .flatMapCompletable(user -> {
+                .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
+                .flatMap(user -> {
                     /// delete WebAuthn credentials
                     return credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())
                             .flatMapCompletable(credential -> credentialService.delete(credential.getId(), false))
-                            .andThen(getUserRepository().delete(userId));
+                            .andThen(getUserRepository().delete(userId))
+                            .toSingleDefault(user);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
-                        return Completable.error(ex);
+                        return Single.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to delete user: {}", userId, ex);
-                    return Completable.error(new TechnicalManagementException(
+                    return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete user: %s", userId), ex));
                 });
     }

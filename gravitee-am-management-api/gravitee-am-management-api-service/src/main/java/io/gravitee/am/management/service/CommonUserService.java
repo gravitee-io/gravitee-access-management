@@ -43,10 +43,10 @@ public interface CommonUserService {
 
     Single<User> updateUsername(ReferenceType referenceType, String referenceId, String id, String username, io.gravitee.am.identityprovider.api.User principal);
 
-    default Completable delete(ReferenceType referenceType, String referenceId, String userId) {
+    default Single<User> delete(ReferenceType referenceType, String referenceId, String userId) {
         return delete(referenceType, referenceId, userId, null);
     }
 
-    Completable delete(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal);
+    Single<User> delete(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal);
 
 }

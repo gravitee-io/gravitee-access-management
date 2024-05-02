@@ -187,6 +187,11 @@ public class OrganizationUserServiceImpl extends AbstractUserService<Organizatio
                 .flatMap(token -> prepareTokenToGet(token).toFlowable());
     }
 
+    @Override
+    public Completable revokeUserAccessTokens(ReferenceType referenceType, String referenceId, String userId) {
+        return accessTokenRepository.deleteByUserId(referenceType, referenceId, userId);
+    }
+
     private Single<AccountAccessToken> prepareTokenToGet(AccountAccessToken token) {
         return prepareTokenToGet(token, false);
     }
@@ -214,5 +219,11 @@ public class OrganizationUserServiceImpl extends AbstractUserService<Organizatio
                 .flatMapSingle(token -> accessTokenRepository.delete(token.tokenId())
                         .andThen(Single.just(token)))
                 .toSingle();
+    }
+
+    @Override
+    public Single<User> delete(String userId) {
+        return super.delete(userId)
+                .flatMap(user -> accessTokenRepository.deleteByUserId(user.getReferenceType(), user.getReferenceId(), user.getId()).toSingleDefault(user));
     }
 }

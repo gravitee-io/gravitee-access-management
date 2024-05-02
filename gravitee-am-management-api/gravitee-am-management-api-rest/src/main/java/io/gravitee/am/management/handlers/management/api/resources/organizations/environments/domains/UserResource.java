@@ -225,8 +225,8 @@ public class UserResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.DELETE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapCompletable(irrelevant -> userService.delete(ReferenceType.DOMAIN, domain, user, authenticatedUser)))
-                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
+                        .flatMapSingle(irrelevant -> userService.delete(ReferenceType.DOMAIN, domain, user, authenticatedUser)))
+                .subscribe((u) -> response.resume(Response.noContent().build()), response::resume);
     }
 
     @POST

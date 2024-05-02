@@ -22,10 +22,12 @@ import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
+import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
+import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.PasswordHistoryService;
@@ -89,6 +91,9 @@ public class OrganizationUserServiceTest {
     @Mock
     private VerifyAttemptService verifyAttemptService;
 
+    @Mock
+    private AccessTokenRepository accessTokenRepository;
+
     @Spy
     private UserValidatorImpl userValidator = new UserValidatorImpl(
             NAME_STRICT_PATTERN,
@@ -101,14 +106,13 @@ public class OrganizationUserServiceTest {
     public void shouldDeleteUser_without_membership() {
         String organization = "DEFAULT";
         String userId = "user-id";
-
         User user = new User();
         user.setId(userId);
         user.setSource("source-idp");
-
         when(commonUserService.findById(any(), any(), any())).thenReturn(Single.just(user));
         when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.empty());
-        when(commonUserService.delete(anyString())).thenReturn(Completable.complete());
+        when(commonUserService.delete(anyString())).thenReturn(Single.just(user));
+        when(commonUserService.revokeUserAccessTokens(any(), any(), any())).thenReturn(Completable.complete());
         when(membershipService.findByMember(any(), any())).thenReturn(Flowable.empty());
         when(rateLimiterService.deleteByUser(any())).thenReturn(Completable.complete());
         when(passwordHistoryService.deleteByUser(any())).thenReturn(Completable.complete());
@@ -140,7 +144,8 @@ public class OrganizationUserServiceTest {
 
         when(commonUserService.findById(any(), any(), any())).thenReturn(Single.just(user));
         when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.empty());
-        when(commonUserService.delete(anyString())).thenReturn(Completable.complete());
+        when(commonUserService.delete(anyString())).thenReturn(Single.just(user));
+        when(commonUserService.revokeUserAccessTokens(any(), any(), any())).thenReturn(Completable.complete());
         when(membershipService.findByMember(any(), any())).thenReturn(Flowable.just(m1, m2, m3));
         when(membershipService.delete(anyString())).thenReturn(Completable.complete());
         when(rateLimiterService.deleteByUser(any())).thenReturn(Completable.complete());
