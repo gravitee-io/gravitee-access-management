@@ -18,9 +18,12 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.AccountAccessToken;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 
 public interface AccountAccessTokenRepository extends CrudRepository<AccountAccessToken, String> {
 
     Flowable<AccountAccessToken> findByUserId(ReferenceType referenceType, String referenceId, String userId);
+
+    Completable deleteByUserId(ReferenceType referenceType, String referenceId, String userId);
 }

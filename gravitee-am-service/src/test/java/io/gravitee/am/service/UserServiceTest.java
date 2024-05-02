@@ -99,6 +99,9 @@ public class UserServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private TokenService tokenService;
+
     private final static String DOMAIN = "domain1";
 
     @Test
@@ -469,6 +472,7 @@ public class UserServiceTest {
         when(userRepository.findById("my-user")).thenReturn(Maybe.just(user));
         when(userRepository.delete("my-user")).thenReturn(Completable.complete());
         when(credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())).thenReturn(Flowable.empty());
+        when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
 
         TestObserver testObserver = userService.delete("my-user").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -494,6 +498,7 @@ public class UserServiceTest {
         when(userRepository.delete("my-user")).thenReturn(Completable.complete());
         when(credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())).thenReturn(Flowable.just(credential));
         when(credentialService.delete(credential.getId(), false)).thenReturn(Completable.complete());
+        when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
 
         TestObserver testObserver = userService.delete("my-user").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);

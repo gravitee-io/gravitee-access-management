@@ -24,6 +24,7 @@ import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.AccountAccessTokenRepository;
 import io.gravitee.am.repository.management.api.OrganizationUserRepository;
+import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.InvalidUserException;
@@ -96,8 +97,10 @@ public class OrganizationUserServiceTest {
 
     @Mock
     private OrganizationUserRepository userRepository;
+
     @Mock
     private AccountAccessTokenRepository accessTokenRepository;
+
     @Mock
     private CredentialService credentialService;
 
@@ -287,6 +290,7 @@ public class OrganizationUserServiceTest {
         when(userRepository.findById("my-user")).thenReturn(Maybe.just(user));
         when(userRepository.delete("my-user")).thenReturn(Completable.complete());
         when(credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())).thenReturn(Flowable.empty());
+        when(accessTokenRepository.deleteByUserId(any(), any(), any())).thenReturn(Completable.complete());
 
         TestObserver testObserver = userService.delete("my-user").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -312,6 +316,7 @@ public class OrganizationUserServiceTest {
         when(userRepository.delete("my-user")).thenReturn(Completable.complete());
         when(credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())).thenReturn(Flowable.just(credential));
         when(credentialService.delete(credential.getId(), false)).thenReturn(Completable.complete());
+        when(accessTokenRepository.deleteByUserId(any(), any(), any())).thenReturn(Completable.complete());
 
         TestObserver testObserver = userService.delete("my-user").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);

@@ -35,6 +35,7 @@ import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
+import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.InvalidUserException;
@@ -103,6 +104,9 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
 
     @Autowired
     private LoginAttemptService loginAttemptService;
+
+    @Autowired
+    private TokenService tokenService;
 
     protected abstract BiFunction<String, String, Maybe<Application>> checkClientFunction();
 
@@ -187,7 +191,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                         ).flatMap(user -> identityProviderManager.getUserProvider(user.getSource())
                                 .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(user.getSource())))
                                 .flatMap(userProvider -> userProvider.findByUsername(user.getUsername())
-                                        .switchIfEmpty(Single.error(() -> new UserNotFoundException()))
+                                        .switchIfEmpty(Single.error(UserNotFoundException::new))
                                         .flatMap(idpUser -> userProvider.updateUsername(idpUser, username))
                                         .flatMap(idpUser -> {
                                             oldUsername.set(user.getUsername());
@@ -226,14 +230,14 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
 
     @SuppressWarnings("ReactiveStreamsUnusedPublisher")
     @Override
-    public Completable delete(ReferenceType referenceType, String referenceId, String
+    public Single<User> delete(ReferenceType referenceType, String referenceId, String
             userId, io.gravitee.am.identityprovider.api.User principal) {
         return getUserService().findById(referenceType, referenceId, userId)
-                .flatMapCompletable(user -> identityProviderManager.getUserProvider(user.getSource())
+                .flatMap(user -> identityProviderManager.getUserProvider(user.getSource())
                         .map(Optional::ofNullable)
                         .flatMapCompletable(optUserProvider -> {
                             // no user provider found, continue
-                            if (!optUserProvider.isPresent()) {
+                            if (optUserProvider.isEmpty()) {
                                 return Completable.complete();
                             }
                             // user has never been created in the identity provider, continue
@@ -254,15 +258,15 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                         // Delete rate limit
                         .andThen(rateLimiterService.deleteByUser(user))
                         .andThen(verifyAttemptService.deleteByUser(user))
-                        .andThen(getUserService().delete(userId))
+                        .andThen(getUserService().delete(userId).ignoreElement())
                         // remove from memberships if user is an administrative user
                         .andThen((ReferenceType.ORGANIZATION != referenceType) ? Completable.complete() :
                                 membershipService.findByMember(userId, MemberType.USER)
                                         .flatMapCompletable(membership -> membershipService.delete(membership.getId())))
                         .andThen(passwordHistoryService.deleteByUser(userId))
-                        .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(user)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).throwable(throwable)))
-                );
+                        .toSingleDefault(user))
+                        .doOnSuccess(u -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(u)))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).throwable(throwable)));
     }
 
     protected io.gravitee.am.identityprovider.api.User convert(NewUser newUser) {

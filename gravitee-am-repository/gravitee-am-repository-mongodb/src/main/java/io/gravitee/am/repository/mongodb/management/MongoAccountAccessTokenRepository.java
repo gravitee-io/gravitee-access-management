@@ -72,6 +72,15 @@ public class MongoAccountAccessTokenRepository extends AbstractManagementMongoRe
     }
 
     @Override
+    public Completable deleteByUserId(ReferenceType referenceType, String referenceId, String userId) {
+        return Completable.fromPublisher(accountTokensCollection.deleteMany(and(
+                eq(FIELD_USER_ID, userId),
+                eq(FIELD_REFERENCE_ID, referenceId),
+                eq(FIELD_REFERENCE_TYPE, referenceType.name())
+        )));
+    }
+
+    @Override
     public Single<AccountAccessToken> create(AccountAccessToken item) {
         var document = convert(item);
         return Single.fromPublisher(accountTokensCollection.insertOne(document))

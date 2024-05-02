@@ -17,6 +17,7 @@ package io.gravitee.am.repository.jdbc.management.api.spring;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcAccountAccessToken;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.reactive.RxJava3CrudRepository;
@@ -25,4 +26,7 @@ public interface SpringAccountAccessTokenRepository extends RxJava3CrudRepositor
 
     @Query("select * from account_access_tokens a where a.user_id = :userId and a.reference_id = :refId and a.reference_type = :refType")
     Flowable<JdbcAccountAccessToken> findByUserId(@Param("refType") String refType, @Param("refId") String refId, @Param("userId") String userId);
+
+    @Query("delete from account_access_tokens a where a.user_id = :userId and a.reference_id = :refId and a.reference_type = :refType")
+    Maybe<Long> deleteByUserId(@Param("refType") String refType, @Param("refId") String refId, @Param("userId") String userId);
 }

@@ -283,6 +283,12 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
     }
 
     @Override
+    public Single<User> delete(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal) {
+        return super.delete(referenceType, referenceId, userId, principal)
+                .flatMap(user -> tokenService.deleteByUser(user).toSingleDefault(user));
+    }
+
+    @Override
     public Single<User> updateStatus(String domain, String id, boolean status, io.gravitee.am.identityprovider.api.User principal) {
         return updateStatus(DOMAIN, domain, id, status, principal);
     }

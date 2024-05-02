@@ -247,7 +247,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         LOGGER.debug("Assigning Password Policy {} to IdentityProvider {} for domain {}", assignPasswordPolicy.getPasswordPolicy(), id, domain);
 
         return identityProviderRepository.findById(ReferenceType.DOMAIN, domain, id)
-                .switchIfEmpty(Single.error(new IdentityProviderNotFoundException(id)))
+                .switchIfEmpty(Single.error(() -> new IdentityProviderNotFoundException(id)))
                 .flatMap(oldIdentity -> {
                     IdentityProvider identityToUpdate = new IdentityProvider(oldIdentity);
                     identityToUpdate.setUpdatedAt(new Date());

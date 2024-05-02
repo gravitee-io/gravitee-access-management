@@ -52,6 +52,11 @@ public class JdbcAccountAccessTokenRepository extends AbstractJdbcRepository imp
     }
 
     @Override
+    public Completable deleteByUserId(ReferenceType referenceType, String referenceId, String userId) {
+        return accessTokenRepository.deleteByUserId(referenceType.name(), referenceId, userId).ignoreElement();
+    }
+
+    @Override
     public Single<AccountAccessToken> create(AccountAccessToken item) {
         var entity = toEntity(item);
         if (entity.getId() == null) {

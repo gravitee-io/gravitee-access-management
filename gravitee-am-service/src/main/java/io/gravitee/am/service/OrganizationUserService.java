@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.AccountAccessToken;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.model.NewAccountAccessToken;
 import io.reactivex.rxjava3.core.Completable;
@@ -46,6 +47,8 @@ public interface OrganizationUserService extends CommonUserService {
     Flowable<AccountAccessToken> findUserAccessTokens(String organisationId, String userId);
 
     Single<AccountAccessToken> generateAccountAccessToken(User user, NewAccountAccessToken newAccountToken, String issuer);
+
+    Completable revokeUserAccessTokens(ReferenceType referenceType, String organizationId, String userId);
 
     Single<User> findByAccessToken(String token, String tokenValue);
 

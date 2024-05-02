@@ -58,7 +58,7 @@ public interface CommonUserService {
 
     Single<User> update(User user);
 
-    Completable delete(String userId);
+    Single<User> delete(String userId);
 
     Single<User> enhance(User user);
 }

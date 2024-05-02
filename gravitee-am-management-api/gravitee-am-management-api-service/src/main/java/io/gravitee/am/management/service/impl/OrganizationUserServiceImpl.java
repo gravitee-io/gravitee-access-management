@@ -251,4 +251,10 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                         .throwable(x)))
                 .ignoreElement();
     }
+
+    @Override
+    public Single<User> delete(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal) {
+        return super.delete(referenceType, referenceId, userId, principal)
+                .flatMap(user -> getUserService().revokeUserAccessTokens(user.getReferenceType(), user.getReferenceId(), user.getId()).toSingleDefault(user));
+    }
 }
