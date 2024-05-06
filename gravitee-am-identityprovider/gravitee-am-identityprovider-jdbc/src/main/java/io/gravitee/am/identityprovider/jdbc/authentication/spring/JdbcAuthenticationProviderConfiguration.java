@@ -26,7 +26,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.Optional;
 import java.util.regex.Pattern;
 
 import static io.gravitee.am.identityprovider.jdbc.utils.PasswordEncoder.*;
@@ -74,6 +73,9 @@ public class JdbcAuthenticationProviderConfiguration {
             passwordEncoder.setEncodeSaltAsBase64("Base64".equals(configuration.getPasswordEncoding()));
             passwordEncoder.setSaltLength(configuration.getPasswordSaltLength());
             passwordEncoder.setPasswordSaltFormat(configuration.getPasswordSaltFormat());
+            if (configuration.getPasswordEncoderOptions() != null && configuration.getPasswordEncoderOptions().getRounds() > 0) {
+                passwordEncoder.setIterationsRounds(configuration.getPasswordEncoderOptions().getRounds());
+            }
             return passwordEncoder;
         }
 

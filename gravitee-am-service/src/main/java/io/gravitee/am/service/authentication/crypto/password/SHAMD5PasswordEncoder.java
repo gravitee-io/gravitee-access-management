@@ -65,4 +65,9 @@ public class SHAMD5PasswordEncoder extends SHAPasswordEncoder {
     public void setSaltLength(int saltLength) {
         shaPasswordEncoder.setSaltLength(saltLength);
     }
+
+    @Override
+    public void setIterationsRounds(int iterationsRounds) {
+        shaPasswordEncoder.setIterationsRounds(iterationsRounds);
+    }
 }
