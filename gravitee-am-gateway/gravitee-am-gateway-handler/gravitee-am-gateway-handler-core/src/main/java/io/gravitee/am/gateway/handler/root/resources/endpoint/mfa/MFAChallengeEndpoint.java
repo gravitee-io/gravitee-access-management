@@ -356,7 +356,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
 
 
             updateStrongAuthStatus(routingContext);
-            logger.info("User {} strongly authenticated", endUser.getId());
+            logger.debug("User {} strongly authenticated", endUser.getId());
             // set the credentialId in session
             routingContext.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, credentialId);
             final Credential credential = ch.result();
@@ -413,7 +413,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                             }
                         },
                         error -> {
-                            logger.info("Challenge failed for user {}", factorContext.getUser().getId());
+                            logger.debug("Challenge failed for user {}", factorContext.getUser().getId());
                             final EnrolledFactor enrolledFactor = (EnrolledFactor) factorContext.getData().get(FactorContext.KEY_ENROLLED_FACTOR);
                             verifyAttemptService.incrementAttempt(factorContext.getUser().getId(), enrolledFactor.getFactorId(),
                                     factorContext.getClient(), domain, verifyAttempt).subscribe(
