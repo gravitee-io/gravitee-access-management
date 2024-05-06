@@ -17,6 +17,9 @@ package io.gravitee.am.service.authentication.crypto.password;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.security.SecureRandom;
 
@@ -33,8 +36,10 @@ public class SHAMD5PasswordEncoderTest extends AbstractPasswordEncoderTest {
         return this.messageDigestPasswordEncoder;
     }
 
-    @Test
-    public void testPassword_match_not_equals_dedicated_salt() {
+    @ParameterizedTest
+    @ValueSource(ints = {1, 100, 1000})
+    public void testPassword_match_not_equals_dedicated_salt(int rounds) {
+        messageDigestPasswordEncoder.setIterationsRounds(rounds);
         byte[] salt = new byte[32];
         SecureRandom secureRandom = new SecureRandom();
         secureRandom.nextBytes(salt);
@@ -42,8 +47,10 @@ public class SHAMD5PasswordEncoderTest extends AbstractPasswordEncoderTest {
         Assert.assertFalse(messageDigestPasswordEncoder.matches("wrongPassword", encodedPassword, salt));
     }
 
-    @Test
-    public void testPassword_match_equals_dedicated_salt() {
+    @ParameterizedTest
+    @ValueSource(ints = {1, 100, 1000})
+    public void testPassword_match_equals_dedicated_salt(int rounds) {
+        messageDigestPasswordEncoder.setIterationsRounds(rounds);
         byte[] salt = new byte[32];
         SecureRandom secureRandom = new SecureRandom();
         secureRandom.nextBytes(salt);
@@ -57,5 +64,17 @@ public class SHAMD5PasswordEncoderTest extends AbstractPasswordEncoderTest {
         String b64EncodedPassword = "M/sMmBh2AH+S5jkaMvhab/akUQFGHwxG+Qi7AiC9kIU=";
         String rawPassword = "Test123!";
         Assert.assertTrue(messageDigestPasswordEncoder.matches(rawPassword, b64EncodedPassword, b64EncodedSalt));
+    }
+
+    @Test
+    public void byDefaultIterationRoundsIsSetTo1() {
+        Assert.assertEquals(1, messageDigestPasswordEncoder.iterationsRounds);
+    }
+
+    @Test
+    public void negativeIterationRoundsNumberShouldNotChangeTheSettings() {
+        Assert.assertEquals(1, messageDigestPasswordEncoder.iterationsRounds);
+        messageDigestPasswordEncoder.setIterationsRounds(-5);
+        Assert.assertEquals(1, messageDigestPasswordEncoder.iterationsRounds);
     }
 }

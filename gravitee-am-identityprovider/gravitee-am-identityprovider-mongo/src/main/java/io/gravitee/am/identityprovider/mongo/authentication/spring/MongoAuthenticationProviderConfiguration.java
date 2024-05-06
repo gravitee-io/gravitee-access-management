@@ -82,6 +82,9 @@ public class MongoAuthenticationProviderConfiguration {
             passwordEncoder.setEncodeSaltAsBase64("Base64".equals(configuration.getPasswordEncoding()));
             passwordEncoder.setSaltLength(configuration.getPasswordSaltLength());
             passwordEncoder.setPasswordSaltFormat(configuration.getPasswordSaltFormat());
+            if (configuration.getPasswordEncoderOptions() != null && configuration.getPasswordEncoderOptions().getRounds() > 0) {
+                passwordEncoder.setIterationsRounds(configuration.getPasswordEncoderOptions().getRounds());
+            }
             return passwordEncoder;
         }
 

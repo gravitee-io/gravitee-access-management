@@ -45,40 +45,58 @@ public abstract class MessageDigestPasswordEncoderTest extends AbstractPasswordE
     public void testPassword_match_not_equals_dedicated_salt() {
         Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.DIGEST, false));
         Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.DIGEST, true));
+        Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.DIGEST, false, 100));
+        Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.DIGEST, true, 100));
     }
 
     @Test
     public void testPassword_match_equals_dedicated_salt() {
         Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.DIGEST, false));
         Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.DIGEST, true));
+        Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.DIGEST, false, 100));
+        Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.DIGEST, true, 100));
     }
 
     @Test
     public void testPassword_match_not_equals_dedicated_salt_appending_format() {
         Assert.assertFalse(match_equals_dedicated_salt("myPassword", "wrongPassword", PasswordSaltFormat.APPENDING, false));
         Assert.assertFalse(match_equals_dedicated_salt("myPassword", "wrongPassword", PasswordSaltFormat.APPENDING, true));
+        Assert.assertFalse(match_equals_dedicated_salt("myPassword", "wrongPassword", PasswordSaltFormat.APPENDING, false, 100));
+        Assert.assertFalse(match_equals_dedicated_salt("myPassword", "wrongPassword", PasswordSaltFormat.APPENDING, true, 100));
     }
 
     @Test
     public void testPassword_match_equals_dedicated_salt_appending_format() {
         Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.APPENDING, false));
         Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.APPENDING, true));
+        Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.APPENDING, false, 100));
+        Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.APPENDING, true, 100));
     }
 
     @Test
     public void testPassword_match_not_equals_dedicated_salt_prepending_format() {
         Assert.assertFalse(match_equals_dedicated_salt("myPassword", "wrongPassword", PasswordSaltFormat.PREPENDING, false));
         Assert.assertFalse(match_equals_dedicated_salt("myPassword", "wrongPassword", PasswordSaltFormat.PREPENDING, true));
+        Assert.assertFalse(match_equals_dedicated_salt("myPassword", "wrongPassword", PasswordSaltFormat.PREPENDING, false, 100));
+        Assert.assertFalse(match_equals_dedicated_salt("myPassword", "wrongPassword", PasswordSaltFormat.PREPENDING, true, 100));
     }
 
     @Test
     public void testPassword_match_equals_dedicated_salt_prepending_format() {
         Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.PREPENDING, false));
         Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.PREPENDING, true));
+        Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.PREPENDING, false, 100));
+        Assert.assertTrue(match_equals_dedicated_salt("myPassword", "myPassword", PasswordSaltFormat.PREPENDING, true, 100));
     }
 
+
     private boolean match_equals_dedicated_salt(String p1, String p2, String format, boolean encodingAsString) {
+        return match_equals_dedicated_salt(p1, p2, format, encodingAsString, 1);
+    }
+
+    private boolean match_equals_dedicated_salt(String p1, String p2, String format, boolean encodingAsString, int rounds) {
         digester.setPasswordSaltFormat(format);
+        digester.setIterationsRounds(rounds);
         byte[] salt = new byte[32];
         SecureRandom secureRandom = new SecureRandom();
         secureRandom.nextBytes(salt);
