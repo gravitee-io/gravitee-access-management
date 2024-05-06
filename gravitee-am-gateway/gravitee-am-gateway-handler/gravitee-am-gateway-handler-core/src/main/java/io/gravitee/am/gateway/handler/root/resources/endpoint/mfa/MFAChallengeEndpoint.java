@@ -378,7 +378,11 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
 
 
             updateStrongAuthStatus(routingContext);
+<<<<<<< HEAD
             updateAuditLog(routingContext, auditLogType, endUser, client, factor, factorContext, null);
+=======
+            logger.debug("User {} strongly authenticated", endUser.getId());
+>>>>>>> 376491f404 (fix: Added crucial MFA event logs (2))
             // set the credentialId in session
             routingContext.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, credentialId);
             final Credential credential = ch.result();
@@ -433,6 +437,10 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                             }
                         },
                         error -> {
+<<<<<<< HEAD
+=======
+                            logger.debug("Challenge failed for user {}", factorContext.getUser().getId());
+>>>>>>> 376491f404 (fix: Added crucial MFA event logs (2))
                             final EnrolledFactor enrolledFactor = (EnrolledFactor) factorContext.getData().get(FactorContext.KEY_ENROLLED_FACTOR);
                             verifyAttemptService.incrementAttempt(factorContext.getUser().getId(), enrolledFactor.getFactorId(),
                                     factorContext.getClient(), domain, verifyAttempt).subscribe(
