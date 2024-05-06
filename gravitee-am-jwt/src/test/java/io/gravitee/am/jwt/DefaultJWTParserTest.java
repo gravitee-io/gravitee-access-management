@@ -26,7 +26,10 @@ import io.gravitee.am.common.exception.jwt.PrematureJWTException;
 import io.gravitee.am.common.exception.jwt.SignatureException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
+import io.vertx.core.http.impl.CookieImpl;
+import io.vertx.core.http.impl.Http1xServerResponse;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.security.SecureRandom;
@@ -42,6 +45,7 @@ import java.util.Date;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -249,6 +253,32 @@ public class DefaultJWTParserTest {
         JWTParser jwtParser = new DefaultJWTParser(secretKeySpec);
 
         jwtParser.parse("malformed-token");
+    }
+
+    @Test
+    public void shouldParse_withEmptyHttpResponse() throws Exception {
+        RSAKey rsaJWK = new RSAKeyGenerator(2048)
+                .keyID("123")
+                .generate();
+        RSAPrivateKey rsaPrivateKey = rsaJWK.toRSAPrivateKey();
+        RSAPublicKey rsaPublicKey = rsaJWK.toRSAPublicKey();
+        String algorithm = SignatureAlgorithm.RS256.getValue();
+        JWTBuilder jwtBuilder  = new DefaultJWTBuilder(rsaPrivateKey, algorithm, rsaJWK.getKeyID());
+        JWTParser jwtParser = new DefaultJWTParser(rsaPublicKey);
+        JWT jwt = new JWT();
+        jwt.setIss("https://gravitee.io");
+        jwt.setSub("alice");
+        jwt.setIat(Instant.now().plus(24 * 365, ChronoUnit.HOURS).getEpochSecond());
+        jwt.setExp(Instant.now().plus(24 * 365 * 2, ChronoUnit.HOURS).getEpochSecond());
+        Http1xServerResponse response = Mockito.mock(Http1xServerResponse.class);
+        response.addCookie(new CookieImpl("test cookie","coockie"));
+        jwt.put("test",response);
+        jwt.put("test2","test claim");
+        String signedJWT = jwtBuilder.sign(jwt);
+        JWT parsedJWT = jwtParser.parse(signedJWT);
+        assertFalse(parsedJWT.containsKey("test"));
+        assertTrue(parsedJWT.containsKey("test2"));
+
     }
 
     private void assertJwt(JWTBuilder jwtBuilder, JWTParser jwtParser, String algorithm) {
