@@ -101,7 +101,7 @@
         "rounds": {
           "type": "number",
           "title": "Rounds",
-          "description": "Number of iterations (useful only for BCrypt)"
+          "description": "Number of iterations (useful only for BCrypt, SHA)"
         }
       }
     },
