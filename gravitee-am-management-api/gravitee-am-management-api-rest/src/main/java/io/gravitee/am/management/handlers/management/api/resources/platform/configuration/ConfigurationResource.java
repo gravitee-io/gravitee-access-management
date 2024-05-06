@@ -87,7 +87,7 @@ public class ConfigurationResource {
     }
 
     @GET
-    @Path("users/emailRequired")
+    @Path("users/email-required")
     @Produces(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
     public void getUserEmailRequired(@Suspended final AsyncResponse response) {
         var emailRequired = environment.getProperty(UserEmail.PROPERTY_USER_EMAIL_REQUIRED, boolean.class, true);

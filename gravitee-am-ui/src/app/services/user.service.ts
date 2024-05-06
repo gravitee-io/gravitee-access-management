@@ -33,7 +33,7 @@ export class UserService {
   ) {}
 
   isEmailRequired(): Observable<boolean> {
-    return this.http.get<any>(this.platformURL + '/configuration/users/emailRequired');
+    return this.http.get<any>(this.platformURL + '/configuration/users/email-required');
   }
 
   findByDomain(domainId, page, size): Observable<any> {
