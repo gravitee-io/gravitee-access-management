@@ -16,6 +16,10 @@ a.gv-accent-link {
   }
 }
 
+.policy-icon {
+  margin: 5px 0 0;
+}
+
 .mat-mdc-list-item-icon {
   color: #808080;
 }
@@ -47,4 +51,10 @@ a.gv-accent-link {
 
 table.dataTable tbody td {
   vertical-align: top;
+}
+
+ngx-datatable {
+  .gv-table-cell-actions {
+    margin-top: -10px;
+  }
 }
