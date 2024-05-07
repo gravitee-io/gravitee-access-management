@@ -16,9 +16,7 @@
 package io.gravitee.am.gateway.vertx;
 
 import io.gravitee.am.gateway.reactor.Reactor;
-import io.gravitee.node.management.http.vertx.configuration.HttpServerConfiguration;
 import io.gravitee.node.vertx.server.http.VertxHttpServer;
-import io.gravitee.node.vertx.server.http.VertxHttpServerOptions;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.rxjava3.core.http.HttpServer;
@@ -36,13 +34,11 @@ public class GraviteeVerticle extends AbstractVerticle {
 
     private final VertxHttpServer vertxHttpServer;
     private final Reactor reactor;
-    private final VertxHttpServerOptions httpServerConfiguration;
     private HttpServer httpServer;
 
-    public GraviteeVerticle(VertxHttpServer vertxHttpServer, Reactor reactor, VertxHttpServerOptions httpServerConfiguration) {
+    public GraviteeVerticle(VertxHttpServer vertxHttpServer, Reactor reactor) {
         this.vertxHttpServer = vertxHttpServer;
         this.reactor = reactor;
-        this.httpServerConfiguration = httpServerConfiguration;
     }
 
     @Override
@@ -53,8 +49,7 @@ public class GraviteeVerticle extends AbstractVerticle {
         httpServer.rxListen()
                 .subscribe(
                         httpServer1 -> {
-                            logger.info("HTTP Server is now listening for requests on port {}",
-                                    httpServerConfiguration.getPort());
+                            logger.info("HTTP Server is now listening for requests on port {}", vertxHttpServer.options().getPort());
                             startPromise.complete();
                         },
                         throwable -> {

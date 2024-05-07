@@ -38,10 +38,10 @@ import io.gravitee.am.plugins.protocol.spring.ProtocolSpringConfiguration;
 import io.gravitee.am.plugins.reporter.spring.ReporterSpringConfiguration;
 import io.gravitee.am.plugins.resource.spring.ResourceSpringConfiguration;
 import io.gravitee.el.ExpressionLanguageInitializer;
+import io.gravitee.node.api.Node;
 import io.gravitee.node.api.NodeMetadataResolver;
 import io.gravitee.node.api.cluster.ClusterManager;
 import io.gravitee.node.certificates.spring.NodeCertificatesConfiguration;
-import io.gravitee.node.container.NodeFactory;
 import io.gravitee.node.plugin.cluster.standalone.StandaloneClusterManager;
 import io.gravitee.node.vertx.spring.VertxConfiguration;
 import io.gravitee.platform.repository.api.RepositoryScopeProvider;
@@ -82,8 +82,8 @@ import org.springframework.context.annotation.Import;
 public class StandaloneConfiguration {
 
     @Bean
-    public NodeFactory node() {
-        return new NodeFactory(GatewayNode.class);
+    public Node node() {
+        return new GatewayNode();
     }
 
     @Bean

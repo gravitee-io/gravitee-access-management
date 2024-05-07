@@ -19,9 +19,9 @@ import io.gravitee.am.management.handlers.management.api.ManagementApplication;
 import io.gravitee.am.management.handlers.management.api.spring.ManagementConfiguration;
 import io.gravitee.node.jetty.JettyHttpServer;
 import jakarta.servlet.DispatcherType;
-import org.eclipse.jetty.servlet.FilterHolder;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.ee10.servlet.FilterHolder;
+import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,7 +54,7 @@ public class ManagementApiServer extends JettyHttpServer {
     public void attachHandlers() {
 
         // Create the servlet context
-        final ServletContextHandler context = new ServletContextHandler(this.server, entrypoint, ServletContextHandler.NO_SESSIONS);
+        final ServletContextHandler context = new ServletContextHandler(entrypoint, ServletContextHandler.NO_SESSIONS);
 
         // REST configuration
         final ServletHolder servletHolder = new ServletHolder(ServletContainer.class);
