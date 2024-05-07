@@ -60,6 +60,7 @@ export class UserProfileComponent implements OnInit {
   canEdit: boolean;
   canDelete: boolean;
   accountTokens: any[] = [];
+  emailRequired: boolean = true;
   private domainId: string;
 
   constructor(
@@ -88,14 +89,20 @@ export class UserProfileComponent implements OnInit {
     this.organizationService.getAccountTokens(this.route.snapshot.data['user'].id).subscribe((tokens) => {
       this.accountTokens = tokens;
     });
+    this.userService.isEmailRequired().subscribe((response: boolean) => {
+      this.emailRequired = response;
+    });
   }
 
   update() {
     // TODO we should be able to update platform users
+    console.log(`update(): email: '${this.user.email}'`);
     this.user.additionalInformation = this.user.additionalInformation || {};
     Object.keys(this.userClaims).forEach((key) => (this.user.additionalInformation[key] = this.userClaims[key]));
     this.user.displayName = [this.user.firstName, this.user.lastName].filter(Boolean).join(' ');
+    console.log(`update(): calling user service`);
     this.userService.update(this.domainId, this.user.id, this.user, this.organizationContext).subscribe((data) => {
+      console.log(`update(): got response: ${data}`);
       this.user = data;
       this.userClaims = {};
       this.viewContainerRef?.clear();

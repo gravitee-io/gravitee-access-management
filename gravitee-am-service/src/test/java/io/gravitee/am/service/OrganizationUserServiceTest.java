@@ -92,7 +92,7 @@ public class OrganizationUserServiceTest {
             NAME_STRICT_PATTERN,
             NAME_LAX_PATTERN,
             USERNAME_PATTERN,
-            new EmailValidatorImpl(EMAIL_PATTERN)
+            new EmailValidatorImpl(EMAIL_PATTERN, true)
     );
 
     @Mock

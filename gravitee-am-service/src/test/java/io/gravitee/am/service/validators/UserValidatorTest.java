@@ -24,8 +24,9 @@ import io.gravitee.am.service.validators.user.UserValidatorImpl;
 import org.junit.Test;
 
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
-import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
-import static org.junit.Assert.*;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_LAX_PATTERN;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_STRICT_PATTERN;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.USERNAME_PATTERN;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -37,7 +38,7 @@ public class UserValidatorTest {
             NAME_STRICT_PATTERN,
             NAME_LAX_PATTERN,
             USERNAME_PATTERN,
-            new EmailValidatorImpl(EMAIL_PATTERN)
+            new EmailValidatorImpl(EMAIL_PATTERN, true)
     );
 
     @Test
