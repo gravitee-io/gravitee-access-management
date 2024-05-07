@@ -66,7 +66,6 @@ import static io.gravitee.am.service.validators.user.UserValidatorImpl.USERNAME_
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -159,7 +158,7 @@ public class UserServiceTest {
     @Test
     public void shouldFindByDomainPagination() {
         Page pageUsers = new Page(Collections.singleton(new User()), 1 , 1);
-        when(userRepository.findAll(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq(1) , eq(1))).thenReturn(Single.just(pageUsers));
+        when(userRepository.findAll(ReferenceType.DOMAIN, DOMAIN, 1 , 1)).thenReturn(Single.just(pageUsers));
         TestObserver<Page<User>> testObserver = userService.findByDomain(DOMAIN, 1, 1).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
@@ -170,7 +169,7 @@ public class UserServiceTest {
 
     @Test
     public void shouldFindByDomainPagination_technicalException() {
-        when(userRepository.findAll(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq(1) , eq(1))).thenReturn(Single.error(TechnicalException::new));
+        when(userRepository.findAll(ReferenceType.DOMAIN, DOMAIN, 1 , 1)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
         userService.findByDomain(DOMAIN, 1 , 1).subscribe(testObserver);
@@ -306,7 +305,7 @@ public class UserServiceTest {
         user.setReferenceType(ReferenceType.DOMAIN);
         user.setReferenceId(DOMAIN);
 
-        when(userRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"))).thenReturn(Maybe.just(user));
+        when(userRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-user")).thenReturn(Maybe.just(user));
         when(userRepository.update(any(User.class), any())).thenReturn(Single.just(user));
 
         TestObserver testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
@@ -315,7 +314,7 @@ public class UserServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(userRepository, times(1)).findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"));
+        verify(userRepository, times(1)).findById(ReferenceType.DOMAIN, DOMAIN, "my-user");
         verify(userRepository, times(1)).update(any(User.class), any());
     }
 
@@ -333,7 +332,7 @@ public class UserServiceTest {
         user.setDisplayName(UserProfileUtils.buildDisplayName(user));
         when(updateUser.getDisplayName()).thenReturn(user.getDisplayName());
 
-        when(userRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"))).thenReturn(Maybe.just(user));
+        when(userRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-user")).thenReturn(Maybe.just(user));
         when(userRepository.update(any(User.class), any())).thenReturn(Single.just(user));
 
         TestObserver testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
@@ -342,7 +341,7 @@ public class UserServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(userRepository, times(1)).findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"));
+        verify(userRepository, times(1)).findById(ReferenceType.DOMAIN, DOMAIN, "my-user");
         verify(userRepository, times(1)).update(argThat(entity -> "Johanna Doe".equals(entity.getDisplayName())), any());
     }
 
@@ -361,7 +360,7 @@ public class UserServiceTest {
         user.setLastName("Doe");
         user.setDisplayName(DISPLAYNAME);
 
-        when(userRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"))).thenReturn(Maybe.just(user));
+        when(userRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-user")).thenReturn(Maybe.just(user));
         when(userRepository.update(any(User.class), any())).thenReturn(Single.just(user));
 
         TestObserver testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
@@ -370,7 +369,7 @@ public class UserServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(userRepository, times(1)).findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"));
+        verify(userRepository, times(1)).findById(ReferenceType.DOMAIN, DOMAIN, "my-user");
         verify(userRepository, times(1)).update(argThat(entity -> DISPLAYNAME.equals(entity.getDisplayName())), any());
     }
 
@@ -389,7 +388,7 @@ public class UserServiceTest {
         user.setLastName("Doe");
         user.setDisplayName(UserProfileUtils.buildDisplayName(user));
 
-        when(userRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"))).thenReturn(Maybe.just(user));
+        when(userRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-user")).thenReturn(Maybe.just(user));
         when(userRepository.update(any(User.class), any())).thenReturn(Single.just(user));
 
         TestObserver testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
@@ -398,7 +397,7 @@ public class UserServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(userRepository, times(1)).findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"));
+        verify(userRepository, times(1)).findById(ReferenceType.DOMAIN, DOMAIN, "my-user");
         verify(userRepository, times(1)).update(argThat(entity -> DISPLAYNAME.equals(entity.getDisplayName())), any());
     }
 
@@ -410,8 +409,8 @@ public class UserServiceTest {
 
         UpdateUser updateUser = new UpdateUser();
         updateUser.setEmail("invalid");
-        when(userRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN),
-            eq("my-user"))).thenReturn(Maybe.just(user));
+        when(userRepository.findById(ReferenceType.DOMAIN, DOMAIN,
+            "my-user")).thenReturn(Maybe.just(user));
         when(userRepository.update(any(User.class), any())).thenReturn(Single.just(user));
 
         TestObserver<User> testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
@@ -428,7 +427,7 @@ public class UserServiceTest {
 
         UpdateUser updateUser = new UpdateUser();
         updateUser.setFirstName("$$^^^^¨¨¨)");
-        when(userRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"))).thenReturn(Maybe.just(user));
+        when(userRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-user")).thenReturn(Maybe.just(user));
         when(userRepository.update(any(User.class),any())).thenReturn(Single.just(user));
 
         TestObserver<User> testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
@@ -440,7 +439,7 @@ public class UserServiceTest {
     @Test
     public void shouldUpdate_technicalException() {
         UpdateUser updateUser = Mockito.mock(UpdateUser.class);
-        when(userRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"))).thenReturn(Maybe.just(new User()));
+        when(userRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-user")).thenReturn(Maybe.just(new User()));
         when(userRepository.update(any(User.class), any())).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
@@ -453,7 +452,7 @@ public class UserServiceTest {
     @Test
     public void shouldUpdate_userNotFound() {
         UpdateUser updateUser = Mockito.mock(UpdateUser.class);
-        when(userRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"))).thenReturn(Maybe.empty());
+        when(userRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-user")).thenReturn(Maybe.empty());
 
         TestObserver testObserver = new TestObserver();
         userService.update(DOMAIN, "my-user", updateUser).subscribe(testObserver);
