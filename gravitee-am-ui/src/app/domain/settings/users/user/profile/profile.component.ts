@@ -96,13 +96,10 @@ export class UserProfileComponent implements OnInit {
 
   update() {
     // TODO we should be able to update platform users
-    console.log(`update(): email: '${this.user.email}'`);
     this.user.additionalInformation = this.user.additionalInformation || {};
     Object.keys(this.userClaims).forEach((key) => (this.user.additionalInformation[key] = this.userClaims[key]));
     this.user.displayName = [this.user.firstName, this.user.lastName].filter(Boolean).join(' ');
-    console.log(`update(): calling user service`);
     this.userService.update(this.domainId, this.user.id, this.user, this.organizationContext).subscribe((data) => {
-      console.log(`update(): got response: ${data}`);
       this.user = data;
       this.userClaims = {};
       this.viewContainerRef?.clear();

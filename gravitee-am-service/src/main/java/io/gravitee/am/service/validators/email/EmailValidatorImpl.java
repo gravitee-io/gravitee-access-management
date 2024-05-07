@@ -60,7 +60,7 @@ public class EmailValidatorImpl implements EmailValidator {
      */
     @Override
     public Boolean validate(String email) {
-        if (this.allowBlank) {
+        if (allowBlank) {
             return StringUtils.isEmpty(email) || isValidEmail(email);
         } else {
             return email != null && isValidEmail(email);
