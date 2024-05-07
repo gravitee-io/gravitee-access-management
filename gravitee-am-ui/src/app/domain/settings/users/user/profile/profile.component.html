@@ -124,7 +124,7 @@
             ></app-select-applications>
           </div>
         </div>
-        <div class="gv-form-section" *ngIf="canEdit && user.referenceType === 'domain'">
+        <div class="gv-form-section" *ngIf="canEdit && user.internal && user.referenceType === 'domain'">
           <div class="gv-form-section-title">
             <h5 style="margin-bottom: 8px">Force Password Reset</h5>
             <p style="font-size: 12px">Ask this user to reset their password at next sign in.</p>
