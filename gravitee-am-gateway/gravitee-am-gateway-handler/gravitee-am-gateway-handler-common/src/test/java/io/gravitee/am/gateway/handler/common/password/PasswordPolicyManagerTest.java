@@ -138,6 +138,7 @@ public class PasswordPolicyManagerTest {
     @Test
     public void shouldGetAppSettings_domainNotInherited() {
         var identityProvider = new IdentityProvider();
+        identityProvider.setPasswordPolicy(POLICY_ID_1);
 
         var client = new Client();
         var passwordSettings = new PasswordSettings();

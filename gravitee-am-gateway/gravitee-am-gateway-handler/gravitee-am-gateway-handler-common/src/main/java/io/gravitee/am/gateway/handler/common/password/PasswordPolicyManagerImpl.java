@@ -132,12 +132,15 @@ public class PasswordPolicyManagerImpl extends AbstractService implements Passwo
 
     @Override
     public Optional<PasswordPolicy> getPolicy(Client client, IdentityProvider identityProvider) {
-        return ofNullable(identityProvider)
+        Optional<PasswordPolicy> clientPasswordPolicy = ofNullable(client)
+                .map(Client::getPasswordSettings)
+                .filter(not(PasswordSettings::isInherited))
+                .map(PasswordSettings::toPasswordPolicy);
+        Optional<PasswordPolicy> idpPasswordPolicy = ofNullable(identityProvider)
                 .map(IdentityProvider::getPasswordPolicy)
-                .map(policyId -> this.policies.get(policyId))
-                .or(() -> ofNullable(client).map(Client::getPasswordSettings)
-                        .filter(not(PasswordSettings::isInherited))
-                        .map(PasswordSettings::toPasswordPolicy)
-                        .or(this::getDefaultPolicy));
+                .map(this.policies::get);
+        return clientPasswordPolicy
+                .or(() -> idpPasswordPolicy)
+                .or(this::getDefaultPolicy);
     }
 }
