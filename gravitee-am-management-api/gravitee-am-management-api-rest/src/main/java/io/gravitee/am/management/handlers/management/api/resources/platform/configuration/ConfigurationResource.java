@@ -21,7 +21,6 @@ import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.SpelService;
 import io.gravitee.am.service.validators.email.UserEmail;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -94,8 +93,7 @@ public class ConfigurationResource {
     @Produces(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
     public void getUserEmailRequired(@Suspended final AsyncResponse response) {
         var emailRequired = environment.getProperty(UserEmail.PROPERTY_USER_EMAIL_REQUIRED, boolean.class, true);
-        Single.just(Map.of("emailRequired", emailRequired))
-                .subscribe(response::resume, response::resume);
+        response.resume(Map.of("emailRequired", emailRequired));
     }
 
 }
