@@ -124,6 +124,11 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
 
     private Single<User> updateUser(ReferenceType referenceType, String referenceId, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal) {
         return getUserService().findById(referenceType, referenceId, id).flatMap(user -> {
+
+                    if (Boolean.FALSE.equals(user.isInternal()) && Boolean.TRUE.equals(updateUser.getForceResetPassword())) {
+                        return Single.error(new InvalidUserException("forceResetPassword is forbidden on external users"));
+                    }
+
                     // This handles identity providers not enforcing email
                     final boolean validateEmailIfNecessary = !(isNullOrEmpty(user.getEmail()) && isNullOrEmpty(updateUser.getEmail()));
                     return userValidator.validate(updateUser, validateEmailIfNecessary).andThen(Single.just(user));
