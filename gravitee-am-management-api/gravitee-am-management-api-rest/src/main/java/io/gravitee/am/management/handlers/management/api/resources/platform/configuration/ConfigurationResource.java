@@ -19,19 +19,22 @@ import io.gravitee.am.management.handlers.management.api.model.AlertServiceStatu
 import io.gravitee.am.management.service.AlertService;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.SpelService;
+import io.gravitee.am.service.validators.email.UserEmail;
 import io.gravitee.common.http.MediaType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
+import org.springframework.core.env.Environment;
 
-import jakarta.inject.Inject;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -41,12 +44,12 @@ public class ConfigurationResource {
 
     @Inject
     private FlowService flowService;
-
     @Inject
     private AlertService alertService;
-
     @Inject
     private SpelService spelService;
+    @Inject
+    private Environment environment;
 
     @GET
     @Path("/flow/schema")
@@ -79,10 +82,18 @@ public class ConfigurationResource {
     @Path("spel/grammar")
     @Produces(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
     @Operation(summary = "Get the spel grammar",
-        description = "There is no particular permission needed. User must be authenticated.")
+            description = "There is no particular permission needed. User must be authenticated.")
     public void getSpelGrammar(@Suspended final AsyncResponse response) {
         spelService.getGrammar()
-            .subscribe(response::resume, response::resume);
+                .subscribe(response::resume, response::resume);
+    }
+
+    @GET
+    @Path("users/email-required")
+    @Produces(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
+    public void getUserEmailRequired(@Suspended final AsyncResponse response) {
+        var emailRequired = environment.getProperty(UserEmail.PROPERTY_USER_EMAIL_REQUIRED, boolean.class, true);
+        response.resume(Map.of("emailRequired", emailRequired));
     }
 
 }

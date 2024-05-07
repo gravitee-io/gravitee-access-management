@@ -345,6 +345,10 @@ user:
 #      algorithm: SHA256 # possible values: SHA256, SHA512, NONE. default SHA256
 #      salt: someSalt #default is null meaning the key generated will change every time and data won't be exploitable
   email:
+    # Set required: false to make email optional for internal identity providers' users.
+    # WARNING: Features that rely on having an email available won't work for such users!
+    # E.g.: password reset, Email MFA, pre-registration
+    #required: true
     policy:
       pattern: ^[a-zA-Z0-9_+-]+(?:\.[a-zA-Z0-9_+-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,15}$
   # Password complexity validation policy

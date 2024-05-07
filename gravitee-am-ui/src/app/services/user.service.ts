@@ -16,6 +16,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { AppConfig } from '../../config/app.config';
 import { toHttpParams } from '../utils/http-utils';
@@ -25,11 +26,16 @@ import { OrganizationService } from './organization.service';
 @Injectable()
 export class UserService {
   private usersURL = AppConfig.settings.domainBaseURL;
+  private platformURL = AppConfig.settings.baseURL + '/platform';
 
   constructor(
     private http: HttpClient,
     private organizationService: OrganizationService,
   ) {}
+
+  isEmailRequired(): Observable<boolean> {
+    return this.http.get<any>(this.platformURL + '/configuration/users/email-required').pipe(map((response) => response.emailRequired));
+  }
 
   findByDomain(domainId, page, size): Observable<any> {
     return this.http.get<any>(this.usersURL + domainId + '/users?page=' + page + '&size=' + size);
