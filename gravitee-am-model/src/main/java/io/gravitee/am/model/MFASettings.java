@@ -15,11 +15,15 @@
  */
 package io.gravitee.am.model;
 
-import java.util.Objects;
-import static java.util.Optional.ofNullable;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.Objects;
+
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -27,7 +31,9 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class MFASettings {
 
     private String loginRule;

@@ -24,8 +24,10 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.Form;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
@@ -51,9 +53,12 @@ import io.gravitee.am.service.impl.ApplicationClientSecretService;
 import io.gravitee.am.service.impl.ApplicationServiceImpl;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.am.service.model.PatchApplication;
+import io.gravitee.am.service.model.PatchApplicationFactorSettings;
 import io.gravitee.am.service.model.PatchApplicationIdentityProvider;
 import io.gravitee.am.service.model.PatchApplicationOAuthSettings;
 import io.gravitee.am.service.model.PatchApplicationSettings;
+import io.gravitee.am.service.model.PatchFactorSettings;
+import io.gravitee.am.service.model.PatchMFASettings;
 import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
 import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
@@ -1807,6 +1812,53 @@ public class ApplicationServiceTest {
 
         verify(applicationRepository, times(1)).findById(anyString());
         verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    /**
+     * AM-3065
+     * Observed: NPE when enabling MFA on existing app with legacy (?) MFE config
+     * Wanted: no NPE, new MFA config applied
+     */
+    @Test
+    public void shouldAddMfaToAppWithLegacyMfaConfiguration() {
+        Application client = Application.builder()
+                .settings(ApplicationSettings.builder()
+                        .mfa(MFASettings.builder()
+                                .factor(new FactorSettings(null, null)) // client's existing config
+                                .build())
+                        .build())
+                .build();
+
+        when(applicationRepository.findById(any())).thenReturn(Maybe.just(client));
+        when(applicationRepository.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(eventService.create(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+
+
+        var factorId = UUID.randomUUID().toString();
+        PatchApplication patch = mfaConfigurationPatch(factorId);
+        applicationService.patch(client.getDomain(), client.getId(), patch)
+                .test()
+                .assertValue(app -> app.getSettings().getMfa().getFactor().getDefaultFactorId().equals(factorId))
+                .assertNoErrors();
+
+
+    }
+
+    private PatchApplication mfaConfigurationPatch(String factorId) {
+        return PatchApplication.builder()
+                .factors(Optional.of(Set.of(factorId)))
+                .settings(Optional.of(PatchApplicationSettings.builder()
+                                .mfa(Optional.of(PatchMFASettings.builder()
+                                                .factor(Optional.of(PatchFactorSettings.builder()
+                                                                .defaultFactorId(Optional.of(factorId))
+                                                                .applicationFactors(Optional.of(List.of(PatchApplicationFactorSettings.builder()
+                                                                                .id(Optional.of(factorId))
+                                                                        .build())))
+                                                        .build()))
+                                                .stepUpAuthenticationRule(Optional.of(""))
+                                        .build()))
+                        .build()))
+                .build();
     }
 
     private Application createClientWithPostLogoutRedirectUris(String uri){
