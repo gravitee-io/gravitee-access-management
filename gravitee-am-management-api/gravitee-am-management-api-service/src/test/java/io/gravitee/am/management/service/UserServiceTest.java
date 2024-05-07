@@ -23,15 +23,43 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.impl.UserServiceImpl;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Credential;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Email;
+import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.PasswordHistory;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
+import io.gravitee.am.model.Template;
+import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.PasswordPolicyService;
+import io.gravitee.am.service.PasswordService;
+import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.TokenService;
+import io.gravitee.am.service.exception.ClientNotFoundException;
+import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.InvalidPasswordException;
+import io.gravitee.am.service.exception.InvalidUserException;
+import io.gravitee.am.service.exception.PasswordHistoryException;
+import io.gravitee.am.service.exception.RoleNotFoundException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserInvalidException;
+import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
@@ -42,7 +70,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import java.io.IOException;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,16 +83,39 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.*;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
-import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_LAX_PATTERN;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_STRICT_PATTERN;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.USERNAME_PATTERN;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -136,7 +186,7 @@ public class UserServiceTest {
             NAME_STRICT_PATTERN,
             NAME_LAX_PATTERN,
             USERNAME_PATTERN,
-            new EmailValidatorImpl(EMAIL_PATTERN)
+            new EmailValidatorImpl(EMAIL_PATTERN, true)
     );
 
     @Mock

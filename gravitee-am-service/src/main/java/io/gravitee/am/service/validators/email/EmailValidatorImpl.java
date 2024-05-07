@@ -39,16 +39,16 @@ public class EmailValidatorImpl implements EmailValidator {
     public static final String EMAIL_PATTERN = "^[a-zA-Z0-9_+-]+(?:\\.[a-zA-Z0-9_+-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,15}$";
 
     private final Pattern pattern;
-    private final boolean allowBlank;
+    private final boolean allowEmpty;
 
     public EmailValidatorImpl(@Value("${user.email.policy.pattern:" + EMAIL_PATTERN + "}") String emailPattern,
-                              @Value("${" + UserEmail.PROPERTY_USER_EMAIL_REQUIRED + ":false}") boolean allowBlank) {
+                              @Value("${" + UserEmail.PROPERTY_USER_EMAIL_REQUIRED + ":false}") boolean allowEmpty) {
         this.pattern = Pattern.compile(ofNullable(emailPattern)
                 .filter(not(Strings::isNullOrEmpty))
                 .filter(not(String::isBlank))
                 .orElse(EMAIL_PATTERN)
         );
-        this.allowBlank = allowBlank;
+        this.allowEmpty = allowEmpty;
     }
 
     /**
@@ -60,10 +60,12 @@ public class EmailValidatorImpl implements EmailValidator {
      */
     @Override
     public Boolean validate(String email) {
-        if (allowBlank) {
-            return StringUtils.isEmpty(email) || isValidEmail(email);
+        var isEmpty = StringUtils.isEmpty(email);
+        if (allowEmpty) {
+            // skip regex validation for empty emails, so that existing regexes keep working
+            return isEmpty || isValidEmail(email);
         } else {
-            return email != null && isValidEmail(email);
+            return !isEmpty && isValidEmail(email);
         }
     }
 
