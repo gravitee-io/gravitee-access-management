@@ -61,7 +61,7 @@ public class CertificateUtils {
         if (certHeaderValue != null) {
             try {
                 certHeaderValue = certHeaderValue
-                        .replaceAll("\\+","%2F")
+                        .replaceAll("/+","%2F")
                         .replaceAll("//","%2B")
                         .replaceAll("=","%3D");
 
