@@ -61,6 +61,11 @@ public class CertificateUtils {
 
         if (certHeaderValue != null) {
             try {
+                certHeaderValue = certHeaderValue
+                        .replaceAll("\\+","%2F")
+                        .replaceAll("//","%2B")
+                        .replaceAll("=","%3D");
+
                 certHeaderValue = URLDecoder.decode(certHeaderValue.replaceAll("\t", "\n"), Charset.defaultCharset());
                 CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
                 certificate = Optional.ofNullable((X509Certificate) certificateFactory.generateCertificate(new ByteArrayInputStream(certHeaderValue.getBytes())));
