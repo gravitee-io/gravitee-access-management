@@ -25,7 +25,6 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import java.io.ByteArrayInputStream;
 import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -59,7 +58,6 @@ public class CertificateUtils {
         Optional<X509Certificate> certificate = Optional.empty();
 
         String certHeaderValue = StringUtils.isEmpty(certHeader) ? null : routingContext.request().getHeader(certHeader);
-        LOGGER.debug("extractPeerCertificate certHeaderValue {}", certHeaderValue);
         if (certHeaderValue != null) {
             try {
                 certHeaderValue = certHeaderValue
@@ -67,15 +65,11 @@ public class CertificateUtils {
                         .replaceAll("//","%2B")
                         .replaceAll("=","%3D");
 
-                LOGGER.debug("extractPeerCertificate encode certHeaderValue {}", certHeaderValue);
-
                 certHeaderValue = URLDecoder.decode(certHeaderValue.replaceAll("\t", "\n"), Charset.defaultCharset());
-                LOGGER.debug("extractPeerCertificate decode certHeaderValue {}", certHeaderValue);
 
                 CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
                 certificate = Optional.ofNullable((X509Certificate) certificateFactory.generateCertificate(new ByteArrayInputStream(certHeaderValue.getBytes())));
             } catch (CertificateException e) {
-                LOGGER.error("extractPeerCertificate error certHeaderValue {}", certHeaderValue, e);
                 LOGGER.debug("Peer Certificate header is present but certificate can't be read, try with the sslSession (cause: {})", e.getMessage());
             }
         }
