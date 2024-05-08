@@ -61,8 +61,8 @@ public class CertificateUtils {
         if (certHeaderValue != null) {
             try {
                 certHeaderValue = certHeaderValue
-                        .replaceAll("/+","%2F")
-                        .replaceAll("//","%2B")
+                        .replaceAll("/+","%2B")
+                        .replaceAll("//","%2F")
                         .replaceAll("=","%3D");
 
                 certHeaderValue = URLDecoder.decode(certHeaderValue.replaceAll("\t", "\n"), Charset.defaultCharset());
