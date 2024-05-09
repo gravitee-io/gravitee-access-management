@@ -42,13 +42,13 @@ public class EmailValidatorImpl implements EmailValidator {
     private final boolean allowEmpty;
 
     public EmailValidatorImpl(@Value("${user.email.policy.pattern:" + EMAIL_PATTERN + "}") String emailPattern,
-                              @Value("${" + UserEmail.PROPERTY_USER_EMAIL_REQUIRED + ":false}") boolean allowEmpty) {
+                              @Value("${" + UserEmail.PROPERTY_USER_EMAIL_REQUIRED + ":false}") boolean emailRequired) {
         this.pattern = Pattern.compile(ofNullable(emailPattern)
                 .filter(not(Strings::isNullOrEmpty))
                 .filter(not(String::isBlank))
                 .orElse(EMAIL_PATTERN)
         );
-        this.allowEmpty = allowEmpty;
+        this.allowEmpty = !emailRequired;
     }
 
     /**
@@ -60,6 +60,9 @@ public class EmailValidatorImpl implements EmailValidator {
      */
     @Override
     public Boolean validate(String email) {
+        if (email == null) {
+            return true; // needed for compatibility
+        }
         var isEmpty = StringUtils.isEmpty(email);
         if (allowEmpty) {
             // skip regex validation for empty emails, so that existing regexes keep working

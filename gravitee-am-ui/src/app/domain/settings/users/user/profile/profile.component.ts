@@ -84,13 +84,13 @@ export class UserProfileComponent implements OnInit {
     } else {
       this.canEdit = this.authService.hasPermissions(['domain_user_update']);
       this.canDelete = this.authService.hasPermissions(['domain_user_delete']);
+      this.userService.isEmailRequired().subscribe((response: boolean) => {
+        this.emailRequired = response;
+      });
     }
     this.user = this.route.snapshot.data['user'];
     this.organizationService.getAccountTokens(this.route.snapshot.data['user'].id).subscribe((tokens) => {
       this.accountTokens = tokens;
-    });
-    this.userService.isEmailRequired().subscribe((response: boolean) => {
-      this.emailRequired = response;
     });
   }
 
