@@ -146,7 +146,7 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
     }
 
     @Override
-    public Completable delete(ReferenceType referenceType, String referenceId, String policyId, User principal) {
+    public Completable deleteAndUpdateIdp(ReferenceType referenceType, String referenceId, String policyId, User principal) {
         log.debug("Delete password policy with id '{}' for {} {}", policyId, referenceType, referenceId);
         return passwordPolicyRepository.findByReferenceAndId(referenceType, referenceId, policyId)
                 .flatMapSingle(policy -> resetPolicyOnIdentityProviders(referenceType, referenceId, policyId)
@@ -189,6 +189,11 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
                     log.error("An error occurs while trying to set default policy", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to set default policy", ex));
                 });
+    }
+
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        return passwordPolicyRepository.deleteByReference(referenceType, referenceId);
     }
 
     @Override

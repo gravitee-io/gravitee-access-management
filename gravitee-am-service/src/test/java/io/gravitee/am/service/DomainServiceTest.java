@@ -243,6 +243,9 @@ public class DomainServiceTest {
     @Mock
     private VerifyAttemptService verifyAttemptService;
 
+    @Mock
+    private PasswordPolicyService passwordPolicyService;
+
 
     @Test
     public void shouldFindById() {
@@ -676,6 +679,7 @@ public class DomainServiceTest {
         when(themeService.findByReference(any(), any())).thenReturn(Maybe.empty());
         when(rateLimiterService.deleteByDomain(any(), any())).thenReturn(complete());
         when(verifyAttemptService.deleteByDomain(any(), any())).thenReturn(complete());
+        when(passwordPolicyService.deleteByReference(any(), any())).thenReturn(complete());
 
         var testObserver = domainService.delete(DOMAIN_ID).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -730,6 +734,7 @@ public class DomainServiceTest {
         when(rateLimiterService.deleteByDomain(any(), any())).thenReturn(complete());
         when(passwordHistoryService.deleteByReference(DOMAIN, DOMAIN_ID)).thenReturn(complete());
         when(verifyAttemptService.deleteByDomain(any(), any())).thenReturn(complete());
+        when(passwordPolicyService.deleteByReference(any(), any())).thenReturn(complete());
 
         var testObserver = domainService.delete(DOMAIN_ID).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);

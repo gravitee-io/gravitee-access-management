@@ -159,7 +159,7 @@ public class PasswordPolicyResource extends AbstractDomainResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_SETTINGS, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(() -> new DomainNotFoundException(domain)))
-                        .flatMapCompletable(d -> passwordPolicyService.delete(ReferenceType.DOMAIN, d.getId(), policy, authenticatedUser))
+                        .flatMapCompletable(d -> passwordPolicyService.deleteAndUpdateIdp(ReferenceType.DOMAIN, d.getId(), policy, authenticatedUser))
                 .doOnError(error -> log.error("Delete Password Policy fails: ", error)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }

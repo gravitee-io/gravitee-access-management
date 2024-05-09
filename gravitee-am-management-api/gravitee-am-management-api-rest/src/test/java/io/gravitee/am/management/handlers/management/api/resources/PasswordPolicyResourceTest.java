@@ -237,12 +237,12 @@ public class PasswordPolicyResourceTest extends JerseySpringTest {
                 .request().delete();
 
         assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
-        verify(passwordPolicyService, never()).delete(any(), any(), any(), any());
+        verify(passwordPolicyService, never()).deleteAndUpdateIdp(any(), any(), any(), any());
     }
 
     @Test
     public void shouldDelete_Policy() {
-        doReturn(Completable.complete()).when(passwordPolicyService).delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(POLICY_ID), any());
+        doReturn(Completable.complete()).when(passwordPolicyService).deleteAndUpdateIdp(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(POLICY_ID), any());
         doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
 
         final Response response = target("domains")
@@ -256,7 +256,7 @@ public class PasswordPolicyResourceTest extends JerseySpringTest {
 
     @Test
     public void deleteShould_Propagate_Exception() {
-        doReturn(Completable.error(new TechnicalException())).when(passwordPolicyService).delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(POLICY_ID), any());
+        doReturn(Completable.error(new TechnicalException())).when(passwordPolicyService).deleteAndUpdateIdp(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(POLICY_ID), any());
         doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
 
         final Response response = target("domains")
