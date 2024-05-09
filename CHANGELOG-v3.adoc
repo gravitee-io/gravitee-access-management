@@ -1,5 +1,14 @@
 # Change Log
 
+==  - 3.21.25 (2024-05-09)
+
+== What's new !
+
+=== Gateway
+
+* Addition of MFA logs https://github.com/gravitee-io/issues/issues/9629[#9629]
+
+
 ==  - 3.21.24 (2024-04-29)
 
 == What's new !
