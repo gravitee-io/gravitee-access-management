@@ -183,6 +183,9 @@ public class DomainServiceImpl implements DomainService {
     @Autowired
     private VerifyAttemptService verifyAttemptService;
 
+    @Autowired
+    private PasswordPolicyService passwordPolicyService;
+
     public DomainServiceImpl(@Value("${gateway.url:http://localhost:8092}") String gatewayUrl) {
         this.gatewayUrl = gatewayUrl;
     }
@@ -513,6 +516,7 @@ public class DomainServiceImpl implements DomainService {
                             // delete rate limit
                             .andThen(rateLimiterService.deleteByDomain(domain, DOMAIN))
                             .andThen(passwordHistoryService.deleteByReference(ReferenceType.DOMAIN, domainId))
+                            .andThen(passwordPolicyService.deleteByReference(ReferenceType.DOMAIN, domainId))
                             .andThen(verifyAttemptService.deleteByDomain(domain, DOMAIN))
                             .andThen(domainRepository.delete(domainId))
                             .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, DOMAIN, domainId, Action.DELETE)))))

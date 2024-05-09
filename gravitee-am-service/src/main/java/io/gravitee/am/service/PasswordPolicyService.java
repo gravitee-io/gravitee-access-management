@@ -83,7 +83,16 @@ public interface PasswordPolicyService {
      * @param principal the principal user performing the operation
      * @return a Completable
      */
-    Completable delete(ReferenceType referenceType, String referenceId, String policyId, User principal);
+    Completable deleteAndUpdateIdp(ReferenceType referenceType, String referenceId, String policyId, User principal);
+
+    /**
+     * Delete password policies by the reference
+     *
+     * @param referenceType the type of reference (e.g., DOMAIN)
+     * @param referenceId the identifier of the reference
+     * @return a Completable
+     */
+    Completable deleteByReference(ReferenceType referenceType, String referenceId);
 
     /**
      * Retrieve the password policy associated with a user, based on the user's password settings awareness.

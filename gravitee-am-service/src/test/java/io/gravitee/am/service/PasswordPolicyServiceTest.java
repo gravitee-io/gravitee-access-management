@@ -523,7 +523,20 @@ public class PasswordPolicyServiceTest {
     }
 
     @Test
-    public void shouldDeletePolicyAndUpdateIdp() {
+    public void shouldDeleteAndUpdateIdpPoliciesByReference() {
+        when(passwordPolicyRepository.deleteByReference(any(), any())).thenReturn(Completable.complete());
+
+        cut.deleteByReference(ReferenceType.DOMAIN, DOMAIN_ID)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(passwordPolicyRepository).deleteByReference(any(), any());
+    }
+
+    @Test
+    public void shouldDeleteAndUpdateIdpPolicyAndUpdateIdp() {
         PasswordPolicy passwordPolicy = new PasswordPolicy();
         passwordPolicy.setId(UUID.randomUUID().toString());
 
@@ -533,7 +546,7 @@ public class PasswordPolicyServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(passwordPolicyRepository.delete(any())).thenReturn(Completable.complete());
 
-        final var observer = cut.delete(ReferenceType.DOMAIN, DOMAIN_ID, passwordPolicy.getId(), principal).test();
+        final var observer = cut.deleteAndUpdateIdp(ReferenceType.DOMAIN, DOMAIN_ID, passwordPolicy.getId(), principal).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
@@ -545,7 +558,7 @@ public class PasswordPolicyServiceTest {
     }
 
     @Test
-    public void shouldDeletePolicy_NoIdp_ToUpdate() {
+    public void shouldDeleteAndUpdateIdpPolicy_NoIdp_ToUpdate() {
         PasswordPolicy passwordPolicy = new PasswordPolicy();
         passwordPolicy.setId(UUID.randomUUID().toString());
 
@@ -554,7 +567,7 @@ public class PasswordPolicyServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(passwordPolicyRepository.delete(any())).thenReturn(Completable.complete());
 
-        final var observer = cut.delete(ReferenceType.DOMAIN, DOMAIN_ID, passwordPolicy.getId(), principal).test();
+        final var observer = cut.deleteAndUpdateIdp(ReferenceType.DOMAIN, DOMAIN_ID, passwordPolicy.getId(), principal).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
@@ -569,13 +582,13 @@ public class PasswordPolicyServiceTest {
     }
 
     @Test
-    public void shouldIgnoreDeletePolicy_unknownPolicy() {
+    public void shouldIgnoreDeleteAndUpdateIdpPolicy_unknownPolicy() {
         PasswordPolicy passwordPolicy = new PasswordPolicy();
         passwordPolicy.setId(UUID.randomUUID().toString());
 
         when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.empty());
 
-        final var observer = cut.delete(ReferenceType.DOMAIN, DOMAIN_ID, passwordPolicy.getId(), principal).test();
+        final var observer = cut.deleteAndUpdateIdp(ReferenceType.DOMAIN, DOMAIN_ID, passwordPolicy.getId(), principal).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
@@ -589,7 +602,7 @@ public class PasswordPolicyServiceTest {
     }
 
     @Test
-    public void shouldNotDeletePolicyIfIdpNotUpdated() {
+    public void shouldNotDeleteAndUpdateIdpPolicyIfIdpNotUpdated() {
         PasswordPolicy passwordPolicy = new PasswordPolicy();
         passwordPolicy.setId(UUID.randomUUID().toString());
 
@@ -603,7 +616,7 @@ public class PasswordPolicyServiceTest {
         when(passwordPolicyRepository.delete(any())).thenReturn(deleteResponse);
         when(eventService.create(any())).thenReturn(eventResponse);
 
-        final var observer = cut.delete(ReferenceType.DOMAIN, DOMAIN_ID, passwordPolicy.getId(), principal).test();
+        final var observer = cut.deleteAndUpdateIdp(ReferenceType.DOMAIN, DOMAIN_ID, passwordPolicy.getId(), principal).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(TechnicalException.class);
@@ -619,7 +632,7 @@ public class PasswordPolicyServiceTest {
     }
 
     @Test
-    public void shouldDelete_AndChangeDefaultPasswordPolicy() {
+    public void shouldDelete_AndUpdateIdps_AndChangeDefaultPasswordPolicy() {
         PasswordPolicy somePasswordPolicy = new PasswordPolicy();
         somePasswordPolicy.setId(UUID.randomUUID().toString());
         somePasswordPolicy.setDefaultPolicy(Boolean.FALSE);
@@ -640,7 +653,7 @@ public class PasswordPolicyServiceTest {
 
         when(passwordPolicyRepository.delete(any())).thenReturn(Completable.complete());
 
-        final var observer = cut.delete(ReferenceType.DOMAIN, DOMAIN_ID, passwordPolicy.getId(), principal).test();
+        final var observer = cut.deleteAndUpdateIdp(ReferenceType.DOMAIN, DOMAIN_ID, passwordPolicy.getId(), principal).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
