@@ -138,7 +138,6 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
         insertSpec = addQuotedField(insertSpec,COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec,COL_EXPIRES_AT, dateConverter.convertTo(item.getExpiresAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec,COL_SYSTEM, item.isSystem(), boolean.class);
-
         Mono<Long> action = insertSpec.fetch().rowsUpdated();
 
         return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle())

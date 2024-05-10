@@ -64,6 +64,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.gravitee.am.certificate.api.ConfigurationCertUtils.extractUsageFromCertConfiguration;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -257,6 +259,8 @@ public class CertificatesResource extends AbstractResource {
                 filteredCertificate.setStatus(CertificateStatus.WILL_EXPIRE);
             }
         }
+        filteredCertificate.setUsage(extractUsageFromCertConfiguration(certificate.getConfiguration()));
+
         return filteredCertificate;
     }
 }
