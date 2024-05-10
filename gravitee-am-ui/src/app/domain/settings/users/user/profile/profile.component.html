@@ -109,7 +109,7 @@
                 name="email"
                 [(ngModel)]="user.email"
                 [email]="user.email !== ''"
-                required
+                [required]="emailRequired"
               />
               <mat-hint>Email address for the User.</mat-hint>
               <mat-error *ngIf="email.errors?.required">Enter email</mat-error>

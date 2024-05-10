@@ -27,9 +27,12 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
-import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.VerifyAttemptService;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.exception.InvalidPasswordException;
+import io.gravitee.am.service.exception.InvalidUserException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserInvalidException;
+import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
@@ -49,13 +52,21 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
-import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_LAX_PATTERN;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_STRICT_PATTERN;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.USERNAME_PATTERN;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -99,7 +110,7 @@ public class OrganizationUserServiceTest {
             NAME_STRICT_PATTERN,
             NAME_LAX_PATTERN,
             USERNAME_PATTERN,
-            new EmailValidatorImpl("")
+            new EmailValidatorImpl("", true)
     );
 
     @Test

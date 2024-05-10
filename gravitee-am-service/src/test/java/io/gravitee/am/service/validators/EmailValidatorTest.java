@@ -16,33 +16,46 @@
 package io.gravitee.am.service.validators;
 
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class EmailValidatorTest {
+class EmailValidatorTest {
 
-    private static final String[] VALID_EMAILS = {
-            "email@gravitee.io",
-            "firstname.lastname@gravitee.io",
-            "email@subdomain.gravitee.io",
-            "firstname+lastname@gravitee.io",
-            "firstname.lastname+1-test@gravitee.io",
-            "1234567890@gravitee.io",
-            "email@gravitee-io.com",
-            "_______@gravitee.io",
-            "firstname-lastname@gravitee.io",
-            "firstname-lastname@gravitee.io",
-            "firstname-lastname@gravitee.americanexpress"
-    };
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                    "email@gravitee.io",
+                    "firstname.lastname@gravitee.io",
+                    "email@subdomain.gravitee.io",
+                    "firstname+lastname@gravitee.io",
+                    "firstname.lastname+1-test@gravitee.io",
+                    "1234567890@gravitee.io",
+                    "email@gravitee-io.com",
+                    "_______@gravitee.io",
+                    "firstname-lastname@gravitee.io",
+                    "firstname-lastname@gravitee.io",
+                    "firstname-lastname@gravitee.americanexpress"
+            }
+    )
+    void validate(String email) {
+        var emailValidator = new EmailValidatorImpl(EMAIL_PATTERN, true);
+        assertThat(emailValidator.validate(email))
+                .as("%s should be valid", email)
+                .isTrue();
+    }
 
-    private static final String[] INVALID_EMAILS = {
+    @ParameterizedTest
+    @ValueSource(strings = {
             "email",
             "#@%^%#$@#$@#.com",
             "@gravitee.io",
@@ -55,10 +68,15 @@ public class EmailValidatorTest {
             "email@gravitee",
             "email@gravitee..io",
             "firstname-lastname@gravitee.verylongextension"
-    };
+    })
+    void validate_notValid(String email) {
+        var emailValidator = new EmailValidatorImpl(EMAIL_PATTERN, true);
+        assertThat(emailValidator.validate(email)).isFalse();
 
+    }
 
-    private static final String[] VALID_EXTENDED_EMAILS = {
+    @ParameterizedTest
+    @ValueSource(strings = {
             "émail@gravitee.io",
             "émail@gråvitèê.iø",
             "电子邮件@重力.阿约",
@@ -67,29 +85,34 @@ public class EmailValidatorTest {
             "이메일@중력.아요",
             "почта@гравитация.Айо",
             "ηλεκτρονικόταχυδρομείο@βαρύτητα.ιο"
-    };
+    })
+    void validate_extended(String email) {
+        var emailValidator = new EmailValidatorImpl("^[\\p{L}0-9_+-]+(?:\\.[\\p{L}0-9_+-]+)*@(?:[\\p{L}0-9-]+\\.)+[\\p{L}]{2,7}$", true);
+        assertThat(emailValidator.validate(email)).isTrue();
+    }
+
 
     @Test
-    public void validate() {
-        var emailValidator = new EmailValidatorImpl(EMAIL_PATTERN);
-        for (String email : VALID_EMAILS) {
-            assertTrue(email + " should be valid", emailValidator.validate(email));
-        }
+    void emailRequired_emptyNotValid() {
+        var emailValidator = new EmailValidatorImpl(EMAIL_PATTERN, true);
+        assertThat(emailValidator.validate("")).isFalse();
     }
 
     @Test
-    public void validate_notValid() {
-        var emailValidator = new EmailValidatorImpl(EMAIL_PATTERN);
-        for (String email : INVALID_EMAILS) {
-            assertFalse(email + " should be invalid", emailValidator.validate(email));
-        }
+    void emailRequired_nullIsValid() {
+        var emailValidator = new EmailValidatorImpl(EMAIL_PATTERN, true);
+        assertThat(emailValidator.validate(null)).isTrue();
     }
 
     @Test
-    public void validate_extended() {
-        var emailValidator = new EmailValidatorImpl("^[\\p{L}0-9_+-]+(?:\\.[\\p{L}0-9_+-]+)*@(?:[\\p{L}0-9-]+\\.)+[\\p{L}]{2,7}$");
-        for (String email : VALID_EXTENDED_EMAILS) {
-            assertTrue(email + " should be valid", emailValidator.validate(email));
-        }
+    void emailOptional_emptyIsValid() {
+        var emailValidator = new EmailValidatorImpl(EMAIL_PATTERN, false);
+        assertThat(emailValidator.validate("")).isTrue();
+    }
+
+    @Test
+    void emailOptional_nullIsValid() {
+        var emailValidator = new EmailValidatorImpl(EMAIL_PATTERN, false);
+        assertThat(emailValidator.validate(null)).isTrue();
     }
 }

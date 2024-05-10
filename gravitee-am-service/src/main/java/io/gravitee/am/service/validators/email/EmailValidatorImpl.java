@@ -16,9 +16,11 @@
 package io.gravitee.am.service.validators.email;
 
 import com.google.common.base.Strings;
-import java.util.regex.Pattern;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import java.util.regex.Pattern;
 
 import static java.util.Optional.ofNullable;
 import static java.util.function.Predicate.not;
@@ -37,13 +39,16 @@ public class EmailValidatorImpl implements EmailValidator {
     public static final String EMAIL_PATTERN = "^[a-zA-Z0-9_+-]+(?:\\.[a-zA-Z0-9_+-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,15}$";
 
     private final Pattern pattern;
+    private final boolean allowEmpty;
 
-    public EmailValidatorImpl(@Value("${user.email.policy.pattern:" + EMAIL_PATTERN + "}") String emailPattern) {
+    public EmailValidatorImpl(@Value("${user.email.policy.pattern:" + EMAIL_PATTERN + "}") String emailPattern,
+                              @Value("${" + UserEmail.PROPERTY_USER_EMAIL_REQUIRED + ":false}") boolean emailRequired) {
         this.pattern = Pattern.compile(ofNullable(emailPattern)
                 .filter(not(Strings::isNullOrEmpty))
                 .filter(not(String::isBlank))
                 .orElse(EMAIL_PATTERN)
         );
+        this.allowEmpty = !emailRequired;
     }
 
     /**
@@ -55,6 +60,19 @@ public class EmailValidatorImpl implements EmailValidator {
      */
     @Override
     public Boolean validate(String email) {
-        return email == null || (email.length() <= EMAIL_MAX_LENGTH && pattern.matcher(email).matches());
+        if (email == null) {
+            return true; // needed for compatibility
+        }
+        var isEmpty = StringUtils.isEmpty(email);
+        if (allowEmpty) {
+            // skip regex validation for empty emails, so that existing regexes keep working
+            return isEmpty || isValidEmail(email);
+        } else {
+            return !isEmpty && isValidEmail(email);
+        }
+    }
+
+    private boolean isValidEmail(String email) {
+        return email.length() <= EMAIL_MAX_LENGTH && pattern.matcher(email).matches();
     }
 }

@@ -15,12 +15,15 @@
  */
 package io.gravitee.am.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -36,6 +39,8 @@ import java.util.stream.Collectors;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public class User implements IUser {
 
     private String id;
@@ -232,37 +237,6 @@ public class User implements IUser {
         this.forceResetPassword = other.forceResetPassword;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getExternalId() {
-        return externalId;
-    }
-
-    public void setExternalId(String externalId) {
-        this.externalId = externalId;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
 
     public String getEmail() {
         if (email == null) {
@@ -274,18 +248,6 @@ public class User implements IUser {
             }
         }
         return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getNickName() {
-        return nickName;
-    }
-
-    public void setNickName(String nickName) {
-        this.nickName = nickName;
     }
 
     public String getDisplayName() {
@@ -312,10 +274,6 @@ public class User implements IUser {
         return username;
     }
 
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
-    }
-
     public String getFirstName() {
         if (firstName == null) {
             if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.GIVEN_NAME) != null) {
@@ -324,10 +282,6 @@ public class User implements IUser {
             }
         }
         return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
     }
 
     public String getMiddleName() {
@@ -351,34 +305,6 @@ public class User implements IUser {
         return lastName;
     }
 
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getPreferredLanguage() {
-        return preferredLanguage;
-    }
-
-    public void setPreferredLanguage(String preferredLanguage) {
-        this.preferredLanguage = preferredLanguage;
-    }
-
     public String getPicture() {
         if (picture == null) {
             if (photos != null && !photos.isEmpty()) {
@@ -396,277 +322,43 @@ public class User implements IUser {
         return picture;
     }
 
-    public void setPicture(String picture) {
-        this.picture = picture;
-    }
-
-    public List<Attribute> getEmails() {
-        return emails;
-    }
-
-    public void setEmails(List<Attribute> emails) {
-        this.emails = emails;
-    }
-
-    public List<Attribute> getPhoneNumbers() {
-        return phoneNumbers;
-    }
-
-    public void setPhoneNumbers(List<Attribute> phoneNumbers) {
-        this.phoneNumbers = phoneNumbers;
-    }
-
-    public List<Attribute> getIms() {
-        return ims;
-    }
-
-    public void setIms(List<Attribute> ims) {
-        this.ims = ims;
-    }
-
-    public List<Attribute> getPhotos() {
-        return photos;
-    }
-
-    public void setPhotos(List<Attribute> photos) {
-        this.photos = photos;
-    }
-
-    public List<String> getEntitlements() {
-        return entitlements;
-    }
-
-    public void setEntitlements(List<String> entitlements) {
-        this.entitlements = entitlements;
-    }
-
-    public List<Address> getAddresses() {
-        return addresses;
-    }
-
-    public void setAddresses(List<Address> addresses) {
-        this.addresses = addresses;
-    }
-
-    public List<Certificate> getX509Certificates() {
-        return x509Certificates;
-    }
-
-    public void setX509Certificates(List<Certificate> x509Certificates) {
-        this.x509Certificates = x509Certificates;
-    }
-
     public Boolean isAccountNonExpired() {
         return accountNonExpired;
     }
-
-    public void setAccountNonExpired(Boolean accountNonExpired) {
-        this.accountNonExpired = accountNonExpired;
-    }
-
     public Boolean isAccountNonLocked() {
         return accountNonLocked;
-    }
-
-    public void setAccountNonLocked(Boolean accountNonLocked) {
-        this.accountNonLocked = accountNonLocked;
-    }
-
-    public Date getAccountLockedAt() {
-        return accountLockedAt;
-    }
-
-    public void setAccountLockedAt(Date accountLockedAt) {
-        this.accountLockedAt = accountLockedAt;
-    }
-
-    public Date getAccountLockedUntil() {
-        return accountLockedUntil;
-    }
-
-    public void setAccountLockedUntil(Date accountLockedUntil) {
-        this.accountLockedUntil = accountLockedUntil;
     }
 
     public Boolean isCredentialsNonExpired() {
         return credentialsNonExpired;
     }
 
-    public void setCredentialsNonExpired(Boolean credentialsNonExpired) {
-        this.credentialsNonExpired = credentialsNonExpired;
-    }
-
     public Boolean isEnabled() {
         return enabled;
-    }
-
-    public void setEnabled(Boolean enabled) {
-        this.enabled = enabled;
     }
 
     public Boolean isInternal() {
         return internal;
     }
 
-    public void setInternal(Boolean internal) {
-        this.internal = internal;
-    }
-
     public Boolean isPreRegistration() {
         return preRegistration;
-    }
-
-    public void setPreRegistration(Boolean preRegistration) {
-        this.preRegistration = preRegistration;
     }
 
     public Boolean isRegistrationCompleted() {
         return registrationCompleted;
     }
 
-    public void setRegistrationCompleted(Boolean registrationCompleted) {
-        this.registrationCompleted = registrationCompleted;
-    }
-
     public Boolean isNewsletter() {
         return newsletter;
     }
 
-    public void setNewsletter(Boolean newsletter) {
-        this.newsletter = newsletter;
-    }
 
-    public String getRegistrationUserUri() {
-        return registrationUserUri;
-    }
-
-    public void setRegistrationUserUri(String registrationUserUri) {
-        this.registrationUserUri = registrationUserUri;
-    }
-
-    public String getRegistrationAccessToken() {
-        return registrationAccessToken;
-    }
-
-    public void setRegistrationAccessToken(String registrationAccessToken) {
-        this.registrationAccessToken = registrationAccessToken;
-    }
-
-    public ReferenceType getReferenceType() {
-        return referenceType;
-    }
-
-    public void setReferenceType(ReferenceType referenceType) {
-        this.referenceType = referenceType;
-    }
-
-    public String getReferenceId() {
-        return referenceId;
-    }
-
-    public void setReferenceId(String referenceId) {
-        this.referenceId = referenceId;
-    }
-
-    public String getSource() {
-        return source;
-    }
-
-    public void setSource(String source) {
-        this.source = source;
-    }
-
-    public String getClient() {
-        return client;
-    }
-
-    public void setClient(String client) {
-        this.client = client;
-    }
-
-    public Long getLoginsCount() {
-        return loginsCount;
-    }
-
-    public void setLoginsCount(Long loginsCount) {
-        this.loginsCount = loginsCount;
-    }
-
-    public List<EnrolledFactor> getFactors() {
-        return factors;
-    }
-
-    public void setFactors(List<EnrolledFactor> factors) {
-        this.factors = factors;
-    }
-
-    public List<UserIdentity> getIdentities() {
-        return identities;
-    }
-
-    public void setIdentities(List<UserIdentity> identities) {
-        this.identities = identities;
-    }
 
     public String getLastIdentityUsed() {
         return lastIdentityUsed != null ? lastIdentityUsed : source;
     }
 
-    public void setLastIdentityUsed(String lastIdentityUsed) {
-        this.lastIdentityUsed = lastIdentityUsed;
-    }
-
-    public Date getLoggedAt() {
-        return loggedAt;
-    }
-
-    public void setLoggedAt(Date loggedAt) {
-        this.loggedAt = loggedAt;
-    }
-
-    public Date getLastLoginWithCredentials() {
-        return lastLoginWithCredentials;
-    }
-
-    public void setLastLoginWithCredentials(Date lastLoginWithCredentials) {
-        this.lastLoginWithCredentials = lastLoginWithCredentials;
-    }
-
-    public List<String> getRoles() {
-        return roles;
-    }
-
-    public void setRoles(List<String> roles) {
-        this.roles = roles;
-    }
-
-    public List<String> getDynamicRoles() {
-        return dynamicRoles;
-    }
-
-    public void setDynamicRoles(List<String> roles) {
-        this.dynamicRoles = roles;
-    }
-
-    public Set<Role> getRolesPermissions() {
-        return rolesPermissions;
-    }
-
-    public void setRolesPermissions(Set<Role> rolesPermissions) {
-        this.rolesPermissions = rolesPermissions;
-    }
-
-    public List<String> getGroups() {
-        return groups;
-    }
-
-    public void setGroups(List<String> groups) {
-        this.groups = groups;
-    }
-
-    public Map<String, Object> getAdditionalInformation() {
-        return additionalInformation;
-    }
 
     public Map<String, Object> getLastIdentityInformation() {
         if (this.lastIdentityUsed != null && this.identities != null) {
@@ -708,49 +400,6 @@ public class User implements IUser {
         return null;
     }
 
-    public void setAdditionalInformation(Map<String, Object> additionalInformation) {
-        this.additionalInformation = additionalInformation;
-    }
-
-    public Date getLastPasswordReset() {
-        return lastPasswordReset;
-    }
-
-    public void setLastPasswordReset(Date lastPasswordReset) {
-        this.lastPasswordReset = lastPasswordReset;
-    }
-
-    public Date getLastUsernameReset() {
-        return lastUsernameReset;
-    }
-
-    public void setLastUsernameReset(Date lastUsernameReset) {
-        this.lastUsernameReset = lastUsernameReset;
-    }
-
-    public Date getLastLogoutAt() {
-        return lastLogoutAt;
-    }
-
-    public void setLastLogoutAt(Date lastLogoutAt) {
-        this.lastLogoutAt = lastLogoutAt;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Date getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Date updatedAt) {
-        this.updatedAt = updatedAt;
-    }
 
     public Boolean isInactive() {
         return isPreRegistration() && !isRegistrationCompleted();
@@ -804,14 +453,6 @@ public class User implements IUser {
         putAdditionalInformation(StandardClaims.PHONE_NUMBER, phoneNumber);
     }
 
-    public Date getMfaEnrollmentSkippedAt() {
-        return mfaEnrollmentSkippedAt;
-    }
-
-    public void setMfaEnrollmentSkippedAt(Date mfaEnrollmentSkippedAt) {
-        this.mfaEnrollmentSkippedAt = mfaEnrollmentSkippedAt;
-    }
-
     public Map<String, Object> getAddress() {
         if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.ADDRESS) != null) {
             return (Map<String, Object>) getAdditionalInformation().get(StandardClaims.ADDRESS);
@@ -833,13 +474,5 @@ public class User implements IUser {
         setAccountNonLocked(true);
         setAccountLockedAt(null);
         setAccountLockedUntil(null);
-    }
-
-    public Boolean getForceResetPassword() {
-        return forceResetPassword;
-    }
-
-    public void setForceResetPassword(Boolean forceResetPassword) {
-        this.forceResetPassword = forceResetPassword;
     }
 }
