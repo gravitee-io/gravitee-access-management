@@ -291,6 +291,10 @@ public class User implements IUser {
         return null;
     }
 
+    public void setMiddleName(String middleName) {
+        putAdditionalInformation(StandardClaims.MIDDLE_NAME, middleName);
+    }
+
     public String getLastName() {
         if (lastName == null) {
             if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.FAMILY_NAME) != null) {

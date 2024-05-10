@@ -16,6 +16,7 @@
 package io.gravitee.am.service.validators;
 
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -90,24 +91,28 @@ class EmailValidatorTest {
         assertThat(emailValidator.validate(email)).isTrue();
     }
 
-    private static String[] emptyEmails() {
-        return new String[]{
-                "",
-                null
-        };
-    }
 
-    @ParameterizedTest(name = "[{index}] \"{0}\"")
-    @MethodSource("emptyEmails")
-    void emailRequired_blankNotValid(String emptyEmail) {
-        var emailValidator = new EmailValidatorImpl(EMAIL_PATTERN, false);
-        assertThat(emailValidator.validate(emptyEmail)).isFalse();
-    }
-
-    @ParameterizedTest(name = "[{index}] \"{0}\"")
-    @MethodSource("emptyEmails")
-    void emailOptional_blankIsValid(String emptyEmail) {
+    @Test
+    void emailRequired_emptyNotValid() {
         var emailValidator = new EmailValidatorImpl(EMAIL_PATTERN, true);
-        assertThat(emailValidator.validate(emptyEmail)).isTrue();
+        assertThat(emailValidator.validate("")).isFalse();
+    }
+
+    @Test
+    void emailRequired_nullIsValid() {
+        var emailValidator = new EmailValidatorImpl(EMAIL_PATTERN, true);
+        assertThat(emailValidator.validate(null)).isTrue();
+    }
+
+    @Test
+    void emailOptional_emptyIsValid() {
+        var emailValidator = new EmailValidatorImpl(EMAIL_PATTERN, false);
+        assertThat(emailValidator.validate("")).isTrue();
+    }
+
+    @Test
+    void emailOptional_nullIsValid() {
+        var emailValidator = new EmailValidatorImpl(EMAIL_PATTERN, false);
+        assertThat(emailValidator.validate(null)).isTrue();
     }
 }
