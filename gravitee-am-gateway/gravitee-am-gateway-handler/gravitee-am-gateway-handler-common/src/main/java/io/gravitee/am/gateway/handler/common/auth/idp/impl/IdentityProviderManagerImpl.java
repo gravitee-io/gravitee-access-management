@@ -32,6 +32,7 @@ import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
@@ -41,6 +42,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import static io.gravitee.am.identityprovider.api.oidc.OpenIDConnectConfigurationUtils.extractCertificateId;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -150,7 +153,7 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
                 .flatMapSingle(this::updateAuthenticationProvider)
                 .subscribe(
                         identityProvider -> {
-                            logger.info("Identity provider {} {}d for domain {}", identityProviderId, eventType, domain.getName());
+                            logger.info("Identity provider {} {} for domain {}", identityProviderId, eventType, domain.getName());
                         },
                         error -> logger.error("Unable to {} identity provider for domain {}", eventType, domain.getName(), error),
                         () -> logger.error("No identity provider found with id {}", identityProviderId));
@@ -163,39 +166,43 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
 
     private Single<IdentityProvider> updateAuthenticationProvider(IdentityProvider identityProvider) {
         if (needDeployment(identityProvider)) {
-            return Single.fromCallable(() -> {
-                logger.info("\tInitializing identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
-                // stop existing provider, if any
-                clearProvider(identityProvider.getId());
-                return identityProvider;
-            }).flatMap(idp -> {
-                var authProviderConfig = new AuthenticationProviderConfiguration(identityProvider, certificateManager);
-                var authenticationProvider = identityProviderPluginManager.create(authProviderConfig);
-                if (authenticationProvider != null) {
-                    // init the user provider
-                    return identityProviderPluginManager
-                            .create(identityProvider.getType(), identityProvider.getConfiguration(), identityProvider)
-                            .map(userProviderOpt -> {
-                                providers.put(identityProvider.getId(), authenticationProvider);
-                                identities.put(identityProvider.getId(), identityProvider);
-                                if (userProviderOpt.isPresent()) {
-                                    userProviders.put(identityProvider.getId(), userProviderOpt.get());
-                                } else {
-                                    userProviders.remove(identityProvider.getId());
-                                }
-                                return idp;
-                            });
-                } else {
-                    return Single.just(idp);
-                }
-            }).doOnError(error -> {
-                logger.error("An error occurs while initializing the identity provider : {}", identityProvider.getName(), error);
-                clearProvider(identityProvider.getId());
-            });
-        }  else{
+            return forceUpdateAuthenticationProvider(identityProvider);
+        } else {
             logger.debug("\tIdentity provider already initialized: {} [{}]", identityProvider.getName(), identityProvider.getType());
             return Single.just(identityProvider);
         }
+    }
+
+    private Single<IdentityProvider> forceUpdateAuthenticationProvider(IdentityProvider identityProvider) {
+        return Single.fromCallable(() -> {
+            logger.info("\tInitializing identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
+            // stop existing provider, if any
+            clearProvider(identityProvider.getId());
+            return identityProvider;
+        }).flatMap(idp -> {
+            var authProviderConfig = new AuthenticationProviderConfiguration(identityProvider, certificateManager);
+            var authenticationProvider = identityProviderPluginManager.create(authProviderConfig);
+            if (authenticationProvider != null) {
+                // init the user provider
+                return identityProviderPluginManager
+                        .create(identityProvider.getType(), identityProvider.getConfiguration(), identityProvider)
+                        .map(userProviderOpt -> {
+                            providers.put(identityProvider.getId(), authenticationProvider);
+                            identities.put(identityProvider.getId(), identityProvider);
+                            if (userProviderOpt.isPresent()) {
+                                userProviders.put(identityProvider.getId(), userProviderOpt.get());
+                            } else {
+                                userProviders.remove(identityProvider.getId());
+                            }
+                            return idp;
+                        });
+            } else {
+                return Single.just(idp);
+            }
+        }).doOnError(error -> {
+            logger.error("An error occurs while initializing the identity provider : {}", identityProvider.getName(), error);
+            clearProvider(identityProvider.getId());
+        });
     }
 
     private void clearProviders() {
@@ -231,5 +238,17 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     private boolean needDeployment(IdentityProvider provider) {
         final IdentityProvider deployedProvider = this.identities.get(provider.getId());
         return (deployedProvider == null || deployedProvider.getUpdatedAt().before(provider.getUpdatedAt()));
+    }
+
+    @Override
+    public Completable reloadIdentityProvidersWithCertificate(String certificateId) {
+        var publisher = identityProviderRepository
+                .findAll()
+                .filter(idp -> extractCertificateId(idp.getConfiguration())
+                        .map(idpCertId -> idpCertId.equals(certificateId))
+                        .orElse(false))
+                .doOnNext(idp -> logger.info("Identity provider id={} from domain {} needs to be reloaded.", idp.getId(), domain.getName()))
+                .flatMapSingle(this::forceUpdateAuthenticationProvider);
+        return Completable.fromPublisher(publisher);
     }
 }
