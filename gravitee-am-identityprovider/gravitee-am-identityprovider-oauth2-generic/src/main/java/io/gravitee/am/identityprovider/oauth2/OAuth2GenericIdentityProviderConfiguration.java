@@ -48,6 +48,7 @@ public class OAuth2GenericIdentityProviderConfiguration implements OpenIDConnect
     private Integer idleTimeout = 10000;
     private Integer maxPoolSize = 200;
     private String clientAuthenticationMethod = ClientAuthenticationMethod.CLIENT_SECRET_POST;
+    private String clientAuthenticationCertificate;
     private boolean storeOriginalTokens;
 
     public String getClientId() {
@@ -210,5 +211,13 @@ public class OAuth2GenericIdentityProviderConfiguration implements OpenIDConnect
 
     public void setClientAuthenticationMethod(String clientAuthenticationMethod) {
         this.clientAuthenticationMethod = clientAuthenticationMethod;
+    }
+
+    public String getClientAuthenticationCertificate() {
+        return clientAuthenticationCertificate;
+    }
+
+    public void setClientAuthenticationCertificate(String clientAuthenticationCertificate) {
+        this.clientAuthenticationCertificate = clientAuthenticationCertificate;
     }
 }

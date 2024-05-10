@@ -39,11 +39,13 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.EventService;
+import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.TaskManager;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.CertificatePluginSchemaNotFoundException;
 import io.gravitee.am.service.exception.CertificateWithApplicationsException;
+import io.gravitee.am.service.exception.CertificateWithIdpException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
@@ -94,6 +96,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import static io.gravitee.am.certificate.api.ConfigurationCertUtils.usageContains;
+import static io.gravitee.am.identityprovider.api.oidc.OpenIDConnectConfigurationUtils.extractCertificateId;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -127,6 +132,9 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Autowired
     private ApplicationService applicationService;
+
+    @Autowired
+    private IdentityProviderService identityProviderService;
 
     @Autowired
     private EventService eventService;
@@ -267,6 +275,16 @@ public class CertificateServiceImpl implements CertificateService {
                         .switchIfEmpty(Single.error(() -> new CertificatePluginSchemaNotFoundException(certificate.getType())))
                         .flatMap(schema -> Single.just(new CertificateWithSchema(certificate, objectMapper.readValue(schema, CertificateSchema.class)))))
                 .flatMap(oldCertificate -> {
+                    boolean oldWithMTls = usageContains(oldCertificate.getCertificate().getConfiguration(), "mtls");
+                    boolean newWithMTls = usageContains(updateCertificate.getConfiguration(), "mtls");
+                    if(oldWithMTls && !newWithMTls){
+                        return checkIdentityProviderUsage(oldCertificate.getCertificate())
+                                .map(cert -> oldCertificate);
+                    } else {
+                        return Single.just(oldCertificate);
+                    }
+                })
+                .flatMap(oldCertificate -> {
                     Certificate certificateToUpdate = new Certificate(oldCertificate.getCertificate());
                     certificateToUpdate.setName(updateCertificate.getName());
                     certificateToUpdate.setUpdatedAt(new Date());
@@ -313,7 +331,25 @@ public class CertificateServiceImpl implements CertificateService {
                 })
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to update a certificate", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to update a certificate", ex));
+                    if(ex instanceof AbstractManagementException){
+                        return Single.error(ex);
+                    } else {
+                        return Single.error(new TechnicalManagementException("An error occurs while trying to update a certificate", ex));
+                    }
+                });
+    }
+
+    private Single<Certificate> checkIdentityProviderUsage(Certificate certificate){
+        return identityProviderService.findByDomain(certificate.getDomain())
+                .filter(idp -> extractCertificateId(idp.getConfiguration())
+                        .map(certId -> certId.equals(certificate.getId()))
+                        .orElse(false))
+                .count()
+                .flatMap(count -> {
+                    if (count > 0) {
+                        return Single.error(new CertificateWithIdpException());
+                    }
+                    return Single.just(certificate);
                 });
     }
 
@@ -330,6 +366,7 @@ public class CertificateServiceImpl implements CertificateService {
                             return Single.just(certificate);
                         })
                 )
+                .flatMapSingle(this::checkIdentityProviderUsage)
                 .flatMapCompletable(certificate -> {
                     // create event for sync process
                     Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), ReferenceType.DOMAIN, certificate.getDomain(), Action.DELETE));

@@ -16,7 +16,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { filter, switchMap, tap } from 'rxjs/operators';
+import { filter, map, switchMap, tap } from 'rxjs/operators';
 
 import { ProviderService } from '../../../../../services/provider.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
@@ -25,6 +25,7 @@ import { DomainService } from '../../../../../services/domain.service';
 import { DialogService } from '../../../../../services/dialog.service';
 import { EntrypointService } from '../../../../../services/entrypoint.service';
 import { AppConfig } from '../../../../../../config/app.config';
+import { enrichOIDCFormWithCerts } from '../provider.oidc.enricher';
 
 @Component({
   selector: 'provider-settings',
@@ -46,6 +47,7 @@ export class ProviderSettingsComponent implements OnInit {
   redirectUri: string;
   customCode: string;
   domainWhitelistPattern: string;
+  certificates: any[];
 
   constructor(
     private providerService: ProviderService,
@@ -59,6 +61,7 @@ export class ProviderSettingsComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.certificates = this.route.snapshot.data['certificates'];
     this.provider = this.route.snapshot.data['provider'];
     if (this.provider.system) {
       // settings tab is useless for system providers
@@ -83,18 +86,21 @@ export class ProviderSettingsComponent implements OnInit {
     }
     this.providerConfiguration = JSON.parse(this.provider.configuration);
     this.updateProviderConfiguration = this.providerConfiguration;
-    this.organizationService.identitySchema(this.provider.type).subscribe((data) => {
-      this.providerSchema = data;
-      if (data) {
-        // handle default null values
-        Object.keys(this.providerSchema['properties']).forEach((key) => {
-          if (this.providerSchema['properties'][key].default && this.providerConfiguration[key] == null) {
-            this.providerConfiguration[key] = this.providerSchema['properties'][key].default;
-          }
-          this.providerSchema['properties'][key].default = '';
-        });
-      }
-    });
+    this.organizationService
+      .identitySchema(this.provider.type)
+      .pipe(map((schema) => enrichOIDCFormWithCerts(schema, this.certificates)))
+      .subscribe((data) => {
+        this.providerSchema = data;
+        if (data) {
+          // handle default null values
+          Object.keys(this.providerSchema['properties']).forEach((key) => {
+            if (this.providerSchema['properties'][key].default && this.providerConfiguration[key] == null) {
+              this.providerConfiguration[key] = this.providerSchema['properties'][key].default;
+            }
+            this.providerSchema['properties'][key].default = '';
+          });
+        }
+      });
   }
 
   update(event: Event): void {

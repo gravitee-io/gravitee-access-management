@@ -15,9 +15,11 @@
  */
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { map } from 'rxjs/operators';
 
 import { OrganizationService } from '../../../../../../services/organization.service';
 import { SnackbarService } from '../../../../../../services/snackbar.service';
+import { enrichOIDCFormWithCerts } from '../../../provider/provider.oidc.enricher';
 
 @Component({
   selector: 'provider-creation-step2',
@@ -45,9 +47,12 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.provider) {
-      this.organizationService.identitySchema(changes.provider.currentValue.type).subscribe((data) => {
-        this.providerSchema = data;
-      });
+      this.organizationService
+        .identitySchema(changes.provider.currentValue.type)
+        .pipe(map((schema) => enrichOIDCFormWithCerts(schema, this.certificates)))
+        .subscribe((data) => {
+          this.providerSchema = data;
+        });
     }
   }
 

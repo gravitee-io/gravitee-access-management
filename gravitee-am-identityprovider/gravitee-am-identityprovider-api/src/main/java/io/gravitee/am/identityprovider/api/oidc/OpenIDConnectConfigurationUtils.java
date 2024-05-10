@@ -13,50 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.certificate.api;
+package io.gravitee.am.identityprovider.api.oidc;
 
 import com.nimbusds.jose.util.JSONObjectUtils;
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
 import java.text.ParseException;
-import java.util.List;
 import java.util.Map;
-
-/**
- * @author Lukasz GAWEL (lukasz.gawel at graviteesource.com)
- * @author GraviteeSource Team
- */
+import java.util.Optional;
 
 @Slf4j
-public final class ConfigurationCertUtils {
+@UtilityClass
+public final class OpenIDConnectConfigurationUtils {
 
-    public static Map<String, Object> configurationStringAsMap(String configuration) {
+    public static Optional<String> extractCertificateId(String configuration) {
         if (configuration == null) {
-            return Map.of() ;
-        }
-        try {
-            return JSONObjectUtils.parse(configuration);
-        } catch (ParseException e) {
-            log.warn("Problem at parsing certificate configuration, msg={}", e.getMessage());
-            return Map.of();
-        }
-    }
-
-    public static List<String> extractUsageFromCertConfiguration(String configuration) {
-        if (configuration == null) {
-            return List.of();
+            return Optional.empty();
         }
         try {
             Map<String, Object> cfg = JSONObjectUtils.parse(configuration);
-            List<String> uses = JSONObjectUtils.getStringList(cfg, "use");
-            return uses == null ? List.of() : uses;
+            String certId = JSONObjectUtils.getString(cfg, "clientAuthenticationCertificate");
+            return Optional.ofNullable(certId);
         } catch (ParseException e) {
             log.warn("Problem at parsing certificate configuration, msg={}", e.getMessage());
-            return List.of();
+            return Optional.empty();
         }
-    }
-
-    public static boolean usageContains(String configuration, String usage) {
-        return extractUsageFromCertConfiguration(configuration).contains(usage);
     }
 }
