@@ -40,12 +40,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
-import java.nio.charset.StandardCharsets;
-import java.security.cert.CertificateException;
-import java.time.Instant;
-import static java.time.temporal.ChronoUnit.HOURS;
-import java.util.Base64;
-import java.util.Optional;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -61,13 +55,19 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.cert.CertificateException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Base64;
 import java.util.Date;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.service.impl.CertificateServiceImpl.DEFAULT_CERTIFICATE_PLUGIN;
+import static java.time.temporal.ChronoUnit.HOURS;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doReturn;
@@ -94,6 +94,9 @@ public class CertificateServiceTest {
 
     @Mock
     private CertificateRepository certificateRepository;
+
+    @Mock
+    private IdentityProviderService identityProviderService;
 
     @Mock
     private ApplicationService applicationService;
@@ -197,6 +200,7 @@ public class CertificateServiceTest {
         Certificate certificate = Mockito.mock(Certificate.class);
         when(certificate.getDomain()).thenReturn(DOMAIN);
 
+        when(identityProviderService.findByDomain(DOMAIN)).thenReturn(Flowable.empty());
         when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(certificate));
         when(applicationService.findByCertificate("my-certificate")).thenReturn(Flowable.empty());
         when(certificateRepository.delete("my-certificate")).thenReturn(Completable.complete());

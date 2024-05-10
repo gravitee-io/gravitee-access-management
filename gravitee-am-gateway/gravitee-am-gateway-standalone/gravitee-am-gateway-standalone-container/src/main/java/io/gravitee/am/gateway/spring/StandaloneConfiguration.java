@@ -37,6 +37,7 @@ import io.gravitee.am.plugins.policy.spring.PolicySpringConfiguration;
 import io.gravitee.am.plugins.protocol.spring.ProtocolSpringConfiguration;
 import io.gravitee.am.plugins.reporter.spring.ReporterSpringConfiguration;
 import io.gravitee.am.plugins.resource.spring.ResourceSpringConfiguration;
+import io.gravitee.am.service.spring.ServiceConfiguration;
 import io.gravitee.el.ExpressionLanguageInitializer;
 import io.gravitee.node.api.Node;
 import io.gravitee.node.api.NodeMetadataResolver;
@@ -58,6 +59,7 @@ import org.springframework.context.annotation.Import;
 @Import({
         ReactorConfiguration.class,
         VertxServerConfiguration.class,
+        ServiceConfiguration.class,
         IdentityProviderSpringConfiguration.class,
         CertificateSpringConfiguration.class,
         ExtensionGrantSpringConfiguration.class,

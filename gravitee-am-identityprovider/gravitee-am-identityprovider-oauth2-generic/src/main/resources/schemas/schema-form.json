@@ -1,6 +1,7 @@
 {
   "type" : "object",
   "id" : "urn:jsonschema:io:gravitee:am:identityprovider:oauth2:OAuth2GenericIdentityProvider",
+  "version" : "05-2024",
   "description": "OpenID Connect identity provider, let you register and set up permissions and authorization options for OpenID Connect protocol.\n\nhttps://openid.net/specs/openid-connect-core-1_0.html",
   "properties" : {
     "clientId" : {
@@ -21,8 +22,15 @@
       "default": "client_secret_post",
       "enum" : [
         "client_secret_post",
-        "client_secret_basic"
+        "client_secret_basic",
+        "tls_client_auth"
       ]
+    },
+    "clientAuthenticationCertificate" : {
+      "type" : "string",
+      "title": "mTLS Client Authenticate Certificate",
+      "description": "Applicable only with tls_client_auth",
+      "readonly": true
     },
     "wellKnownUri": {
       "type" : "string",
@@ -170,10 +178,23 @@
       ]
     }
   ],
-  "if": {
-    "properties": {
-      "responseType": { "const": "code" }
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "responseType": { "const": "code" }
+        }
+      },
+      "then": { "required": ["clientSecret"] }
+    },
+    {
+      "if": {
+        "properties": {
+          "clientAuthenticationMethod": { "const": "tls_client_auth" }
+        }
+      },
+      "then": { "required": ["clientAuthenticationCertificate"] }
     }
-  },
-  "then": { "required": ["clientSecret"] }
+  ]
+
 }
