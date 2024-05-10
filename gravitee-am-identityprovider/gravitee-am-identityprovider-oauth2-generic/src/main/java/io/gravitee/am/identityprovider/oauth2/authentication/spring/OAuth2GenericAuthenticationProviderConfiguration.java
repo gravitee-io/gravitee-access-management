@@ -15,8 +15,12 @@
  */
 package io.gravitee.am.identityprovider.oauth2.authentication.spring;
 
+import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderConfiguration;
+import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.http.WebClientBuilder;
+import io.gravitee.am.service.http.WebClientInitializer;
+import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
@@ -44,6 +48,9 @@ public class OAuth2GenericAuthenticationProviderConfiguration {
     @Autowired
     private OAuth2GenericIdentityProviderConfiguration configuration;
 
+    @Autowired
+    private CertificateService certificateService;
+
     @Bean
     public WebClientBuilder webClientBuilder() {
         return new WebClientBuilder();
@@ -60,9 +67,14 @@ public class OAuth2GenericAuthenticationProviderConfiguration {
                 .setIdleTimeoutUnit(DEFAULT_IDLE_TIMEOUT_UNIT)
                 .setMaxPoolSize(configuration.getMaxPoolSize())
                 .setSsl(isTLS());
-
-        return webClientBuilder.createWebClient(vertx, httpClientOptions, configuration.getUserAuthorizationUri());
+        if (configuration.getClientAuthenticationMethod().equals(ClientAuthenticationMethod.TLS_CLIENT_AUTH)) {
+            return initializeMTlsWebClient(webClientBuilder, httpClientOptions);
+        } else {
+            return createWebClient(webClientBuilder, httpClientOptions);
+        }
     }
+
+
 
     /**
      * Check if all defined oauth2 urls are secured or not.
@@ -76,4 +88,17 @@ public class OAuth2GenericAuthenticationProviderConfiguration {
                 && configuration.getUserProfileUri() != null && configuration.getUserProfileUri().startsWith(HTTPS)
                 && configuration.getWellKnownUri() != null && configuration.getWellKnownUri().startsWith(HTTPS);
     }
+
+    private WebClient initializeMTlsWebClient(WebClientBuilder webClientBuilder, WebClientOptions options) {
+        Maybe<WebClient> webClient = certificateService
+                .findById(configuration.getClientAuthenticationCertificate())
+                .map(cert -> webClientBuilder.createMTLSWebClient(vertx, options, configuration.getUserAuthorizationUri(), cert));
+        var delegate = WebClientInitializer.asyncInitialize(webClient).getDelegate();
+        return new WebClient(delegate);
+    }
+
+    private WebClient createWebClient(WebClientBuilder webClientBuilder, WebClientOptions options) {
+        return webClientBuilder.createWebClient(vertx, options, configuration.getUserAuthorizationUri());
+    }
+
 }

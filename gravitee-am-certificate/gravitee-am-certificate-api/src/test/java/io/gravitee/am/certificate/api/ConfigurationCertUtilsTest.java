@@ -63,4 +63,16 @@ public class ConfigurationCertUtilsTest {
         Assertions.assertTrue(usages.isEmpty());
     }
 
+    @Test
+    public void shouldReturnTrueIfUsageContainsSpecificUse() {
+        String cfg = "{\"jks\":\"keystore.jks\",\"storepass\":\"password\",\"alias\":\"abc\",\"keypass\":\"password\",\"use\":[\"sig\", \"enc\"]}";
+        Assertions.assertTrue(ConfigurationCertUtils.usageContains(cfg, "sig"));
+        Assertions.assertTrue(ConfigurationCertUtils.usageContains(cfg, "enc"));
+    }
+
+    @Test
+    public void shouldReturnFalseIfUsageDoesntContainSpecificUse() {
+        String cfg = "{\"jks\":\"keystore.jks\",\"storepass\":\"password\",\"alias\":\"abc\",\"keypass\":\"password\",\"use\":[\"sig\", \"enc\"]}";
+        Assertions.assertFalse(ConfigurationCertUtils.usageContains(cfg, "xxxxx"));
+    }
 }

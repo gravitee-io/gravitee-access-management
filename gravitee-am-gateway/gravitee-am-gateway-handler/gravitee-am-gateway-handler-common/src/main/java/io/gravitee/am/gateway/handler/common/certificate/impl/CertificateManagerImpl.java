@@ -23,6 +23,7 @@ import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.certificate.CertificateProviderManager;
+import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderCertificateReloader;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
@@ -73,6 +74,9 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
     @Autowired
     private EventManager eventManager;
+
+    @Autowired
+    private IdentityProviderCertificateReloader identityProviderReloader;
 
     @Autowired
     private CertificateProviderManager certificateProviderManager;
@@ -205,6 +209,7 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
                                 certificateProviderManager.create(certificate);
                                 certificates.put(certificateId, certificate);
                                 logger.info("Certificate {} loaded for domain {}", certificateId, domain.getName());
+                                reloadIdentityProviders(certificate);
                             } catch (Exception ex) {
                                 logger.error("Unable to load certificate {} for domain {}", certificate.getName(), certificate.getDomain(), ex);
                                 certificates.remove(certificateId, certificate);
@@ -212,6 +217,12 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
                         },
                         error -> logger.error("An error has occurred when loading certificate {} for domain {}", certificateId, domain.getName(), error),
                         () -> logger.error("No certificate found with id {}", certificateId));
+    }
+
+    private void reloadIdentityProviders(Certificate certificate){
+        identityProviderReloader
+                .reloadIdentityProvidersWithCertificate(certificate.getId())
+                .subscribe();
     }
 
     private void removeCertificate(String certificateId) {
