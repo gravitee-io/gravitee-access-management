@@ -38,6 +38,7 @@ public class CertificateEntity extends Certificate {
 
     private CertificateStatus status;
     private List<Application> applications;
+    private List<String> usage;
 
     public CertificateStatus getStatus() {
         return status;
@@ -53,5 +54,13 @@ public class CertificateEntity extends Certificate {
 
     public void setApplications(List<Application> applications) {
         this.applications = applications;
+    }
+
+    public List<String> getUsage() {
+        return usage;
+    }
+
+    public void setUsage(List<String> usage) {
+        this.usage = usage;
     }
 }

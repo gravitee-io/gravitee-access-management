@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.net.URISyntaxException;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -41,6 +42,7 @@ import java.util.function.Predicate;
  * @author GraviteeSource Team
  */
 public class JWKServiceImpl implements JWKService {
+    private final static Set<String> JWK_USAGE = Set.of("sig", "enc");
 
     @Autowired
     private CertificateManager certificateManager;
@@ -53,6 +55,7 @@ public class JWKServiceImpl implements JWKService {
     public Single<JWKSet> getKeys() {
         return Flowable.fromIterable(certificateManager.providers())
                 .flatMap(certificateProvider -> certificateProvider.getProvider().keys())
+                .filter(jwk -> jwk.getUse() == null || JWK_USAGE.contains(jwk.getUse()))
                 .toList()
                 .map(keys -> {
                     JWKSet jwkSet = new JWKSet();
