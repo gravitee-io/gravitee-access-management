@@ -58,9 +58,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.SingleSource;
 import io.reactivex.rxjava3.functions.Function;
-import java.security.cert.CertificateException;
-import java.time.Instant;
-import java.util.Map;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.BasicConstraints;
@@ -85,12 +82,15 @@ import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -281,18 +281,18 @@ public class CertificateServiceImpl implements CertificateService {
                                     .filter(map -> map.getValue().getWidget() != null && "file".equals(map.getValue().getWidget()))
                                     .map(Map.Entry::getKey)
                                     .findFirst().orElse(null);
-                                String oldFileInformation = oldCertificateConfiguration.get(key).asText();
-                                String fileInformation = certificateConfiguration.get(key).asText();
-                                // file has changed, let's update it
-                                if (!oldFileInformation.equals(fileInformation)) {
-                                    JsonNode file = objectMapper.readTree(certificateConfiguration.get(key).asText());
-                                    byte[] data = Base64.getDecoder().decode(file.get(CONTENT).asText());
-                                    certificateToUpdate.setMetadata(Collections.singletonMap(CertificateMetadata.FILE, data));
+                            String oldFileInformation = oldCertificateConfiguration.get(key).asText();
+                            String fileInformation = certificateConfiguration.get(key).asText();
+                            // file has changed, let's update it
+                            if (!oldFileInformation.equals(fileInformation)) {
+                                JsonNode file = objectMapper.readTree(certificateConfiguration.get(key).asText());
+                                byte[] data = Base64.getDecoder().decode(file.get(CONTENT).asText());
+                                certificateToUpdate.setMetadata(Collections.singletonMap(CertificateMetadata.FILE, data));
 
-                                    // update configuration to set the file path
-                                    ((ObjectNode) certificateConfiguration).put(key, file.get(NAME).asText());
-                                    updateCertificate.setConfiguration(objectMapper.writeValueAsString(certificateConfiguration));
-                                }
+                                // update configuration to set the file path
+                                ((ObjectNode) certificateConfiguration).put(key, file.get(NAME).asText());
+                                updateCertificate.setConfiguration(objectMapper.writeValueAsString(certificateConfiguration));
+                            }
                             certificateToUpdate.setConfiguration(updateCertificate.getConfiguration());
                         } catch (IOException ex) {
                             LOGGER.error("An error occurs while trying to update certificate binaries", ex);
@@ -334,7 +334,7 @@ public class CertificateServiceImpl implements CertificateService {
                     // create event for sync process
                     Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), ReferenceType.DOMAIN, certificate.getDomain(), Action.DELETE));
                     return Completable.fromSingle(certificateRepository.delete(certificateId)
-                            .andThen(eventService.create(event)))
+                                    .andThen(eventService.create(event)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_DELETED).certificate(certificate)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_DELETED).throwable(throwable)));
                 })
@@ -472,6 +472,7 @@ public class CertificateServiceImpl implements CertificateService {
 
         return objectMapper.writeValueAsString(certificateNode);
     }
+
     private ByteArrayOutputStream generateCertificate(String sigAlgName, int keySize, String name, int validity, String alias, String keyPass, String storePass) throws GeneralSecurityException, IOException, OperatorCreationException {
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(getAlgorithmCategory(sigAlgName));
         keyPairGenerator.initialize(keySize);

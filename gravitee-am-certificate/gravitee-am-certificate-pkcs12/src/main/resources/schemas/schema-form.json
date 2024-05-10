@@ -64,12 +64,14 @@
         "type": "string",
         "enum": [
           "sig",
-          "enc"]
+          "enc",
+          "mtls"]
       },
       "x-schema-form": {
         "titleMap": {
           "sig": "Signature",
-          "enc": "Encryption"
+          "enc": "Encryption",
+          "mtls": "mTLS"
         }
       }
     }

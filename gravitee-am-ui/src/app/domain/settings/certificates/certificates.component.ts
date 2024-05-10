@@ -36,6 +36,12 @@ export class DomainSettingsCertificatesComponent implements OnInit {
     'javakeystore-am-certificate': 'security',
     'pkcs12-am-certificate': 'security',
   };
+  private certificateUsage = new Map([
+    ['enc', 'Encryption'],
+    ['sig', 'Signature'],
+    ['mtls', 'mTLS'],
+  ]);
+
   certificates: any[];
   domainId: string;
   threshold: number;
@@ -86,6 +92,18 @@ export class DomainSettingsCertificatesComponent implements OnInit {
       return this.certificateTypes[type];
     }
     return type;
+  }
+
+  usageBadgeLabel(cert: any): string {
+    if (cert?.usage?.length > 1) {
+      return `${cert.usage.length} Usage`;
+    } else if (cert?.usage?.length == 1) {
+      return this.certificateUsage.get(cert.usage[0]);
+    } else return '';
+  }
+
+  usageBadgeTooltip(cert: any): string {
+    return cert.usage.map((u) => this.certificateUsage.get(u)).join(', ');
   }
 
   certificateWillExpire(cert) {
@@ -139,7 +157,10 @@ export class DomainSettingsCertificatesComponent implements OnInit {
 
   rotateCertificate() {
     this.dialogService
-      .confirm('Rotate key', 'Are you sure you want to generate a new system certificate ?')
+      .confirm(
+        'Rotate key',
+        'Are you sure you want to generate a new system certificate?\nThis will only affect the latest System Certificate created.',
+      )
       .pipe(
         filter((res) => res),
         tap(() => (this.ongoingRotation = true)),

@@ -126,8 +126,13 @@ public class JWKServiceTest {
         octSig.setKid("octSig");
         octSig.setUse("sig");
 
+        RSAKey mtlsKeys = new RSAKey();
+        rsaSig.setKty("RSA");
+        rsaSig.setKid("rsaSig");
+        rsaSig.setUse("mtls");
+
         JWK_SET = new JWKSet();
-        JWK_SET.setKeys(Arrays.asList(rsaEnc, rsaSig, ecEnc, ecSig, oct128, oct192, oct256, oct384, oct512, octSig));
+        JWK_SET.setKeys(Arrays.asList(rsaEnc, rsaSig, ecEnc, ecSig, oct128, oct192, oct256, oct384, oct512, octSig, mtlsKeys));
     }
 
     @Test
@@ -596,7 +601,7 @@ public class JWKServiceTest {
         io.gravitee.am.model.jose.JWK key = new io.gravitee.am.model.jose.RSAKey();
         key.setKid("my-test-key");
         io.gravitee.am.model.jose.JWK key2 = new io.gravitee.am.model.jose.RSAKey();
-        key.setKid("my-test-key-2");
+        key2.setKid("my-test-key-2");
 
         CertificateProvider certificateProvider = mock(CertificateProvider.class);
         when(certificateProvider.keys()).thenReturn(Flowable.just(key));
@@ -615,4 +620,38 @@ public class JWKServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertValue(jwkSet -> jwkSet.getKeys().size() == 2);
     }
+
+    @Test
+    public void shouldGetJWKSet_filter_mtls() {
+        io.gravitee.am.model.jose.JWK key = new io.gravitee.am.model.jose.RSAKey();
+        key.setKid("my-test-key");
+        key.setUse("sig");
+        io.gravitee.am.model.jose.JWK key2 = new io.gravitee.am.model.jose.RSAKey();
+        key.setKid("my-test-key-2");
+        key.setUse("enc");
+        io.gravitee.am.model.jose.JWK key3 = new io.gravitee.am.model.jose.RSAKey();
+        key3.setKid("my-test-key-3");
+        key3.setUse("mtls");
+
+        CertificateProvider certificateProvider = mock(CertificateProvider.class);
+        when(certificateProvider.keys()).thenReturn(Flowable.just(key));
+        CertificateProvider certificateProvider2 = mock(CertificateProvider.class);
+        when(certificateProvider2.keys()).thenReturn(Flowable.just(key2));
+        CertificateProvider certificateProvider3 = mock(CertificateProvider.class);
+        when(certificateProvider3.keys()).thenReturn(Flowable.just(key3));
+
+        List<io.gravitee.am.gateway.certificate.CertificateProvider> certificateProviders = new ArrayList<>();
+        certificateProviders.add(new io.gravitee.am.gateway.certificate.CertificateProvider(certificateProvider));
+        certificateProviders.add(new io.gravitee.am.gateway.certificate.CertificateProvider(certificateProvider2));
+        certificateProviders.add(new io.gravitee.am.gateway.certificate.CertificateProvider(certificateProvider3));
+
+        when(certificateManager.providers()).thenReturn(certificateProviders);
+
+        TestObserver<JWKSet> testObserver = jwkService.getKeys().test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(jwkSet -> jwkSet.getKeys().size() == 2);
+    }
+
 }

@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.management.handlers.management.api.model.CertificateEntity;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -24,19 +25,19 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.junit.Test;
-
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
+import org.junit.Test;
+
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -68,7 +69,64 @@ public class CertificatesResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final List<Certificate> responseEntity = readEntity(response, List.class);
-        assertTrue(responseEntity.size() == 2);
+        assertEquals(2, responseEntity.size());
+    }
+
+    @Test
+    public void shouldGetCertificates_with_usages() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        final Certificate mockCertificate = new Certificate();
+        mockCertificate.setId("certificate-1-id");
+        mockCertificate.setName("certificate-1-name");
+        mockCertificate.setDomain(domainId);
+        mockCertificate.setConfiguration("{\"jks\":\"keystore.jks\",\"storepass\":\"password\",\"alias\":\"abc\",\"keypass\":\"password\",\"use\":[\"sig\", \"enc\"]}");
+
+        final Certificate mockCertificate2 = new Certificate();
+        mockCertificate2.setId("certificate-2-id");
+        mockCertificate2.setName("certificate-2-name");
+        mockCertificate2.setDomain(domainId);
+        mockCertificate2.setConfiguration("{\"jks\":\"keystore.jks\",\"storepass\":\"password\",\"alias\":\"abc\",\"keypass\":\"password\",\"use\":[\"mtls\"]}");
+
+        final Certificate mockCertificate3 = new Certificate();
+        mockCertificate3.setId("certificate-3-id");
+        mockCertificate3.setName("certificate-3-name");
+        mockCertificate3.setDomain(domainId);
+        mockCertificate3.setConfiguration("{\"jks\":\"keystore.jks\",\"storepass\":\"password\",\"alias\":\"abc\",\"keypass\":\"password\"}");
+
+        final Certificate mockCertificate4 = new Certificate();
+        mockCertificate4.setId("certificate-4-id");
+        mockCertificate4.setName("certificate-4-name");
+        mockCertificate4.setDomain(domainId);
+        mockCertificate4.setConfiguration(null);
+
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Flowable.just(mockCertificate, mockCertificate2, mockCertificate3, mockCertificate4)).when(certificateService).findByDomain(domainId);
+        doReturn(Flowable.empty()).when(applicationService).findByCertificate(anyString());
+
+        final Response response = target("domains").path(domainId).path("certificates").request().get();
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        final List<CertificateEntity> responseEntity = readListEntity(response, CertificateEntity.class);
+        assertEquals(4, responseEntity.size());
+
+        CertificateEntity responseCert1 = responseEntity.stream().filter(c -> c.getId().equals("certificate-1-id"))
+                .findFirst().orElseThrow();
+        CertificateEntity responseCert2 = responseEntity.stream().filter(c -> c.getId().equals("certificate-2-id"))
+                .findFirst().orElseThrow();
+        CertificateEntity responseCert3 = responseEntity.stream().filter(c -> c.getId().equals("certificate-3-id"))
+                .findFirst().orElseThrow();
+        CertificateEntity responseCert4 = responseEntity.stream().filter(c -> c.getId().equals("certificate-4-id"))
+                .findFirst().orElseThrow();
+
+        assertTrue(responseCert1.getUsage().containsAll(List.of("sig", "enc")));
+        assertTrue(responseCert2.getUsage().contains("mtls"));
+        assertTrue(responseCert3.getUsage().isEmpty());
+        assertTrue(responseCert4.getUsage().isEmpty());
+
     }
 
     @Test
