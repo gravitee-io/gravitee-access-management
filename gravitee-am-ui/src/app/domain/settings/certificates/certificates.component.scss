@@ -14,9 +14,13 @@
   }
 }
 
+.badge {
+  margin-left: 0;
+  text-transform: none;
+}
+
 .certificate-expiry {
   align-items: center;
-  margin: 5px;
 
   h3 {
     margin: 0;
