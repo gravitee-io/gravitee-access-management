@@ -253,7 +253,6 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         final Map<String, Object> configMap = new LinkedHashMap<>();
 
         final String encoder = environment.getProperty("domains.identities.default.passwordEncoder.algorithm", "BCrypt");
-        final String rounds = environment.getProperty("domains.identities.default.passwordEncoder.properties.rounds", "10");
 
         if (!SUPPORTED_PASSWORD_ENCODER.contains(encoder)) {
             throw new IllegalArgumentException("Invalid password encoder value '" + encoder + "'");
@@ -292,9 +291,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             configMap.put("usernameField", "username");
             configMap.put("passwordField", "password");
             configMap.put("passwordEncoder", encoder);
-            if ("bcrypt".equalsIgnoreCase(encoder)) {
-                configMap.put("passwordEncoderOptions", new PasswordEncoderOptions(Integer.parseInt(rounds)));
-            }
+            updatePasswordEncoderOptions(configMap, encoder);
 
         } else if (useJdbcRepositories()) {
             String tableSuffix = lowerCaseId.replace("-", "_");
@@ -326,11 +323,19 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             configMap.put("usernameAttribute", "username");
             configMap.put("passwordAttribute", "password");
             configMap.put("passwordEncoder", encoder);
-            if ("bcrypt".equalsIgnoreCase(encoder)) {
-                configMap.put("passwordEncoderOptions", new PasswordEncoderOptions(Integer.parseInt(rounds)));
-            }
+            updatePasswordEncoderOptions(configMap, encoder);
         }
         return configMap;
+    }
+
+    private void updatePasswordEncoderOptions(Map<String, Object> configMap, String encoder) {
+        if ("bcrypt".equalsIgnoreCase(encoder)) {
+            String rounds = environment.getProperty("domains.identities.default.passwordEncoder.properties.rounds", "10");
+            configMap.put("passwordEncoderOptions", new PasswordEncoderOptions(Integer.parseInt(rounds)));
+        } else if (encoder.toLowerCase().startsWith("sha")){
+            String rounds = environment.getProperty("domains.identities.default.passwordEncoder.properties.rounds", "1");
+            configMap.put("passwordEncoderOptions", new PasswordEncoderOptions(Integer.parseInt(rounds)));
+        }
     }
 
     private Optional<String> getMongoServers() {
