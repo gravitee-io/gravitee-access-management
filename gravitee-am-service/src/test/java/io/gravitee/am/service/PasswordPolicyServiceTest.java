@@ -399,7 +399,7 @@ public class PasswordPolicyServiceTest {
     }
 
     @Test
-    public void shouldRetrieve_DefaultPasswordPolicy_noPolicyDefined_atApp() {
+    public void shouldNotRetrievePolicy_noPolicyDefined() {
         io.gravitee.am.model.User user = new io.gravitee.am.model.User();
         user.setSource("idp-id");
 
@@ -415,7 +415,7 @@ public class PasswordPolicyServiceTest {
     }
 
     @Test
-    public void shouldRetrieve_DefaultPasswordPolicy_noPolicyDefined_atApplication() {
+    public void shouldRetrieve_DefaultPasswordPolicy_noPolicyDefined_atApplication_or_IdpLevel() {
         var user = new io.gravitee.am.model.User();
         user.setSource("idp-id");
         var app = new Application();
@@ -436,7 +436,7 @@ public class PasswordPolicyServiceTest {
     }
 
     @Test
-    public void shouldRetrieve_DefaultPasswordPolicy_appSettings_inherite() {
+    public void shouldRetrieve_DefaultPasswordPolicy_appSettings_inherited() {
         var user = new io.gravitee.am.model.User();
         user.setSource("idp-id");
 
@@ -481,19 +481,18 @@ public class PasswordPolicyServiceTest {
         var policy = new PasswordPolicy();
         policy.setMaxLength(128);
 
-        when(passwordPolicyRepository.findByDefaultPolicy(any(), any())).thenReturn(Maybe.empty());
-
         var policyObserver = cut.retrievePasswordPolicy(user, app, idp).test();
 
         verify(passwordPolicyRepository, never()).findByReferenceAndId(any(), any(), any());
-        verify(passwordPolicyRepository, times(1)).findByDefaultPolicy(any(), any());
+        verify(passwordPolicyRepository, never()).findByDefaultPolicy(any(), any());
 
         policyObserver.awaitDone(5, TimeUnit.SECONDS);
         policyObserver.assertValue(result -> Objects.equals(result.getMaxLength(), passwordSettings.getMaxLength()));
     }
 
     @Test
-    public void shouldRetrieve_idpPolicy() {
+    public void shouldNotRetrieve_idpPolicy_But_AppPolicy() {
+        // app policy set inherited to false, so the app policy is expected
         var user = new io.gravitee.am.model.User();
         user.setSource("idp-id");
 
@@ -501,6 +500,37 @@ public class PasswordPolicyServiceTest {
         var settings = new ApplicationSettings();
         var passwordSettings = new PasswordSettings();
         passwordSettings.setInherited(false);
+        passwordSettings.setMaxLength(64);
+        settings.setPasswordSettings(passwordSettings);
+        app.setSettings(settings);
+
+        var policy = new PasswordPolicy();
+        policy.setMaxLength(128);
+        policy.setId(UUID.randomUUID().toString());
+
+        var idp = new IdentityProvider();
+        idp.setPasswordPolicy(policy.getId());
+
+        when(passwordPolicyRepository.findByReferenceAndId(any(), any(), eq(policy.getId()))).thenReturn(Maybe.just(policy));
+
+        var policyObserver = cut.retrievePasswordPolicy(user, app, idp).test();
+
+        verify(passwordPolicyRepository, never()).findByReference(any(), any());
+
+        policyObserver.awaitDone(5, TimeUnit.SECONDS);
+        policyObserver.assertValue(result -> Objects.equals(result.getMaxLength(), passwordSettings.getMaxLength()));
+    }
+
+    @Test
+    public void shouldRetrieve_idpPolicy_as_AppPolicy_is_inherited() {
+        // app policy set inherited to false, so the app policy is expected
+        var user = new io.gravitee.am.model.User();
+        user.setSource("idp-id");
+
+        var app = new Application();
+        var settings = new ApplicationSettings();
+        var passwordSettings = new PasswordSettings();
+        passwordSettings.setInherited(true);
         passwordSettings.setMaxLength(64);
         settings.setPasswordSettings(passwordSettings);
         app.setSettings(settings);
