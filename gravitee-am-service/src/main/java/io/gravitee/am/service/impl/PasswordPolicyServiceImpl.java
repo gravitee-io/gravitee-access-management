@@ -49,7 +49,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.Optional;
 
 import static java.util.Optional.ofNullable;
 import static java.util.function.Predicate.not;
@@ -198,23 +197,25 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
 
     @Override
     public Maybe<PasswordPolicy> retrievePasswordPolicy(io.gravitee.am.model.User user, PasswordSettingsAware passwordSettingsAware, IdentityProvider provider) {
-        // IDP with policy always take precedence
-        // If policy linked to the IDP is missing or if IDP doesn't reference a policy
-        // then fallback to the application password settings
-        // if the app doesn't have such settings,
+        // The application password settings always take precedence (if present and not inherited)
+        // If the app doesn't have such settings then fallback to the one linked to the IDP
+        // if the IDP doesn't have such settings,
         // look for default policy linked to the domain
-        return ofNullable(provider)
+        Maybe<PasswordPolicy> clientPasswordPolicy = ofNullable(passwordSettingsAware)
+                .map(PasswordSettingsAware::getPasswordSettings)
+                .filter(not(PasswordSettings::isInherited))
+                .map(PasswordSettings::toPasswordPolicy)
+                .map(Maybe::just)
+                .orElse(Maybe.empty());
+
+        Maybe<PasswordPolicy> idpPasswordPolicy = ofNullable(provider)
                 .map(IdentityProvider::getPasswordPolicy)
                 .map(policyId -> passwordPolicyRepository.findByReferenceAndId(user.getReferenceType(), user.getReferenceId(), policyId))
-                .orElseGet(() ->
-                        passwordSettingsAware == null ? defaultPasswordPolicy(user) : Optional.of(passwordSettingsAware)
-                                .map(PasswordSettingsAware::getPasswordSettings)
-                                .filter(not(PasswordSettings::isInherited))
-                                .map(PasswordSettings::toPasswordPolicy)
-                                .map(Maybe::just)
-                                .orElse(Maybe.empty())
-                                .switchIfEmpty(defaultPasswordPolicy(user))
-                );
+                .orElse(Maybe.empty());
+
+        return clientPasswordPolicy
+                .switchIfEmpty(idpPasswordPolicy)
+                .switchIfEmpty(Maybe.defer(() -> this.defaultPasswordPolicy(user)));
     }
 
     private Completable resetPolicyOnIdentityProviders(ReferenceType referenceType, String referenceId, String policyId) {
