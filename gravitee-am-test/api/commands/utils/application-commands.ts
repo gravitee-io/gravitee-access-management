@@ -14,29 +14,24 @@
  * limitations under the License.
  */
 
-import {createApplication, updateApplication} from "@management-commands/application-management-commands";
-import {expect} from "@jest/globals";
+import { createApplication, updateApplication } from '@management-commands/application-management-commands';
+import { expect } from '@jest/globals';
 
-export const createTestApp = async (name, domain, accessToken, applicationType = 'web', body= {}) => {
-    const application = await createApplication(domain.id, accessToken, {
-        name: name,
-        type: applicationType,
-        clientId: `${name}-id`,
-    }).then((app) =>
-        updateApplication(
-            domain.id,
-            accessToken,
-            body,
-            app.id,
-        ).then(updatedApp => {
-            // restore the clientSecret coming from the create order
-            updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
-            return updatedApp;
-        }),
-    );
+export const createTestApp = async (name, domain, accessToken, applicationType = 'web', body = {}) => {
+  const application = await createApplication(domain.id, accessToken, {
+    name: name,
+    type: applicationType,
+    clientId: `${name}-id`,
+  }).then((app) =>
+    updateApplication(domain.id, accessToken, body, app.id).then((updatedApp) => {
+      // restore the clientSecret coming from the create order
+      updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
+      return updatedApp;
+    }),
+  );
 
-    expect(application).toBeDefined();
-    expect(application.settings.oauth.clientId).toBeDefined();
+  expect(application).toBeDefined();
+  expect(application.settings.oauth.clientId).toBeDefined();
 
-    return application;
+  return application;
 };

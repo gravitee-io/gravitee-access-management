@@ -401,7 +401,6 @@ afterAll(async () => {
   }
 });
 
-
 const login = async (authResponse, user, clientId) => {
   const loginResult = await extractXsrfTokenAndActionResponse(authResponse);
   return await performFormPost(
@@ -591,20 +590,20 @@ const createMfaApp = async (domain, accessToken, factors: Array<number>) => {
               applicationFactors: factors.map((i) => {
                 return {
                   id: i,
-                  selectionRule: ''
-                } as any
-              })
+                  selectionRule: '',
+                } as any;
+              }),
             },
             enroll: {
               active: true,
               forceEnrollment: true,
-              type: "REQUIRED"
+              type: 'REQUIRED',
             },
             challenge: {
               active: true,
-              type: "REQUIRED"
-            }
-          }
+              type: 'REQUIRED',
+            },
+          },
         },
         account: {
           inherited: false,
@@ -616,7 +615,7 @@ const createMfaApp = async (domain, accessToken, factors: Array<number>) => {
         factors: factors,
       },
       app.id,
-    ).then(updatedApp => {
+    ).then((updatedApp) => {
       // restore the clientSecret coming from the create order
       updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
       return updatedApp;
@@ -659,26 +658,26 @@ const createBruteForceTestApp = async (smsFactor, domain, accessToken, mfaChalle
               applicationFactors: factors.map((i) => {
                 return {
                   id: i,
-                  selectionRule: ''
-                } as any
-              })
+                  selectionRule: '',
+                } as any;
+              }),
             },
             enroll: {
               active: true,
               forceEnrollment: true,
-              type: "REQUIRED"
+              type: 'REQUIRED',
             },
             challenge: {
               active: true,
-              type: "REQUIRED"
-            }
-          }
+              type: 'REQUIRED',
+            },
+          },
         },
         identityProviders: [{ identity: `default-idp-${domain.id}`, priority: -1 }],
         factors: [smsFactor.id],
       },
       app.id,
-    ).then(updatedApp => {
+    ).then((updatedApp) => {
       // restore the clientSecret coming from the create order
       updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
       return updatedApp;
