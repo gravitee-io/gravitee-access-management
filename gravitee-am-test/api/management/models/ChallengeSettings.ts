@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 /* tslint:disable */
 /* eslint-disable */
 /**
@@ -18,63 +33,58 @@ import { exists, mapValues } from '../runtime';
  * @interface ChallengeSettings
  */
 export interface ChallengeSettings {
-    /**
-     *
-     * @type {boolean}
-     * @memberof ChallengeSettings
-     */
-    active?: boolean;
-    /**
-     *
-     * @type {string}
-     * @memberof ChallengeSettings
-     */
-    challengeRule?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof ChallengeSettings
-     */
-    type?: ChallengeSettingsTypeEnum;
+  /**
+   *
+   * @type {boolean}
+   * @memberof ChallengeSettings
+   */
+  active?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof ChallengeSettings
+   */
+  challengeRule?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ChallengeSettings
+   */
+  type?: ChallengeSettingsTypeEnum;
 }
-
 
 /**
  * @export
  */
 export const ChallengeSettingsTypeEnum = {
-    Required: 'REQUIRED',
-    Conditional: 'CONDITIONAL',
-    RiskBased: 'RISK_BASED'
+  Required: 'REQUIRED',
+  Conditional: 'CONDITIONAL',
+  RiskBased: 'RISK_BASED',
 } as const;
 export type ChallengeSettingsTypeEnum = typeof ChallengeSettingsTypeEnum[keyof typeof ChallengeSettingsTypeEnum];
 
-
 export function ChallengeSettingsFromJSON(json: any): ChallengeSettings {
-    return ChallengeSettingsFromJSONTyped(json, false);
+  return ChallengeSettingsFromJSONTyped(json, false);
 }
 
 export function ChallengeSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): ChallengeSettings {
-    if (json == null) {
-        return json;
-    }
-    return {
-
-        'active': !exists(json, 'active') ? undefined : json['active'],
-        'challengeRule': !exists(json, 'challengeRule') ? undefined : json['challengeRule'],
-        'type': !exists(json, 'type') ? undefined : json['type'],
-    };
+  if (json == null) {
+    return json;
+  }
+  return {
+    active: !exists(json, 'active') ? undefined : json['active'],
+    challengeRule: !exists(json, 'challengeRule') ? undefined : json['challengeRule'],
+    type: !exists(json, 'type') ? undefined : json['type'],
+  };
 }
 
 export function ChallengeSettingsToJSON(value?: ChallengeSettings | null): any {
-    if (value == null) {
-        return value;
-    }
-    return {
-
-        'active': value.active,
-        'challengeRule': value.challengeRule,
-        'type': value.type,
-    };
+  if (value == null) {
+    return value;
+  }
+  return {
+    active: value.active,
+    challengeRule: value.challengeRule,
+    type: value.type,
+  };
 }
-

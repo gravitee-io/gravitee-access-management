@@ -97,8 +97,7 @@ describe('Testing dictionaries api...', () => {
     });
     it('should error when attempting to create dictionary with used locale', async () => {
       await expect(async () => {
-        const res = await createDictionary(domain.id, accessToken, { name: 'German2', locale: 'de' });
-        console.log(res);
+        await createDictionary(domain.id, accessToken, { name: 'German2', locale: 'de' });
       }).rejects.toThrow(ResponseError);
     });
     it('should error when attempting to create dictionary with invalid locale', async () => {

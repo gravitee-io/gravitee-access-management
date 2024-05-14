@@ -31,7 +31,7 @@ import { FactorApi } from '@management-apis/FactorApi';
 import { ResourceApi } from '@management-apis/ResourceApi';
 import { DevicesApi } from '@management-apis/DevicesApi';
 import { DeviceIdentifiersApi } from '@management-apis/DeviceIdentifiersApi';
-import {PasswordPolicyApi} from '@management-apis/PasswordPolicyApi';
+import { PasswordPolicyApi } from '@management-apis/PasswordPolicyApi';
 
 function createAccessTokenConfig(accessToken) {
   return new Configuration({ ...managementConf, apiKey: 'Bearer ' + accessToken });

@@ -37,7 +37,7 @@ import cheerio from 'cheerio';
 import { createUser } from '@management-commands/user-management-commands';
 import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
-import {createPasswordPolicy} from '@management-commands/password-policy-management-commands';
+import { createPasswordPolicy } from '@management-commands/password-policy-management-commands';
 
 global.fetch = fetch;
 
@@ -89,7 +89,7 @@ const settings = [
       },
     },
     passwordPolicy: {
-      name: "default",
+      name: 'default',
       minLength: 5,
       maxLength: 24,
       includeNumbers: true,
@@ -123,7 +123,7 @@ const settings = [
       },
     },
     passwordPolicy: {
-      name: "default",
+      name: 'default',
       minLength: 5,
       maxLength: 64,
       includeNumbers: true,
@@ -133,7 +133,7 @@ const settings = [
       expiryDuration: 9,
       passwordHistoryEnabled: true,
       oldPasswords: 3,
-    }
+    },
   },
 ];
 
@@ -147,7 +147,6 @@ const expectedMsg = (setting) => {
     : 'success=reset_password_completed';
 };
 
-
 const getPasswordSettingsAttribute = (setting, selectedSetting, attrName) => {
   if (!setting.inherited) {
     return selectedSetting.passwordSettings[attrName];
@@ -158,7 +157,7 @@ const getPasswordSettingsAttribute = (setting, selectedSetting, attrName) => {
   }
 
   return null;
-}
+};
 
 settings.forEach((setting) => {
   const selectedSetting = selectSetting(setting);
@@ -213,7 +212,7 @@ settings.forEach((setting) => {
             identityProviders: [{ identity: `default-idp-${domain.id}`, priority: 0 }],
           },
           app.id,
-        ).then(updatedApp => {
+        ).then((updatedApp) => {
           // restore the clientSecret coming from the create order
           updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
           return updatedApp;
@@ -274,7 +273,11 @@ settings.forEach((setting) => {
     ];
 
     if (getPasswordSettingsAttribute(setting, selectedSetting, 'passwordHistoryEnabled')) {
-      describe(`when password history is enabled for ${getPasswordSettingsAttribute(setting, selectedSetting, 'oldPasswords')} passwords`, () => {
+      describe(`when password history is enabled for ${getPasswordSettingsAttribute(
+        setting,
+        selectedSetting,
+        'oldPasswords',
+      )} passwords`, () => {
         passwordHistoryTests.forEach(({ password, expectedMsg }) => {
           describe(`when resetting password with ${password}`, () => {
             it('should redirect to forgot password form', async () => {
@@ -304,7 +307,11 @@ settings.forEach((setting) => {
       });
 
       if (getPasswordSettingsAttribute(setting, selectedSetting, 'minLength')) {
-        describe(`when a password is shorter than the minimum length of ${getPasswordSettingsAttribute(setting, selectedSetting, 'minLength')}`, () => {
+        describe(`when a password is shorter than the minimum length of ${getPasswordSettingsAttribute(
+          setting,
+          selectedSetting,
+          'minLength',
+        )}`, () => {
           const minLength = 'SomeP@ssw0rd99'.substring(0, getPasswordSettingsAttribute(setting, selectedSetting, 'minLength') - 1);
           it(`reset password should fail with ${invalidPasswordValue}`, async () => {
             await resetPassword(minLength, invalidPasswordValue, selectedSetting);
@@ -313,7 +320,11 @@ settings.forEach((setting) => {
       }
 
       if (getPasswordSettingsAttribute(setting, selectedSetting, 'maxLength')) {
-        describe(`when a password is longer than the maximum length of ${getPasswordSettingsAttribute(setting, selectedSetting, 'maxLength')}`, () => {
+        describe(`when a password is longer than the maximum length of ${getPasswordSettingsAttribute(
+          setting,
+          selectedSetting,
+          'maxLength',
+        )}`, () => {
           let maxLength = 'SomeP@ssw0rd99';
           while (maxLength.length <= getPasswordSettingsAttribute(setting, selectedSetting, 'maxLength')) {
             maxLength += maxLength;
@@ -351,7 +362,11 @@ settings.forEach((setting) => {
       }
 
       if (getPasswordSettingsAttribute(setting, selectedSetting, 'maxConsecutiveLetters')) {
-        describe(`when password contains sequence exceeding ${getPasswordSettingsAttribute(setting, selectedSetting, 'maxConsecutiveLetters')} consecutive letters`, () => {
+        describe(`when password contains sequence exceeding ${getPasswordSettingsAttribute(
+          setting,
+          selectedSetting,
+          'maxConsecutiveLetters',
+        )} consecutive letters`, () => {
           it(`reset password should fail with ${invalidPasswordValue}`, async () => {
             let letters = '';
             for (let i = 0; i <= getPasswordSettingsAttribute(setting, selectedSetting, 'maxConsecutiveLetters'); i++) {

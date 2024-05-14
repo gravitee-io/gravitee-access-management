@@ -991,7 +991,7 @@ async function createApp1(domain: Domain, accessToken: string, scopeKey: string,
         identityProviders: [{ identity: idpId, priority: -1 }],
       },
       app.id,
-    ).then(updatedApp => {
+    ).then((updatedApp) => {
       // restore the clientSecret coming from the create order
       updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
       return updatedApp;
@@ -1021,7 +1021,7 @@ async function createApp2(domain: Domain, accessToken: string, scopeKey: string,
         identityProviders: [{ identity: idpId, priority: -1 }],
       },
       app.id,
-    ).then(updatedApp => {
+    ).then((updatedApp) => {
       // restore the clientSecret coming from the create order
       updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
       return updatedApp;
@@ -1048,7 +1048,7 @@ async function createApp3(domain: Domain, accessToken: string, scopeKey: string)
         },
       },
       app.id,
-    ).then(updatedApp => {
+    ).then((updatedApp) => {
       // restore the clientSecret coming from the create order
       updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
       return updatedApp;
