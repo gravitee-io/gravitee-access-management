@@ -34,10 +34,10 @@ export function extractDomAttr(response, selector, attr): string {
 
 export function extractCookieSessionValues(cookie): any {
   const jwt = cookie[0]
-      .split('; ')
-      .filter(str => str.includes('GRAVITEE_IO_AM_SESSION'))[0]
-      .split('=')[1]
-      .split('.')[1]
+    .split('; ')
+    .filter((str) => str.includes('GRAVITEE_IO_AM_SESSION'))[0]
+    .split('=')[1]
+    .split('.')[1];
   const decoded = Buffer.from(jwt, 'base64').toString('binary');
-  return JSON.parse(decoded)
+  return JSON.parse(decoded);
 }

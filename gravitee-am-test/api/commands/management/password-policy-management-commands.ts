@@ -14,12 +14,87 @@
  * limitations under the License.
  */
 
-import { getPasswordPolicyApi } from './service/utils';
+import { getIdpApi, getPasswordPolicyApi } from './service/utils';
+import { UpdatePasswordPolicy } from '../../management/models/UpdatePasswordPolicy';
+import { NewPasswordPolicy } from '../../management/models';
 
-export const createPasswordPolicy = (domainId, accessToken, body) =>
+export const createPasswordPolicy = (domainId: string, accessToken: string, body: NewPasswordPolicy) =>
   getPasswordPolicyApi(accessToken).createPasswordPolicy({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     newPasswordPolicy: body,
+  });
+
+export const getPasswordPolicy = (domainId: string, accessToken: string, policyId: string) =>
+  getPasswordPolicyApi(accessToken).getPasswordPolicies({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    policy: policyId,
+  });
+
+export const getPasswordPolicyRaw = (domainId: string, accessToken: string, policyId: string) =>
+  getPasswordPolicyApi(accessToken).getPasswordPoliciesRaw({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    policy: policyId,
+  });
+
+export const getAllPasswordPolicies = (domainId: string, accessToken: string) =>
+  getPasswordPolicyApi(accessToken).listPasswordPolicies({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+  });
+
+export const getAllPasswordPoliciesRaw = (domainId: string, accessToken: string) =>
+  getPasswordPolicyApi(accessToken).listPasswordPoliciesRaw({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+  });
+
+export const updatePasswordPolicy = (domainId: string, accessToken: string, policyId: string, body: UpdatePasswordPolicy) =>
+  getPasswordPolicyApi(accessToken).updatePasswordPolicy({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    policy: policyId,
+    updatePasswordPolicy: body,
+  });
+
+export const setPasswordPolicyDefault = (domainId: string, accessToken: string, policyId: string) =>
+  getPasswordPolicyApi(accessToken).setPasswordPolicyDefault({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    policy: policyId,
+  });
+
+export const deletePasswordPolicy = (domainId: string, accessToken: string, policyId: string) =>
+  getPasswordPolicyApi(accessToken).deletePasswordPolicy({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    policy: policyId,
+  });
+
+export const assignPasswordPolicyToIdp = (domainId: string, accessToken: string, idpId: string, policyId: string) =>
+  getIdpApi(accessToken).assignPasswordPolicyToIdp({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    identity: idpId,
+    policy: policyId,
+  });
+
+export const resetUserPassword = (domainId: string, accessToken: string, user: string, password: string) =>
+  getPasswordPolicyApi(accessToken).resetUserPassword({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: user,
+    password: password,
   });

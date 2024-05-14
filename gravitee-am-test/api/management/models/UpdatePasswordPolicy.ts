@@ -30,88 +30,95 @@ import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
- * @interface NewPasswordPolicy
+ * @interface UpdatePasswordPolicy
  */
-export interface NewPasswordPolicy {
+export interface UpdatePasswordPolicy {
   /**
    *
    * @type {string}
-   * @memberof NewPasswordPolicy
+   * @memberof UpdatePasswordPolicy
    */
   name: string;
   /**
    *
    * @type {number}
-   * @memberof NewPasswordPolicy
+   * @memberof UpdatePasswordPolicy
    */
   minLength?: number;
   /**
    *
    * @type {number}
-   * @memberof NewPasswordPolicy
+   * @memberof UpdatePasswordPolicy
    */
   maxLength?: number;
   /**
    *
    * @type {boolean}
-   * @memberof NewPasswordPolicy
+   * @memberof UpdatePasswordPolicy
    */
   includeNumbers?: boolean;
   /**
    *
    * @type {boolean}
-   * @memberof NewPasswordPolicy
+   * @memberof UpdatePasswordPolicy
    */
   includeSpecialCharacters?: boolean;
   /**
    *
    * @type {boolean}
-   * @memberof NewPasswordPolicy
+   * @memberof UpdatePasswordPolicy
    */
   lettersInMixedCase?: boolean;
   /**
    *
    * @type {number}
-   * @memberof NewPasswordPolicy
+   * @memberof UpdatePasswordPolicy
    */
   maxConsecutiveLetters?: number;
   /**
    *
    * @type {boolean}
-   * @memberof NewPasswordPolicy
+   * @memberof UpdatePasswordPolicy
    */
   excludePasswordsInDictionary?: boolean;
   /**
    *
    * @type {boolean}
-   * @memberof NewPasswordPolicy
+   * @memberof UpdatePasswordPolicy
    */
   excludeUserProfileInfoInPassword?: boolean;
   /**
    *
    * @type {number}
-   * @memberof NewPasswordPolicy
+   * @memberof UpdatePasswordPolicy
    */
   expiryDuration?: number;
   /**
    *
    * @type {boolean}
-   * @memberof NewPasswordPolicy
+   * @memberof UpdatePasswordPolicy
    */
   passwordHistoryEnabled?: boolean;
   /**
    *
    * @type {number}
-   * @memberof NewPasswordPolicy
+   * @memberof UpdatePasswordPolicy
    */
   oldPasswords?: number;
+
+  /**
+   *
+   * @type {boolean}
+   * @memberof defaultPolicy
+   */
+  defaultPolicy?: boolean;
 }
 
-export function NewPasswordPolicyFromJSON(json: any): NewPasswordPolicy {
-  return NewPasswordPolicyFromJSONTyped(json, false);
+export function UpdatePasswordPolicyFromJSON(json: any): UpdatePasswordPolicy {
+  return UpdatePasswordPolicyFromJSONTyped(json, false);
 }
 
-export function NewPasswordPolicyFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewPasswordPolicy {
+export function UpdatePasswordPolicyFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdatePasswordPolicy {
   if (json === undefined || json === null) {
     return json;
   }
@@ -130,10 +137,11 @@ export function NewPasswordPolicyFromJSONTyped(json: any, ignoreDiscriminator: b
     expiryDuration: !exists(json, 'expiryDuration') ? undefined : json['expiryDuration'],
     passwordHistoryEnabled: !exists(json, 'passwordHistoryEnabled') ? undefined : json['passwordHistoryEnabled'],
     oldPasswords: !exists(json, 'oldPasswords') ? undefined : json['oldPasswords'],
+    defaultPolicy: !exists(json, 'defaultPolicy') ? undefined : json['defaultPolicy'],
   };
 }
 
-export function NewPasswordPolicyToJSON(value?: NewPasswordPolicy | null): any {
+export function UpdatePasswordPolicyToJSON(value?: UpdatePasswordPolicy | null): any {
   if (value === undefined) {
     return undefined;
   }
@@ -153,5 +161,6 @@ export function NewPasswordPolicyToJSON(value?: NewPasswordPolicy | null): any {
     expiryDuration: value.expiryDuration,
     passwordHistoryEnabled: value.passwordHistoryEnabled,
     oldPasswords: value.oldPasswords,
+    defaultPolicy: value.defaultPolicy,
   };
 }
