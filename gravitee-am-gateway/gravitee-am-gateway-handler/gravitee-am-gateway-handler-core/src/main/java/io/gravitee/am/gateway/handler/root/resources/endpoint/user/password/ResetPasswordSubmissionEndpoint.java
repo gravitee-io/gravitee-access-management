@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
@@ -30,12 +29,13 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.MultiMap;
-import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.jsoup.internal.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
+
+import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_QUERY_PARAM;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -87,13 +87,11 @@ public class ResetPasswordSubmissionEndpoint extends UserRequestHandler {
             // do on force password reset
             if (context.get(ConstantKeys.TOKEN_CONTEXT_KEY) != null) {
                 JWT jwt = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
-                String claimsRequestParameter = (String) jwt.getClaimsRequestParameter();
+                String claimsRequestParameter = (String) jwt.get(CLAIM_QUERY_PARAM);
                 if (!StringUtil.isBlank(claimsRequestParameter)) {
-                    final HttpServerRequest request = context.request();
-                    RequestUtils.getCleanedQueryParams(request);
-                    String uri = UriBuilderRequest.resolveProxyRequest(request, claimsRequestParameter);
+                    final var queryParamsToRestore = RequestUtils.getQueryParams(claimsRequestParameter, false);
                     context.response()
-                            .putHeader(io.vertx.core.http.HttpHeaders.LOCATION, uri)
+                            .putHeader(io.vertx.core.http.HttpHeaders.LOCATION, getReturnUrl(context, queryParamsToRestore))
                             .setStatusCode(302)
                             .end();
                     return;

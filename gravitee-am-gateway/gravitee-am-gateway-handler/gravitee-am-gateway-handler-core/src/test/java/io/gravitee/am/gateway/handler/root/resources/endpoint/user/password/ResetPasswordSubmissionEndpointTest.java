@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
@@ -25,6 +26,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.ext.web.Session;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import org.junit.Test;
@@ -39,6 +41,7 @@ import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -74,16 +77,17 @@ public class ResetPasswordSubmissionEndpointTest extends RxWebTestBase {
 
         User user = new User();
         user.setId("user-id");
-        String redirectUrl = "/authorize?client_id=client-id&response_type=code&redirect_uri=https%3A%2F%2Fwebapp";
 
         JWT jwt = new JWT();
         jwt.setSub(user.getId());
         jwt.setAud(client.getId());
         jwt.setIat(System.currentTimeMillis());
-        jwt.setClaimsRequestParameter(redirectUrl);
+        jwt.put(ConstantKeys.CLAIM_QUERY_PARAM, "client_id=client-id&response_type=code&redirect_uri=https%3A%2F%2Fwebapp");
 
         String jwtToken = "eyJraWQiOiJkZWZhdWx0LWdyYXZpdGVlLUFNLWtleSIsInR5cCI6IkpXVCIsImFsZyI6IkhTMjU2In0.eyJzdWIiOiJ1c2VyLWlkIiwiYXVkIjoiY2xpZW50LWlkIiwiaWF0IjoxNzE0MTMxODE1NjI0LCJjbGFpbXNfcmVxdWVzdF9wYXJhbWV0ZXIiOiIvYXV0aG9yaXplP2NsaWVudF9pZD1jbGllbnQtaWQmcmVzcG9uc2VfdHlwZT1jb2RlJnJlZGlyZWN0X3VyaT1odHRwcyUzQSUyRiUyRndlYmFwcCJ9.-D_OeGamCN3xciwUUKwZYBvmsk1-zPjFUz_FD2GPHGE";
-        router.route().order(-1).handler(routingContext -> {
+        router.route().order(-1)
+        .handler(routingContext -> {
+            routingContext.getDelegate().setSession(mock(Session.class));
             routingContext.put("client", client);
             routingContext.put("user", user);
             routingContext.put("token", jwt);
@@ -119,6 +123,7 @@ public class ResetPasswordSubmissionEndpointTest extends RxWebTestBase {
 
         String jwtToken = "eyJraWQiOiJkZWZhdWx0LWdyYXZpdGVlLUFNLWtleSIsInR5cCI6IkpXVCIsImFsZyI6IkhTMjU2In0.eyJzdWIiOiJ1c2VyLWlkIiwiYXVkIjoiY2xpZW50LWlkIiwiaWF0IjoxNzE0MTMxODE1NjI0fQ.UuqhK0mg_378I7-r7GkNvwkr9MYiaQGwuCYKx8zEFAw";
         router.route().order(-1).handler(routingContext -> {
+            routingContext.getDelegate().setSession(mock(Session.class));
             routingContext.put("client", client);
             routingContext.put("user", user);
             routingContext.put("token", jwt);

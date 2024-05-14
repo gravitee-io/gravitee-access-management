@@ -24,9 +24,12 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import org.springframework.core.env.Environment;
 
+import java.time.Instant;
 import java.util.Optional;
 
+import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_QUERY_PARAM;
 import static java.util.Optional.ofNullable;
 
 public class ForceResetPasswordStep extends AuthenticationFlowStep {
@@ -34,10 +37,13 @@ public class ForceResetPasswordStep extends AuthenticationFlowStep {
     private final JWTService jwtService;
     private final CertificateManager certificateManager;
 
-    public ForceResetPasswordStep(Handler<RoutingContext> handler, JWTService jwtService, CertificateManager certificateManager) {
+    private final Long tokenExpiresAfter;
+
+    public ForceResetPasswordStep(Handler<RoutingContext> handler, JWTService jwtService, CertificateManager certificateManager, Environment environment) {
         super(handler);
         this.jwtService = jwtService;
         this.certificateManager = certificateManager;
+        this.tokenExpiresAfter =  environment.getProperty("user.resetPassword.token.expire-after", Long.class, 300L);
     }
 
     @Override
@@ -52,8 +58,10 @@ public class ForceResetPasswordStep extends AuthenticationFlowStep {
                 JWT jwt = new JWT();
                 jwt.setSub(endUser.getId());
                 jwt.setAud(client.getId());
-                jwt.setIat(System.currentTimeMillis());
-                jwt.setClaimsRequestParameter(routingContext.request().uri());
+                Instant now = Instant.now();
+                jwt.setIat(now.getEpochSecond());
+                jwt.setExp(now.plusSeconds(tokenExpiresAfter).getEpochSecond());
+                jwt.put(CLAIM_QUERY_PARAM, routingContext.request().query());
                 String jwtString = jwtService.encode(jwt, certificateManager.defaultCertificateProvider()).blockingGet();
                 routingContext.put(ConstantKeys.TOKEN_CONTEXT_KEY, jwtString);
                 routingContext.put(ConstantKeys.RETURN_URL_KEY, routingContext.request().uri());
