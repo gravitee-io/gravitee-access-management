@@ -18,10 +18,9 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
@@ -111,7 +110,8 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
                 );
     }
 
-    private String getTemplateFileName(Client client) {
-        return "registration_confirmation" + (client != null ? FormManager.TEMPLATE_NAME_SEPARATOR + client.getId() : "");
+    @Override
+    public String getTemplateSuffix() {
+        return Template.REGISTRATION_CONFIRMATION.template();
     }
 }

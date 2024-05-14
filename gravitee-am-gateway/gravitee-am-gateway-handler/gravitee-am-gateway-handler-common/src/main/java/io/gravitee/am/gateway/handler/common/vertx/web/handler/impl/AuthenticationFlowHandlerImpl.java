@@ -42,6 +42,7 @@ import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -81,6 +82,9 @@ public class AuthenticationFlowHandlerImpl implements AuthenticationFlowHandler 
     @Autowired
     private CertificateManager certificateManager;
 
+    @Autowired
+    private Environment environment;
+
     @Value("${http.cookie.rememberMe.name:" + DEFAULT_REMEMBER_ME_COOKIE_NAME + "}")
     private String rememberMeCookieName;
 
@@ -92,8 +96,8 @@ public class AuthenticationFlowHandlerImpl implements AuthenticationFlowHandler 
         steps.add(new FormIdentifierFirstLoginStep(RedirectHandler.create("/login/identifier"), domain));
         steps.add(new WebAuthnLoginStep(RedirectHandler.create("/webauthn/login"), domain, webAuthnCookieService));
         steps.add(new FormLoginStep(RedirectHandler.create("/login")));
+        steps.add(new ForceResetPasswordStep(RedirectHandler.create("/resetPassword"), jwtService, certificateManager, environment));
         steps.add(new WebAuthnRegisterStep(domain, RedirectHandler.create("/webauthn/register"), factorManager, credentialService));
-        steps.add(new ForceResetPasswordStep(RedirectHandler.create("/resetPassword"), jwtService, certificateManager));
         steps.add(new MFAEnrollStep(RedirectHandler.create("/mfa/enroll"), ruleEngine, factorManager));
         steps.add(new MFAChallengeStep(RedirectHandler.create("/mfa/challenge"), ruleEngine, factorManager));
         steps.add(new MFARecoveryCodeStep(RedirectHandler.create("/mfa/recovery_code"), ruleEngine, factorManager));
