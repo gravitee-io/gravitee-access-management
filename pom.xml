@@ -73,10 +73,10 @@
 
     <properties>
         <awaitility.version>4.2.0</awaitility.version>
-        <gravitee-bom.version>7.0.23</gravitee-bom.version>
+        <gravitee-bom.version>8.0.4</gravitee-bom.version>
         <gravitee-common.version>4.2.0</gravitee-common.version>
         <gravitee-plugin.version>4.0.3</gravitee-plugin.version>
-        <gravitee-node.version>5.14.0</gravitee-node.version>
+        <gravitee-node.version>5.14.3</gravitee-node.version>
         <gravitee-reporter.version>1.17.1</gravitee-reporter.version>
         <gravitee-gateway-api.version>3.5.0</gravitee-gateway-api.version>
         <gravitee-expression-language.version>3.1.0</gravitee-expression-language.version>
@@ -105,7 +105,6 @@
         <ldaptive.version>1.2.4</ldaptive.version>
         <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
         <thymeleaf.version>3.1.2.RELEASE</thymeleaf.version>
-        <bouncycastle.version>1.78</bouncycastle.version>
         <wiremock.version>3.0.4</wiremock.version>
         <embedded-ldap-junit.version>0.7</embedded-ldap-junit.version>
         <reactor-netty.version>1.0.15</reactor-netty.version>
@@ -430,16 +429,6 @@
                 <groupId>com.jayway.jsonpath</groupId>
                 <artifactId>json-path</artifactId>
                 <version>${json-path.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.bouncycastle</groupId>
-                <artifactId>bcpkix-jdk18on</artifactId>
-                <version>${bouncycastle.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.bouncycastle</groupId>
-                <artifactId>bcprov-jdk18on</artifactId>
-                <version>${bouncycastle.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.mongodb</groupId>
