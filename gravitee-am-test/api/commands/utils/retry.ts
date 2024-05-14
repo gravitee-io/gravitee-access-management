@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {waitFor} from '@management-commands/domain-management-commands';
-
+import { waitFor } from '@management-commands/domain-management-commands';
 
 export async function withRetry(operation, retries = 50, delay = 100) {
   let success = false;

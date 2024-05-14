@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 /* tslint:disable */
 /* eslint-disable */
 /**
@@ -18,79 +33,74 @@ import { exists } from '../runtime';
  * @interface PatchEnrollSettings
  */
 export interface PatchEnrollSettings {
-    /**
-     *
-     * @type {boolean}
-     * @memberof PatchEnrollSettings
-     */
-    active?: boolean;
-    /**
-     *
-     * @type {boolean}
-     * @memberof PatchEnrollSettings
-     */
-    forceEnrollment?: boolean;
-    /**
-     *
-     * @type {number}
-     * @memberof PatchEnrollSettings
-     */
-    skipTimeSeconds?: number;
-    /**
-     *
-     * @type {string}
-     * @memberof PatchEnrollSettings
-     */
-    enrollmentRule?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof PatchEnrollSettings
-     */
-    type?: PatchEnrollSettingsTypeEnum;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchEnrollSettings
+   */
+  active?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchEnrollSettings
+   */
+  forceEnrollment?: boolean;
+  /**
+   *
+   * @type {number}
+   * @memberof PatchEnrollSettings
+   */
+  skipTimeSeconds?: number;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchEnrollSettings
+   */
+  enrollmentRule?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PatchEnrollSettings
+   */
+  type?: PatchEnrollSettingsTypeEnum;
 }
-
 
 /**
  * @export
  */
 export const PatchEnrollSettingsTypeEnum = {
-    Optional: 'OPTIONAL',
-    Required: 'REQUIRED',
-    Conditional: 'CONDITIONAL',
+  Optional: 'OPTIONAL',
+  Required: 'REQUIRED',
+  Conditional: 'CONDITIONAL',
 } as const;
 export type PatchEnrollSettingsTypeEnum = typeof PatchEnrollSettingsTypeEnum[keyof typeof PatchEnrollSettingsTypeEnum];
 
-
 export function PatchEnrollSettingsFromJSON(json: any): PatchEnrollSettings {
-    return PatchEnrollSettingsFromJSONTyped(json, false);
+  return PatchEnrollSettingsFromJSONTyped(json, false);
 }
 
 export function PatchEnrollSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchEnrollSettings {
-    if (json == null) {
-        return json;
-    }
-    return {
-
-        'active': !exists(json, 'active') ? undefined : json['active'],
-        'forceEnrollment': !exists(json, 'forceEnrollment') ? undefined : json['forceEnrollment'],
-        'skipTimeSeconds': !exists(json, 'skipTimeSeconds') ? undefined : json['skipTimeSeconds'],
-        'enrollmentRule': !exists(json, 'enrollmentRule') ? undefined : json['enrollmentRule'],
-        'type': !exists(json, 'type') ? undefined : json['type'],
-    };
+  if (json == null) {
+    return json;
+  }
+  return {
+    active: !exists(json, 'active') ? undefined : json['active'],
+    forceEnrollment: !exists(json, 'forceEnrollment') ? undefined : json['forceEnrollment'],
+    skipTimeSeconds: !exists(json, 'skipTimeSeconds') ? undefined : json['skipTimeSeconds'],
+    enrollmentRule: !exists(json, 'enrollmentRule') ? undefined : json['enrollmentRule'],
+    type: !exists(json, 'type') ? undefined : json['type'],
+  };
 }
 
 export function PatchEnrollSettingsToJSON(value?: PatchEnrollSettings | null): any {
-    if (value == null) {
-        return value;
-    }
-    return {
-
-        'active': value.active,
-        'forceEnrollment': value.forceEnrollment,
-        'skipTimeSeconds': value.skipTimeSeconds,
-        'enrollmentRule': value.enrollmentRule,
-        'type': value.type,
-    };
+  if (value == null) {
+    return value;
+  }
+  return {
+    active: value.active,
+    forceEnrollment: value.forceEnrollment,
+    skipTimeSeconds: value.skipTimeSeconds,
+    enrollmentRule: value.enrollmentRule,
+    type: value.type,
+  };
 }
-

@@ -111,6 +111,13 @@ export interface IdentityProvider {
    * @memberof IdentityProvider
    */
   updatedAt?: number;
+
+  /**
+   *
+   * @type {string}
+   * @memberof IdentityProvider
+   */
+  passwordPolicy?: string;
 }
 
 /**
@@ -147,6 +154,7 @@ export function IdentityProviderFromJSONTyped(json: any, ignoreDiscriminator: bo
     domainWhitelist: !exists(json, 'domainWhitelist') ? undefined : json['domainWhitelist'],
     createdAt: !exists(json, 'createdAt') ? undefined : json['createdAt'],
     updatedAt: !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
+    passwordPolicy: !exists(json, 'passwordPolicy') ? undefined : json['passwordPolicy'],
   };
 }
 
@@ -171,5 +179,6 @@ export function IdentityProviderToJSON(value?: IdentityProvider | null): any {
     domainWhitelist: value.domainWhitelist,
     createdAt: value.createdAt,
     updatedAt: value.updatedAt,
+    passwordPolicy: value.passwordPolicy,
   };
 }
