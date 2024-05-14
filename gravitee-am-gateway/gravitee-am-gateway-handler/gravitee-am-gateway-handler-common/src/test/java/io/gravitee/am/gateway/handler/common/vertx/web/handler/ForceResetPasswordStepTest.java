@@ -32,6 +32,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.core.env.Environment;
 
 import java.util.List;
 
@@ -62,12 +63,16 @@ public class ForceResetPasswordStepTest {
     @Mock
     private HttpServerRequest httpServerRequest;
 
+    @Mock
+    private Environment environment;
+
     private AuthenticationFlowChain authenticationFlowChain;
 
 
     @Before
     public void setUp() {
-        step = new ForceResetPasswordStep(redirectHandler, jwtService, certificateManager);
+        when(environment.getProperty("user.resetPassword.token.expire-after", Long.class, 300L)).thenReturn(300L);
+        step = new ForceResetPasswordStep(redirectHandler, jwtService, certificateManager, environment);
         authenticationFlowChain = spy(new AuthenticationFlowChain(List.of(step)));
 
         when(routingContext.request()).thenReturn(httpServerRequest);
