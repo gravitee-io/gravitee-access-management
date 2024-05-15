@@ -20,7 +20,7 @@ import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-import io.gravitee.am.service.model.NewUser;
+import io.gravitee.am.service.model.NewOrganizationUser;
 import io.gravitee.cockpit.api.command.v1.CockpitCommandType;
 import io.gravitee.cockpit.api.command.v1.user.UserCommand;
 import io.gravitee.cockpit.api.command.v1.user.UserCommandPayload;
@@ -111,7 +111,7 @@ public class UserCommandHandlerTest {
                 .build();
         UserCommand command = new UserCommand(userPayload);
 
-        when(userService.createOrUpdate(eq(ReferenceType.ORGANIZATION), eq("orga#1"), any(NewUser.class)))
+        when(userService.createOrUpdate(eq(ReferenceType.ORGANIZATION), eq("orga#1"), any(NewOrganizationUser.class)))
                 .thenReturn(Single.error(new TechnicalException()));
 
         TestObserver<UserReply> obs = userCommandHandler.handle(command).test();

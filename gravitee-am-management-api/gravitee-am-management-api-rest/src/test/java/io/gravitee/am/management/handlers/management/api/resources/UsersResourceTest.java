@@ -18,7 +18,11 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Sets;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Organization;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -29,21 +33,19 @@ import io.gravitee.common.util.Maps;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.function.Function;
-import org.junit.Before;
-import org.junit.Test;
-
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import static io.gravitee.am.model.ReferenceType.ORGANIZATION;
 import static java.util.stream.Collectors.toList;
@@ -52,7 +54,9 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -321,5 +325,95 @@ public class UsersResourceTest extends JerseySpringTest {
         assertEquals(user.getUsername(), mockUser.getUsername());
         assertNull(user.getPassword());
         assertEquals(user.getReferenceId(), mockUser.getReferenceId());
+    }
+
+    @Test
+    public void shouldCreateOrganizationUserServiceAccount() {
+        when(permissionService.hasPermission(any(), any())).thenReturn(Single.just(true));
+        when(organizationService.findById(ORGANIZATION_DEFAULT)).thenReturn(Single.just(new Organization()));
+
+        final User mockUser = new User();
+        mockUser.setId("service-id-1");
+        mockUser.setReferenceType(ORGANIZATION);
+        mockUser.setReferenceId("DEFAULT");
+        mockUser.setEmail("test@test.com");
+        mockUser.setServiceAccount(Boolean.TRUE);
+
+        when(organizationUserService.createGraviteeUser(any(), any(), any())).thenReturn(Single.just(mockUser));
+
+        final NewUser entity = new NewUser();
+        entity.setUsername("test");
+        entity.setEmail("test@test.com");
+        entity.setServiceAccount(Boolean.TRUE);
+        final Response response = target("organizations")
+                .path(ORGANIZATION_DEFAULT)
+                .path("users")
+                .request()
+                .post(Entity.entity(entity, MediaType.APPLICATION_JSON_TYPE));
+
+        assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
+        verify(organizationUserService).createGraviteeUser(any(), any(), any());
+
+        User user = readEntity(response, User.class);
+        assertEquals(user.getId(), mockUser.getId());
+        assertEquals(user.getUsername(), mockUser.getUsername());
+        assertNull(user.getPassword());
+        assertTrue(user.getServiceAccount());
+        assertEquals(user.getReferenceId(), mockUser.getReferenceId());
+    }
+
+    @Test
+    public void shouldGetOrganizationUsersAndServiceAccount() {
+        final String organizationId = "DEFAULT";
+
+        final User mockUser = new User();
+        mockUser.setId("service-id-1");
+        mockUser.setUsername("service-1");
+        mockUser.setReferenceType(ORGANIZATION);
+        mockUser.setReferenceId(organizationId);
+        mockUser.setServiceAccount(Boolean.TRUE);
+
+        final User mockUser2 = new User();
+        mockUser2.setId("user-id-2");
+        mockUser2.setUsername("username-2");
+        mockUser2.setPassword("SomePassWord-2");
+        mockUser2.setReferenceType(ORGANIZATION);
+        mockUser2.setReferenceId(organizationId);
+
+        final User mockUser3 = new User();
+        mockUser3.setId("user-id-3");
+        mockUser3.setUsername("username-3");
+        mockUser3.setPassword("SomePassWord-3");
+        mockUser3.setReferenceType(ORGANIZATION);
+        mockUser3.setReferenceId(organizationId);
+        mockUser3.setServiceAccount(Boolean.FALSE);
+
+        final Set<User> users = new HashSet<>(Arrays.asList(mockUser, mockUser2, mockUser3));
+        final Page<User> pagedUsers = new Page<>(users, 0, 3);
+
+        final Map<Permission, Set<Acl>> permissions = Maps.<Permission, Set<Acl>>builder().put(Permission.ORGANIZATION_USER, Sets.newHashSet(Acl.LIST)).build();
+        when(permissionService.findAllPermissions(any(), eq(ORGANIZATION), eq(organizationId))).thenReturn(Single.just(permissions));
+        doReturn(Single.just(pagedUsers)).when(organizationUserService).findAll(ORGANIZATION, organizationId, 0, 10);
+
+        final Response response = target("organizations")
+                .path("DEFAULT")
+                .path("users")
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+                .request()
+                .get();
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        Page<User> values = readEntity(response, new TypeReference<>() {
+        });
+
+        assertEquals(values.getCurrentPage(), 0);
+        assertEquals(values.getTotalCount(), 3);
+        final Collection<User> data = values.getData();
+
+        assertTrue(getFilteredElements(data, User::getId).containsAll(List.of("service-id-1", "user-id-2", "user-id-3")));
+        assertTrue(getFilteredElements(data, User::getUsername).containsAll(List.of("service-1", "username-2", "username-3")));
+        assertTrue(getFilteredElements(data, User::getPassword).isEmpty());
     }
 }

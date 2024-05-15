@@ -20,7 +20,83 @@
   <h1>New User</h1>
   <div class="new-user-content">
     <form (ngSubmit)="create()" #userForm="ngForm" fxLayout="column" fxFlex="70">
-      <div class="gv-form-section">
+      <div *ngIf="isOrganizationUserAction()">
+        <div class="gv-form-section">
+          <div class="gv-form-section-title">
+            <h3>User Type</h3>
+          </div>
+          <mat-radio-group [(ngModel)]="selectedAccountType" name="accountType" (ngModelChange)="selectAccountType($event)">
+            <div fxLayout="row" fxLayoutGap="20">
+              <mat-card
+                appearance="outlined"
+                [ngClass]="{ 'selected-card': selectedAccountType === AccountType.User }"
+                (click)="selectAccountType(AccountType.User)"
+                fxFlex="50"
+              >
+                <mat-card-content fxLayoutAlign="start center" fxLayout="row">
+                  <mat-radio-button [value]="AccountType.User"></mat-radio-button>
+                  <div fxLayout="column">
+                    <div>
+                      <mat-icon svgIcon="gio:user"></mat-icon>
+                    </div>
+                    <div>User</div>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+              <mat-card
+                appearance="outlined"
+                [ngClass]="{ 'selected-card': selectedAccountType === AccountType.ServiceAccount }"
+                (click)="selectAccountType(AccountType.ServiceAccount)"
+                fxFlex="50"
+              >
+                <mat-card-content fxLayoutAlign="start center" fxLayout="row">
+                  <mat-radio-button [value]="AccountType.ServiceAccount"></mat-radio-button>
+                  <div fxLayout="column">
+                    <div>
+                      <mat-icon svgIcon="gio:user-service"></mat-icon>
+                    </div>
+                    <div>Service Account</div>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </mat-radio-group>
+        </div>
+      </div>
+      <div class="gv-form-section" *ngIf="isOrganizationUserAction() && isServiceAccount()">
+        <div class="gv-form-section-title">
+          <h3>General Details</h3>
+        </div>
+        <div fxLayout="column">
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Service Name</mat-label>
+            <input
+              matInput
+              type="text"
+              placeholder="Service name"
+              #serviceName="ngModel"
+              name="serviceName"
+              [(ngModel)]="service.username"
+              required
+            />
+            <mat-error *ngIf="serviceName.errors?.required">Enter service name</mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Email Address</mat-label>
+            <input
+              matInput
+              type="email"
+              placeholder="Email Address"
+              #serviceEmail="ngModel"
+              name="serviceEmail"
+              [(ngModel)]="service.email"
+              [email]="service.email !== ''"
+            />
+            <mat-error *ngIf="serviceEmail.errors?.required">Enter service email</mat-error>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="gv-form-section" *ngIf="!isServiceAccount()">
         <div fxLayout="row">
           <mat-form-field appearance="outline" floatLabel="always" style="margin-right: 20px">
             <mat-label>First name</mat-label>
@@ -82,12 +158,13 @@
             (change)="toggleUseEmailAsUsername($event)"
             [disabled]="email.invalid"
             style="margin-top: 20px"
-            ><mat-hint style="font-size: 75%">Use email as username</mat-hint></mat-checkbox
           >
+            <mat-hint style="font-size: 75%">Use email as username</mat-hint>
+          </mat-checkbox>
         </div>
         <div fxLayout="column" *ngIf="!isOrganizationUserAction()">
           <mat-slide-toggle (change)="preRegistration = !preRegistration">Enable pre-registration</mat-slide-toggle>
-          <mat-hint style="font-size: 75%">The user will receive an email to complete his profile and activate account.</mat-hint>
+          <mat-hint style="font-size: 75%">The user will receive an email to complete his profile and activate account. </mat-hint>
         </div>
         <div *ngIf="!preRegistration" [@fadeInOut]>
           <div fxLayout="row">
@@ -101,7 +178,7 @@
                 [(ngModel)]="user.password"
                 [required]="!preRegistration"
               />
-              <mat-icon matSuffix (click)="hidePassword = !hidePassword">{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+              <mat-icon matSuffix (click)="hidePassword = !hidePassword">{{ hidePassword ? 'visibility_off' : 'visibility' }} </mat-icon>
               <mat-hint>Password for the User.</mat-hint>
               <mat-error *ngIf="password.errors?.required">Enter password</mat-error>
             </mat-form-field>
@@ -114,12 +191,11 @@
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-select placeholder="Identity provider" [(ngModel)]="user.source" name="source">
               <mat-option>None</mat-option>
-              <mat-option *ngFor="let userProvider of userProviders" [value]="userProvider.id">{{ userProvider.name }}</mat-option>
+              <mat-option *ngFor="let userProvider of userProviders" [value]="userProvider.id">{{ userProvider.name }} </mat-option>
             </mat-select>
             <mat-hint
-              >Assign user to an identity provider. The user will be stored in the selected identity provider instead of the default
-              one.</mat-hint
-            >
+              >Assign user to an identity provider. The user will be stored in the selected identity provider instead of the default one.
+            </mat-hint>
           </mat-form-field>
         </div>
       </div>
@@ -138,9 +214,9 @@
         </div>
       </div>
 
-      <div class="gv-form-section">
+      <div class="gv-form-section" *ngIf="!isServiceAccount()">
         <div class="gv-form-section-title">
-          <h5>Additional information</h5>
+          <h3>Additional information</h3>
           <small>Custom information about the user. These details will be available in the user's profile.</small>
           <mat-divider></mat-divider>
         </div>
@@ -155,8 +231,8 @@
       </div>
     </form>
     <div class="gv-page-description" fxFlex>
-      <h3>User creation ?</h3>
-      <div class="gv-page-description-content">
+      <h3>{{ isServiceAccount() ? 'Service Account Creation ?' : 'User creation ?' }}</h3>
+      <div class="gv-page-description-content" *ngIf="!isServiceAccount()">
         <p>User will be able to access and sign-in to clients registered to that domain.</p>
       </div>
     </div>

@@ -42,7 +42,7 @@ import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
-import io.gravitee.am.service.model.NewUser;
+import io.gravitee.am.service.model.AbstractNewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
@@ -274,7 +274,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).throwable(throwable)));
     }
 
-    protected io.gravitee.am.identityprovider.api.User convert(NewUser newUser) {
+    protected io.gravitee.am.identityprovider.api.User convert(AbstractNewUser newUser) {
         DefaultUser user = new DefaultUser(newUser.getUsername());
         user.setCredentials(newUser.getPassword());
 
@@ -299,7 +299,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
         return user;
     }
 
-    protected User transform(NewUser newUser, ReferenceType referenceType, String referenceId) {
+    protected User transform(AbstractNewUser newUser, ReferenceType referenceType, String referenceId) {
         User user = new User();
         user.setId(RandomString.generate());
         user.setExternalId(newUser.getExternalId());
@@ -321,10 +321,11 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
         user.setCreatedAt(new Date());
         user.setUpdatedAt(user.getCreatedAt());
         user.setLastPasswordReset(user.getCreatedAt());
+        user.setServiceAccount(newUser.getServiceAccount());
         return user;
     }
 
-    protected void updateInfos(User user, NewUser newUser) {
+    protected void updateInfos(User user, AbstractNewUser newUser) {
         user.setFirstName(newUser.getFirstName());
         user.setLastName(newUser.getLastName());
         user.setEmail(newUser.getEmail());
@@ -375,7 +376,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
             additionalInformation.put(StandardClaims.EMAIL, user.getEmail());
         }
         if (user.getAdditionalInformation() != null) {
-            user.getAdditionalInformation().forEach((k, v) -> additionalInformation.putIfAbsent(k, v));
+            user.getAdditionalInformation().forEach(additionalInformation::putIfAbsent);
         }
         idpUser.setAdditionalInformation(additionalInformation);
         idpUser.setForceResetPassword(Boolean.FALSE);

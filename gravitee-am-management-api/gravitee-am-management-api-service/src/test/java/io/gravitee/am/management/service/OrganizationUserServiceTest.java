@@ -34,7 +34,7 @@ import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
-import io.gravitee.am.service.model.NewUser;
+import io.gravitee.am.service.model.NewOrganizationUser;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
 import io.gravitee.am.service.validators.user.UserValidatorImpl;
 import io.reactivex.rxjava3.core.Completable;
@@ -171,8 +171,8 @@ public class OrganizationUserServiceTest {
         verify(membershipService, times(3)).delete(anyString());
     }
 
-    private NewUser newOrganizationUser() {
-        NewUser newUser = new NewUser();
+    private NewOrganizationUser newOrganizationUser() {
+        NewOrganizationUser newUser = new NewOrganizationUser();
         newUser.setUsername("userid");
         newUser.setFirstName("userid");
         newUser.setLastName("userid");
@@ -184,7 +184,7 @@ public class OrganizationUserServiceTest {
 
     @Test
     public void shouldCreateOrganizationUser() {
-        NewUser newUser = newOrganizationUser();
+        NewOrganizationUser newUser = newOrganizationUser();
         newUser.setSource("gravitee");
         newUser.setPassword("Test123!");
         newUser.setEmail("email@acme.fr");
@@ -209,7 +209,7 @@ public class OrganizationUserServiceTest {
 
     @Test
     public void shouldNotCreateOrganizationUserWhenUsernameIsNull() {
-        NewUser newUser = newOrganizationUser();
+        NewOrganizationUser newUser = newOrganizationUser();
         newUser.setUsername(null);
         newUser.setSource("gravitee");
         newUser.setPassword("Test123!");
@@ -222,7 +222,7 @@ public class OrganizationUserServiceTest {
 
     @Test
     public void shouldNotCreateOrganizationUser_NotGraviteeSource() {
-        NewUser newUser = newOrganizationUser();
+        NewOrganizationUser newUser = newOrganizationUser();
         newUser.setSource("toto");
         newUser.setPassword("Test123!");
         newUser.setEmail("email@acme.fr");
@@ -237,7 +237,7 @@ public class OrganizationUserServiceTest {
 
     @Test
     public void shouldNotCreateOrganizationUser_UserAlreadyExist() {
-        NewUser newUser = newOrganizationUser();
+        NewOrganizationUser newUser = newOrganizationUser();
 
         Organization organization = new Organization();
         organization.setId("orgaid");
@@ -251,7 +251,7 @@ public class OrganizationUserServiceTest {
 
     @Test
     public void shouldNotCreateOrganizationUser_UnknownProvider() {
-        NewUser newUser = newOrganizationUser();
+        NewOrganizationUser newUser = newOrganizationUser();
 
         Organization organization = new Organization();
         organization.setId("orgaid");
@@ -266,10 +266,10 @@ public class OrganizationUserServiceTest {
 
     @Test
     public void shouldNotCreateOrganizationUser_noPassword() {
-        NewUser newUser = newOrganizationUser();
+        NewOrganizationUser newUser = newOrganizationUser();
         newUser.setPassword(null);
 
-        when(commonUserService.findByUsernameAndSource(any(), any(),  any(),  any())).thenReturn(Maybe.empty());
+        when(commonUserService.findByUsernameAndSource(any(), any(), any(), any())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.just(mock(UserProvider.class)));
         TestObserver<User> testObserver = organizationUserService.createGraviteeUser(new Organization(), newUser, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -279,7 +279,7 @@ public class OrganizationUserServiceTest {
     @Test
     public void shouldUpdateUser_byExternalId() {
 
-        NewUser newUser = new NewUser();
+        NewOrganizationUser newUser = new NewOrganizationUser();
         newUser.setExternalId("user#1");
         newUser.setSource("source");
         newUser.setUsername("Username");
@@ -355,7 +355,7 @@ public class OrganizationUserServiceTest {
     @Test
     public void shouldUpdateUser_byUsername() {
 
-        NewUser newUser = new NewUser();
+        NewOrganizationUser newUser = new NewOrganizationUser();
         newUser.setExternalId("user#1");
         newUser.setSource("source");
         newUser.setUsername("Username");
@@ -394,7 +394,7 @@ public class OrganizationUserServiceTest {
     @Test
     public void shouldCreateUser() {
 
-        NewUser newUser = new NewUser();
+        NewOrganizationUser newUser = new NewOrganizationUser();
         newUser.setExternalId("user#1");
         newUser.setSource("source");
         newUser.setUsername("Username");
@@ -421,6 +421,7 @@ public class OrganizationUserServiceTest {
             assertEquals(updatedUser.getFirstName(), newUser.getFirstName());
             assertEquals(updatedUser.getLastName(), newUser.getLastName());
             assertEquals(updatedUser.getEmail(), newUser.getEmail());
+            assertEquals(updatedUser.getPassword(), newUser.getPassword());
             assertEquals(updatedUser.getAdditionalInformation(), newUser.getAdditionalInformation());
             assertEquals(updatedUser.getPicture(), newUser.getAdditionalInformation().get(StandardClaims.PICTURE));
 
@@ -430,7 +431,7 @@ public class OrganizationUserServiceTest {
 
     @Test
     public void shouldNotCreateUserWHenUsernameIsNull() {
-        NewUser newUser = new NewUser();
+        NewOrganizationUser newUser = new NewOrganizationUser();
         newUser.setExternalId("user#1");
         newUser.setSource("source");
         newUser.setUsername(null);
@@ -500,5 +501,90 @@ public class OrganizationUserServiceTest {
 
         verify(commonUserService, never()).update(any());
     }
+
+    @Test
+    public void shouldCreateServiceAccount() {
+        NewOrganizationUser newUser = new NewOrganizationUser();
+        newUser.setExternalId("user#1");
+        newUser.setSource("source");
+        newUser.setUsername("service");
+        newUser.setEmail("email@gravitee.io");
+        newUser.setServiceAccount(Boolean.TRUE);
+
+        when(commonUserService.findByExternalIdAndSource(ReferenceType.ORGANIZATION, "orga#1", newUser.getExternalId(), newUser.getSource())).thenReturn(Maybe.empty());
+        when(commonUserService.findByUsernameAndSource(ReferenceType.ORGANIZATION, "orga#1", newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.empty());
+        when(commonUserService.create(any(User.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
+
+        TestObserver<User> obs = organizationUserService.createOrUpdate(ReferenceType.ORGANIZATION, "orga#1", newUser).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertNoErrors();
+        obs.assertValue(updatedUser ->
+                updatedUser.getId() != null &&
+                        updatedUser.getEmail().contains(newUser.getEmail()) &&
+                        updatedUser.getServiceAccount()
+        );
+    }
+
+    @Test
+    public void shouldCreateServiceAccount_skipPassword() {
+        NewOrganizationUser newUser = new NewOrganizationUser();
+        newUser.setExternalId("user#1");
+        newUser.setSource("source");
+        newUser.setUsername("service");
+        newUser.setEmail("email@gravitee.io");
+        newUser.setPassword("password"); //This should not happen.
+        newUser.setServiceAccount(Boolean.TRUE);
+
+        when(commonUserService.findByExternalIdAndSource(ReferenceType.ORGANIZATION, "orga#1", newUser.getExternalId(), newUser.getSource())).thenReturn(Maybe.empty());
+        when(commonUserService.findByUsernameAndSource(ReferenceType.ORGANIZATION, "orga#1", newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.empty());
+        when(commonUserService.create(any(User.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
+
+        TestObserver<User> obs = organizationUserService.createOrUpdate(ReferenceType.ORGANIZATION, "orga#1", newUser).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertNoErrors();
+        obs.assertValue(updatedUser ->
+                updatedUser.getId() != null &&
+                        updatedUser.getEmail().contains(newUser.getEmail()) &&
+                        updatedUser.getServiceAccount() &&
+                        updatedUser.getPassword() == null
+        );
+    }
+
+    @Test
+    public void shouldUpdateServiceAccount() {
+
+        User user = new User();
+        user.setId("user_id#1");
+        user.setExternalId("user_id#1");
+        user.setSource("source");
+        user.setUsername("service");
+        user.setEmail("email@gravitee.io");
+        user.setServiceAccount(Boolean.TRUE);
+
+        NewOrganizationUser newUser = new NewOrganizationUser();
+        newUser.setExternalId("user_id#1");
+        newUser.setSource("source");
+        newUser.setUsername("service");
+        newUser.setEmail("email123@gravitee.io");
+        newUser.setServiceAccount(Boolean.TRUE);
+
+        when(commonUserService.findByExternalIdAndSource(ReferenceType.ORGANIZATION, "orga#1", user.getExternalId(), user.getSource())).thenReturn(Maybe.just(user));
+        when(commonUserService.update(any(User.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
+
+        TestObserver<User> obs = organizationUserService.createOrUpdate(ReferenceType.ORGANIZATION, "orga#1", newUser).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertNoErrors();
+        obs.assertValue(updatedUser ->
+                updatedUser.getId() != null &&
+                        updatedUser.getEmail().contains(newUser.getEmail()) &&
+                        updatedUser.getServiceAccount() &&
+                        updatedUser.getPassword() == null
+        );
+    }
+
+
 
 }
