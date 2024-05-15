@@ -52,17 +52,18 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
     @Autowired
     private OrganizationUserRepository organizationUserRepository;
 
+
     @Test
-    public void testFindByOrganization() throws TechnicalException {
+    public void testFindByOrganization() {
         // create user
         User user = new User();
         user.setUsername("testsUsername");
         user.setReferenceType(ReferenceType.ORGANIZATION);
-        user.setReferenceId("testOrga");
+        user.setReferenceId(ORGANIZATION_ID);
         organizationUserRepository.create(user).blockingGet();
 
         // fetch users
-        TestSubscriber<User> testSubscriber = organizationUserRepository.findAll(ReferenceType.ORGANIZATION, "testOrga").test();
+        TestSubscriber<User> testSubscriber = organizationUserRepository.findAll(ReferenceType.ORGANIZATION, ORGANIZATION_ID).test();
         testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
@@ -71,17 +72,17 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindByUserAndSource() throws TechnicalException {
+    public void testFindByUserAndSource() {
         // create user
         User user = new User();
         user.setUsername("testsUsername");
         user.setSource("sourceid");
         user.setReferenceType(ReferenceType.ORGANIZATION);
-        user.setReferenceId("testOrga");
+        user.setReferenceId(ORGANIZATION_ID);
         organizationUserRepository.create(user).blockingGet();
 
         // fetch users
-        TestObserver<User> testObserver = organizationUserRepository.findByUsernameAndSource(ReferenceType.ORGANIZATION, "testOrga", user.getUsername(), user.getSource()).test();
+        TestObserver<User> testObserver = organizationUserRepository.findByUsernameAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, user.getUsername(), user.getSource()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -90,16 +91,16 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindAll() throws TechnicalException {
+    public void testFindAll() {
         // create user
         User user = new User();
         user.setUsername("testsUsername");
         user.setReferenceType(ReferenceType.ORGANIZATION);
-        user.setReferenceId("testFindByAll");
+        user.setReferenceId(ORGANIZATION_ID);
         organizationUserRepository.create(user).blockingGet();
 
         // fetch users
-        TestObserver<Page<User>> testObserver = organizationUserRepository.findAll(ReferenceType.ORGANIZATION, user.getReferenceId(), 0, 10).test();
+        TestObserver<Page<User>> testObserver = organizationUserRepository.findAll(ReferenceType.ORGANIZATION, ORGANIZATION_ID, 0, 10).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -112,6 +113,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         // create user
         User user = buildUser();
         User userCreated = organizationUserRepository.create(user).blockingGet();
+        Assert.assertNotNull(userCreated.getPassword());
 
         // fetch user
         TestObserver<User> testObserver = organizationUserRepository.findById(userCreated.getId()).test();
@@ -139,7 +141,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindByIdIn() throws TechnicalException {
+    public void testFindByIdIn(){
         // create user
         User user = buildUser();
         User userCreated = organizationUserRepository.create(user).blockingGet();
@@ -154,7 +156,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void shouldFindByExternalIdAndSource() throws TechnicalException {
+    public void shouldFindByExternalIdAndSource(){
         // create user
         User user = buildUser();
         User userCreated = organizationUserRepository.create(user).blockingGet();
@@ -187,7 +189,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void shouldNotFindByUnkownExternalIdAndSource() throws TechnicalException {
+    public void shouldNotFindByUnkownExternalIdAndSource(){
         // create user
         User user = buildUser();
         User userCreated = organizationUserRepository.create(user).blockingGet();
@@ -201,69 +203,8 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoValues();
     }
 
-
-    private User buildUser() {
-        User user = new User();
-        String random = UUID.randomUUID().toString();
-        user.setReferenceType(ReferenceType.ORGANIZATION);
-        user.setReferenceId("organization"+random);
-        user.setUsername("username"+random);
-        user.setEmail(random+"@acme.fr");
-        user.setAccountLockedAt(new Date());
-        user.setAccountLockedUntil(new Date());
-        user.setAccountNonExpired(true);
-        user.setAccountNonLocked(true);
-        user.setClient("client"+random);
-        user.setCreatedAt(new Date());
-        user.setCredentialsNonExpired(true);
-        user.setDisplayName("display"+random);
-        user.setEnabled(true);
-        user.setExternalId("external"+random);
-        user.setInternal(false);
-        user.setLastName("last"+random);
-        user.setLoggedAt(new Date());
-        user.setFirstName("first"+random);
-        user.setLoginsCount(5l);
-        user.setNewsletter(false);
-        user.setNickName("nick"+random);
-        user.setSource("gravitee");
-        user.setPassword("testpassword");
-
-        Attribute attribute = new Attribute();
-        attribute.setPrimary(true);
-        attribute.setType("attrType");
-        attribute.setValue("val"+random);
-        user.setEmails(Arrays.asList(attribute));
-        user.setPhotos(Arrays.asList(attribute));
-        user.setPhoneNumbers(Arrays.asList(attribute));
-        user.setIms(Arrays.asList(attribute));
-
-        user.setEntitlements(Arrays.asList("ent"+random));
-        user.setRoles(Arrays.asList("role"+random));
-        user.setDynamicRoles(Arrays.asList("dynamic_role"+random));
-
-        Address addr = new Address();
-        addr.setCountry("fr");
-        user.setAddresses(Arrays.asList(addr));
-
-        Certificate certificate = new Certificate();
-        certificate.setValue("cert"+random);
-        user.setX509Certificates(Arrays.asList(certificate));
-
-        EnrolledFactor fact = new EnrolledFactor();
-        fact.setAppId("app"+random);
-        fact.setSecurity(new EnrolledFactorSecurity("a", "b", Collections.singletonMap("a", "b")));
-        fact.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.EMAIL, "e@e"));
-        user.setFactors(Arrays.asList(fact));
-
-        Map<String, Object> info = new HashMap<>();
-        info.put(StandardClaims.EMAIL, random+"@info.acme.fr");
-        user.setAdditionalInformation(info);
-        return user;
-    }
-
     @Test
-    public void testFindById_referenceType() throws TechnicalException {
+    public void testFindById_referenceType() {
         // create user
         User user = new User();
         user.setUsername("testsUsername");
@@ -294,7 +235,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
     public void testCreate() throws TechnicalException {
         User user = new User();
         user.setReferenceType(ReferenceType.ORGANIZATION);
-        user.setReferenceId("organizationId");
+        user.setReferenceId(ORGANIZATION_ID);
         user.setUsername("testsUsername");
         user.setAdditionalInformation(Collections.singletonMap("email", "johndoe@test.com"));
         TestObserver<User> testObserver = organizationUserRepository.create(user).test();
@@ -306,18 +247,18 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testUpdate() throws TechnicalException {
+    public void testUpdate() {
         // create user
         User user = new User();
         user.setReferenceType(ReferenceType.ORGANIZATION);
-        user.setReferenceId("organizationId");
+        user.setReferenceId(ORGANIZATION_ID);
         user.setUsername("testsUsername");
         User userCreated = organizationUserRepository.create(user).blockingGet();
 
         // update user
         User updatedUser = new User();
         updatedUser.setReferenceType(ReferenceType.ORGANIZATION);
-        updatedUser.setReferenceId("organizationId");
+        updatedUser.setReferenceId(ORGANIZATION_ID);
         updatedUser.setId(userCreated.getId());
         updatedUser.setUsername("testUpdatedUsername");
 
@@ -334,7 +275,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         // create user
         User user = new User();
         user.setReferenceType(ReferenceType.ORGANIZATION);
-        user.setReferenceId("organizationId");
+        user.setReferenceId(ORGANIZATION_ID);
         user.setUsername("testsUsername");
         User userCreated = organizationUserRepository.create(user).blockingGet();
 
@@ -346,7 +287,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(u -> u.getUsername().equals(user.getUsername()));
 
         // delete user
-        TestObserver testObserver1 = organizationUserRepository.delete(userCreated.getId()).test();
+        TestObserver<Void> testObserver1 = organizationUserRepository.delete(userCreated.getId()).test();
         testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch user
@@ -409,28 +350,27 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testSearch_byUsername_paged() {
-        final String organization = "organization";
         // create user
         User user1 = new User();
         user1.setReferenceType(ReferenceType.ORGANIZATION);
-        user1.setReferenceId(organization);
+        user1.setReferenceId(ORGANIZATION_ID);
         user1.setUsername("testUsername1");
         organizationUserRepository.create(user1).blockingGet();
 
         User user2 = new User();
         user2.setReferenceType(ReferenceType.ORGANIZATION);
-        user2.setReferenceId(organization);
+        user2.setReferenceId(ORGANIZATION_ID);
         user2.setUsername("testUsername2");
         organizationUserRepository.create(user2).blockingGet();
 
         User user3 = new User();
         user3.setReferenceType(ReferenceType.ORGANIZATION);
-        user3.setReferenceId(organization);
+        user3.setReferenceId(ORGANIZATION_ID);
         user3.setUsername("testUsername3");
         organizationUserRepository.create(user3).blockingGet();
 
         // fetch user (page 0)
-        TestObserver<Page<User>> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, "testUsername*", 0, 2).test();
+        TestObserver<Page<User>> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "testUsername*", 0, 2).test();
         testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
@@ -442,7 +382,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         });
 
         // fetch user (page 1)
-        TestObserver<Page<User>> testObserverP1 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, "testUsername*", 1, 2).test();
+        TestObserver<Page<User>> testObserverP1 = organizationUserRepository.search(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "testUsername*", 1, 2).test();
         testObserverP1.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP1.assertComplete();
@@ -453,12 +393,11 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testScimSearch_byDate_paged() {
-        final String organization = "organization";
         // create user
         Date now = new Date();
         User user1 = new User();
         user1.setReferenceType(ReferenceType.ORGANIZATION);
-        user1.setReferenceId(organization);
+        user1.setReferenceId(ORGANIZATION_ID);
         user1.setUsername("testUsername1");
         user1.setCreatedAt(now);
         user1.setUpdatedAt(now);
@@ -466,7 +405,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
         User user2 = new User();
         user2.setReferenceType(ReferenceType.ORGANIZATION);
-        user2.setReferenceId(organization);
+        user2.setReferenceId(ORGANIZATION_ID);
         user2.setUsername("testUsername2");
         user2.setCreatedAt(now);
         user2.setUpdatedAt(now);
@@ -474,7 +413,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
         User user3 = new User();
         user3.setReferenceType(ReferenceType.ORGANIZATION);
-        user3.setReferenceId(organization);
+        user3.setReferenceId(ORGANIZATION_ID);
         user3.setUsername("testUsername3");
         user3.setCreatedAt(now);
         user3.setUpdatedAt(now);
@@ -495,7 +434,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         FilterCriteria criteria = new FilterCriteria();
         criteria.setOperator("and");
         criteria.setFilterComponents(Arrays.asList(criteriaDate, criteriaName));
-        TestObserver<Page<User>> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, criteria, 0, 4).test();
+        TestObserver<Page<User>> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, ORGANIZATION_ID, criteria, 0, 4).test();
         testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
@@ -503,7 +442,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         testObserverP0.assertValue(users -> users.getData().size() == 3);
 
         // fetch user (page 1)
-        TestObserver<Page<User>> testObserverP1 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, criteria, 1, 2).test();
+        TestObserver<Page<User>> testObserverP1 = organizationUserRepository.search(ReferenceType.ORGANIZATION, ORGANIZATION_ID, criteria, 1, 2).test();
         testObserverP1.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP1.assertComplete();
@@ -513,23 +452,22 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testScimSearch_byUsername_paged() {
-        final String organization = "organization";
         // create user
         User user1 = new User();
         user1.setReferenceType(ReferenceType.ORGANIZATION);
-        user1.setReferenceId(organization);
+        user1.setReferenceId(ORGANIZATION_ID);
         user1.setUsername("testUsername1");
         organizationUserRepository.create(user1).blockingGet();
 
         User user2 = new User();
         user2.setReferenceType(ReferenceType.ORGANIZATION);
-        user2.setReferenceId(organization);
+        user2.setReferenceId(ORGANIZATION_ID);
         user2.setUsername("testUsername2");
         organizationUserRepository.create(user2).blockingGet();
 
         User user3 = new User();
         user3.setReferenceType(ReferenceType.ORGANIZATION);
-        user3.setReferenceId(organization);
+        user3.setReferenceId(ORGANIZATION_ID);
         user3.setUsername("testUsername3");
         organizationUserRepository.create(user3).blockingGet();
 
@@ -539,7 +477,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         criteria.setFilterValue("testUsername");
         criteria.setOperator("sw");
         criteria.setQuoteFilterValue(true);
-        TestObserver<Page<User>> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, criteria, 0, 4).test();
+        TestObserver<Page<User>> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, ORGANIZATION_ID, criteria, 0, 4).test();
         testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
@@ -547,7 +485,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         testObserverP0.assertValue(users -> users.getData().size() == 3);
 
         // fetch user (page 1)
-        TestObserver<Page<User>> testObserverP1 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, criteria, 1, 2).test();
+        TestObserver<Page<User>> testObserverP1 = organizationUserRepository.search(ReferenceType.ORGANIZATION, ORGANIZATION_ID, criteria, 1, 2).test();
         testObserverP1.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP1.assertComplete();
@@ -557,23 +495,22 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testScimSearch_byUsername_NotPaged() {
-        final String organization = "organization";
         // create user
         User user1 = new User();
         user1.setReferenceType(ReferenceType.ORGANIZATION);
-        user1.setReferenceId(organization);
+        user1.setReferenceId(ORGANIZATION_ID);
         user1.setUsername("testUsername1");
         organizationUserRepository.create(user1).blockingGet();
 
         User user2 = new User();
         user2.setReferenceType(ReferenceType.ORGANIZATION);
-        user2.setReferenceId(organization);
+        user2.setReferenceId(ORGANIZATION_ID);
         user2.setUsername("testUsername2");
         organizationUserRepository.create(user2).blockingGet();
 
         User user3 = new User();
         user3.setReferenceType(ReferenceType.ORGANIZATION);
-        user3.setReferenceId(organization);
+        user3.setReferenceId(ORGANIZATION_ID);
         user3.setUsername("testUsername3");
         organizationUserRepository.create(user3).blockingGet();
 
@@ -583,7 +520,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         criteria.setFilterValue("testUsername");
         criteria.setOperator("sw");
         criteria.setQuoteFilterValue(true);
-        final TestSubscriber<User> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, criteria).test();
+        final TestSubscriber<User> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, ORGANIZATION_ID, criteria).test();
         testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
@@ -593,24 +530,23 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testScimSearch_byGivenName_SW_paged() {
-        final String organization = "organization";
         // create user
         User user1 = new User();
         user1.setReferenceType(ReferenceType.ORGANIZATION);
-        user1.setReferenceId(organization);
+        user1.setReferenceId(ORGANIZATION_ID);
         user1.setUsername("testUsername1");
         user1.setAdditionalInformation(Collections.singletonMap("given_name", "gname1"));
         organizationUserRepository.create(user1).blockingGet();
 
         User user2 = new User();
         user2.setReferenceType(ReferenceType.ORGANIZATION);
-        user2.setReferenceId(organization);
+        user2.setReferenceId(ORGANIZATION_ID);
         user2.setAdditionalInformation(Collections.singletonMap("given_name", "gname2"));
         organizationUserRepository.create(user2).blockingGet();
 
         User user3 = new User();
         user3.setReferenceType(ReferenceType.ORGANIZATION);
-        user3.setReferenceId(organization);
+        user3.setReferenceId(ORGANIZATION_ID);
         user3.setUsername("testUsername3");
         user3.setAdditionalInformation(Collections.singletonMap("given_name", "no"));
         organizationUserRepository.create(user3).blockingGet();
@@ -621,7 +557,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         criteria.setFilterValue("gname");
         criteria.setOperator("sw");
         criteria.setQuoteFilterValue(true);
-        TestObserver<Page<User>> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, criteria, 0, 4).test();
+        TestObserver<Page<User>> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, ORGANIZATION_ID, criteria, 0, 4).test();
         testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
@@ -629,7 +565,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         testObserverP0.assertValue(users -> users.getData().size() == 2);
 
         // fetch user (page 1)
-        TestObserver<Page<User>> testObserverP1 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, criteria, 1, 1).test();
+        TestObserver<Page<User>> testObserverP1 = organizationUserRepository.search(ReferenceType.ORGANIZATION, ORGANIZATION_ID, criteria, 1, 1).test();
         testObserverP1.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP1.assertComplete();
@@ -639,18 +575,17 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testScimSearch_byGivenName_EQ_paged() {
-        final String organization = "organization";
         // create user
         User user1 = new User();
         user1.setReferenceType(ReferenceType.ORGANIZATION);
-        user1.setReferenceId(organization);
+        user1.setReferenceId(ORGANIZATION_ID);
         user1.setUsername("testUsername1");
         user1.setAdditionalInformation(Collections.singletonMap("given_name", "gname1"));
         organizationUserRepository.create(user1).blockingGet();
 
         User user2 = new User();
         user2.setReferenceType(ReferenceType.ORGANIZATION);
-        user2.setReferenceId(organization);
+        user2.setReferenceId(ORGANIZATION_ID);
         user2.setAdditionalInformation(Collections.singletonMap("given_name", "gname2"));
         organizationUserRepository.create(user2).blockingGet();
 
@@ -659,7 +594,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         criteria.setFilterValue("gname1");
         criteria.setOperator("eq");
         criteria.setQuoteFilterValue(true);
-        TestObserver<Page<User>> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, criteria, 0, 4).test();
+        TestObserver<Page<User>> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, ORGANIZATION_ID, criteria, 0, 4).test();
         testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
@@ -671,18 +606,17 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testScimSearch_byGivenName_PR_paged() {
-        final String organization = "organization";
         // create user
         User user1 = new User();
         user1.setReferenceType(ReferenceType.ORGANIZATION);
-        user1.setReferenceId(organization);
+        user1.setReferenceId(ORGANIZATION_ID);
         user1.setUsername("testUsername1");
         user1.setAdditionalInformation(Collections.singletonMap("given_name", "gname1"));
         organizationUserRepository.create(user1).blockingGet();
 
         User user2 = new User();
         user2.setReferenceType(ReferenceType.ORGANIZATION);
-        user2.setReferenceId(organization);
+        user2.setReferenceId(ORGANIZATION_ID);
         user2.setUsername("testUsername2");
         organizationUserRepository.create(user2).blockingGet();
 
@@ -690,7 +624,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         criteria.setFilterName("name.givenName");
         criteria.setFilterValue("");
         criteria.setOperator("pr");
-        TestObserver<Page<User>> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, criteria, 0, 4).test();
+        TestObserver<Page<User>> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, ORGANIZATION_ID, criteria, 0, 4).test();
         testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
@@ -702,18 +636,17 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testScimSearch_byGivenName_NE_paged() {
-        final String organization = "organization";
         // create user
         User user1 = new User();
         user1.setReferenceType(ReferenceType.ORGANIZATION);
-        user1.setReferenceId(organization);
+        user1.setReferenceId(ORGANIZATION_ID);
         user1.setUsername("testUsername1");
         user1.setAdditionalInformation(Collections.singletonMap("given_name", "gname1"));
         organizationUserRepository.create(user1).blockingGet();
 
         User user2 = new User();
         user2.setReferenceType(ReferenceType.ORGANIZATION);
-        user2.setReferenceId(organization);
+        user2.setReferenceId(ORGANIZATION_ID);
         user2.setUsername("testUsername2");
         user2.setAdditionalInformation(Collections.singletonMap("given_name", "theother"));
         organizationUserRepository.create(user2).blockingGet();
@@ -723,7 +656,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         criteria.setFilterValue("gname1");
         criteria.setOperator("ne");
         criteria.setQuoteFilterValue(true);
-        TestObserver<Page<User>> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, criteria, 0, 4).test();
+        TestObserver<Page<User>> testObserverP0 = organizationUserRepository.search(ReferenceType.ORGANIZATION, ORGANIZATION_ID, criteria, 0, 4).test();
         testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
@@ -734,11 +667,10 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
     }
 
     private void testSearch_strict(String query) {
-        final String organization = "organization";
         // create user
         User user = new User();
         user.setReferenceType(ReferenceType.ORGANIZATION);
-        user.setReferenceId(organization);
+        user.setReferenceId(ORGANIZATION_ID);
         user.setFirstName("firstName");
         user.setLastName("lastName");
         user.setDisplayName("displayName");
@@ -748,7 +680,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
         User user2 = new User();
         user2.setReferenceType(ReferenceType.ORGANIZATION);
-        user2.setReferenceId(organization);
+        user2.setReferenceId(ORGANIZATION_ID);
         user2.setFirstName("firstName2");
         user2.setLastName("lastName2");
         user2.setDisplayName("displayName2");
@@ -757,7 +689,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         organizationUserRepository.create(user2).blockingGet();
 
         // fetch user
-        TestObserver<Page<User>> testObserver = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, query, 0, 10).test();
+        TestObserver<Page<User>> testObserver = organizationUserRepository.search(ReferenceType.ORGANIZATION, ORGANIZATION_ID, query, 0, 10).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -768,11 +700,10 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
     }
 
     private void testSearch_wildcard(String query) {
-        final String organization = "organization";
         // create user
         User user = new User();
         user.setReferenceType(ReferenceType.ORGANIZATION);
-        user.setReferenceId(organization);
+        user.setReferenceId(ORGANIZATION_ID);
         user.setFirstName("firstName");
         user.setLastName("lastName");
         user.setDisplayName("displayName");
@@ -782,7 +713,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
         User user2 = new User();
         user2.setReferenceType(ReferenceType.ORGANIZATION);
-        user2.setReferenceId(organization);
+        user2.setReferenceId(ORGANIZATION_ID);
         user2.setFirstName("firstName2");
         user2.setLastName("lastName2");
         user2.setDisplayName("displayName2");
@@ -791,7 +722,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         organizationUserRepository.create(user2).blockingGet();
 
         // fetch user
-        TestObserver<Page<User>> testObserver = organizationUserRepository.search(ReferenceType.ORGANIZATION, organization, query, 0, 10).test();
+        TestObserver<Page<User>> testObserver = organizationUserRepository.search(ReferenceType.ORGANIZATION, ORGANIZATION_ID, query, 0, 10).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -800,7 +731,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDeleteByRef() throws TechnicalException {
+    public void testDeleteByRef(){
         final String ORG_1 = "org1";
         final String ORG_2 = "org2";
 
@@ -826,7 +757,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         Assert.assertEquals("Org2 should have 1 users", 1, usersDomain2);
 
         // delete user
-        TestObserver testObserver1 = organizationUserRepository.deleteByReference(ReferenceType.ORGANIZATION, ORG_1).test();
+        TestObserver<Void> testObserver1 = organizationUserRepository.deleteByReference(ReferenceType.ORGANIZATION, ORG_1).test();
         testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch user
@@ -836,6 +767,110 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
         usersDomain2 = organizationUserRepository.findAll(ReferenceType.ORGANIZATION, ORG_2).count().blockingGet();
         Assert.assertEquals("Org2 should have 1 users", 1, usersDomain2);
+    }
 
+    @Test
+    public void testCreateServiceAccount(){
+        User user = new User();
+        user.setUsername("testUsername");
+        user.setEmail("test@test.com");
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        user.setReferenceId(ORGANIZATION_ID);
+        user.setServiceAccount(Boolean.TRUE);
+        TestObserver<User> testObserver = organizationUserRepository.create(user).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> u.getUsername().equals(user.getUsername()) && u.getEmail().equals(user.getEmail())&& u.getServiceAccount().equals(Boolean.TRUE));
+    }
+
+    @Test
+    public void testUpdateServiceAccount(){
+        // create user
+        User user = new User();
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        user.setReferenceId(ORGANIZATION_ID);
+        user.setUsername("testServiceName");
+        user.setServiceAccount(Boolean.TRUE);
+        User userCreated = organizationUserRepository.create(user).blockingGet();
+
+        // update user
+        User updatedUser = new User();
+        updatedUser.setReferenceType(ReferenceType.ORGANIZATION);
+        updatedUser.setReferenceId(ORGANIZATION_ID);
+        updatedUser.setId(userCreated.getId());
+        updatedUser.setServiceAccount(Boolean.TRUE);
+        updatedUser.setUsername("testUpdatedServiceName");
+
+        TestObserver<User> testObserver = organizationUserRepository.update(updatedUser).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> u.getUsername().equals(updatedUser.getUsername()));
+    }
+
+
+
+
+    private User buildUser() {
+        User user = new User();
+        String random = UUID.randomUUID().toString();
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        user.setReferenceId("organization"+random);
+        user.setUsername("username"+random);
+        user.setEmail(random+"@acme.fr");
+        user.setAccountLockedAt(new Date());
+        user.setAccountLockedUntil(new Date());
+        user.setAccountNonExpired(true);
+        user.setAccountNonLocked(true);
+        user.setClient("client"+random);
+        user.setCreatedAt(new Date());
+        user.setCredentialsNonExpired(true);
+        user.setDisplayName("display"+random);
+        user.setEnabled(true);
+        user.setExternalId("external"+random);
+        user.setInternal(false);
+        user.setLastName("last"+random);
+        user.setLoggedAt(new Date());
+        user.setFirstName("first"+random);
+        user.setLoginsCount(5L);
+        user.setNewsletter(false);
+        user.setNickName("nick"+random);
+        user.setSource("gravitee");
+        user.setPassword("testpassword");
+
+        Attribute attribute = new Attribute();
+        attribute.setPrimary(true);
+        attribute.setType("attrType");
+        attribute.setValue("val"+random);
+        user.setEmails(List.of(attribute));
+        user.setPhotos(List.of(attribute));
+        user.setPhoneNumbers(List.of(attribute));
+        user.setIms(List.of(attribute));
+
+        user.setEntitlements(List.of("ent" + random));
+        user.setRoles(List.of("role" + random));
+        user.setDynamicRoles(List.of("dynamic_role" + random));
+
+        Address addr = new Address();
+        addr.setCountry("fr");
+        user.setAddresses(List.of(addr));
+
+        Certificate certificate = new Certificate();
+        certificate.setValue("cert"+random);
+        user.setX509Certificates(List.of(certificate));
+
+        EnrolledFactor fact = new EnrolledFactor();
+        fact.setAppId("app"+random);
+        fact.setSecurity(new EnrolledFactorSecurity("a", "b", Collections.singletonMap("a", "b")));
+        fact.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.EMAIL, "e@e"));
+        user.setFactors(List.of(fact));
+
+        Map<String, Object> info = new HashMap<>();
+        info.put(StandardClaims.EMAIL, random+"@info.acme.fr");
+        user.setAdditionalInformation(info);
+        return user;
     }
 }

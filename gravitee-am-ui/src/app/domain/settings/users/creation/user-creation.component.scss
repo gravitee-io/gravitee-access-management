@@ -1,6 +1,13 @@
+@use '@angular/material' as mat;
+@use '@gravitee/ui-particles-angular' as gio;
+
 .gv-form-section {
   a.gv-accent-link {
     cursor: pointer;
     font-size: 75%;
   }
+}
+
+.selected-card {
+  border: 2px solid mat.get-color-from-palette(gio.$mat-accent-palette, 'default');
 }

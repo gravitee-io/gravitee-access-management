@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.4.0-update-organization-users-table
+      author: GraviteeSource Team
+      changes:
+        #############################
+        # organization_users #
+        ############################
+        - addColumn:
+            tableName: organization_users
+            columns:
+              - column: { name: service_account, type: boolean, constraints: { nullable: true }, defaultValueBoolean: false }

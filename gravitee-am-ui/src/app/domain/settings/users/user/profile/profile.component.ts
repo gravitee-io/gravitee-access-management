@@ -98,25 +98,29 @@ export class UserProfileComponent implements OnInit {
     // TODO we should be able to update platform users
     this.user.additionalInformation = this.user.additionalInformation || {};
     Object.keys(this.userClaims).forEach((key) => (this.user.additionalInformation[key] = this.userClaims[key]));
-    this.user.displayName = [this.user.firstName, this.user.lastName].filter(Boolean).join(' ');
+    if (this.user.firstName || this.user.lastName) {
+      this.user.displayName = [this.user.firstName, this.user.lastName].filter(Boolean).join(' ');
+    } else {
+      this.user.displayName = this.user.username;
+    }
     this.userService.update(this.domainId, this.user.id, this.user, this.organizationContext).subscribe((data) => {
       this.user = data;
       this.userClaims = {};
       this.viewContainerRef?.clear();
       this.formChanged = false;
-      this.snackbarService.open('User updated');
+      this.snackbarService.open(`${this.isServiceAccount() ? 'Service' : ''} User updated`);
     });
   }
 
   delete(event: Event): void {
     event.preventDefault();
     this.dialogService
-      .confirm('Delete User', 'Are you sure you want to delete this user ?')
+      .confirm(`Delete ${this.getProfileType()}`, `Are you sure you want to delete this ${this.getProfileType().toLowerCase()}?`)
       .pipe(
         filter((res) => res),
         switchMap(() => this.userService.delete(this.domainId, this.user.id, this.organizationContext)),
         tap(() => {
-          this.snackbarService.open('User ' + this.user.username + ' deleted');
+          this.snackbarService.open(`${this.getProfileType().toLowerCase()} ${this.user.username} deleted`);
           this.router.navigate(['../..'], { relativeTo: this.route });
         }),
       )
@@ -264,14 +268,14 @@ export class UserProfileComponent implements OnInit {
 
   updateUsername(): void {
     this.dialogService
-      .confirm('Update Username', 'Are you sure you want to update this username?')
+      .confirm(`Update ${this.getProfileNameType}`, `Are you sure you want to update this ${this.getProfileNameType}?`)
       .pipe(
         filter((res) => res),
         switchMap(() => this.userService.updateUsername(this.domainId, this.user.id, this.organizationContext, this.user.username)),
         tap(() => {
           this.usernameForm.resetForm({ username: this.user.username });
           this.unlockUser(this.user);
-          this.snackbarService.open('Username updated');
+          this.snackbarService.open(`${this.getProfileNameType} updated`);
         }),
       )
       .subscribe();
@@ -362,13 +366,15 @@ export class UserProfileComponent implements OnInit {
     this.formChanged = true;
   }
 
-  passwordReset(): boolean {
-    //Sometimes time differ by 1 millisecond
-    if (!this.user.lastPasswordReset) {
-      return false;
-    }
-    const lastPasswordResetSeconds = Math.floor(this.user.lastPasswordReset / 1000);
-    const createdAtSeconds = Math.floor(this.user.createdAt / 1000);
-    return lastPasswordResetSeconds !== createdAtSeconds;
+  isServiceAccount(): boolean {
+    return this.user?.serviceAccount ?? false;
+  }
+
+  getProfileNameType(): string {
+    return this.isServiceAccount() ? 'Service Name' : 'Username';
+  }
+
+  getProfileType(): string {
+    return this.isServiceAccount() ? 'Service User' : 'User';
   }
 }

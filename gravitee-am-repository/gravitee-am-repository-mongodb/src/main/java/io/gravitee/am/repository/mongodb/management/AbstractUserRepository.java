@@ -316,6 +316,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         // TODO manage update Actions
         updateFields.add(Updates.set("identities", item.getIdentities()));
         updateFields.add(Updates.set("forceResetPassword", item.getForceResetPassword()));
+        updateFields.add(Updates.set("serviceAccount", item.getServiceAccount()));
         return updateFields;
     }
 
@@ -352,7 +353,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         user.setInternal(userMongo.isInternal());
         user.setPreRegistration(userMongo.isPreRegistration());
         user.setRegistrationCompleted(userMongo.isRegistrationCompleted());
-        user.setNewsletter(userMongo.isNewsletter());
+        user.setNewsletter(userMongo.getNewsletter());
         user.setRegistrationUserUri(userMongo.getRegistrationUserUri());
         user.setRegistrationAccessToken(userMongo.getRegistrationAccessToken());
         user.setReferenceType(ReferenceType.valueOf(userMongo.getReferenceType()));
@@ -385,6 +386,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         user.setCreatedAt(userMongo.getCreatedAt());
         user.setUpdatedAt(userMongo.getUpdatedAt());
         user.setForceResetPassword(userMongo.getForceResetPassword());
+        user.setServiceAccount(userMongo.getServiceAccount());
         return user;
     }
 
@@ -445,6 +447,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         userMongo.setCreatedAt(user.getCreatedAt());
         userMongo.setUpdatedAt(user.getUpdatedAt());
         userMongo.setForceResetPassword(user.getForceResetPassword());
+        userMongo.setServiceAccount(user.getServiceAccount());
         return userMongo;
     }
 
