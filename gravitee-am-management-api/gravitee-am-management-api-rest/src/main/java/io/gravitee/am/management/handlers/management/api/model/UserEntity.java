@@ -16,12 +16,16 @@
 package io.gravitee.am.management.handlers.management.api.model;
 
 import io.gravitee.am.model.User;
+import lombok.Getter;
+import lombok.Setter;
 
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public class UserEntity extends User {
 
     private ApplicationEntity applicationEntity;
@@ -64,22 +68,7 @@ public class UserEntity extends User {
         setLastPasswordReset(user.getLastPasswordReset());
         setLastIdentityUsed(user.getLastIdentityUsed());
         setForceResetPassword(user.getForceResetPassword());
+        setServiceAccount(user.getServiceAccount());
         this.sourceId = user.getSource();
-    }
-
-    public ApplicationEntity getApplicationEntity() {
-        return applicationEntity;
-    }
-
-    public void setApplicationEntity(ApplicationEntity applicationEntity) {
-        this.applicationEntity = applicationEntity;
-    }
-
-    public String getSourceId() {
-        return sourceId;
-    }
-
-    public void setSourceId(String sourceId) {
-        this.sourceId = sourceId;
     }
 }

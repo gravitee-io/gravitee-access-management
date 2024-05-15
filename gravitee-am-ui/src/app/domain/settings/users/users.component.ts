@@ -37,7 +37,6 @@ export class UsersComponent implements OnInit {
   searchValue: string;
   organizationContext: boolean;
   requiredReadPermission: string;
-  pagedUsers: any;
   users: any[];
   domainId: string;
   page: any = {};
@@ -79,7 +78,7 @@ export class UsersComponent implements OnInit {
   }
 
   loadUsers(searchQuery) {
-    let findUsers;
+    let findUsers: any;
     let advancedSearchMode = false;
     if (searchQuery) {
       advancedSearchMode = this.isAdvancedSearch(searchQuery);

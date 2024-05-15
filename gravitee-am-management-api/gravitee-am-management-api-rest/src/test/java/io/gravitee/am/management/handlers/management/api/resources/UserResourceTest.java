@@ -23,7 +23,6 @@ import io.gravitee.am.model.AccountAccessToken;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
-import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewAccountAccessToken;
 import io.gravitee.am.service.model.UpdateUser;
@@ -470,6 +469,39 @@ public class UserResourceTest extends JerseySpringTest {
         final List<AccountAccessToken> tokens = readListEntity(response, AccountAccessToken.class);
         assertEquals(2, tokens.size());
         assertTrue(tokens.stream().allMatch(i -> i.tokenId().equals("1") || i.tokenId().equals("2")));
+    }
+
+    @Test
+    public void shouldUpdateServiceAccount(){
+        final String organization = "DEFAULT";
+
+        final String userId = "userId";
+        final User mockUser = new User();
+        mockUser.setId(userId);
+        mockUser.setEmail("email@email.com");
+        mockUser.setReferenceType(ReferenceType.ORGANIZATION);
+        mockUser.setServiceAccount(Boolean.TRUE);
+        mockUser.setReferenceId(organization);
+        mockUser.setEnabled(true);
+
+        final UpdateUser updateUser = new UpdateUser();
+        updateUser.setEmail("email@email.com");
+
+        doReturn(Single.just(mockUser)).when(organizationUserService).update(eq(ReferenceType.ORGANIZATION), eq(organization), eq(userId), any(), any());
+
+        final Response response = target("organizations")
+                .path(organization)
+                .path("users")
+                .path(userId)
+                .request()
+                .put(Entity.json(updateUser));
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        final User user = readEntity(response, User.class);
+        assertEquals(organization, user.getReferenceId());
+        assertEquals("email@email.com", user.getEmail());
+        assertEquals("userId", user.getId());
+        assertNull(user.getPassword());
     }
 
 

@@ -35,7 +35,7 @@ import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewAccountAccessToken;
-import io.gravitee.am.service.model.NewUser;
+import io.gravitee.am.service.model.NewOrganizationUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
@@ -90,7 +90,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
     }
 
     @Override
-    public Single<User> createOrUpdate(ReferenceType referenceType, String referenceId, NewUser newUser) {
+    public Single<User> createOrUpdate(ReferenceType referenceType, String referenceId, NewOrganizationUser newUser) {
         return userService.findByExternalIdAndSource(referenceType, referenceId, newUser.getExternalId(), newUser.getSource())
                 .switchIfEmpty(Maybe.defer(() -> userService.findByUsernameAndSource(referenceType, referenceId, newUser.getUsername(), newUser.getSource())))
                 .flatMap(existingUser -> {
@@ -106,7 +106,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                 }));
     }
 
-    public Single<User> createGraviteeUser(Organization organization, NewUser newUser, io.gravitee.am.identityprovider.api.User principal) {
+    public Single<User> createGraviteeUser(Organization organization, NewOrganizationUser newUser, io.gravitee.am.identityprovider.api.User principal) {
         if (StringUtils.isBlank(newUser.getUsername())) {
             return Single.error(() -> new UserInvalidException("Field [username] is required"));
         }
@@ -132,9 +132,11 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                                     newUser.setClient(null);
                                     // user is flagged as internal user
                                     newUser.setInternal(true);
-                                    String password = newUser.getPassword();
-                                    if (password == null || !passwordService.isValid(password)) {
-                                        return Single.error(InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value"));
+                                    if (newUser.getServiceAccount() == null || newUser.getServiceAccount().equals(Boolean.FALSE)) {
+                                        String password = newUser.getPassword();
+                                        if (password == null || !passwordService.isValid(password)) {
+                                            return Single.error(InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value"));
+                                        }
                                     }
                                     newUser.setRegistrationCompleted(true);
                                     newUser.setEnabled(true);
@@ -152,19 +154,20 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                                                     .map(idpUser -> {
                                                         // Excepted for GraviteeIDP that manage Organization Users
                                                         // AM 'users' collection is not made for authentication (but only management stuff)
-                                                        userToPersist.setPassword(PWD_ENCODER.encode(newUser.getPassword()));
+                                                        if(newUser.getServiceAccount() == null || newUser.getServiceAccount().equals(Boolean.FALSE)) {
+                                                            userToPersist.setPassword(PWD_ENCODER.encode(newUser.getPassword()));
+                                                        }
                                                         // set external id
                                                         // id and external id are the same for GraviteeIdP users
                                                         userToPersist.setId(RandomString.generate());
                                                         userToPersist.setExternalId(userToPersist.getId());
                                                         return userToPersist;
                                                     })
-                                                    .flatMap(newOrgUser -> {
-                                                        return userService.create(newOrgUser)
-                                                                .flatMap(newlyCreatedUser -> userService.setRoles(newlyCreatedUser).andThen(Single.just(newlyCreatedUser)))
-                                                                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
-                                                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)));
-                                                    }));
+                                                    .flatMap(newOrgUser -> userService.create(newOrgUser)
+                                                            .flatMap(newlyCreatedUser -> userService.setRoles(newlyCreatedUser).andThen(Single.just(newlyCreatedUser)))
+                                                            .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
+                                                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)))
+                                                    ));
                                 });
 
                     }

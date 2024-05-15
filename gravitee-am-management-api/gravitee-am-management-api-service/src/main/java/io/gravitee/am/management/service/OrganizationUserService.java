@@ -20,7 +20,7 @@ import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.model.NewAccountAccessToken;
-import io.gravitee.am.service.model.NewUser;
+import io.gravitee.am.service.model.NewOrganizationUser;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
@@ -31,9 +31,9 @@ import io.reactivex.rxjava3.core.Single;
  */
 public interface OrganizationUserService extends CommonUserService {
 
-    Single<User> createOrUpdate(ReferenceType referenceType, String referenceId, NewUser newUser);
+    Single<User> createOrUpdate(ReferenceType referenceType, String referenceId, NewOrganizationUser newUser);
 
-    Single<User> createGraviteeUser(Organization organization, NewUser newUser, io.gravitee.am.identityprovider.api.User principal);
+    Single<User> createGraviteeUser(Organization organization, NewOrganizationUser newUser, io.gravitee.am.identityprovider.api.User principal);
 
     Completable resetPassword(String organizationId, User user, String password, io.gravitee.am.identityprovider.api.User principal);
 

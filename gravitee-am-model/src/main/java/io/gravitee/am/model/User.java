@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.scim.Address;
@@ -160,6 +159,8 @@ public class User implements IUser {
     private Date updatedAt;
 
     private Boolean forceResetPassword = Boolean.FALSE;
+
+    private Boolean serviceAccount = Boolean.FALSE;
 
     public User() {
 

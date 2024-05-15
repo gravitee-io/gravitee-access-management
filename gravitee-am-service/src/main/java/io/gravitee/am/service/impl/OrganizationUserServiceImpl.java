@@ -135,6 +135,8 @@ public class OrganizationUserServiceImpl extends AbstractUserService<Organizatio
                     user.setReferenceId(oldUser.getReferenceId());
                     if (user.getFirstName() != null) {
                         user.setDisplayName(user.getFirstName() + (user.getLastName() != null ? " " + user.getLastName() : ""));
+                    } else {
+                        user.setDisplayName(user.getUsername());
                     }
                     user.setSource(oldUser.getSource());
                     user.setInternal(oldUser.isInternal());

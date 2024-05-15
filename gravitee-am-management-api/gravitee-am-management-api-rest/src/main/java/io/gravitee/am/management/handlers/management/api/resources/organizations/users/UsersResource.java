@@ -24,7 +24,7 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.OrganizationService;
-import io.gravitee.am.service.model.NewUser;
+import io.gravitee.am.service.model.NewOrganizationUser;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
@@ -36,7 +36,16 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
-import jakarta.ws.rs.*;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
@@ -44,8 +53,6 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import java.net.URI;
 import java.util.Comparator;
 import java.util.Map;
@@ -107,23 +114,23 @@ public class UsersResource extends AbstractUsersResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Operation(
             operationId = "createOrganisationUser",
-            summary = "Create a platform user",
+            summary = "Create a platform user or Service Account",
             description = "User must have the ORGANIZATION_USER[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "User successfully created",
+            @ApiResponse(responseCode = "201", description = "User or Service Account successfully created",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = User.class))),
+                            schema = @Schema(implementation = NewOrganizationUser.class))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,
-            @Parameter(name = "user", required = true) @Valid @NotNull final NewUser newUser,
+            @Parameter(name = "user", required = true) @Valid @NotNull final NewOrganizationUser newOrganizationUser,
             @Suspended final AsyncResponse response) {
 
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.CREATE)
                 .andThen(organizationService.findById(organizationId)
-                        .flatMap(organization -> organizationUserService.createGraviteeUser(organization, newUser, authenticatedUser))
+                        .flatMap(organization -> organizationUserService.createGraviteeUser(organization, newOrganizationUser, authenticatedUser))
                         .map(user -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/users/" + user.getId()))
                                 .entity(new UserEntity(user))
