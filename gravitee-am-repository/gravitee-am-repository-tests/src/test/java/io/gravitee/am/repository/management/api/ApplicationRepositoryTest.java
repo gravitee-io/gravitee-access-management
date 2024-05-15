@@ -41,7 +41,15 @@ import org.junit.Test;
 import org.mockito.internal.util.collections.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -444,7 +452,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         var rememberDeviceSettings = new RememberDeviceSettings();
         rememberDeviceSettings.setActive(true);
         rememberDeviceSettings.setDeviceIdentifierId("device-id");
-        rememberDeviceSettings.setSkipRememberDevice(true);
+        rememberDeviceSettings.setSkipChallengeWhenRememberDevice(true);
         rememberDeviceSettings.setExpirationTimeSeconds(100000L);
 
         var mfaSettings = new MFASettings();
