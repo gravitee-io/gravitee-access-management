@@ -18,7 +18,7 @@ package io.gravitee.am.management.service.impl.commands;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.service.model.NewUser;
+import io.gravitee.am.service.model.NewOrganizationUser;
 import io.gravitee.cockpit.api.command.v1.CockpitCommandType;
 import io.gravitee.cockpit.api.command.v1.user.UserCommand;
 import io.gravitee.cockpit.api.command.v1.user.UserCommandPayload;
@@ -60,7 +60,7 @@ public class UserCommandHandler implements CommandHandler<UserCommand, UserReply
             return Single.just(new UserReply(command.getId(), errorMsg));
         }
 
-        NewUser newUser = new NewUser();
+        NewOrganizationUser newUser = new NewOrganizationUser();
         newUser.setInternal(false);
         newUser.setExternalId(userPayload.id());
         newUser.setUsername(userPayload.username());

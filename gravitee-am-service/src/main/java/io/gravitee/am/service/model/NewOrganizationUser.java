@@ -15,21 +15,14 @@
  */
 package io.gravitee.am.service.model;
 
-import io.gravitee.am.service.validators.email.UserEmail;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Teams
- */
 @Getter
 @Setter
 @ToString
-public class NewUser extends AbstractNewUser{
+public class NewOrganizationUser extends AbstractNewUser {
 
-    @UserEmail
     private String email;
 }

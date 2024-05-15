@@ -129,3 +129,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_4_0/4.4.0-add-account-access-tokens-table.yml
   - include:
       - file: liquibase/changelogs/v4_4_0/4.4.0-update-users-table.yml
+  - include:
+      - file: liquibase/changelogs/v4_4_0/4.4.0-update-organization-users-table.yml

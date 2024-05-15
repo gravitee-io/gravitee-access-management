@@ -15,19 +15,15 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public class OrganizationUserMongo extends UserMongo {
-
     private String password;
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
 }

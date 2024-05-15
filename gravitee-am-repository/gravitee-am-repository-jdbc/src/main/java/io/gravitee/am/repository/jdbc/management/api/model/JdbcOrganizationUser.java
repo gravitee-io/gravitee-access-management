@@ -27,12 +27,22 @@ public class JdbcOrganizationUser extends AbstractUser {
 
     private String password;
 
+    private Boolean serviceAccount;
+
     public String getPassword() {
         return password;
     }
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public Boolean getServiceAccount() {
+        return serviceAccount;
+    }
+
+    public void setServiceAccount(Boolean serviceAccount) {
+        this.serviceAccount = serviceAccount;
     }
 
     @Table("organization_user_entitlements")
