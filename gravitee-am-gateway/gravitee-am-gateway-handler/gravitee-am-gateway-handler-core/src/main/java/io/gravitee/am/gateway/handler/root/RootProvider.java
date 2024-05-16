@@ -356,7 +356,7 @@ public class RootProvider extends AbstractProtocolProvider {
         Handler<RoutingContext> localeHandler = new LocaleHandler(messageResolver);
         Handler<RoutingContext> loginPostWebAuthnHandler = new LoginPostWebAuthnHandler(webAuthnCookieService);
         Handler<RoutingContext> userRememberMeHandler = new UserRememberMeRequestHandler(jwtService, domain, rememberMeCookieName);
-        Handler<RoutingContext> redirectUriValidationHandler = new RedirectUriValidationHandler(domain);
+        Handler<RoutingContext> redirectUriValidationHandler = new RedirectUriValidationHandler(domain, userService);
 
         // Root policy chain handler
         rootRouter.route()
