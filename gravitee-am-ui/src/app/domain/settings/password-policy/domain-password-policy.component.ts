@@ -46,6 +46,7 @@ export class DomainPasswordPolicyComponent implements OnInit {
   providers = [];
   linkedProviders = [];
   displayLinkedProviders = false;
+  maxConsecutiveLetters = 0;
 
   @Input() passwordPolicy: DomainPasswordPolicy;
 
@@ -69,6 +70,9 @@ export class DomainPasswordPolicyComponent implements OnInit {
     }
     this.buildLinkedIdentityProviders(false);
     this.editMode = this.authService.hasPermissions(['domain_settings_update']);
+    if (this.passwordPolicy?.maxConsecutiveLetters > 0) {
+      this.maxConsecutiveLetters = this.passwordPolicy.maxConsecutiveLetters;
+    }
   }
 
   formChange(): void {
@@ -115,6 +119,12 @@ export class DomainPasswordPolicyComponent implements OnInit {
     if (this.passwordPolicy.maxLength && this.passwordPolicy.maxLength <= 0) {
       this.snackbarService.open('Max length must be greater than zero');
       return;
+    }
+
+    if (this.maxConsecutiveLetters > 0) {
+      this.passwordPolicy.maxConsecutiveLetters = this.maxConsecutiveLetters;
+    } else {
+      this.passwordPolicy.maxConsecutiveLetters = undefined;
     }
 
     let request: Observable<any>;
