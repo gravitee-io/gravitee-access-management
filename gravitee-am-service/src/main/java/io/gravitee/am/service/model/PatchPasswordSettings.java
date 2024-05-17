@@ -148,7 +148,11 @@ public class PatchPasswordSettings {
         SetterUtils.safeSet(toPatch::setIncludeNumbers, this.includeNumbers);
         SetterUtils.safeSet(toPatch::setIncludeSpecialCharacters, this.includeSpecialCharacters);
         SetterUtils.safeSet(toPatch::setLettersInMixedCase, this.lettersInMixedCase);
-        SetterUtils.safeSet(toPatch::setMaxConsecutiveLetters, this.maxConsecutiveLetters);
+        if (this.maxConsecutiveLetters == null) { // There must be option to set null.
+            toPatch.setMaxConsecutiveLetters(null);
+        } else {
+            SetterUtils.safeSet(toPatch::setMaxConsecutiveLetters, this.maxConsecutiveLetters);
+        }
         SetterUtils.safeSet(toPatch::setExcludePasswordsInDictionary, this.excludePasswordsInDictionary);
         SetterUtils.safeSet(toPatch::setExcludeUserProfileInfoInPassword, this.excludeUserProfileInfoInPassword);
         SetterUtils.safeSet(toPatch::setExpiryDuration, this.expiryDuration);
@@ -158,11 +162,11 @@ public class PatchPasswordSettings {
             getPasswordHistoryEnabled().ifPresent(toPatch::setPasswordHistoryEnabled);
         }
         if (toPatch.isPasswordHistoryEnabled() && (toPatch.getOldPasswords() == null || toPatch.getOldPasswords() > MAX_PASSWORD_HISTORY || toPatch.getOldPasswords() < MIN_PASSWORD_HISTORY)) {
-            throw new InvalidParameterException("Number of old passwords must be within the range  ["+MIN_PASSWORD_HISTORY+", "+MAX_PASSWORD_HISTORY+"]");
+            throw new InvalidParameterException("Number of old passwords must be within the range  [" + MIN_PASSWORD_HISTORY + ", " + MAX_PASSWORD_HISTORY + "]");
         }
 
         if (toPatch.getMinLength() != null) {
-            if (toPatch.getMinLength() <=0) {
+            if (toPatch.getMinLength() <= 0) {
                 throw new InvalidParameterException("Min password length must be greater than zero");
             }
 

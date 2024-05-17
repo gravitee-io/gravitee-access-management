@@ -38,7 +38,7 @@ export class DomainPasswordPolicyComponent implements OnInit {
   includeNumbers: boolean;
   includeSpecialCharacters: boolean;
   lettersInMixedCase: boolean;
-  maxConsecutiveLetters: number;
+  maxConsecutiveLetters = 0;
   excludePasswordsInDictionary: boolean;
   excludeUserProfileInfoInPassword: boolean;
   expiryDuration: number;
@@ -63,7 +63,9 @@ export class DomainPasswordPolicyComponent implements OnInit {
       this.includeNumbers = this.passwordSettings.includeNumbers;
       this.includeSpecialCharacters = this.passwordSettings.includeSpecialCharacters;
       this.lettersInMixedCase = this.passwordSettings.lettersInMixedCase;
-      this.maxConsecutiveLetters = this.passwordSettings.maxConsecutiveLetters;
+      if (this.passwordSettings.maxConsecutiveLetters) {
+        this.maxConsecutiveLetters = this.passwordSettings.maxConsecutiveLetters;
+      }
       this.excludePasswordsInDictionary = this.passwordSettings.excludePasswordsInDictionary;
       this.excludeUserProfileInfoInPassword = this.passwordSettings.excludeUserProfileInfoInPassword;
       this.expiryDuration = this.passwordSettings.expiryDuration;
@@ -118,7 +120,6 @@ export class DomainPasswordPolicyComponent implements OnInit {
       this.snackbarService.open('Max length must be greater than zero');
       return;
     }
-
     data.passwordSettings = {
       inherited: false,
       minLength: this.minLength,
@@ -126,7 +127,7 @@ export class DomainPasswordPolicyComponent implements OnInit {
       includeNumbers: this.includeNumbers,
       includeSpecialCharacters: this.includeSpecialCharacters,
       lettersInMixedCase: this.lettersInMixedCase,
-      maxConsecutiveLetters: this.maxConsecutiveLetters,
+      maxConsecutiveLetters: this.maxConsecutiveLetters > 0 ? this.maxConsecutiveLetters : undefined,
       excludePasswordsInDictionary: this.excludePasswordsInDictionary,
       excludeUserProfileInfoInPassword: this.excludeUserProfileInfoInPassword,
       expiryDuration: this.expiryDuration,
