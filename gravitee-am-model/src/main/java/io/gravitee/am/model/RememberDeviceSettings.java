@@ -15,14 +15,23 @@
  */
 package io.gravitee.am.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Data
 public class RememberDeviceSettings {
 
     private boolean active;
-    private boolean skipRememberDevice;
+
+    /**
+     * Only used with conditional MFA challenge. If true, remember device will not be applied when MFA condition evaluates to no risk
+     */
+    @JsonProperty("skipRememberDevice")
+    private boolean isSkipChallengeWhenRememberDevice;
     private Long expirationTimeSeconds;
     private String deviceIdentifierId;
 
@@ -33,37 +42,5 @@ public class RememberDeviceSettings {
         this.active = other.active;
         this.expirationTimeSeconds = other.expirationTimeSeconds;
         this.deviceIdentifierId = other.deviceIdentifierId;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public boolean isSkipChallengeWhenRememberDevice() {
-        return skipRememberDevice;
-    }
-
-    public Long getExpirationTimeSeconds() {
-        return expirationTimeSeconds;
-    }
-
-    public String getDeviceIdentifierId() {
-        return deviceIdentifierId;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
-    }
-
-    public void setExpirationTimeSeconds(Long expirationTimeSeconds) {
-        this.expirationTimeSeconds = expirationTimeSeconds;
-    }
-
-    public void setDeviceIdentifierId(String deviceIdentifierId) {
-        this.deviceIdentifierId = deviceIdentifierId;
-    }
-
-    public void setSkipRememberDevice(boolean skipRememberDevice) {
-        this.skipRememberDevice = skipRememberDevice;
     }
 }
