@@ -52,7 +52,7 @@ public class RedirectUriValidationHandler implements Handler<RoutingContext> {
 
     private final Domain domain;
     private final RedirectUriValidator redirectUriValidator;
-    private Function<String, Maybe<JWT>> tokenVerifier;
+    private final Function<String, Maybe<JWT>> tokenVerifier;
 
     public RedirectUriValidationHandler(Domain domain) {
         this.domain = domain;
@@ -71,12 +71,8 @@ public class RedirectUriValidationHandler implements Handler<RoutingContext> {
     public void handle(RoutingContext context) {
         final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         getOperation(context)
-                .subscribe(operation -> {
-                            // proceed redirect_uri parameter
-                            parseRedirectUriParameter(context, client, operation);
-                            context.next();
-                        },
-                        context::fail);
+                .doOnSuccess(op -> parseRedirectUriParameter(context, client, op))
+                .subscribe(x -> context.next(), context::fail);
     }
 
     private Single<TokenPurpose> getOperation(RoutingContext context) {
