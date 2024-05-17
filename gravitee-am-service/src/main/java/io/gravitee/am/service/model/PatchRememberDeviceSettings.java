@@ -80,7 +80,7 @@ public class PatchRememberDeviceSettings {
         RememberDeviceSettings toPatch = _toPatch == null ? new RememberDeviceSettings() : new RememberDeviceSettings(_toPatch);
         SetterUtils.safeSet(toPatch::setDeviceIdentifierId, this.getDeviceIdentifierId());
         SetterUtils.safeSet(toPatch::setActive, this.getActive());
-        SetterUtils.safeSet(toPatch::setSkipRememberDevice, this.getSkipRememberDevice());
+        SetterUtils.safeSet(toPatch::setSkipChallengeWhenRememberDevice, this.getSkipRememberDevice());
         final Optional<Long> expirationTimeSeconds = isNull(this.getExpirationTimeSeconds()) ? Optional.empty() : this.getExpirationTimeSeconds();
         SetterUtils.safeSet(toPatch::setExpirationTimeSeconds, expirationTimeSeconds.filter(Objects::nonNull).map(Math::abs));
         return toPatch;
