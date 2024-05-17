@@ -265,12 +265,12 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     }
 
     private Optional<TokenPurpose> getTokenPurpose(io.gravitee.am.model.Template template) {
-        var purpose = switch (template) {
-            case RESET_PASSWORD -> TokenPurpose.RESET_PASSWORD;
-            case REGISTRATION_VERIFY -> TokenPurpose.REGISTRATION_VERIFY;
-            default -> null;
+        return switch (template) {
+            case RESET_PASSWORD -> Optional.of(TokenPurpose.RESET_PASSWORD);
+            case REGISTRATION_VERIFY -> Optional.of(TokenPurpose.REGISTRATION_VERIFY);
+            // not UNSPECIFIED, because if the token has no particular purpose, we don't want it to contain this claim
+            default -> Optional.empty();
         };
-        return Optional.ofNullable(purpose);
 
     }
 
