@@ -40,7 +40,7 @@ export class PasswordPolicyComponent implements OnInit {
   includeSpecialCharacters: boolean;
   lettersInMixedCase: boolean;
   inherited: boolean;
-  maxConsecutiveLetters: number;
+  maxConsecutiveLetters = 0;
   excludePasswordsInDictionary: boolean;
   excludeUserProfileInfoInPassword: boolean;
   expiryDuration: number;
@@ -70,7 +70,9 @@ export class PasswordPolicyComponent implements OnInit {
       this.includeNumbers = this.passwordSettings.includeNumbers;
       this.includeSpecialCharacters = this.passwordSettings.includeSpecialCharacters;
       this.lettersInMixedCase = this.passwordSettings.lettersInMixedCase;
-      this.maxConsecutiveLetters = this.passwordSettings.maxConsecutiveLetters;
+      if (this.passwordSettings.maxConsecutiveLetters) {
+        this.maxConsecutiveLetters = this.passwordSettings.maxConsecutiveLetters;
+      }
       this.excludePasswordsInDictionary = this.passwordSettings.excludePasswordsInDictionary;
       this.excludeUserProfileInfoInPassword = this.passwordSettings.excludeUserProfileInfoInPassword;
       this.expiryDuration = this.passwordSettings.expiryDuration;
@@ -138,7 +140,7 @@ export class PasswordPolicyComponent implements OnInit {
       includeNumbers: this.includeNumbers,
       includeSpecialCharacters: this.includeSpecialCharacters,
       lettersInMixedCase: this.lettersInMixedCase,
-      maxConsecutiveLetters: this.maxConsecutiveLetters,
+      maxConsecutiveLetters: this.maxConsecutiveLetters > 0 ? this.maxConsecutiveLetters : undefined,
       excludePasswordsInDictionary: this.excludePasswordsInDictionary,
       excludeUserProfileInfoInPassword: this.excludeUserProfileInfoInPassword,
       expiryDuration: this.expiryDuration,
