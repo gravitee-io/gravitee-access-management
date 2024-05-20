@@ -60,6 +60,9 @@ public class RedirectUriValidator {
     }
 
     private boolean requiresRedirectUri(TokenPurpose operation) {
+        /* In the forgotten password flow, the "reset password" link user receives doesn't contain a redirect_uri,
+           because unlike other in flows - it's not used. If the uri is provided for any reason we still should
+           validate it - but we can't require it to be present. */
         return operation != TokenPurpose.RESET_PASSWORD;
     }
 }
