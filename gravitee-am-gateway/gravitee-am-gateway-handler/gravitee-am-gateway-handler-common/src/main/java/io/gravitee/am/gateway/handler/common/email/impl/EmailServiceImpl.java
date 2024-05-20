@@ -23,6 +23,7 @@ import io.gravitee.am.common.email.Email;
 import io.gravitee.am.common.email.EmailBuilder;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.jwt.TokenPurpose;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.email.EmailManager;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
@@ -41,8 +42,6 @@ import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
 import io.vertx.rxjava3.core.MultiMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -58,6 +57,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 import static io.gravitee.am.common.oauth2.Parameters.CLIENT_ID;
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
@@ -219,7 +219,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     }
 
     private Email prepareEmail(io.gravitee.am.model.Template template, io.gravitee.am.model.Email emailTemplate, User user, Client client, MultiMap queryParams) {
-        Map<String, Object> params = prepareEmailParams(user, client, emailTemplate.getExpiresAfter(), template.redirectUri(), queryParams);
+        Map<String, Object> params = prepareEmailParams(user, client, emailTemplate.getExpiresAfter(), template, queryParams);
         return new EmailBuilder()
                 .to(user.getEmail())
                 .from(emailTemplate.getFrom())
@@ -230,7 +230,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
                 .build();
     }
 
-    private Map<String, Object> prepareEmailParams(User user, Client client, Integer expiresAfter, String path, MultiMap queryParams) {
+    private Map<String, Object> prepareEmailParams(User user, Client client, Integer expiresAfter, io.gravitee.am.model.Template template, MultiMap queryParams) {
         // generate a JWT to store user's information and for security purpose
         final Map<String, Object> claims = new HashMap<>();
         Instant now = Instant.now();
@@ -245,6 +245,9 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
             queryParams.add(CLIENT_ID, encodeURIComponent(client.getClientId()));
         }
 
+        getTokenPurpose(template)
+                .ifPresent(purpose -> claims.put(ConstantKeys.CLAIM_TOKEN_PURPOSE, purpose));
+
         String token = jwtBuilder.sign(new JWT(claims));
         queryParams.add("token", token);
 
@@ -258,9 +261,19 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
             params.put("client", new ClientProperties(client));
         }
 
-        params.put("url", domainService.buildUrl(domain, path, queryParams));
+        params.put("url", domainService.buildUrl(domain, template.redirectUri(), queryParams));
 
         return params;
+    }
+
+    private Optional<TokenPurpose> getTokenPurpose(io.gravitee.am.model.Template template) {
+        return switch (template) {
+            case RESET_PASSWORD -> Optional.of(TokenPurpose.RESET_PASSWORD);
+            case REGISTRATION_VERIFY -> Optional.of(TokenPurpose.REGISTRATION_VERIFY);
+            // not UNSPECIFIED, because if the token has no particular purpose, we don't want it to contain this claim
+            default -> Optional.empty();
+        };
+
     }
 
     protected io.gravitee.am.model.Email getEmailTemplate(io.gravitee.am.model.Template template, Client client) {
