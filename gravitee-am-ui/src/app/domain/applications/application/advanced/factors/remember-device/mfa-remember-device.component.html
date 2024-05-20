@@ -52,7 +52,7 @@
     </mat-form-field>
     <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
       <input matInput type="number" placeholder="Duration" name="expirationTimeSeconds" min="0" [min]="0"
-             [value]="displayExpiresIn()" (keyup)="onTimeChange($event)">
+             [value]="displayExpiresIn()" (change)="onTimeChange($event)">
       <mat-hint>Default time is 10 hours</mat-hint>
     </mat-form-field>
     <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
