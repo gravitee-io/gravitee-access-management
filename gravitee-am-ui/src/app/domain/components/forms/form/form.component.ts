@@ -70,12 +70,11 @@ export class FormComponent implements OnInit, AfterViewInit {
     if (this.form && this.form.id) {
       this.formFound = true;
     }
-    if (this.form && this.form.content) {
+    if (this.form?.content !== undefined) {
       this.formContent = this.form.content;
       this.originalFormContent = (' ' + this.formContent).slice(1);
     } else {
-      this.form = {};
-      this.form.template = this.rawTemplate
+      this.form.template = this.rawTemplate;
     }
 
     this.template = this.rawTemplate.toLowerCase().replace(/_/g, ' ');;
