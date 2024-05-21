@@ -268,14 +268,14 @@ export class UserProfileComponent implements OnInit {
 
   updateUsername(): void {
     this.dialogService
-      .confirm(`Update ${this.getProfileNameType}`, `Are you sure you want to update this ${this.getProfileNameType}?`)
+      .confirm(`Update ${this.getProfileNameType()}`, `Are you sure you want to update this ${this.getProfileNameType().toLowerCase()}?`)
       .pipe(
         filter((res) => res),
         switchMap(() => this.userService.updateUsername(this.domainId, this.user.id, this.organizationContext, this.user.username)),
         tap(() => {
           this.usernameForm.resetForm({ username: this.user.username });
           this.unlockUser(this.user);
-          this.snackbarService.open(`${this.getProfileNameType} updated`);
+          this.snackbarService.open(`${this.getProfileNameType()} updated`);
         }),
       )
       .subscribe();
