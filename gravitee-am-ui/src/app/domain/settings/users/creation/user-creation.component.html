@@ -231,9 +231,18 @@
       </div>
     </form>
     <div class="gv-page-description" fxFlex>
-      <h3>{{ isServiceAccount() ? 'Service Account Creation ?' : 'User creation ?' }}</h3>
+      <h3>{{ isServiceAccount() ? 'Service Account Creation' : 'User Creation' }}</h3>
       <div class="gv-page-description-content" *ngIf="!isServiceAccount()">
-        <p>User will be able to access and sign-in to clients registered to that domain.</p>
+        <p>
+          {{
+            isOrganizationUserAction()
+              ? 'User will be able to sign in as an admin user in AM.'
+              : 'User will be able to access and sign-in to clients registered to that domain.'
+          }}
+        </p>
+      </div>
+      <div class="gv-page-description-content" *ngIf="isServiceAccount()">
+        <p>Service account can be used as non-personal accounts to automate actions on AM Management API by generating tokens.</p>
       </div>
     </div>
   </div>
