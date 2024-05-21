@@ -252,6 +252,7 @@ public interface ConstantKeys {
     String CLAIM_REMEMBER_ME = "r";
     String CLAIM_TARGET = "t";
     String CLAIM_STATUS = "s";
+    String CLAIM_TOKEN_PURPOSE = "tp";
     String STATUS_SIGNED_IN = "signed-in";
     String STATUS_FAILURE = "failure";
     String CLAIM_ISSUING_REASON = "ir";
