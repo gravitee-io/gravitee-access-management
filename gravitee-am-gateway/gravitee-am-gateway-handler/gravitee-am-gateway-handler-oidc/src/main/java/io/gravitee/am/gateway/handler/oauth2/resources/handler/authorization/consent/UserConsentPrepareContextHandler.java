@@ -38,7 +38,7 @@ public class UserConsentPrepareContextHandler implements Handler<RoutingContext>
 
     @Override
     public void handle(RoutingContext routingContext) {
-        // user must redirected here after an authorization request
+        // user must be redirected here after an authorization request
         AuthorizationRequest authorizationRequest = routingContext.get(ConstantKeys.AUTHORIZATION_REQUEST_CONTEXT_KEY);
         if (authorizationRequest == null) {
             routingContext.response().setStatusCode(400).end("An authorization request is required to handle user approval");
@@ -53,10 +53,9 @@ public class UserConsentPrepareContextHandler implements Handler<RoutingContext>
         }
 
         // prepare context
-        Client safeClient = new Client(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY));
-        safeClient.setClientSecret(null);
+        Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         io.gravitee.am.model.User user = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) authenticatedUser.getDelegate()).getUser();
-        prepareContext(routingContext, safeClient, user);
+        prepareContext(routingContext, client.asSafeClient(), user);
 
         routingContext.next();
     }

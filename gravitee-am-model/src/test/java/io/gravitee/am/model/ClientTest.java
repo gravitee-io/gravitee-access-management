@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model;
 
+import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import org.junit.Test;
@@ -85,5 +86,24 @@ public class ClientTest {
         client.setFactors(Set.of(id));
 
         Assertions.assertTrue(client.getFactors().containsAll(List.of(id)));
+    }
+
+    @Test
+    public void testSafeClone() throws CloneNotSupportedException{
+        Client from = new Client();
+        from.setClientName("original");
+        from.setRedirectUris(Stream.of("http://host/callback","http://host/login").collect(Collectors.toList()));
+        from.setClientSecret(UUID.randomUUID().toString());
+        from.setClientSecrets(List.of(new ClientSecret()));
+
+        Client safeClient = from.asSafeClient();
+
+        //client name
+        assertTrue("same name",from.getClientName().equals(safeClient.getClientName()));
+        //redirect uris
+        assertTrue("same redirect uris size",safeClient.getRedirectUris()!=null && safeClient.getRedirectUris().size()==from.getRedirectUris().size());
+        assertTrue("same redirect uris values",safeClient.getRedirectUris().containsAll(from.getRedirectUris()));
+        assertTrue("client secret should be null", safeClient.getClientSecret() == null);
+        assertTrue("list of client secrets should be empty", safeClient.getClientSecrets().isEmpty());
     }
 }
