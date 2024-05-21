@@ -1166,4 +1166,11 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         clone.setClientSecrets(this.getClientSecrets() != null ? this.getClientSecrets().stream().map(ClientSecret::new).collect(Collectors.toList()) : new ArrayList<>());
         return clone;
     }
+
+    public Client asSafeClient() {
+        Client safeClient = new Client(this);
+        safeClient.setClientSecret(null);
+        safeClient.setClientSecrets(List.of());
+        return safeClient;
+    }
 }
