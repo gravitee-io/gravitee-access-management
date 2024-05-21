@@ -42,7 +42,7 @@ class Content {
 
 export async function getLastEmail(delay = 1000) {
 	await new Promise((r) => setTimeout(r, delay))
-	const response = await fetch(process.env.FAKE_SMTP+'/api/email');
+	const response = await fetch(process.env.FAKE_SMTP + '/api/email');
 	const array = await response.json()
 	const jsonEmail = array[0];
 

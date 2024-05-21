@@ -583,6 +583,7 @@ public class UserServiceTest {
         User user = mock(User.class);
         when(user.getEmail()).thenReturn("test@test.com");
         when(user.getUsername()).thenReturn("test");
+        when(user.isEnabled()).thenReturn(true);
 
         when(domain.getId()).thenReturn("domain-id");
         when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList()));
@@ -622,6 +623,8 @@ public class UserServiceTest {
         when(user.getUsername()).thenReturn("username");
         when(user.getEmail()).thenReturn("test@test.com");
         when(user.getSource()).thenReturn(localClientId);
+        when(user.isEnabled()).thenReturn(true);
+
         User user2 = mock(User.class);
         when(user2.getSource()).thenReturn("other-idp-client-id");
 
@@ -732,6 +735,7 @@ public class UserServiceTest {
 
         User user = mock(User.class);
         when(user.getEmail()).thenReturn("test@test.com");
+        when(user.isEnabled()).thenReturn(true);
 
         UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.findByEmail(user.getEmail())).thenReturn(Maybe.just(idpUser));
@@ -984,6 +988,8 @@ public class UserServiceTest {
         when(user.getUsername()).thenReturn("username");
         when(user.getEmail()).thenReturn("test@test.com");
         when(user.getSource()).thenReturn("idp-id");
+        when(user.isEnabled()).thenReturn(true);
+
         when(domain.getId()).thenReturn("domain-id");
         when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
         when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.just(userProvider));

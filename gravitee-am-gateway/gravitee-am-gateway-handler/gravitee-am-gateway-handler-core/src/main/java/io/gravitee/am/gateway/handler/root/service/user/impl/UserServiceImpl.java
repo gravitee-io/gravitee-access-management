@@ -447,18 +447,10 @@ public class UserServiceImpl implements UserService {
                                     .switchIfEmpty(Single.error(() -> new UserInvalidException("User [ " + user.getUsername() + " ] cannot be updated because its identity provider does not support user provisioning")))
                                     .flatMap(userProvider -> {
                                         // if user registration is not completed and force registration option is disabled throw invalid account exception
-                                        AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
-
-                                        if (user.isInactive() && !forceUserRegistration(accountSettings)) {
-                                            return Single.error(new AccountInactiveException("User [ " + user.getUsername() + " ] needs to complete the activation process"));
-                                        }
-
-                                        if (!user.isEnabled() && !user.isInactive()) {
-                                            return Single.error(new AccountInactiveException("User [ " + user.getUsername() + " ] is disabled."));
-                                        }
+                                        final Single<User> error = checkIfUserIsActive(client, user);
 
                                         // fetch latest information from the identity provider and return the user
-                                        return userProvider.findByUsername(user.getUsername())
+                                        return error != null ? error : userProvider.findByUsername(user.getUsername())
                                                 .map(Optional::ofNullable)
                                                 .defaultIfEmpty(Optional.empty())
                                                 .flatMap(optUser -> {
@@ -520,7 +512,12 @@ public class UserServiceImpl implements UserService {
                                             if (optEndUser.isEmpty()) {
                                                 return userService.create(convert(idpUser.getUser(), idpUser.getSource()));
                                             }
-                                            return userService.update(enhanceUser(optEndUser.get(), idpUser.getUser()));
+
+                                            final User user = optEndUser.get();
+
+                                            // if user registration is not completed and force registration option is disabled throw invalid account exception
+                                            final Single<User> error = checkIfUserIsActive(client, user);
+                                            return error != null ? error : userService.update(enhanceUser(user, idpUser.getUser()));
                                         });
                             })
                             .onErrorResumeNext(exception -> Single.error(new UserNotFoundException(email != null ? email : params.getUsername())));
@@ -533,6 +530,18 @@ public class UserServiceImpl implements UserService {
                 })
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.FORGOT_PASSWORD_REQUESTED).throwable(throwable)))
                 .ignoreElement();
+    }
+
+    private Single<User> checkIfUserIsActive(Client client, User user) {
+        AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
+        if (user.isInactive() && !forceUserRegistration(accountSettings)) {
+            return Single.error(new AccountInactiveException("User [ " + user.getUsername() + " ] needs to complete the activation process"));
+        }
+
+        if (!user.isEnabled() && !user.isInactive()) {
+            return Single.error(new AccountInactiveException("User [ " + user.getUsername() + " ] is disabled."));
+        }
+        return null;
     }
 
     /**
