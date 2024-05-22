@@ -410,10 +410,14 @@ public class TokenServiceImpl implements TokenService {
         ExecutionContext executionContext = executionContextFactory.create(simpleExecutionContext);
 
         // put authorization request in context
+        // AM-3137 => clean OAuth 2.0 request
+        OAuth2Request safeRequest = new OAuth2Request(request);
+        safeRequest.setExecutionContext(null);
+        safeRequest.setHttpResponse(null);
         if (request.getResponseType() != null && !request.getResponseType().isEmpty()) {
-            executionContext.setAttribute("authorizationRequest", request);
+            executionContext.setAttribute("authorizationRequest", safeRequest);
         } else {
-            executionContext.setAttribute("tokenRequest", request);
+            executionContext.setAttribute("tokenRequest", safeRequest);
         }
         // put auth flow policy context attributes in context
         Object authFlowAttributes = request.getContext().get(ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY);
