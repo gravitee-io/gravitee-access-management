@@ -96,9 +96,7 @@ public class LogoutCallbackEndpoint extends AbstractLogoutEndpoint {
                 if (currentSession != null) {
                     // put current session in context for later use
                     if (currentSession.getClient() != null) {
-                        Client safeClient = new Client(currentSession.getClient());
-                        safeClient.setClientSecret(null);
-                        routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, safeClient);
+                        routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, currentSession.getClient().asSafeClient());
                     }
                     if (currentSession.getUser() != null) {
                         routingContext.put(ConstantKeys.USER_CONTEXT_KEY, currentSession.getUser());
