@@ -31,6 +31,7 @@ import java.util.*;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+
 public class OAuth2Request extends BaseRequest {
 
     /**
@@ -127,6 +128,46 @@ public class OAuth2Request extends BaseRequest {
      * REQUIRED for <a href=" https://datatracker.ietf.org/doc/html/rfc8705#section-3.1">Certificate Bound Access Token</a>
      */
     private String confirmationMethodX5S256;
+
+    public OAuth2Request(OAuth2Request other){
+        this.clientId = other.clientId;
+        this.grantType = other.grantType;
+        this.responseType = other.responseType;
+        this.scopes = other.scopes;
+        this.redirectUri = other.redirectUri;
+        this.subject = other.subject;
+        this.supportRefreshToken = other.supportRefreshToken;
+        this.refreshToken = other.refreshToken;
+        this.authorizationCode = other.authorizationCode;
+        this.context = other.context;
+        this.contextVersion = other.contextVersion;
+        this.executionContext = other.executionContext;
+        this.permissions = other.permissions;
+        this.pathParameters = other.pathParameters;
+        this.confirmationMethodX5S256 = other.confirmationMethodX5S256;
+
+        //BaseRequest
+        this.setId(other.getId());
+        this.setTransactionId(other.getTransactionId());
+        this.setUri(other.getUri());
+        this.setPath(other.getPath());
+        this.setPathInfo(other.getPathInfo());
+        this.setContextPath(other.getContextPath());
+        this.setParameters(other.getParameters());
+        this.setHeaders(other.getHeaders());
+        this.setMethod(other.getMethod());
+        this.setScheme(other.getScheme());
+        this.setTimestamp(other.getTimestamp());
+        this.setRemoteAddress(other.getRemoteAddress());
+        this.setLocalAddress(other.getLocalAddress());
+        this.setVersion(other.getVersion());
+        this.setSslSession(other.getSslSession());
+        this.setHttpResponse(other.getHttpResponse());
+        this.setHost(other.host());
+    }
+
+    public OAuth2Request() {
+    }
 
     public String getClientId() {
         return clientId;
