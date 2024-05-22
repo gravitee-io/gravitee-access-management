@@ -15,12 +15,16 @@
  */
 package io.gravitee.am.gateway.handler.context.provider;
 
+import io.gravitee.am.gateway.handler.context.EvaluableExecutionContext;
+import io.gravitee.am.gateway.handler.context.ReactableExecutionContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.el.TemplateContext;
 import io.gravitee.el.TemplateVariableProvider;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -43,5 +47,10 @@ public class DomainTemplateVariableProvider implements TemplateVariableProvider,
     @Override
     public void provide(TemplateContext templateContext) {
         templateContext.setVariable("domain", domainProperties);
+        ofNullable(templateContext.lookupVariable(ReactableExecutionContext.TEMPLATE_ATTRIBUTE_CONTEXT)).ifPresent(ctx -> {
+            if (ctx instanceof EvaluableExecutionContext) {
+                ((EvaluableExecutionContext) ctx).getAttributes().putIfAbsent("domain", domainProperties);
+            }
+        });
     }
 }
