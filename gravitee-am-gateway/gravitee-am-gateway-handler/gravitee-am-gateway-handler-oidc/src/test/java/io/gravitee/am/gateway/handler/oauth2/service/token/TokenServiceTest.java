@@ -38,8 +38,8 @@ import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.gravitee.el.TemplateEngine;
-import io.gravitee.el.spel.SpelTemplateEngine;
 import io.gravitee.gateway.api.ExecutionContext;
+import io.gravitee.gateway.api.Response;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -55,12 +55,15 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.any;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
@@ -124,6 +127,40 @@ public class TokenServiceTest {
         verify(tokenManager, times(1)).storeAccessToken(any());
         verify(accessTokenRepository, never()).delete(anyString());
         verify(refreshTokenRepository, never()).delete(anyString());
+    }
+
+    @Test
+    public void shouldCreate_withSafeRequest() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setExecutionContext(Map.of("key","val"));
+        Response mockResponse = mock(Response.class);
+        oAuth2Request.setHttpResponse(mockResponse);
+
+        Client client = new Client();
+        client.setClientId("my-client-id");
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+
+        when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+        TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(tokenManager, times(1)).storeAccessToken(any());
+        verify(accessTokenRepository, never()).delete(anyString());
+        verify(refreshTokenRepository, never()).delete(anyString());
+
+        ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Object> valueCaptor = ArgumentCaptor.forClass(Object.class);
+
+        verify(executionContext, times(2)).setAttribute(keyCaptor.capture(), valueCaptor.capture());
+
+        assertEquals("tokenRequest", keyCaptor.getAllValues().get(0));
+        assertNull(((OAuth2Request)valueCaptor.getAllValues().get(0)).getExecutionContext());
+        assertNull(((OAuth2Request)valueCaptor.getAllValues().get(0)).getHttpResponse());
     }
 
     @Test

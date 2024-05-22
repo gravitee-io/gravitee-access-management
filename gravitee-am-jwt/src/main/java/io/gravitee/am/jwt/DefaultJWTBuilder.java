@@ -32,10 +32,7 @@ import io.gravitee.am.common.exception.jwt.MalformedJWTException;
 import io.gravitee.am.common.exception.jwt.SignatureException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
-<<<<<<< HEAD
 import net.minidev.json.JSONObject;
-=======
->>>>>>> 3f2a4a2614 (Revert "fix: added typeadapter for gson serialization")
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,11 +100,7 @@ public class DefaultJWTBuilder implements JWTBuilder {
             if (issuer != null && !jsonObject.containsKey(Claims.iss)) {
                 jsonObject.put(Claims.iss, issuer);
             }
-<<<<<<< HEAD
             SignedJWT signedJWT = new SignedJWT(header, JWTClaimsSet.parse(jsonObject));
-=======
-            SignedJWT signedJWT = new SignedJWT(header, JWTClaimsSet.parse(payload));
->>>>>>> 3f2a4a2614 (Revert "fix: added typeadapter for gson serialization")
             signedJWT.sign(signer);
             return signedJWT.serialize();
         } catch (ParseException ex) {
