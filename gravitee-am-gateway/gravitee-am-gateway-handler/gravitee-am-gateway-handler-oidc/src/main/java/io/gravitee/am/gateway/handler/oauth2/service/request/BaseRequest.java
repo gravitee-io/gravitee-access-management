@@ -47,7 +47,6 @@ public abstract class BaseRequest implements Request {
     private HttpHeaders headers;
     private HttpMethod method;
     private String scheme;
-    private String rawMethod;
     private long timestamp;
     private String remoteAddress;
     private String localAddress;
@@ -271,10 +270,6 @@ public abstract class BaseRequest implements Request {
 
     public String getScheme() {
         return scheme;
-    }
-
-    public String getRawMethod() {
-        return rawMethod;
     }
 
     public long getTimestamp() {
