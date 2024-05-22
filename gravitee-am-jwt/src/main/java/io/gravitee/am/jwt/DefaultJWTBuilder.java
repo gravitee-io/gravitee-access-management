@@ -26,17 +26,12 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton;
 import com.nimbusds.jose.jca.JCASupport;
-import com.nimbusds.jose.shaded.gson.Gson;
-import com.nimbusds.jose.shaded.gson.GsonBuilder;
-import com.nimbusds.jose.shaded.gson.ToNumberPolicy;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.exception.jwt.MalformedJWTException;
 import io.gravitee.am.common.exception.jwt.SignatureException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.json.HttpResponseAdapter;
-import io.vertx.core.http.impl.Http1xServerResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,18 +52,12 @@ public class DefaultJWTBuilder implements JWTBuilder {
     private final JWSSigner signer;
     private final JWSHeader header;
     private String issuer;
-    private static final Gson GSON = new GsonBuilder()
-            .serializeNulls()
-            .registerTypeAdapter(Http1xServerResponse.class, new HttpResponseAdapter())
-            .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
-            .disableHtmlEscaping()
-            .create();
 
     public DefaultJWTBuilder(final Key key,
                              final String signatureAlgorithm,
                              final String keyId) throws InvalidKeyException {
         if (key instanceof PrivateKey) {
-            if (key.getAlgorithm().equals("RSA")) {
+            if ( key.getAlgorithm().equals("RSA")){
                 signer = new RSASSASigner((PrivateKey) key, true);
             } else {
                 try {
@@ -109,7 +98,7 @@ public class DefaultJWTBuilder implements JWTBuilder {
             if (issuer != null && !payload.containsKey(Claims.iss)) {
                 payload.setIss(issuer);
             }
-            SignedJWT signedJWT = new SignedJWT(header, JWTClaimsSet.parse(GSON.toJson(payload)));
+            SignedJWT signedJWT = new SignedJWT(header, JWTClaimsSet.parse(payload));
             signedJWT.sign(signer);
             return signedJWT.serialize();
         } catch (ParseException ex) {
