@@ -38,7 +38,7 @@ public class ReactableExecutionContext implements MutableExecutionContext {
 
     private final static String TEMPLATE_ATTRIBUTE_REQUEST = "request";
     private final static String TEMPLATE_ATTRIBUTE_RESPONSE = "response";
-    private final static String TEMPLATE_ATTRIBUTE_CONTEXT = "context";
+    public final static String TEMPLATE_ATTRIBUTE_CONTEXT = "context";
 
     private final ApplicationContext applicationContext;
 
