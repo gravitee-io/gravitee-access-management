@@ -1,9 +1,10 @@
 {
 	"info": {
-		"_postman_id": "759a4491-bd61-4a8e-95c3-cc72e94d3ec3",
+		"_postman_id": "c3b6f33b-c3c1-458b-813f-d21d15284077",
 		"name": "Gravitee.io - AM - Oauth2 - app version",
 		"description": "Test Oauth2 (RFC 6749) specifications",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31343100"
 	},
 	"item": [
 		{
@@ -13970,7 +13971,8 @@
 											"// wait for sync process",
 											"setTimeout(function(){}, 6000);"
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],
@@ -13988,7 +13990,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"tokenCustomClaims\" : [\n\t\t  \t{\n\t\t  \t\t\"tokenType\": \"ACCESS_TOKEN\",\n\t\t  \t\t\"claimName\": \"custom-claim\",\n\t\t  \t\t\"claimValue\": \"test\"\n\t\t  \t}\n\t\t  ]\n  \t}\n  }\n}"
+									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"tokenCustomClaims\" : [\n\t\t  \t{\n\t\t  \t\t\"tokenType\": \"ACCESS_TOKEN\",\n\t\t  \t\t\"claimName\": \"custom-claim\",\n\t\t  \t\t\"claimValue\": \"test\"\n\t\t  \t},\n            {\n\t\t  \t\t\"tokenType\": \"ACCESS_TOKEN\",\n\t\t  \t\t\"claimName\": \"custom-claim-domain\",\n\t\t  \t\t\"claimValue\": \"{#domain.name}\"\n\t\t  \t},\n            {\n\t\t  \t\t\"tokenType\": \"ACCESS_TOKEN\",\n\t\t  \t\t\"claimName\": \"custom-claim-domain-from-ctx\",\n\t\t  \t\t\"claimValue\": \"{#context.attributes['domain']['name']}\"\n\t\t  \t}\n\t\t  ]\n  \t}\n  }\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{client1}}",
@@ -14112,9 +14114,14 @@
 											"    pm.expect(body.token_type).to.eql(\"bearer\");",
 											"    pm.expect(body).to.have.property('custom-claim');",
 											"    pm.expect(body['custom-claim']).to.eql(\"test\");",
+											"    pm.expect(body).to.have.property('custom-claim-domain');",
+											"    pm.expect(body['custom-claim-domain']).to.eql(\"oauth2-app-version\");",
+											"    pm.expect(body).to.have.property('custom-claim-domain-from-ctx');",
+											"    pm.expect(body['custom-claim-domain-from-ctx']).to.eql(\"oauth2-app-version\");",
 											"});"
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],
