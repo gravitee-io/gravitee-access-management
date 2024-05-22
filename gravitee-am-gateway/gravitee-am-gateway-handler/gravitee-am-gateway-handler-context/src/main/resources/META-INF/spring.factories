@@ -1,0 +1,2 @@
+io.gravitee.el.TemplateVariableProvider=\
+    io.gravitee.am.gateway.handler.context.provider.DomainTemplateVariableProvider
