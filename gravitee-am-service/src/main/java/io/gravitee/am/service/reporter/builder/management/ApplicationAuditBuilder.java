@@ -20,6 +20,8 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.ReferenceType;
 
+import java.util.List;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -48,6 +50,7 @@ public class ApplicationAuditBuilder extends ManagementAuditBuilder<ApplicationA
             if (safeApp.getSettings() != null && safeApp.getSettings().getOauth() != null) {
                 safeApp.getSettings().getOauth().setClientSecret(null);
             }
+            safeApp.setSecrets(List.of());
         }
         return value;
     }

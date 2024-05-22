@@ -464,12 +464,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     Event event = new Event(Type.APPLICATION, new Payload(application1.getId(), ReferenceType.DOMAIN, application1.getDomain(), Action.UPDATE));
                     return eventService.create(event).flatMap(domain1 -> Single.just(application1));
                 })
-                .doOnSuccess(updatedApplication -> {
-                    // make sure that the client secret is not displayed in clear text into the audits
-                    Application sanitizedApp = new Application(updatedApplication);
-                    sanitizedApp.getSettings().getOauth().setClientSecret(null);
-                    auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CLIENT_SECRET_RENEWED).application(sanitizedApp));
-                })
+                .doOnSuccess(updatedApplication -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CLIENT_SECRET_RENEWED).application(updatedApplication)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CLIENT_SECRET_RENEWED).throwable(throwable)))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -658,14 +653,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     Event event = new Event(Type.APPLICATION, new Payload(application.getId(), ReferenceType.DOMAIN, application.getDomain(), Action.CREATE));
                     return eventService.create(event).flatMap(domain1 -> Single.just(application1));
                 })
-                .doOnSuccess(application1 -> {
-                    // make sure that the client secret is not displayed in clear text into the audits
-                    Application sanitizedApp = new Application(application1);
-                    if (sanitizedApp.getSettings() != null && sanitizedApp.getSettings().getOauth() != null) {
-                        sanitizedApp.getSettings().getOauth().setClientSecret(null);
-                    }
-                    auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CREATED).application(sanitizedApp));
-                })
+                .doOnSuccess(application1 -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CREATED).application(application1)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CREATED).throwable(throwable)));
     }
 
