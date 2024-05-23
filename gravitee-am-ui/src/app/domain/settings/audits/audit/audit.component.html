@@ -21,7 +21,7 @@
   <div class="audit-content" fxLayout="row">
     <form fxLayout="column" fxFlex="70">
       <div class="gv-form-section">
-        <mat-chip-list #chipList style="position: absolute; margin-top: -35px; margin-left: -10px">
+        <mat-chip-list #chipList style="position: absolute; margin-top: -45px; margin-left: -10px">
           <mat-chip [color]="audit.outcome?.status === 'SUCCESS' ? 'accent' : 'warn'" selected>
             {{ audit.outcome?.status }}
           </mat-chip>
