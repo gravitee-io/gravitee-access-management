@@ -343,7 +343,7 @@ public class CertificateServiceImpl implements CertificateService {
                             })
                             .onErrorResumeNext(ex -> {
                                 LOGGER.error("An error occurs while trying to update a certificate", ex);
-                                throw new TechnicalManagementException("An error occurs while trying to update a certificate", ex);
+                                return Single.error(new TechnicalManagementException("An error occurs while trying to update a certificate", ex));
                             });
                 });
     }
@@ -356,7 +356,7 @@ public class CertificateServiceImpl implements CertificateService {
                 .flatMapSingle(certificate -> applicationService.findByCertificate(certificateId).count()
                         .flatMap(applications -> {
                             if (applications > 0) {
-                                throw new CertificateWithApplicationsException();
+                                return Single.error(new CertificateWithApplicationsException());
                             }
                             return Single.just(certificate);
                         })
