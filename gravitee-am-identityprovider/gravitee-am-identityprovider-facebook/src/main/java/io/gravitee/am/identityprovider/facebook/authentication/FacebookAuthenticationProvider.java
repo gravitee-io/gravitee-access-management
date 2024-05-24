@@ -18,7 +18,14 @@ package io.gravitee.am.identityprovider.facebook.authentication;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.identityprovider.api.*;
+import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.common.oauth2.authentication.AbstractSocialAuthenticationProvider;
 import io.gravitee.am.identityprovider.facebook.FacebookIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.facebook.authentication.spring.FacebookAuthenticationProviderConfiguration;
@@ -28,8 +35,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
@@ -37,16 +43,18 @@ import org.springframework.context.annotation.Import;
 import java.util.HashMap;
 import java.util.Map;
 
-import static io.gravitee.am.identityprovider.facebook.model.FacebookUser.*;
+import static io.gravitee.am.identityprovider.facebook.model.FacebookUser.ALL_FIELDS_PARAM;
+import static io.gravitee.am.identityprovider.facebook.model.FacebookUser.LOCATION;
+import static io.gravitee.am.identityprovider.facebook.model.FacebookUser.OTHER_FIELDS_LIST;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 @Import(FacebookAuthenticationProviderConfiguration.class)
 public class FacebookAuthenticationProvider extends AbstractSocialAuthenticationProvider<FacebookIdentityProviderConfiguration> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FacebookAuthenticationProvider.class);
     private static final String CLIENT_ID = "client_id";
     private static final String CLIENT_SECRET = "client_secret";
     private static final String REDIRECT_URI = "redirect_uri";
@@ -99,7 +107,7 @@ public class FacebookAuthenticationProvider extends AbstractSocialAuthentication
         final String authorizationCode = authentication.getContext().request().parameters().getFirst(configuration.getCodeParameter());
 
         if (authorizationCode == null || authorizationCode.isEmpty()) {
-            LOGGER.debug("Authorization code is missing, skip authentication");
+            log.debug("Authorization code is missing, skip authentication");
             return Maybe.error(new BadCredentialsException("Missing authorization code"));
         }
 
@@ -114,7 +122,7 @@ public class FacebookAuthenticationProvider extends AbstractSocialAuthentication
                 .toMaybe()
                 .flatMap(httpResponse -> {
                     if (httpResponse.statusCode() != 200) {
-                        LOGGER.error("HTTP error {} is thrown while exchanging code. The response body is: {} ", httpResponse.statusCode(), httpResponse.bodyAsString());
+                        log.error("HTTP error {} is thrown while exchanging code. The response body is: {} ", httpResponse.statusCode(), httpResponse.bodyAsString());
                         return Maybe.error(new BadCredentialsException(httpResponse.bodyAsString()));
                     }
 
@@ -126,7 +134,7 @@ public class FacebookAuthenticationProvider extends AbstractSocialAuthentication
 
         return client.postAbs(configuration.getUserProfileUri())
                 .rxSendForm(MultiMap.caseInsensitiveMultiMap()
-                        .set(ACCESS_TOKEN, accessToken.getValue())
+                        .set(ACCESS_TOKEN, accessToken.value())
                         .set(FIELDS, ALL_FIELDS_PARAM))
                 .toMaybe()
                 .flatMap(httpResponse -> {

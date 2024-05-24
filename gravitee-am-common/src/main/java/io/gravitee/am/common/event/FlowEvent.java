@@ -26,21 +26,11 @@ public enum FlowEvent {
     UNDEPLOY;
 
     public static FlowEvent actionOf(Action action) {
-        FlowEvent flowEvent = null;
-        switch (action) {
-            case CREATE:
-                flowEvent = FlowEvent.DEPLOY;
-                break;
-            case UPDATE:
-                flowEvent = FlowEvent.UPDATE;
-                break;
-            case DELETE:
-                flowEvent = FlowEvent.UNDEPLOY;
-                break;
-            case BULK_UPDATE:
-                flowEvent = FlowEvent.UPDATE;
-                break;
-        }
-        return flowEvent;
+        return switch (action) {
+            case CREATE -> FlowEvent.DEPLOY;
+            case UPDATE, BULK_UPDATE -> FlowEvent.UPDATE;
+            case DELETE -> FlowEvent.UNDEPLOY;
+            default -> null;
+        };
     }
 }

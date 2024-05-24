@@ -26,18 +26,11 @@ public enum AuthenticationDeviceNotifierEvent {
     UNDEPLOY;
 
     public static AuthenticationDeviceNotifierEvent actionOf(Action action) {
-        AuthenticationDeviceNotifierEvent event = null;
-        switch (action) {
-            case CREATE:
-                event = AuthenticationDeviceNotifierEvent.DEPLOY;
-                break;
-            case UPDATE:
-                event = AuthenticationDeviceNotifierEvent.UPDATE;
-                break;
-            case DELETE:
-                event = AuthenticationDeviceNotifierEvent.UNDEPLOY;
-                break;
-        }
-        return event;
+        return switch (action) {
+            case CREATE -> AuthenticationDeviceNotifierEvent.DEPLOY;
+            case UPDATE -> AuthenticationDeviceNotifierEvent.UPDATE;
+            case DELETE -> AuthenticationDeviceNotifierEvent.UNDEPLOY;
+            default -> null;
+        };
     }
 }

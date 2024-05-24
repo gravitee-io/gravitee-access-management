@@ -20,8 +20,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.BeanDescription;
+import com.fasterxml.jackson.databind.DeserializationConfig;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -29,8 +36,11 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Event;
-import io.gravitee.am.model.jose.*;
-
+import io.gravitee.am.model.jose.ECKey;
+import io.gravitee.am.model.jose.JWK;
+import io.gravitee.am.model.jose.OCTKey;
+import io.gravitee.am.model.jose.OKPKey;
+import io.gravitee.am.model.jose.RSAKey;
 import jakarta.ws.rs.ext.ContextResolver;
 import jakarta.ws.rs.ext.Provider;
 
@@ -65,42 +75,34 @@ public class ObjectMapperResolver implements ContextResolver<ObjectMapper> {
                 };
             }
         });
-        module.addSerializer(Enum.class, new StdSerializer<Enum>(Enum.class) {
+        module.addSerializer(Enum.class, new StdSerializer<>(Enum.class) {
             @Override
             public void serialize(Enum value, JsonGenerator jgen, SerializerProvider provider) throws IOException {
                 jgen.writeString(value.name().toLowerCase());
             }
         });
-        module.addSerializer(Instant.class, new StdSerializer<Instant>(Instant.class) {
+        module.addSerializer(Instant.class, new StdSerializer<>(Instant.class) {
             @Override
             public void serialize(Instant instant, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
                 jsonGenerator.writeNumber(instant.toEpochMilli());
             }
         });
-        module.addDeserializer(JWK.class, new StdDeserializer<JWK>(JWK.class) {
+        module.addDeserializer(JWK.class, new StdDeserializer<>(JWK.class) {
             @Override
-            public JWK deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
+            public JWK deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
                 JsonNode node = jsonParser.getCodec().readTree(jsonParser);
                 String kty = node.get("kty").asText();
                 if (kty == null) {
                     return null;
                 }
-                JWK jwk = null;
-                switch (kty) {
-                    case "RSA":
-                        jwk = jsonParser.getCodec().treeToValue(node, RSAKey.class);
-                        break;
-                    case "EC":
-                        jwk = jsonParser.getCodec().treeToValue(node, ECKey.class);
-                        break;
-                    case "oct":
-                        jwk = jsonParser.getCodec().treeToValue(node, OCTKey.class);
-                        break;
-                    case "OKP":
-                        jwk = jsonParser.getCodec().treeToValue(node, OKPKey.class);
-                        break;
-                }
-                return jwk;
+                Class<?> keyType =  switch (kty) {
+                    case "RSA" -> RSAKey.class;
+                    case "EC" -> ECKey.class;
+                    case "oct" -> OCTKey.class;
+                    case "OKP" -> OKPKey.class;
+                    default -> null;
+                };
+                return keyType != null  ? (JWK) jsonParser.getCodec().treeToValue(node, keyType) : null;
             }
         });
         mapper.addMixIn(Domain.class, MixIn.class);
@@ -117,7 +119,7 @@ public class ObjectMapperResolver implements ContextResolver<ObjectMapper> {
         return mapper;
     }
 
-    private abstract class MixIn {
+    private abstract static class MixIn {
         @JsonIgnore
         abstract Event getLastEvent();
     }

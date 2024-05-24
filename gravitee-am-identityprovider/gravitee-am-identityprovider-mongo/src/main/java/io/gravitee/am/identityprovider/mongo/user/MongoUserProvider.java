@@ -88,7 +88,7 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
 
     @Override
     public Maybe<User> findByEmail(String email) {
-        String rawQuery = this.configuration.getFindUserByEmailQuery().replaceAll("\\?", email);
+        String rawQuery = this.configuration.getFindUserByEmailQuery().replace("?", email);
         String jsonQuery = convertToJsonString(rawQuery);
         BsonDocument query = BsonDocument.parse(jsonQuery);
         return Observable.fromPublisher(usersCollection.find(query).first()).firstElement().map(this::convert);
@@ -99,7 +99,7 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
         final String encodedUsername = getSafeUsername(username);
 
         String rawQuery = this.configuration.getFindUserByUsernameQuery();
-        String jsonQuery = convertToJsonString(rawQuery).replaceAll("\\?", encodedUsername);
+        String jsonQuery = convertToJsonString(rawQuery).replace("?", encodedUsername);
         BsonDocument query = BsonDocument.parse(jsonQuery);
         return Observable.fromPublisher(usersCollection.find(query).first()).firstElement().map(this::convert);
     }

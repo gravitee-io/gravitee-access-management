@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token;
 
+import lombok.Getter;
+import lombok.Setter;
+
+import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +32,9 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class Token {
+@Getter
+@Setter
+public abstract class Token implements Serializable {
 
     private String value;
     private String tokenType = BEARER_TYPE.toLowerCase();
@@ -84,91 +90,4 @@ public abstract class Token {
         this.value = value;
     }
 
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-    public String getTokenType() {
-        return tokenType;
-    }
-
-    public void setTokenType(String tokenType) {
-        this.tokenType = tokenType;
-    }
-
-    public long getExpiresIn() {
-        return expiresIn;
-    }
-
-    public void setExpiresIn(long expiresIn) {
-        this.expiresIn = expiresIn;
-    }
-
-    public String getScope() {
-        return scope;
-    }
-
-    public void setScope(String scope) {
-        this.scope = scope;
-    }
-
-    public String getClientId() {
-        return clientId;
-    }
-
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    public String getSubject() {
-        return subject;
-    }
-
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
-    }
-
-    public Map<String, Object> getAdditionalInformation() {
-        return additionalInformation;
-    }
-
-    public void setAdditionalInformation(Map<String, Object> additionalInformation) {
-        this.additionalInformation = additionalInformation;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Date getExpireAt() {
-        return expireAt;
-    }
-
-    public void setExpireAt(Date expireAt) {
-        this.expireAt = expireAt;
-    }
-
-    public Boolean isUpgraded() {
-        return upgraded;
-    }
-
-    public void setUpgraded(Boolean upgraded) {
-        this.upgraded = upgraded;
-    }
 }

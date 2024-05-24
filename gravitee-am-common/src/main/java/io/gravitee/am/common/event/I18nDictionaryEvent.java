@@ -26,20 +26,12 @@ public enum I18nDictionaryEvent {
     UNDEPLOY;
 
     public static I18nDictionaryEvent actionOf(Action action) {
-        I18nDictionaryEvent roleEvent = null;
-        switch (action) {
-            case CREATE:
-                roleEvent = I18nDictionaryEvent.DEPLOY;
-                break;
-            case UPDATE:
-                roleEvent = I18nDictionaryEvent.UPDATE;
-                break;
-            case DELETE:
-                roleEvent = I18nDictionaryEvent.UNDEPLOY;
-                break;
-            default:
-                throw new IllegalArgumentException(String.format("Action %s not supported for I18DictionaryEvent", action));
-        }
-        return roleEvent;
+        return switch (action) {
+            case CREATE -> I18nDictionaryEvent.DEPLOY;
+            case UPDATE -> I18nDictionaryEvent.UPDATE;
+            case DELETE -> I18nDictionaryEvent.UNDEPLOY;
+            default ->
+                    throw new IllegalArgumentException(String.format("Action %s not supported for I18DictionaryEvent", action));
+        };
     }
 }

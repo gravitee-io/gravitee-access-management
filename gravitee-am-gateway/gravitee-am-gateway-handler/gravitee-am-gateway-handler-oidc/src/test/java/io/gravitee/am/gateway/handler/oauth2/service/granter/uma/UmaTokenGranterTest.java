@@ -62,13 +62,28 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
-import static io.gravitee.am.common.oauth2.Parameters.*;
+import static io.gravitee.am.common.oauth2.Parameters.CLAIM_TOKEN;
+import static io.gravitee.am.common.oauth2.Parameters.CLAIM_TOKEN_FORMAT;
+import static io.gravitee.am.common.oauth2.Parameters.RPT;
+import static io.gravitee.am.common.oauth2.Parameters.TICKET;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -124,8 +139,8 @@ public class UmaTokenGranterTest {
     );
 
     private TokenRequest tokenRequest;
-    private MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-    private ArgumentCaptor<OAuth2Request> oauth2RequestCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
+    private final MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+    private final ArgumentCaptor<OAuth2Request> oauth2RequestCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
     private static final String USER_ID = "userId";
     private static final String CLIENT_ID = "clientId";
     private static final String TICKET_ID = "ticketId";
@@ -143,12 +158,12 @@ public class UmaTokenGranterTest {
         tokenRequest = new TokenRequest();
         tokenRequest.setParameters(parameters);
         List<PermissionRequest> permissions = Arrays.asList(
-                new PermissionRequest().setResourceId(RS_ONE).setResourceScopes(new ArrayList<>(Arrays.asList("scopeA"))),
-                new PermissionRequest().setResourceId(RS_TWO).setResourceScopes(new ArrayList<>(Arrays.asList("scopeA")))
+                new PermissionRequest().setResourceId(RS_ONE).setResourceScopes(new ArrayList<>(List.of("scopeA"))),
+                new PermissionRequest().setResourceId(RS_TWO).setResourceScopes(new ArrayList<>(List.of("scopeA")))
         );
-        Map permission = new HashMap();
-        permission.put("resourceId",RS_ONE);
-        permission.put("resourceScopes",Arrays.asList("scopeB"));
+        Map<String, Object> permission = new HashMap<>();
+        permission.put("resourceId", RS_ONE);
+        permission.put("resourceScopes", List.of("scopeB"));
 
         //Init mocks
         when(domain.getUma()).thenReturn(new UMASettings().setEnabled(true));
@@ -159,7 +174,7 @@ public class UmaTokenGranterTest {
         when(jwt.getSub()).thenReturn(USER_ID);
         when(rpt.getSub()).thenReturn(USER_ID);
         when(rpt.getAud()).thenReturn(CLIENT_ID);
-        when(rpt.get("permissions")).thenReturn(new LinkedList(Arrays.asList(permission)));
+        when(rpt.get("permissions")).thenReturn(new LinkedList(List.of(permission)));
         when(jwtService.decodeAndVerify(RQP_ID_TOKEN, client, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
         when(jwtService.decodeAndVerify(RPT_OLD_TOKEN, client, ACCESS_TOKEN)).thenReturn(Single.just(rpt));
         when(userAuthenticationManager.loadPreAuthenticatedUser(USER_ID, tokenRequest)).thenReturn(Maybe.just(user));
@@ -174,18 +189,18 @@ public class UmaTokenGranterTest {
 
     @Test
     public void handle_nonUmaGrant() {
-        assertFalse(umaTokenGranter.handle("any",client));
+        assertFalse(umaTokenGranter.handle("any", client));
     }
 
     @Test
     public void handle_umaDisabled() {
         when(domain.getUma()).thenReturn(new UMASettings().setEnabled(false));
-        assertFalse(umaTokenGranter.handle(GrantType.UMA,client));
+        assertFalse(umaTokenGranter.handle(GrantType.UMA, client));
     }
 
     @Test
     public void handle_ok() {
-        assertTrue(umaTokenGranter.handle(GrantType.UMA,client));
+        assertTrue(umaTokenGranter.handle(GrantType.UMA, client));
     }
 
     @Test
@@ -214,7 +229,7 @@ public class UmaTokenGranterTest {
 
     @Test
     public void grant_badClaimTokenFormat() {
-        parameters.replace(CLAIM_TOKEN_FORMAT, Arrays.asList("claim_token_format"));
+        parameters.replace(CLAIM_TOKEN_FORMAT, List.of("claim_token_format"));
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
         testObserver.assertNotComplete().assertError(UmaException.class).assertError(this::assertNeedInfoBadClaimTokenFormat);
     }
@@ -243,7 +258,7 @@ public class UmaTokenGranterTest {
     @Test
     public void grant_scopesNotPreregistered() {
         //Here request scope has not been pre-registered on client.
-        tokenRequest.setScopes(new HashSet<>(Arrays.asList("not-pre-registered-scope")));
+        tokenRequest.setScopes(new HashSet<>(List.of("not-pre-registered-scope")));
         when(client.getScopeSettings()).thenReturn(Collections.emptyList());
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
         testObserver.assertNotComplete().assertError(InvalidScopeException.class);
@@ -252,8 +267,8 @@ public class UmaTokenGranterTest {
     @Test
     public void grant_unboundResourceScope() {
         //Here request scope is well pre-registered on client, but does not match any resources
-        when(client.getScopeSettings()).thenReturn(Arrays.asList(new ApplicationScopeSettings("not-resource-scope")));
-        tokenRequest.setScopes(new HashSet<>(Arrays.asList("not-resource-scope")));
+        when(client.getScopeSettings()).thenReturn(List.of(new ApplicationScopeSettings("not-resource-scope")));
+        tokenRequest.setScopes(new HashSet<>(List.of("not-resource-scope")));
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
         testObserver.assertNotComplete().assertError(InvalidScopeException.class);
     }
@@ -287,7 +302,7 @@ public class UmaTokenGranterTest {
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
         testObserver.assertComplete().assertNoErrors().assertValue(token -> "success".equals(token.getValue()));
         OAuth2Request result = oauth2RequestCaptor.getValue();
-        assertTrue(USER_ID.equals(result.getSubject()));
+        assertEquals(USER_ID, result.getSubject());
         assertTrue(assertNominalPermissions(result.getPermissions()));
         assertTrue(result.isSupportRefreshToken());
     }
@@ -298,7 +313,7 @@ public class UmaTokenGranterTest {
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
         testObserver.assertComplete().assertNoErrors().assertValue(token -> "success".equals(token.getValue()));
         OAuth2Request result = oauth2RequestCaptor.getValue();
-        assertTrue(USER_ID.equals(result.getSubject()));
+        assertEquals(USER_ID, result.getSubject());
         assertTrue(assertAdditionalScopePermissions(result.getPermissions()));
         assertTrue(result.isSupportRefreshToken());
     }
@@ -310,7 +325,7 @@ public class UmaTokenGranterTest {
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
         testObserver.assertComplete().assertNoErrors().assertValue(token -> "success".equals(token.getValue()));
         OAuth2Request result = oauth2RequestCaptor.getValue();
-        assertTrue(USER_ID.equals(result.getSubject()));
+        assertEquals(USER_ID, result.getSubject());
         assertTrue(assertNominalPermissions(result.getPermissions()));
         assertTrue(result.isSupportRefreshToken());
     }
@@ -318,11 +333,11 @@ public class UmaTokenGranterTest {
     @Test
     public void grant_user_extendRptCase() {
         parameters.add(RPT, RPT_OLD_TOKEN);
-        tokenRequest.setScopes(new HashSet<>(Arrays.asList("scopeD")));
+        tokenRequest.setScopes(new HashSet<>(List.of("scopeD")));
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
-        testObserver.assertComplete().assertNoErrors().assertValue(token -> "success".equals(token.getValue()) && token.isUpgraded());
+        testObserver.assertComplete().assertNoErrors().assertValue(token -> "success".equals(token.getValue()) && token.getUpgraded());
         OAuth2Request result = oauth2RequestCaptor.getValue();
-        assertTrue(USER_ID.equals(result.getSubject()));
+        assertEquals(USER_ID, result.getSubject());
         assertTrue(assertExtendedRptPermissions(result.getPermissions()));
         assertTrue(result.isSupportRefreshToken());
     }
@@ -357,10 +372,10 @@ public class UmaTokenGranterTest {
         parameters.remove(CLAIM_TOKEN);
         parameters.remove(CLAIM_TOKEN_FORMAT);
         parameters.add(RPT, RPT_OLD_TOKEN);
-        tokenRequest.setScopes(new HashSet<>(Arrays.asList("scopeD")));
+        tokenRequest.setScopes(new HashSet<>(List.of("scopeD")));
         when(rpt.getSub()).thenReturn(CLIENT_ID);//Set RPT as Client bearer.
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
-        testObserver.assertComplete().assertNoErrors().assertValue(token -> "success".equals(token.getValue()) && token.isUpgraded());
+        testObserver.assertComplete().assertNoErrors().assertValue(token -> "success".equals(token.getValue()) && token.getUpgraded());
         OAuth2Request result = oauth2RequestCaptor.getValue();
         assertNull(result.getSubject());
         assertTrue(assertExtendedRptPermissions(result.getPermissions()));
@@ -390,7 +405,7 @@ public class UmaTokenGranterTest {
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
         testObserver.assertComplete().assertNoErrors().assertValue(token -> "success".equals(token.getValue()));
         OAuth2Request result = oauth2RequestCaptor.getValue();
-        assertTrue(USER_ID.equals(result.getSubject()));
+        assertEquals(USER_ID, result.getSubject());
         assertTrue(assertNominalPermissions(result.getPermissions()));
         assertTrue(result.isSupportRefreshToken());
     }
@@ -435,7 +450,7 @@ public class UmaTokenGranterTest {
      */
     private boolean assertNominalPermissions(List<PermissionRequest> result) {
         return result != null && result.size() == 2 && result.stream()
-                .filter(match(Arrays.asList("scopeA"), Arrays.asList("scopeA")))
+                .filter(match(List.of("scopeA"), List.of("scopeA")))
                 .count() == 2;
     }
 

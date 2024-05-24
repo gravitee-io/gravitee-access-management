@@ -24,8 +24,6 @@ import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
-import java.util.Objects;
-
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_REMEMBER_DEVICE_CONSENT_TIME;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
@@ -41,21 +39,13 @@ import static java.util.Optional.ofNullable;
  */
 public class RememberDeviceSettingsHandler implements Handler<RoutingContext> {
 
-    public RememberDeviceSettingsHandler() {
-    }
-
     @Override
     public void handle(RoutingContext routingContext) {
         HttpServerRequest req = routingContext.request();
         switch (req.method().name()) {
-            case "GET":
-                handleGetRememberDevice(routingContext);
-                break;
-            case "POST":
-                routingContext.next();
-                break;
-            default:
-                routingContext.fail(405);
+            case "GET" -> handleGetRememberDevice(routingContext);
+            case "POST" -> routingContext.next();
+            default -> routingContext.fail(405);
         }
     }
 
@@ -73,7 +63,7 @@ public class RememberDeviceSettingsHandler implements Handler<RoutingContext> {
     }
 
     private RememberDeviceSettings getRememberDeviceSettings(Client client) {
-        return ofNullable(client.getMfaSettings()).filter(Objects::nonNull)
+        return ofNullable(client.getMfaSettings())
                 .map(MFASettings::getRememberDevice)
                 .orElse(new RememberDeviceSettings());
     }

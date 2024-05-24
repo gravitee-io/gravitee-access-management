@@ -26,18 +26,11 @@ public enum FormEvent {
     UNDEPLOY;
 
     public static FormEvent actionOf(Action action) {
-        FormEvent formEvent = null;
-        switch (action) {
-            case CREATE:
-                formEvent = FormEvent.DEPLOY;
-                break;
-            case UPDATE:
-                formEvent = FormEvent.UPDATE;
-                break;
-            case DELETE:
-                formEvent = FormEvent.UNDEPLOY;
-                break;
-        }
-        return formEvent;
+        return switch (action) {
+            case CREATE -> FormEvent.DEPLOY;
+            case UPDATE -> FormEvent.UPDATE;
+            case DELETE -> FormEvent.UNDEPLOY;
+            default -> null;
+        };
     }
 }

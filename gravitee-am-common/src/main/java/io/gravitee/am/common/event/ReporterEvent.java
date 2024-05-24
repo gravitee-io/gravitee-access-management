@@ -26,18 +26,11 @@ public enum ReporterEvent {
     UNDEPLOY;
 
     public static ReporterEvent actionOf(Action action) {
-        ReporterEvent reporterEvent = null;
-        switch (action) {
-            case CREATE:
-                reporterEvent = ReporterEvent.DEPLOY;
-                break;
-            case UPDATE:
-                reporterEvent = ReporterEvent.UPDATE;
-                break;
-            case DELETE:
-                reporterEvent = ReporterEvent.UNDEPLOY;
-                break;
-        }
-        return reporterEvent;
+        return switch (action) {
+            case CREATE -> ReporterEvent.DEPLOY;
+            case UPDATE -> ReporterEvent.UPDATE;
+            case DELETE -> ReporterEvent.UNDEPLOY;
+            default -> null;
+        };
     }
 }

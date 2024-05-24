@@ -26,18 +26,11 @@ public enum ScopeEvent {
     UNDEPLOY;
 
     public static ScopeEvent actionOf(Action action) {
-        ScopeEvent scopeEvent = null;
-        switch (action) {
-            case CREATE:
-                scopeEvent = ScopeEvent.DEPLOY;
-                break;
-            case UPDATE:
-                scopeEvent = ScopeEvent.UPDATE;
-                break;
-            case DELETE:
-                scopeEvent = ScopeEvent.UNDEPLOY;
-                break;
-        }
-        return scopeEvent;
+        return switch (action) {
+            case CREATE -> ScopeEvent.DEPLOY;
+            case UPDATE -> ScopeEvent.UPDATE;
+            case DELETE -> ScopeEvent.UNDEPLOY;
+            default -> null;
+        };
     }
 }

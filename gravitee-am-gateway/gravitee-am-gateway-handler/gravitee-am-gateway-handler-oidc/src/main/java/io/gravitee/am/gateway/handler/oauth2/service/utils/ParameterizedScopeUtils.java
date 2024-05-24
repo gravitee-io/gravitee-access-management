@@ -25,11 +25,11 @@ public class ParameterizedScopeUtils {
     public static boolean isParameterizedScope(List<String> parameterizedScopes, String scope) {
         return parameterizedScopes != null &&
                 scope != null &&
-                scope.indexOf(':') > 0 &&
+                scope.contains(":") &&
                 parameterizedScopes.contains(scope.substring(0, scope.indexOf(':')));
     }
 
     public static String getScopeBase(String scope) {
-        return scope.indexOf(':') > 0 ? scope.substring(0, scope.indexOf(':')) : scope;
+        return scope.contains(":") ? scope.substring(0, scope.indexOf(':')) : scope;
     }
 }

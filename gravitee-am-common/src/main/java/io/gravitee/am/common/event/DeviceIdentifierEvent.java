@@ -26,15 +26,11 @@ public enum DeviceIdentifierEvent {
     UNDEPLOY;
 
     public static DeviceIdentifierEvent actionOf(Action action) {
-        switch (action) {
-            case CREATE:
-                return DeviceIdentifierEvent.DEPLOY;
-            case UPDATE:
-                return DeviceIdentifierEvent.UPDATE;
-            case DELETE:
-                return DeviceIdentifierEvent.UNDEPLOY;
-            default:
-                return null;
-        }
+        return switch (action) {
+            case CREATE -> DeviceIdentifierEvent.DEPLOY;
+            case UPDATE -> DeviceIdentifierEvent.UPDATE;
+            case DELETE -> DeviceIdentifierEvent.UNDEPLOY;
+            default -> null;
+        };
     }
 }

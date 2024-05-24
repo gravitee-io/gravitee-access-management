@@ -26,18 +26,11 @@ public enum CertificateEvent {
     UNDEPLOY;
 
     public static CertificateEvent actionOf(Action action) {
-        CertificateEvent certificateEvent = null;
-        switch (action) {
-            case CREATE:
-                certificateEvent = CertificateEvent.DEPLOY;
-                break;
-            case UPDATE:
-                certificateEvent = CertificateEvent.UPDATE;
-                break;
-            case DELETE:
-                certificateEvent = CertificateEvent.UNDEPLOY;
-                break;
-        }
-        return certificateEvent;
+        return switch (action) {
+            case CREATE -> CertificateEvent.DEPLOY;
+            case UPDATE -> CertificateEvent.UPDATE;
+            case DELETE -> CertificateEvent.UNDEPLOY;
+            default -> null;
+        };
     }
 }

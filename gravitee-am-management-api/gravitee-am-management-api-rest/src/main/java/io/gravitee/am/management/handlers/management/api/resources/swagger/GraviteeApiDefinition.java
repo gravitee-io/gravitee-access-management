@@ -39,7 +39,7 @@ public class GraviteeApiDefinition implements ReaderListener {
 
     @Override
     public void beforeScan(OpenApiReader openApiReader, OpenAPI openAPI) {
-
+        // This method is currently not implemented and does not perform any actions.
     }
 
     @Override

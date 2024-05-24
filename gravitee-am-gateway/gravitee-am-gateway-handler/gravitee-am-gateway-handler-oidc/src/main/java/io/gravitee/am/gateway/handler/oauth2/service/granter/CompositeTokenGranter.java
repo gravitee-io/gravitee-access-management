@@ -58,8 +58,8 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class CompositeTokenGranter implements TokenGranter, InitializingBean {
 
-    private ConcurrentMap<String, TokenGranter> tokenGranters = new ConcurrentHashMap<>();
-    private TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
+    private final ConcurrentMap<String, TokenGranter> tokenGranters = new ConcurrentHashMap<>();
+    private final TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
 
     @Autowired
     private Domain domain;
@@ -102,8 +102,6 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
 
     @Autowired
     private AuditService auditService;
-
-    public CompositeTokenGranter() { }
 
     @Override
     public Single<Token> grant(TokenRequest tokenRequest, Client client) {

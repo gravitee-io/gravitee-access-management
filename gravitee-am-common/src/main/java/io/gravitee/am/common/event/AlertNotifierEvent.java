@@ -26,18 +26,11 @@ public enum AlertNotifierEvent {
     UNDEPLOY;
 
     public static AlertNotifierEvent actionOf(Action action) {
-        AlertNotifierEvent notifier = null;
-        switch (action) {
-            case CREATE:
-                notifier = AlertNotifierEvent.DEPLOY;
-                break;
-            case UPDATE:
-                notifier = AlertNotifierEvent.UPDATE;
-                break;
-            case DELETE:
-                notifier = AlertNotifierEvent.UNDEPLOY;
-                break;
-        }
-        return notifier;
+        return switch (action) {
+            case CREATE -> AlertNotifierEvent.DEPLOY;
+            case UPDATE -> AlertNotifierEvent.UPDATE;
+            case DELETE -> AlertNotifierEvent.UNDEPLOY;
+            default -> null;
+        };
     }
 }

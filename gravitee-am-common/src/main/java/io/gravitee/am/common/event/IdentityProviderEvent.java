@@ -26,18 +26,11 @@ public enum IdentityProviderEvent {
     UNDEPLOY;
 
     public static IdentityProviderEvent actionOf(Action action) {
-        IdentityProviderEvent identityProviderEvent = null;
-        switch (action) {
-            case CREATE:
-                identityProviderEvent = IdentityProviderEvent.DEPLOY;
-                break;
-            case UPDATE:
-                identityProviderEvent = IdentityProviderEvent.UPDATE;
-                break;
-            case DELETE:
-                identityProviderEvent = IdentityProviderEvent.UNDEPLOY;
-                break;
-        }
-        return identityProviderEvent;
+        return switch (action) {
+            case CREATE -> IdentityProviderEvent.DEPLOY;
+            case UPDATE -> IdentityProviderEvent.UPDATE;
+            case DELETE -> IdentityProviderEvent.UNDEPLOY;
+            default -> null;
+        };
     }
 }

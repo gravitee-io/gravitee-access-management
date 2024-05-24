@@ -33,7 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthenticationEventListener extends AbstractService implements EventListener<AuthenticationEvent, AuthenticationDetails> {
+public class AuthenticationEventListener extends AbstractService<AuthenticationEventListener> implements EventListener<AuthenticationEvent, AuthenticationDetails> {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationEventListener.class);
 

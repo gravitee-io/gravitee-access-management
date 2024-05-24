@@ -53,7 +53,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.client.HttpRequest;
-import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -107,9 +106,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
         }
 
         return Maybe.fromCallable(() -> this.jwtProcessor.process(idToken, null))
-                .onErrorResumeNext(ex -> {
-                    return Maybe.error(new BadCredentialsException(ex.getMessage()));
-                })
+                .onErrorResumeNext(ex -> Maybe.error(new BadCredentialsException(ex.getMessage())))
                 .map(jwtClaimsSet -> createUser(authContext, jwtClaimsSet.getClaims()));
     }
 
@@ -133,7 +130,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
                 builder.addParameter(io.gravitee.am.common.oidc.Parameters.NONCE, SecureRandomString.generate());
             }
             // add state if provided.
-            if (!StringUtils.isEmpty(state)) {
+            if (StringUtils.hasText(state)) {
                 builder.addParameter(Parameters.STATE, state);
             }
 
@@ -233,12 +230,12 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
 
     protected Maybe<User> profile(Token token, Authentication authentication) {
         // we only have the id_token, try to decode it and create the end-user
-        if (TokenTypeHint.ID_TOKEN.equals(token.getTypeHint())) {
-            return retrieveUserFromIdToken(authentication.getContext(), token.getValue());
+        if (TokenTypeHint.ID_TOKEN.equals(token.typeHint())) {
+            return retrieveUserFromIdToken(authentication.getContext(), token.value());
         }
 
         // if it's an access token but user ask for id token verification, try to decode it and create the end-user
-        if (TokenTypeHint.ACCESS_TOKEN.equals(token.getTypeHint()) && getConfiguration().isUseIdTokenForUserInfo()) {
+        if (TokenTypeHint.ACCESS_TOKEN.equals(token.typeHint()) && getConfiguration().isUseIdTokenForUserInfo()) {
             if (authentication.getContext().get(ID_TOKEN_PARAMETER) != null) {
                 String idToken = String.valueOf(authentication.getContext().get(ID_TOKEN_PARAMETER));
                 return retrieveUserFromIdToken(authentication.getContext(), idToken);
@@ -250,7 +247,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
 
         // retrieve user claims from the UserInfo Endpoint
         return getClient().getAbs(getConfiguration().getUserProfileUri())
-                .putHeader(HttpHeaders.AUTHORIZATION, "Bearer " + token.getValue())
+                .putHeader(HttpHeaders.AUTHORIZATION, "Bearer " + token.value())
                 .rxSend()
                 .toMaybe()
                 .map(httpClientResponse -> {
@@ -299,18 +296,17 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
                 // get the corresponding key processor
                 final String resolverParameter = getConfiguration().getResolverParameter();
                 switch (signature) {
-                    case RS256:
-                    case RS384:
-                    case RS512:
+                    case RS256, RS384, RS512 -> {
                         keyProcessor = new RSAKeyProcessor();
                         keyProcessor.setJwkSourceResolver(new RSAJWKSourceResolver(resolverParameter));
-                        break;
-                    case HS256:
-                    case HS384:
-                    case HS512:
+                    }
+                    case HS256, HS384, HS512 -> {
                         keyProcessor = new HMACKeyProcessor();
                         keyProcessor.setJwkSourceResolver(new MACJWKSourceResolver(resolverParameter));
-                        break;
+                    }
+                    default -> {
+                        // No action needed for default case
+                    }
                 }
             }
 

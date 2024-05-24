@@ -22,6 +22,7 @@ import io.gravitee.am.model.User;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
@@ -66,17 +67,12 @@ public interface RateLimiterService {
 
     private long timePeriodToMillSeconds(String timeUnit, int timePeriod){
         ChronoUnit unit = ChronoUnit.valueOf(timeUnit.trim().toUpperCase());
-        long seconds = 0;
-        switch (unit) {
-            case HOURS:
-                seconds = timePeriod * 60 * 60;
-                break;
-            case MINUTES:
-                seconds = timePeriod * 60;
-                break;
-            case SECONDS:
-                seconds = timePeriod;
-        }
+        long seconds = switch (unit) {
+            case HOURS -> timePeriod * 60L * 60L;
+            case MINUTES -> timePeriod * 60L;
+            case SECONDS -> timePeriod;
+            default -> Duration.of(timePeriod, unit).toMillis();
+        };
 
         return TimeUnit.SECONDS.toMillis(seconds);
     }

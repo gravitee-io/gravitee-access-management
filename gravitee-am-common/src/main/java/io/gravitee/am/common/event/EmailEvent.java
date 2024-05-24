@@ -26,18 +26,11 @@ public enum EmailEvent {
     UNDEPLOY;
 
     public static EmailEvent actionOf(Action action) {
-        EmailEvent emailEvent = null;
-        switch (action) {
-            case CREATE:
-                emailEvent = EmailEvent.DEPLOY;
-                break;
-            case UPDATE:
-                emailEvent = EmailEvent.UPDATE;
-                break;
-            case DELETE:
-                emailEvent = EmailEvent.UNDEPLOY;
-                break;
-        }
-        return emailEvent;
+        return switch (action) {
+            case CREATE -> EmailEvent.DEPLOY;
+            case UPDATE -> EmailEvent.UPDATE;
+            case DELETE -> EmailEvent.UNDEPLOY;
+            default -> null;
+        };
     }
 }

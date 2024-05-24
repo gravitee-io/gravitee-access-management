@@ -26,18 +26,11 @@ public enum MembershipEvent {
     UNDEPLOY;
 
     public static MembershipEvent actionOf(Action action) {
-        MembershipEvent membershipEvent = null;
-        switch (action) {
-            case CREATE:
-                membershipEvent = MembershipEvent.DEPLOY;
-                break;
-            case UPDATE:
-                membershipEvent = MembershipEvent.UPDATE;
-                break;
-            case DELETE:
-                membershipEvent = MembershipEvent.UNDEPLOY;
-                break;
-        }
-        return membershipEvent;
+        return switch (action) {
+            case CREATE -> MembershipEvent.DEPLOY;
+            case UPDATE -> MembershipEvent.UPDATE;
+            case DELETE -> MembershipEvent.UNDEPLOY;
+            default -> null;
+        };
     }
 }

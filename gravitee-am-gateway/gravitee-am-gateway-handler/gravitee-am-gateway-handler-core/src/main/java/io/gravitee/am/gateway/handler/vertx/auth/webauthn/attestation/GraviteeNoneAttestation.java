@@ -31,8 +31,6 @@ import org.slf4j.LoggerFactory;
  */
 public class GraviteeNoneAttestation implements Attestation {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    public GraviteeNoneAttestation() {
-    }
 
     public String fmt() {
         return "none";
@@ -41,11 +39,11 @@ public class GraviteeNoneAttestation implements Attestation {
     public AttestationCertificates validate(WebAuthnOptions options, MetaData metadata, byte[] clientDataJSON, JsonObject attestation, AuthData authData) throws AttestationException {
         if (!"00000000-0000-0000-0000-000000000000".equals(authData.getAaguidString())) {
             // Some browsers don't respect the need to send 16 zero bytes values
-            // we only log in debug this fact and we just check that the attStmt is empty
+            // we only log in debug this fact, and we just check that the attStmt is empty
             logger.debug("AAGUID is not 00000000-0000-0000-0000-000000000000 for None attestation (provided AAGUID : {})", authData.getAaguidString());
         }
 
-        if (attestation.containsKey("attStmt") && attestation.getJsonObject("attStmt").size() > 0) {
+        if (attestation.containsKey("attStmt") && !attestation.getJsonObject("attStmt").isEmpty()) {
             throw new AttestationException("attStmt is present!");
         } else {
             return new AttestationCertificates();
