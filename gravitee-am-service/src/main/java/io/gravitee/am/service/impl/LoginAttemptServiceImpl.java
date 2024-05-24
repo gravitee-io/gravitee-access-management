@@ -17,6 +17,7 @@ package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.LoginAttempt;
+import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.repository.management.api.LoginAttemptRepository;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
@@ -34,7 +35,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -50,7 +53,7 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
     private LoginAttemptRepository loginAttemptRepository;
 
     @Override
-    public Single<LoginAttempt> loginFailed(LoginAttemptCriteria criteria, AccountSettings accountSettings) {
+    public Single<LoginAttempt> loginFailed(LoginAttemptCriteria criteria, List<UserIdentity> linkedIdentities, AccountSettings accountSettings) {
         LOGGER.debug("Add login attempt for {}", criteria);
         return loginAttemptRepository.findByCriteria(criteria)
                 .map(Optional::of)
@@ -62,6 +65,7 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
                         if (loginAttempt.getAttempts() >= accountSettings.getMaxLoginAttempts()) {
                             loginAttempt.setExpireAt(new Date(System.currentTimeMillis() + (accountSettings.getAccountBlockedDuration() * 1000)));
                         }
+                        loginAttempt.setLinkedUserIdentities(linkedIdentities);
                         loginAttempt.setUpdatedAt(new Date());
                         return loginAttemptRepository.update(loginAttempt);
                     } else {
@@ -71,6 +75,7 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
                         loginAttempt.setClient(criteria.client());
                         loginAttempt.setIdentityProvider(criteria.identityProvider());
                         loginAttempt.setUsername(criteria.username());
+                        loginAttempt.setLinkedUserIdentities(linkedIdentities);
                         loginAttempt.setAttempts(1);
                         if (loginAttempt.getAttempts() >= accountSettings.getMaxLoginAttempts()) {
                             loginAttempt.setExpireAt(new Date(System.currentTimeMillis() + (accountSettings.getAccountBlockedDuration() * 1000)));

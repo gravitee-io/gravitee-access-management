@@ -72,6 +72,8 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
     protected static final String FIELD_EMAIL = "email";
     protected static final String FIELD_ADDITIONAL_INFO_EMAIL = "additionalInformation.email";
     protected static final String FIELD_EXTERNAL_ID = "externalId";
+
+    protected static final String FIELD_IDENTITY_PROVIDER_ID = "providerId";
     private static final String INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE = "referenceType_1_referenceId_1_username_1_source_1";
     private static final String INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE_NAME = "rt1ri1u1s1";
     private static final String INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE_NAME_UNIQUE = "rt1ri1u1s1_unique";
@@ -195,23 +197,21 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         return Observable.fromPublisher(withMaxTime(
                         usersCollection
                                 .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_USERNAME, username), eq(FIELD_SOURCE, source))))
-                                .limit(1)
-                                .first())
+                        .limit(1)
+                        .first())
                 .firstElement()
-                .switchIfEmpty(includeLinkedIdentities ?  findByLinkedIdentity(referenceType, referenceId, username, source) : Maybe.empty())
+                .switchIfEmpty(includeLinkedIdentities ? findByLinkedIdentity(referenceType, referenceId, username, source) : Maybe.empty())
                 .map(this::convert);
     }
 
     private Maybe<T> findByLinkedIdentity(ReferenceType referenceType, String referenceId, String username, String source) {
-        return Observable.fromPublisher(withMaxTime(
-                        usersCollection.find(
-                                        and(eq(FIELD_REFERENCE_TYPE, referenceType.name()),
-                                                eq(FIELD_REFERENCE_ID, referenceId),
-                                                eq(FIELD_SOURCE, source),
-                                                elemMatch("identities", eq(FIELD_USER_ID, username))
-                                        ))
-                                .limit(1))
-                        .first())
+        Bson query = and(
+                eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                eq(FIELD_REFERENCE_ID, referenceId),
+                elemMatch("identities", and(
+                        eq(FIELD_USER_ID, username),
+                        eq(FIELD_IDENTITY_PROVIDER_ID, source))));
+        return Observable.fromPublisher(withMaxTime(usersCollection.find(query).limit(1)).first())
                 .firstElement();
     }
 
@@ -220,8 +220,8 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         return Observable.fromPublisher(withMaxTime(
                         usersCollection
                                 .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_EXTERNAL_ID, externalId), eq(FIELD_SOURCE, source))))
-                                .limit(1)
-                                .first())
+                        .limit(1)
+                        .first())
                 .firstElement()
                 .map(this::convert);
     }

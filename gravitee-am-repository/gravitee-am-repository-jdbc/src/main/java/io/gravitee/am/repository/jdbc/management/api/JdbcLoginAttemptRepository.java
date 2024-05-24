@@ -59,6 +59,7 @@ public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implement
 
     @Override
     public Maybe<LoginAttempt> findByCriteria(LoginAttemptCriteria criteria) {
+        // TODO AM-3095 add query by linked identities
         LOGGER.debug("findByCriteria({})", criteria);
 
         Criteria whereClause = buildWhereClause(criteria);

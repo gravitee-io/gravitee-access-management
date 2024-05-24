@@ -15,15 +15,19 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import io.gravitee.am.model.LoginAttempt;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
+import lombok.Data;
 import org.bson.codecs.pojo.annotations.BsonId;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Data
 public class LoginAttemptMongo extends Auditable {
 
     @BsonId
@@ -36,6 +40,7 @@ public class LoginAttemptMongo extends Auditable {
     private Date expireAt;
     private Date createdAt;
     private Date updatedAt;
+    private List<LoginAttempt.Identity> linkedIdentities;
 
     public String getId() {
         return id;

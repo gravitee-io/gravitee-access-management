@@ -27,17 +27,22 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.elemMatch;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.gte;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -75,7 +80,10 @@ public class MongoLoginAttemptRepository extends AbstractManagementMongoReposito
     public Single<LoginAttempt> create(LoginAttempt item) {
         LoginAttemptMongo loginAttempt = convert(item);
         loginAttempt.setId(loginAttempt.getId() == null ? RandomString.generate() : loginAttempt.getId());
-        return Single.fromPublisher(loginAttemptsCollection.insertOne(loginAttempt)).flatMap(success -> { item.setId(loginAttempt.getId()); return Single.just(item); });
+        return Single.fromPublisher(loginAttemptsCollection.insertOne(loginAttempt)).flatMap(success -> {
+            item.setId(loginAttempt.getId());
+            return Single.just(item);
+        });
     }
 
     @Override
@@ -105,11 +113,17 @@ public class MongoLoginAttemptRepository extends AbstractManagementMongoReposito
             filters.add(eq(FIELD_CLIENT, criteria.client()));
         }
         // idp
-        if (criteria.identityProvider() != null && !criteria.identityProvider().isEmpty()) {
+        var hasIdpFilter = criteria.identityProvider() != null && !criteria.identityProvider().isEmpty();
+        var hasUsernameFilter = criteria.username() != null && !criteria.username().isEmpty();
+        // TODO AM-3095 query linkedIdentities as well
+        if (hasIdpFilter && hasUsernameFilter) {
+            filters.add(eq(FIELD_IDP, criteria.identityProvider()));
+            filters.add(eq(FIELD_USERNAME, criteria.username()));
+        } else if (hasIdpFilter) {
             filters.add(eq(FIELD_IDP, criteria.identityProvider()));
         }
         // username
-        if (criteria.username() != null && !criteria.username().isEmpty()) {
+        if (hasUsernameFilter) {
             filters.add(eq(FIELD_USERNAME, criteria.username()));
         }
         // build query
@@ -132,6 +146,7 @@ public class MongoLoginAttemptRepository extends AbstractManagementMongoReposito
         loginAttempt.setExpireAt(loginAttemptMongo.getExpireAt());
         loginAttempt.setCreatedAt(loginAttemptMongo.getCreatedAt());
         loginAttempt.setUpdatedAt(loginAttemptMongo.getUpdatedAt());
+        loginAttempt.setLinkedIdentities(Set.copyOf(loginAttemptMongo.getLinkedIdentities()));
         return loginAttempt;
     }
 
@@ -149,6 +164,11 @@ public class MongoLoginAttemptRepository extends AbstractManagementMongoReposito
         loginAttemptMongo.setExpireAt(loginAttempt.getExpireAt());
         loginAttemptMongo.setCreatedAt(loginAttempt.getCreatedAt());
         loginAttemptMongo.setUpdatedAt(loginAttempt.getUpdatedAt());
+        if (loginAttempt.getLinkedIdentities() == null) {
+            loginAttemptMongo.setLinkedIdentities(List.of());
+        } else {
+            loginAttemptMongo.setLinkedIdentities(List.copyOf(loginAttempt.getLinkedIdentities()));
+        }
         return loginAttemptMongo;
     }
 }

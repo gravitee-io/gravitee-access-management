@@ -334,7 +334,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
     @Override
     public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source) {
         LOGGER.debug("findByUsernameAndSource({},{},{},{})", referenceType, referenceId, username, source);
-        // todo regulski IMPLEMENT
+        // todo AM-3095
         return userRepository.findByUsernameAndSource(referenceType.name(), referenceId, username, source)
                 .map(this::toEntity)
                 .flatMap(user -> completeUser(user).toMaybe());
@@ -342,7 +342,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
 
     @Override
     public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source, boolean includeLinkedIdentities) {
-        return null; // todo regulski IMPLEMENT
+        return null; // todo AM-3095
     }
 
     @Override

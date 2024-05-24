@@ -29,6 +29,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.when;
@@ -66,7 +67,7 @@ public class LoginAttemptServiceTest {
         when(loginAttemptRepository.findByCriteria(loginAttemptCriteria)).thenReturn(Maybe.just(loginAttempt));
         when(loginAttemptRepository.update(loginAttempt)).thenReturn(Single.just(loginAttempt));
 
-        TestObserver testObserver = loginAttemptService.loginFailed(loginAttemptCriteria, accountSettings).test();
+        TestObserver testObserver = loginAttemptService.loginFailed(loginAttemptCriteria, List.of(), accountSettings).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
     }
@@ -91,7 +92,7 @@ public class LoginAttemptServiceTest {
         when(loginAttemptRepository.findByCriteria(loginAttemptCriteria)).thenReturn(Maybe.just(loginAttempt));
         when(loginAttemptRepository.update(loginAttempt)).thenReturn(Single.just(loginAttempt));
 
-        TestObserver testObserver = loginAttemptService.loginFailed(loginAttemptCriteria, accountSettings).test();
+        TestObserver testObserver = loginAttemptService.loginFailed(loginAttemptCriteria, List.of(), accountSettings).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
     }

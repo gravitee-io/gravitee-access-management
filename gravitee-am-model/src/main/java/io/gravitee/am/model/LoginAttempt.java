@@ -16,13 +16,22 @@
 package io.gravitee.am.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Data
+@NoArgsConstructor
 public class LoginAttempt {
 
     private String id;
@@ -30,6 +39,7 @@ public class LoginAttempt {
     private String client;
     private String identityProvider;
     private String username;
+    private Set<Identity> linkedIdentities;
     private int attempts;
     @Schema(type = "java.lang.Long")
     private Date expireAt;
@@ -38,79 +48,22 @@ public class LoginAttempt {
     @Schema(type = "java.lang.Long")
     private Date updatedAt;
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getDomain() {
-        return domain;
-    }
-
-    public void setDomain(String domain) {
-        this.domain = domain;
-    }
-
-    public String getClient() {
-        return client;
-    }
-
-    public void setClient(String client) {
-        this.client = client;
-    }
-
-    public String getIdentityProvider() {
-        return identityProvider;
-    }
-
-    public void setIdentityProvider(String identityProvider) {
-        this.identityProvider = identityProvider;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public int getAttempts() {
-        return attempts;
-    }
-
-    public void setAttempts(int attempts) {
-        this.attempts = attempts;
-    }
-
-    public Date getExpireAt() {
-        return expireAt;
-    }
-
-    public void setExpireAt(Date expireAt) {
-        this.expireAt = expireAt;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Date getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Date updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
     public boolean isAccountLocked(int maxAttempts) {
         return attempts >= maxAttempts;
+    }
+
+    public void setLinkedUserIdentities(List<UserIdentity> linkedIdentities) {
+        this.linkedIdentities = linkedIdentities
+                .stream()
+                .map(identity -> new Identity(identity.getUserId(), identity.getProviderId()))
+                .collect(Collectors.toSet());
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Identity {
+        private String username;
+        private String identityProvider;
     }
 }

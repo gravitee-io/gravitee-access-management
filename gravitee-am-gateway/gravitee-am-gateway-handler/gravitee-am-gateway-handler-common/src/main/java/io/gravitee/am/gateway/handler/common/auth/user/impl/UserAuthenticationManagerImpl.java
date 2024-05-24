@@ -239,6 +239,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
 
         // check if user is locked
         return loginAttemptService
+                // todo AM-3095:
                 .checkAccount(criteria, accountSettings)
                 .map(Optional::of)
                 .defaultIfEmpty(Optional.empty())
@@ -260,7 +261,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                         // but we can't control custom IdP that's why we have to check user existence
                         // TODO AM-3095: also look by linked identites
                         return userService.findByDomainAndUsernameAndSource(criteria.domain(), criteria.username(), criteria.identityProvider(), true)
-                                .flatMapCompletable(user -> loginAttemptService.loginFailed(criteria.withUsername(user.getUsername()), accountSettings)
+                                .flatMapCompletable(user -> loginAttemptService.loginFailed(criteria, user.getIdentities(), accountSettings)
                                         .flatMapCompletable(loginAttempt -> {
                                             if (loginAttempt.isAccountLocked(accountSettings.getMaxLoginAttempts())) {
                                                 return userAuthenticationService.lockAccount(criteria, accountSettings, client, user);

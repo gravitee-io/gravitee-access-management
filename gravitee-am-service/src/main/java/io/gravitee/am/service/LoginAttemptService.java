@@ -16,11 +16,14 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.LoginAttempt;
+import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+
+import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -30,7 +33,7 @@ public interface LoginAttemptService {
 
     Completable loginSucceeded(LoginAttemptCriteria criteria);
 
-    Single<LoginAttempt> loginFailed(LoginAttemptCriteria criteria, AccountSettings accountSettings);
+    Single<LoginAttempt> loginFailed(LoginAttemptCriteria criteria, List<UserIdentity> otherIdentities, AccountSettings accountSettings);
 
     Completable reset(LoginAttemptCriteria criteria);
 
