@@ -427,50 +427,17 @@ public class UserServiceImpl implements UserService {
             return error(new EmailFormatInvalidException(email));
         }
 
+        if (client.getIdentityProviders() == null || client.getIdentityProviders().isEmpty()) {
+            return Completable.error(new UserNotFoundException(email));
+        }
+
         return userService.findByDomainAndCriteria(domain.getId(), params.buildCriteria())
                 .flatMap(users -> {
-                    List<User> foundUsers = new ArrayList<>(users);
-                    // narrow users
-                    if (users.size() > 1) {
-                        // filter by identity provider
-                        if (client.getIdentityProviders() != null && !client.getIdentityProviders().isEmpty()) {
-                            foundUsers = users.stream()
-                                    .flatMap(u -> client.getIdentityProviders().stream().map(appIdp -> entry(u, appIdp.getIdentity())))
-                                    .filter(entry -> {
-                                        var user = entry.getKey();
-                                        var identity = entry.getValue();
-                                        return Objects.equals(user.getSource(), identity);
-                                    }).map(Entry::getKey).collect(toList());
-                        }
-
-                        if (foundUsers.size() > 1) {
-                            // try to filter by latest application used
-                            List<User> filteredSourceUsers = users
-                                    .stream()
-                                    .filter(u -> u.getClient() == null || client.getId().equals(u.getClient()))
-                                    .collect(toList());
-
-                            if (!filteredSourceUsers.isEmpty()) {
-                                foundUsers = new ArrayList<>(filteredSourceUsers);
-                            }
-                        }
-                    }
+                    List<User> foundUsers = narrowUsersForForgotPassword(client, users);
 
                     // If multiple results, check if ConfirmIdentity isn't required before returning the first User.
                     if (foundUsers.size() == 1 || (foundUsers.size() > 1 && !params.isConfirmIdentityEnabled())) {
-                        User user = foundUsers.get(0);
-
-                        //fixes https://graviteecommunity.atlassian.net/browse/AM-71
-                        if (client.getIdentityProviders() != null) {
-                            final IdentityProvider identityProvider = identityProviderManager.getIdentityProvider(user.getSource());
-                            final boolean isClientHasUserIdp = client.getIdentityProviders()
-                                    .stream()
-                                    .anyMatch(applicationIdentityProvider -> applicationIdentityProvider.getIdentity().equals(identityProvider.getId()));
-
-                            if (!isClientHasUserIdp) {
-                                return Single.error(new UserNotFoundException(email));
-                            }
-                        }
+                        final User user = foundUsers.get(0);
 
                         // check if user can update its password according to its identity provider type
                         return identityProviderManager.getUserProvider(user.getSource())
@@ -503,12 +470,8 @@ public class UserServiceImpl implements UserService {
                     if (foundUsers.size() > 1) {
                         return Single.error(new EnforceUserIdentityException());
                     }
-
                     // if user has no email or email is unknown
                     // fallback to registered user providers if user has never been authenticated
-                    if (client.getIdentityProviders() == null || client.getIdentityProviders().isEmpty()) {
-                        return Single.error(new UserNotFoundException(email));
-                    }
 
                     if (isNullOrEmpty(params.getEmail()) & StringUtils.isEmpty(params.getUsername())) {
                         // no user found using criteria. email & username are missing, unable to search the user through UserProvider
@@ -562,6 +525,34 @@ public class UserServiceImpl implements UserService {
                 })
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.FORGOT_PASSWORD_REQUESTED).throwable(throwable)))
                 .ignoreElement();
+    }
+
+    private List<User> narrowUsersForForgotPassword(Client client, List<User> users) {
+        List<User> foundUsers = new ArrayList<>(users);
+
+        // filter by identity provider
+        if (client.getIdentityProviders() != null && !client.getIdentityProviders().isEmpty()) {
+            foundUsers = users.stream()
+                    .flatMap(u -> client.getIdentityProviders().stream().map(appIdp -> entry(u, appIdp.getIdentity())))
+                    .filter(entry -> {
+                        var user = entry.getKey();
+                        var identity = entry.getValue();
+                        return Objects.equals(user.getSource(), identity);
+                    }).map(Entry::getKey).collect(toList());
+        }
+
+        if (foundUsers.size() > 1) {
+            // try to filter by latest application used
+            List<User> filteredSourceUsers = users
+                    .stream()
+                    .filter(u -> u.getClient() == null || client.getId().equals(u.getClient()))
+                    .collect(toList());
+
+            if (!filteredSourceUsers.isEmpty()) {
+                foundUsers = new ArrayList<>(filteredSourceUsers);
+            }
+        }
+        return foundUsers;
     }
 
     /**
