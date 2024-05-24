@@ -18,7 +18,14 @@ package io.gravitee.am.identityprovider.linkedin.authentication;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.identityprovider.api.*;
+import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.common.oauth2.authentication.AbstractSocialAuthenticationProvider;
 import io.gravitee.am.identityprovider.common.oauth2.utils.URLEncodedUtils;
 import io.gravitee.am.identityprovider.linkedin.LinkedinIdentityProviderConfiguration;
@@ -33,13 +40,16 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static io.gravitee.am.common.oauth2.Parameters.GRANT_TYPE;
 
@@ -47,10 +57,10 @@ import static io.gravitee.am.common.oauth2.Parameters.GRANT_TYPE;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 @Import(LinkedinAuthenticationProviderConfiguration.class)
 public class LinkedinAuthenticationProvider extends AbstractSocialAuthenticationProvider<LinkedinIdentityProviderConfiguration> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(LinkedinAuthenticationProvider.class);
     private static final String CLIENT_ID = "client_id";
     private static final String CLIENT_SECRET = "client_secret";
     private static final String REDIRECT_URI = "redirect_uri";
@@ -99,7 +109,7 @@ public class LinkedinAuthenticationProvider extends AbstractSocialAuthentication
         // prepare body request parameters
         final String authorizationCode = authentication.getContext().request().parameters().getFirst(configuration.getCodeParameter());
         if (authorizationCode == null || authorizationCode.isEmpty()) {
-            LOGGER.debug("Authorization code is missing, skip authentication");
+            log.debug("Authorization code is missing, skip authentication");
             return Maybe.error(new BadCredentialsException("Missing authorization code"));
         }
         List<NameValuePair> urlParameters = new ArrayList<>();
@@ -117,7 +127,7 @@ public class LinkedinAuthenticationProvider extends AbstractSocialAuthentication
                 .toMaybe()
                 .map(httpResponse -> {
                     if (httpResponse.statusCode() != 200) {
-                        LOGGER.error("HTTP error {} is thrown while exchanging code. The response body is: {} ", httpResponse.statusCode(), httpResponse.bodyAsString());
+                        log.error("HTTP error {} is thrown while exchanging code. The response body is: {} ", httpResponse.statusCode(), httpResponse.bodyAsString());
                         throw new BadCredentialsException(httpResponse.statusMessage());
                     }
 
@@ -130,7 +140,7 @@ public class LinkedinAuthenticationProvider extends AbstractSocialAuthentication
     @Override
     protected Maybe<User> profile(Token accessToken, Authentication authentication) {
         return client.getAbs(configuration.getUserProfileUri())
-                .putHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken.getValue())
+                .putHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken.value())
                 .rxSend()
                 .toMaybe()
                 .map(httpClientResponse -> {
@@ -155,7 +165,7 @@ public class LinkedinAuthenticationProvider extends AbstractSocialAuthentication
     private Maybe<Optional<String>> requestEmailAddress(Token accessToken) {
         if (configuration.getScopes().contains(SCOPE_EMAIL)) {
             return client.getAbs(configuration.getUserEmailAddressUri())
-                    .putHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken.getValue())
+                    .putHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken.value())
                     .rxSend()
                     .toMaybe()
                     .map(httpClientResponse -> {
@@ -175,7 +185,7 @@ public class LinkedinAuthenticationProvider extends AbstractSocialAuthentication
                             }
                             return Optional.ofNullable(email);
                         } else {
-                            LOGGER.warn("Unable to retrieve the LinkedIn email address : {}", httpClientResponse.statusMessage());
+                            log.warn("Unable to retrieve the LinkedIn email address : {}", httpClientResponse.statusMessage());
                             return Optional.empty(); // do not reject the authentication due to missing emailAddress
                         }
                     });
@@ -229,7 +239,7 @@ public class LinkedinAuthenticationProvider extends AbstractSocialAuthentication
             if (elements != null && !elements.isEmpty()) {
                 JsonArray imgIdentifiers = elements.getJsonObject(0).getJsonArray("identifiers");
                 if (imgIdentifiers != null) {
-                    for( int i = 0;  i < imgIdentifiers.size(); i++) {
+                    for (int i = 0; i < imgIdentifiers.size(); i++) {
                         JsonObject imgId = imgIdentifiers.getJsonObject(i);
                         String mediaType = imgId.getString("mediaType");
                         if ("EXTERNAL_URL".equalsIgnoreCase(imgId.getString("identifierType")) && mediaType != null && mediaType.startsWith("image")) {

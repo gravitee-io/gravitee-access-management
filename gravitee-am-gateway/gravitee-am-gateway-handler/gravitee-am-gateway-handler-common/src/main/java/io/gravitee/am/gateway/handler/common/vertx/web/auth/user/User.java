@@ -22,6 +22,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.auth.authorization.Authorization;
 import io.vertx.ext.auth.authorization.Authorizations;
+import lombok.Getter;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -29,16 +30,13 @@ import io.vertx.ext.auth.authorization.Authorizations;
  */
 public class User implements io.vertx.ext.auth.User {
 
-    private JsonObject principal;
-    private io.gravitee.am.model.User user;
+    private final JsonObject principal;
+    @Getter
+    private final io.gravitee.am.model.User user;
 
     public User(io.gravitee.am.model.User user) {
         this.user = user;
         this.principal = JsonObject.mapFrom(user);
-    }
-
-    public io.gravitee.am.model.User getUser() {
-        return user;
     }
 
     @Override

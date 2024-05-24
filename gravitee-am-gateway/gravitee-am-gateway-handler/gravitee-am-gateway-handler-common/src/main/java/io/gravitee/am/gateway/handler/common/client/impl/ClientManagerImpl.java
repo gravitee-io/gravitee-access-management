@@ -88,15 +88,18 @@ public class ClientManagerImpl extends AbstractService implements ClientManager,
             // count the event after the test to avoid duplicate events across domains
             gatewayMetricProvider.incrementAppEvt();
             switch (event.type()) {
-                case DEPLOY:
+                case DEPLOY -> {
                     gatewayMetricProvider.incrementApp();
-                case UPDATE:
                     deployClient(event.content().getId());
-                    break;
-                case UNDEPLOY:
+                }
+                case UPDATE -> deployClient(event.content().getId());
+                case UNDEPLOY -> {
                     removeClient(event.content().getId());
                     gatewayMetricProvider.decrementApp();
-                    break;
+                }
+                default -> {
+                    // No action needed for default case
+                }
             }
         }
     }

@@ -26,18 +26,11 @@ public enum RoleEvent {
     UNDEPLOY;
 
     public static RoleEvent actionOf(Action action) {
-        RoleEvent roleEvent = null;
-        switch (action) {
-            case CREATE:
-                roleEvent = RoleEvent.DEPLOY;
-                break;
-            case UPDATE:
-                roleEvent = RoleEvent.UPDATE;
-                break;
-            case DELETE:
-                roleEvent = RoleEvent.UNDEPLOY;
-                break;
-        }
-        return roleEvent;
+        return switch (action) {
+            case CREATE -> RoleEvent.DEPLOY;
+            case UPDATE -> RoleEvent.UPDATE;
+            case DELETE -> RoleEvent.UNDEPLOY;
+            default -> null;
+        };
     }
 }

@@ -1889,7 +1889,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"selectionRule\" : \"{#request,params['username'] == 'something-else' }\", \"priority\" : -1 },\n    { \"identity\": \"{{idp.inmemory2}}\", \"priority\" : -1 }  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [{\"scope\" : \"openid\"}]\n\t}\n  }\n}"
+											"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"selectionRule\" : \"{#request.params['username'] == 'something-else' }\", \"priority\" : -1 },\n    { \"identity\": \"{{idp.inmemory2}}\", \"priority\" : -1 }  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [{\"scope\" : \"openid\"}]\n\t}\n  }\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",

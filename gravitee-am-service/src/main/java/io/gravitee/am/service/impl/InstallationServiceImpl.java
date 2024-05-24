@@ -18,12 +18,10 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Installation;
 import io.gravitee.am.repository.management.api.InstallationRepository;
-import io.gravitee.am.service.*;
+import io.gravitee.am.service.InstallationService;
 import io.gravitee.am.service.exception.InstallationNotFoundException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -32,16 +30,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import static io.gravitee.am.model.Installation.COCKPIT_INSTALLATION_STATUS;
-
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
 public class InstallationServiceImpl implements InstallationService {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(InstallationServiceImpl.class);
 
     private final InstallationRepository installationRepository;
 

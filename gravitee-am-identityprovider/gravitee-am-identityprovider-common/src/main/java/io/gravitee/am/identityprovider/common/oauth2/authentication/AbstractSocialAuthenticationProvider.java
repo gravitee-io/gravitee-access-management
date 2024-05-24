@@ -18,18 +18,24 @@ package io.gravitee.am.identityprovider.common.oauth2.authentication;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.web.UriBuilder;
-import io.gravitee.am.identityprovider.api.*;
+import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfiguration;
 import io.gravitee.common.http.HttpMethod;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
@@ -37,9 +43,9 @@ import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public abstract class AbstractSocialAuthenticationProvider<T extends SocialIdentityProviderConfiguration> implements SocialAuthenticationProvider {
 
-    protected final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
     public static final String ACCESS_TOKEN_PARAMETER = "access_token";
 
     protected abstract T getConfiguration();
@@ -58,7 +64,7 @@ public abstract class AbstractSocialAuthenticationProvider<T extends SocialIdent
                 builder.addParameter(Parameters.SCOPE, String.join(SCOPE_DELIMITER, getConfiguration().getScopes()));
             }
 
-            if(!StringUtils.isEmpty(state)) {
+            if(StringUtils.hasText(state)) {
                 builder.addParameter(Parameters.STATE, state);
             }
 
@@ -67,7 +73,7 @@ public abstract class AbstractSocialAuthenticationProvider<T extends SocialIdent
             request.setUri(builder.build().toString());
             return request;
         } catch (Exception e) {
-            LOGGER.error("An error occurs while building Sign In URL", e);
+            log.error("An error occurs while building Sign In URL", e);
             return null;
         }
     }
@@ -127,31 +133,11 @@ public abstract class AbstractSocialAuthenticationProvider<T extends SocialIdent
         return this.getIdentityProviderRoleMapper() != null;
     }
 
-    protected final class Token {
-        private String value;
-        private String secret;
-        private TokenTypeHint typeHint;
 
+
+    public record Token(String value, String secret, TokenTypeHint typeHint) {
         public Token(String value, TokenTypeHint typeHint) {
             this(value, null, typeHint);
-        }
-
-        public Token(String value, String secret, TokenTypeHint typeHint) {
-            this.value = value;
-            this.secret = secret;
-            this.typeHint = typeHint;
-        }
-
-        public String getValue() {
-            return value;
-        }
-
-        public String getSecret() {
-            return secret;
-        }
-
-        public TokenTypeHint getTypeHint() {
-            return typeHint;
         }
     }
 }

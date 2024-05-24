@@ -26,18 +26,11 @@ public enum ResourceEvent {
     UNDEPLOY;
 
     public static ResourceEvent actionOf(Action action) {
-        ResourceEvent resourceEvent = null;
-        switch (action) {
-            case CREATE:
-                resourceEvent = ResourceEvent.DEPLOY;
-                break;
-            case UPDATE:
-                resourceEvent = ResourceEvent.UPDATE;
-                break;
-            case DELETE:
-                resourceEvent = ResourceEvent.UNDEPLOY;
-                break;
-        }
-        return resourceEvent;
+        return switch (action) {
+            case CREATE -> ResourceEvent.DEPLOY;
+            case UPDATE -> ResourceEvent.UPDATE;
+            case DELETE -> ResourceEvent.UNDEPLOY;
+            default -> null;
+        };
     }
 }

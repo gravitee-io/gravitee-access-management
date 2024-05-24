@@ -15,13 +15,21 @@
  */
 package io.gravitee.am.common.exception.uma;
 
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-public class RequiredClaims {
+@Getter
+@Setter
+@Builder
+public class RequiredClaims implements Serializable {
 
     private List<String> claimTokenFormat;
     private String claimType;
@@ -29,47 +37,4 @@ public class RequiredClaims {
     private String issuer;
     private String name;
 
-    public RequiredClaims(String name) {
-        this.name = name;
-    }
-
-    public List<String> getClaimTokenFormat() {
-        return claimTokenFormat;
-    }
-
-    public RequiredClaims setClaimTokenFormat(List<String> claimTokenFormat) {
-        this.claimTokenFormat = claimTokenFormat;
-        return this;
-    }
-
-    public String getClaimType() {
-        return claimType;
-    }
-
-    public RequiredClaims setClaimType(String claimType) {
-        this.claimType = claimType;
-        return this;
-    }
-
-    public String getFriendlyName() {
-        return friendlyName;
-    }
-
-    public RequiredClaims setFriendlyName(String friendlyName) {
-        this.friendlyName = friendlyName;
-        return this;
-    }
-
-    public String getIssuer() {
-        return issuer;
-    }
-
-    public RequiredClaims setIssuer(String issuer) {
-        this.issuer = issuer;
-        return this;
-    }
-
-    public String getName() {
-        return name;
-    }
 }

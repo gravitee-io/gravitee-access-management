@@ -26,18 +26,11 @@ public enum ApplicationEvent {
     UNDEPLOY;
 
     public static ApplicationEvent actionOf(Action action) {
-        ApplicationEvent applicationEvent = null;
-        switch (action) {
-            case CREATE:
-                applicationEvent = ApplicationEvent.DEPLOY;
-                break;
-            case UPDATE:
-                applicationEvent = ApplicationEvent.UPDATE;
-                break;
-            case DELETE:
-                applicationEvent = ApplicationEvent.UNDEPLOY;
-                break;
-        }
-        return applicationEvent;
+        return switch (action) {
+            case CREATE -> ApplicationEvent.DEPLOY;
+            case UPDATE -> ApplicationEvent.UPDATE;
+            case DELETE -> ApplicationEvent.UNDEPLOY;
+            default -> null;
+        };
     }
 }

@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.services.sync;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.gateway.reactor.SecurityDomainManager;
 import io.gravitee.am.gateway.reactor.impl.DefaultReactor;
 import io.gravitee.am.model.Domain;
@@ -29,6 +30,7 @@ import io.gravitee.common.event.EventManager;
 import io.gravitee.node.api.Node;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -113,6 +115,7 @@ public class SyncManager implements InitializingBean {
 
     private long lastDelay = 0;
 
+    @Getter
     private boolean allSecurityDomainsSync = false;
 
     @Value("${services.sync.initTimeOutMillis:-1}")
@@ -121,24 +124,24 @@ public class SyncManager implements InitializingBean {
     @Value("${services.sync.eventsTimeOutMillis:30000}")
     private int eventsTimeOut = 30000;
 
-    @Value("${services.sync.timeframeBeforeDelay:"+TIMEFRAME_BEFORE_DELAY+"}")
+    @Value("${services.sync.timeframeBeforeDelay:" + TIMEFRAME_BEFORE_DELAY + "}")
     private int timeframeBeforeDelay;
 
-    @Value("${services.sync.timeframeAfterDelay:"+TIMEFRAME_AFTER_DELAY+"}")
+    @Value("${services.sync.timeframeAfterDelay:" + TIMEFRAME_AFTER_DELAY + "}")
     private int timeframeAfterDelay;
 
     private Cache<String, String> processedEventIds;
 
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
         logger.info("Starting gateway tags initialization ...");
         this.initShardingTags();
         this.initEnvironments();
         logger.info("Gateway has been loaded with the following information :");
-        logger.info("\t\t - Sharding tags : " + (shardingTags.isPresent() ? shardingTags.get() : "[]"));
-        logger.info("\t\t - Organizations : " + (organizations.isPresent() ? organizations.get() : "[]"));
-        logger.info("\t\t - Environments : " + (environments.isPresent() ? environments.get() : "[]"));
-        logger.info("\t\t - Environments loaded : " + (environmentIds != null ? environmentIds : "[]"));
+        logger.info("\t\t - Sharding tags : {}", shardingTags.isPresent() ? shardingTags.get() : "[]");
+        logger.info("\t\t - Organizations : {}", organizations.isPresent() ? organizations.get() : "[]");
+        logger.info("\t\t - Environments : {}", environments.isPresent() ? environments.get() : "[]");
+        logger.info("\t\t - Environments loaded : {}", environmentIds != null ? environmentIds : "[]");
         this.processedEventIds = CacheBuilder.newBuilder()
                 .expireAfterWrite(timeframeBeforeDelay + timeframeAfterDelay, TimeUnit.MILLISECONDS)
                 .build();
@@ -193,10 +196,6 @@ public class SyncManager implements InitializingBean {
         }
     }
 
-    public boolean isAllSecurityDomainsSync() {
-        return allSecurityDomainsSync;
-    }
-
     private void deployDomains() {
         logger.info("Starting security domains initialization ...");
         Single<List<Domain>> findDomains = domainRepository.findAll()
@@ -211,24 +210,22 @@ public class SyncManager implements InitializingBean {
         List<Domain> domains = findDomains.blockingGet();
 
         // deploy security domains
-        domains.stream().forEach(domain -> securityDomainManager.deploy(domain));
+        domains.forEach(securityDomainManager::deploy);
         logger.info("Security domains initialization done");
     }
 
     private void computeEvents(Collection<Event> events) {
         events.forEach(event -> {
             logger.debug("Compute event id : {}, with type : {} and timestamp : {} and payload : {}", event.getId(), event.getType(), event.getCreatedAt(), event.getPayload());
-            switch (event.getType()) {
-                case DOMAIN:
-                    synchronizeDomain(event);
-                    break;
-                default:
-                    if (Objects.isNull(processedEventIds.getIfPresent(event.getId()))) {
-                        eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
-                        processedEventIds.put(event.getId(), event.getId());
-                    } else {
-                        logger.debug("Event id {} already processed", event.getId());
-                    }
+            if (Objects.requireNonNull(event.getType()) == Type.DOMAIN) {
+                synchronizeDomain(event);
+            } else {
+                if (Objects.isNull(processedEventIds.getIfPresent(event.getId()))) {
+                    eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
+                    processedEventIds.put(event.getId(), event.getId());
+                } else {
+                    logger.debug("Event id {} already processed", event.getId());
+                }
             }
         });
     }
@@ -237,8 +234,7 @@ public class SyncManager implements InitializingBean {
         final String domainId = event.getPayload().getId();
         final Action action = event.getPayload().getAction();
         switch (action) {
-            case CREATE:
-            case UPDATE:
+            case CREATE, UPDATE -> {
                 Maybe<Domain> maybeDomain = domainRepository.findById(domainId);
                 if (this.eventsTimeOut > 0) {
                     maybeDomain = maybeDomain.timeout(this.eventsTimeOut, TimeUnit.MILLISECONDS);
@@ -263,10 +259,11 @@ public class SyncManager implements InitializingBean {
                         }
                     }
                 }
-                break;
-            case DELETE:
-                securityDomainManager.undeploy(domainId);
-                break;
+            }
+            case DELETE -> securityDomainManager.undeploy(domainId);
+            default -> {
+                // No action needed for default case
+            }
         }
     }
 
@@ -275,7 +272,7 @@ public class SyncManager implements InitializingBean {
     }
 
     private boolean hasMatchingTags(Domain domain) {
-        if (!shardingTags.isPresent()) {
+        if (shardingTags.isEmpty()) {
             // no tags configured on this gateway instance
             return true;
         }
@@ -304,7 +301,7 @@ public class SyncManager implements InitializingBean {
         if (environmentIds == null || environmentIds.isEmpty()) {
             // check if there is no environment because gravitee.yml is empty (OK)
             // or no matching environment has been found in the database (KO)
-            return !organizations.isPresent() && !environments.isPresent();
+            return organizations.isEmpty() && environments.isEmpty();
         }
         return environmentIds.contains(domain.getReferenceId());
     }
@@ -331,21 +328,19 @@ public class SyncManager implements InitializingBean {
     private static boolean hasMatchingElements(final List<String> inclusionElements,
                                                final List<String> exclusionElements,
                                                final Set<String> domainElements) {
-        final boolean hasMatchingElements =
-                inclusionElements
+        return inclusionElements
+                .stream()
+                .anyMatch(element ->
+                        domainElements
+                                .stream()
+                                .anyMatch(domainElement -> matchingString(element, domainElement))
+                ) || (!exclusionElements.isEmpty() &&
+                exclusionElements
                         .stream()
-                        .anyMatch(element ->
+                        .noneMatch(element ->
                                 domainElements
                                         .stream()
-                                        .anyMatch(domainElement -> matchingString(element, domainElement))
-                        ) || (!exclusionElements.isEmpty() &&
-                        exclusionElements
-                                .stream()
-                                .noneMatch(element ->
-                                        domainElements
-                                                .stream()
-                                                .anyMatch(domainElement -> matchingString(element, domainElement))));
-        return hasMatchingElements;
+                                        .anyMatch(domainElement -> matchingString(element, domainElement))));
     }
 
     private static List<String> getInclusionElements(final List<String> elements) {

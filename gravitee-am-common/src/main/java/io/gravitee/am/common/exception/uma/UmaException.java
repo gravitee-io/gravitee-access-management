@@ -15,7 +15,8 @@
  */
 package io.gravitee.am.common.exception.uma;
 
-import io.gravitee.common.util.MultiValueMap;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 import java.util.List;
 
@@ -26,47 +27,16 @@ import java.util.List;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@Getter
+@AllArgsConstructor
 public class UmaException extends RuntimeException{
 
-    private String error;
-    private String ticket;
-    private String redirectUser;
-    private List<RequiredClaims> requiredClaims;
-    private Integer interval;
-    private Integer status;
-
-    public UmaException(String error, String ticket, String redirectUser, List<RequiredClaims> requiredClaims, Integer interval, Integer status) {
-        this.error = error;
-        this.ticket = ticket;
-        this.redirectUser = redirectUser;
-        this.requiredClaims = requiredClaims;
-        this.interval = interval;
-        this.status = status;
-    }
-
-    public String getError() {
-        return error;
-    }
-
-    public String getTicket() {
-        return ticket;
-    }
-
-    public String getRedirectUser() {
-        return redirectUser;
-    }
-
-    public List<RequiredClaims> getRequiredClaims() {
-        return requiredClaims;
-    }
-
-    public Integer getInterval() {
-        return interval;
-    }
-
-    public Integer getStatus() {
-        return status;
-    }
+    private final String error;
+    private final String ticket;
+    private final String redirectUser;
+    private final List<RequiredClaims> requiredClaims;
+    private final Integer interval;
+    private final Integer status;
 
     public static UmaExceptionBuilder builder() {
         return new UmaExceptionBuilder();
@@ -83,9 +53,5 @@ public class UmaException extends RuntimeException{
 
     public static UmaExceptionBuilder requestDeniedBuilder() {
         return new UmaExceptionBuilder().error("request_denied").status(403);
-    }
-
-    public static UmaExceptionBuilder requestSubmittedBuilder() {
-        return new UmaExceptionBuilder().error("request_submitted").status(403);
     }
 }

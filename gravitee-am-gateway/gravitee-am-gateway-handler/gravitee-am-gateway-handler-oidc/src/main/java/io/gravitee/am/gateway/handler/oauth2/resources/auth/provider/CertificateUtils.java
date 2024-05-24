@@ -40,32 +40,31 @@ public class CertificateUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(CertificateUtils.class);
 
     public static boolean hasPeerCertificate(RoutingContext routingContext, String certHeader) {
-        String certHeaderValue = StringUtils.isEmpty(certHeader) ? null : routingContext.request().getHeader(certHeader);
+        String certHeaderValue = StringUtils.hasText(certHeader) ? routingContext.request().getHeader(certHeader) : null;
         return routingContext.request().sslSession() != null || certHeaderValue != null;
     }
 
     /**
-     * This method gets the PeerCertificate from the sslSession.
-     * If no sslSession is available, the certificate from the HTTP Header using the header name provided as parameter.
+     * This method gets the PeerCertificate from the SSL session.
+     * If no SSL session is available, it retrieves the certificate from the HTTP header using the header name provided as a parameter.
      *
-     * @param routingContext
-     * @param certHeader
-     * @return
-     * @throws SSLPeerUnverifiedException
-     * @throws CertificateException
+     * @param routingContext the routing context which provides access to the HTTP request and SSL session.
+     * @param certHeader the name of the HTTP header that may contain the certificate.
+     * @return an Optional containing the X509Certificate if found, otherwise an empty Optional.
+     * @throws SSLPeerUnverifiedException if the peer's identity has not been verified.
      */
     public static Optional<X509Certificate> extractPeerCertificate(RoutingContext routingContext, String certHeader) throws SSLPeerUnverifiedException {
         Optional<X509Certificate> certificate = Optional.empty();
 
-        String certHeaderValue = StringUtils.isEmpty(certHeader) ? null : routingContext.request().getHeader(certHeader);
+        String certHeaderValue = StringUtils.hasText(certHeader) ? routingContext.request().getHeader(certHeader) : null;
 
         if (certHeaderValue != null) {
             try {
                 certHeaderValue = certHeaderValue
-                        .replaceAll("\\+","%2F")
-                        .replaceAll("//","%2B")
-                        .replaceAll("=","%3D")
-                        .replaceAll("\t", "\n");
+                        .replace("+","%2F")
+                        .replace("//","%2B")
+                        .replace("=","%3D")
+                        .replace("\t", "\n");
 
                 certHeaderValue = URLDecoder.decode(certHeaderValue, Charset.defaultCharset());
                 CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");

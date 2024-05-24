@@ -26,18 +26,11 @@ public enum BotDetectionEvent {
     UNDEPLOY;
 
     public static BotDetectionEvent actionOf(Action action) {
-        BotDetectionEvent event = null;
-        switch (action) {
-            case CREATE:
-                event = BotDetectionEvent.DEPLOY;
-                break;
-            case UPDATE:
-                event = BotDetectionEvent.UPDATE;
-                break;
-            case DELETE:
-                event = BotDetectionEvent.UNDEPLOY;
-                break;
-        }
-        return event;
+        return switch (action) {
+            case CREATE -> BotDetectionEvent.DEPLOY;
+            case UPDATE -> BotDetectionEvent.UPDATE;
+            case DELETE -> BotDetectionEvent.UNDEPLOY;
+            default -> null;
+        };
     }
 }

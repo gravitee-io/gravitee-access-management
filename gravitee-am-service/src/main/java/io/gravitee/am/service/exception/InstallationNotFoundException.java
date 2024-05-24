@@ -21,9 +21,6 @@ package io.gravitee.am.service.exception;
  */
 public class InstallationNotFoundException extends AbstractNotFoundException {
 
-    public InstallationNotFoundException() {
-    }
-
     @Override
     public String getMessage() {
         return "Installation can not be found.";

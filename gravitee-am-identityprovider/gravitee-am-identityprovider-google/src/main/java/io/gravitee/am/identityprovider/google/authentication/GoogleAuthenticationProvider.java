@@ -15,11 +15,10 @@
  */
 package io.gravitee.am.identityprovider.google.authentication;
 
+import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.common.oidc.Scope;
-import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
-import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectIdentityProviderConfiguration;
@@ -107,8 +106,8 @@ public class GoogleAuthenticationProvider extends AbstractOpenIDConnectAuthentic
 
     private void generateJWTProcessor() {
         final SignatureAlgorithm signature = SignatureAlgorithm.RS256;
-        JWKSKeyProcessor keyProcessor = new JWKSKeyProcessor<>();
-        keyProcessor.setJwkSourceResolver(new RemoteJWKSourceResolver(configuration.getResolverParameter()));
+        JWKSKeyProcessor<SecurityContext> keyProcessor = new JWKSKeyProcessor<>();
+        keyProcessor.setJwkSourceResolver(new RemoteJWKSourceResolver<>(configuration.getResolverParameter()));
         jwtProcessor = keyProcessor.create(signature);
     }
 }

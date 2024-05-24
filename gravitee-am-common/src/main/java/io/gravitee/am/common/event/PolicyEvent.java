@@ -26,21 +26,11 @@ public enum PolicyEvent {
     UNDEPLOY;
 
     public static PolicyEvent actionOf(Action action) {
-        PolicyEvent policyEvent = null;
-        switch (action) {
-            case CREATE:
-                policyEvent = PolicyEvent.DEPLOY;
-                break;
-            case UPDATE:
-                policyEvent = PolicyEvent.UPDATE;
-                break;
-            case DELETE:
-                policyEvent = PolicyEvent.UNDEPLOY;
-                break;
-            case BULK_UPDATE:
-                policyEvent = PolicyEvent.UPDATE;
-                break;
-        }
-        return policyEvent;
+        return switch (action) {
+            case CREATE -> PolicyEvent.DEPLOY;
+            case UPDATE, BULK_UPDATE -> PolicyEvent.UPDATE;
+            case DELETE -> PolicyEvent.UNDEPLOY;
+            default -> null;
+        };
     }
 }

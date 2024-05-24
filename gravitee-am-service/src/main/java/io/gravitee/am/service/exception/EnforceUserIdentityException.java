@@ -20,8 +20,6 @@ package io.gravitee.am.service.exception;
  * @author GraviteeSource Team
  */
 public class EnforceUserIdentityException extends AbstractNotFoundException {
-    public EnforceUserIdentityException() {
-    }
 
     @Override
     public String getMessage() {

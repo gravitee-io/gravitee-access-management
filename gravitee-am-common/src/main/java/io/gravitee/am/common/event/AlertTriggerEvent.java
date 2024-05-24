@@ -26,18 +26,11 @@ public enum AlertTriggerEvent {
     UNDEPLOY;
 
     public static AlertTriggerEvent actionOf(Action action) {
-        AlertTriggerEvent alertTriggerEvent = null;
-        switch (action) {
-            case CREATE:
-                alertTriggerEvent = AlertTriggerEvent.DEPLOY;
-                break;
-            case UPDATE:
-                alertTriggerEvent = AlertTriggerEvent.UPDATE;
-                break;
-            case DELETE:
-                alertTriggerEvent = AlertTriggerEvent.UNDEPLOY;
-                break;
-        }
-        return alertTriggerEvent;
+        return switch (action) {
+            case CREATE -> AlertTriggerEvent.DEPLOY;
+            case UPDATE -> AlertTriggerEvent.UPDATE;
+            case DELETE -> AlertTriggerEvent.UNDEPLOY;
+            default -> null;
+        };
     }
 }

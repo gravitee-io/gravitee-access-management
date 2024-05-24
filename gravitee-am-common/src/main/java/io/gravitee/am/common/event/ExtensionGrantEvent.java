@@ -26,18 +26,11 @@ public enum ExtensionGrantEvent {
     UNDEPLOY;
 
     public static ExtensionGrantEvent actionOf(Action action) {
-        ExtensionGrantEvent extensionGrantEvent = null;
-        switch (action) {
-            case CREATE:
-                extensionGrantEvent = ExtensionGrantEvent.DEPLOY;
-                break;
-            case UPDATE:
-                extensionGrantEvent = ExtensionGrantEvent.UPDATE;
-                break;
-            case DELETE:
-                extensionGrantEvent = ExtensionGrantEvent.UNDEPLOY;
-                break;
-        }
-        return extensionGrantEvent;
+        return switch (action) {
+            case CREATE -> ExtensionGrantEvent.DEPLOY;
+            case UPDATE -> ExtensionGrantEvent.UPDATE;
+            case DELETE -> ExtensionGrantEvent.UNDEPLOY;
+            default -> null;
+        };
     }
 }

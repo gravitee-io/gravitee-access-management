@@ -21,7 +21,6 @@ import io.gravitee.common.http.MediaType;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -31,10 +30,10 @@ public final class SanitizeUtils {
 
     /**
      * Sanitize user credentials if a JSON body is sent
-     * @param credentials
-     * @param requestBody
-     * @param authenticationHttpHeaders
-     * @return
+     * @param credentials the user credentials to be sanitized.
+     * @param requestBody the body of the HTTP request, which may contain JSON content.
+     * @param authenticationHttpHeaders a list of HTTP headers from the authentication request.
+     * @return the sanitized credentials if JSON content is detected, otherwise the original credentials.
      */
     public static String sanitize(String credentials, String requestBody, List<HttpHeader> authenticationHttpHeaders) {
         final List<String> contentTypeHeaders = authenticationHttpHeaders == null ? Collections.emptyList() :
@@ -42,19 +41,18 @@ public final class SanitizeUtils {
                         .stream()
                         .filter(httpHeader -> HttpHeaders.CONTENT_TYPE.equals(httpHeader.getName()))
                         .map(HttpHeader::getValue)
-                        .collect(Collectors.toList());
+                        .toList();
 
         // if HTTP headers contains Content-Type == application/json
         // it means we except a json body content
         if (contentTypeHeaders.contains(MediaType.APPLICATION_JSON)) {
-            return credentials.replaceAll("\"", "\\\\\"");
+            return credentials.replace("\"", "\\\\\"");
         }
 
         // if we can't rely on http headers, look into the body
         if (contentTypeHeaders.isEmpty() && requestBody != null && (requestBody.startsWith("{") || requestBody.startsWith("["))) {
-            return credentials.replaceAll("\"", "\\\\\"");
+            return credentials.replace("\"", "\\\\\"");
         }
-
         return credentials;
     }
 }

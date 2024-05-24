@@ -22,7 +22,11 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.web.UriBuilder;
-import io.gravitee.am.identityprovider.api.*;
+import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.common.oauth2.authentication.AbstractSocialAuthenticationProvider;
 import io.gravitee.am.identityprovider.twitter.TwitterIdentityProviderConfiguration;
@@ -35,6 +39,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.ext.web.client.WebClient;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
@@ -44,17 +49,25 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static io.gravitee.am.identityprovider.twitter.authentication.utils.SignerUtils.*;
+import static io.gravitee.am.identityprovider.twitter.authentication.utils.SignerUtils.OAUTH_CALLBACK;
+import static io.gravitee.am.identityprovider.twitter.authentication.utils.SignerUtils.OAUTH_CONSUMER_KEY;
+import static io.gravitee.am.identityprovider.twitter.authentication.utils.SignerUtils.OAUTH_SIGNATURE_METHOD;
+import static io.gravitee.am.identityprovider.twitter.authentication.utils.SignerUtils.OAUTH_SIGNATURE_METHOD_VALUE;
+import static io.gravitee.am.identityprovider.twitter.authentication.utils.SignerUtils.OAUTH_TOKEN;
+import static io.gravitee.am.identityprovider.twitter.authentication.utils.SignerUtils.OAUTH_TOKEN_SECRET;
+import static io.gravitee.am.identityprovider.twitter.authentication.utils.SignerUtils.OAUTH_VERIFIER;
+import static io.gravitee.am.identityprovider.twitter.authentication.utils.SignerUtils.OAUTH_VERSION;
+import static io.gravitee.am.identityprovider.twitter.authentication.utils.SignerUtils.OAUTH_VERSION_VALUE;
+import static io.gravitee.am.identityprovider.twitter.authentication.utils.SignerUtils.getAuthorizationHeader;
 import static java.util.Collections.emptyMap;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 @Import(TwitterAuthenticationProviderConfiguration.class)
 public class TwitterAuthenticationProvider extends AbstractSocialAuthenticationProvider<TwitterIdentityProviderConfiguration> {
-    private static final String HMAC_SHA1_JAVA_ALGO = "HmacSHA1";
-
 
     private static final String FOLLOWERS = "followers";
     private static final String FOLLOWERS_COUNT = "followers_count";
@@ -120,7 +133,7 @@ public class TwitterAuthenticationProvider extends AbstractSocialAuthenticationP
     @Override
     public Maybe<Request> asyncSignInUrl(String redirectUri, String state) {
         try {
-            if(!StringUtils.isEmpty(state)) {
+            if (StringUtils.hasText(state)) {
                 // Add state to redirect uri if specified. Note: Twitter is not oidc compliant and does not allow to specify a 'state' query parameter on its own authorization url.
                 final UriBuilder uriBuilder = UriBuilder.fromURIString(redirectUri).addParameter(Parameters.STATE, state);
                 redirectUri = uriBuilder.buildString();
@@ -164,7 +177,7 @@ public class TwitterAuthenticationProvider extends AbstractSocialAuthenticationP
                         }
 
                         if ("true".equalsIgnoreCase(callbackState)) {
-                            tokenMemory.put(token, tokenSecret); // preserve toke & token secret for the next steps
+                            tokenMemory.put(token, tokenSecret); // preserve token & token secret for the next steps
 
                             UriBuilder builder = UriBuilder.fromHttpUrl(configuration.getUserAuthorizationUri());
                             builder.addParameter(OAUTH_TOKEN, token);
@@ -178,7 +191,7 @@ public class TwitterAuthenticationProvider extends AbstractSocialAuthenticationP
                         throw new BadCredentialsException("Token returned by Twitter mismatch");
                     });
         } catch (BadCredentialsException e) {
-            LOGGER.error("An error occurs while building Sign In URL", e);
+            log.error("An error occurs while building Sign In URL", e);
             return Maybe.empty();
         }
     }
@@ -189,12 +202,12 @@ public class TwitterAuthenticationProvider extends AbstractSocialAuthenticationP
         final String tokenVerifier = authentication.getContext().request().parameters().getFirst(configuration.getTokenVerifier());
 
         if (oauthToken == null || oauthToken.isEmpty() || tokenMemory.getIfPresent(oauthToken) == null) {
-            LOGGER.debug("OAuth Token is missing, skip authentication");
+            log.debug("OAuth Token is missing, skip authentication");
             return Maybe.error(new BadCredentialsException("Missing OAuth Token"));
         }
 
         if (tokenVerifier == null || tokenVerifier.isEmpty()) {
-            LOGGER.debug("Token Verifier is missing, skip authentication");
+            log.debug("Token Verifier is missing, skip authentication");
             return Maybe.error(new BadCredentialsException("Missing Token Verifier"));
         }
 
@@ -222,13 +235,13 @@ public class TwitterAuthenticationProvider extends AbstractSocialAuthenticationP
                 .toMaybe()
                 .flatMap(httpResponse -> {
                     if (httpResponse.statusCode() != 200) {
-                        LOGGER.error("HTTP error {} is thrown while exchanging code. The response body is: {} ", httpResponse.statusCode(), httpResponse.bodyAsString());
+                        log.error("HTTP error {} is thrown while exchanging code. The response body is: {} ", httpResponse.statusCode(), httpResponse.bodyAsString());
                         return Maybe.error(new BadCredentialsException(httpResponse.bodyAsString()));
                     }
                     String[] tokenInfo = httpResponse.bodyAsString().split("&");
                     String token = "";
                     String secret = "";
-                    for (String pairString: tokenInfo) {
+                    for (String pairString : tokenInfo) {
                         String[] pair = pairString.split("=");
                         if (pair.length > 1) {
                             if (pair[0].equalsIgnoreCase(OAUTH_TOKEN)) {
@@ -251,7 +264,7 @@ public class TwitterAuthenticationProvider extends AbstractSocialAuthenticationP
 
         Map<String, String> oauthParams = Maps.<String, String>builder()
                 .put(OAUTH_CONSUMER_KEY, configuration.getClientId())
-                .put(OAUTH_TOKEN, token.getValue())
+                .put(OAUTH_TOKEN, token.value())
                 .put(OAUTH_SIGNATURE_METHOD, OAUTH_SIGNATURE_METHOD_VALUE)
                 .put(OAUTH_VERSION, OAUTH_VERSION_VALUE)
                 .build();
@@ -259,9 +272,9 @@ public class TwitterAuthenticationProvider extends AbstractSocialAuthenticationP
         String authorization = getAuthorizationHeader("GET",
                 configuration.getUserProfileUri(),
                 parameters, oauthParams,
-                new OAuthCredentials(configuration, token.getValue(), token.getSecret()));
+                new OAuthCredentials(configuration, token.value(), token.secret()));
 
-        return client.getAbs(configuration.getUserProfileUri()+"?include_email=true")
+        return client.getAbs(configuration.getUserProfileUri() + "?include_email=true")
                 .putHeader(HttpHeaders.AUTHORIZATION, authorization)
                 //.rxSendForm(form)
                 .rxSend()
@@ -275,8 +288,7 @@ public class TwitterAuthenticationProvider extends AbstractSocialAuthenticationP
                     DefaultUser user = new DefaultUser(jsonObject.getString(TWITTER_SCREEN_NAME));
                     user.setId(jsonObject.getString(TWITTER_ID));
 
-                    Map<String, Object> additionalInfos = new HashMap<>();
-                    additionalInfos.putAll(applyUserMapping(authentication.getContext(), jsonObject.getMap()));
+                    Map<String, Object> additionalInfos = new HashMap<>(applyUserMapping(authentication.getContext(), jsonObject.getMap()));
                     user.setAdditionalInformation(additionalInfos);
                     user.setRoles(applyRoleMapping(authentication.getContext(), jsonObject.getMap()));
 
@@ -289,7 +301,7 @@ public class TwitterAuthenticationProvider extends AbstractSocialAuthenticationP
         JsonObject jsonObject = JsonObject.mapFrom(attributes);
         Map<String, Object> claims = new HashMap<>();
 
-        claims.put(StandardClaims.PROFILE, TWITTER_BASE_URL+jsonObject.getString(TWITTER_SCREEN_NAME));
+        claims.put(StandardClaims.PROFILE, TWITTER_BASE_URL + jsonObject.getString(TWITTER_SCREEN_NAME));
         claims.put(StandardClaims.PREFERRED_USERNAME, jsonObject.getString(TWITTER_SCREEN_NAME));
         claims.put(StandardClaims.SUB, jsonObject.getString(TWITTER_ID));
 
@@ -338,7 +350,7 @@ public class TwitterAuthenticationProvider extends AbstractSocialAuthenticationP
         }
 
         claims.put(FOLLOWERS, jsonObject.getInteger(FOLLOWERS_COUNT, 0));
-        claims.put(FRIENDS, jsonObject.getInteger(FRIENDS_COUNT,0));
+        claims.put(FRIENDS, jsonObject.getInteger(FRIENDS_COUNT, 0));
 
         return claims;
     }

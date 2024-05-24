@@ -22,57 +22,32 @@ package io.gravitee.am.common.event;
 public abstract class Event {
 
     public static Enum valueOf(Type type, Action action) {
-        switch (type) {
-            case DOMAIN:
-                return DomainEvent.actionOf(action);
-            case APPLICATION:
-                return ApplicationEvent.actionOf(action);
-            case CERTIFICATE:
-                return CertificateEvent.actionOf(action);
-            case EXTENSION_GRANT:
-                return ExtensionGrantEvent.actionOf(action);
-            case IDENTITY_PROVIDER:
-                return IdentityProviderEvent.actionOf(action);
-            case ROLE:
-                return RoleEvent.actionOf(action);
-            case SCOPE:
-                return ScopeEvent.actionOf(action);
-            case FORM:
-                return FormEvent.actionOf(action);
-            case EMAIL:
-                return EmailEvent.actionOf(action);
-            case REPORTER:
-                return ReporterEvent.actionOf(action);
-            case POLICY:
-                return PolicyEvent.actionOf(action);
-            case GROUP:
-                return GroupEvent.actionOf(action);
-            case MEMBERSHIP:
-                return MembershipEvent.actionOf(action);
-            case FACTOR:
-                return FactorEvent.actionOf(action);
-            case FLOW:
-                return FlowEvent.actionOf(action);
-            case ALERT_TRIGGER:
-                return AlertTriggerEvent.actionOf(action);
-            case ALERT_NOTIFIER:
-                return AlertNotifierEvent.actionOf(action);
-            case RESOURCE:
-                return ResourceEvent.actionOf(action);
-            case BOT_DETECTION:
-                return BotDetectionEvent.actionOf(action);
-            case DEVICE_IDENTIFIER:
-                return DeviceIdentifierEvent.actionOf(action);
-            case AUTH_DEVICE_NOTIFIER:
-                return AuthenticationDeviceNotifierEvent.actionOf(action);
-            case I18N_DICTIONARY:
-                return I18nDictionaryEvent.actionOf(action);
-            case THEME:
-                return ThemeEvent.actionOf(action);
-            case PASSWORD_POLICY:
-                return PasswordPolicyEvent.actionOf(action);
-            default:
-                return null;
-        }
+        return switch (type) {
+            case DOMAIN -> DomainEvent.actionOf(action);
+            case APPLICATION -> ApplicationEvent.actionOf(action);
+            case CERTIFICATE -> CertificateEvent.actionOf(action);
+            case EXTENSION_GRANT -> ExtensionGrantEvent.actionOf(action);
+            case IDENTITY_PROVIDER -> IdentityProviderEvent.actionOf(action);
+            case ROLE -> RoleEvent.actionOf(action);
+            case SCOPE -> ScopeEvent.actionOf(action);
+            case FORM -> FormEvent.actionOf(action);
+            case EMAIL -> EmailEvent.actionOf(action);
+            case REPORTER -> ReporterEvent.actionOf(action);
+            case POLICY -> PolicyEvent.actionOf(action);
+            case GROUP -> GroupEvent.actionOf(action);
+            case MEMBERSHIP -> MembershipEvent.actionOf(action);
+            case FACTOR -> FactorEvent.actionOf(action);
+            case FLOW -> FlowEvent.actionOf(action);
+            case ALERT_TRIGGER -> AlertTriggerEvent.actionOf(action);
+            case ALERT_NOTIFIER -> AlertNotifierEvent.actionOf(action);
+            case RESOURCE -> ResourceEvent.actionOf(action);
+            case BOT_DETECTION -> BotDetectionEvent.actionOf(action);
+            case DEVICE_IDENTIFIER -> DeviceIdentifierEvent.actionOf(action);
+            case AUTH_DEVICE_NOTIFIER -> AuthenticationDeviceNotifierEvent.actionOf(action);
+            case I18N_DICTIONARY -> I18nDictionaryEvent.actionOf(action);
+            case THEME -> ThemeEvent.actionOf(action);
+            case PASSWORD_POLICY -> PasswordPolicyEvent.actionOf(action);
+            default -> null;
+        };
     }
 }

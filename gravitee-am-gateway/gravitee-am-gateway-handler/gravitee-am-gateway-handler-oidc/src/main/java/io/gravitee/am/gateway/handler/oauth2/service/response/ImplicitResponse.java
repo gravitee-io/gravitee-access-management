@@ -20,8 +20,7 @@ import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.vertx.rxjava3.core.MultiMap;
-
-import java.net.URISyntaxException;
+import lombok.Getter;
 
 /**
  * If the resource owner grants the access request, the authorization server issues an access token and delivers it to the client by adding
@@ -32,6 +31,7 @@ import java.net.URISyntaxException;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
 public class ImplicitResponse extends AuthorizationResponse {
 
     /**
@@ -40,10 +40,6 @@ public class ImplicitResponse extends AuthorizationResponse {
      * Note : The authorization server MUST NOT issue a refresh token.
      */
     private Token accessToken;
-
-    public Token getAccessToken() {
-        return accessToken;
-    }
 
     public void setAccessToken(Token accessToken) {
         if (accessToken.getRefreshToken() != null) {

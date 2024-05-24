@@ -159,6 +159,6 @@ public class UserConsentsResource extends AbstractResource {
     }
 
     private String getScopeBase(String scope) {
-        return scope.indexOf(':') > 0 ? scope.substring(0, scope.indexOf(':')) : scope;
+        return scope.contains(":") ? scope.substring(0, scope.indexOf(':')) : scope;
     }
 }

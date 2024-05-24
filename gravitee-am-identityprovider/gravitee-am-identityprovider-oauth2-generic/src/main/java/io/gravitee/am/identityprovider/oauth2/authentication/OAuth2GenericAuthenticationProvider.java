@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.identityprovider.oauth2.authentication;
 
-import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectIdentityProviderConfiguration;
@@ -23,10 +22,8 @@ import io.gravitee.am.identityprovider.api.oidc.jwt.KeyResolver;
 import io.gravitee.am.identityprovider.common.oauth2.authentication.AbstractOpenIDConnectAuthenticationProvider;
 import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.oauth2.authentication.spring.OAuth2GenericAuthenticationProviderConfiguration;
-import io.gravitee.am.model.flow.Flow;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.functions.Function;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.reactivestreams.Publisher;
@@ -35,7 +32,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -159,7 +155,7 @@ public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAu
     /**
      * trigger a retry with a delay of 1 second up to 60 seconds.
      */
-    private class RetryWithDelay implements Function<Flowable<Throwable>, Publisher<?>> {
+    private static class RetryWithDelay implements Function<Flowable<Throwable>, Publisher<?>> {
 
         private int delayInSec = 0;
 

@@ -26,18 +26,11 @@ public enum ThemeEvent {
     UNDEPLOY;
 
     public static ThemeEvent actionOf(Action action) {
-        ThemeEvent event = null;
-        switch (action) {
-            case CREATE:
-                event = ThemeEvent.DEPLOY;
-                break;
-            case UPDATE:
-                event = ThemeEvent.UPDATE;
-                break;
-            case DELETE:
-                event = ThemeEvent.UNDEPLOY;
-                break;
-        }
-        return event;
+        return switch (action) {
+            case CREATE -> ThemeEvent.DEPLOY;
+            case UPDATE -> ThemeEvent.UPDATE;
+            case DELETE -> ThemeEvent.UNDEPLOY;
+            default -> null;
+        };
     }
 }

@@ -28,8 +28,6 @@ import io.gravitee.am.gateway.handler.common.policy.DefaultRule;
 import io.gravitee.am.gateway.handler.common.policy.Rule;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
-import io.gravitee.am.model.safe.ClientProperties;
-import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
@@ -41,6 +39,8 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.safe.ClientProperties;
+import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.model.uma.PermissionTicket;
 import io.gravitee.am.model.uma.Resource;
@@ -108,7 +108,7 @@ public class UMATokenGranter extends AbstractTokenGranter {
     @Override
     public boolean handle(String grantType, Client client) {
         return super.handle(grantType, client) &&
-        domain!=null && domain.getUma()!=null && domain.getUma().isEnabled();
+                domain != null && domain.getUma() != null && domain.getUma().isEnabled();
     }
 
     @Override
@@ -129,26 +129,35 @@ public class UMATokenGranter extends AbstractTokenGranter {
         String persistedClaimsToken = parameters.getFirst(PCT);
         String requestingPartyToken = parameters.getFirst(RPT);
 
-        if(ticket == null) {
+        if (ticket == null) {
             return Single.error(new InvalidGrantException("Missing parameter: ticket"));
         }
 
         //if there's only one of both informed
-        if(claimToken != null ^ claimTokenFormat != null) {
+        if (claimToken != null ^ claimTokenFormat != null) {
             return Single.error(UmaException.needInfoBuilder(ticket)
                     .requiredClaims(Arrays.asList(
-                            new RequiredClaims(CLAIM_TOKEN).setFriendlyName("Requesting party token"),
-                            new RequiredClaims(CLAIM_TOKEN_FORMAT).setFriendlyName("supported claims token format")
-                                    .setClaimTokenFormat(CLAIM_TOKEN_FORMAT_SUPPORTED)
+                            RequiredClaims.builder()
+                                    .name(CLAIM_TOKEN)
+                                    .friendlyName("Requesting party token")
+                                    .build(),
+                            RequiredClaims.builder()
+                                    .name(CLAIM_TOKEN_FORMAT)
+                                    .friendlyName("supported claims token format")
+                                    .claimTokenFormat(CLAIM_TOKEN_FORMAT_SUPPORTED)
+                                    .build()
                     ))
                     .build());
         }
 
-        if(!StringUtils.isEmpty(claimTokenFormat) && !CLAIM_TOKEN_FORMAT_SUPPORTED.contains(claimTokenFormat)) {
+        if (StringUtils.hasText(claimTokenFormat) && !CLAIM_TOKEN_FORMAT_SUPPORTED.contains(claimTokenFormat)) {
             return Single.error(UmaException.needInfoBuilder(ticket)
-                    .requiredClaims(List.of(new RequiredClaims(CLAIM_TOKEN_FORMAT)
-                            .setFriendlyName("supported claims token format")
-                            .setClaimTokenFormat(CLAIM_TOKEN_FORMAT_SUPPORTED)
+                    .requiredClaims(List.of(RequiredClaims
+                            .builder()
+                            .name(CLAIM_TOKEN_FORMAT)
+                            .friendlyName("supported claims token format")
+                            .claimTokenFormat(CLAIM_TOKEN_FORMAT_SUPPORTED)
+                            .build()
                     ))
                     .build());
         }
@@ -166,7 +175,7 @@ public class UMATokenGranter extends AbstractTokenGranter {
 
     @Override
     protected Maybe<User> resolveResourceOwner(TokenRequest tokenRequest, Client client) {
-        if(StringUtils.isEmpty(tokenRequest.getClaimToken())) {
+        if (!StringUtils.hasText(tokenRequest.getClaimToken())) {
             return Maybe.empty();
         }
 
@@ -177,7 +186,10 @@ public class UMATokenGranter extends AbstractTokenGranter {
                     //If user
                     return Maybe.error(UmaException.needInfoBuilder(tokenRequest.getTicket())
                             .requiredClaims(List.of(
-                                    new RequiredClaims(CLAIM_TOKEN).setFriendlyName("Malformed or expired claim_token")
+                                    RequiredClaims.builder()
+                                            .name(CLAIM_TOKEN)
+                                            .friendlyName("Malformed or expired claim_token")
+                                            .build()
                             ))
                             .build());
                 });
@@ -217,19 +229,23 @@ public class UMATokenGranter extends AbstractTokenGranter {
                             .flatMap(resourceSet -> this.checkRequestedScopesMatchResource(tokenRequest, resourceSet))
                             .flatMap(resourceMap -> this.resolveScopeRequestAssessment(tokenRequest, permissionRequests, resourceMap))
                             .flatMap(resolvedPermissionRequests -> this.extendPermissionWithRPT(tokenRequest, client, endUser, resolvedPermissionRequests))
-                            .map(extendedPermissionRequests -> {tokenRequest.setPermissions(extendedPermissionRequests); return tokenRequest;});
+                            .map(extendedPermissionRequests -> {
+                                tokenRequest.setPermissions(extendedPermissionRequests);
+                                return tokenRequest;
+                            });
                 });
     }
 
     /**
      * Check token request scopes are all known/referenced within the target resources
+     *
      * @param tokenRequest TokenRequest
-     * @param resourceSet List<Resource>
-     * @return Single<Map<String, Resource>> if no errors
+     * @param resourceSet  List<Resource>
+     * @return Single<Map < String, Resource>> if no errors
      */
     private Single<Map<String, Resource>> checkRequestedScopesMatchResource(TokenRequest tokenRequest, List<Resource> resourceSet) {
         //Return InvalidScopeException if the token request contains unbounded resource set scopes.
-        if(tokenRequest.getScopes()!=null && !tokenRequest.getScopes().isEmpty()) {
+        if (tokenRequest.getScopes() != null && !tokenRequest.getScopes().isEmpty()) {
             Set<String> allResourcesScopes = resourceSet.stream().map(Resource::getResourceScopes).flatMap(List::stream).collect(Collectors.toSet());
             if (!allResourcesScopes.containsAll(tokenRequest.getScopes())) {
                 return Single.error(new InvalidScopeException("At least one of the scopes included in the request does not match resource registered scopes"));
@@ -242,7 +258,7 @@ public class UMATokenGranter extends AbstractTokenGranter {
 
     private Single<List<PermissionRequest>> resolveScopeRequestAssessment(TokenRequest tokenRequest, List<PermissionRequest> requestedPermissions, Map<String, Resource> fetchedResources) {
         //If request does not contains additional scopes, just return the permission Ticket resources.
-        if(tokenRequest.getScopes()==null || tokenRequest.getScopes().isEmpty()) {
+        if (tokenRequest.getScopes() == null || tokenRequest.getScopes().isEmpty()) {
             return Single.just(requestedPermissions);
         }
 
@@ -261,13 +277,14 @@ public class UMATokenGranter extends AbstractTokenGranter {
     /**
      * If a valid Requesting Party Token was provided, then we inject previous permissions from this RPT.
      * This permissions must be reviewed by the Permission Policy Management as some of them may have been revoked in the meantime.
-     * @param tokenRequest TokenRequest
-     * @param client Client
+     *
+     * @param tokenRequest         TokenRequest
+     * @param client               Client
      * @param requestedPermissions List<PermissionRequest>
      * @return List<PermissionRequest>
      */
     private Single<List<PermissionRequest>> extendPermissionWithRPT(TokenRequest tokenRequest, Client client, User endUser, List<PermissionRequest> requestedPermissions) {
-        if(!StringUtils.isEmpty(tokenRequest.getRequestingPartyToken())) {
+        if (StringUtils.hasText(tokenRequest.getRequestingPartyToken())) {
             return jwtService.decodeAndVerify(tokenRequest.getRequestingPartyToken(), client, ACCESS_TOKEN)
                     .flatMap(rpt -> this.checkRequestingPartyToken(rpt, client, endUser))
                     .map(rpt -> this.mergePermissions(rpt, requestedPermissions))
@@ -281,8 +298,8 @@ public class UMATokenGranter extends AbstractTokenGranter {
      * Provided "previous" Requesting Party Token to extend must belong to the same user & client.
      */
     private Single<JWT> checkRequestingPartyToken(JWT rpt, Client client, User user) {
-        String expectedSub = user!=null?user.getId():client.getClientId();
-        if(!expectedSub.equals(rpt.getSub()) || !client.getClientId().equals(rpt.getAud())) {
+        String expectedSub = user != null ? user.getId() : client.getClientId();
+        if (!expectedSub.equals(rpt.getSub()) || !client.getClientId().equals(rpt.getAud())) {
             return Single.error(InvalidTokenException::new);
         }
         return Single.just(rpt);
@@ -291,9 +308,9 @@ public class UMATokenGranter extends AbstractTokenGranter {
     private List<PermissionRequest> mergePermissions(JWT rpt, List<PermissionRequest> requested) {
         if (rpt.get("permissions") != null) {
             //Build Map with current request
-            Map<String, PermissionRequest> newRequestedPermission = requested.stream().collect(Collectors.toMap(PermissionRequest::getResourceId,pr->pr));
+            Map<String, PermissionRequest> newRequestedPermission = requested.stream().collect(Collectors.toMap(PermissionRequest::getResourceId, pr -> pr));
             //Build map with previous permissions from the old RPT (Requesting Party Token)
-            Map<String, PermissionRequest> rptPermission = convert(((List<Map<String, Object>>)rpt.get("permissions")));
+            Map<String, PermissionRequest> rptPermission = convert(((List<Map<String, Object>>) rpt.get("permissions")));
             //Merge both
             return new ArrayList<>(Stream.concat(newRequestedPermission.entrySet().stream(), rptPermission.entrySet().stream())
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (requestedPermission, fromRpt) -> {
@@ -327,15 +344,15 @@ public class UMATokenGranter extends AbstractTokenGranter {
         //Create Request
         OAuth2Request oAuth2Request = tokenRequest.createOAuth2Request();
         //Set User
-        oAuth2Request.setSubject(endUser!=null?endUser.getId():oAuth2Request.getSubject());
+        oAuth2Request.setSubject(endUser != null ? endUser.getId() : oAuth2Request.getSubject());
         //Client may have refresh_token grant, but if request is not made for an end user, then we should not generate refresh.
-        oAuth2Request.setSupportRefreshToken(endUser!=null && isSupportRefreshToken(client));
+        oAuth2Request.setSupportRefreshToken(endUser != null && isSupportRefreshToken(client));
 
         return Single.just(oAuth2Request);
     }
 
     private Token handleUpgradedToken(TokenRequest tokenRequest, Token token) {
-        if(tokenRequest.getRequestingPartyToken()!=null) {
+        if (tokenRequest.getRequestingPartyToken() != null) {
             token.setUpgraded(true);
         }
         return token;
@@ -353,9 +370,10 @@ public class UMATokenGranter extends AbstractTokenGranter {
     /**
      * The resource owner works with the authorization server to configure policy conditions (authorization grant rules), which the authorization server executes in the process of issuing access tokens.
      * The authorization process makes use of claims gathered from the requesting party and client in order to satisfy all operative operative policy conditions.
+     *
      * @param oAuth2Request OAuth 2.0 Token Request
-     * @param client client
-     * @param endUser requesting party
+     * @param client        client
+     * @param endUser       requesting party
      * @return
      */
     private Single<OAuth2Request> executePolicies(OAuth2Request oAuth2Request, Client client, User endUser) {
@@ -373,7 +391,7 @@ public class UMATokenGranter extends AbstractTokenGranter {
                             .stream()
                             .filter(permissionRequest -> permissionRequest.getResourceId().equals(accessPolicy.getResource()))
                             .findFirst()
-                            .ifPresent(permissionRequest -> ((DefaultRule)rule).setMetadata(Collections.singletonMap("permissionRequest", permissionRequest)));
+                            .ifPresent(permissionRequest -> ((DefaultRule) rule).setMetadata(Collections.singletonMap("permissionRequest", permissionRequest)));
                     return rule;
                 })
                 .toList()

@@ -18,7 +18,14 @@ package io.gravitee.am.identityprovider.github.authentication;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.identityprovider.api.*;
+import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.common.oauth2.authentication.AbstractSocialAuthenticationProvider;
 import io.gravitee.am.identityprovider.common.oauth2.utils.URLEncodedUtils;
 import io.gravitee.am.identityprovider.github.GithubIdentityProviderConfiguration;
@@ -31,8 +38,7 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
@@ -48,10 +54,10 @@ import static io.gravitee.gateway.api.http.HttpHeaderNames.AUTHORIZATION;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 @Import(GithubAuthenticationProviderConfiguration.class)
 public class GithubAuthenticationProvider extends AbstractSocialAuthenticationProvider<GithubIdentityProviderConfiguration> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(GithubAuthenticationProvider.class);
     private static final String CLIENT_ID = "client_id";
     private static final String CLIENT_SECRET = "client_secret";
     private static final String REDIRECT_URI = "redirect_uri";
@@ -95,7 +101,7 @@ public class GithubAuthenticationProvider extends AbstractSocialAuthenticationPr
         // prepare body request parameters
         final String authorizationCode = authentication.getContext().request().parameters().getFirst(configuration.getCodeParameter());
         if (authorizationCode == null || authorizationCode.isEmpty()) {
-            LOGGER.debug("Authorization code is missing, skip authentication");
+            log.debug("Authorization code is missing, skip authentication");
             return Maybe.error(new BadCredentialsException("Missing authorization code"));
         }
         List<NameValuePair> urlParameters = new ArrayList<>();
@@ -112,7 +118,7 @@ public class GithubAuthenticationProvider extends AbstractSocialAuthenticationPr
                 .toMaybe()
                 .map(httpResponse -> {
                     if (httpResponse.statusCode() != 200) {
-                        LOGGER.error("HTTP error {} is thrown while exchanging code. The response body is: {} ", httpResponse.statusCode(), httpResponse.bodyAsString());
+                        log.error("HTTP error {} is thrown while exchanging code. The response body is: {} ", httpResponse.statusCode(), httpResponse.bodyAsString());
                         throw new BadCredentialsException(httpResponse.statusMessage());
                     }
 
@@ -128,7 +134,7 @@ public class GithubAuthenticationProvider extends AbstractSocialAuthenticationPr
 
     @Override
     protected Maybe<User> profile(Token accessToken, Authentication authentication) {
-        final String tokenValue = accessToken.getValue();
+        final String tokenValue = accessToken.value();
         return client.getAbs(configuration.getUserProfileUri())
                 .putHeader(AUTHORIZATION, "token " + tokenValue)
                 .rxSend()
@@ -174,7 +180,7 @@ public class GithubAuthenticationProvider extends AbstractSocialAuthenticationPr
                 claims.put(StandardClaims.FAMILY_NAME, fullName[1]);
             }
         } catch (Exception e) {
-            LOGGER.debug("Unable to resolve Github user full name : {}", attributes.get(GithubUser.NAME), e);
+            log.debug("Unable to resolve Github user full name : {}", attributes.get(GithubUser.NAME), e);
         }
 
         claims.put(StandardClaims.PROFILE, attributes.get(GithubUser.HTML_URL));

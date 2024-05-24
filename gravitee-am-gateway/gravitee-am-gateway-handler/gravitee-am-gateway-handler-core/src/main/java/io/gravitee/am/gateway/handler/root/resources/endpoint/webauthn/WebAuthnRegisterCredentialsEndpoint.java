@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
  *
  * These options object contains a number of required and optional fields that a server specifies to create a new credential for a user.
  *
- * https://webauthn.guide/#registration
+ * <a href="https://webauthn.guide/#registration">...</a>
  *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -53,12 +53,10 @@ public class WebAuthnRegisterCredentialsEndpoint extends WebAuthnHandler {
     @Override
     public void handle(RoutingContext routingContext) {
         HttpServerRequest req = routingContext.request();
-        switch (req.method().name()) {
-            case "POST":
-                createCredentialCreationOptions(routingContext);
-                break;
-            default:
-                routingContext.fail(405);
+        if (req.method().name().equals("POST")) {
+            createCredentialCreationOptions(routingContext);
+        } else {
+            routingContext.fail(405);
         }
     }
 

@@ -23,9 +23,6 @@ import io.gravitee.common.http.HttpStatusCode;
  */
 public class MissingScopeException extends AbstractManagementException {
 
-    public MissingScopeException() {
-    }
-
     @Override
     public int getHttpStatusCode() {
         return HttpStatusCode.BAD_REQUEST_400;

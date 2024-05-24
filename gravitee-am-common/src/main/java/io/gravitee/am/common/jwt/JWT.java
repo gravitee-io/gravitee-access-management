@@ -70,7 +70,7 @@ public class JWT extends HashMap<String, Object> {
     }
 
     public long getExp() {
-        return containsKey(Claims.exp) ? ((Number) get(Claims.exp)).longValue(): 0l;
+        return containsKey(Claims.exp) ? ((Number) get(Claims.exp)).longValue(): 0L;
     }
 
     public void setExp(long exp) {
@@ -78,7 +78,7 @@ public class JWT extends HashMap<String, Object> {
     }
 
     public long getNbf() {
-        return containsKey(Claims.nbf) ? ((Number) get(Claims.nbf)).longValue() : 0l;
+        return containsKey(Claims.nbf) ? ((Number) get(Claims.nbf)).longValue() : 0L;
     }
 
     public void setNbf(long nbf) {
@@ -86,7 +86,7 @@ public class JWT extends HashMap<String, Object> {
     }
 
     public long getIat() {
-        return containsKey(Claims.iat) ? ((Number) get(Claims.iat)).longValue() : 0l;
+        return containsKey(Claims.iat) ? ((Number) get(Claims.iat)).longValue() : 0L;
     }
 
     public void setIat(long iat) {

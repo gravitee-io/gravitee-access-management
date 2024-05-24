@@ -26,18 +26,11 @@ public enum DomainEvent {
     UNDEPLOY;
 
     public static DomainEvent actionOf(Action action) {
-        DomainEvent domainEvent = null;
-        switch (action) {
-            case CREATE:
-                domainEvent = DomainEvent.DEPLOY;
-                break;
-            case UPDATE:
-                domainEvent = DomainEvent.UPDATE;
-                break;
-            case DELETE:
-                domainEvent = DomainEvent.UNDEPLOY;
-                break;
-        }
-        return domainEvent;
+        return switch (action) {
+            case CREATE -> DomainEvent.DEPLOY;
+            case UPDATE -> DomainEvent.UPDATE;
+            case DELETE -> DomainEvent.UNDEPLOY;
+            default -> null;
+        };
     }
 }

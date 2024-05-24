@@ -26,18 +26,11 @@ public enum GroupEvent {
     UNDEPLOY;
 
     public static GroupEvent actionOf(Action action) {
-        GroupEvent roleEvent = null;
-        switch (action) {
-            case CREATE:
-                roleEvent = GroupEvent.DEPLOY;
-                break;
-            case UPDATE:
-                roleEvent = GroupEvent.UPDATE;
-                break;
-            case DELETE:
-                roleEvent = GroupEvent.UNDEPLOY;
-                break;
-        }
-        return roleEvent;
+        return switch (action) {
+            case CREATE -> GroupEvent.DEPLOY;
+            case UPDATE -> GroupEvent.UPDATE;
+            case DELETE -> GroupEvent.UNDEPLOY;
+            default -> null;
+        };
     }
 }

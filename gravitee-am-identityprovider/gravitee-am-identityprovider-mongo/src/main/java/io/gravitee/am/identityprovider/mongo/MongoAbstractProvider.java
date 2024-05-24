@@ -70,7 +70,7 @@ public abstract class MongoAbstractProvider implements InitializingBean {
     }
 
     protected String getSafeUsername(String username) {
-        return getEncodedUsername(username).replaceAll(QUOTE, SAFE_QUOTE_REPLACEMENT);
+        return getEncodedUsername(username).replace(QUOTE, SAFE_QUOTE_REPLACEMENT);
     }
 
     protected String getEncodedUsername(String username) {

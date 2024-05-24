@@ -45,7 +45,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
 
@@ -59,7 +58,6 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MongoAuthenticationProvider.class);
     private static final String FIELD_ID = "_id";
-    private static final String FIELD_USERNAME = "username";
     private static final String FIELD_CREATED_AT = "createdAt";
     private static final String FIELD_UPDATED_AT = "updatedAt";
 
@@ -113,7 +111,7 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
                 })
                 .toList()
                 .flatMapMaybe(userEvaluations -> {
-                    final var validUsers = userEvaluations.stream().filter(UserCredentialEvaluation::isPasswordValid).collect(Collectors.toList());
+                    final var validUsers = userEvaluations.stream().filter(UserCredentialEvaluation::isPasswordValid).toList();
                     if (validUsers.size() > 1) {
                         LOGGER.debug("Authentication failed: multiple accounts with same credentials");
                         return Maybe.error(new BadCredentialsException("Bad credentials"));
@@ -133,7 +131,7 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
         MongoCollection<Document> usersCol = this.mongoClient.getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getUsersCollection());
         String findQuery = this.configuration.getFindUserByMultipleFieldsQuery() != null ? this.configuration.getFindUserByMultipleFieldsQuery() : this.configuration.getFindUserByUsernameQuery();
         String jsonQuery = convertToJsonString(findQuery)
-                .replaceAll("\\?", value);
+                .replace("?", value);
         BsonDocument query = BsonDocument.parse(jsonQuery);
         return Flowable.fromPublisher(usersCol.find(query));
     }
@@ -147,7 +145,7 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
     private Maybe<Document> findUserByUsername(String encodedUsername) {
         MongoCollection<Document> usersCol = this.mongoClient.getDatabase(this.configuration.getDatabase())
             .getCollection(this.configuration.getUsersCollection());
-        String rawQuery = this.configuration.getFindUserByUsernameQuery().replaceAll("\\?", encodedUsername);
+        String rawQuery = this.configuration.getFindUserByUsernameQuery().replace("?", encodedUsername);
         String jsonQuery = convertToJsonString(rawQuery);
         BsonDocument query = BsonDocument.parse(jsonQuery);
         return Observable.fromPublisher(usersCol.find(query).first()).firstElement();
