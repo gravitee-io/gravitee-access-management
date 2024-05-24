@@ -20,6 +20,7 @@ import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.repository.management.api.CommonUserRepository.UpdateActions;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.MaybeSource;
 import io.reactivex.rxjava3.core.Single;
 
 import java.util.List;
@@ -53,7 +54,11 @@ public interface UserService {
      * @param source user identity provider
      * @return end user
      */
-    Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source);
+    Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source, boolean includeLinkedIdentities);
+
+    default Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source) {
+        return findByDomainAndUsernameAndSource(domain, username, source, false);
+    }
 
     /**
      * Find users by security domain and email
@@ -105,4 +110,5 @@ public interface UserService {
      * @return
      */
     Single<User> updateFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal);
+
 }

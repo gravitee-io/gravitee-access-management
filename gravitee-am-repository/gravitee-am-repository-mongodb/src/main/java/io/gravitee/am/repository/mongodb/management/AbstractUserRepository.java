@@ -53,6 +53,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.elemMatch;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.in;
 import static com.mongodb.client.model.Filters.or;
@@ -190,14 +191,28 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
     }
 
     @Override
-    public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source) {
+    public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source, boolean includeLinkedIdentities) {
         return Observable.fromPublisher(withMaxTime(
                         usersCollection
                                 .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_USERNAME, username), eq(FIELD_SOURCE, source))))
                                 .limit(1)
                                 .first())
                 .firstElement()
+                .switchIfEmpty(includeLinkedIdentities ?  findByLinkedIdentity(referenceType, referenceId, username, source) : Maybe.empty())
                 .map(this::convert);
+    }
+
+    private Maybe<T> findByLinkedIdentity(ReferenceType referenceType, String referenceId, String username, String source) {
+        return Observable.fromPublisher(withMaxTime(
+                        usersCollection.find(
+                                        and(eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                                                eq(FIELD_REFERENCE_ID, referenceId),
+                                                eq(FIELD_SOURCE, source),
+                                                elemMatch("identities", eq(FIELD_USER_ID, username))
+                                        ))
+                                .limit(1))
+                        .first())
+                .firstElement();
     }
 
     @Override

@@ -45,7 +45,7 @@ public interface UserRepository extends CommonUserRepository {
 
     Maybe<User> findByUsernameAndDomain(String domain, String username);
 
-    Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source);
+//    Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source);
 
     Maybe<User> findByExternalIdAndSource(ReferenceType referenceType, String referenceId, String externalId, String source);
 

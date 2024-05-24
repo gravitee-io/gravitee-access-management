@@ -15,15 +15,22 @@
  */
 package io.gravitee.am.repository.management.api.search;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.With;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@AllArgsConstructor(access= AccessLevel.PRIVATE)
 public class LoginAttemptCriteria {
 
     private String domain;
     private String client;
     private String identityProvider;
+    @With
     private String username;
 
     public LoginAttemptCriteria(Builder builder) {

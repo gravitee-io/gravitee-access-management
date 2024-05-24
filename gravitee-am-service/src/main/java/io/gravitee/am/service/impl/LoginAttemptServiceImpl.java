@@ -94,6 +94,7 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
     @Override
     public Completable loginSucceeded(LoginAttemptCriteria criteria) {
         LOGGER.debug("Delete login attempt for {}", criteria);
+        // TODO delete by linked id as well?
         return loginAttemptRepository.delete(criteria)
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

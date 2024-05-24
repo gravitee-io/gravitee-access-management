@@ -54,7 +54,10 @@ public interface CommonUserRepository extends CrudRepository<User, String> {
 
     Flowable<User> search(ReferenceType referenceType, String referenceId, FilterCriteria criteria);
 
-    Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source);
+    default Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source) {
+        return findByUsernameAndSource(referenceType, referenceId, username, source, false);
+    }
+    Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source, boolean includeLinkedIdentities);
 
     Maybe<User> findByExternalIdAndSource(ReferenceType referenceType, String referenceId, String externalId, String source);
 

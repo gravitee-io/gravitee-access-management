@@ -112,8 +112,8 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
     }
 
     @Override
-    public Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source) {
-        return findByUsernameAndSource(ReferenceType.DOMAIN, domain, username, source);
+    public Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source, boolean includeLinkedIdentities) {
+        return findByUsernameAndSource(ReferenceType.DOMAIN, domain, username, source, includeLinkedIdentities);
     }
 
     @Override

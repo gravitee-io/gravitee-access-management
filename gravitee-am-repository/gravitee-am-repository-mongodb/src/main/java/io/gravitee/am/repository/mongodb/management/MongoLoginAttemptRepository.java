@@ -113,8 +113,9 @@ public class MongoLoginAttemptRepository extends AbstractManagementMongoReposito
             filters.add(eq(FIELD_USERNAME, criteria.username()));
         }
         // build query
-        Bson query = (filters.isEmpty()) ? new BasicDBObject() : and(filters);
-        return query;
+        Bson mainQuery = (filters.isEmpty()) ? new BasicDBObject() : and(filters);
+
+        return mainQuery;
     }
 
     private LoginAttempt convert(LoginAttemptMongo loginAttemptMongo) {

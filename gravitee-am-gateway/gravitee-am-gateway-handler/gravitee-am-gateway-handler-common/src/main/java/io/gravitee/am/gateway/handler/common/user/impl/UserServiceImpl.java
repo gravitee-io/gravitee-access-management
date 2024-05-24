@@ -47,8 +47,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source) {
-        return userService.findByDomainAndUsernameAndSource(domain, username, source);
+    public Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source, boolean includeLinkedIdentities) {
+        return userService.findByDomainAndUsernameAndSource(domain, username, source, includeLinkedIdentities);
     }
 
     @Override

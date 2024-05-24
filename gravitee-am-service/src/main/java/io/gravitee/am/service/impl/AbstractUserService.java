@@ -155,9 +155,9 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
     }
 
     @Override
-    public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source) {
+    public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source, boolean includeLinkedIdentities) {
         LOGGER.debug("Find user by {} {}, username and source: {} {}", referenceType, referenceId, username, source);
-        return getUserRepository().findByUsernameAndSource(referenceType, referenceId, username, source)
+        return getUserRepository().findByUsernameAndSource(referenceType, referenceId, username, source, includeLinkedIdentities)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a user using its username: {} for the {} {}  and source {}", username, referenceType, referenceId, source, ex);
                     return Maybe.error(new TechnicalManagementException(

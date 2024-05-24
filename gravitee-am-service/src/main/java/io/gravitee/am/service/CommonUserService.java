@@ -44,7 +44,10 @@ public interface CommonUserService {
     Single<Page<User>> search(ReferenceType referenceType, String referenceId, FilterCriteria filterCriteria, int page, int size);
     Flowable<User> search(ReferenceType referenceType, String referenceId, FilterCriteria filterCriteria);
 
-    Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source);
+    default Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source) {
+        return findByUsernameAndSource(referenceType, referenceId, username, source, false);
+    }
+    Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source, boolean includeLinkedIdentities);
 
     Single<User> findById(ReferenceType referenceType, String referenceId, String id);
 

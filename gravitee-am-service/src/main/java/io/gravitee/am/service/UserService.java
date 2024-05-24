@@ -42,7 +42,10 @@ public interface UserService extends CommonUserService {
 
     Maybe<User> findByDomainAndUsername(String domain, String username);
 
-    Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source);
+    default Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source) {
+        return findByDomainAndUsernameAndSource(domain, username, source, false);
+    }
+    Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source, boolean includeLinkedIdentities);
 
     Maybe<User> findById(String id);
 
