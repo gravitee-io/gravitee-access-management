@@ -1,5 +1,30 @@
 # Change Log
 
+==  - 3.21.26 (2024-05-24)
+
+== What's new !
+
+
+
+=== Gateway
+
+
+
+=== Management API
+
+
+
+=== Console
+
+
+
+=== Other
+
+* Application - Forms - Page not found error when enabling custom form again after being 'cleared' https://github.com/gravitee-io/issues/issues/9492[#9492]
+* Unable to remove a FORM at orgnazation level
+* Password Policy Blank value in dropbox when selecting value Unlimited
+
+
 ==  - 3.21.25 (2024-05-09)
 
 == What's new !
