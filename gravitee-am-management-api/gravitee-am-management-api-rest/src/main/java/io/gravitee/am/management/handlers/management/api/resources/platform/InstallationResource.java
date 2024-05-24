@@ -70,7 +70,16 @@ public class InstallationResource extends AbstractResource {
                 .andThen(installationService.get()
                         .map(InstallationEntity::new))
                 .doOnSuccess(installationEntity -> installationEntity.getAdditionalInformation()
-                        .put(Installation.COCKPIT_URL, environment.getProperty("cockpit.url", DEFAULT_COCKPIT_URL)))
+                        .put(Installation.COCKPIT_URL, getProperty("cockpit.url", "cloud.url", DEFAULT_COCKPIT_URL)))
                 .subscribe(response::resume, response::resume);
     }
+
+    private String getProperty(final String property, final String fallback, final String defaultValue) {
+        String value = environment.getProperty(property, String.class);
+        if (value == null) {
+            value = environment.getProperty(fallback, String.class);
+        }
+        return value != null ? value : defaultValue;
+    }
+
 }

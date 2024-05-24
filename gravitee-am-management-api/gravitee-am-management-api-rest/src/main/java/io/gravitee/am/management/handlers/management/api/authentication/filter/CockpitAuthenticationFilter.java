@@ -154,41 +154,45 @@ public class CockpitAuthenticationFilter extends GenericFilterBean {
     }
 
     private boolean enabled() {
-        return configuration.getProperty("cockpit.enabled", Boolean.class, false);
+        return getProperty("cockpit.enabled", "cloud.enabled", Boolean.class, false);
     }
 
     /**
      * Cockpit keystore type for client certificate (mtls) and jwt signature verification.
      */
     private String keyStoreType() {
-        return getProperty("cockpit.connector.ws.ssl.keystore.type", "cockpit.keystore.type", null);
+        return getProperty("cockpit.keystore.type","cloud.connector.ws.ssl.keystore.type", null);
     }
 
     /**
      * Cockpit keystore path for client mtls and jwt.
      */
     private String keyStorePath() {
-        return getProperty("cockpit.connector.ws.ssl.keystore.path", "cockpit.keystore.path", null);
+        return getProperty("cockpit.keystore.path", "cloud.connector.ws.ssl.keystore.path",  null);
     }
 
     /**
      * Cockpit keystore password.
      */
     private String keyStorePassword() {
-        return getProperty("cockpit.connector.ws.ssl.keystore.password", "cockpit.keystore.password", null);
+        return getProperty("cockpit.keystore.password", "cloud.connector.ws.ssl.keystore.password", null);
     }
 
     /**
      * Cockpit key alias.
      */
     private String keyAlias() {
-        return getProperty("cockpit.connector.ws.ssl.keystore.key.alias", "cockpit.keystore.key.alias", "cockpit-client");
+        return getProperty("cockpit.keystore.key.alias","cloud.connector.ws.ssl.keystore.key.alias",  "cockpit-client");
     }
 
     private String getProperty(final String property, final String fallback, final String defaultValue) {
-        String value = configuration.getProperty(property);
+        return getProperty(property, fallback, String.class, defaultValue);
+    }
+
+    <T> T getProperty(final String property, final String fallback, Class<T> targetType, final T defaultValue) {
+        T value = configuration.getProperty(property, targetType);
         if (value == null) {
-            value = configuration.getProperty(fallback);
+            value = configuration.getProperty(fallback, targetType);
         }
         return value != null ? value : defaultValue;
     }
