@@ -649,7 +649,7 @@ public class UserAuthenticationManagerTest {
         }));
 
         when(domain.getId()).thenReturn("domain-id");
-        when(userService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(userService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString(), anyBoolean())).thenReturn(Maybe.empty());
         when(loginAttemptService.checkAccount(any(), any())).thenReturn(Maybe.empty());
         TestObserver<User> observer = userAuthenticationManager.authenticate(client, new Authentication() {
             @Override
@@ -669,7 +669,7 @@ public class UserAuthenticationManagerTest {
         }).test();
 
         observer.assertError(BadCredentialsException.class);
-        verify(userService, times(1)).findByDomainAndUsernameAndSource(anyString(), anyString(), anyString());
+        verify(userService, times(1)).findByDomainAndUsernameAndSource(anyString(), anyString(), anyString(), anyBoolean());
         verify(loginAttemptService, never()).loginFailed(any(), any());
         verify(userAuthenticationService, never()).lockAccount(any(), any(), any(), any());
         verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.FAILURE), any());
