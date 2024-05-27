@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.1.23-update-user-identities-table
+      author: GraviteeSource Team
+      changes:
+        #############################
+        # Users #
+        ############################
+        - createIndex:
+            columns:
+              - column:
+                  name: provider_id
+            indexName: idx_user_identities_provider
+            tableName: user_identities
+            unique: false
+
