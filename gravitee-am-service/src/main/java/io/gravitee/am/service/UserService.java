@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
@@ -43,6 +44,8 @@ public interface UserService extends CommonUserService {
     Maybe<User> findByDomainAndUsername(String domain, String username);
 
     Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source);
+
+    Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source, boolean includeLinkedIdentities);
 
     Maybe<User> findById(String id);
 
