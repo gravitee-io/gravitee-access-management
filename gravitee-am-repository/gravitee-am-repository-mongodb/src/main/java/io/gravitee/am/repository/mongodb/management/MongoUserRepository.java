@@ -114,6 +114,17 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
         return Single.just(Collections.emptyMap());
     }
 
+    @Override
+    public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source, boolean includeLinkedIdentities) {
+        Bson query = and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_USERNAME, username), includeLinkedIdentities ? or(eq(FIELD_SOURCE, source), eq("identities.providerId", source)) : eq(FIELD_SOURCE, source));
+
+        return Observable.fromPublisher(withMaxTime(usersCollection.find(query))
+                        .limit(1)
+                        .first())
+                .firstElement()
+                .map(this::convert);
+    }
+
     private Single<Map<Object, Object>> usersStatusRepartition(AnalyticsQuery query) {
         List<Bson> filters = new ArrayList<>(Arrays.asList(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, query.getDomain())));
         if (query.getApplication() != null && !query.getApplication().isEmpty()) {
