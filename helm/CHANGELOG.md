@@ -2,6 +2,10 @@
 
 This file documents all notable changes to [Gravitee.io Access Management 3.x](https://github.com/gravitee-io/helm-charts/tree/master/am/) Helm Chart. The release numbering uses [semantic versioning](http://semver.org).
 
+### 4.0.20
+
+- 'fix' remove default value for `smtp.allowedfrom` to use the default value (*@*.*) defined into the service source code.
+
 ### 4.0.7
 
 - add networkPolicy
