@@ -102,11 +102,9 @@
         <commons-lang.version>2.6</commons-lang.version>
         <swagger.version>2.2.15</swagger.version>
         <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
-        <ldaptive.version>1.2.4</ldaptive.version>
         <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
         <thymeleaf.version>3.1.2.RELEASE</thymeleaf.version>
         <wiremock.version>3.0.4</wiremock.version>
-        <embedded-ldap-junit.version>0.7</embedded-ldap-junit.version>
         <reactor-netty.version>1.0.15</reactor-netty.version>
         <json-path.version>2.9.0</json-path.version>
         <commons-io.version>2.11.0</commons-io.version>
@@ -486,16 +484,6 @@
                 <version>${jsoup.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.ldaptive</groupId>
-                <artifactId>ldaptive-unboundid</artifactId>
-                <version>${ldaptive.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.ldaptive</groupId>
-                <artifactId>ldaptive</artifactId>
-                <version>${ldaptive.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>
                 <version>${snakeyaml.version}</version>
@@ -516,12 +504,6 @@
                 <groupId>de.flapdoodle.embed</groupId>
                 <artifactId>de.flapdoodle.embed.mongo</artifactId>
                 <version>${embed.mongo.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.zapodot</groupId>
-                <artifactId>embedded-ldap-junit</artifactId>
-                <version>${embedded-ldap-junit.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
