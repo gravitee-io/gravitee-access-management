@@ -97,6 +97,47 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void testFindByUserAndSourceAndLinkedIDP() throws TechnicalException {
+        // create user
+        User user = new User();
+        user.setUsername("testsUsername");
+        user.setSource("sourceid");
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId("testDomain");
+
+        userRepository.create(user).blockingGet();
+
+        // create linkUser
+        User linkUser = new User();
+        linkUser.setId(UUID.randomUUID().toString());
+        linkUser.setUsername("testsUsernamelinked");
+        linkUser.setSource("sourceidlinked");
+        linkUser.setReferenceType(ReferenceType.DOMAIN);
+        linkUser.setReferenceId("testDomain");
+        UserIdentity identity = getUserIdentity();
+        identity.setUserId(linkUser.getId());
+        identity.setProviderId(UUID.randomUUID().toString());
+        linkUser.setIdentities(of(identity));
+        userRepository.create(linkUser).blockingGet();
+
+        // fetch users using linked identity provider id
+        TestObserver<User> testObserver = userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, "testDomain", linkUser.getUsername(), identity.getProviderId(), true).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> u.getUsername().equals(linkUser.getUsername()));
+
+        // fetch users using direct source id
+        testObserver = userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, "testDomain", user.getUsername(), user.getSource(), true).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> u.getUsername().equals(user.getUsername()));
+    }
+
+    @Test
     public void testFindAll() throws TechnicalException {
         // create user
         User user = new User();
