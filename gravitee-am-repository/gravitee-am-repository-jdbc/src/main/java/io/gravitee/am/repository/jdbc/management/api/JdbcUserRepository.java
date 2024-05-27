@@ -529,6 +529,15 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     }
 
     @Override
+    public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source, boolean includeLinkedIdentities) {
+        LOGGER.debug("findByUsernameAndSource({},{},{},{},{})", referenceType, referenceId, username, source, includeLinkedIdentities);
+        return userRepository.findByUsernameAndSource(referenceType.name(), referenceId, username, source)
+                .switchIfEmpty(Maybe.defer(() -> includeLinkedIdentities ? userRepository.findByUsernameAndLinkedIdentities(referenceType.name(), referenceId, username, source) : Maybe.empty()))
+                .map(this::toEntity)
+                .flatMap(user -> completeUser(user).toMaybe());
+    }
+
+    @Override
     public Maybe<User> findByExternalIdAndSource(ReferenceType referenceType, String referenceId, String externalId, String source) {
         LOGGER.debug("findByExternalIdAndSource({},{},{},{})", referenceType, referenceId, externalId, source);
         return userRepository.findByExternalIdAndSource(referenceType.name(), referenceId, externalId, source)

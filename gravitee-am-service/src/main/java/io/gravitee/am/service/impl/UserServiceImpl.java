@@ -121,6 +121,17 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
     }
 
     @Override
+    public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source, boolean includeLinkedIdentities) {
+        LOGGER.debug("Find user by {} {}, username and source: {} {} (include linked idp: {})", referenceType, referenceId, username, source, includeLinkedIdentities);
+        return getUserRepository().findByUsernameAndSource(referenceType, referenceId, username, source, includeLinkedIdentities)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find a user using its username: {} for the {} {}  and source {}", username, referenceType, referenceId, source, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a user using its username: %s for the %s %s and source %s", username, referenceType, referenceId, source), ex));
+                });
+    }
+
+    @Override
     public Single<User> create(String domain, NewUser newUser) {
         return create(ReferenceType.DOMAIN, domain, newUser);
     }

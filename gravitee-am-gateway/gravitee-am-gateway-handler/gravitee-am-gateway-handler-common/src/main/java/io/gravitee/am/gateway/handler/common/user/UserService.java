@@ -55,6 +55,8 @@ public interface UserService {
      */
     Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source);
 
+    Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source, boolean includeLinkedIdentities);
+
     /**
      * Find users by security domain and email
      * @param domain user security domain
