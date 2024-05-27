@@ -83,8 +83,8 @@ smtp:
   username: info@example.com
   password: example.com
   subject: "[gravitee] %s"
-  allowedfrom:
-    - ${email.from}
+#  allowedfrom:
+#    - "*@*.*"
   properties:
     auth: true
     starttlsEnable: false
