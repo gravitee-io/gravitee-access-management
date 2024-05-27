@@ -99,7 +99,7 @@ export class DomainSettingsCertificatesComponent implements OnInit {
       return `${cert.usage.length} Usage`;
     } else if (cert?.usage?.length == 1) {
       return this.certificateUsage.get(cert.usage[0]);
-    } else return '';
+    } else return 'Undefined';
   }
 
   usageBadgeTooltip(cert: any): string {
