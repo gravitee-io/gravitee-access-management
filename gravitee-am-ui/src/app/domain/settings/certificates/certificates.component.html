@@ -52,7 +52,7 @@
       <ngx-datatable-column name="Usage" prop="usage" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="certificate-simple-text" fxLayout="row">
-            <span *ngIf="row?.usage?.length > 0" class="gio-badge-neutral badge" [matTooltip]="usageBadgeTooltip(row)">{{
+            <span *ngIf="!row.system" class="gio-badge-neutral badge" [matTooltip]="usageBadgeTooltip(row)">{{
               usageBadgeLabel(row)
             }}</span>
           </div>
