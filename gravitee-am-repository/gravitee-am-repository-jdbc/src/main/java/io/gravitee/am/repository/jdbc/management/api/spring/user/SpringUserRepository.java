@@ -49,6 +49,9 @@ public interface SpringUserRepository extends RxJava3CrudRepository<JdbcUser, St
     @Query("select * from users u where u.reference_type = :refType and u.reference_id = :refId and UPPER(u.username) = UPPER(:name) and u.source = :src")
     Maybe<JdbcUser> findByUsernameAndSource(@Param("refType")String refType, @Param("refId") String refId, @Param("name") String username, @Param("src") String source);
 
+    @Query("select * from users u left join user_identities ui on ui.user_id = u.id where u.reference_type = :refType and u.reference_id = :refId and UPPER(u.username) = UPPER(:name) and ui.provider_id = :src ")
+    Maybe<JdbcUser> findByUsernameAndLinkedIdentities(@Param("refType")String refType, @Param("refId") String refId, @Param("name") String username, @Param("src") String source);
+
     @Query("select * from users u where u.reference_type = :refType and u.reference_id = :refId and UPPER(u.username) = UPPER(:name)")
     Maybe<JdbcUser> findByUsername(@Param("refType")String refType, @Param("refId") String refId, @Param("name") String username);
 
