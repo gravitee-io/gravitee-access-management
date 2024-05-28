@@ -41,6 +41,7 @@ import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.EmailTemplateService;
+import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
@@ -111,6 +112,9 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     @Autowired
     private Domain domain;
+
+    @Autowired
+    private FlowService flowService;
 
     @Autowired
     private FormService formService;
@@ -208,6 +212,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .map(request::patch)
                 .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
                 .flatMap(clientService::create)
+                .flatMap(client -> copyFlows(request.getSoftwareId().get(), client))
                 .flatMap(client -> copyForms(request.getSoftwareId().get(), client))
                 .flatMap(client -> copyEmails(request.getSoftwareId().get(), client));
     }
@@ -232,6 +237,11 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         template.setTemplate(false);
 
         return Single.just(template);
+    }
+
+    private Single<Client> copyFlows(String sourceId, Client client) {
+        return flowService.copyFromClient(domain.getId(), sourceId, client.getId())
+                .flatMap(irrelevant -> Single.just(client));
     }
 
     private Single<Client> copyForms(String sourceId, Client client) {
