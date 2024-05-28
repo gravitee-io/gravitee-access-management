@@ -37,6 +37,10 @@ import java.util.List;
 
 import java.util.Arrays;
 
+import static io.gravitee.am.common.oidc.Prompt.CONSENT;
+import static io.gravitee.am.common.oidc.Prompt.LOGIN;
+import static io.gravitee.am.common.oidc.Prompt.MFA_ENROLL;
+import static io.gravitee.am.common.oidc.Prompt.NONE;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.any;
@@ -66,6 +70,7 @@ public class OpenIDDiscoveryServiceTest {
     public void prepare() {
         when(environment.getProperty("http.secured", Boolean.class, false)).thenReturn(false);
         when(environment.getProperty("http.ssl.clientAuth", String.class, "none")).thenReturn("none");
+        when(environment.getProperty("legacy.openid.filterCustomPrompt", Boolean.class, false)).thenReturn(false);
     }
 
     private void enableMtls() {
@@ -73,6 +78,24 @@ public class OpenIDDiscoveryServiceTest {
         when(environment.getProperty("http.secured", Boolean.class, false)).thenReturn(true);
         when(environment.getProperty("http.ssl.clientAuth", String.class, "none")).thenReturn("required");
         when(environment.getProperty(ConstantKeys.HTTP_SSL_ALIASES_BASE_URL, String.class, "/")).thenReturn("/");
+        when(environment.getProperty("legacy.openid.filterCustomPrompt", Boolean.class, false)).thenReturn(false);
+    }
+
+    private void filterPromptValues() {
+        when(environment.getProperty("legacy.openid.filterCustomPrompt", Boolean.class, false)).thenReturn(true);
+    }
+
+    @Test
+    public void shouldContain_all_prompt_values() {
+        OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
+        assertEquals(List.of(NONE, LOGIN, CONSENT, MFA_ENROLL), openIDProviderMetadata.getPromptValuesSupported());
+    }
+
+    @Test
+    public void shouldContain_standard_prompt_values() {
+        filterPromptValues();
+        OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
+        assertEquals(List.of(NONE, LOGIN, CONSENT), openIDProviderMetadata.getPromptValuesSupported());
     }
 
     @Test

@@ -62,7 +62,7 @@ public interface Prompt {
      */
     String MFA_ENROLL = "mfa_enroll";
 
-    static List<String> supportedValues() {
-        return Arrays.asList(NONE, LOGIN, CONSENT, MFA_ENROLL);
+    static List<String> supportedValues(boolean filterCustomValues) {
+        return filterCustomValues ? Arrays.asList(NONE, LOGIN, CONSENT) : Arrays.asList(NONE, LOGIN, CONSENT, MFA_ENROLL);
     }
 }
