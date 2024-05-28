@@ -21,15 +21,22 @@ import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.ClientService;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.CookieSettings;
+import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
+import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.utils.GrantTypeUtils;
+import io.gravitee.risk.assessment.api.assessment.Assessment;
+import io.gravitee.risk.assessment.api.assessment.settings.AssessmentSettings;
+import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -38,8 +45,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -155,6 +165,11 @@ public class ClientServiceImpl implements ClientService {
         // preserve client secret hash
         application.setSecrets(client.getClientSecrets());
         application.setSecretSettings(client.getSecretSettings());
+
+        if (client.getFactors() != null) {
+            application.setFactors(new HashSet<>(client.getFactors()));
+        }
+
         return application;
     }
 
@@ -277,6 +292,40 @@ public class ClientServiceImpl implements ClientService {
             applicationSettings.setAccount(accountSettings);
         }
 
+        if (client.getPasswordSettings() != null) {
+            applicationSettings.setPasswordSettings(new PasswordSettings(client.getPasswordSettings()));
+        }
+
+        if (client.getLoginSettings() != null) {
+            applicationSettings.setLogin(new LoginSettings(client.getLoginSettings()));
+        }
+
+        if (client.getCookieSettings() != null) {
+            applicationSettings.setCookieSettings(new CookieSettings(client.getCookieSettings()));
+        }
+
+        if (client.getRiskAssessment() != null) {
+            RiskAssessmentSettings riskAssessment = new RiskAssessmentSettings();
+            riskAssessment.setEnabled(client.getRiskAssessment().isEnabled());
+            riskAssessment.setDeviceAssessment(cloneAssessmentSettings(client.getRiskAssessment().getDeviceAssessment()));
+            riskAssessment.setGeoVelocityAssessment(cloneAssessmentSettings(client.getRiskAssessment().getGeoVelocityAssessment()));
+            riskAssessment.setIpReputationAssessment(cloneAssessmentSettings(client.getRiskAssessment().getIpReputationAssessment()));
+            applicationSettings.setRiskAssessment(riskAssessment);
+        }
+
+        if (client.getMfaSettings() != null) {
+            applicationSettings.setMfa(new MFASettings(client.getMfaSettings()));
+        }
+
         return applicationSettings;
+    }
+
+    private AssessmentSettings cloneAssessmentSettings(AssessmentSettings assessmentSettings) {
+        AssessmentSettings result = new AssessmentSettings();
+        result.setEnabled(assessmentSettings.isEnabled());
+        HashMap<Assessment, Double> thresholds = new HashMap<>();
+        thresholds.putAll(assessmentSettings.getThresholds());
+        result.setThresholds(thresholds);
+        return result;
     }
 }
