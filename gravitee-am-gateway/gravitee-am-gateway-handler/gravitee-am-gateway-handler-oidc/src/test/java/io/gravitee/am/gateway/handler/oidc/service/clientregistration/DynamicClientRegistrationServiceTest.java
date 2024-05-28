@@ -32,18 +32,24 @@ import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.CookieSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
+import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.EmailTemplateService;
+import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
+import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -70,6 +76,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -120,6 +128,9 @@ public class DynamicClientRegistrationServiceTest {
 
     @Mock
     private Domain domain;
+
+    @Mock
+    private FlowService flowService;
 
     @Mock
     private FormService formService;
@@ -902,11 +913,20 @@ public class DynamicClientRegistrationServiceTest {
         template.setSectorIdentifierUri("shouldBeRemoved");
         template.setJwks(new JWKSet());
         template.setTemplate(true);
+        template.setMfaSettings(new MFASettings());
+        template.setRiskAssessment(new RiskAssessmentSettings());
+        template.setPasswordSettings(new PasswordSettings());
+        template.setCookieSettings(new CookieSettings());
+        template.setLoginSettings(new LoginSettings());
+
+        String factorId = UUID.randomUUID().toString();
+        template.setFactors(Set.of(factorId));
 
         DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
         request.setSoftwareId(Optional.of(ID_SOURCE));
         request.setApplicationType(Optional.of("app"));
 
+        when(flowService.copyFromClient(DOMAIN_ID, ID_SOURCE, ID_TARGET)).thenReturn(Single.just(Collections.emptyList()));
         when(formService.copyFromClient(DOMAIN_ID, ID_SOURCE, ID_TARGET)).thenReturn(Single.just(Collections.emptyList()));
         when(emailTemplateService.copyFromClient(DOMAIN_ID, ID_SOURCE, ID_TARGET)).thenReturn(Flowable.empty());
         when(domain.isDynamicClientRegistrationTemplateEnabled()).thenReturn(true);
@@ -923,7 +943,14 @@ public class DynamicClientRegistrationServiceTest {
                         client.getClientName().equals(ClientServiceImpl.DEFAULT_CLIENT_NAME) &&
                         client.getClientSecret() == null &&
                         client.getJwks() == null &&
-                        client.getSectorIdentifierUri() == null
+                        client.getSectorIdentifierUri() == null &&
+                        !client.getFactors().isEmpty() &&
+                        client.getFactors().iterator().next().equals(factorId) &&
+                        client.getLoginSettings() != null &&
+                        client.getMfaSettings() != null &&
+                        client.getPasswordSettings() != null &&
+                        client.getCookieSettings() != null &&
+                        client.getRiskAssessment() != null
         );
         verify(clientService, times(1)).create(any());
     }
