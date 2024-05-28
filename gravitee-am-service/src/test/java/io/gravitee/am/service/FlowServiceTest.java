@@ -32,7 +32,13 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
+
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
@@ -519,4 +525,80 @@ public class FlowServiceTest {
         verify(eventService, times(2)).create(any());
     }
 
+    @Test
+    public void shouldCopyFlow() {
+        String clientSourceId = UUID.randomUUID().toString();
+        String clientTargetId = UUID.randomUUID().toString();
+
+        Flow existingFlow = buildFlow();
+        existingFlow.setApplication(clientSourceId);
+
+        when(flowRepository.findByApplication(ReferenceType.DOMAIN, DOMAIN, clientSourceId)).thenReturn(Flowable.just(existingFlow));
+        when(flowRepository.create(any())).thenAnswer(answer -> Single.just(answer.getArguments()[0]));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<List<Flow>> observer = flowService.copyFromClient(DOMAIN, clientSourceId, clientTargetId).test();
+        observer.assertComplete();
+        observer.assertNoErrors();
+
+        observer.assertValue(flows -> {
+            Optional<Flow> flow = flows.stream().filter(f -> f.getType() == Type.REGISTER).findFirst();
+            return flow.isPresent() 
+                            && !flow.get().getId().equals(existingFlow.getId())
+                            && flow.get().getApplication().equals(clientTargetId)
+                            && flow.get().getReferenceId().equals(DOMAIN)
+                            && flow.get().getOrder().equals(existingFlow.getOrder())
+                            && !flow.get().getCreatedAt().equals(existingFlow.getCreatedAt())
+                            && !flow.get().getUpdatedAt().equals(existingFlow.getUpdatedAt())
+                            && flow.get().getPost().size() == existingFlow.getPost().size()
+                            && flow.get().getPost().get(0).getName().equals(existingFlow.getPost().get(0).getName())
+                            && flow.get().getPre().size() == existingFlow.getPre().size()
+                            && flow.get().getPre().get(0).getName().equals(existingFlow.getPre().get(0).getName());
+                }
+        );
+
+        // the find method return all instance of Flows
+        verify(flowRepository, atLeast(1)).create(argThat(flow -> !flow.getId().equals(existingFlow.getId())
+                && flow.getApplication().equals(clientTargetId)
+                && flow.getReferenceId().equals(DOMAIN)));
+        verify(eventService, atLeast(1)).create(any());
+    }
+
+    private Flow buildFlow() {
+        String rand = UUID.randomUUID().toString();
+        Flow flow = new Flow();
+        flow.setName("ROOT" + rand);
+        flow.setCreatedAt(new Date());
+        flow.setUpdatedAt(new Date());
+        flow.setCondition("condition" + rand);
+        flow.setEnabled(true);
+        flow.setOrder(5);
+        flow.setReferenceId(DOMAIN);
+        flow.setReferenceType(ReferenceType.DOMAIN);
+        flow.setType(Type.REGISTER);
+
+        List<Step> steps = new ArrayList<>();
+        Step step = new Step();
+        step.setName(UUID.randomUUID().toString());
+        step.setEnabled(true);
+        step.setConfiguration(UUID.randomUUID().toString());
+        step.setPolicy(UUID.randomUUID().toString());
+        step.setDescription(UUID.randomUUID().toString());
+        step.setCondition(UUID.randomUUID().toString());
+        steps.add(step);
+        flow.setPre(steps);
+
+        steps = new ArrayList<>();
+        step = new Step();
+        step.setName(UUID.randomUUID().toString());
+        step.setEnabled(true);
+        step.setConfiguration(UUID.randomUUID().toString());
+        step.setPolicy(UUID.randomUUID().toString());
+        step.setDescription(UUID.randomUUID().toString());
+        step.setCondition(UUID.randomUUID().toString());
+        steps.add(step);
+        flow.setPost(steps);
+
+        return flow;
+    }
 }
