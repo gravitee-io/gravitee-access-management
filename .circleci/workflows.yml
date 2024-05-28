@@ -408,7 +408,7 @@ jobs:
       - run:
           name: "Maven Package and deploy to Nexus Snapshots"
           command: |
-            mvn -s /tmp/.gravitee.settings.xml -Dlicense.skip=true -T2C deploy -DskipTests
+            mvn -s /tmp/.gravitee.settings.xml -Dlicense.skip=true deploy -DskipTests
       - save-maven-job-cache:
           jobName: build_branch_nexus
   run_jest_tests_mongo:
