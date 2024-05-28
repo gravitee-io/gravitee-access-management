@@ -20,6 +20,7 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Template;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.flow.Flow;
@@ -32,6 +33,7 @@ import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.FlowNotFoundException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.model.NewForm;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.FlowAuditBuilder;
 import io.micrometer.core.instrument.util.IOUtils;
@@ -425,5 +427,20 @@ public class FlowServiceImpl implements FlowService {
             }
             return f1.getOrder() - f2.getOrder();
         };
+    }
+
+    @Override
+    public Single<List<Flow>> copyFromClient(String domain, String clientSource, String clientTarget) {
+        return findByApplication(ReferenceType.DOMAIN, domain, clientSource)
+                .flatMapSingle(source -> {
+                    Flow flow = new Flow(source);
+                    flow.setId(null);
+                    flow.setApplication(clientTarget);
+                    Date now = new Date();
+                    flow.setCreatedAt(now);
+                    flow.setUpdatedAt(now);
+                    return create(ReferenceType.DOMAIN, domain, clientTarget, flow);
+                })
+                .toList();
     }
 }
