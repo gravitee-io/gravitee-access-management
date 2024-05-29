@@ -46,9 +46,6 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class OpenIDScopeUpgraderTest {
 
-    @InjectMocks
-    private OpenIDScopeUpgrader openIDScopeUpgrader = new OpenIDScopeUpgrader();
-
     @Mock
     private DomainService domainService;
 
@@ -57,6 +54,9 @@ public class OpenIDScopeUpgraderTest {
 
     @Mock
     private Domain domain;
+
+    @InjectMocks
+    private OpenIDScopeUpgrader openIDScopeUpgrader = new OpenIDScopeUpgrader(domainService, scopeService);
 
     private static final String DOMAIN_ID = "domainId";
 

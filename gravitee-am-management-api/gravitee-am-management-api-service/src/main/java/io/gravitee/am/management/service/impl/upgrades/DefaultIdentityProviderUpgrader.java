@@ -21,11 +21,11 @@ import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -35,26 +35,29 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 @Component
-public class DefaultIdentityProviderUpgrader implements Upgrader, Ordered {
+public class DefaultIdentityProviderUpgrader extends AsyncUpgrader {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultIdentityProviderUpgrader.class);
 
-    @Autowired
-    private IdentityProviderService identityProviderService;
+    private final IdentityProviderService identityProviderService;
+    private final IdentityProviderManager identityProviderManager;
+    private final ObjectMapper mapper;
 
-    @Autowired
-    private IdentityProviderManager identityProviderManager;
+    public DefaultIdentityProviderUpgrader(IdentityProviderService identityProviderService,
+                                           IdentityProviderManager identityProviderManager) {
+        this.identityProviderService = identityProviderService;
+        this.identityProviderManager = identityProviderManager;
+        this.mapper = new ObjectMapper();
+    }
 
-    private ObjectMapper mapper = new ObjectMapper();
 
     @Override
-    public boolean upgrade() {
-        logger.info("Applying domain idp upgrade");
-        identityProviderService.findAll()
+    public Completable doUpgrade() {
+         return Completable.fromPublisher(identityProviderService.findAll()
                 .filter(IdentityProvider::isSystem)
                 .flatMapSingle(this::updateDefaultIdp)
-                .subscribe();
-        return true;
+                 .doOnNext(idp -> logger.info("updated IDP: id={}", idp.getId())));
+
     }
 
     private Single<IdentityProvider> updateDefaultIdp(IdentityProvider identityProvider) {

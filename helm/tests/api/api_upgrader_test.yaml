@@ -24,7 +24,7 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env
           value:
-            - name: gravitee_upgrade_mode
+            - name: upgrade.mode
               value: "true"
       - isEmpty:
           # It should not contain init containers by default

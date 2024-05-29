@@ -20,12 +20,14 @@ package io.gravitee.am.management.service.impl.upgrades;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.model.SystemTaskStatus;
+import io.gravitee.am.repository.management.api.SystemTaskRepository;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.PasswordPolicyService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -43,13 +45,18 @@ public class DomainPasswordPoliciesUpgrader extends SystemTaskUpgrader {
     private static final String TASK_ID = "domain_password_settings_migration";
     private static final String UPGRADE_NOT_SUCCESSFUL_ERROR_MESSAGE =
             "Domain Password Policy can't be upgraded, other instance may process them or an upgrader has failed previously";
+    @SuppressWarnings("squid:S2068") // not a hardcoded password
     public static final String PASSWORD_POLICY_NAME_DEFAULT = "default";
 
-    @Autowired
-    private DomainService domainService;
+    private final DomainService domainService;
 
-    @Autowired
-    private PasswordPolicyService passwordPolicyService;
+    private final PasswordPolicyService passwordPolicyService;
+
+    public DomainPasswordPoliciesUpgrader(@Lazy SystemTaskRepository systemTaskRepository, DomainService domainService, PasswordPolicyService passwordPolicyService) {
+        super(systemTaskRepository);
+        this.domainService = domainService;
+        this.passwordPolicyService = passwordPolicyService;
+    }
 
     @Override
     protected Single<Boolean> processUpgrade(String instanceOperationId, SystemTask task, String previousOperationId) {

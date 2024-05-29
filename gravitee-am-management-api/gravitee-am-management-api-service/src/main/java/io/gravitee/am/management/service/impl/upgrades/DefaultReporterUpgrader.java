@@ -18,11 +18,12 @@ package io.gravitee.am.management.service.impl.upgrades;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.model.UpdateReporter;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 /**
@@ -30,21 +31,19 @@ import org.springframework.stereotype.Component;
  * @author GraviteeSource Team
  */
 @Component
-public class DefaultReporterUpgrader implements Upgrader, Ordered {
+@RequiredArgsConstructor
+public class DefaultReporterUpgrader extends AsyncUpgrader {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultReporterUpgrader.class);
 
-    @Autowired
-    private ReporterService reporterService;
+    private final ReporterService reporterService;
 
     @Override
-    public boolean upgrade() {
-        logger.info("Applying domain idp upgrade");
-        reporterService.findAll()
+    public Completable doUpgrade() {
+        logger.info("Applying domain reporter upgrade");
+        return Completable.fromPublisher(reporterService.findAll()
                 .filter(Reporter::isSystem)
-                .flatMapSingle(this::updateDefaultReporter)
-                .subscribe();
-        return true;
+                .flatMapSingle(this::updateDefaultReporter));
     }
 
     private Single<Reporter> updateDefaultReporter(Reporter reporter) {

@@ -63,8 +63,6 @@ import static org.mockito.Mockito.when;
     private static final String FACTOR_ID_OTP = UUID.randomUUID().toString();
     private static final String FACTOR_ID_SMS = UUID.randomUUID().toString();
 
-    @InjectMocks
-    private ApplicationFactorSettingsUpgrader upgrader = new ApplicationFactorSettingsUpgrader();
 
     @Mock
     private SystemTaskRepository systemTaskRepository;
@@ -74,6 +72,8 @@ import static org.mockito.Mockito.when;
 
     @Mock
     private FactorService factorService;
+
+    private ApplicationFactorSettingsUpgrader upgrader = new ApplicationFactorSettingsUpgrader(systemTaskRepository, applicationService, factorService);
 
     @Test
     void should_ignore_if_task_completed() {

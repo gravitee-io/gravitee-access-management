@@ -17,9 +17,10 @@ package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.service.EnvironmentService;
+import io.gravitee.node.api.upgrader.Upgrader;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 /**
@@ -27,15 +28,12 @@ import org.springframework.stereotype.Component;
  * @author GraviteeSource Team
  */
 @Component
-public class DefaultEnvironmentUpgrader implements Upgrader, Ordered {
+@RequiredArgsConstructor
+public class DefaultEnvironmentUpgrader implements Upgrader {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultEnvironmentUpgrader.class);
 
     private final EnvironmentService environmentService;
-
-    public DefaultEnvironmentUpgrader(EnvironmentService environmentService) {
-        this.environmentService = environmentService;
-    }
 
     @Override
     public boolean upgrade() {

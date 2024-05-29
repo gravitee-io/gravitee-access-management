@@ -22,12 +22,13 @@ import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.model.NewScope;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -43,32 +44,24 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.SCOP
  * @author GraviteeSource Team
  */
 @Component
-public class ScopeUpgrader implements Upgrader, Ordered {
+@RequiredArgsConstructor
+public class ScopeUpgrader extends AsyncUpgrader {
 
     /**
      * Logger.
      */
     private final Logger logger = LoggerFactory.getLogger(ScopeUpgrader.class);
 
-    @Autowired
-    private DomainService domainService;
-
-    @Autowired
-    private ScopeService scopeService;
-
-    @Autowired
-    private ApplicationService applicationService;
-
-    @Autowired
-    private RoleService roleService;
+    private final DomainService domainService;
+    private final ScopeService scopeService;
+    private final ApplicationService applicationService;
+    private final RoleService roleService;
 
     @Override
-    public boolean upgrade() {
+    public Completable doUpgrade() {
         logger.info("Applying scope upgrade");
-        domainService.listAll()
-                .flatMapSingle(this::upgradeDomain)
-                .subscribe();
-        return true;
+        return Completable.fromPublisher(domainService.listAll()
+                .flatMapSingle(this::upgradeDomain));
     }
 
     private Single<List<Scope>> upgradeDomain(Domain domain) {
@@ -109,7 +102,7 @@ public class ScopeUpgrader implements Upgrader, Ordered {
         return scopeService.findByDomain(domain, 0, Integer.MAX_VALUE)
                 .flatMap(scopes -> {
                     Optional<Scope> optScope = scopes.getData().stream().filter(scope -> scope.getKey().equalsIgnoreCase(scopeKey)).findFirst();
-                    if (!optScope.isPresent()) {
+                    if (optScope.isEmpty()) {
                         logger.info("Create a new scope key[{}] for domain[{}]", scopeKey, domain);
                         NewScope scope = new NewScope();
                         scope.setKey(scopeKey);

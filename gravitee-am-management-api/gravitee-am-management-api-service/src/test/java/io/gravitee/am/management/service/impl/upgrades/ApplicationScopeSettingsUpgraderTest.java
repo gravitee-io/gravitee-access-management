@@ -53,14 +53,14 @@ public class ApplicationScopeSettingsUpgraderTest {
 
     public static final String SCOPE_OPENID = "openid";
     public static final String SCOPE_PROFILE = "profile";
-    @InjectMocks
-    private ApplicationScopeSettingsUpgrader upgrader = new ApplicationScopeSettingsUpgrader();
 
     @Mock
     private SystemTaskRepository systemTaskRepository;
 
     @Mock
     private ApplicationService applicationService;
+
+    private ApplicationScopeSettingsUpgrader upgrader = new ApplicationScopeSettingsUpgrader(systemTaskRepository, applicationService);
 
     @Test
     public void shouldIgnore_IfTaskCompleted() {

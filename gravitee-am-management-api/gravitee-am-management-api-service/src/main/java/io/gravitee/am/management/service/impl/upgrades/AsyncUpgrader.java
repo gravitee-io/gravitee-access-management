@@ -15,13 +15,25 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.node.api.upgrader.Upgrader;
+import io.reactivex.rxjava3.core.Completable;
+import lombok.extern.slf4j.Slf4j;
+
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author GraviteeSource Team
+ * Adapts async upgraders to the sync {@link Upgrader} interface in a consistent way.
  */
-public interface Upgrader {
+@Slf4j
+public abstract class AsyncUpgrader implements Upgrader {
+    @Override
+    public final boolean upgrade() {
+        return doUpgrade()
+                .toSingleDefault(true)
+                .onErrorReturn(ex -> {
+                    log.error("Unable to apply {}: ", this.getClass().getSimpleName(), ex);
+                    return false;
+                })
+                .blockingGet();
+    }
 
-    boolean upgrade();
-
-    int getOrder();
+    abstract Completable doUpgrade();
 }

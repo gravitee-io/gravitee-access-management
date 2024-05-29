@@ -22,6 +22,7 @@ import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.model.SystemTaskStatus;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
+import io.gravitee.am.repository.management.api.SystemTaskRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
@@ -49,13 +50,17 @@ public class ApplicationIdentityProviderUpgrader extends SystemTaskUpgrader {
     private static final String UPGRADE_NOT_SUCCESSFUL_ERROR_MESSAGE =
             "Settings for Application Identity Providers can't be upgraded, other instance may process them or an upgrader has failed previously";
 
-    @Lazy
-    @Autowired
-    private ApplicationService applicationRepository;
+    private final ApplicationService applicationRepository;
 
-    @Lazy
-    @Autowired
-    private IdentityProviderRepository identityProviderRepository;
+    private final IdentityProviderRepository identityProviderRepository;
+
+    public ApplicationIdentityProviderUpgrader(@Lazy SystemTaskRepository systemTaskRepository,
+                                               ApplicationService applicationRepository,
+                                               @Lazy IdentityProviderRepository identityProviderRepository) {
+        super(systemTaskRepository);
+        this.applicationRepository = applicationRepository;
+        this.identityProviderRepository = identityProviderRepository;
+    }
 
     @Override
     protected Single<Boolean> processUpgrade(String instanceOperationId, SystemTask task, String conditionalOperationId) {

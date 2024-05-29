@@ -50,9 +50,6 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class ScopeUpgraderTest {
 
-    @InjectMocks
-    private ScopeUpgrader scopeUpgrader = new ScopeUpgrader();
-
     @Mock
     private DomainService domainService;
 
@@ -64,6 +61,8 @@ public class ScopeUpgraderTest {
 
     @Mock
     private RoleService roleService;
+
+    private ScopeUpgrader scopeUpgrader = new ScopeUpgrader(domainService, scopeService, applicationService, roleService);
 
     @Test
     public void shouldCreateScopes_withRoleAndClientScopes() {

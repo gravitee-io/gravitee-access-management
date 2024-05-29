@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.model.SystemTaskStatus;
+import io.gravitee.am.repository.management.api.SystemTaskRepository;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.reactivex.rxjava3.core.Completable;
@@ -28,6 +29,7 @@ import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -42,11 +44,16 @@ public class NonBCryptIterationsRoundsUpgrader extends SystemTaskUpgrader {
 
     private static final String TASK_ID = "non_bcrypt_iterations_rounds_remove_migration";
 
-    @Autowired
-    private IdentityProviderService idpService;
+    private final IdentityProviderService idpService;
+    private final ObjectMapper objectMapper;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    protected NonBCryptIterationsRoundsUpgrader(@Lazy SystemTaskRepository systemTaskRepository,
+                                                IdentityProviderService idpService,
+                                                ObjectMapper objectMapper) {
+        super(systemTaskRepository);
+        this.idpService = idpService;
+        this.objectMapper = objectMapper;
+    }
 
     @Override
     protected Single<Boolean> processUpgrade(String instanceOperationId, SystemTask task, String previousOperationId) {

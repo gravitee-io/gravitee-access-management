@@ -30,13 +30,14 @@ import io.gravitee.am.model.StepUpAuthenticationSettings;
 import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.model.SystemTaskStatus;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.repository.management.api.SystemTaskRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.FactorService;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -60,11 +61,16 @@ public class ApplicationFactorSettingsUpgrader extends SystemTaskUpgrader {
 
     private final Logger logger = LoggerFactory.getLogger(ApplicationFactorSettingsUpgrader.class);
 
-    @Autowired
-    private ApplicationService applicationService;
+    private final ApplicationService applicationService;
+    private final FactorService factorService;
 
-    @Autowired
-    private FactorService factorService;
+    public ApplicationFactorSettingsUpgrader(@Lazy SystemTaskRepository systemTaskRepository,
+                                             ApplicationService applicationService,
+                                             FactorService factorService) {
+        super(systemTaskRepository);
+        this.applicationService = applicationService;
+        this.factorService = factorService;
+    }
 
     @Override
     protected Single<Boolean> processUpgrade(String instanceOperationId, SystemTask task, String previousOperationId) {

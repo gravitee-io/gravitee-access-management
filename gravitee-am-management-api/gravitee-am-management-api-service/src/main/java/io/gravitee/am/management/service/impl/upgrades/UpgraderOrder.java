@@ -19,22 +19,26 @@ package io.gravitee.am.management.service.impl.upgrades;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UpgraderOrder {
-    int INSTALLATION_UPGRADER = 0;
-    int DEFAULT_ROLE_UPGRADER = 1;
-    int DEFAULT_ORG_UPGRADER = 2;
-    int DEFAULT_ENV_UPGRADER = 3;
-    int SCOPE_UPGRADER = 4;
-    int OPENID_SCOPE_UPGRADER = 5;
-    int DOMAIN_UPGRADER = 6;
-    int DOMAIN_IDP_UPGRADER = 7;
-    int DOMAIN_REPORTER_UPGRADER = 8;
-    int POLICY_FLOW_UPGRADER = 9;
-    int APPLICATION_SCOPE_SETTINGS_UPGRADER = 10;
-    int DEFAULT_IDP_UPGRADER = 11;
-    int DEFAULT_REPORTER_UPGRADER = 12;
-    int APPLICATION_IDENTITY_PROVIDER_UPGRADER = 13;
-    int SYSTEM_CERTIFICATE_UPGRADER = 14;
-    int APPLICATION_FACTOR_UPGRADER = 15;
-    int DOMAIN_PASSWORD_POLICIES_UPGRADER = 16;
+public final class UpgraderOrder {
+    public static final int INSTALLATION_UPGRADER = 0;
+    public static final int DEFAULT_ROLE_UPGRADER = 1;
+    public static final int DEFAULT_ORG_UPGRADER = 2;
+    public static final int DEFAULT_ENV_UPGRADER = 3;
+    public static final int SCOPE_UPGRADER = 4;
+    public static final int OPENID_SCOPE_UPGRADER = 5;
+    public static final int DOMAIN_UPGRADER = 6;
+    public static final int DOMAIN_IDP_UPGRADER = 7;
+    public static final int DOMAIN_REPORTER_UPGRADER = 8;
+    public static final int POLICY_FLOW_UPGRADER = 9;
+    public static final int APPLICATION_SCOPE_SETTINGS_UPGRADER = 10;
+    public static final int DEFAULT_IDP_UPGRADER = 11;
+    public static final int DEFAULT_REPORTER_UPGRADER = 12;
+    public static final int APPLICATION_IDENTITY_PROVIDER_UPGRADER = 13;
+    public static final int SYSTEM_CERTIFICATE_UPGRADER = 14;
+    public static final int APPLICATION_FACTOR_UPGRADER = 15;
+    public static final int DOMAIN_PASSWORD_POLICIES_UPGRADER = 16;
+
+    private UpgraderOrder() {
+        throw new UnsupportedOperationException("utility class, don't instantiate");
+    }
 }

@@ -48,14 +48,15 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class DefaultIdentityProviderUpgraderTest {
 
-    @InjectMocks
-    private DefaultIdentityProviderUpgrader defaultIdentityProviderUpgrader = new DefaultIdentityProviderUpgrader();
 
     @Mock
     private IdentityProviderService identityProviderService;
 
     @Mock
     private IdentityProviderManager identityProviderManager;
+
+    @InjectMocks
+    private DefaultIdentityProviderUpgrader defaultIdentityProviderUpgrader = new DefaultIdentityProviderUpgrader(identityProviderService, identityProviderManager);
 
     private IdentityProvider systemIdentityProvider = createDefaultTestIdp(true);
     private IdentityProvider nonSystemIdentityProvider = createDefaultTestIdp(false);

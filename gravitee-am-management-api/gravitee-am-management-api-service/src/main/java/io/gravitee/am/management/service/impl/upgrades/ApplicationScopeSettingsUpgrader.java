@@ -19,12 +19,14 @@ import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.model.SystemTaskStatus;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
+import io.gravitee.am.repository.management.api.SystemTaskRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -44,8 +46,12 @@ public class ApplicationScopeSettingsUpgrader extends SystemTaskUpgrader {
 
     private final Logger logger = LoggerFactory.getLogger(ApplicationScopeSettingsUpgrader.class);
 
-    @Autowired
-    private ApplicationService applicationService;
+    public ApplicationScopeSettingsUpgrader(@Lazy SystemTaskRepository systemTaskRepository, ApplicationService applicationService) {
+        super(systemTaskRepository);
+        this.applicationService = applicationService;
+    }
+
+    private final ApplicationService applicationService;
 
     @Override
     public boolean upgrade() {
