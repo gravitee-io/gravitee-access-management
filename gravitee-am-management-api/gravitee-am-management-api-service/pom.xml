@@ -145,6 +145,11 @@
             <artifactId>gravitee-node-notifier</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>io.gravitee.node.services</groupId>
+            <artifactId>gravitee-node-services-upgrader</artifactId>
+        </dependency>
+
         <!-- Spring dependencies -->
         <dependency>
             <groupId>org.springframework</groupId>

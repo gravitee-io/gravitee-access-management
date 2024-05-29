@@ -58,9 +58,6 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class ApplicationIdentityProviderUpgraderTest {
 
-    @InjectMocks
-    private ApplicationIdentityProviderUpgrader upgrader = new ApplicationIdentityProviderUpgrader();
-
     @Mock
     private SystemTaskRepository systemTaskRepository;
 
@@ -69,6 +66,8 @@ public class ApplicationIdentityProviderUpgraderTest {
 
     @Mock
     private IdentityProviderRepository identityProviderRepository;
+
+    private ApplicationIdentityProviderUpgrader upgrader = new ApplicationIdentityProviderUpgrader(systemTaskRepository, applicationService, identityProviderRepository);
 
     @Test
     public void shouldIgnore_IfTaskCompleted() {

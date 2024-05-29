@@ -96,7 +96,7 @@ spec:
             - name: {{ .Values.api.service.internalPortName }}
               containerPort: {{ .Values.api.service.internalPort }}
           env:
-            - name: gravitee_upgrade_mode
+            - name: upgrade.mode
               value: "true"
             {{- if $plugins }}
             - name: GRAVITEE_PLUGINS_PATH_0

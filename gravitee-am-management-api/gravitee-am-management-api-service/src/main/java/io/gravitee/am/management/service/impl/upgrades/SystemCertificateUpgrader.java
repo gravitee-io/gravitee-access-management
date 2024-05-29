@@ -18,6 +18,7 @@ package io.gravitee.am.management.service.impl.upgrades;
 import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.model.SystemTaskStatus;
 import io.gravitee.am.repository.management.api.CertificateRepository;
+import io.gravitee.am.repository.management.api.SystemTaskRepository;
 import io.gravitee.am.service.DomainService;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
@@ -40,12 +41,18 @@ public class SystemCertificateUpgrader extends SystemTaskUpgrader {
     public static final int ONE_MINUTE = 60_000;
     private final Logger logger = LoggerFactory.getLogger(SystemCertificateUpgrader.class);
 
-    @Autowired
-    private DomainService domainService;
+    private final DomainService domainService;
 
-    @Autowired
     @Lazy
-    private CertificateRepository certificateRepository;
+    private final CertificateRepository certificateRepository;
+
+    public SystemCertificateUpgrader(@Lazy SystemTaskRepository systemTaskRepository,
+                                     DomainService domainService,
+                                     @Lazy CertificateRepository certificateRepository) {
+        super(systemTaskRepository);
+        this.domainService = domainService;
+        this.certificateRepository = certificateRepository;
+    }
 
     @Override
     public boolean upgrade() {

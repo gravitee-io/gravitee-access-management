@@ -54,8 +54,6 @@ public class SystemCertificateUpgraderTest {
 
     public static final String DOMAIN_2 = "DOMAIN_2";
     public static final String DOMAIN_1 = "DOMAIN_1";
-    @InjectMocks
-    private SystemCertificateUpgrader upgrader = new SystemCertificateUpgrader();
 
     @Mock
     private SystemTaskRepository systemTaskRepository;
@@ -65,6 +63,8 @@ public class SystemCertificateUpgraderTest {
 
     @Mock
     private CertificateRepository certificateRepository;
+
+    private SystemCertificateUpgrader upgrader = new SystemCertificateUpgrader(systemTaskRepository, domainService, certificateRepository);
 
     @Test
     public void shouldIgnore_IfTaskCompleted() {

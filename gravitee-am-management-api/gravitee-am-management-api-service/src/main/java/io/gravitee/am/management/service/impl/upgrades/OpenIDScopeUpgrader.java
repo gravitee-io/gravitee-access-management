@@ -21,12 +21,14 @@ import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.UpdateSystemScope;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -38,26 +40,19 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.OPEN
  * @author GraviteeSource Team
  */
 @Component
-public class OpenIDScopeUpgrader implements Upgrader, Ordered {
+@RequiredArgsConstructor
+public class OpenIDScopeUpgrader extends AsyncUpgrader {
 
-    /**
-     * Logger.
-     */
     private final Logger logger = LoggerFactory.getLogger(OpenIDScopeUpgrader.class);
 
-    @Autowired
-    private DomainService domainService;
-
-    @Autowired
-    private ScopeService scopeService;
+    private final DomainService domainService;
+    private final ScopeService scopeService;
 
     @Override
-    public boolean upgrade() {
+    public Completable doUpgrade() {
         logger.info("Applying OIDC scope upgrade");
-        domainService.listAll()
-                .flatMapSingle(this::createOrUpdateSystemScopes)
-                .subscribe();
-        return true;
+        return Completable.fromPublisher(domainService.listAll()
+                .flatMapSingle(this::createOrUpdateSystemScopes));
     }
 
     private Single<Domain> createOrUpdateSystemScopes(Domain domain) {

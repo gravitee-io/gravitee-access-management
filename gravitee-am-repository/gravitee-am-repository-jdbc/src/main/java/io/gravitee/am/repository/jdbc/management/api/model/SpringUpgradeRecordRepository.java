@@ -13,13 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service;
+package io.gravitee.am.repository.jdbc.management.api.model;
 
-import io.gravitee.common.component.LifecycleComponent;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 
-/**
- * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface InitializerService<T> extends LifecycleComponent<T> {
+public interface SpringUpgradeRecordRepository extends RxJava3CrudRepository<JdbcUpgradeRecord, String> {
 }

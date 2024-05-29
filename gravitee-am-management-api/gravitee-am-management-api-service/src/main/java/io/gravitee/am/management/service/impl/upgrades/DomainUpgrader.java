@@ -20,11 +20,11 @@ import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.am.service.model.openid.PatchClientRegistrationSettings;
 import io.gravitee.am.service.model.openid.PatchOIDCSettings;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -36,7 +36,7 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.DOMA
  * @author GraviteeSource Team
  */
 @Component
-public class DomainUpgrader implements Upgrader, Ordered {
+public class DomainUpgrader extends AsyncUpgrader {
 
     /**
      * Logger.
@@ -47,13 +47,10 @@ public class DomainUpgrader implements Upgrader, Ordered {
     private DomainService domainService;
 
     @Override
-    public boolean upgrade() {
+    public Completable doUpgrade() {
         LOGGER.info("Applying domain upgrade");
-        domainService.listAll()
-                .flatMapSingle(this::upgradeDomain)
-                .toList()
-                .subscribe();
-        return true;
+        return Completable.fromPublisher(domainService.listAll()
+                .flatMapSingle(this::upgradeDomain));
 
     }
 

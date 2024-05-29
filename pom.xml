@@ -242,6 +242,11 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <dependency>
+                <groupId>io.gravitee.node.services</groupId>
+                <artifactId>gravitee-node-services-upgrader</artifactId>
+                <version>${gravitee-node.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>io.gravitee.kubernetes</groupId>

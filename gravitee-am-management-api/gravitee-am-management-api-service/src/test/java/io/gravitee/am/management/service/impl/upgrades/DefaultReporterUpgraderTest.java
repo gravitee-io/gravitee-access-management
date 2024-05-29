@@ -43,11 +43,10 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class DefaultReporterUpgraderTest {
 
-    @InjectMocks
-    private DefaultReporterUpgrader defaultReporterUpgrader = new DefaultReporterUpgrader();
 
     @Mock
     private ReporterService reporterService;
+    private DefaultReporterUpgrader defaultReporterUpgrader = new DefaultReporterUpgrader(reporterService);
 
     private Reporter systemReporter = createDefaultTestReporter(true);
     private Reporter nonSystemReporter = createDefaultTestReporter(false);

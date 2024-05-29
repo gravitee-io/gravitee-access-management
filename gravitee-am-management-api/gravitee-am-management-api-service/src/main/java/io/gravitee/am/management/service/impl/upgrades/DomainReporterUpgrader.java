@@ -22,7 +22,6 @@ import io.reactivex.rxjava3.core.Completable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 /**
@@ -32,7 +31,7 @@ import org.springframework.stereotype.Component;
  * @author GraviteeSource Team
  */
 @Component
-public class DomainReporterUpgrader implements Upgrader, Ordered {
+public class DomainReporterUpgrader extends AsyncUpgrader {
 
     private static final Logger logger = LoggerFactory.getLogger(DomainReporterUpgrader.class);
 
@@ -43,12 +42,10 @@ public class DomainReporterUpgrader implements Upgrader, Ordered {
     private ReporterService reporterService;
 
     @Override
-    public boolean upgrade() {
+    public Completable doUpgrade() {
         logger.info("Applying domain reporter upgrade");
-        domainService.listAll()
-                .flatMapCompletable(this::updateDefaultReporter)
-                .subscribe();
-        return true;
+        return domainService.listAll()
+                .flatMapCompletable(this::updateDefaultReporter);
     }
 
     private Completable updateDefaultReporter(Domain domain) {
@@ -63,6 +60,7 @@ public class DomainReporterUpgrader implements Upgrader, Ordered {
                     return Completable.complete();
                 });
     }
+
     @Override
     public int getOrder() {
         return UpgraderOrder.DOMAIN_REPORTER_UPGRADER;

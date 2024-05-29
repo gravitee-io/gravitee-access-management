@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.4.0-add-upgraders-table
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: upgraders
+      changes:
+        - createTable:
+            tableName: upgraders
+            columns:
+              - column: { name: id, type: nvarchar(256), constraints: { nullable: false } }
+              - column: { name: applied_at, type: timestamp(6), constraints: { nullable: false } }
+        - addPrimaryKey:
+            constraintName: pk_upgraders
+            columnNames: id
+            tableName: upgraders

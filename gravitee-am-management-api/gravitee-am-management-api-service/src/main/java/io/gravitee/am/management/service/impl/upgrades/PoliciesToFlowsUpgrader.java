@@ -31,9 +31,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -46,23 +46,26 @@ import static java.util.function.Function.identity;
  * @author GraviteeSource Team
  */
 @Component
-public class PoliciesToFlowsUpgrader implements Upgrader, Ordered {
+public class PoliciesToFlowsUpgrader extends AsyncUpgrader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PoliciesToFlowsUpgrader.class);
 
-    @Lazy
-    @Autowired
-    private PolicyRepository policyRepository;
+    private final PolicyRepository policyRepository;
+    private final FlowService flowService;
 
-    @Autowired
-    private FlowService flowService;
+    private final PolicyPluginService policyPluginService;
 
-    @Autowired
-    private PolicyPluginService policyPluginService;
+    public PoliciesToFlowsUpgrader(@Lazy PolicyRepository policyRepository,
+                                   FlowService flowService,
+                                   PolicyPluginService policyPluginService) {
+        this.policyRepository = policyRepository;
+        this.flowService = flowService;
+        this.policyPluginService = policyPluginService;
+    }
 
     @Override
-    public boolean upgrade() {
-        policyRepository.collectionExists()
+    public Completable doUpgrade() {
+        return policyRepository.collectionExists()
                 .flatMapCompletable(collectionExists -> {
                     if (collectionExists) {
                         LOGGER.info("Policies collection exists, upgrading policies to flows");
@@ -78,12 +81,8 @@ public class PoliciesToFlowsUpgrader implements Upgrader, Ordered {
                         return Completable.complete();
                     }
                 })
-                .subscribe(
-                        () -> LOGGER.info("Policies to flows upgrade, done."),
-                        error -> LOGGER.error("An error occurs while updating policies to flows", error)
-                );
-
-        return true;
+                .doOnComplete(() -> LOGGER.info("Policies to flows upgrade, done."))
+                .doOnError(error -> LOGGER.error("An error occurs while updating policies to flows", error));
     }
 
     private Completable migrateToFlows(List<Policy> policies, String domain) {
@@ -95,7 +94,7 @@ public class PoliciesToFlowsUpgrader implements Upgrader, Ordered {
 
         for (Map.Entry<ExtensionPoint, List<Policy>> epPolicies : policiesPerExtPoint.entrySet()) {
             // be sure that the policies are in the right execution order
-            epPolicies.getValue().sort((p1, p2) -> p1.getOrder() - p2.getOrder());
+            epPolicies.getValue().sort(Comparator.comparingInt(Policy::getOrder));
             switch (epPolicies.getKey()) {
                 case ROOT:
                     flows.get(Type.ROOT).setPre(epPolicies.getValue().stream().map(this::createStep).toList());
