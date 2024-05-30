@@ -116,7 +116,9 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
 
     @Override
     public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source, boolean includeLinkedIdentities) {
-        Bson query = and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_USERNAME, username), includeLinkedIdentities ? or(eq(FIELD_SOURCE, source), eq("identities.providerId", source)) : eq(FIELD_SOURCE, source));
+        Bson usernameAndSourceClause = and(eq(FIELD_USERNAME, username), eq(FIELD_SOURCE, source));
+        Bson withLinkedIdentityClause = or(usernameAndSourceClause, and(eq("identities.username", username), eq("identities.providerId", source)));
+        Bson query = and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), includeLinkedIdentities ? withLinkedIdentityClause : usernameAndSourceClause);
 
         return Observable.fromPublisher(withMaxTime(usersCollection.find(query))
                         .limit(1)
