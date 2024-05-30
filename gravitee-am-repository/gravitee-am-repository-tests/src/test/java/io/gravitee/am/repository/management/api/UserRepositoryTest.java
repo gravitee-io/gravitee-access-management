@@ -121,7 +121,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         userRepository.create(linkUser).blockingGet();
 
         // fetch users using linked identity provider id
-        TestObserver<User> testObserver = userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, "testDomain", linkUser.getUsername(), identity.getProviderId(), true).test();
+        TestObserver<User> testObserver = userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, "testDomain", identity.getUsername(), identity.getProviderId(), true).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -548,6 +548,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     private static UserIdentity getUserIdentity() {
         UserIdentity userIdentity = new UserIdentity();
         userIdentity.setUserId("userId");
+        userIdentity.setUsername(UUID.randomUUID().toString());
         userIdentity.setProviderId("providerId");
         userIdentity.setLinkedAt(new Date());
         userIdentity.setAdditionalInformation(Collections.singletonMap("key", "value"));

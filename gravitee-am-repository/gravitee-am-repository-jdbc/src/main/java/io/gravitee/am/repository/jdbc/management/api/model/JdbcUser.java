@@ -223,6 +223,7 @@ public class JdbcUser extends AbstractUser {
     public static class Identity {
         @Column("user_id")
         private String userId;
+        private String username;
         @Column("identity_id")
         private String identityId;
         @Column("provider_id")
@@ -238,6 +239,14 @@ public class JdbcUser extends AbstractUser {
 
         public void setUserId(String userId) {
             this.userId = userId;
+        }
+
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
         }
 
         public String getIdentityId() {
