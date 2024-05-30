@@ -438,7 +438,9 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                     .findFirst();
             if (linkedAccount.isPresent()) {
                 // only update the additionalInformation
+                // and username as it is part of the additionalInformation
                 var userIdentity = new UserIdentity(linkedAccount.get());
+                userIdentity.setUsername(preConnectedUser.getUsername());
                 userIdentity.setAdditionalInformation(preConnectedUser.getAdditionalInformation());
                 userIdentities.removeIf(u -> u.getUserId().equals(userIdentity.getUserId()));
                 userIdentities.add(userIdentity);
@@ -452,6 +454,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     private UserIdentity userIdentity(User preConnectedUser) {
         UserIdentity userIdentity = new UserIdentity();
         userIdentity.setUserId(preConnectedUser.getExternalId());
+        userIdentity.setUsername(preConnectedUser.getUsername());
         userIdentity.setProviderId(preConnectedUser.getSource());
         userIdentity.setAdditionalInformation(preConnectedUser.getAdditionalInformation());
         userIdentity.setLinkedAt(new Date());
