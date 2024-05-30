@@ -207,6 +207,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     private static final List<String> IDENTITIES_COLUMNS = List.of(
             FK_USER_ID,
             USER_COL_IDENTITY_ID,
+            USER_COL_USERNAME,
             USER_COL_PROVIDER_ID,
             USER_COL_LINKED_AT,
             USER_COL_ADDITIONAL_INFORMATION
@@ -854,6 +855,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
             actionFlow = actionFlow.then(Flux.fromIterable(identities).concatMap(identity -> {
                 DatabaseClient.GenericExecuteSpec insert = getTemplate().getDatabaseClient().sql(INSERT_IDENTITIES_STATEMENT).bind(FK_USER_ID, item.getId());
                 insert = identity.getUserId() != null ? insert.bind(USER_COL_IDENTITY_ID, identity.getUserId()) : insert.bindNull(USER_COL_IDENTITY_ID, String.class);
+                insert = identity.getUsername() != null ? insert.bind(USER_COL_USERNAME, identity.getUsername()) : insert.bindNull(USER_COL_USERNAME, String.class);
                 insert = identity.getProviderId() != null ? insert.bind(USER_COL_PROVIDER_ID, identity.getProviderId()) : insert.bindNull(USER_COL_PROVIDER_ID, String.class);
                 insert = addQuotedField(insert, USER_COL_LINKED_AT, dateConverter.convertTo(identity.getLinkedAt(), null), LocalDateTime.class);
                 insert = identity.getAdditionalInformation() != null ? databaseDialectHelper.addJsonField(insert, USER_COL_ADDITIONAL_INFORMATION, identity.getAdditionalInformation()) : insert.bindNull(USER_COL_ADDITIONAL_INFORMATION, String.class);
@@ -1010,6 +1012,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     private UserIdentity convertIdentity(JdbcUser.Identity userIdentity) {
         var result = new UserIdentity();
         result.setUserId(userIdentity.getIdentityId());
+        result.setUsername(userIdentity.getUsername());
         result.setProviderId(userIdentity.getProviderId());
         result.setLinkedAt(dateConverter.convertFrom(userIdentity.getLinkedAt(), null));
         result.setAdditionalInformation(mapToStringConverter.convertFrom(userIdentity.getAdditionalInformation(), null));
