@@ -21,6 +21,8 @@ import { map } from 'rxjs/operators';
 import { AppConfig } from '../../config/app.config';
 import { Plugin } from '../entities/plugins/Plugin';
 
+import { SearchParams } from './search';
+
 @Injectable()
 export class OrganizationService {
   private organizationURL = AppConfig.settings.organizationBaseURL;
@@ -131,18 +133,18 @@ export class OrganizationService {
     return this.http.get<any>(this.platformURL + '/plugins/reporters');
   }
 
-  audits(page, size, type?, status?, user?, from?, to?): Observable<any> {
+  audits(searchParams: SearchParams): Observable<any> {
     return this.http.get(
       this.organizationURL +
         '/audits?page=' +
-        page +
+        searchParams.page +
         '&size=' +
-        size +
-        (type ? '&type=' + type : '') +
-        (status ? '&status=' + status : '') +
-        (user ? '&user=' + user : '') +
-        (from ? '&from=' + from : '') +
-        (to ? '&to=' + to : ''),
+        searchParams.size +
+        (searchParams.type ? '&type=' + searchParams.type : '') +
+        (searchParams.status ? '&status=' + searchParams.status : '') +
+        (searchParams.userId ? '&user=' + searchParams.userId : '') +
+        (searchParams.from ? '&from=' + searchParams.from : '') +
+        (searchParams.to ? '&to=' + searchParams.to : ''),
     );
   }
 
@@ -168,10 +170,6 @@ export class OrganizationService {
       url += `?${expand.join('&')}`;
     }
     return this.http.get<any>(url);
-  }
-
-  policySchema(id): Observable<any> {
-    return this.http.get<any>(this.platformURL + '/plugins/policies/' + id + '/schema');
   }
 
   policyDocumentation(id): Observable<any> {
@@ -219,7 +217,7 @@ export class OrganizationService {
       map((response) => {
         const memberships = response.memberships;
         const metadata = response.metadata;
-        const members = memberships.map((m) => {
+        return memberships.map((m) => {
           m.roleName = metadata['roles'][m.roleId] ? metadata['roles'][m.roleId].name : 'Unknown role';
           if (m.memberType === 'user') {
             m.name = metadata['users'][m.memberId] ? metadata['users'][m.memberId].displayName : 'Unknown user';
@@ -228,7 +226,6 @@ export class OrganizationService {
           }
           return m;
         });
-        return members;
       }),
     );
   }

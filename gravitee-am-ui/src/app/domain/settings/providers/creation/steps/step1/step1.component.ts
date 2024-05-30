@@ -62,7 +62,7 @@ export class ProviderCreationStep1Component implements OnInit {
   }
 
   getIcon(identityProvider) {
-    if (identityProvider && identityProvider.icon) {
+    if (identityProvider?.icon) {
       const title = identityProvider.displayName ? identityProvider.displayName : identityProvider.name;
       return `<img mat-card-avatar src="${identityProvider.icon}" alt="${title} image" title="${title}"/>`;
     }

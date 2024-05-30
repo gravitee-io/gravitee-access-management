@@ -296,7 +296,7 @@
             <div *ngIf="editMode()" fxLayout="column">
               <mat-divider></mat-divider>
               <form (ngSubmit)="resetPassword()" #passwordForm="ngForm" fxLayout="row" style="margin-top: 20px">
-                <mat-form-field style="margin: 0px 15px 0px 15px" fxFlex="70" appearance="outline" floatLabel="always">
+                <mat-form-field style="margin: 0 15px 0 15px" fxFlex="70" appearance="outline" floatLabel="always">
                   <mat-label>Password</mat-label>
                   <input matInput type="password" name="password" placeholder="Password" required [(ngModel)]="password" />
                   <mat-hint>User's password</mat-hint>
@@ -322,7 +322,7 @@
           <div fxLayout="column">
             <div *ngIf="editMode()" fxLayout="column">
               <form (ngSubmit)="resetPassword()" #passwordForm="ngForm" fxLayout="row" style="margin-top: 20px">
-                <mat-form-field style="margin: 0px 15px 0px 15px" fxFlex="70" appearance="outline" floatLabel="always">
+                <mat-form-field style="margin: 0 15px 0 15px" fxFlex="70" appearance="outline" floatLabel="always">
                   <mat-label>Password</mat-label>
                   <input matInput type="password" name="password" placeholder="Password" required [(ngModel)]="password" />
                   <mat-hint>User's password</mat-hint>

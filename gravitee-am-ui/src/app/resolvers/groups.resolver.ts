@@ -30,7 +30,7 @@ export class GroupsResolver {
     private organizationService: OrganizationService,
   ) {}
 
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> {
     if (state.url.startsWith('/settings')) {
       return this.organizationService.groups(this.default_page, this.default_size);
     }

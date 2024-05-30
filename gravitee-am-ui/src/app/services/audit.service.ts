@@ -22,6 +22,7 @@ import { AppConfig } from '../../config/app.config';
 import { toHttpParams } from '../utils/http-utils';
 
 import { OrganizationService } from './organization.service';
+import { SearchParams } from './search';
 
 interface AuditsResponse {
   currentPage: number;
@@ -55,29 +56,19 @@ export class AuditService {
     });
   }
 
-  search(
-    domainId: string,
-    page: number,
-    size: number,
-    type: string,
-    status: string,
-    user: string,
-    from: number,
-    to: number,
-    organizationContext: boolean,
-  ): Observable<AuditsResponse> {
+  search(searchParams: SearchParams, organizationContext: boolean): Observable<AuditsResponse> {
     if (organizationContext) {
-      return this.organizationService.audits(page, size, type, status, user, from, to);
+      return this.organizationService.audits(searchParams);
     }
-    return this.http.get<AuditsResponse>(`${this.auditsURL + domainId}/audits`, {
+    return this.http.get<AuditsResponse>(`${this.auditsURL + searchParams.domainId}/audits`, {
       params: toHttpParams({
-        page,
-        size,
-        type,
-        status,
-        user,
-        from,
-        to,
+        page: searchParams.page,
+        size: searchParams.size,
+        type: searchParams.type,
+        status: searchParams.status,
+        user: searchParams.userId,
+        from: searchParams.from,
+        to: searchParams.to,
       }),
     });
   }

@@ -31,7 +31,7 @@ export class ReporterFormComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges) {
     if (changes.reporterSchema) {
       const _reporterSchema = changes.reporterSchema.currentValue;
-      if (_reporterSchema && _reporterSchema.id) {
+      if (_reporterSchema?.id) {
         this.displayForm = true;
       }
     }

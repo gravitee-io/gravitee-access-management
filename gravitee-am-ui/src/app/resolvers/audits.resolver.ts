@@ -30,9 +30,18 @@ export class AuditsResolver {
     private organizationService: OrganizationService,
   ) {}
 
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> {
     if (state.url.startsWith('/settings')) {
-      return this.organizationService.audits(this.default_page, this.default_size);
+      return this.organizationService.audits({
+        page: this.default_page,
+        size: this.default_size,
+        domainId: undefined,
+        userId: undefined,
+        type: undefined,
+        status: undefined,
+        from: undefined,
+        to: undefined,
+      });
     }
 
     const domainId = route.parent.data['domain'].id;

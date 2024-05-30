@@ -30,7 +30,7 @@ export class ApplicationsResolver {
     private dashboardService: DashboardService,
   ) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domain = route.parent.data['domain'];
 
     if (domain) {

@@ -15,21 +15,21 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { UserRolesComponent } from './roles.component';
+import { GroupRolesComponent } from './roles.component';
 
 describe('UserRolesComponent', () => {
-  let component: UserRolesComponent;
-  let fixture: ComponentFixture<UserRolesComponent>;
+  let component: GroupRolesComponent;
+  let fixture: ComponentFixture<GroupRolesComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [UserRolesComponent],
+      declarations: [GroupRolesComponent],
       teardown: { destroyAfterEach: false },
     }).compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(UserRolesComponent);
+    fixture = TestBed.createComponent(GroupRolesComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

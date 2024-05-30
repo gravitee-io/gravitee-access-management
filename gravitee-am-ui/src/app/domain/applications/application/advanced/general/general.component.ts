@@ -28,13 +28,8 @@ import { AuthService } from '../../../../../services/auth.service';
 import {
   ApplicationClientSecretCopyDialogComponent,
   ApplicationClientSecretCopyDialogData,
-  ApplicationClientSecretCopyDialogResult,
 } from '../../../client-secret/application-client-secret-copy-dialog.component';
-import {
-  ApplicationClientSecretRenewDialogComponent,
-  ApplicationClientSecretRenewDialogData,
-  ApplicationClientSecretRenewDialogResult,
-} from '../../../client-secret/application-client-secret-renew-dialog.component';
+import { ApplicationClientSecretRenewDialogComponent } from '../../../client-secret/application-client-secret-renew-dialog.component';
 
 @Component({
   selector: 'application-general',
@@ -116,7 +111,7 @@ export class ApplicationGeneralComponent implements OnInit {
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
     this.deleteMode = this.authService.hasPermissions(['application_settings_delete']);
     this.renewSecretMode = this.authService.hasPermissions(['application_openid_update']);
-    if (!this.domain.uma || !this.domain.uma.enabled) {
+    if (!this.domain.uma?.enabled) {
       remove(this.applicationTypes, { type: 'RESOURCE_SERVER' });
     }
   }
@@ -161,15 +156,12 @@ export class ApplicationGeneralComponent implements OnInit {
   renewClientSecret(event) {
     event.preventDefault();
     this.matDialog
-      .open<ApplicationClientSecretRenewDialogComponent, ApplicationClientSecretRenewDialogData, ApplicationClientSecretRenewDialogResult>(
-        ApplicationClientSecretRenewDialogComponent,
-        {
-          width: GIO_DIALOG_WIDTH.MEDIUM,
-          disableClose: true,
-          role: 'alertdialog',
-          id: 'applicationClientSecretRenewDialog',
-        },
-      )
+      .open<ApplicationClientSecretRenewDialogComponent, void, string>(ApplicationClientSecretRenewDialogComponent, {
+        width: GIO_DIALOG_WIDTH.MEDIUM,
+        disableClose: true,
+        role: 'alertdialog',
+        id: 'applicationClientSecretRenewDialog',
+      })
       .afterClosed()
       .pipe(
         switchMap((action: any) => {
@@ -181,20 +173,19 @@ export class ApplicationGeneralComponent implements OnInit {
               }),
               switchMap(() =>
                 this.matDialog
-                  .open<
+                  .open<ApplicationClientSecretCopyDialogComponent, ApplicationClientSecretCopyDialogData, void>(
                     ApplicationClientSecretCopyDialogComponent,
-                    ApplicationClientSecretCopyDialogData,
-                    ApplicationClientSecretCopyDialogResult
-                  >(ApplicationClientSecretCopyDialogComponent, {
-                    width: GIO_DIALOG_WIDTH.MEDIUM,
-                    disableClose: true,
-                    data: {
-                      secret: this.application.settings.oauth.clientSecret,
-                      renew: true,
+                    {
+                      width: GIO_DIALOG_WIDTH.MEDIUM,
+                      disableClose: true,
+                      data: {
+                        secret: this.application.settings.oauth.clientSecret,
+                        renew: true,
+                      },
+                      role: 'alertdialog',
+                      id: 'applicationClientSecretCopyDialog',
                     },
-                    role: 'alertdialog',
-                    id: 'applicationClientSecretCopyDialog',
-                  })
+                  )
                   .afterClosed()
                   .pipe(
                     tap(() => {

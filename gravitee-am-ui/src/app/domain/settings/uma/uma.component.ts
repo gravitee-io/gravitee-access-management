@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
 import { SnackbarService } from '../../../services/snackbar.service';
 import { DomainService } from '../../../services/domain.service';
@@ -36,7 +36,6 @@ export class UmaComponent implements OnInit {
     private snackbarService: SnackbarService,
     private authService: AuthService,
     private route: ActivatedRoute,
-    private router: Router,
   ) {}
 
   ngOnInit() {
@@ -58,7 +57,7 @@ export class UmaComponent implements OnInit {
     this.formChanged = true;
   }
 
-  isUMAEnabled() {
-    return this.domain.uma && this.domain.uma.enabled;
+  isUMAEnabled(): boolean {
+    return this.domain.uma?.enabled;
   }
 }

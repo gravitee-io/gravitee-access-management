@@ -41,7 +41,7 @@ export class DomainSettingsAccountComponent implements OnInit {
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
     this.domainId = this.domain.id;
-    this.accountSettings = Object.assign({}, this.domain.accountSettings);
+    this.accountSettings = { ...this.domain.accountSettings };
     this.readonly =
       !this.authService.hasPermissions(['domain_settings_create']) && !this.authService.hasPermissions(['domain_settings_update']);
   }

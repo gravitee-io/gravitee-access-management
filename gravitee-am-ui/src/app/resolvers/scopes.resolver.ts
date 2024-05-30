@@ -23,7 +23,7 @@ import { ScopeService } from '../services/scope.service';
 export class ScopesResolver {
   constructor(private scopeService: ScopeService) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domainId = route.parent.data['domain'].id;
     return this.scopeService.findByDomain(domainId, 0, 10);
   }

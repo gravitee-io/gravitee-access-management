@@ -23,7 +23,7 @@ import { UserService } from '../services/user.service';
 export class UserCredentialResolver {
   constructor(private userService: UserService) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const credentialId = route.paramMap.get('credentialId');
     const userId = route.parent.paramMap.get('userId');
     const domainId = route.parent.data['domain'].id;

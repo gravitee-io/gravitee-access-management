@@ -15,21 +15,21 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { ProviderComponent } from './notifier.component';
+import { DomainAlertNotifierComponent } from './notifier.component';
 
-describe('ProviderComponent', () => {
-  let component: ProviderComponent;
-  let fixture: ComponentFixture<ProviderComponent>;
+describe('DomainAlertNotifierComponent', () => {
+  let component: DomainAlertNotifierComponent;
+  let fixture: ComponentFixture<DomainAlertNotifierComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ProviderComponent],
+      declarations: [DomainAlertNotifierComponent],
       teardown: { destroyAfterEach: false },
     }).compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(ProviderComponent);
+    fixture = TestBed.createComponent(DomainAlertNotifierComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

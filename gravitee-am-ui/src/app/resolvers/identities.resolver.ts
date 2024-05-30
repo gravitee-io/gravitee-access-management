@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
 
 import { OrganizationService } from '../services/organization.service';
 
@@ -22,7 +21,7 @@ import { OrganizationService } from '../services/organization.service';
 export class IdentitiesResolver {
   constructor(private organizationService: OrganizationService) {}
 
-  resolve(): Observable<any> | Promise<any> | any {
+  resolve(): Promise<any> {
     return Promise.all([
       this.organizationService.identities(true, true, true).toPromise(),
       this.organizationService

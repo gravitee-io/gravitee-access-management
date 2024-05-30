@@ -15,7 +15,6 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import moment from 'moment';
 import { filter, switchMap, tap } from 'rxjs/operators';
 
 import { SnackbarService } from '../../../services/snackbar.service';
@@ -95,10 +94,6 @@ export class DomainSettingsScopesComponent implements OnInit {
   setPage(pageInfo) {
     this.page.pageNumber = pageInfo.offset;
     this.loadScopes();
-  }
-
-  getScopeExpiry(expiresIn) {
-    return expiresIn ? moment.duration(expiresIn, 'seconds').humanize() : 'no time set';
   }
 
   enableScopeDiscovery(id, event) {

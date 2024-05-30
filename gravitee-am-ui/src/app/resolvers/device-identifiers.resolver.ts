@@ -23,7 +23,7 @@ import { DeviceIdentifierService } from '../services/device-identifier.service';
 export class DeviceIdentifiersResolver {
   constructor(private deviceIdentifierService: DeviceIdentifierService) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domainId = route.parent.data['domain'].id;
     return this.deviceIdentifierService.findByDomain(domainId);
   }

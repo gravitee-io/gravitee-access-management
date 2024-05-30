@@ -55,17 +55,14 @@
                 <th mat-header-cell *matHeaderCellDef>
                   <mat-form-field>
                     <mat-label>Filter</mat-label>
-                    <input matInput (keyup)="applyFilter(filter.value)" placeholder="Ex. DOMAIN, OPENID, ..." #filter />
-                    <button
-                      mat-button
-                      *ngIf="filter.value"
-                      matSuffix
-                      mat-icon-button
-                      aria-label="Clear"
-                      (click)="filter.value = ''; applyFilter('')"
-                    >
-                      <mat-icon>close</mat-icon>
-                    </button>
+                    <input
+                      type="search"
+                      matInput
+                      (search)="applyFilter(filter.value)"
+                      (keyup)="applyFilter(filter.value)"
+                      placeholder="Ex. DOMAIN, OPENID, ..."
+                      #filter
+                    />
                   </mat-form-field>
                 </th>
               </ng-container>

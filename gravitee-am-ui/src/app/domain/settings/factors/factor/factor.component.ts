@@ -111,18 +111,21 @@ export class FactorComponent implements OnInit {
     return this.factor.type.includes('fido2-am-factor');
   }
 
-  private applyResourceSelection(property, propertyName?) {
+  private applyResourceSelection(property: any, propertyName?: string): void {
     if (property.type === 'array') {
-      if (property.items && property.items.properties) {
+      if (property.items?.properties) {
         for (const key in property.items.properties) {
           const child = property.items.properties[key];
           this.applyResourceSelection(child);
         }
       }
     }
+    this.applyForGraviteeResource(property, propertyName);
+  }
 
+  private applyForGraviteeResource(property: any, propertyName?: string): void {
     if ('graviteeResource' === property.widget || 'graviteeResource' === propertyName) {
-      if (this.resources && this.resources.length > 0) {
+      if (this.resources?.length > 0) {
         const resourcePluginTypeToCategories = this.resourcePlugins.reduce(
           (accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.categories }),
           {},
@@ -136,14 +139,13 @@ export class FactorComponent implements OnInit {
         const filteredResources = this.resources.filter(
           (r) =>
             factorCategory === 'any' ||
-            (resourcePluginTypeToCategories[r.type] &&
-              resourcePluginTypeToCategories[r.type].filter((resourceCategory) => resourceCategory === factorCategory).length > 0),
+            resourcePluginTypeToCategories[r.type]?.filter((resourceCategory) => resourceCategory === factorCategory).length > 0,
         );
 
         property['x-schema-form'] = { type: 'select' };
         if (filteredResources.length > 0) {
           property.enum = filteredResources.map((r) => r.id);
-          property['x-schema-form'].titleMap = filteredResources.reduce(function (map, obj) {
+          property['x-schema-form'].titleMap = filteredResources.reduce((map, obj) => {
             map[obj.id] = obj.name;
             return map;
           }, {});

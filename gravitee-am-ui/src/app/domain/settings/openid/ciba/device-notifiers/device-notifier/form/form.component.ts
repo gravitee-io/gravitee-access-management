@@ -31,7 +31,7 @@ export class DeviceNotifierFormComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges) {
     if (changes.deviceNotifierSchema) {
       const _deviceNotifierSchema = changes.deviceNotifierSchema.currentValue;
-      if (_deviceNotifierSchema && _deviceNotifierSchema.id) {
+      if (_deviceNotifierSchema?.id) {
         this.displayForm = true;
       }
     }

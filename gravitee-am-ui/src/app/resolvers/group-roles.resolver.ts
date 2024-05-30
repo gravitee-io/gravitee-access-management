@@ -27,7 +27,7 @@ export class GroupRolesResolver {
     private organizationService: OrganizationService,
   ) {}
 
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> {
     const groupId = route.paramMap.get('groupId');
     if (state.url.startsWith('/settings')) {
       return this.organizationService.groupRoles(groupId);

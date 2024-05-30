@@ -27,7 +27,7 @@ export class ProviderResolver {
     private organizationService: OrganizationService,
   ) {}
 
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> {
     const providerId = route.paramMap.get('providerId');
     if (state.url.startsWith('/settings')) {
       return this.organizationService.identityProvider(providerId);

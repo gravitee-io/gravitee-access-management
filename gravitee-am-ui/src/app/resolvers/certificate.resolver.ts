@@ -23,7 +23,7 @@ import { CertificateService } from '../services/certificate.service';
 export class CertificateResolver {
   constructor(private certificateService: CertificateService) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domainId: string = route.parent.data['domain'].id;
     const certificateId: string = route.paramMap.get('certificateId');
     return this.certificateService.get(domainId, certificateId);

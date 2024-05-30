@@ -31,7 +31,7 @@ export class BotDetectionFormComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges) {
     if (changes.botDetectionSchema) {
       const _botDetectionSchema = changes.botDetectionSchema.currentValue;
-      if (_botDetectionSchema && _botDetectionSchema.id) {
+      if (_botDetectionSchema?.id) {
         this.displayForm = true;
       }
     }

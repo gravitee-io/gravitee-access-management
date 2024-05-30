@@ -31,7 +31,7 @@ export class FactorFormComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges) {
     if (changes.factorSchema) {
       const _factorSchema = changes.factorSchema.currentValue;
-      if (_factorSchema && _factorSchema.id) {
+      if (_factorSchema?.id) {
         this.displayForm = true;
       }
     }

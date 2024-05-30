@@ -242,8 +242,8 @@ export class DomainSettingsThemeComponent implements OnInit {
     }
   }
 
-  isFormEnabled() {
-    return this.selectedForm && this.selectedForm.enabled;
+  isFormEnabled(): boolean {
+    return this.selectedForm?.enabled;
   }
 
   enableForm(event) {

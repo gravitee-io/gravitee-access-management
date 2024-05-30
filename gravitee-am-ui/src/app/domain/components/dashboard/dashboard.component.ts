@@ -93,8 +93,8 @@ export class DashboardComponent implements OnInit {
     );
   }
 
-  private fetch() {
-    const dashboard: DashboardData = Object.assign({}, this.dashboard);
+  private fetch(): void {
+    const dashboard: DashboardData = { ...this.dashboard };
     this.widgets?.forEach((w) => (w.chart.response = null));
     this.widgets = [];
     this.isLoading = true;

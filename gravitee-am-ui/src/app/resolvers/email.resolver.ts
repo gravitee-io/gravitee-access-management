@@ -23,11 +23,10 @@ import { EmailService } from '../services/email.service';
 export class EmailResolver {
   constructor(private emailService: EmailService) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const emailTemplate = route.queryParams['template'];
     const domainId = route.parent.data['domain'].id;
     const appId = route.paramMap.get('appId');
-
     return this.emailService.get(domainId, appId, emailTemplate);
   }
 }

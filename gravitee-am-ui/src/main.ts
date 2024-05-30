@@ -54,10 +54,8 @@ forkJoin([constants, build]).subscribe((response) => {
   const DEFAULT_ORGANIZATION = ':organizationId';
   const DEFAULT_ENV = ':environmentId';
   const PORTAL_TITLE = 'Access Management';
-  const config = {};
-  Object.keys(response[0]).forEach((key) => (config[key] = response[0][key]));
-  Object.keys(response[1]).forEach((key) => (config[key] = response[1][key]));
-  AppConfig.settings = config;
+  Object.keys(response[0]).forEach((key) => (AppConfig.settings[key] = response[0][key]));
+  Object.keys(response[1]).forEach((key) => (AppConfig.settings[key] = response[1][key]));
   AppConfig.settings.portalTitle = PORTAL_TITLE;
   AppConfig.settings.organizationBaseURL = AppConfig.settings.baseURL + '/organizations/' + DEFAULT_ORGANIZATION;
   AppConfig.settings.domainBaseURL = AppConfig.settings.organizationBaseURL + '/environments/' + DEFAULT_ENV + '/domains/';

@@ -23,7 +23,7 @@ import { ApplicationService } from '../services/application.service';
 export class ApplicationResourcePolicyResolver {
   constructor(private applicationService: ApplicationService) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domainId = route.parent.data['domain'].id;
     const appId = route.paramMap.get('appId');
     const resourceId = route.paramMap.get('resourceId');

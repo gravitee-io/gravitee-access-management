@@ -89,7 +89,7 @@
             <ngx-datatable-column name="" [flexGrow]="4">
               <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
                 <pre
-                  style="margin: 0px; white-space: normal; font-size: 12px"
+                  style="margin: 0; white-space: normal; font-size: 12px"
                   (dblclick)="editing[row.id + '-value'] = true"
                   *ngIf="!editing[row.id + '-value']"
                 >

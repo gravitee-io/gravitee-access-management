@@ -25,8 +25,6 @@ export interface AccountTokenCopyDialogData {
   orgId: string;
 }
 
-export type AccountTokenCopyDialogResult = void;
-
 @Component({
   selector: 'account-token-copy-dialog',
   templateUrl: './account-token-copy-dialog.component.html',
@@ -39,7 +37,7 @@ export class AccountTokenCopyDialogComponent {
 
   constructor(
     @Inject(MAT_DIALOG_DATA) dialogData: AccountTokenCopyDialogData,
-    public dialogRef: MatDialogRef<AccountTokenCopyDialogData, AccountTokenCopyDialogResult>,
+    public dialogRef: MatDialogRef<AccountTokenCopyDialogData, void>,
     private snackbarService: SnackbarService,
   ) {
     this.token = dialogData.token;

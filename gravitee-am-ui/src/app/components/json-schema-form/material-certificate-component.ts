@@ -57,7 +57,7 @@ export class MaterialCertificateComponent implements OnInit {
     this.jsf.initializeControl(this);
   }
 
-  updateValue(e) {
+  updateValue(e: any): void {
     this.jsf.updateValue(this, e.value);
   }
 }

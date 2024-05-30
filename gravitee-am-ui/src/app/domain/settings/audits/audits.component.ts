@@ -40,7 +40,6 @@ export class AuditsComponent implements OnInit {
   @ViewChild('auditsTable', { static: true }) table: any;
   userCtrl = new UntypedFormControl();
   audits: any[];
-  pagedAudits: any;
   domainId: string;
   page: any = {};
   eventTypes: string[];
@@ -53,7 +52,7 @@ export class AuditsComponent implements OnInit {
   loadingIndicator: boolean;
   config: any = { lineWrapping: true, lineNumbers: true, readOnly: true, mode: 'application/json' };
   filteredUsers$: Observable<any[]>;
-  selectedUser: any;
+  selectedUser: string;
   selectedTimeRange = defaultTimeRangeId;
   readonly timeRanges = availableTimeRanges;
 
@@ -88,10 +87,6 @@ export class AuditsComponent implements OnInit {
     this.search();
   }
 
-  get isEmpty() {
-    return !this.audits || (this.audits.length === 0 && !this.displayReset);
-  }
-
   setPage(pageInfo) {
     this.page.pageNumber = pageInfo.offset;
     this.searchAudits();
@@ -122,27 +117,40 @@ export class AuditsComponent implements OnInit {
     return routerLink;
   }
 
-  getTargetUrl(row) {
-    const routerLink = [];
-
+  getTargetUrl(row): string[] {
     if (row.target.type === 'MEMBERSHIP') {
       // Membership doesn't have link;
-      return routerLink;
+      return [];
     }
+    return this.buildLink(row);
+  }
 
+  private buildLink(row) {
+    const routerLink = [];
     if ('organization' === row.target.referenceType) {
       routerLink.push('/settings');
     } else {
-      routerLink.push('/environments');
-      routerLink.push(this.route.snapshot.paramMap.get('envHrid'));
-      routerLink.push('domains');
-      routerLink.push(this.route.snapshot.paramMap.get('domainId'));
-
-      if (row.target.type !== 'CLIENT' && row.target.type !== 'APPLICATION') {
-        routerLink.push('settings');
-      }
+      routerLink.push(...this.buildNotOrganizationLink(row));
     }
+    routerLink.push(...this.buildNotDomainLink(row));
+    return routerLink;
+  }
 
+  private buildNotOrganizationLink(row) {
+    const routerLink = [];
+    routerLink.push('/environments');
+    routerLink.push(this.route.snapshot.paramMap.get('envHrid'));
+    routerLink.push('domains');
+    routerLink.push(this.route.snapshot.paramMap.get('domainId'));
+
+    if (row.target.type !== 'CLIENT' && row.target.type !== 'APPLICATION') {
+      routerLink.push('settings');
+    }
+    return routerLink;
+  }
+
+  private buildNotDomainLink(row) {
+    const routerLink = [];
     if (row.target.type !== 'DOMAIN') {
       if (row.target.type !== 'IDENTITY_PROVIDER') {
         if (row.target.type === 'PASSWORD_POLICY') {
@@ -161,7 +169,6 @@ export class AuditsComponent implements OnInit {
         routerLink.push(row.target.id);
       }
     }
-
     return routerLink;
   }
 
@@ -216,30 +223,30 @@ export class AuditsComponent implements OnInit {
       ? moment(this.startDate).valueOf()
       : moment().subtract(selectedTimeRange.value, selectedTimeRange.unit).valueOf();
     const to = this.endDateChanged ? moment(this.endDate).valueOf() : moment().valueOf();
-    const user =
-      this.selectedUser ||
-      (this.userCtrl.value ? (typeof this.userCtrl.value === 'string' ? this.userCtrl.value : this.userCtrl.value.username) : null);
+    let userId: string = null;
+    if (this.selectedUser) {
+      userId = this.selectedUser;
+    } else if (this.userCtrl.value) {
+      userId = typeof this.userCtrl.value === 'string' ? this.userCtrl.value : this.userCtrl.value.username;
+    }
     this.loadingIndicator = true;
-    this.auditService
-      .search(
-        this.domainId,
-        this.page.pageNumber,
-        this.page.size,
-        this.eventType,
-        this.eventStatus,
-        user,
-        from,
-        to,
-        this.organizationContext,
-      )
-      .subscribe((pagedAudits) => {
-        this.page.totalElements = pagedAudits.totalCount;
-        this.audits = pagedAudits.data
-          .map((audit) => this.createActorSortDisplayName(audit))
-          .map((audit) => this.createTargetSortDisplayName(audit));
-        this.selectedUser = null;
-        this.loadingIndicator = false;
-      });
+    const searchParams = {
+      domainId: this.domainId,
+      page: this.page.pageNumber,
+      size: this.page.size,
+      type: this.eventType,
+      status: this.eventStatus,
+      userId: userId,
+      from: from,
+      to: to,
+    };
+    this.auditService.search(searchParams, this.organizationContext).subscribe((pagedAudits) => {
+      this.page.totalElements = pagedAudits.totalCount;
+      this.audits = pagedAudits.data
+        .map((audit) => this.createActorSortDisplayName(audit))
+        .map((audit) => this.createTargetSortDisplayName(audit));
+      this.loadingIndicator = false;
+    });
   }
 
   private createTargetSortDisplayName(audit) {
@@ -282,8 +289,12 @@ export class AuditsComponent implements OnInit {
   }
 
   onUserSelectionChanged(event) {
-    this.selectedUser = event.option.value['username'];
-    this.displayReset = true;
+    if (this.selectedUser === event.option.value['username']) {
+      this.clearUserInput();
+    } else {
+      this.selectedUser = event.option.value['username'];
+      this.displayReset = true;
+    }
   }
 
   displayUserFn(user?: any): string | undefined {

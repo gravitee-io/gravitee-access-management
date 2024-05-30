@@ -15,21 +15,21 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { FormComponent } from './form.component';
+import { CertificateFormComponent } from './form.component';
 
 describe('FormComponent', () => {
-  let component: FormComponent;
-  let fixture: ComponentFixture<FormComponent>;
+  let component: CertificateFormComponent;
+  let fixture: ComponentFixture<CertificateFormComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [FormComponent],
+      declarations: [CertificateFormComponent],
       teardown: { destroyAfterEach: false },
     }).compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(FormComponent);
+    fixture = TestBed.createComponent(CertificateFormComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

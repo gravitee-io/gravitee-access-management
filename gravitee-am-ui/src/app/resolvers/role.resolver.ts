@@ -27,7 +27,7 @@ export class RoleResolver {
     private organizationService: OrganizationService,
   ) {}
 
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> {
     const roleId = route.paramMap.get('roleId');
     if (state.url.startsWith('/settings')) {
       if (route.queryParams['system'] === 'true') {

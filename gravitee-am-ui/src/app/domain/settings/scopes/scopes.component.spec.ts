@@ -15,21 +15,21 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { ScopesComponent } from './scopes.component';
+import { DomainSettingsScopesComponent } from './scopes.component';
 
-describe('ScopesComponent', () => {
-  let component: ScopesComponent;
-  let fixture: ComponentFixture<ScopesComponent>;
+describe('DomainSettingsScopesComponent', () => {
+  let component: DomainSettingsScopesComponent;
+  let fixture: ComponentFixture<DomainSettingsScopesComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ScopesComponent],
+      declarations: [DomainSettingsScopesComponent],
       teardown: { destroyAfterEach: false },
     }).compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(ScopesComponent);
+    fixture = TestBed.createComponent(DomainSettingsScopesComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

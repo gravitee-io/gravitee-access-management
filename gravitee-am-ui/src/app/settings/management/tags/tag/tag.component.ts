@@ -50,7 +50,7 @@ export class TagComponent implements OnInit {
   update() {
     this.tagService.update(this.tag.id, this.tag).subscribe((data) => {
       this.tag = data;
-      this.tagForm.reset(Object.assign({}, this.tag));
+      this.tagForm.reset({ ...this.tag });
       this.snackbarService.open('Sharding tag updated');
     });
   }

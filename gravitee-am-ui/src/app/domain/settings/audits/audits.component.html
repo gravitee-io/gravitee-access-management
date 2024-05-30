@@ -39,9 +39,6 @@
 
     <mat-form-field fxFlex="10" appearance="fill">
       <input matInput placeholder="User" [matAutocomplete]="auto" [formControl]="userCtrl" (input)="updateForm()" />
-      <button mat-button *ngIf="selectedUser" matSuffix mat-icon-button aria-label="Clear" (click)="clearUserInput()">
-        <mat-icon style="margin: 0px 0px 0px 3px">close</mat-icon>
-      </button>
       <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayUserFn" (optionSelected)="onUserSelectionChanged($event)">
         <mat-option
           *ngFor="let user of filteredUsers$ | async"

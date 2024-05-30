@@ -64,7 +64,7 @@ export class DomainSettingsProvidersComponent implements OnInit {
   }
 
   getIdentityProvider(type) {
-    if (this.identities && this.identities[type]) {
+    if (this.identities?.[type]) {
       return this.identities[type];
     }
     return null;
@@ -72,7 +72,7 @@ export class DomainSettingsProvidersComponent implements OnInit {
 
   getIdentityProviderTypeIcon(type) {
     const provider = this.getIdentityProvider(type);
-    if (provider && provider.icon) {
+    if (provider?.icon) {
       const name = provider.displayName ? provider.displayName : provider.name;
       return `<img width="24" height="24" src="${provider.icon}" alt="${name} image" title="${name}"/>`;
     }

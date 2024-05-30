@@ -28,8 +28,8 @@ export class HelpTipsThemeComponent implements OnInit, OnChanges {
     this.loadTemplate(this.template);
   }
 
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes.template && changes.template.currentValue) {
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes.template?.currentValue) {
       this.loadTemplate(changes.template.currentValue);
     }
   }

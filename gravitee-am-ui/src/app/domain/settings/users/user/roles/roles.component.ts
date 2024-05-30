@@ -143,7 +143,7 @@ export class UserRolesComponent implements OnInit {
 })
 export class AddUserRolesComponent implements OnInit {
   private domainId: string;
-  private organizationContext: boolean;
+  private readonly organizationContext: boolean;
   roles: any[];
   initialSelectedRoles: any[];
   assignedRoles: string[] = [];

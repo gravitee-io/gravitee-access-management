@@ -52,6 +52,6 @@ export class DomainAlertNotifierCreationComponent implements OnInit {
   }
 
   stepperValid() {
-    return this.alertNotifier && this.alertNotifier.name && this.configurationIsValid;
+    return this.alertNotifier?.name && this.configurationIsValid;
   }
 }

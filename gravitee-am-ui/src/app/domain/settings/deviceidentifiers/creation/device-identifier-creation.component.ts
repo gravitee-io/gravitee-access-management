@@ -57,7 +57,7 @@ export class DeviceIdentifierCreationComponent implements OnInit {
     });
   }
 
-  stepperValid() {
-    return this.deviceIdentifier && this.deviceIdentifier.name && this.configurationIsValid;
+  stepperValid(): boolean {
+    return this.deviceIdentifier?.name && this.configurationIsValid;
   }
 }

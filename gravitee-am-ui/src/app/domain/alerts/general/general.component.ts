@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { forkJoin, Observable } from 'rxjs';
 
 import { DomainService } from '../../../services/domain.service';
-import { DialogService } from '../../../services/dialog.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { AuthService } from '../../../services/auth.service';
 import { AlertService } from '../../../services/alert.service';
@@ -44,9 +43,7 @@ export class DomainAlertGeneralComponent implements OnInit {
 
   constructor(
     private domainService: DomainService,
-    private dialogService: DialogService,
     private snackbarService: SnackbarService,
-    private router: Router,
     private route: ActivatedRoute,
     private authService: AuthService,
     private alertService: AlertService,

@@ -27,16 +27,8 @@ import { UserClaimComponent } from '../../creation/user-claim.component';
 import { AuthService } from '../../../../../services/auth.service';
 import { OrganizationService } from '../../../../../services/organization.service';
 
-import {
-  AccountTokenCreationDialogComponent,
-  AccountTokenCreationDialogData,
-  AccountTokenCreationDialogResult,
-} from './token/account-token-creation-dialog.component';
-import {
-  AccountTokenCopyDialogComponent,
-  AccountTokenCopyDialogData,
-  AccountTokenCopyDialogResult,
-} from './token/account-token-copy-dialog.component';
+import { AccountTokenCreationDialogComponent, AccountTokenCreationDialogResult } from './token/account-token-creation-dialog.component';
+import { AccountTokenCopyDialogComponent, AccountTokenCopyDialogData } from './token/account-token-copy-dialog.component';
 import {
   AccountTokenRevokationDialogComponent,
   AccountTokenRevokationDialogData,
@@ -95,7 +87,6 @@ export class UserProfileComponent implements OnInit {
   }
 
   update() {
-    // TODO we should be able to update platform users
     this.user.additionalInformation = this.user.additionalInformation || {};
     Object.keys(this.userClaims).forEach((key) => (this.user.additionalInformation[key] = this.userClaims[key]));
     if (this.user.firstName || this.user.lastName) {
@@ -188,7 +179,6 @@ export class UserProfileComponent implements OnInit {
   }
 
   enableUser(event: any): void {
-    // TODO we should be able to update platform users
     this.dialogService
       .confirm(
         (event.checked ? 'Enable' : 'Disable') + ' User',
@@ -283,15 +273,12 @@ export class UserProfileComponent implements OnInit {
 
   createToken(): void {
     this.matDialog
-      .open<AccountTokenCreationDialogComponent, AccountTokenCreationDialogData, AccountTokenCreationDialogResult>(
-        AccountTokenCreationDialogComponent,
-        {
-          width: '640px',
-          disableClose: true,
-          role: 'alertdialog',
-          id: 'accountTokenCreateDialog',
-        },
-      )
+      .open<AccountTokenCreationDialogComponent, void, AccountTokenCreationDialogResult>(AccountTokenCreationDialogComponent, {
+        width: '640px',
+        disableClose: true,
+        role: 'alertdialog',
+        id: 'accountTokenCreateDialog',
+      })
       .afterClosed()
       .pipe(
         switchMap((result: AccountTokenCreationDialogResult) => {
@@ -310,19 +297,16 @@ export class UserProfileComponent implements OnInit {
         }),
         switchMap((data) =>
           this.matDialog
-            .open<AccountTokenCopyDialogComponent, AccountTokenCopyDialogData, AccountTokenCopyDialogResult>(
-              AccountTokenCopyDialogComponent,
-              {
-                width: '640px',
-                disableClose: true,
-                data: {
-                  token: data.token,
-                  orgId: this.user.referenceId,
-                },
-                role: 'alertdialog',
-                id: 'accountTokenCopyDialog',
+            .open<AccountTokenCopyDialogComponent, AccountTokenCopyDialogData, void>(AccountTokenCopyDialogComponent, {
+              width: '640px',
+              disableClose: true,
+              data: {
+                token: data.token,
+                orgId: this.user.referenceId,
               },
-            )
+              role: 'alertdialog',
+              id: 'accountTokenCopyDialog',
+            })
             .afterClosed(),
         ),
       )

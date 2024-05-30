@@ -73,6 +73,7 @@ import {
   GioTopBarModule,
 } from '@gravitee/ui-particles-angular';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
+import { NgOptimizedImage } from '@angular/common';
 
 import { AppConfig } from '../config/app.config';
 
@@ -758,6 +759,7 @@ import { PasswordPolicyService } from './services/password-policy.service';
     HighchartsChartModule,
     ApplicationClientSecretDialogModule,
     AccountTokenDialogModule,
+    NgOptimizedImage,
   ],
   providers: [
     DomainService,

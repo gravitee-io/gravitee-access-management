@@ -115,7 +115,7 @@ export class GroupMembersComponent implements OnInit {
     dialogRef.afterClosed().subscribe((members) => {
       if (members) {
         const memberIds = map(members, 'id');
-        this.group.members = (this.group.members = this.group.members || []).concat(memberIds);
+        this.group.members = (this.group.members || []).concat(memberIds);
         this.update('Member(s) added');
       }
     });

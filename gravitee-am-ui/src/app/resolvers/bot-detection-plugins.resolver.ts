@@ -22,7 +22,7 @@ import { OrganizationService } from '../services/organization.service';
 export class BotDetectionPluginsResolver {
   constructor(private organizationService: OrganizationService) {}
 
-  resolve(): Observable<any> | Promise<any> | any {
+  resolve(): Observable<any> {
     return this.organizationService.botDetections();
   }
 }

@@ -23,7 +23,7 @@ import { BotDetectionService } from '../services/bot-detection.service';
 export class BotDetectionsResolver {
   constructor(private botDetectionService: BotDetectionService) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domainId = route.parent.data['domain'].id;
     return this.botDetectionService.findByDomain(domainId);
   }

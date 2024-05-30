@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 
 import { OrganizationService } from '../../../../../../services/organization.service';
 
@@ -31,10 +30,7 @@ export class BotDetectionCreationStep2Component implements OnInit {
   configuration: any;
   botDetectionSchema: any = {};
 
-  constructor(
-    private organizationService: OrganizationService,
-    private route: ActivatedRoute,
-  ) {}
+  constructor(private organizationService: OrganizationService) {}
 
   ngOnInit() {
     this.organizationService.botDetectionsSchema(this.botDetection.type).subscribe((data) => {

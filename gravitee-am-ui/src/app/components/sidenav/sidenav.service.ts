@@ -21,7 +21,7 @@ export class SidenavService {
   private resizeSidenav = new Subject<boolean>();
   public resizeSidenavObservable = this.resizeSidenav.asObservable();
 
-  resize(reducedMode) {
+  resize(reducedMode: any): void {
     this.resizeSidenav.next(reducedMode);
   }
 }

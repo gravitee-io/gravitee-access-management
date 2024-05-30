@@ -27,7 +27,7 @@ export class UserRolesResolver {
     private organizationService: OrganizationService,
   ) {}
 
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> {
     const userId = route.paramMap.get('userId');
     if (state.url.startsWith('/settings')) {
       return this.organizationService.userRoles(userId);

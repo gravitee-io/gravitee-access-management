@@ -16,10 +16,11 @@
 
 -->
 <img
-  [src]="url"
-  alt="Photo of a {{ username }}"
+  [ngSrc]="url"
+  alt="{{ username }}"
   (error)="userAvatar.src = 'assets/default-account-icon.png'"
   #userAvatar
+  [height]="width"
   [width]="width"
   style="border-radius: 50%"
 />

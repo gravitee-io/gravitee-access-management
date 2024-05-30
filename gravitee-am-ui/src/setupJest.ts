@@ -16,7 +16,5 @@
 import { AppConfig } from './config/app.config';
 
 beforeAll(() => {
-  AppConfig.settings = {
-    domainBaseURL: 'http://example.com/domains/',
-  };
+  AppConfig.settings.domainBaseURL = 'http://example.com/domains/';
 });

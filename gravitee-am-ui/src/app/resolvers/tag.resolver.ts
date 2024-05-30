@@ -23,7 +23,7 @@ import { TagService } from '../services/tag.service';
 export class TagResolver {
   constructor(private tagService: TagService) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const tagId: string = route.paramMap.get('tagId');
     return this.tagService.get(tagId);
   }

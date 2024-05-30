@@ -18,9 +18,7 @@ import { MatDialog } from '@angular/material/dialog';
 
 import { IdpDataModel, PasswordPoliciesIdpSelectDialogComponent } from './password-policies-idp-select-dialog.component';
 
-export interface DialogCallback {
-  (data: Map<string, boolean>): void;
-}
+export type DialogCallback = (data: Map<string, boolean>) => void;
 
 @Injectable()
 export class PasswordPoliciesIdpSelectDialogFactory {

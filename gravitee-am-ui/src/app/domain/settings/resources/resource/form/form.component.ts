@@ -31,7 +31,7 @@ export class ResourceFormComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges) {
     if (changes.resourceSchema) {
       const _resourceSchema = changes.resourceSchema.currentValue;
-      if (_resourceSchema && _resourceSchema.id) {
+      if (_resourceSchema?.id) {
         this.displayForm = true;
       }
     }

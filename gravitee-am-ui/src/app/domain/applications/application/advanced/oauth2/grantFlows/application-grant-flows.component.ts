@@ -191,13 +191,12 @@ export class ApplicationGrantFlowsComponent implements OnInit {
   private initTokenEndpointAuthMethods() {
     // disabled none (public client) for service application
     if (this.application.type === 'service') {
-      const updatedAuthMethods = map(this.tokenEndpointAuthMethods, (item) => {
+      this.tokenEndpointAuthMethods = map(this.tokenEndpointAuthMethods, (item) => {
         if (item.value === 'none') {
           item.disabled = true;
         }
         return item;
       });
-      this.tokenEndpointAuthMethods = updatedAuthMethods;
     }
     // hide client_secret_jwt if the app has at least one secret hashed.
     // For now, as we only manage one secret we don't have to go through secrets
@@ -205,9 +204,8 @@ export class ApplicationGrantFlowsComponent implements OnInit {
     // is not using the NONE alg.
     const secretSettings = this.application.secretSettings || [];
     const hashIds = secretSettings.filter((settings) => settings.algorithm.toUpperCase() !== 'NONE').map((settings) => settings.id);
-    if (hashIds && hashIds.length !== 0 && this.application.settings.oauth.tokenEndpointAuthMethod !== 'client_secret_jwt') {
-      const updatedAuthMethods = this.tokenEndpointAuthMethods.filter((item) => item.value !== 'client_secret_jwt');
-      this.tokenEndpointAuthMethods = updatedAuthMethods;
+    if (hashIds?.length !== 0 && this.application.settings.oauth.tokenEndpointAuthMethod !== 'client_secret_jwt') {
+      this.tokenEndpointAuthMethods = this.tokenEndpointAuthMethods.filter((item) => item.value !== 'client_secret_jwt');
     }
   }
 

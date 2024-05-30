@@ -26,7 +26,6 @@ import { OrganizationService } from '../../../../services/organization.service';
   styleUrls: ['./role-creation.component.scss'],
 })
 export class RoleCreationComponent implements OnInit {
-  private scopes: any[];
   private domainId: string;
   organizationContext: boolean;
   role: any = {};
@@ -45,7 +44,6 @@ export class RoleCreationComponent implements OnInit {
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }
-    this.scopes = this.route.snapshot.data['scopes'];
   }
 
   create() {

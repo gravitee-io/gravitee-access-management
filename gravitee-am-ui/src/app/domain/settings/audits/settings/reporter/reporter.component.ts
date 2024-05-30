@@ -18,7 +18,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { filter, switchMap, tap } from 'rxjs/operators';
 
 import { DialogService } from '../../../../../services/dialog.service';
-import { NavbarService } from '../../../../../components/navbar/navbar.service';
 import { OrganizationService } from '../../../../../services/organization.service';
 import { ReporterService } from '../../../../../services/reporter.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
@@ -51,7 +50,6 @@ export class ReporterComponent implements OnInit {
     private reporterService: ReporterService,
     private snackbarService: SnackbarService,
     private dialogService: DialogService,
-    private navbarService: NavbarService,
   ) {}
 
   ngOnInit() {

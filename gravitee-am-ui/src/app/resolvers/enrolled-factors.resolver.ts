@@ -23,7 +23,7 @@ import { UserService } from '../services/user.service';
 export class EnrolledFactorsResolver {
   constructor(private userService: UserService) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domainId = route.parent.data['domain'].id;
     const userId = route.paramMap.get('userId');
     return this.userService.factors(domainId, userId);

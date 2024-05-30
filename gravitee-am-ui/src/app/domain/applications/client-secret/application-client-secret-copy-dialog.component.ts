@@ -24,8 +24,6 @@ export interface ApplicationClientSecretCopyDialogData {
   renew?: boolean;
 }
 
-export type ApplicationClientSecretCopyDialogResult = void;
-
 @Component({
   selector: 'application-client-secret-copy-dialog',
   templateUrl: './application-client-secret-copy-dialog.component.html',
@@ -38,14 +36,14 @@ export class ApplicationClientSecretCopyDialogComponent {
 
   constructor(
     @Inject(MAT_DIALOG_DATA) dialogData: ApplicationClientSecretCopyDialogData,
-    public dialogRef: MatDialogRef<ApplicationClientSecretCopyDialogData, ApplicationClientSecretCopyDialogResult>,
+    public dialogRef: MatDialogRef<ApplicationClientSecretCopyDialogData, void>,
     private snackbarService: SnackbarService,
   ) {
     this.clientSecret = dialogData.secret;
     this.renew = dialogData.renew;
   }
 
-  valueCopied(message: string) {
+  valueCopied(message: string): void {
     this.notCopied = false;
     this.snackbarService.open(message);
   }

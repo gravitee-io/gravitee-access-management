@@ -15,13 +15,13 @@
  */
 import { Injectable } from '@angular/core';
 import moment, { DurationInputArg1, DurationInputArg2 } from 'moment';
+import { duration } from 'moment/moment';
 
 @Injectable()
 export class TimeConverterService {
   getTime(value: DurationInputArg1, unit: DurationInputArg2 = 'seconds') {
     if (value) {
-      const humanizeDate = moment.duration(value, unit).humanize().split(' ');
-      return humanizeDate.length === 2 ? (humanizeDate[0] === 'a' || humanizeDate[0] === 'an' ? 1 : humanizeDate[0]) : value;
+      return this.getExpiresIn(value, unit);
     }
     return null;
   }
@@ -29,18 +29,26 @@ export class TimeConverterService {
   getUnitTime(value: DurationInputArg1, unit: DurationInputArg2 = 'seconds') {
     if (value) {
       const humanizeDate = moment.duration(value, unit).humanize().split(' ');
-      return humanizeDate.length === 2
-        ? humanizeDate[1].endsWith('s')
-          ? humanizeDate[1]
-          : humanizeDate[1] + 's'
-        : humanizeDate[2].endsWith('s')
-          ? humanizeDate[2]
-          : humanizeDate[2] + 's';
+      return this.extractUnitTime(humanizeDate);
     }
     return 'seconds';
   }
 
+  extractUnitTime(humanizeDate: string[]): string {
+    const index = humanizeDate.length === 2 ? 1 : 2;
+    return humanizeDate[index].endsWith('s') ? humanizeDate[index] : humanizeDate[index] + 's';
+  }
+
   getHumanTime(value: DurationInputArg1, unit: DurationInputArg2 = 'seconds') {
     return moment.duration(value, unit).humanize();
+  }
+
+  private getExpiresIn(value, unit: DurationInputArg2 = 'seconds') {
+    const humanizeDate = duration(value, unit).humanize().split(' ');
+    if (humanizeDate.length === 2) {
+      return humanizeDate[0] === 'a' || humanizeDate[0] === 'an' ? 1 : humanizeDate[0];
+    } else {
+      return value;
+    }
   }
 }

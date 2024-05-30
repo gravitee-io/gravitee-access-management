@@ -130,12 +130,6 @@ export class DomainService {
     });
   }
 
-  patchPasswordSettings(id, domain): Observable<any> {
-    return this.http.patch<any>(this.domainsURL + id, {
-      passwordSettings: domain.passwordSettings,
-    });
-  }
-
   patchWebAuthnSettings(id, domain): Observable<any> {
     return this.http.patch<any>(this.domainsURL + id, {
       webAuthnSettings: domain.webAuthnSettings,
@@ -165,7 +159,7 @@ export class DomainService {
       map((response) => {
         const memberships = response.memberships;
         const metadata = response.metadata;
-        const members = memberships.map((m) => {
+        return memberships.map((m) => {
           m.roleName = metadata['roles'][m.roleId] ? metadata['roles'][m.roleId].name : 'Unknown role';
           if (m.memberType === 'user') {
             m.name = metadata['users'][m.memberId] ? metadata['users'][m.memberId].displayName : 'Unknown user';
@@ -174,7 +168,6 @@ export class DomainService {
           }
           return m;
         });
-        return members;
       }),
     );
   }

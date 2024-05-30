@@ -129,7 +129,16 @@ export class UserHistoryComponent implements OnInit {
     const to = this.endDateChanged ? moment(this.endDate).valueOf() : moment().valueOf();
     this.loadingIndicator = true;
     this.userService
-      .audits(this.domainId, this.user.id, this.page.pageNumber, this.page.size, this.eventType, this.eventStatus, from, to)
+      .audits({
+        domainId: this.domainId,
+        userId: this.user.id,
+        page: this.page.pageNumber,
+        size: this.page.size,
+        type: this.eventType,
+        status: this.eventStatus,
+        from: from,
+        to: to,
+      })
       .subscribe((pagedAudits) => {
         this.page.totalElements = pagedAudits.totalCount;
         this.audits = pagedAudits.data;

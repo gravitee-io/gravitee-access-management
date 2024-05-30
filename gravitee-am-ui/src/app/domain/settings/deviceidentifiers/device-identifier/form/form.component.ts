@@ -31,8 +31,8 @@ export class DeviceIdentifierFormComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges) {
     if (changes.deviceIdentifierSchema) {
       const _schema = changes.deviceIdentifierSchema.currentValue;
-      const length = _schema && _schema.properties ? Object.keys(_schema.properties).length : 0;
-      if (_schema && _schema.id && length > 0) {
+      const length = _schema?.properties ? Object.keys(_schema.properties).length : 0;
+      if (_schema?.id && length > 0) {
         this.displayForm = true;
       }
     }

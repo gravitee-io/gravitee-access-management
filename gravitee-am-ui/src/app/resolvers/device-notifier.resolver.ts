@@ -23,7 +23,7 @@ import { DeviceNotifiersService } from '../services/device-notifiers.service';
 export class DeviceNotifierResolver {
   constructor(private notifierService: DeviceNotifiersService) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domainId = route.parent.data['domain'].id;
     const notifierId = route.paramMap.get('notifierId');
     return this.notifierService.get(domainId, notifierId);

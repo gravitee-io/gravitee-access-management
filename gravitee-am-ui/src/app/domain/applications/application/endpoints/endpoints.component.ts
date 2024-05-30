@@ -52,19 +52,19 @@ export class ApplicationEndpointsComponent implements OnInit {
     return this.baseUrl + path;
   }
 
-  uma2Enabled() {
-    return this.domain.uma && this.domain.uma.enabled;
+  uma2Enabled(): boolean {
+    return this.domain.uma?.enabled;
   }
 
-  cibaEnabled() {
-    return this.domain.oidc.cibaSettings && this.domain.oidc.cibaSettings.enabled;
+  cibaEnabled(): boolean {
+    return this.domain.oidc.cibaSettings?.enabled;
   }
 
-  scimEnabled() {
-    return this.domain.scim && this.domain.scim.enabled;
+  scimEnabled(): boolean {
+    return this.domain.scim?.enabled;
   }
 
-  samlEnabled() {
-    return this.domain.saml && this.domain.saml.enabled;
+  samlEnabled(): boolean {
+    return this.domain.saml?.enabled;
   }
 }

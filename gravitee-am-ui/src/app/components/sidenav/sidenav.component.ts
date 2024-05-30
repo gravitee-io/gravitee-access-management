@@ -81,7 +81,7 @@ export class SidenavComponent implements OnInit, OnDestroy {
     this.itemsSubscription.unsubscribe();
   }
 
-  switchEnvironment($event: any) {
+  switchEnvironment($event: any): void {
     const currentEnvironment = this.rawEnvironments.find((element) => element.id === $event);
     this.environmentService.setCurrentEnvironment(currentEnvironment);
     this.router.navigate(['/', 'environments', currentEnvironment.hrids[0]]);

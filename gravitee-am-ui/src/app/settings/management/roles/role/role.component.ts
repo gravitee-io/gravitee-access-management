@@ -72,11 +72,21 @@ export class ManagementRoleComponent implements OnInit {
     this.role.permissions = this.allPermissions.data
       .map((p) => {
         const perms = [];
-        p.create === true ? perms.push(p.permission + '_create') : null;
-        p.read === true ? perms.push(p.permission + '_read') : null;
-        p.list === true ? perms.push(p.permission + '_list') : null;
-        p.update === true ? perms.push(p.permission + '_update') : null;
-        p.delete === true ? perms.push(p.permission + '_delete') : null;
+        if (p.create === true) {
+          perms.push(p.permission + '_create');
+        }
+        if (p.read === true) {
+          perms.push(p.permission + '_read');
+        }
+        if (p.list === true) {
+          perms.push(p.permission + '_list');
+        }
+        if (p.update === true) {
+          perms.push(p.permission + '_update');
+        }
+        if (p.delete === true) {
+          perms.push(p.permission + '_delete');
+        }
         return perms;
       })
       .reduce((x, y) => x.concat(y), []);

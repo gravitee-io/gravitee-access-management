@@ -43,8 +43,8 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
     }
   }
 
-  save() {
-    let loginSettings = Object.assign({}, this.loginSettings);
+  save(): void {
+    let loginSettings = { ...this.loginSettings };
     if (loginSettings.inherited) {
       loginSettings = { inherited: true };
     }
@@ -57,8 +57,8 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
   }
 
-  isInherited() {
-    return this.loginSettings && this.loginSettings.inherited;
+  isInherited(): boolean {
+    return this.loginSettings?.inherited;
   }
 
   enableRegistration(event) {
@@ -66,8 +66,8 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
   }
 
-  isRegistrationEnabled() {
-    return this.loginSettings && this.loginSettings.registerEnabled;
+  isRegistrationEnabled(): boolean {
+    return this.loginSettings?.registerEnabled;
   }
 
   enableForgotPassword(event) {
@@ -76,7 +76,7 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
   }
 
   isForgotPasswordEnabled() {
-    return this.loginSettings && this.loginSettings.forgotPasswordEnabled;
+    return this.loginSettings?.forgotPasswordEnabled;
   }
 
   enablePasswordless(event) {
@@ -85,7 +85,7 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
   }
 
   isPasswordlessEnabled() {
-    return this.loginSettings && this.loginSettings.passwordlessEnabled;
+    return this.loginSettings?.passwordlessEnabled;
   }
 
   enablePasswordlessRememberDevice(event) {
@@ -93,8 +93,8 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
   }
 
-  isPasswordlessRememberDeviceEnabled() {
-    return this.loginSettings && this.loginSettings.passwordlessRememberDeviceEnabled;
+  isPasswordlessRememberDeviceEnabled(): boolean {
+    return this.loginSettings?.passwordlessRememberDeviceEnabled;
   }
 
   enablePasswordlessEnforcePassword(event) {
@@ -102,8 +102,8 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
   }
 
-  isPasswordlessEnforcePasswordEnabled() {
-    return this.loginSettings && this.loginSettings.passwordlessEnforcePasswordEnabled;
+  isPasswordlessEnforcePasswordEnabled(): boolean {
+    return this.loginSettings?.passwordlessEnforcePasswordEnabled;
   }
 
   enablePasswordlessDeviceNaming(event) {
@@ -111,8 +111,8 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
   }
 
-  isPasswordlessDeviceNamingEnabled() {
-    return this.loginSettings && this.loginSettings.passwordlessDeviceNamingEnabled;
+  isPasswordlessDeviceNamingEnabled(): boolean {
+    return this.loginSettings?.passwordlessDeviceNamingEnabled;
   }
 
   enableHideForm(event) {
@@ -120,8 +120,8 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
   }
 
-  isHideFormEnabled() {
-    return this.loginSettings && this.loginSettings.hideForm;
+  isHideFormEnabled(): boolean {
+    return this.loginSettings?.hideForm;
   }
 
   setEnforcePasswordMaxAge(value) {
@@ -137,8 +137,8 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
   }
 
-  isIdentifierFirstLoginEnabled() {
-    return this.loginSettings && this.loginSettings.identifierFirstEnabled;
+  isIdentifierFirstLoginEnabled(): boolean {
+    return this.loginSettings?.identifierFirstEnabled;
   }
 
   isFormValid(): boolean {

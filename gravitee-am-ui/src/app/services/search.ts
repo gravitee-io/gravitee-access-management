@@ -13,22 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export type UTMSource = 'oss_am';
-
-export type UTMCampaign = 'oss_am_to_ee_am';
-
-export class UTM {
-  constructor(
-    private readonly source: UTMSource,
-    private readonly medium: string,
-    private readonly campaign: UTMCampaign,
-  ) {}
-
-  public buildURL(): string {
-    return `https://gravitee.io/self-hosted-trial?utm_source=${this.source}&utm_medium=${this.medium}&utm_campaign=${this.campaign}`;
-  }
-
-  public static ossEnterpriseV4(medium: string): UTM {
-    return new UTM('oss_am', medium, 'oss_am_to_ee_am');
-  }
+export interface SearchParams {
+  domainId: string;
+  userId: string;
+  page: number;
+  size: number;
+  type: string;
+  status: string;
+  from: number;
+  to: number;
 }

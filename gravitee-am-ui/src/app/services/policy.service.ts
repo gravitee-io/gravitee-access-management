@@ -46,10 +46,6 @@ export class PolicyService {
     });
   }
 
-  updateAll(domainId, policies): Observable<any> {
-    return this.http.put<any>(this.providersURL + domainId + '/policies', policies);
-  }
-
   delete(domainId, id): Observable<any> {
     return this.http.delete<any>(this.providersURL + domainId + '/policies/' + id);
   }

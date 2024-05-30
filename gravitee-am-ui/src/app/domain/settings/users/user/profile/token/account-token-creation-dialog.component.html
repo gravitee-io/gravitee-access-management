@@ -33,9 +33,7 @@
 
   <mat-dialog-actions class="actions">
     <div fxLayout="row">
-      <button mat-raised-button [mat-dialog-close]="" color="secondary" type="button" [mat-dialog-close]="" (click)="onCancel()">
-        Cancel
-      </button>
+      <button mat-raised-button [mat-dialog-close]="" color="secondary" type="button" (click)="onCancel()">Cancel</button>
       <button mat-raised-button color="primary" type="button" [mat-dialog-close]="" [disabled]="tokenControl.invalid" (click)="onSubmit()">
         Generate
       </button>

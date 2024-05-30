@@ -50,11 +50,7 @@ export class DeviceNotifiersCreationComponent implements OnInit {
     });
   }
 
-  stepperValid() {
-    return this.deviceNotifier && this.deviceNotifier.name && this.configurationIsValid;
-  }
-
-  setStepper(stepper: MatStepper, step: number) {
-    stepper.selectedIndex = step;
+  stepperValid(): boolean {
+    return this.deviceNotifier?.name && this.configurationIsValid;
   }
 }

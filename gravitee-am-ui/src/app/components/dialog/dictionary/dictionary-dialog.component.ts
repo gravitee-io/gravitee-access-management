@@ -36,7 +36,6 @@ export class DictionaryDialogComponent implements OnInit {
   prop2Label: string;
   title: string;
   languageCodes: Language[];
-  selectedCode = '123';
   languageCtrl = new UntypedFormControl('');
   filtered: Observable<Language[]>;
 
@@ -80,6 +79,6 @@ export class DictionaryDialogComponent implements OnInit {
   }
 
   displayFn(language: Language): string {
-    return language && language.code ? language.code : '';
+    return language?.code ?? '';
   }
 }

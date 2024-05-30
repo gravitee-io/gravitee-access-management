@@ -30,7 +30,7 @@ export class MembershipsResolver {
     private applicationService: ApplicationService,
   ) {}
 
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> {
     if (state.url.startsWith('/settings')) {
       return this.organizationService.members().pipe(
         catchError((__: unknown) => {

@@ -65,8 +65,8 @@ export class ScimComponent implements OnInit {
     this.formChanged = true;
   }
 
-  isSCIMEnabled() {
-    return this.domain.scim && this.domain.scim.enabled;
+  isSCIMEnabled(): boolean {
+    return this.domain.scim?.enabled;
   }
 
   isIdpSelectionEnabled() {

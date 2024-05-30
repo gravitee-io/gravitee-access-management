@@ -23,7 +23,7 @@ import { AlertService } from '../services/alert.service';
 export class AlertNotifierResolver {
   constructor(private alertService: AlertService) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domainId: string = route.parent.data['domain'].id;
     const alertNotifierId: string = route.paramMap.get('alertNotifierId');
 

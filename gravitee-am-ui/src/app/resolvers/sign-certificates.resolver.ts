@@ -23,7 +23,7 @@ import { CertificateService } from '../services/certificate.service';
 export class SignCertificatesResolver {
   constructor(private certificateService: CertificateService) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domainId = route.parent.data['domain'].id;
     return this.certificateService.findByDomainAndUse(domainId, 'sig');
   }

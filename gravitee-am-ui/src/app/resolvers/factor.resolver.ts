@@ -23,7 +23,7 @@ import { FactorService } from '../services/factor.service';
 export class FactorResolver {
   constructor(private factorService: FactorService) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domainId = route.parent.data['domain'].id;
     const factorId = route.paramMap.get('factorId');
     return this.factorService.get(domainId, factorId);

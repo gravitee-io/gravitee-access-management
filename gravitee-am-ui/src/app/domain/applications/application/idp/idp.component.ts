@@ -33,7 +33,6 @@ import { OrganizationService } from '../../../../services/organization.service';
 export class ApplicationIdPComponent implements OnInit {
   private domainId: string;
   private identities: any;
-  priorities: any[];
   loadIdentities = true;
   application: any;
   identityProviders: any[];
@@ -134,7 +133,7 @@ export class ApplicationIdPComponent implements OnInit {
   }
 
   getIdentityProvider(type) {
-    if (this.identities && this.identities[type]) {
+    if (this.identities?.[type]) {
       return this.identities[type];
     }
     return null;
@@ -147,7 +146,7 @@ export class ApplicationIdPComponent implements OnInit {
 
   getIdentityProviderTypeIcon(type) {
     const provider = this.getIdentityProvider(type);
-    if (provider && provider.icon) {
+    if (provider?.icon) {
       const name = provider.displayName ? provider.displayName : provider.name;
       return `<img width="24" height="24" src="${provider.icon}" alt="${name} image" title="${name}"/>`;
     }
@@ -160,11 +159,6 @@ export class ApplicationIdPComponent implements OnInit {
       return provider.displayName ? provider.displayName : provider.name;
     }
     return 'Custom';
-  }
-
-  isIdentityProviderSelected(identityProviderId, identityProviders) {
-    const identityProvider = identityProviders.find((idp) => idp.id === identityProviderId);
-    return identityProvider !== undefined && identityProvider.selected;
   }
 
   add(identityProvider) {

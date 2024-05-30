@@ -15,21 +15,21 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { DomainSettingsFlowsComponent } from './flows.component';
+import { ApplicationFlowsComponent } from './flows.component';
 
 describe('DomainSettingsFlowsComponent', () => {
-  let component: DomainSettingsFlowsComponent;
-  let fixture: ComponentFixture<DomainSettingsFlowsComponent>;
+  let component: ApplicationFlowsComponent;
+  let fixture: ComponentFixture<ApplicationFlowsComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [DomainSettingsFlowsComponent],
+      declarations: [ApplicationFlowsComponent],
       teardown: { destroyAfterEach: false },
     }).compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(DomainSettingsFlowsComponent);
+    fixture = TestBed.createComponent(ApplicationFlowsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
