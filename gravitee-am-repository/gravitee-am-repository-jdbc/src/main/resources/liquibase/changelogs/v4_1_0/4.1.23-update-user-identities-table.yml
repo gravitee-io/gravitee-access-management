@@ -6,11 +6,18 @@ databaseChangeLog:
         #############################
         # Users #
         ############################
+        - addColumn:
+            tableName: user_identities
+            columns:
+              - column: { name: username, type: nvarchar(320), constraints: { nullable: true } }
+
         - createIndex:
             columns:
               - column:
+                  name: username
+              - column:
                   name: provider_id
-            indexName: idx_user_identities_provider
+            indexName: idx_user_identities_username_provider
             tableName: user_identities
             unique: false
 
