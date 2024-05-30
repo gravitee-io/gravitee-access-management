@@ -39,10 +39,6 @@ export class ProviderService {
     return this.http.get<any>(this.providersURL + domainId + '/identities?userProvider=true');
   }
 
-  findOrganizationUserProviders(): Observable<any> {
-    return this.organizationService.identityProviders(true);
-  }
-
   get(domainId, id): Observable<any> {
     return this.http.get<any>(this.providersURL + domainId + '/identities/' + id);
   }

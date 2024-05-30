@@ -25,6 +25,7 @@ import { difference, find, map, remove } from 'lodash';
 import { AuthService } from '../../../../../../services/auth.service';
 import { SnackbarService } from '../../../../../../services/snackbar.service';
 import { ApplicationService } from '../../../../../../services/application.service';
+import { TimeConverterService } from '../../../../../../services/time-converter.service';
 
 @Component({
   selector: 'application-scopes',
@@ -49,6 +50,7 @@ export class ApplicationScopesComponent implements OnInit {
     private snackbarService: SnackbarService,
     private authService: AuthService,
     private dialog: MatDialog,
+    private timeConverterService: TimeConverterService,
   ) {}
 
   ngOnInit() {
@@ -76,8 +78,8 @@ export class ApplicationScopesComponent implements OnInit {
           }
           if (scopeSettings.scopeApproval) {
             this.selectedScopeApprovals[scopeSettings.scope] = {
-              expiresIn: this.getExpiresIn(scopeSettings.scopeApproval),
-              unitTime: this.getUnitTime(scopeSettings.scopeApproval),
+              expiresIn: this.timeConverterService.getTime(scopeSettings.scopeApproval),
+              unitTime: this.timeConverterService.getUnitTime(scopeSettings.scopeApproval),
             };
           }
         }
@@ -197,26 +199,6 @@ export class ApplicationScopesComponent implements OnInit {
 
   displayUnitTime(scopeKey) {
     return this.selectedScopeApprovals[scopeKey] ? this.selectedScopeApprovals[scopeKey].unitTime : null;
-  }
-
-  private getExpiresIn(value) {
-    const humanizeDate = duration(value, 'seconds').humanize().split(' ');
-    const humanizeDateValue =
-      humanizeDate.length === 2 ? (humanizeDate[0] === 'a' || humanizeDate[0] === 'an' ? 1 : humanizeDate[0]) : value;
-    return humanizeDateValue;
-  }
-
-  private getUnitTime(value) {
-    const humanizeDate = duration(value, 'seconds').humanize().split(' ');
-    const humanizeDateUnit =
-      humanizeDate.length === 2
-        ? humanizeDate[1].endsWith('s')
-          ? humanizeDate[1]
-          : humanizeDate[1] + 's'
-        : humanizeDate[2].endsWith('s')
-          ? humanizeDate[2]
-          : humanizeDate[2] + 's';
-    return humanizeDateUnit;
   }
 }
 

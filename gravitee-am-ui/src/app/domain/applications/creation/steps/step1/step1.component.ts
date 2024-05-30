@@ -67,12 +67,12 @@ export class ApplicationCreationStep1Component implements OnInit {
 
   ngOnInit(): void {
     this.domain = this.route.snapshot.data['domain'];
-    if (!this.domain.uma || !this.domain.uma.enabled) {
+    if (!this.domain?.uma.enabled) {
       remove(this.applicationTypes, { type: 'RESOURCE_SERVER' });
     }
   }
 
-  selectApplicationType(selectedApplicationType) {
+  selectApplicationType(selectedApplicationType: string): void {
     this.application.type = selectedApplicationType;
   }
 }

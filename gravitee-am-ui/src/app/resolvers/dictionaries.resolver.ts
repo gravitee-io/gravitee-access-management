@@ -23,7 +23,7 @@ import { I18nDictionaryService } from '../services/dictionary.service';
 export class DictionariesResolver {
   constructor(private dictionaryService: I18nDictionaryService) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domainId = route.parent.data['domain'].id;
     return this.dictionaryService.getAll(domainId);
   }

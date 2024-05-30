@@ -15,10 +15,11 @@
  */
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import moment, { duration, unitOfTime } from 'moment';
+import moment, { unitOfTime } from 'moment';
 
 import { BotDetectionService } from '../../../services/bot-detection.service';
 import { ProviderService } from '../../../services/provider.service';
+import { TimeConverterService } from '../../../services/time-converter.service';
 
 interface Duration {
   time: number;
@@ -78,6 +79,7 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     private route: ActivatedRoute,
     private providerService: ProviderService,
     private botDetectionService: BotDetectionService,
+    private timeConverterService: TimeConverterService,
   ) {}
 
   ngOnInit(): void {
@@ -101,8 +103,8 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     }
   }
 
-  save() {
-    let accountSettings = Object.assign({}, this.accountSettings);
+  save(): void {
+    let accountSettings = { ...this.accountSettings };
     if (accountSettings.inherited) {
       accountSettings = { inherited: true };
     } else {
@@ -158,8 +160,8 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
   }
 
-  isInherited() {
-    return this.accountSettings && this.accountSettings.inherited;
+  isInherited(): boolean {
+    return this.accountSettings?.inherited;
   }
 
   enableBrutForceAuthenticationDetection(event) {
@@ -176,8 +178,8 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     );
   }
 
-  isBrutForceAuthenticationEnabled() {
-    return this.accountSettings && this.accountSettings.loginAttemptsDetectionEnabled;
+  isBrutForceAuthenticationEnabled(): boolean {
+    return this.accountSettings?.loginAttemptsDetectionEnabled;
   }
 
   enableDynamicUserRegistration(event) {
@@ -185,8 +187,8 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
   }
 
-  isDynamicUserRegistrationEnabled() {
-    return this.accountSettings && this.accountSettings.dynamicUserRegistration;
+  isDynamicUserRegistrationEnabled(): boolean {
+    return this.accountSettings?.dynamicUserRegistration;
   }
 
   enableCompleteRegistration(event) {
@@ -194,8 +196,8 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
   }
 
-  isSendVerifyRegistrationAccountEmail() {
-    return this.accountSettings && this.accountSettings.sendVerifyRegistrationAccountEmail;
+  isSendVerifyRegistrationAccountEmail(): boolean {
+    return this.accountSettings?.sendVerifyRegistrationAccountEmail;
   }
 
   enableSendVerifyRegistrationAccountEmail(event) {
@@ -203,8 +205,8 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
   }
 
-  isCompleteRegistrationEnabled() {
-    return this.accountSettings && this.accountSettings.completeRegistrationWhenResetPassword;
+  isCompleteRegistrationEnabled(): boolean {
+    return this.accountSettings?.completeRegistrationWhenResetPassword;
   }
 
   enableAutoLoginAfterRegistration(event) {
@@ -212,8 +214,8 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
   }
 
-  isAutoLoginAfterRegistrationEnabled() {
-    return this.accountSettings && this.accountSettings.autoLoginAfterRegistration;
+  isAutoLoginAfterRegistrationEnabled(): boolean {
+    return this.accountSettings?.autoLoginAfterRegistration;
   }
 
   enableAutoLoginAfterResetPassword(event) {
@@ -221,8 +223,8 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
   }
 
-  isAutoLoginAfterResetPasswordEnabled() {
-    return this.accountSettings && this.accountSettings.autoLoginAfterResetPassword;
+  isAutoLoginAfterResetPasswordEnabled(): boolean {
+    return this.accountSettings?.autoLoginAfterResetPassword;
   }
 
   enableSendRecoverAccountEmail(event) {
@@ -230,8 +232,8 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
   }
 
-  isSendRecoverAccountEmailEnabled() {
-    return this.accountSettings && this.accountSettings.sendRecoverAccountEmail;
+  isSendRecoverAccountEmailEnabled(): boolean {
+    return this.accountSettings?.sendRecoverAccountEmail;
   }
 
   enableRememberMe(event) {
@@ -241,8 +243,8 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     this.rememberMeDuration = this.getHumanizeDuration(this.getDuration(this.rememberMeDuration) || this.defaultRememberMeDurationInSecond);
   }
 
-  isRememberMeEnabled() {
-    return this.accountSettings && this.accountSettings.rememberMe;
+  isRememberMeEnabled(): boolean {
+    return this.accountSettings?.rememberMe;
   }
 
   enableDeletePasswordlessDevicesAfterResetPassword(event) {
@@ -250,8 +252,8 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
   }
 
-  isDeletePasswordlessDevicesAfterResetPasswordEnabled() {
-    return this.accountSettings && this.accountSettings.deletePasswordlessDevicesAfterResetPassword;
+  isDeletePasswordlessDevicesAfterResetPasswordEnabled(): boolean {
+    return this.accountSettings?.deletePasswordlessDevicesAfterResetPassword;
   }
 
   enableBotDetection(event) {
@@ -259,8 +261,8 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
   }
 
-  isBotDetectionEnabled() {
-    return this.accountSettings && this.accountSettings.useBotDetection;
+  isBotDetectionEnabled(): boolean {
+    return this.accountSettings?.useBotDetection;
   }
 
   hasBotDetectionPlugins() {
@@ -272,8 +274,8 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
   }
 
-  isResetPasswordCustomFormEnabled() {
-    return this.accountSettings && this.accountSettings.resetPasswordCustomForm;
+  isResetPasswordCustomFormEnabled(): boolean {
+    return this.accountSettings?.resetPasswordCustomForm;
   }
 
   enableResetPasswordConfirmIdentity(event) {
@@ -281,8 +283,8 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
   }
 
-  isResetPasswordConfirmIdentityEnabled() {
-    return this.accountSettings && this.accountSettings.resetPasswordConfirmIdentity;
+  isResetPasswordConfirmIdentityEnabled(): boolean {
+    return this.accountSettings?.resetPasswordConfirmIdentity;
   }
 
   updateModel() {
@@ -294,51 +296,39 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
   }
 
-  isInvalidateTokensEnabled() {
-    return this.accountSettings && this.accountSettings.resetPasswordInvalidateTokens;
+  isInvalidateTokensEnabled(): boolean {
+    return this.accountSettings?.resetPasswordInvalidateTokens;
   }
 
-  formIsValid() {
+  formIsValid(): boolean {
     if (this.accountSettings.loginAttemptsDetectionEnabled) {
-      if (this.accountSettings.maxLoginAttempts < 1) {
-        return false;
-      }
-      if (this.loginAttemptsResetTime.time < 1) {
-        return false;
-      } else if (!this.loginAttemptsResetTime.unit) {
-        return false;
-      }
-      if (this.accountBlockedDuration.time < 1) {
-        return false;
-      } else if (!this.accountBlockedDuration.unit) {
+      if (
+        this.accountSettings.maxLoginAttempts < 1 ||
+        this.loginAttemptsResetTime.time < 1 ||
+        !this.loginAttemptsResetTime.unit ||
+        this.accountBlockedDuration.time < 1 ||
+        !this.accountBlockedDuration.unit
+      ) {
         return false;
       }
     }
-
     if (this.accountSettings.resetPasswordCustomForm) {
-      return this.selectedFields && this.selectedFields.length > 0;
+      return this.selectedFields?.length > 0;
     }
-
     if (this.accountSettings.mfaChallengeAttemptsDetectionEnabled) {
-      if (this.accountSettings.mfaChallengeMaxAttempts < 1) {
-        return false;
-      }
-      if (this.mfaChallengeAttemptsResetTime.time < 1) {
-        return false;
-      }
-      if (!this.mfaChallengeAttemptsResetTime.unit) {
+      if (
+        this.accountSettings.mfaChallengeMaxAttempts < 1 ||
+        this.mfaChallengeAttemptsResetTime.time < 1 ||
+        !this.mfaChallengeAttemptsResetTime.unit
+      ) {
         return false;
       }
     }
-
     if (this.accountSettings.rememberMe) {
-      if (this.rememberMeDuration.time < 1) {
-        return false;
-      } else if (!this.rememberMeDuration.unit) {
+      if (this.rememberMeDuration.time < 1 || !this.rememberMeDuration.unit) {
         return false;
       }
     }
-
     return true;
   }
 
@@ -373,16 +363,8 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
   }
 
   private getHumanizeDuration(value): Duration {
-    const humanizeDate = duration(value, 'seconds').humanize().split(' ');
-    const time = humanizeDate.length === 2 ? (humanizeDate[0] === 'a' || humanizeDate[0] === 'an' ? 1 : humanizeDate[0]) : value;
-    const unit =
-      humanizeDate.length === 2
-        ? humanizeDate[1].endsWith('s')
-          ? humanizeDate[1]
-          : humanizeDate[1] + 's'
-        : humanizeDate[2].endsWith('s')
-          ? humanizeDate[2]
-          : humanizeDate[2] + 's';
+    const time = this.timeConverterService.getTime(value);
+    const unit = this.timeConverterService.extractUnitTime(time);
     return { time, unit };
   }
 
@@ -390,8 +372,8 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     return moment.duration(duration.time, <unitOfTime.DurationConstructor>duration.unit).asSeconds();
   }
 
-  isMFAChallengeBrutForceAuthenticationEnabled() {
-    return this.accountSettings && this.accountSettings.mfaChallengeAttemptsDetectionEnabled;
+  isMFAChallengeBrutForceAuthenticationEnabled(): boolean {
+    return this.accountSettings?.mfaChallengeAttemptsDetectionEnabled;
   }
 
   enableMFABrutForceAuthenticationDetection(event) {
@@ -410,7 +392,7 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
   }
 
-  isMFAChallengeSendVerifyAlertEmailEnabled() {
-    return this.accountSettings && this.accountSettings.mfaChallengeSendVerifyAlertEmail;
+  isMFAChallengeSendVerifyAlertEmailEnabled(): boolean {
+    return this.accountSettings?.mfaChallengeSendVerifyAlertEmail;
   }
 }

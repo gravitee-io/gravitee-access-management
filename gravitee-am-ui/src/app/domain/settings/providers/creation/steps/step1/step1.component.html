@@ -25,9 +25,6 @@
       <mat-icon matPrefix>search</mat-icon>
       <mat-label>Filter providers...</mat-label>
       <input matInput type="search" [(ngModel)]="filter" autocomplete="off" (ngModelChange)="onFilterChange()" />
-      <button mat-button mat-icon-button matSuffix (click)="clear()" *ngIf="filter">
-        <mat-icon>close</mat-icon>
-      </button>
     </mat-form-field>
   </div>
 

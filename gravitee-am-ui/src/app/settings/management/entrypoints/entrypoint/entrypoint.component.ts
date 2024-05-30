@@ -78,10 +78,10 @@ export class EntrypointComponent implements OnInit {
     this.entrypoint.tags = map(this.selectedTags, (tag) => tag.id);
   }
 
-  update() {
+  update(): void {
     this.entrypointService.update(this.entrypoint.id, this.entrypoint).subscribe((data) => {
       this.entrypoint = data;
-      this.entrypointForm.reset(Object.assign({}, this.entrypoint));
+      this.entrypointForm.reset({ ...this.entrypoint });
       this.snackbarService.open('Entrypoint updated');
     });
   }

@@ -26,7 +26,6 @@ import { SnackbarService } from '../../../../services/snackbar.service';
   styleUrls: ['./provider-creation.component.scss'],
 })
 export class ProviderCreationComponent implements OnInit {
-  private identities: any[];
   public provider: any = {};
   private domainId: string;
   private organizationContext: boolean;
@@ -42,7 +41,6 @@ export class ProviderCreationComponent implements OnInit {
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
-    this.identities = this.route.snapshot.data['identities'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }
@@ -56,6 +54,6 @@ export class ProviderCreationComponent implements OnInit {
   }
 
   stepperValid() {
-    return this.provider && this.provider.name && this.configurationIsValid;
+    return this.provider?.name && this.configurationIsValid;
   }
 }

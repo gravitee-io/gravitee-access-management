@@ -53,7 +53,7 @@ export class DomainSettingsResourcesComponent implements OnInit {
 
   getResourceTypeIcon(type) {
     const res = this.getResourcePlugin(type);
-    if (res && res.icon) {
+    if (res?.icon) {
       const name = this.displayType(type);
       return `<img width="24" height="24" src="${res.icon}" alt="${name} image" title="${name}"/>`;
     }

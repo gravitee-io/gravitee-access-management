@@ -16,9 +16,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { SidenavService } from '../components/sidenav/sidenav.service';
 import { DomainService } from '../services/domain.service';
-import { NavbarService } from '../components/navbar/navbar.service';
 import { SnackbarService } from '../services/snackbar.service';
 import { AuthService } from '../services/auth.service';
 
@@ -34,8 +32,6 @@ export class DomainComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private sidenavService: SidenavService,
-    private navbarService: NavbarService,
     private snackbarService: SnackbarService,
     private domainService: DomainService,
     private authService: AuthService,

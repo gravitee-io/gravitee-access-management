@@ -45,7 +45,7 @@ export class DomainSettingsEmailsComponent implements OnInit {
     });
   }
 
-  private allowResetPassword() {
-    return this.domain.loginSettings && this.domain.loginSettings.forgotPasswordEnabled;
+  private allowResetPassword(): boolean {
+    return this.domain.loginSettings?.forgotPasswordEnabled;
   }
 }

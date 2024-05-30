@@ -77,7 +77,7 @@ export class EmailComponent implements OnInit, AfterViewInit {
 
     this.email = this.route.snapshot.data['email'];
 
-    if (this.email && this.email.content) {
+    if (this.email?.content) {
       this.emailContent = this.email.content;
       this.originalEmailContent = (' ' + this.emailContent).slice(1);
       this.emailFound = true;
@@ -95,8 +95,8 @@ export class EmailComponent implements OnInit, AfterViewInit {
     this.enableCodeMirror();
   }
 
-  isEnabled() {
-    return this.email && this.email.enabled;
+  isEnabled(): boolean {
+    return this.email?.enabled;
   }
 
   enableEmail(event) {

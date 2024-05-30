@@ -181,7 +181,7 @@ export class DomainPasswordPolicyComponent implements OnInit {
 
   private getIdentityProviderDetails(type: string) {
     const identities = this.route.snapshot.data['identities'];
-    if (identities && identities[type]) {
+    if (identities?.[type]) {
       return identities[type];
     }
   }

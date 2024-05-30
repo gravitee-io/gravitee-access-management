@@ -15,21 +15,21 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { DomainSettingsMembershipsComponent } from './memberships.component';
+import { SettingsMembershipsComponent } from './memberships.component';
 
-describe('DomainSettingsMembershipsComponent', () => {
-  let component: DomainSettingsMembershipsComponent;
-  let fixture: ComponentFixture<DomainSettingsMembershipsComponent>;
+describe('SettingsMembershipsComponent', () => {
+  let component: SettingsMembershipsComponent;
+  let fixture: ComponentFixture<SettingsMembershipsComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [DomainSettingsMembershipsComponent],
+      declarations: [SettingsMembershipsComponent],
       teardown: { destroyAfterEach: false },
     }).compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(DomainSettingsMembershipsComponent);
+    fixture = TestBed.createComponent(SettingsMembershipsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

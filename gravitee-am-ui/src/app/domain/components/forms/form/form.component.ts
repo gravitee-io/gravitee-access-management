@@ -70,7 +70,7 @@ export class FormComponent implements OnInit, AfterViewInit {
 
     this.form = this.route.snapshot.data['form'];
 
-    if (this.form && this.form.id) {
+    if (this.form?.id) {
       this.formFound = true;
     }
     if (this.form?.content !== undefined) {
@@ -88,8 +88,8 @@ export class FormComponent implements OnInit, AfterViewInit {
     this.enableCodeMirror();
   }
 
-  isEnabled() {
-    return this.form && this.form.enabled;
+  isEnabled(): boolean {
+    return this.form?.enabled;
   }
 
   enableForm(event) {

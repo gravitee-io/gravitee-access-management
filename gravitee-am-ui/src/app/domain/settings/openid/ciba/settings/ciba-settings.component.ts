@@ -94,11 +94,11 @@ export class CibaSettingsComponent implements OnInit {
     this.formChanged = true;
   }
 
-  isCIBAEnabled() {
-    return this.domain.oidc.cibaSettings && this.domain.oidc.cibaSettings.enabled;
+  isCIBAEnabled(): boolean {
+    return this.domain.oidc.cibaSettings?.enabled;
   }
 
-  modelChanged() {
+  modelChanged(): void {
     this.formChanged = true;
   }
 }

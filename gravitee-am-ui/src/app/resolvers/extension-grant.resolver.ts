@@ -23,7 +23,7 @@ import { ExtensionGrantService } from '../services/extension-grant.service';
 export class ExtensionGrantResolver {
   constructor(private extensionGrantService: ExtensionGrantService) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domainId: string = route.parent.data['domain'].id;
     const tokenGranterId: string = route.paramMap.get('extensionGrantId');
     return this.extensionGrantService.get(domainId, tokenGranterId);

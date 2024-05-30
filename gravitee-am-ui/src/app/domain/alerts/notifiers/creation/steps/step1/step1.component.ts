@@ -36,7 +36,7 @@ export class DomainAlertNotifierCreationStep1Component implements OnInit {
   }
 
   getNotifierIcon(notifier) {
-    if (notifier && notifier.icon) {
+    if (notifier?.icon) {
       return `<img mat-card-avatar src="${notifier.icon}" alt="${notifier.name} image" title="${notifier.name}"/>`;
     }
     return `<i class="material-icons">notifications</i>`;

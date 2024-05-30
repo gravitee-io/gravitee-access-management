@@ -75,7 +75,7 @@ export class MembershipsComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     const members = changes.resourceMembers;
-    if (members && members.currentValue) {
+    if (members?.currentValue) {
       this.members = members.currentValue;
     }
   }
@@ -131,7 +131,7 @@ export class MembershipsComponent implements OnInit, OnChanges {
   }
 
   isPrimaryOwner(membership) {
-    return membership.roleName && membership.roleName.endsWith('_PRIMARY_OWNER');
+    return membership?.roleName.endsWith('_PRIMARY_OWNER');
   }
 
   isRoleDisabled(role) {

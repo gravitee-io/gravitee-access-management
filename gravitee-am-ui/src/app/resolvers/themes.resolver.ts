@@ -23,7 +23,7 @@ import { ThemeService } from '../services/theme.service';
 export class ThemesResolver {
   constructor(private themeService: ThemeService) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domainId = route.parent.data['domain'].id;
     return this.themeService.getAll(domainId);
   }

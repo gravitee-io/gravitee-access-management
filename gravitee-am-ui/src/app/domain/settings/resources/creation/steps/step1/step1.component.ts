@@ -67,7 +67,7 @@ export class ResourceCreationStep1Component implements OnInit, OnDestroy {
   }
 
   getIcon(resource) {
-    if (resource && resource.icon) {
+    if (resource?.icon) {
       const title = this.displayName(resource);
       return `<img mat-card-avatar src="${resource.icon}" alt="${title} image" title="${title}"/>`;
     }

@@ -261,11 +261,7 @@ export class DomainSettingsDictionariesComponent implements OnInit {
       file.text().then((content) => {
         this.formContent = content;
         try {
-          const parse = JSON.parse(content);
-          const entries = [];
-          Object.entries(parse).forEach((mapEntry) => {
-            entries.push(mapEntry);
-          });
+          JSON.parse(content);
         } catch (e) {
           this.snackbarService.open('JSON file was invalid');
         }

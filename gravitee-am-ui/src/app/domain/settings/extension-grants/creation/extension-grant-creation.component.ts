@@ -50,7 +50,7 @@ export class ExtensionGrantCreationComponent implements OnInit {
     });
   }
 
-  stepperValid() {
-    return this.extensionGrant && this.extensionGrant.name && this.extensionGrant.grantType && this.configurationIsValid;
+  stepperValid(): boolean {
+    return this.extensionGrant?.name && this.extensionGrant.grantType && this.configurationIsValid;
   }
 }

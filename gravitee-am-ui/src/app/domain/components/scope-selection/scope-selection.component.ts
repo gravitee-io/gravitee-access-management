@@ -70,13 +70,10 @@ export class ScopeSelectionComponent implements OnInit, AfterViewInit {
   ngAfterViewInit() {
     // implement custom sort to manage select checkbox
     this.scopes.sortingDataAccessor = (scope, property) => {
-      switch (property) {
-        case 'select': {
-          return this.selection.isSelected(scope) ? 0 : 1;
-        }
-        default: {
-          return scope[property];
-        }
+      if (property === 'select') {
+        return this.selection.isSelected(scope) ? 0 : 1;
+      } else {
+        return scope[property];
       }
     };
     this.applySort();

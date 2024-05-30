@@ -33,7 +33,6 @@ export class ApplicationSaml2Component implements OnInit {
   formChanged: boolean;
   editMode: boolean;
   certificates: any[] = [];
-  certificatePublicKeys: any[] = [];
   bindings: any[] = [
     { name: 'Initial-Request', value: 'urn:oasis:names:tc:SAML:2.0:bindings:custom:Initial-Request' },
     { name: 'HTTP-POST', value: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' },

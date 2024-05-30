@@ -88,9 +88,9 @@ export class NavigationService implements OnDestroy {
       breadcrumbItems = this.getBreadcrumbItems(route.parent);
 
       const routeConfig = route.routeConfig;
-      const breadcrumbData = routeConfig && routeConfig.data && routeConfig.data.breadcrumb;
+      const breadcrumbData = routeConfig?.data?.breadcrumb;
 
-      if (routeConfig && !(breadcrumbData && breadcrumbData.disabled) && routeConfig.path !== '') {
+      if (routeConfig && !breadcrumbData?.disabled && routeConfig.path !== '') {
         breadcrumbItems.push({
           label: this.resolveLabel(breadcrumbData, routeConfig.path, route.data),
           path: this.resolvePath(route),
@@ -104,10 +104,10 @@ export class NavigationService implements OnDestroy {
   getMenuItems(route: ActivatedRouteSnapshot): MenuItem[] {
     let menuItems: MenuItem[] = [];
 
-    if (route && route.parent) {
-      if (route.parent.routeConfig && route.parent.routeConfig.children) {
+    if (route?.parent) {
+      if (route.parent.routeConfig?.children) {
         route.parent.routeConfig.children.forEach((siblingRoute) => {
-          if (siblingRoute.data && siblingRoute.data.menu && this.authGuard.canDisplay(route.parent, siblingRoute)) {
+          if (siblingRoute.data?.menu && this.authGuard.canDisplay(route.parent, siblingRoute)) {
             const isMissingFeature$ = this.licenseGuard.isMissingFeature$(siblingRoute);
             const licenseOptions = this.licenseGuard.getLicenseOptions(siblingRoute);
             const iconRight$ = isMissingFeature$.pipe(map((isMissingFeature) => (isMissingFeature ? 'gio:lock' : undefined)));
@@ -156,9 +156,9 @@ export class NavigationService implements OnDestroy {
   }
 
   resolveLabel(data: any, alt: string, data1: Data): string {
-    if (data && data.label) {
+    if (data?.label) {
       const resolved = this.getProperty(data.label, data1);
-      const label = resolved ? resolved : data.label;
+      const label = resolved || data.label;
 
       if (data.applyOnLabel && typeof data.applyOnLabel === 'function') {
         return data.applyOnLabel(label);

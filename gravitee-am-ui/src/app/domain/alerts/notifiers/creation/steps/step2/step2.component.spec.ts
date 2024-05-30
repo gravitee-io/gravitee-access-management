@@ -15,21 +15,21 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { ProviderCreationStep2Component } from './step2.component';
+import { DomainAlertNotifierCreationStep2Component } from './step2.component';
 
 describe('Step2Component', () => {
-  let component: ProviderCreationStep2Component;
-  let fixture: ComponentFixture<ProviderCreationStep2Component>;
+  let component: DomainAlertNotifierCreationStep2Component;
+  let fixture: ComponentFixture<DomainAlertNotifierCreationStep2Component>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ProviderCreationStep2Component],
+      declarations: [DomainAlertNotifierCreationStep2Component],
       teardown: { destroyAfterEach: false },
     }).compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(ProviderCreationStep2Component);
+    fixture = TestBed.createComponent(DomainAlertNotifierCreationStep2Component);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 
 import { OrganizationService } from '../../../../../../../../services/organization.service';
 
@@ -31,10 +30,7 @@ export class DeviceNotifierCreationStep2Component implements OnInit {
   configuration: any;
   deviceNotifierSchema: any = {};
 
-  constructor(
-    private organizationService: OrganizationService,
-    private route: ActivatedRoute,
-  ) {}
+  constructor(private organizationService: OrganizationService) {}
 
   ngOnInit() {
     this.organizationService.deviceNotifierSchema(this.deviceNotifier.type).subscribe((data) => {

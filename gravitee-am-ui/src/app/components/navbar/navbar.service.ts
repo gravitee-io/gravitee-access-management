@@ -21,7 +21,7 @@ export class NavbarService {
   private currentDomain = new ReplaySubject<any>(1);
   public currentDomainObs$ = this.currentDomain.asObservable();
 
-  notifyDomain(data) {
+  notifyDomain(data: any): void {
     if (data) {
       this.currentDomain.next(data);
     }

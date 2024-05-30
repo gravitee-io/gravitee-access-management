@@ -24,7 +24,7 @@ import { EnvironmentService } from '../services/environment.service';
 export class EnvironmentResolver {
   constructor(private environmentService: EnvironmentService) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const envHrid = route.paramMap.get('envHrid');
     return this.environmentService
       .getEnvironmentById(envHrid)

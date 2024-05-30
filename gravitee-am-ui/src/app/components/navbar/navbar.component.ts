@@ -21,7 +21,6 @@ import { switchMap, takeUntil, tap } from 'rxjs/operators';
 import { UserNotificationsService } from '../../services/user-notifications.service';
 import { AuthService } from '../../services/auth.service';
 import { DomainService } from '../../services/domain.service';
-import { SnackbarService } from '../../services/snackbar.service';
 import { SidenavService } from '../sidenav/sidenav.service';
 import { EnvironmentService } from '../../services/environment.service';
 import { AppConfig } from '../../../config/app.config';
@@ -35,22 +34,21 @@ import { NavbarService } from './navbar.service';
 })
 export class NavbarComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();
+  private readonly REFRESH_INTERVAL_MS = 10000;
+
   title = AppConfig.settings.portalTitle;
   version = AppConfig.settings.version;
   reducedMode = false;
   domains: any[];
   currentDomain: any = {};
   navLinks: any[];
-  currentEnvironment;
+  currentEnvironment: any;
   notifications: any[];
-  // notification refresh interval in millis
-  readonly REFRESH_INTERVAL = 10000;
 
   constructor(
     private authService: AuthService,
     private domainService: DomainService,
     private navbarService: NavbarService,
-    private snackbarService: SnackbarService,
     private sidenavService: SidenavService,
     private environmentService: EnvironmentService,
     public router: Router,
@@ -101,7 +99,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   private fetchListNotificationsInterval() {
-    return interval(this.REFRESH_INTERVAL).pipe(
+    return interval(this.REFRESH_INTERVAL_MS).pipe(
       switchMap(() => this.userNotificationsService.listNotifications()),
       tap((data) => (this.notifications = data)),
     );

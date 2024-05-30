@@ -50,11 +50,7 @@ export class FactorCreationComponent implements OnInit {
     });
   }
 
-  stepperValid() {
-    return this.factor && this.factor.name && this.configurationIsValid;
-  }
-
-  setStepper(stepper: MatStepper, step: number) {
-    stepper.selectedIndex = step;
+  stepperValid(): boolean {
+    return this.factor?.name && this.configurationIsValid;
   }
 }

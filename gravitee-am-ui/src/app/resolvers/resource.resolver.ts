@@ -23,7 +23,7 @@ import { ResourceService } from '../services/resource.service';
 export class ResourceResolver {
   constructor(private resourceService: ResourceService) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domainId = route.parent.data['domain'].id;
     const resourceId: string = route.paramMap.get('resourceId');
     return this.resourceService.get(domainId, resourceId);

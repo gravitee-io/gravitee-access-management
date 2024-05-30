@@ -19,16 +19,11 @@ import { Observable } from 'rxjs';
 
 import { AppConfig } from '../../config/app.config';
 
-import { DomainService } from './domain.service';
-
 @Injectable()
 export class AlertService {
   private alertsURL: string = AppConfig.settings.domainBaseURL;
 
-  constructor(
-    private http: HttpClient,
-    private domainService: DomainService,
-  ) {}
+  constructor(private http: HttpClient) {}
 
   getAlertTriggers(domainId: string): Observable<any[]> {
     return this.http.get<any>(this.alertsURL + domainId + '/alerts/triggers');

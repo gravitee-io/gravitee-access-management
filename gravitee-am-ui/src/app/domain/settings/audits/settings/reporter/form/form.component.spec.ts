@@ -15,21 +15,21 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { ExtensionGrantFormComponent } from './form.component';
+import { ReporterFormComponent } from './form.component';
 
 describe('ExtensionGrantFormComponent', () => {
-  let component: ExtensionGrantFormComponent;
-  let fixture: ComponentFixture<ExtensionGrantFormComponent>;
+  let component: ReporterFormComponent;
+  let fixture: ComponentFixture<ReporterFormComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ExtensionGrantFormComponent],
+      declarations: [ReporterFormComponent],
       teardown: { destroyAfterEach: false },
     }).compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(ExtensionGrantFormComponent);
+    fixture = TestBed.createComponent(ReporterFormComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

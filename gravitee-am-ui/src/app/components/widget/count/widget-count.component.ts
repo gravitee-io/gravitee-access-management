@@ -27,7 +27,7 @@ export class WidgetCountComponent implements OnChanges {
   value: number;
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.chart.currentValue && changes.chart.currentValue.response) {
+    if (changes.chart.currentValue?.response) {
       this.value = changes.chart.currentValue.response.value;
     }
   }

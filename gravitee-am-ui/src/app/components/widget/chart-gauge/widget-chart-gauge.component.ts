@@ -29,7 +29,7 @@ export class WidgetChartGaugeComponent implements OnChanges {
   chartOptions: Highcharts.Options;
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.chart.currentValue && changes.chart.currentValue.response) {
+    if (changes.chart.currentValue?.response) {
       const response = changes.chart.currentValue.response;
       const max = response.values['total'];
       const current = Object.keys(response.values)

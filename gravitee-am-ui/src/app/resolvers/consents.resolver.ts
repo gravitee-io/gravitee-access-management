@@ -23,7 +23,7 @@ import { UserService } from '../services/user.service';
 export class ConsentsResolver {
   constructor(private userService: UserService) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domainId = route.parent.data['domain'].id;
     const userId = route.paramMap.get('userId');
     let clientId = route.paramMap.get('clientId');

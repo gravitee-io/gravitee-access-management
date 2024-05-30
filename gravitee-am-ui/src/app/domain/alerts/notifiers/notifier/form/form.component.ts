@@ -31,7 +31,7 @@ export class AlertNotifierFormComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges) {
     if (changes.notifierSchema) {
       const notifierSchema = changes.notifierSchema.currentValue;
-      if (notifierSchema && notifierSchema.id) {
+      if (notifierSchema?.id) {
         this.displayForm = true;
       }
     }

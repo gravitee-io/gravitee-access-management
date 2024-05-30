@@ -77,7 +77,17 @@ describe('AuditService', () => {
       const to = 1609718400000;
       const auditResponse = { currentPage: 0, data: [], totalCount: 0 };
 
-      auditService.search(domainId, page, size, type, status, user, from, to, false).subscribe((result) => {
+      const searchParams = {
+        domainId: domainId,
+        userId: user,
+        page: page,
+        size: size,
+        type: type,
+        status: status,
+        from: from,
+        to: to,
+      };
+      auditService.search(searchParams, false).subscribe((result) => {
         expect(result).toEqual(auditResponse);
         done();
       });

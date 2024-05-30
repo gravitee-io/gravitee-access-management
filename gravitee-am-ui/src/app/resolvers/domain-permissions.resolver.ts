@@ -23,7 +23,7 @@ import { DomainService } from '../services/domain.service';
 export class DomainPermissionsResolver {
   constructor(private domainService: DomainService) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domainId = route.parent.data['domain'].id;
     return this.domainService.permissions(domainId);
   }

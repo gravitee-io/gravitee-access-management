@@ -15,21 +15,21 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { FormComponent } from './form.component';
+import { DomainSettingsFormComponent } from './form.component';
 
 describe('FormComponent', () => {
-  let component: FormComponent;
-  let fixture: ComponentFixture<FormComponent>;
+  let component: DomainSettingsFormComponent;
+  let fixture: ComponentFixture<DomainSettingsFormComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [FormComponent],
+      declarations: [DomainSettingsFormComponent],
       teardown: { destroyAfterEach: false },
     }).compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(FormComponent);
+    fixture = TestBed.createComponent(DomainSettingsFormComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

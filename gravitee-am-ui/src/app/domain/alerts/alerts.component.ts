@@ -16,8 +16,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { AuthService } from '../../services/auth.service';
-
 @Component({
   selector: 'app-domain-alerts',
   templateUrl: './alerts.component.html',
@@ -29,15 +27,10 @@ export class DomainAlertsComponent implements OnInit {
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    private authService: AuthService,
   ) {}
 
   ngOnInit() {
     this.alertStatus = this.route.snapshot.data.alertStatus;
     this.router.navigateByUrl(this.router.url);
-  }
-
-  private canNavigate(permissions): boolean {
-    return this.authService.hasPermissions(permissions);
   }
 }

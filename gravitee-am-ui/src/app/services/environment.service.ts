@@ -24,7 +24,7 @@ import { AuthService } from './auth.service';
 
 @Injectable()
 export class EnvironmentService {
-  public static NO_ENVIRONMENT = 'NO_ENVIRONMENT';
+  public static readonly NO_ENVIRONMENT = 'NO_ENVIRONMENT';
 
   private organizationURL = AppConfig.settings.organizationBaseURL;
   private currentEnvironment;

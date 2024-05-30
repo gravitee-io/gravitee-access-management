@@ -27,9 +27,9 @@ import { Chart } from '../widget.model';
 export class WidgetChartLineComponent implements OnChanges {
   @Input() Highcharts: typeof Highcharts;
   @Input() chart: Chart;
-  chartOptions;
+  chartOptions: any;
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.chart.currentValue && changes.chart.currentValue.response) {
+    if (changes.chart.currentValue?.response) {
       const response = changes.chart.currentValue.response;
       const plotOptions = {
         series: {

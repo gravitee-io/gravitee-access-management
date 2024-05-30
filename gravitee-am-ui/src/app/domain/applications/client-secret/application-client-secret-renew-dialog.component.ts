@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 
-import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-
-export type ApplicationClientSecretRenewDialogData = void;
-
-export type ApplicationClientSecretRenewDialogResult = string;
+import { Component } from '@angular/core';
+import { MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'application-client-secret-renew-dialog',
@@ -27,8 +23,5 @@ export type ApplicationClientSecretRenewDialogResult = string;
   styleUrls: ['./application-client-secret-dialog.component.scss'],
 })
 export class ApplicationClientSecretRenewDialogComponent {
-  constructor(
-    @Inject(MAT_DIALOG_DATA) dialogData: ApplicationClientSecretRenewDialogData,
-    public dialogRef: MatDialogRef<ApplicationClientSecretRenewDialogData, ApplicationClientSecretRenewDialogResult>,
-  ) {}
+  constructor(public dialogRef: MatDialogRef<void, string>) {}
 }

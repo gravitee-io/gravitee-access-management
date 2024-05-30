@@ -414,7 +414,7 @@
                         </ul>
                     </div>
                     <div>
-                        <img th:src="${factor.enrollment.barcode}" width="200" />
+                        <img th:src="${factor.enrollment.barcode}" width="200" alt="Factor enrollment barcode"/>
                     </div>
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                     <input type="hidden" th:name="sharedSecret" th:value="${factor.enrollment.key}" />

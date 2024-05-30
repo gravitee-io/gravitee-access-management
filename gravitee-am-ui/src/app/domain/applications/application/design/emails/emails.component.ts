@@ -54,7 +54,7 @@ export class ApplicationEmailsComponent implements OnInit {
     if (this.application.type) {
       return this.application.type !== 'service';
     }
-    if (this.application.settings && this.application.settings.oauth && this.application.settings.oauth.grantTypes) {
+    if (this.application.settings?.oauth?.grantTypes) {
       return (
         this.application.settings.oauth.grantTypes.includes('authorization_code') ||
         this.application.settings.oauth.grantTypes.includes('implicit')
@@ -63,10 +63,10 @@ export class ApplicationEmailsComponent implements OnInit {
     return false;
   }
 
-  allowResetPassword() {
-    if (this.application.settings && this.application.settings.login && !this.application.settings.login.inherited) {
+  allowResetPassword(): boolean {
+    if (this.application.settings?.login && !this.application.settings.login.inherited) {
       return this.application.settings.login.forgotPasswordEnabled;
     }
-    return this.domain.loginSettings && this.domain.loginSettings.forgotPasswordEnabled;
+    return this.domain.loginSettings?.forgotPasswordEnabled;
   }
 }

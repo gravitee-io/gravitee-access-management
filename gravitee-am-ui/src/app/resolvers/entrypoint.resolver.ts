@@ -23,7 +23,7 @@ import { EntrypointService } from '../services/entrypoint.service';
 export class EntrypointResolver {
   constructor(private entrypointService: EntrypointService) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const entrypointId: string = route.paramMap.get('entrypointId');
     return this.entrypointService.get(entrypointId);
   }

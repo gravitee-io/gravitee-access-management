@@ -31,7 +31,7 @@ export class ExtensionGrantFormComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges) {
     if (changes.extensionGrantSchema) {
       const _extensionGrantSchema = changes.extensionGrantSchema.currentValue;
-      if (_extensionGrantSchema && _extensionGrantSchema.id) {
+      if (_extensionGrantSchema?.id) {
         this.displayForm = true;
       }
     }

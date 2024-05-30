@@ -36,7 +36,7 @@ export class ProviderFormComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges) {
     if (changes.providerSchema) {
       const _providerSchema = changes.providerSchema.currentValue;
-      if (_providerSchema && _providerSchema.id) {
+      if (_providerSchema?.id) {
         this.displayForm = true;
       }
     }

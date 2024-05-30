@@ -58,7 +58,7 @@ export class DomainAlertNotifiersComponent implements OnInit {
 
   getNotifierIcon(type) {
     const notifier = this.notifiersByType[type];
-    if (notifier && notifier.icon) {
+    if (notifier?.icon) {
       return `<img width="24" height="24" src="${notifier.icon}" alt="${notifier.name} image" title="${notifier.name}"/>`;
     }
     return `<span class="material-icons">notifications</span>`;

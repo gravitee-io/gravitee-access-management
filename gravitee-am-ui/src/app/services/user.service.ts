@@ -22,6 +22,7 @@ import { AppConfig } from '../../config/app.config';
 import { toHttpParams } from '../utils/http-utils';
 
 import { OrganizationService } from './organization.service';
+import { SearchParams } from './search';
 
 @Injectable()
 export class UserService {
@@ -162,15 +163,15 @@ export class UserService {
     return this.http.delete<any>(this.usersURL + domainId + '/users/' + userId + '/devices/' + deviceId);
   }
 
-  audits(domainId, userId, page: number, size: number, type: string, status: string, from: number, to: number): Observable<any> {
-    return this.http.get<any>(this.usersURL + domainId + '/users/' + userId + '/audits', {
+  audits(searchParams: SearchParams): Observable<any> {
+    return this.http.get<any>(this.usersURL + searchParams.domainId + '/users/' + searchParams.userId + '/audits', {
       params: toHttpParams({
-        page,
-        size,
-        type,
-        status,
-        from,
-        to,
+        page: searchParams.page,
+        size: searchParams.size,
+        type: searchParams.type,
+        status: searchParams.status,
+        from: searchParams.from,
+        to: searchParams.to,
       }),
     });
   }

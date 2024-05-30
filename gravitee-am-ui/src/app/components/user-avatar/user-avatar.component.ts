@@ -31,7 +31,7 @@ export class UserAvatarComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     const user = changes.user;
-    if (user && user.currentValue) {
+    if (user?.currentValue) {
       this.user = user.currentValue;
       this.loadUrl();
     }
@@ -41,7 +41,7 @@ export class UserAvatarComponent implements OnInit, OnChanges {
     this.username = this.user.username ? this.user.username : this.user.name;
     if (this.user.picture) {
       this.url = this.user.picture;
-    } else if (this.user.additionalInformation && this.user.additionalInformation.picture) {
+    } else if (this.user.additionalInformation?.picture) {
       this.url = this.user.additionalInformation.picture;
     } else {
       this.url = 'assets/material-letter-icons/' + this.username.charAt(0).toUpperCase() + '.png';

@@ -50,7 +50,7 @@ export class DeviceNotifierCreationStep1Component implements OnInit {
   }
 
   getIcon(deviceNotifier) {
-    if (deviceNotifier && deviceNotifier.icon) {
+    if (deviceNotifier?.icon) {
       const title = this.displayName(deviceNotifier);
       return `<img mat-card-avatar src="${deviceNotifier.icon}" alt="${title} image" title="${title}"/>`;
     }

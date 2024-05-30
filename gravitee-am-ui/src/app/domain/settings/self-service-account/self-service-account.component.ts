@@ -70,8 +70,8 @@ export class DomainSettingsSelfServiceAccountComponent implements OnInit {
     this.formChanged = true;
   }
 
-  isSelfServiceAccountEnabled() {
-    return this.domain.selfServiceAccountManagementSettings && this.domain.selfServiceAccountManagementSettings.enabled;
+  isSelfServiceAccountEnabled(): boolean {
+    return this.domain.selfServiceAccountManagementSettings?.enabled;
   }
 
   oldPasswordRequired(event) {

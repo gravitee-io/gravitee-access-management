@@ -121,7 +121,7 @@ export class GroupRolesComponent implements OnInit {
 })
 export class AddGroupRolesComponent implements OnInit {
   private domainId: string;
-  private organizationContext = false;
+  private readonly organizationContext = false;
   roles: any[];
   initialSelectedRoles: any[];
   assignedRoles: string[] = [];

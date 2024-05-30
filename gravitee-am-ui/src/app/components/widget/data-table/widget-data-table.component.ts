@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { Router } from '@angular/router';
 import { map } from 'lodash';
 
 import { Chart } from '../widget.model';
@@ -33,7 +32,7 @@ export class WidgetDataTableComponent implements OnInit, OnChanges {
   sorts = [];
   limit = 5;
 
-  constructor(private router: Router) {}
+  constructor() {}
 
   ngOnInit() {
     this.columns = map(this.chart.columns, (column) => ({ name: column }));
@@ -41,7 +40,7 @@ export class WidgetDataTableComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.chart.currentValue && changes.chart.currentValue.response) {
+    if (changes.chart.currentValue?.response) {
       const response = changes.chart.currentValue.response.values;
       const metadata = changes.chart.currentValue.response.metadata;
       const field = this.chart.request.field;
@@ -55,7 +54,7 @@ export class WidgetDataTableComponent implements OnInit, OnChanges {
         obj['name'] = obj[columnName];
         obj['value'] = obj[columnValue];
         obj['deleted'] = WidgetDataTableComponent.resourceDeleted(key, metadata);
-        obj['link'] = WidgetDataTableComponent.getResourceLink(key, metadata, field);
+        obj['link'] = WidgetDataTableComponent.getResourceLink(key, field);
         return obj;
       });
       setTimeout(() => {
@@ -65,14 +64,14 @@ export class WidgetDataTableComponent implements OnInit, OnChanges {
   }
 
   private static getColumnName(key, metadata): string {
-    if (!metadata && !metadata[key]) {
+    if (!metadata?.[key]) {
       return key;
     } else {
       return metadata[key].name;
     }
   }
 
-  private static getResourceLink(key, metadata, field) {
+  private static getResourceLink(key: string, field: string): string[] {
     if ('application' === field) {
       return ['..', 'applications', key];
     }
@@ -80,7 +79,7 @@ export class WidgetDataTableComponent implements OnInit, OnChanges {
   }
 
   private static resourceDeleted(key, metadata) {
-    if (!metadata || !metadata[key]) {
+    if (!metadata?.[key]) {
       return true;
     }
     return metadata[key].deleted;

@@ -162,12 +162,7 @@ export class ApplicationFlowsComponent implements OnInit {
   }
 
   isInherited() {
-    return (
-      this.application &&
-      this.application.settings &&
-      this.application.settings.advanced &&
-      this.application.settings.advanced.flowsInherited
-    );
+    return this.application?.settings?.advanced?.flowsInherited;
   }
 
   private initPolicies() {

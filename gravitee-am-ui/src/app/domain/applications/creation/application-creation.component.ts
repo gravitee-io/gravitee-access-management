@@ -18,14 +18,13 @@ import { MatStepper } from '@angular/material/stepper';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { GIO_DIALOG_WIDTH } from '@gravitee/ui-particles-angular';
-import { mapTo, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { map, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
 import { ApplicationService } from '../../../services/application.service';
 import {
   ApplicationClientSecretCopyDialogComponent,
   ApplicationClientSecretCopyDialogData,
-  ApplicationClientSecretCopyDialogResult,
 } from '../client-secret/application-client-secret-copy-dialog.component';
 import { SnackbarService } from '../../../services/snackbar.service';
 
@@ -65,26 +64,25 @@ export class ApplicationCreationComponent implements OnInit {
       .pipe(
         switchMap((data) =>
           this.matDialog
-            .open<
+            .open<ApplicationClientSecretCopyDialogComponent, ApplicationClientSecretCopyDialogData, void>(
               ApplicationClientSecretCopyDialogComponent,
-              ApplicationClientSecretCopyDialogData,
-              ApplicationClientSecretCopyDialogResult
-            >(ApplicationClientSecretCopyDialogComponent, {
-              width: GIO_DIALOG_WIDTH.MEDIUM,
-              disableClose: true,
-              data: {
-                secret: data.settings.oauth.clientSecret,
-                renew: false,
+              {
+                width: GIO_DIALOG_WIDTH.MEDIUM,
+                disableClose: true,
+                data: {
+                  secret: data.settings.oauth.clientSecret,
+                  renew: false,
+                },
+                role: 'alertdialog',
+                id: 'applicationClientSecretCopyDialog',
               },
-              role: 'alertdialog',
-              id: 'applicationClientSecretCopyDialog',
-            })
+            )
             .afterClosed()
             .pipe(
               tap(() => {
                 this.snackbarService.open('Application ' + data.name + ' created');
               }),
-              mapTo(data),
+              map(() => data),
               takeUntil(this.unsubscribe$),
             ),
         ),
@@ -94,10 +92,9 @@ export class ApplicationCreationComponent implements OnInit {
       });
   }
 
-  stepperValid() {
+  stepperValid(): boolean {
     return (
-      this.application &&
-      this.application.type &&
+      this.application?.type &&
       this.application.domain &&
       this.application.name &&
       (this.application.type !== 'SERVICE' ? this.application.redirectUri : true)

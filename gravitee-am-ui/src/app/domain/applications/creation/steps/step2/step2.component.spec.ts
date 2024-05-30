@@ -15,21 +15,21 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { ProviderCreationStep2Component } from './step2.component';
+import { ApplicationCreationStep2Component } from './step2.component';
 
 describe('Step2Component', () => {
-  let component: ProviderCreationStep2Component;
-  let fixture: ComponentFixture<ProviderCreationStep2Component>;
+  let component: ApplicationCreationStep2Component;
+  let fixture: ComponentFixture<ApplicationCreationStep2Component>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ProviderCreationStep2Component],
+      declarations: [ApplicationCreationStep2Component],
       teardown: { destroyAfterEach: false },
     }).compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(ProviderCreationStep2Component);
+    fixture = TestBed.createComponent(ApplicationCreationStep2Component);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

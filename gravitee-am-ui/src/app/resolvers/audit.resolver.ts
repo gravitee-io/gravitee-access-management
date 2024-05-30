@@ -27,7 +27,7 @@ export class AuditResolver {
     private organizationService: OrganizationService,
   ) {}
 
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> {
     const auditId = route.paramMap.get('auditId');
     if (state.url.startsWith('/settings')) {
       return this.organizationService.audit(auditId);

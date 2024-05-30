@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
 import { AuthService } from '../../../../services/auth.service';
 import { DomainService } from '../../../../services/domain.service';
@@ -36,7 +36,6 @@ export class OIDCProfileComponent implements OnInit {
     private snackbarService: SnackbarService,
     private authService: AuthService,
     private route: ActivatedRoute,
-    private router: Router,
   ) {}
 
   ngOnInit() {
@@ -65,8 +64,8 @@ export class OIDCProfileComponent implements OnInit {
     this.formChanged = true;
   }
 
-  isFAPIEnabled() {
-    return this.domain.oidc.securityProfileSettings && this.domain.oidc.securityProfileSettings.enablePlainFapi;
+  isFAPIEnabled(): boolean {
+    return this.domain.oidc.securityProfileSettings?.enablePlainFapi;
   }
 
   enableFAPIBrazil(event) {
@@ -81,7 +80,7 @@ export class OIDCProfileComponent implements OnInit {
     this.formChanged = true;
   }
 
-  isFAPIBrazilEnabled() {
-    return this.domain.oidc.securityProfileSettings && this.domain.oidc.securityProfileSettings.enableFapiBrazil;
+  isFAPIBrazilEnabled(): boolean {
+    return this.domain.oidc.securityProfileSettings?.enableFapiBrazil;
   }
 }

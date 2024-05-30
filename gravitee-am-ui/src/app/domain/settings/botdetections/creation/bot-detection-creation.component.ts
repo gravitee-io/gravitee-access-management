@@ -50,7 +50,7 @@ export class BotDetectionCreationComponent implements OnInit {
     });
   }
 
-  stepperValid() {
-    return this.botDetection && this.botDetection.name && this.configurationIsValid;
+  stepperValid(): boolean {
+    return this.botDetection?.name && this.configurationIsValid;
   }
 }

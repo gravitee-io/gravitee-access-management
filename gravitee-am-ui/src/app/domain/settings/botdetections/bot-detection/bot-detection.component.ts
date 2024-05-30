@@ -39,8 +39,6 @@ export class BotDetectionComponent implements OnInit {
   updatebotDetectionConfiguration: any;
   editMode: boolean;
 
-  codeMirrorConfig: any = { lineNumbers: false, readOnly: true, lineWrapping: true };
-
   constructor(
     private route: ActivatedRoute,
     private router: Router,

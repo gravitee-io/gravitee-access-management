@@ -42,14 +42,12 @@ export class CookieSettingsComponent implements OnInit, OnChanges {
     }
   }
 
-  save() {
-    let cookieSettings = Object.assign({}, this.cookieSettings);
+  save(): void {
+    let cookieSettings = { ...this.cookieSettings };
     if (cookieSettings.inherited) {
       cookieSettings = { inherited: true };
-    } else {
-      if (!cookieSettings.session) {
-        cookieSettings.session = { persistent: false };
-      }
+    } else if (!cookieSettings.session) {
+      cookieSettings.session = { persistent: false };
     }
     this.onSavedCookieSettings.emit(cookieSettings);
     this.formChanged = false;
@@ -60,12 +58,12 @@ export class CookieSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
   }
 
-  isInherited() {
-    return this.cookieSettings && this.cookieSettings.inherited;
+  isInherited(): boolean {
+    return this.cookieSettings?.inherited;
   }
 
-  isSessionPersistent() {
-    return this.cookieSettings.session && this.cookieSettings.session.persistent;
+  isSessionPersistent(): boolean {
+    return this.cookieSettings.session?.persistent;
   }
 
   enableSessionPersistent($event) {

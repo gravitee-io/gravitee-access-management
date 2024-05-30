@@ -70,7 +70,7 @@ export class ApplicationService {
       map((response) => {
         const memberships = response.memberships;
         const metadata = response.metadata;
-        const members = memberships.map((m) => {
+        return memberships.map((m) => {
           m.roleName = metadata['roles'][m.roleId] ? metadata['roles'][m.roleId].name : 'Unknown role';
           if (m.memberType === 'user') {
             m.name = metadata['users'][m.memberId] ? metadata['users'][m.memberId].displayName : 'Unknown user';
@@ -79,7 +79,6 @@ export class ApplicationService {
           }
           return m;
         });
-        return members;
       }),
     );
   }

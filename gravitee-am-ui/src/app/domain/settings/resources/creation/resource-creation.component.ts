@@ -50,8 +50,8 @@ export class ResourceCreationComponent implements OnInit {
     });
   }
 
-  stepperValid() {
-    return this.resource && this.resource.name && this.configurationIsValid;
+  stepperValid(): boolean {
+    return this.resource?.name && this.configurationIsValid;
   }
 
   isHttpFactorResource() {

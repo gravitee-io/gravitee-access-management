@@ -23,7 +23,7 @@ import { ScopeService } from '../services/scope.service';
 export class ScopeResolver {
   constructor(private scopeService: ScopeService) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domainId = route.parent.data['domain'].id;
     const scopeId = route.paramMap.get('scopeId');
     return this.scopeService.get(domainId, scopeId);

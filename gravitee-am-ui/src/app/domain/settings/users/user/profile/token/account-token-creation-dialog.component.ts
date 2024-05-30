@@ -18,8 +18,6 @@ import { Component } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { FormControl, Validators } from '@angular/forms';
 
-export type AccountTokenCreationDialogData = void;
-
 export interface AccountTokenCreationDialogResult {
   name: string;
 }
@@ -32,13 +30,13 @@ export interface AccountTokenCreationDialogResult {
 export class AccountTokenCreationDialogComponent {
   tokenControl = new FormControl<string>('', [Validators.required, Validators.minLength(3)]);
 
-  constructor(public dialogRef: MatDialogRef<AccountTokenCreationDialogData, AccountTokenCreationDialogResult>) {}
+  constructor(public dialogRef: MatDialogRef<void, AccountTokenCreationDialogResult>) {}
 
-  onSubmit() {
+  onSubmit(): void {
     this.dialogRef.close({ name: this.tokenControl.value });
   }
 
-  onCancel() {
+  onCancel(): void {
     this.dialogRef.close();
   }
 }

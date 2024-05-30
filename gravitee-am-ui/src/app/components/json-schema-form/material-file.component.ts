@@ -57,10 +57,7 @@ import { JsonSchemaFormService } from '@ajsf/core';
 })
 export class MaterialFileComponent implements OnInit {
   formControl: AbstractControl;
-  private controlName: string;
   controlValue: any;
-  private controlDisabled = false;
-  private boundControl = false;
   options: any;
   editMode = false;
   filename: string;

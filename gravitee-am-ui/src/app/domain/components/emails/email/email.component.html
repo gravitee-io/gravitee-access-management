@@ -109,7 +109,7 @@
         </div>
       </mat-tab>
       <mat-tab label="Preview" [disabled]="!isEnabled() || !canEdit()">
-        <iframe frameborder="0" class="preview" #preview width="100%" (load)="resizeIframe()"> </iframe>
+        <iframe title="preview" frameborder="0" class="preview" #preview width="100%" (load)="resizeIframe()"> </iframe>
       </mat-tab>
     </mat-tab-group>
   </div>

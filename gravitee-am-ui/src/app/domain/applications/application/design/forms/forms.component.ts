@@ -44,11 +44,11 @@ export class ApplicationFormsComponent implements OnInit {
     });
   }
 
-  private applicationSettingsValid() {
+  private applicationSettingsValid(): boolean {
     if (this.application.type) {
       return this.application.type !== 'service';
     }
-    if (this.application.settings && this.application.settings.oauth && this.application.settings.oauth.grantTypes) {
+    if (this.application.settings?.oauth?.grantTypes) {
       return (
         this.application.settings.oauth.grantTypes.includes('authorization_code') ||
         this.application.settings.oauth.grantTypes.includes('implicit')

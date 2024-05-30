@@ -23,7 +23,7 @@ import { PasswordPolicyService } from '../services/password-policy.service';
 export class PasswordPoliciesResolver {
   constructor(private passwordPolicyService: PasswordPolicyService) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<any> | Promise<any> | any {
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domainId = route.parent.data['domain'].id;
     return this.passwordPolicyService.list(domainId);
   }
