@@ -34,6 +34,8 @@ public class UserIdentity {
 
     private String userId;
 
+    private String username;
+
     private String providerId;
 
     private Map<String, Object> additionalInformation;
@@ -45,6 +47,7 @@ public class UserIdentity {
 
     public UserIdentity(UserIdentity other) {
         this.userId = other.userId;
+        this.username = other.username;
         this.providerId = other.providerId;
         this.additionalInformation = other.additionalInformation != null ? new HashMap<>(other.additionalInformation) : null;
         this.linkedAt = other.linkedAt;
@@ -56,6 +59,14 @@ public class UserIdentity {
 
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getProviderId() {
