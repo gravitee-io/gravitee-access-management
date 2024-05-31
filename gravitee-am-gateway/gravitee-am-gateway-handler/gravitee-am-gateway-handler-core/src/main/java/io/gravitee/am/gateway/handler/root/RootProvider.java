@@ -602,6 +602,9 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(botDetectionHandler)
                 .handler(forgotPasswordAccessHandler)
                 .handler(new ForgotPasswordSubmissionEndpoint(userService, domain));
+
+        router.route(PATH_FORGOT_PASSWORD).failureHandler(new ErrorHandler(PATH_ERROR, true));
+
         rootRouter.route(HttpMethod.GET, PATH_RESET_PASSWORD)
                 .handler(new ResetPasswordRequestParseHandler(userService))
                 .handler(clientRequestParseHandlerOptional)
@@ -695,6 +698,10 @@ public class RootProvider extends AbstractProtocolProvider {
         // Reset password endpoint
         router
                 .route(PATH_RESET_PASSWORD)
+                .handler(sessionHandler);
+
+        router
+                .route(PATH_FORGOT_PASSWORD)
                 .handler(sessionHandler);
 
         // WebAuthn endpoint
@@ -858,7 +865,6 @@ public class RootProvider extends AbstractProtocolProvider {
 
     private void errorHandler(Router router) {
         Handler<RoutingContext> errorHandler = new ErrorHandler(PATH_ERROR);
-        router.route(PATH_FORGOT_PASSWORD).failureHandler(errorHandler);
         router.route(PATH_LOGOUT).failureHandler(errorHandler);
         router.route(PATH_LOGOUT_CALLBACK).failureHandler(errorHandler);
         router.route(PATH_LOGIN).failureHandler(errorHandler);
