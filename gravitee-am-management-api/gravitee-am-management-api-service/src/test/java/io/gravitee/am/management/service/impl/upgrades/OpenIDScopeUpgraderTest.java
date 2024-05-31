@@ -24,12 +24,12 @@ import io.gravitee.am.service.model.UpdateSystemScope;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
@@ -43,7 +43,7 @@ import static org.mockito.Mockito.when;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class OpenIDScopeUpgraderTest {
 
     @Mock
@@ -54,16 +54,17 @@ public class OpenIDScopeUpgraderTest {
 
     @Mock
     private Domain domain;
-
     @InjectMocks
-    private OpenIDScopeUpgrader openIDScopeUpgrader = new OpenIDScopeUpgrader(domainService, scopeService);
+    private OpenIDScopeUpgrader openIDScopeUpgrader;
+
 
     private static final String DOMAIN_ID = "domainId";
 
-    @Before
+    @BeforeEach
     public void setUp() {
         when(domain.getId()).thenReturn(DOMAIN_ID);
         when(domainService.listAll()).thenReturn(Flowable.just(domain));
+        openIDScopeUpgrader = new OpenIDScopeUpgrader(domainService, scopeService);
     }
 
     @Test

@@ -20,11 +20,11 @@ import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.model.UpdateReporter;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
@@ -40,13 +40,14 @@ import static org.mockito.Mockito.when;
  * @author Islem TRIKI (islem.triki at graviteesource.com)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class DefaultReporterUpgraderTest {
 
 
     @Mock
     private ReporterService reporterService;
-    private DefaultReporterUpgrader defaultReporterUpgrader = new DefaultReporterUpgrader(reporterService);
+    @InjectMocks
+    private DefaultReporterUpgrader defaultReporterUpgrader;
 
     private Reporter systemReporter = createDefaultTestReporter(true);
     private Reporter nonSystemReporter = createDefaultTestReporter(false);

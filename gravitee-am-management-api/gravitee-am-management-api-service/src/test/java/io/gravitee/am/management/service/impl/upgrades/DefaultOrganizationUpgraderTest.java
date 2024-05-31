@@ -36,11 +36,11 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.Environment;
 
 import java.util.Arrays;
@@ -66,7 +66,7 @@ import static org.mockito.Mockito.when;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class DefaultOrganizationUpgraderTest {
 
     @Mock
@@ -92,7 +92,7 @@ public class DefaultOrganizationUpgraderTest {
 
     private DefaultOrganizationUpgrader cut;
 
-    @Before
+    @BeforeEach
     public void before() {
         when(environment.getProperty("security.defaultAdmin", boolean.class, true)).thenReturn(true);
         cut = new DefaultOrganizationUpgrader(organizationService, identityProviderService, userService, membershipHelper, roleService, domainService, environment, null);
