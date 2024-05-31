@@ -90,6 +90,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         existingUser.setSource(details.get(SOURCE));
                         existingUser.setLoggedAt(new Date());
                         existingUser.setLoginsCount(existingUser.getLoginsCount() + 1);
+                        if (principal.getEmail() != null) {
+                            existingUser.setEmail(principal.getEmail());
+                        }
                         if (existingUser.getAdditionalInformation() != null) {
                             existingUser.getAdditionalInformation().putAll(principal.getAdditionalInformation());
                         } else {
@@ -104,6 +107,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                             newUser.setInternal(false);
                             newUser.setExternalId(principal.getId());
                             newUser.setUsername(principal.getUsername());
+                            if (principal.getEmail() != null) {
+                                newUser.setEmail(principal.getEmail());
+                            }
                             newUser.setSource(details.get(SOURCE));
                             newUser.setReferenceType(ReferenceType.ORGANIZATION);
                             newUser.setReferenceId(organizationId);
