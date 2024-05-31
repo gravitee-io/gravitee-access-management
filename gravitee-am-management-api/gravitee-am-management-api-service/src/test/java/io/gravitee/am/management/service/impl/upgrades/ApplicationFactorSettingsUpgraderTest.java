@@ -73,7 +73,9 @@ import static org.mockito.Mockito.when;
     @Mock
     private FactorService factorService;
 
-    private ApplicationFactorSettingsUpgrader upgrader = new ApplicationFactorSettingsUpgrader(systemTaskRepository, applicationService, factorService);
+    @InjectMocks
+    private ApplicationFactorSettingsUpgrader upgrader;
+
 
     @Test
     void should_ignore_if_task_completed() {

@@ -21,11 +21,11 @@ import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -45,7 +45,7 @@ import static org.mockito.Mockito.when;
  * @author Islem TRIKI (islem.triki at graviteesource.com)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class DefaultIdentityProviderUpgraderTest {
 
 
@@ -56,7 +56,7 @@ public class DefaultIdentityProviderUpgraderTest {
     private IdentityProviderManager identityProviderManager;
 
     @InjectMocks
-    private DefaultIdentityProviderUpgrader defaultIdentityProviderUpgrader = new DefaultIdentityProviderUpgrader(identityProviderService, identityProviderManager);
+    private DefaultIdentityProviderUpgrader defaultIdentityProviderUpgrader;
 
     private IdentityProvider systemIdentityProvider = createDefaultTestIdp(true);
     private IdentityProvider nonSystemIdentityProvider = createDefaultTestIdp(false);

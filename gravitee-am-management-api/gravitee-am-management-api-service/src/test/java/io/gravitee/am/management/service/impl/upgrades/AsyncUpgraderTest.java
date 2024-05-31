@@ -20,14 +20,15 @@ import org.junit.jupiter.api.Test;
 
 import java.util.function.Supplier;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 class AsyncUpgraderTest {
 
     @Test
-    void shouldPropagateErrors() {
+    void shouldHandleErrors() {
         var upgrader = new TestUpgrader(0, () -> Completable.error(new RuntimeException("test exception")));
-        assertThatThrownBy(upgrader::upgrade).hasMessage("test exception");
+        assertThatCode(upgrader::upgrade).doesNotThrowAnyException();
+
     }
 
 

@@ -29,11 +29,11 @@ import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.model.NewScope;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
 
@@ -47,7 +47,7 @@ import static org.mockito.Mockito.when;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ScopeUpgraderTest {
 
     @Mock
@@ -62,7 +62,8 @@ public class ScopeUpgraderTest {
     @Mock
     private RoleService roleService;
 
-    private ScopeUpgrader scopeUpgrader = new ScopeUpgrader(domainService, scopeService, applicationService, roleService);
+    @InjectMocks
+    private ScopeUpgrader scopeUpgrader;
 
     @Test
     public void shouldCreateScopes_withRoleAndClientScopes() {

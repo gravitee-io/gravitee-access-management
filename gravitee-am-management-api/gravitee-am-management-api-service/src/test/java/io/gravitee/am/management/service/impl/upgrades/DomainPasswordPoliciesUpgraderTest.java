@@ -66,7 +66,9 @@ class DomainPasswordPoliciesUpgraderTest {
     @Mock
     private PasswordPolicyService passwordPolicyService;
 
-    private DomainPasswordPoliciesUpgrader upgrader = new DomainPasswordPoliciesUpgrader(systemTaskRepository, domainService, passwordPolicyService);
+    @InjectMocks
+    private DomainPasswordPoliciesUpgrader upgrader;
+
 
     @Test
     void should_ignore_if_task_completed() {
