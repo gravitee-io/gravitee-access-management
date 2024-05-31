@@ -103,12 +103,12 @@ public class ForgotPasswordSubmissionEndpoint extends UserRequestHandler {
         DefaultUser principal = new DefaultUser(routingContext.request().getParam(ConstantKeys.EMAIL_PARAM_KEY));
         Map<String, Object> additionalInformation = new HashMap<>();
         if (canSaveIp(routingContext)) {
-            additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(routingContext.request()));
+            additionalInformation.put(Claims.IP_ADDRESS, RequestUtils.remoteAddress(routingContext.request()));
         }
         if (canSaveUserAgent(routingContext)) {
-            additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(routingContext.request()));
+            additionalInformation.put(Claims.USER_AGENT, RequestUtils.userAgent(routingContext.request()));
         }
-        additionalInformation.put(Claims.domain, domain.getId());
+        additionalInformation.put(Claims.DOMAIN, domain.getId());
         principal.setAdditionalInformation(additionalInformation);
         return principal;
     }

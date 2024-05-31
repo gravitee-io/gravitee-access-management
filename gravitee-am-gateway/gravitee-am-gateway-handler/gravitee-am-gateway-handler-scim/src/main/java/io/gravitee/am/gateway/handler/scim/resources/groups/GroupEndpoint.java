@@ -31,7 +31,6 @@ import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.json.DecodeException;
-import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import java.util.Optional;
@@ -57,7 +56,7 @@ public class GroupEndpoint extends AbstractGroupEndpoint {
                                 .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
                                 .putHeader(HttpHeaders.LOCATION, group.getMeta().getLocation())
                                 .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(group)),
-                        error -> context.fail(error),
+                        context::fail,
                         () -> context.fail(new GroupNotFoundException(groupId)));
     }
 
@@ -97,11 +96,15 @@ public class GroupEndpoint extends AbstractGroupEndpoint {
      */
     public void update(RoutingContext context) {
         try {
-            if(context.getBodyAsString() == null) {
+            if (context.body() == null) {
                 context.fail(new InvalidSyntaxException("Unable to parse body message"));
                 return;
             }
-            final Group group = Json.decodeValue(context.getBodyAsString(), Group.class);
+            final Group group = context.body().asPojo(Group.class);
+            if (group == null) {
+                context.fail(new InvalidSyntaxException("Unable to parse body message"));
+                return;
+            }
             final String groupId = context.request().getParam("id");
 
             // displayName is required
@@ -124,7 +127,7 @@ public class GroupEndpoint extends AbstractGroupEndpoint {
                     .map(scimUser -> new DefaultUser(UserMapper.convert(scimUser)))
                     .map(Optional::ofNullable)
                     .switchIfEmpty(Maybe.just(Optional.empty()))
-                    .flatMapSingle(optPrincipal ->  groupService.update(groupId, group, baseUrl, optPrincipal.orElse(null)))
+                    .flatMapSingle(optPrincipal -> groupService.update(groupId, group, baseUrl, optPrincipal.orElse(null)))
                     .subscribe(
                             group1 -> context.response()
                                     .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -132,7 +135,7 @@ public class GroupEndpoint extends AbstractGroupEndpoint {
                                     .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
                                     .putHeader(HttpHeaders.LOCATION, group1.getMeta().getLocation())
                                     .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(group1)),
-                            error -> context.fail(error));
+                            context::fail);
         } catch (DecodeException ex) {
             context.fail(new InvalidSyntaxException("Unable to parse body message", ex));
         }
@@ -165,11 +168,15 @@ public class GroupEndpoint extends AbstractGroupEndpoint {
      */
     public void patch(RoutingContext context) {
         try {
-            if(context.getBodyAsString() == null) {
+            if (context.body() == null) {
                 context.fail(new InvalidSyntaxException("Unable to parse body message"));
                 return;
             }
-            final PatchOp patchOp = Json.decodeValue(context.getBodyAsString(), PatchOp.class);
+            final PatchOp patchOp = context.body().asPojo(PatchOp.class);
+            if (patchOp == null) {
+                context.fail(new InvalidSyntaxException("Unable to parse body message"));
+                return;
+            }
             final String groupId = context.request().getParam("id");
 
             // schemas field is REQUIRED and MUST contain valid values and MUST not contain duplicate values
@@ -235,6 +242,6 @@ public class GroupEndpoint extends AbstractGroupEndpoint {
                 .flatMapCompletable(optPrincipal -> groupService.delete(groupId, optPrincipal.orElse(null)))
                 .subscribe(
                         () -> context.response().setStatusCode(204).end(),
-                        error -> context.fail(error));
+                        context::fail);
     }
 }

@@ -18,6 +18,8 @@ package io.gravitee.am.gateway.handler.common.utils;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -30,7 +32,8 @@ import static io.gravitee.am.common.utils.ConstantKeys.*;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class RoutingContextHelper {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public class RoutingContextUtils {
     private static final List<String> BLACKLIST_CONTEXT_ATTRIBUTES = Arrays.asList("X-XSRF-TOKEN", "_csrf", "__body-handled");
     private static final List<String> SESSION_ATTRIBUTES =
             Arrays.asList(
@@ -46,8 +49,8 @@ public class RoutingContextHelper {
      * Return the {@link RoutingContext#data()} entries without technical attributes defined in {@link #BLACKLIST_CONTEXT_ATTRIBUTES}
      * If {@link RoutingContext#data()} doesn't contain {@link ConstantKeys#USER_CONTEXT_KEY}, then the {@link RoutingContext#user()} is added if present
      *
-     * @param routingContext
-     * @return
+     * @param routingContext the routing context from which to extract evaluable attributes
+     * @return a map containing evaluable attributes
      */
     public static Map<String, Object> getEvaluableAttributes(RoutingContext routingContext) {
         Map<String, Object> contextData = new HashMap<>(routingContext.data());
@@ -68,7 +71,7 @@ public class RoutingContextHelper {
         }
 
         // remove technical attributes
-        BLACKLIST_CONTEXT_ATTRIBUTES.forEach(attribute -> contextData.remove(attribute));
+        BLACKLIST_CONTEXT_ATTRIBUTES.forEach(contextData::remove);
         return contextData;
     }
 }

@@ -61,8 +61,8 @@ public class UserAuthProviderImpl implements UserAuthProvider {
         String username = authInfo.getString(USERNAME_PARAMETER);
         String password = authInfo.getString(PASSWORD_PARAMETER);
         String clientId = authInfo.getString(Parameters.CLIENT_ID);
-        String ipAddress = authInfo.getString(Claims.ip_address);
-        String userAgent = authInfo.getString(Claims.user_agent);
+        String ipAddress = authInfo.getString(Claims.IP_ADDRESS);
+        String userAgent = authInfo.getString(Claims.USER_AGENT);
 
         parseClient(clientId, parseClientHandler -> {
             if (parseClientHandler.failed()) {
@@ -78,9 +78,9 @@ public class UserAuthProviderImpl implements UserAuthProvider {
             SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(new VertxHttpServerRequest(context.request().getDelegate()));
             final Authentication authentication = new EndUserAuthentication(username, password, authenticationContext);
 
-            authenticationContext.set(Claims.ip_address, ipAddress);
-            authenticationContext.set(Claims.user_agent, userAgent);
-            authenticationContext.set(Claims.domain, client.getDomain());
+            authenticationContext.set(Claims.IP_ADDRESS, ipAddress);
+            authenticationContext.set(Claims.USER_AGENT, userAgent);
+            authenticationContext.set(Claims.DOMAIN, client.getDomain());
             authenticationContext.set(ConstantKeys.DEVICE_ID, context.request().getParam(DEVICE_ID));
 
             userAuthenticationManager.authenticate(client, authentication)

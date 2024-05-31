@@ -63,7 +63,7 @@ public class RequestObjectRegistrationEndpoint implements Handler<RoutingContext
         }
 
         RequestObjectRegistrationRequest request = new RequestObjectRegistrationRequest();
-        request.setRequest(context.getBodyAsString());
+        request.setRequest(context.body().asString());
         request.setOrigin(extractOrigin(context));
 
         requestObjectService.registerRequestObject(request, client)

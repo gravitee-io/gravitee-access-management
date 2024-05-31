@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.uma.resources.endpoint;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
-import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
@@ -25,8 +24,8 @@ import io.gravitee.am.service.PermissionTicketService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Single;
-import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
+import io.vertx.rxjava3.ext.web.RequestBody;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.junit.Assert;
 import org.junit.Before;
@@ -37,7 +36,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.anyList;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -53,9 +58,6 @@ public class PermissionEndpointTest {
     private PermissionTicketService permissionTicketService;
 
     @Mock
-    private JWT jwt;
-
-    @Mock
     private Client client;
 
     @Mock
@@ -63,6 +65,9 @@ public class PermissionEndpointTest {
 
     @Mock
     private HttpServerResponse response;
+
+    @Mock
+    private RequestBody requestBody;
 
     @InjectMocks
     private PermissionEndpoint endpoint = new PermissionEndpoint(domain, permissionTicketService);
@@ -76,7 +81,6 @@ public class PermissionEndpointTest {
 
     @Before
     public void setUp() {
-        when(context.get(ConstantKeys.TOKEN_CONTEXT_KEY)).thenReturn(jwt);
         when(context.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(domain.getId()).thenReturn(DOMAIN_ID);
         when(client.getId()).thenReturn(CLIENT_ID);
@@ -84,7 +88,7 @@ public class PermissionEndpointTest {
 
     @Test
     public void handle_unableToParse() {
-        when(context.getBody()).thenReturn(null);
+        when(context.body()).thenReturn(null);
         endpoint.handle(context);
         verify(context,times(1)).fail(errCaptor.capture());
         Assert.assertTrue(errCaptor.getValue() instanceof InvalidRequestException);
@@ -92,7 +96,19 @@ public class PermissionEndpointTest {
 
     @Test
     public void handle_missingResourceId() {
-        when(context.getBody()).thenReturn(Buffer.buffer("{\"unknown\":\"object\"}"));
+        String body = "{\"unknown\": \"object\"}";
+        when(requestBody.asString()).thenReturn(body);
+        when(context.body()).thenReturn(requestBody);
+        endpoint.handle(context);
+        verify(context,times(1)).fail(errCaptor.capture());
+        Assert.assertTrue(errCaptor.getValue() instanceof InvalidRequestException);
+    }
+
+    @Test
+    public void handle_scopeIsEmptyString() {
+        String body = "{{\"resource_id\": \"{{set_one}}\", \"resource_scopes\": [\"\"]}}";
+        when(requestBody.asString()).thenReturn(body);
+        when(context.body()).thenReturn(requestBody);
         endpoint.handle(context);
         verify(context,times(1)).fail(errCaptor.capture());
         Assert.assertTrue(errCaptor.getValue() instanceof InvalidRequestException);
@@ -100,7 +116,9 @@ public class PermissionEndpointTest {
 
     @Test
     public void handle_scopeIsEmpty() {
-        when(context.getBody()).thenReturn(Buffer.buffer("{\"resource_id\":\"id\", \"resource_scopes\":[\"\"]}"));
+        String body = "{\"resource_id\": \"{{set_one}}\", \"resource_scopes\": []}";
+        when(requestBody.asString()).thenReturn(body);
+        when(context.body()).thenReturn(requestBody);
         endpoint.handle(context);
         verify(context,times(1)).fail(errCaptor.capture());
         Assert.assertTrue(errCaptor.getValue() instanceof InvalidRequestException);
@@ -109,9 +127,9 @@ public class PermissionEndpointTest {
     @Test
     public void success_simpleRequest() {
         PermissionTicket success = new PermissionTicket().setId("success");
-        final String simpleRequest = "{\"resource_id\":\"{{set_one}}\", \"resource_scopes\":[\"profile:read\"]}";
-
-        when(context.getBody()).thenReturn(Buffer.buffer(simpleRequest));
+        String body = "{\"resource_id\": \"{{set_one}}\", \"resource_scopes\": [\"profile:read\"]}";
+        when(requestBody.asString()).thenReturn(body);
+        when(context.body()).thenReturn(requestBody);
         when(context.response()).thenReturn(response);
         when(response.putHeader(anyString(),anyString())).thenReturn(response);
         when(response.setStatusCode(anyInt())).thenReturn(response);
@@ -127,9 +145,9 @@ public class PermissionEndpointTest {
     @Test
     public void success_extendedRequest() {
         PermissionTicket success = new PermissionTicket().setId("success");
-        final String extendedRequest = "[{\"resource_id\":\"{{set_one}}\", \"resource_scopes\":[\"profile:read\"]}, {\"resource_id\":\"{{set_two}}\",\"resource_scopes\":[\"avatar:write\"]}]";
-
-        when(context.getBody()).thenReturn(Buffer.buffer(extendedRequest));
+        String body = "[{\"resource_id\": \"{{set_one}}\", \"resource_scopes\": [\"profile:read\"]}, {\"resource_id\": \"{{set_two}}\", \"resource_scopes\": [\"avatar:write\"]}]";
+        when(requestBody.asString()).thenReturn(body);
+        when(context.body()).thenReturn(requestBody);
         when(context.response()).thenReturn(response);
         when(response.putHeader(anyString(),anyString())).thenReturn(response);
         when(response.setStatusCode(anyInt())).thenReturn(response);

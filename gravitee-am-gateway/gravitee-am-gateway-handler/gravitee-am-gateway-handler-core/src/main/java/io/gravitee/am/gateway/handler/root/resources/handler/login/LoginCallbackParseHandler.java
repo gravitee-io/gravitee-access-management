@@ -120,11 +120,14 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
 
     private void restoreInitialQueryParams(RoutingContext context, Handler<AsyncResult<Boolean>> handler) {
 
-        final String state =
-                context.request().getParam(Parameters.STATE) != null ? context.request().getParam(Parameters.STATE) :
-                (context.request().getParam(RELAY_STATE_PARAM_KEY) != null ? context.request().getParam(RELAY_STATE_PARAM_KEY) : context.get(Parameters.STATE));
-
-        if (StringUtils.isEmpty(state)) {
+        String state = context.request().getParam(Parameters.STATE);
+        if (state == null) {
+            state = context.request().getParam(RELAY_STATE_PARAM_KEY);
+            if (state == null) {
+                state = context.get(Parameters.STATE);
+            }
+        }
+        if (state.isEmpty()) {
             logger.error("No state or RelayState on login callback");
             handler.handle(Future.failedFuture(new InvalidRequestException("Missing state query param")));
             return;
@@ -191,7 +194,7 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
 
         final String providerId = context.get(ConstantKeys.PROVIDER_ID_PARAM_KEY);
 
-        if (StringUtils.isEmpty(providerId)) {
+        if (!StringUtils.hasText(providerId)) {
             logger.error("No provider identifier on login callback");
             handler.handle(Future.failedFuture(new InvalidRequestException("Missing provider id")));
             return;

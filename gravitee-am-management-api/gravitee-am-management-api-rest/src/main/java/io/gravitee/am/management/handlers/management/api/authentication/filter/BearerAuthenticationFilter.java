@@ -148,8 +148,8 @@ public class BearerAuthenticationFilter extends AbstractAuthenticationProcessing
 
     private UsernamePasswordAuthenticationToken jwtAuthentication(HttpServletRequest request, JWT payload) {
         Map<String, Object> claims = new HashMap<>(payload);
-        claims.put(Claims.ip_address, remoteAddress(request));
-        claims.put(Claims.user_agent, userAgent(request));
+        claims.put(Claims.IP_ADDRESS, remoteAddress(request));
+        claims.put(Claims.USER_AGENT, userAgent(request));
         var orgUser = userService.findById(ReferenceType.ORGANIZATION, (String) payload.get("org"), (String) claims.get(StandardClaims.SUB))
                 .compose(this::applyTimeout)
                 .blockingGet();

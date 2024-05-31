@@ -51,8 +51,8 @@ public class AccessTokenSerializer extends StdSerializer<AccessToken> {
 
         if (token.getAdditionalInformation() != null) {
             Map<String, Object> additionalInformation = token.getAdditionalInformation();
-            for (String key : additionalInformation.keySet()) {
-                jsonGenerator.writeObjectField(key, additionalInformation.get(key));
+            for (Map.Entry<String,Object> info : additionalInformation.entrySet()) {
+                jsonGenerator.writeObjectField(info.getKey(), info.getValue());
             }
         }
 

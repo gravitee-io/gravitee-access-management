@@ -16,6 +16,8 @@
 package io.gravitee.am.certificate.pkcs12;
 
 import io.gravitee.am.certificate.api.CertificateConfiguration;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Set;
 
@@ -23,6 +25,8 @@ import java.util.Set;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Setter
+@Getter
 public class PKCS12Configuration implements CertificateConfiguration {
 
     private String content;
@@ -32,51 +36,4 @@ public class PKCS12Configuration implements CertificateConfiguration {
     private String keypass;
     private String algorithm;
 
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    public String getStorepass() {
-        return storepass;
-    }
-
-    public void setStorepass(String storepass) {
-        this.storepass = storepass;
-    }
-
-    public String getAlias() {
-        return alias;
-    }
-
-    public void setAlias(String alias) {
-        this.alias = alias;
-    }
-
-    public String getKeypass() {
-        return keypass;
-    }
-
-    public void setKeypass(String keypass) {
-        this.keypass = keypass;
-    }
-
-    public String getAlgorithm() {
-        return algorithm;
-    }
-
-    public void setAlgorithm(String algorithm) {
-        this.algorithm = algorithm;
-    }
-
-    public Set<String> getUse() {
-        return use;
-    }
-
-    public void setUse(Set<String> use) {
-        this.use = use;
-    }
 }

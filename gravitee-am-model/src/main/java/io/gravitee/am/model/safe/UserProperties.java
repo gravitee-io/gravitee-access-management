@@ -91,7 +91,7 @@ public class UserProperties {
                 .orElse(new HashMap<>());
         claims = new HashMap<>(userAdditionalInformation);
         if (user.getLoggedAt() != null) {
-            claims.put(Claims.auth_time, user.getLoggedAt().getTime() / 1000);
+            claims.put(Claims.AUTH_TIME, user.getLoggedAt().getTime() / 1000);
         }
 
         removeSensitiveClaims(claims);

@@ -18,10 +18,9 @@ package io.gravitee.am.certificate.pkcs12.provider;
 import com.nimbusds.jose.jwk.KeyUse;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.pkcs12.PKCS12Configuration;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -40,28 +39,28 @@ import static java.util.Map.of;
 public class PKCS12ProviderTest {
 
     @ParameterizedTest
-    @ValueSource(strings = { "/server-no-extension.p12", "/server-sign-extension.p12" })
+    @ValueSource(strings = {"/server-no-extension.p12", "/server-sign-extension.p12"})
     public void should_have_use_with_sig_default(String file) throws Exception {
         final var provider = loadProvider(file, null);
 
         final var jwk = provider.keys().blockingFirst();
-        Assert.assertEquals(KeyUse.SIGNATURE.getValue(), jwk.getUse());
+        Assertions.assertEquals(KeyUse.SIGNATURE.getValue(), jwk.getUse());
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "/server-no-extension.p12", "/server-sign-extension.p12" })
+    @ValueSource(strings = {"/server-no-extension.p12", "/server-sign-extension.p12"})
     public void should_have_use_with_sig_config_empty(String file) throws Exception {
         final var provider = loadProvider(file, Set.of());
         final var jwk = provider.keys().blockingFirst();
-        Assert.assertEquals(KeyUse.SIGNATURE.getValue(), jwk.getUse());
+        Assertions.assertEquals(KeyUse.SIGNATURE.getValue(), jwk.getUse());
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "/server-no-extension.p12", "/server-sign-extension.p12" })
+    @ValueSource(strings = {"/server-no-extension.p12", "/server-sign-extension.p12"})
     public void should_have_use_with_enc_config(String file) throws Exception {
         final var provider = loadProvider(file, Set.of(KeyUse.ENCRYPTION.getValue()));
         final var jwk = provider.keys().blockingFirst();
-        Assert.assertEquals(KeyUse.ENCRYPTION.getValue(), jwk.getUse());
+        Assertions.assertEquals(KeyUse.ENCRYPTION.getValue(), jwk.getUse());
     }
 
     private PKCS12Provider loadProvider(String certificate, Set<String> use) throws Exception {
@@ -73,15 +72,14 @@ public class PKCS12ProviderTest {
         config.setStorepass("server-secret");
         config.setUse(use);
         CertificateMetadata metadata = new CertificateMetadata();
-        try(
-                InputStream certReader = this.getClass().getResourceAsStream(certificate);
-        ) {
+        try (InputStream certReader = this.getClass().getResourceAsStream(certificate)) {
+            assert certReader != null;
             final var content = certReader.readAllBytes();
             metadata.setMetadata(new HashMap<>(of(CertificateMetadata.FILE, content)));
         }
 
-        ReflectionTestUtils.setField(provider,"certificateMetadata", metadata);
-        ReflectionTestUtils.setField(provider,"configuration", config);
+        ReflectionTestUtils.setField(provider, "certificateMetadata", metadata);
+        ReflectionTestUtils.setField(provider, "configuration", config);
 
         provider.afterPropertiesSet();
         return provider;

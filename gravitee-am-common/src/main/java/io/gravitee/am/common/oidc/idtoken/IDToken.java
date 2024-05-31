@@ -32,43 +32,43 @@ import java.util.Map;
 public class IDToken extends JWT {
 
     public Long getAuthTime() {
-        return (Long) get(Claims.auth_time);
+        return (Long) get(Claims.AUTH_TIME);
     }
 
     public void setAuthTime(Long authTime) {
-        put(Claims.auth_time, authTime);
+        put(Claims.AUTH_TIME, authTime);
     }
 
     public String getNonce() {
-        return (String) get(Claims.nonce);
+        return (String) get(Claims.NONCE);
     }
 
     public void setNonce(String nonce) {
-        put(Claims.nonce, nonce);
+        put(Claims.NONCE, nonce);
     }
 
     public String getAcr() {
-        return (String) get(Claims.acr);
+        return (String) get(Claims.ACR);
     }
 
     public void setAcr(String acr) {
-        put(Claims.acr, acr);
+        put(Claims.ACR, acr);
     }
 
     public String getAmr() {
-        return (String) get(Claims.amr);
+        return (String) get(Claims.AMR);
     }
 
     public void setAmr(String amr) {
-        put(Claims.amr, amr);
+        put(Claims.AMR, amr);
     }
 
     public String getAzp() {
-        return (String) get(Claims.azp);
+        return (String) get(Claims.AZP);
     }
 
     public void setAzp(String azp) {
-        put(Claims.azp, azp);
+        put(Claims.AZP, azp);
     }
 
     public void addAdditionalClaim(String claimName, Object claimValue) {

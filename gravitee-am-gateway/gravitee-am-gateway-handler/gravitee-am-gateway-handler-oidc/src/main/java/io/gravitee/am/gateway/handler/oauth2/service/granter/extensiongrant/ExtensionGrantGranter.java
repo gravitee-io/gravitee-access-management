@@ -38,6 +38,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,8 +61,9 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
     private final ExtensionGrant extensionGrant;
     private final UserAuthenticationManager userAuthenticationManager;
     private final IdentityProviderManager identityProviderManager;
+    @Setter
     private Date minDate;
-    private UserService userService;
+    private final UserService userService;
 
     public ExtensionGrantGranter(ExtensionGrantProvider extensionGrantProvider,
                                  ExtensionGrant extensionGrant,
@@ -127,27 +129,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                                                 }
                                                 return Maybe.empty();
                                             })))
-                                    .map(idpUser -> {
-                                        User user = new User();
-                                        user.setId(endUser.getId());
-                                        user.setExternalId(idpUser.getId());
-                                        user.setUsername(endUser.getUsername());
-
-                                        Map<String, Object> extraInformation = new HashMap<>(idpUser.getAdditionalInformation());
-                                        if (endUser.getAdditionalInformation() != null) {
-                                            extraInformation.putAll(endUser.getAdditionalInformation());
-                                        }
-                                        if (user.getLoggedAt() != null) {
-                                            extraInformation.put(Claims.auth_time, user.getLoggedAt().getTime() / 1000);
-                                        }
-                                        extraInformation.put(StandardClaims.PREFERRED_USERNAME, user.getUsername());
-
-                                        user.setAdditionalInformation(extraInformation);
-                                        user.setCreatedAt(idpUser.getCreatedAt());
-                                        user.setUpdatedAt(idpUser.getUpdatedAt());
-                                        user.setDynamicRoles(idpUser.getRoles());
-                                        return user;
-                                    })
+                                    .map(idpUser -> createUser(idpUser, endUser))
                                     .switchIfEmpty(Maybe.error(new InvalidGrantException("Unknown user: " + endUser.getId())));
                         } else {
                             User user = new User();
@@ -159,16 +141,13 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                         }
                     }
                 })
-                .onErrorResumeNext(ex -> {
-                    return Maybe.error(new InvalidGrantException(ex.getMessage()));
-                });
+                .onErrorResumeNext(ex -> Maybe.error(new InvalidGrantException(ex.getMessage())));
     }
 
     private Maybe<io.gravitee.am.identityprovider.api.User> retrieveUserByUsernameFromIdp(AuthenticationProvider provider, TokenRequest tokenRequest, User user) {
         SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(tokenRequest);
         final Authentication authentication = new EndUserAuthentication(user, null, authenticationContext);
-        final Maybe<io.gravitee.am.identityprovider.api.User> userMaybe = provider.loadPreAuthenticatedUser(authentication);
-        return userMaybe;
+        return provider.loadPreAuthenticatedUser(authentication);
     }
 
     private User convert(io.gravitee.am.identityprovider.api.User idpUser) {
@@ -180,10 +159,6 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
         newUser.setLastName(idpUser.getLastName());
         newUser.setAdditionalInformation(idpUser.getAdditionalInformation());
         return newUser;
-    }
-
-    public void setMinDate(Date minDate) {
-        this.minDate = minDate;
     }
 
     private io.gravitee.am.repository.oauth2.model.request.TokenRequest convert(TokenRequest _tokenRequest) {
@@ -199,7 +174,29 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
     private boolean canHandle(Client client) {
         final List<String> authorizedGrantTypes = client.getAuthorizedGrantTypes();
         return authorizedGrantTypes != null && !authorizedGrantTypes.isEmpty()
-                && ( authorizedGrantTypes.contains(extensionGrant.getGrantType() + EXTENSION_GRANT_SEPARATOR + extensionGrant.getId())
-                    || authorizedGrantTypes.contains(extensionGrant.getGrantType()) && extensionGrant.getCreatedAt().equals(minDate));
+                && (authorizedGrantTypes.contains(extensionGrant.getGrantType() + EXTENSION_GRANT_SEPARATOR + extensionGrant.getId())
+                || authorizedGrantTypes.contains(extensionGrant.getGrantType()) && extensionGrant.getCreatedAt().equals(minDate));
+    }
+
+    private User createUser(io.gravitee.am.identityprovider.api.User idpUser, io.gravitee.am.identityprovider.api.User endUser) {
+        User user = new User();
+        user.setId(endUser.getId());
+        user.setExternalId(idpUser.getId());
+        user.setUsername(endUser.getUsername());
+
+        Map<String, Object> extraInformation = new HashMap<>(idpUser.getAdditionalInformation());
+        if (endUser.getAdditionalInformation() != null) {
+            extraInformation.putAll(endUser.getAdditionalInformation());
+        }
+        if (user.getLoggedAt() != null) {
+            extraInformation.put(Claims.AUTH_TIME, user.getLoggedAt().getTime() / 1000);
+        }
+        extraInformation.put(StandardClaims.PREFERRED_USERNAME, user.getUsername());
+
+        user.setAdditionalInformation(extraInformation);
+        user.setCreatedAt(idpUser.getCreatedAt());
+        user.setUpdatedAt(idpUser.getUpdatedAt());
+        user.setDynamicRoles(idpUser.getRoles());
+        return user;
     }
 }

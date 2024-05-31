@@ -16,46 +16,27 @@
 package io.gravitee.am.gateway.handler.root.service.response;
 
 import io.gravitee.am.model.User;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Setter
+@Getter
 public abstract class SelfUserServiceResponse {
 
     private User user;
     private String redirectUri;
     private boolean autoLogin;
 
-    public SelfUserServiceResponse() { }
+    protected SelfUserServiceResponse() { }
 
-    public SelfUserServiceResponse(User user, String redirectUri, boolean autoLogin) {
+    protected SelfUserServiceResponse(User user, String redirectUri, boolean autoLogin) {
         this.user = user;
         this.redirectUri = redirectUri;
         this.autoLogin = autoLogin;
     }
 
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public String getRedirectUri() {
-        return redirectUri;
-    }
-
-    public void setRedirectUri(String redirectUri) {
-        this.redirectUri = redirectUri;
-    }
-
-    public boolean isAutoLogin() {
-        return autoLogin;
-    }
-
-    public void setAutoLogin(boolean autoLogin) {
-        this.autoLogin = autoLogin;
-    }
 }

@@ -212,9 +212,14 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
 
         final String protocol = context.session() != null ? context.session().get(ConstantKeys.PROTOCOL_KEY) : null;
         final String samlEndpoint = ConstantKeys.PROTOCOL_VALUE_SAML_REDIRECT.equals(protocol) || ConstantKeys.PROTOCOL_VALUE_SAML_POST.equals(protocol) ? context.session().get(RETURN_URL_KEY) : null;
-        final String spRedirectUri = samlEndpoint != null ? samlEndpoint : (originalParams != null && originalParams.get(Parameters.REDIRECT_URI) != null) ?
-                originalParams.get(Parameters.REDIRECT_URI) :
-                client.getRedirectUris().get(0);
+        String spRedirectUri;
+        if (samlEndpoint != null) {
+            spRedirectUri = samlEndpoint;
+        } else if (originalParams != null && originalParams.get(Parameters.REDIRECT_URI) != null) {
+            spRedirectUri = originalParams.get(Parameters.REDIRECT_URI);
+        } else {
+            spRedirectUri = client.getRedirectUris().get(0);
+        }
 
         // append error message
         Map<String, String> query = new LinkedHashMap<>();
@@ -283,7 +288,7 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
                                 doRedirect(context, url);
                             },
                             err -> {
-                                LOGGER.error("Session can't be closed on provider '{}': {}", context.get(ConstantKeys.PROVIDER_ID_PARAM_KEY), err);
+                                LOGGER.error("Session can't be closed on provider '{}'", context.get(ConstantKeys.PROVIDER_ID_PARAM_KEY), err);
                                 doRedirect(context, redirectUrl);
                             });
         } else {

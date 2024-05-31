@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.pkce;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 import java.security.MessageDigest;
 import java.util.Base64;
 import java.util.regex.Pattern;
@@ -23,6 +26,7 @@ import java.util.regex.Pattern;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class PKCEUtils {
 
     // https://tools.ietf.org/html/rfc7636#section-4.1

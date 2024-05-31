@@ -44,6 +44,6 @@ public interface ClaimType {
     String DISTRIBUTED = "distributed";
 
     static List<String> supportedValues() {
-        return Arrays.asList(NORMAL);
+        return List.of(NORMAL);
     }
 }

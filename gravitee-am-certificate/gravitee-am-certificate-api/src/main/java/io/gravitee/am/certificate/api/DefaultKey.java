@@ -15,10 +15,13 @@
  */
 package io.gravitee.am.certificate.api;
 
+import lombok.Setter;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Setter
 public class DefaultKey implements Key {
 
     private String keyId;
@@ -34,16 +37,9 @@ public class DefaultKey implements Key {
         return keyId;
     }
 
-    public void setKeyId(String keyId) {
-        this.keyId = keyId;
-    }
-
     @Override
     public Object getValue() {
         return value;
     }
 
-    public void setValue(Object value) {
-        this.value = value;
-    }
 }

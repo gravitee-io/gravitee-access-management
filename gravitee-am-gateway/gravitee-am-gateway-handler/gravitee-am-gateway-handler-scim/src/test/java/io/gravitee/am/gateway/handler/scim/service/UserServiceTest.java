@@ -541,7 +541,6 @@ public class UserServiceTest {
         UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.create(any())).thenReturn(Single.just(idpUser));
 
-        when(domain.getName()).thenReturn(domainName);
         when(objectMapper.convertValue(any(), eq(ObjectNode.class))).thenReturn(userNode);
         when(objectMapper.treeToValue(userNode, User.class)).thenReturn(patchUser);
         when(groupService.findByMember(userId)).thenReturn(Flowable.empty());
@@ -594,7 +593,6 @@ public class UserServiceTest {
         UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.create(any())).thenReturn(Single.just(idpUser));
 
-        when(domain.getName()).thenReturn(domainName);
         when(objectMapper.convertValue(any(), eq(ObjectNode.class))).thenReturn(userNode);
         when(objectMapper.treeToValue(userNode, GraviteeUser.class)).thenReturn(patchUser);
         when(groupService.findByMember(userId)).thenReturn(Flowable.empty());

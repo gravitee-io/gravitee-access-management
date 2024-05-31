@@ -16,30 +16,36 @@
 
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
-import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.MFA_STOP;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFAStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MfaFilterContext;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.ApplicationFactorSettings;
+import io.gravitee.am.model.ChallengeSettings;
+import io.gravitee.am.model.EnrollSettings;
+import io.gravitee.am.model.FactorSettings;
+import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.RememberDeviceSettings;
+import io.gravitee.am.model.StepUpAuthenticationSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
-
-import static io.gravitee.am.model.MfaEnrollType.CONDITIONAL;
-import static java.lang.Boolean.TRUE;
-import java.util.List;
-import java.util.Objects;
-import static java.util.Optional.ofNullable;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_STOP;
+import static io.gravitee.am.model.MfaEnrollType.CONDITIONAL;
+import static java.lang.Boolean.TRUE;
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -63,7 +69,7 @@ public class MfaUtils {
     }
 
     public static RememberDeviceSettings getRememberDeviceSettings(Client client) {
-        return ofNullable(client.getMfaSettings()).filter(Objects::nonNull)
+        return ofNullable(client.getMfaSettings())
                 .map(MFASettings::getRememberDevice)
                 .orElse(new RememberDeviceSettings());
     }
@@ -74,14 +80,12 @@ public class MfaUtils {
 
     public static ChallengeSettings getChallengeSettings(Client client) {
         return ofNullable(client.getMfaSettings())
-                .filter(Objects::nonNull)
                 .map(MFASettings::getChallenge)
                 .orElse(new ChallengeSettings());
     }
 
     public static EnrollSettings getEnrollSettings(Client client) {
         return ofNullable(client.getMfaSettings())
-                .filter(Objects::nonNull)
                 .map(MFASettings::getEnroll)
                 .orElse(new EnrollSettings());
     }

@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.scim.model.ScimType;
  */
 public class UnauthorizedException extends SCIMException {
 
+    @Override
     public String getMessage() {
         return "Authorization failure. The authorization header is invalid or missing.";
     }

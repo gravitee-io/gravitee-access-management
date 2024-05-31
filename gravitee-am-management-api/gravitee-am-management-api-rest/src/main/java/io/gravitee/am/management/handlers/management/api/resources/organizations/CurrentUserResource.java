@@ -73,7 +73,7 @@ public class CurrentUserResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         // Get the organization the current user is logged on.
-        String organizationId = (String) authenticatedUser.getAdditionalInformation().getOrDefault(Claims.organization, Organization.DEFAULT);
+        String organizationId = (String) authenticatedUser.getAdditionalInformation().getOrDefault(Claims.ORGANIZATION, Organization.DEFAULT);
 
         final Single<List<String>> organizationPermissions = permissionService.findAllPermissions(authenticatedUser, ReferenceType.ORGANIZATION, organizationId)
                 .map(Permission::flatten);

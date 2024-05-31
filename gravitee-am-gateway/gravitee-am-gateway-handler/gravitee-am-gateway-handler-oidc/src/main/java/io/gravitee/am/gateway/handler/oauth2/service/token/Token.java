@@ -86,7 +86,7 @@ public abstract class Token implements Serializable {
      */
     public static final String UPGRADED = "upgraded";
 
-    public Token(String value) {
+    protected Token(String value) {
         this.value = value;
     }
 

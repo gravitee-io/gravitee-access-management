@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.common.email;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,6 +25,8 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Setter
+@Getter
 public class Email {
 
     private String from;
@@ -44,69 +49,5 @@ public class Email {
         this.template = other.template;
         this.content = other.content;
         this.params = other.params != null ? new HashMap<>(other.params) : null;
-    }
-
-    public String getFrom() {
-        return from;
-    }
-
-    public void setFrom(String from) {
-        this.from = from;
-    }
-
-    public String getFromName() {
-        return fromName;
-    }
-
-    public void setFromName(String fromName) {
-        this.fromName = fromName;
-    }
-
-    public String[] getTo() {
-        return to;
-    }
-
-    public void setTo(String[] to) {
-        this.to = to;
-    }
-
-    public String[] getBcc() {
-        return bcc;
-    }
-
-    public void setBcc(String[] bcc) {
-        this.bcc = bcc;
-    }
-
-    public String getSubject() {
-        return subject;
-    }
-
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
-
-    public String getTemplate() {
-        return template;
-    }
-
-    public void setTemplate(String template) {
-        this.template = template;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    public Map<String, Object> getParams() {
-        return params;
-    }
-
-    public void setParams(Map<String, Object> params) {
-        this.params = params;
     }
 }

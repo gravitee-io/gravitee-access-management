@@ -15,13 +15,18 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.utils;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 import java.util.List;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ParameterizedScopeUtils {
+
     public static boolean isParameterizedScope(List<String> parameterizedScopes, String scope) {
         return parameterizedScopes != null &&
                 scope != null &&

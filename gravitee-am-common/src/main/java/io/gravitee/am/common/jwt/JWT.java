@@ -37,24 +37,24 @@ public class JWT extends HashMap<String, Object> {
     }
 
     public String getIss() {
-        return containsKey(Claims.iss) ? (String) get(Claims.iss) : null;
+        return containsKey(Claims.ISS) ? (String) get(Claims.ISS) : null;
     }
 
     public void setIss(String iss) {
-        put(Claims.iss, iss);
+        put(Claims.ISS, iss);
     }
 
     public String getSub() {
-        return containsKey(Claims.sub) ? (String) get(Claims.sub) : null;
+        return containsKey(Claims.SUB) ? (String) get(Claims.SUB) : null;
     }
 
     public void setSub(String sub) {
-        put(Claims.sub, sub);
+        put(Claims.SUB, sub);
     }
 
     public String getAud() {
-        if (containsKey(Claims.aud)) {
-            Object aud = get(Claims.aud);
+        if (containsKey(Claims.AUD)) {
+            Object aud = get(Claims.AUD);
             if (aud instanceof List && !((List<?>) aud).isEmpty()) {
                 return ((List<String>) aud).get(0);
             } else {
@@ -66,63 +66,63 @@ public class JWT extends HashMap<String, Object> {
     }
 
     public void setAud(String aud) {
-        put(Claims.aud, aud);
+        put(Claims.AUD, aud);
     }
 
     public long getExp() {
-        return containsKey(Claims.exp) ? ((Number) get(Claims.exp)).longValue(): 0L;
+        return containsKey(Claims.EXP) ? ((Number) get(Claims.EXP)).longValue(): 0L;
     }
 
     public void setExp(long exp) {
-        put(Claims.exp, exp);
+        put(Claims.EXP, exp);
     }
 
     public long getNbf() {
-        return containsKey(Claims.nbf) ? ((Number) get(Claims.nbf)).longValue() : 0L;
+        return containsKey(Claims.NBF) ? ((Number) get(Claims.NBF)).longValue() : 0L;
     }
 
     public void setNbf(long nbf) {
-        put(Claims.nbf, nbf);
+        put(Claims.NBF, nbf);
     }
 
     public long getIat() {
-        return containsKey(Claims.iat) ? ((Number) get(Claims.iat)).longValue() : 0L;
+        return containsKey(Claims.IAT) ? ((Number) get(Claims.IAT)).longValue() : 0L;
     }
 
     public void setIat(long iat) {
-        put(Claims.iat, iat);
+        put(Claims.IAT, iat);
     }
 
     public String getJti() {
-        return containsKey(Claims.jti) ? (String) get(Claims.jti) : null;
+        return containsKey(Claims.JTI) ? (String) get(Claims.JTI) : null;
     }
 
     public void setJti(String jti) {
-        put(Claims.jti, jti);
+        put(Claims.JTI, jti);
     }
 
     public String getScope() {
-        return containsKey(Claims.scope) ? (String) get(Claims.scope) : null;
+        return containsKey(Claims.SCOPE) ? (String) get(Claims.SCOPE) : null;
     }
 
     public void setScope(String scope) {
-        put(Claims.scope, scope);
+        put(Claims.SCOPE, scope);
     }
 
     public String getDomain() {
-        return containsKey(Claims.domain) ? (String) get(Claims.domain) : null;
+        return containsKey(Claims.DOMAIN) ? (String) get(Claims.DOMAIN) : null;
     }
 
     public void setDomain(String domain) {
-        put(Claims.domain, domain);
+        put(Claims.DOMAIN, domain);
     }
 
     public Object getClaimsRequestParameter() {
-        return get(Claims.claims);
+        return get(Claims.CLAIMS);
     }
 
     public void setClaimsRequestParameter(Object claims) {
-        put(Claims.claims, claims);
+        put(Claims.CLAIMS, claims);
     }
 
     public boolean hasScope(String scope) {
@@ -130,10 +130,10 @@ public class JWT extends HashMap<String, Object> {
     }
 
     public void setConfirmationMethod(Map<String, Object> confirmation) {
-        put(Claims.cnf, confirmation);
+        put(Claims.CNF, confirmation);
     }
 
     public Object getConfirmationMethod() {
-        return get(Claims.cnf);
+        return get(Claims.CNF);
     }
 }

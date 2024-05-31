@@ -86,12 +86,12 @@ public class AuthorizationRequestParseRequestObjectHandler extends AbstractAutho
         final String request = context.request().getParam(Parameters.REQUEST);
         final String requestUri = context.request().getParam(Parameters.REQUEST_URI);
         final Client client = context.get(CLIENT_CONTEXT_KEY);
-        if (StringUtils.isEmpty(requestUri)) {
+        if (!StringUtils.hasText(requestUri)) {
             if (client != null && client.isRequireParRequest()) {
                 context.fail(new InvalidRequestException("Client requires pushed authorization requests, request_uri is expected"));
                 return;
             }
-            if (StringUtils.isEmpty(request)) {
+            if (!StringUtils.hasText(request)) {
                 if (this.domain.usePlainFapiProfile()) {
                     // according to https://openid.net/specs/openid-financial-api-part-2-1_0.html#authorization-server
                     // Authorization Server shall require a JWS signed JWT request object passed by value with the request parameter or by reference with the request_uri parameter;
@@ -110,7 +110,7 @@ public class AuthorizationRequestParseRequestObjectHandler extends AbstractAutho
         // Proceed request and request_uri parameters
         Maybe<JWT> requestObject;
 
-        if (!StringUtils.isEmpty(request)) {
+        if (StringUtils.hasText(request)) {
             context.put(REQUEST_OBJECT_FROM_URI, false);
             requestObject = handleRequestObjectValue(context, request);
         } else {
@@ -145,7 +145,7 @@ public class AuthorizationRequestParseRequestObjectHandler extends AbstractAutho
         // Requests using these parameters are represented as JWTs, which are respectively passed by value or by
         // reference. The ability to pass requests by reference is particularly useful for large requests. If one of
         // these parameters is used, the other MUST NOT be used in the same request.
-        if (!StringUtils.isEmpty(request) && !StringUtils.isEmpty(requestUri)) {
+        if (StringUtils.hasText(request) && StringUtils.hasText(requestUri)) {
             throw new InvalidRequestException("request and request_uri parameters must not be use in the same request");
         }
 
@@ -243,18 +243,17 @@ public class AuthorizationRequestParseRequestObjectHandler extends AbstractAutho
                 }
 
                 List<String> scope = context.queryParam(io.gravitee.am.common.oauth2.Parameters.SCOPE);
-                final String scopeClaim = jwtClaimsSet.getStringClaim(Claims.scope);
+                final String scopeClaim = jwtClaimsSet.getStringClaim(Claims.SCOPE);
                 if (scope != null && !scope.isEmpty() &&
                         (scopeClaim == null || !scopeClaim.equals(scope.get(0)))) {
                     throw generateException(fromRequestUri, "Request object must contains valid scope claim");
                 }
 
-                // String scopeClaim = jwtClaimsSet.getStringClaim(Claims.scope);
-                if (scopeClaim != null && scopeClaim.contains("openid") && StringUtils.isEmpty(jwtClaimsSet.getStringClaim(Parameters.NONCE))) {
+                if (scopeClaim != null && scopeClaim.contains("openid") && !StringUtils.hasText(jwtClaimsSet.getStringClaim(Parameters.NONCE))) {
                     // https://openid.net/specs/openid-financial-api-part-1-1_0-final.html#client-requesting-openid-scope
                     // If the client requests the openid scope, the authorization server shall require the nonce parameter defined
                     throw generateException(fromRequestUri, "Scope openid expect the nonce parameter defined");
-                } else if ((scopeClaim == null || !scopeClaim.contains("openid")) && StringUtils.isEmpty(jwtClaimsSet.getStringClaim(io.gravitee.am.common.oauth2.Parameters.STATE))) {
+                } else if ((scopeClaim == null || !scopeClaim.contains("openid")) && !StringUtils.hasText(jwtClaimsSet.getStringClaim(io.gravitee.am.common.oauth2.Parameters.STATE))) {
                     // https://openid.net/specs/openid-financial-api-part-1-1_0-final.html#clients-not-requesting-openid-scope
                     // If the client does not request the openid scope, the authorization server shall require the state parameter defined
                     throw generateException(fromRequestUri, "Absence of scope openid expect the state parameter defined");

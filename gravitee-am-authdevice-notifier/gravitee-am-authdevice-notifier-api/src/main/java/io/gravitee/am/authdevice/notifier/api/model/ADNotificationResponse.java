@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.authdevice.notifier.api.model;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,6 +25,7 @@ import java.util.Map;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
 public class ADNotificationResponse {
 
     private final String transactionId;
@@ -29,21 +33,10 @@ public class ADNotificationResponse {
     /**
      * Map of additional data provided by the notifier
      */
+    @Setter
     private Map<String, Object> extraData = new HashMap<>();
 
     public ADNotificationResponse(String transactionId) {
         this.transactionId = transactionId;
-    }
-
-    public String getTransactionId() {
-        return transactionId;
-    }
-
-    public Map<String, Object> getExtraData() {
-        return extraData;
-    }
-
-    public void setExtraData(Map<String, Object> extraData) {
-        this.extraData = extraData;
     }
 }

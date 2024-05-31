@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
-import io.gravitee.am.common.exception.oauth2.RedirectMismatchException;
 import io.gravitee.am.common.oauth2.CodeChallengeMethod;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.ResponseType;
@@ -45,9 +44,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
-import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.REQUEST_OBJECT_FROM_URI;
+import static io.gravitee.am.common.utils.ConstantKeys.STRONG_AUTH_COMPLETED_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.USER_ID_KEY;
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.getOAuthParameter;
-import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.redirectMatches;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.requireNonce;
 
 /**
@@ -116,15 +117,13 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
 
             // The Authentication Request contains the prompt parameter with the value login.
             // In this case, the Authorization Server MUST reauthenticate the End-User even if the End-User is already authenticated.
-            if (promptValues.contains("login") && context.user() != null) {
-                if (!returnFromLoginPage(context)) {
-                    clearUser(context);
-                }
+            if (promptValues.contains("login") && context.user() != null && !returnFromLoginPage(context)) {
+                clearUser(context);
             }
         }
     }
 
-    private void clearUser(RoutingContext ctx){
+    private void clearUser(RoutingContext ctx) {
         ctx.clearUser();
         ctx.session().remove(STRONG_AUTH_COMPLETED_KEY);
         ctx.session().remove(USER_ID_KEY);
@@ -138,7 +137,7 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
             throw new InvalidRequestException("Missing parameter: code_challenge");
         }
 
-        final boolean pkceRequiredByFapi = this.domain.usePlainFapiProfile() && Optional.ofNullable((Boolean)context.get(REQUEST_OBJECT_FROM_URI)).orElse(Boolean.FALSE);
+        final boolean pkceRequiredByFapi = this.domain.usePlainFapiProfile() && Optional.ofNullable((Boolean) context.get(REQUEST_OBJECT_FROM_URI)).orElse(Boolean.FALSE);
         if (codeChallenge == null && (client.isForcePKCE() || pkceRequiredByFapi)) {
             throw new InvalidRequestException("Missing parameter: code_challenge");
         }
@@ -151,7 +150,7 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
                 // https://openid.net/specs/openid-financial-api-part-2-1_0.html#authorization-server (point 18)
                 if (((this.domain.usePlainFapiProfile() || client.isForceS256CodeChallengeMethod()) && !CodeChallengeMethod.S256.equalsIgnoreCase(codeChallengeMethod)) ||
                         (!CodeChallengeMethod.S256.equalsIgnoreCase(codeChallengeMethod) &&
-                        !CodeChallengeMethod.PLAIN.equalsIgnoreCase(codeChallengeMethod))) {
+                                !CodeChallengeMethod.PLAIN.equalsIgnoreCase(codeChallengeMethod))) {
                     throw new InvalidRequestException("Invalid parameter: code_challenge_method");
                 }
 
@@ -199,16 +198,14 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
 
         // check the elapsed user session duration
         long elapsedLoginTime = (System.currentTimeMillis() - loggedAt.getTime()) / 1000L;
-        Long maxAgeValue = Long.valueOf(maxAge);
-        if (maxAgeValue < elapsedLoginTime) {
-            // check if the user doesn't come from the login page
-            if (!returnFromLoginPage(context)) {
-                // should we logout the user or just force it to go to the login page ?
-                context.clearUser();
+        long maxAgeValue = Long.parseLong(maxAge);
+        // check if the user doesn't come from the login page
+        if (maxAgeValue < elapsedLoginTime && !returnFromLoginPage(context)) {
+            // should we logout the user or just force it to go to the login page ?
+            context.clearUser();
 
-                // check prompt parameter in case the user set 'none' option
-                parsePromptParameter(context);
-            }
+            // check prompt parameter in case the user set 'none' option
+            parsePromptParameter(context);
         }
     }
 
@@ -221,11 +218,16 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
                 // check acr_values supported
                 List<String> acrValuesSupported = openIDProviderMetadata.getAcrValuesSupported();
                 if (claimsRequest.getIdTokenClaims() != null
-                        && claimsRequest.getIdTokenClaims().get(Claims.acr) != null) {
-                    ClaimRequest claimRequest = claimsRequest.getIdTokenClaims().get(Claims.acr);
-                    List<String> acrValuesRequested = claimRequest.getValue() != null
-                            ? Collections.singletonList(claimRequest.getValue())
-                            : claimRequest.getValues() != null ? claimRequest.getValues() : Collections.emptyList();
+                        && claimsRequest.getIdTokenClaims().get(Claims.ACR) != null) {
+                    ClaimRequest claimRequest = claimsRequest.getIdTokenClaims().get(Claims.ACR);
+                    List<String> acrValuesRequested;
+                    if (claimRequest.getValue() != null) {
+                        acrValuesRequested = Collections.singletonList(claimRequest.getValue());
+                    } else if (claimRequest.getValues() != null) {
+                        acrValuesRequested = claimRequest.getValues();
+                    } else {
+                        acrValuesRequested = Collections.emptyList();
+                    }
                     if (!acrValuesSupported.containsAll(acrValuesRequested)) {
                         throw new InvalidRequestException("Invalid parameter: claims, acr_values requested not supported");
                     }
@@ -282,7 +284,7 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
         if (client.getResponseTypes() == null) {
             throw new UnauthorizedClientException("Client should have response_type.");
         }
-        if(!client.getResponseTypes().contains(responseType)) {
+        if (!client.getResponseTypes().contains(responseType)) {
             throw new UnauthorizedClientException("Client should have all requested response_type");
         }
 
@@ -301,7 +303,7 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
     }
 
     private boolean returnFromLoginPage(RoutingContext context) {
-       return Boolean.TRUE.equals(context.session().get(ConstantKeys.USER_LOGIN_COMPLETED_KEY));
+        return Boolean.TRUE.equals(context.session().get(ConstantKeys.USER_LOGIN_COMPLETED_KEY));
     }
 
     private boolean containsGrantType(List<String> authorizedGrantTypes) {

@@ -68,7 +68,7 @@ public class GoogleReCaptchaV3Provider implements BotDetectionProvider  {
     public Single<Boolean> validate(BotDetectionContext context) {
         final String token = context.getHeader(configuration.getTokenParameterName()).orElse(context.getParameter(configuration.getTokenParameterName()).orElse(null));
 
-        if (token == null || "".equals(token.trim())) {
+        if (token == null || token.trim().isEmpty()) {
             LOGGER.debug("Recaptcha token is empty");
             return Single.just(false);
         }

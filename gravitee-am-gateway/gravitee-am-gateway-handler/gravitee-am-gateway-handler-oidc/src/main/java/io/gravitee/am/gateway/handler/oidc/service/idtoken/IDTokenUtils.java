@@ -15,8 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.idtoken;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.security.MessageDigest;
 import java.util.Arrays;
@@ -26,9 +27,9 @@ import java.util.Base64;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class IDTokenUtils {
-
-    private static final Logger logger = LoggerFactory.getLogger(IDTokenUtils.class);
 
     /**
      * When using the Hybrid Flow, additional hash requirements are mandatory to an ID Token returned from the Authorization Endpoint :
@@ -66,7 +67,7 @@ public final class IDTokenUtils {
             byte[] leftMostHalfPayloadHash = Arrays.copyOf(payloadHash, payloadHash.length / 2);
             return Base64.getUrlEncoder().withoutPadding().encodeToString(leftMostHalfPayloadHash);
         } catch (Exception e) {
-            logger.error("Unable to generate ID token claim hash value", e);
+            log.error("Unable to generate ID token claim hash value", e);
         }
         return null;
     }

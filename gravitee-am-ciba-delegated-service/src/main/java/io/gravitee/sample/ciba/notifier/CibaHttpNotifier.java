@@ -193,8 +193,6 @@ public class CibaHttpNotifier {
         options.addOption(keystore_password);
 
         CommandLineParser parser = new DefaultParser();
-        CommandLine cmd = parser.parse( options, args);
-
-        return cmd;
+        return parser.parse( options, args);
     }
 }

@@ -31,7 +31,7 @@ import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
-import java.io.ByteArrayOutputStream;
+
 import java.security.*;
 import java.security.spec.ECGenParameterSpec;
 import org.slf4j.Logger;
@@ -115,7 +115,7 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
         // set claims
         Map<String, Object> additionalInformation = new HashMap<>();
         // add sub required claim
-        additionalInformation.put(io.gravitee.am.common.jwt.Claims.sub, sub);
+        additionalInformation.put(io.gravitee.am.common.jwt.Claims.SUB, sub);
         List<Map<String, String>> claimsMapper = jwtBearerTokenGranterConfiguration.getClaimsMapper();
         if (claimsMapper != null && !claimsMapper.isEmpty()) {
             claimsMapper.forEach(claimMapper -> {

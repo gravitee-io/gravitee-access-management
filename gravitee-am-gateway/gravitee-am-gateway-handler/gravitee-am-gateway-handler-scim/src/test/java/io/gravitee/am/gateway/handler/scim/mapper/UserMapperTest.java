@@ -82,7 +82,7 @@ public class UserMapperTest {
     }
 
     private Map<String, Object> restrictedClaims() {
-        return List.of(Claims.auth_time, ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY, ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY)
+        return List.of(Claims.AUTH_TIME, ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY, ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY)
                 .stream()
                 .collect(Collectors.toMap(s -> s, s -> s));
     }

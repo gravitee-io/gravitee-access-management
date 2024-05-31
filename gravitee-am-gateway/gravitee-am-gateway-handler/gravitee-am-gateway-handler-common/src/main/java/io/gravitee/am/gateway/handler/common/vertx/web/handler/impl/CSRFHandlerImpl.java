@@ -21,14 +21,13 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.Cookie;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.auth.VertxContextPRNG;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.Session;
 import io.vertx.ext.web.handler.CSRFHandler;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -45,9 +44,8 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class CSRFHandlerImpl implements CSRFHandler {
-
-    private static final Logger log = LoggerFactory.getLogger(io.vertx.ext.web.handler.impl.CSRFHandlerImpl.class);
 
     private static final Base64.Encoder BASE64 = Base64.getMimeEncoder();
 

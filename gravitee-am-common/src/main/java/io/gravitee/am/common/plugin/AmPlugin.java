@@ -18,14 +18,18 @@ package io.gravitee.am.common.plugin;
 import io.gravitee.plugin.core.api.ConfigurablePlugin;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginManifest;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.net.URL;
 import java.nio.file.Path;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Setter
+@Getter
 public abstract class AmPlugin<CONFIGURATION, PROVIDER> implements ConfigurablePlugin<CONFIGURATION> {
 
     private Plugin delegate;
@@ -67,11 +71,4 @@ public abstract class AmPlugin<CONFIGURATION, PROVIDER> implements ConfigurableP
 
     public abstract Class<PROVIDER> provider();
 
-    public Plugin getDelegate() {
-        return delegate;
-    }
-
-    public void setDelegate(Plugin delegate) {
-        this.delegate = delegate;
-    }
 }

@@ -177,7 +177,7 @@ public class SyncManager implements InitializingBean {
                     gatewayMetricProvider.updateSyncEvents(events.size());
 
                     // Extract only the latest events by type and id
-                    Map<AbstractMap.SimpleEntry, Event> sortedEvents = events
+                    Map<AbstractMap.SimpleEntry<Object, Object>, Event> sortedEvents = events
                             .stream()
                             .collect(
                                     toMap(

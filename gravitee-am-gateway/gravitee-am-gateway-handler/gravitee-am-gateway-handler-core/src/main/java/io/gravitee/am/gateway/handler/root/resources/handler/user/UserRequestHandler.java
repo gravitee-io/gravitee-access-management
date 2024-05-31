@@ -72,15 +72,15 @@ public abstract class UserRequestHandler extends AbstractEndpoint implements Han
             Map<String, Object> additionalInformation = user.getAdditionalInformation() != null ? new HashMap<>(user.getAdditionalInformation()) : new HashMap<>();
             // add ip address and user agent
             if (canSaveIp(routingContext)) {
-                additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(routingContext.request()));
+                additionalInformation.put(Claims.IP_ADDRESS, RequestUtils.remoteAddress(routingContext.request()));
             }
 
             if(canSaveUserAgent(routingContext)){
-                additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(routingContext.request()));
+                additionalInformation.put(Claims.USER_AGENT, RequestUtils.userAgent(routingContext.request()));
             }
 
             if(user.getReferenceType() == ReferenceType.DOMAIN) {
-                additionalInformation.put(Claims.domain, user.getReferenceId());
+                additionalInformation.put(Claims.DOMAIN, user.getReferenceId());
             }
 
             authenticatedUser.setAdditionalInformation(additionalInformation);

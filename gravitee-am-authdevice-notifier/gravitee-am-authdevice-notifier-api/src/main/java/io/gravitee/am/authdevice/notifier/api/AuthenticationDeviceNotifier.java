@@ -16,9 +16,6 @@
 package io.gravitee.am.authdevice.notifier.api;
 
 import io.gravitee.am.common.plugin.AmPlugin;
-import io.gravitee.plugin.core.api.ConfigurablePlugin;
-import io.gravitee.plugin.core.api.Plugin;
-import org.springframework.beans.factory.annotation.Configurable;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

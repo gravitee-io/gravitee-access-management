@@ -361,8 +361,8 @@ public class PushedAuthorizationRequestServiceTest {
 
         JWTClaimsSet claimsSet = new JWTClaimsSet
                 .Builder()
-                .claim(Claims.aud, "https://op/domain/oidc")
-                .claim(Claims.scope, "openid")
+                .claim(Claims.AUD, "https://op/domain/oidc")
+                .claim(Claims.SCOPE, "openid")
                 .claim(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE, "code")
                 .build();
         final SignedJWT signedJwt = mock(SignedJWT.class);
@@ -383,8 +383,8 @@ public class PushedAuthorizationRequestServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(jwt ->
-                jwt.getJWTClaimsSet().getStringClaim(Claims.aud) != null &&
-                        jwt.getJWTClaimsSet().getStringClaim(Claims.scope) != null);
+                jwt.getJWTClaimsSet().getStringClaim(Claims.AUD) != null &&
+                        jwt.getJWTClaimsSet().getStringClaim(Claims.SCOPE) != null);
 
         verify(repository).findById(eq(ID));
     }

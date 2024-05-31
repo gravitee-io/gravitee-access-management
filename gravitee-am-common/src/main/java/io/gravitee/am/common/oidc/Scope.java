@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.common.oidc;
 
+import lombok.Getter;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -27,6 +29,7 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
 public enum Scope {
 
     PROFILE("profile","Profile","Access to the End-User default profile Claims", Arrays.asList(
@@ -36,7 +39,7 @@ public enum Scope {
             StandardClaims.UPDATED_AT),true),
     FULL_PROFILE("full_profile", "Extended profile", "Access to the End-User extended profile Claims", Collections.emptyList(), true),
     EMAIL("email","Email","Access to the email and email_verified Claims", Arrays.asList(StandardClaims.EMAIL, StandardClaims.EMAIL_VERIFIED),true),
-    ADDRESS("address", "Address","Access to the address Claim", Arrays.asList(StandardClaims.ADDRESS),true),
+    ADDRESS("address", "Address","Access to the address Claim", List.of(StandardClaims.ADDRESS),true),
     PHONE("phone", "Phone", "Access to the phone_number and phone_number_verified Claims", Arrays.asList(StandardClaims.PHONE_NUMBER, StandardClaims.PHONE_NUMBER_VERIFIED),true),
     OPENID("openid","Openid","Used to perform Openid requests", Collections.emptyList(),true),
     OFFLINE_ACCESS("offline_access", "Offline_access","Access to End-User UserInfo even when he is not logged in.", Collections.emptyList(),true),
@@ -45,8 +48,8 @@ public enum Scope {
     SCIM("scim", "SCIM", "Access to System for Cross-domain Identity Management endpoint.", Collections.emptyList(),false),
     UMA("uma_protection", "UMA_2.0","Access and manage user protected resources", Collections.emptyList(), false),
     CONSENT_ADMIN("consent_admin", "Consent_admin", "Access to End-User consents", Collections.emptyList(),false),
-    GROUPS("groups", "Groups", "Access to the groups Claim.", Arrays.asList(CustomClaims.GROUPS), true),
-    ROLES("roles", "Roles", "Access to the roles Claim.", Arrays.asList(CustomClaims.ROLES), true);
+    GROUPS("groups", "Groups", "Access to the groups Claim.", List.of(CustomClaims.GROUPS), true),
+    ROLES("roles", "Roles", "Access to the roles Claim.", List.of(CustomClaims.ROLES), true);
 
     private final String key;
     private final String label;
@@ -65,22 +68,6 @@ public enum Scope {
         this.discovery = discovery;
     }
 
-    public String getKey() {
-        return key;
-    }
-
-    public String getLabel() {
-        return label;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public List<String> getClaims() {
-        return claims;
-    }
-
     public static boolean exists(String scope) {
         try {
             Scope.valueOf(scope);
@@ -90,7 +77,4 @@ public enum Scope {
         }
     }
 
-    public boolean isDiscovery() {
-        return discovery;
-    }
 }

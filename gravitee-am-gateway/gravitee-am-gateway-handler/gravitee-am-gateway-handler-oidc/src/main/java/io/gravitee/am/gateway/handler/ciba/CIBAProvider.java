@@ -134,7 +134,7 @@ public class CIBAProvider extends AbstractProtocolProvider {
                 .handler(corsHandler)
                 .handler(clientAuthHandler)
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(this.openIDDiscoveryService))
-                .handler(new AuthenticationRequestParseRequestObjectHandler(this.requestObjectService, this.domain))
+                .handler(new AuthenticationRequestParseRequestObjectHandler(this.requestObjectService))
                 .handler(new AuthenticationRequestParametersHandler(domain, jwsService, jwkService, userService, scopeManager))
                 .handler(new AuthenticationRequestAcknowledgeHandler(authService, domain, jwtService));
 

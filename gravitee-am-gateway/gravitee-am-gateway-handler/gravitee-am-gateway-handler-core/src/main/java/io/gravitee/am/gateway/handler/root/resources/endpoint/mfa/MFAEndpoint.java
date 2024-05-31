@@ -29,11 +29,7 @@ import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
  */
 public abstract class MFAEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
-    public MFAEndpoint() {
-        super();
-    }
-
-    public MFAEndpoint(TemplateEngine templateEngine) {
+    protected MFAEndpoint(TemplateEngine templateEngine) {
         super(templateEngine);
     }
 

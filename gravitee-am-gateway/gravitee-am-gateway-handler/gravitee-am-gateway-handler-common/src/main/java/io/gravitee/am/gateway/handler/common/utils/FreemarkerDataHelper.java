@@ -22,6 +22,8 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.am.model.safe.UserProperties;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,6 +32,7 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FreemarkerDataHelper {
 
     public static Map<String, Object> generateData(Map<String, Object> rawData) {
@@ -37,13 +40,13 @@ public class FreemarkerDataHelper {
         final Object domain = rawData.get(ConstantKeys.DOMAIN_CONTEXT_KEY);
         final Object client = rawData.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final Object user = rawData.get(ConstantKeys.USER_CONTEXT_KEY);
-        if (domain != null && domain instanceof Domain) {
+        if (domain instanceof Domain) {
             data.put(ConstantKeys.DOMAIN_CONTEXT_KEY, new DomainProperties((Domain) domain));
         }
-        if (client != null && client instanceof Client) {
+        if (client instanceof Client) {
             data.put(ConstantKeys.CLIENT_CONTEXT_KEY, new ClientProperties((Client) client));
         }
-        if (user != null && user instanceof User) {
+        if (user instanceof User) {
             data.put(ConstantKeys.USER_CONTEXT_KEY, new UserProperties((User) user));
         }
         return data;

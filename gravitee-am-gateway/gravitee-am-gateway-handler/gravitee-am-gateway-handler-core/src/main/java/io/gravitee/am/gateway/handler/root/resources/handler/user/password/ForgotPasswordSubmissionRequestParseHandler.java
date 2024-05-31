@@ -24,7 +24,6 @@ import io.gravitee.am.model.oidc.Client;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -40,7 +39,7 @@ public class ForgotPasswordSubmissionRequestParseHandler extends UserBodyRequest
     private final Domain domain;
 
     public ForgotPasswordSubmissionRequestParseHandler(Domain domain) {
-        super(Arrays.asList(EMAIL_PARAM_KEY));
+        super(List.of(EMAIL_PARAM_KEY));
         this.domain = domain;
     }
 

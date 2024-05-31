@@ -83,12 +83,10 @@ public class SocialAuthHandlerImpl implements SocialAuthHandler {
     }
 
     protected void processException(RoutingContext ctx, Throwable exception) {
-        if (exception != null && exception.getCause() != null) {
-            // override default process exception to redirect to the login page
-            if (exception.getCause() instanceof AuthenticationException) {
-                ctx.fail(exception.getCause());
-                return;
-            }
+        // override default process exception to redirect to the login page
+        if (exception != null && exception.getCause() != null && exception.getCause() instanceof AuthenticationException) {
+            ctx.fail(exception.getCause());
+            return;
         }
         // fallback 500
         ctx.fail(exception);

@@ -206,7 +206,7 @@ public class TokenServiceTest {
         client.setClientId("my-client-id");
         TokenClaim customClaim = new TokenClaim();
         customClaim.setTokenType(TokenTypeHint.ACCESS_TOKEN);
-        customClaim.setClaimName(Claims.aud);
+        customClaim.setClaimName(Claims.AUD);
         String customClaimExpression = "{T(java.lang.String).valueOf(\"another_client_identifier,other_value,my-client-id\").split(\",\")}";
         customClaim.setClaimValue(customClaimExpression);
         client.setTokenCustomClaims(List.of(customClaim));
@@ -219,9 +219,9 @@ public class TokenServiceTest {
         when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
 
-        verify(jwtService).encode(argThat(jwt -> jwt.get(Claims.aud) instanceof List
-                && jwt.getAud().equals(((List)jwt.get(Claims.aud)).get(0))
-                && ((List)jwt.get(Claims.aud)).size() == 3
+        verify(jwtService).encode(argThat(jwt -> jwt.get(Claims.AUD) instanceof List
+                && jwt.getAud().equals(((List)jwt.get(Claims.AUD)).get(0))
+                && ((List)jwt.get(Claims.AUD)).size() == 3
                 && oAuth2Request.getClientId().equals(jwt.getAud())), any(Client.class));
     }
 
@@ -234,7 +234,7 @@ public class TokenServiceTest {
         client.setClientId("my-client-id");
         TokenClaim customClaim = new TokenClaim();
         customClaim.setTokenType(TokenTypeHint.ACCESS_TOKEN);
-        customClaim.setClaimName(Claims.aud);
+        customClaim.setClaimName(Claims.AUD);
         String customClaimExpression = "{T(java.lang.String).valueOf(\"another_client_identifier,other_value\").split(\",\")}";
         customClaim.setClaimValue(customClaimExpression);
         client.setTokenCustomClaims(List.of(customClaim));
@@ -255,9 +255,9 @@ public class TokenServiceTest {
         verify(tokenManager, times(1)).storeAccessToken(any());
         verify(accessTokenRepository, never()).delete(anyString());
         verify(refreshTokenRepository, never()).delete(anyString());
-        verify(jwtService).encode(argThat(jwt -> jwt.get(Claims.aud) instanceof List
-                && jwt.getAud().equals(((List)jwt.get(Claims.aud)).get(0))
-                && ((List)jwt.get(Claims.aud)).size() == 3
+        verify(jwtService).encode(argThat(jwt -> jwt.get(Claims.AUD) instanceof List
+                && jwt.getAud().equals(((List)jwt.get(Claims.AUD)).get(0))
+                && ((List)jwt.get(Claims.AUD)).size() == 3
                 && oAuth2Request.getClientId().equals(jwt.getAud())), any(Client.class));
     }
 

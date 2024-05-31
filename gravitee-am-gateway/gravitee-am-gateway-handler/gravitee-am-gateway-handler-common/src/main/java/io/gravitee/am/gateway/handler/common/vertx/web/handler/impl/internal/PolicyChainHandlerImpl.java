@@ -39,11 +39,12 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.List;
 
-import static io.gravitee.am.common.utils.ConstantKeys.*;
-import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
+import static io.gravitee.am.common.utils.ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_FORCE_ENROLLMENT;
+import static io.gravitee.am.common.utils.ConstantKeys.POLICY_CHAIN_ERROR_KEY_MFA_CHALLENGE_ERROR;
+import static io.gravitee.am.gateway.handler.common.utils.RoutingContextUtils.getEvaluableAttributes;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -52,11 +53,10 @@ import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.g
 public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(PolicyChainHandlerImpl.class);
-    private static final List<String> BLACKLIST_CONTEXT_ATTRIBUTES = Arrays.asList("X-XSRF-TOKEN", "_csrf", "__body-handled");
-    private FlowManager flowManager;
-    private PolicyChainProcessorFactory policyChainProcessorFactory;
-    private ExecutionContextFactory executionContextFactory;
-    private ExtensionPoint extensionPoint;
+    private final FlowManager flowManager;
+    private final PolicyChainProcessorFactory policyChainProcessorFactory;
+    private final ExecutionContextFactory executionContextFactory;
+    private final ExtensionPoint extensionPoint;
 
     public PolicyChainHandlerImpl(FlowManager flowManager,
                                   PolicyChainProcessorFactory policyChainProcessorFactory,
@@ -112,10 +112,9 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
                         Throwable failureCause = policyChainHandler.cause();
                         logger.debug("An error occurs while executing the policy chain", failureCause);
 
-                        if (failureCause instanceof PolicyChainException
+                        if (failureCause instanceof PolicyChainException policyChainException
                                 && POLICY_CHAIN_ERROR_KEY_MFA_CHALLENGE_ERROR.equals(((PolicyChainException) failureCause).key())) {
                             // need to set into the session the alternativeFactorId
-                            PolicyChainException policyChainException = (PolicyChainException) failureCause;
                             if (policyChainException.parameters() != null) {
                                 context.session().put(ALTERNATIVE_FACTOR_ID_KEY, policyChainException.parameters().get(ALTERNATIVE_FACTOR_ID_KEY));
                                 if (policyChainException.parameters().containsKey(MFA_FORCE_ENROLLMENT)) {

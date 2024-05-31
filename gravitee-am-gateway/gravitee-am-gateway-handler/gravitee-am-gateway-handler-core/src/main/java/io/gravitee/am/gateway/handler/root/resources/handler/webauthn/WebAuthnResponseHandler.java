@@ -38,7 +38,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
 /**
  * The callback route to verify attestations and assertions. Usually this route is <pre>/webauthn/response</pre>
  *
- *  // TODO : This handler exists only because of https://github.com/gravitee-io/issues/issues/7158
+ *  // TODO : This handler exists only because of <a href="https://github.com/gravitee-io/issues/issues/7158">This issue</a>
  *  // should be removed in a future version of AM
  *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -47,7 +47,6 @@ import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
 public class WebAuthnResponseHandler extends WebAuthnHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnResponseHandler.class);
-    private static final String DEFAULT_ORIGIN = "http://localhost:8092";
     private final WebAuthn webAuthn;
     private final String origin;
 
@@ -70,7 +69,7 @@ public class WebAuthnResponseHandler extends WebAuthnHandler {
     public void handle(RoutingContext ctx) {
         try {
             // might throw runtime exception if there's no json or is bad formed
-            final JsonObject webauthnResp = ctx.getBodyAsJson();
+            final JsonObject webauthnResp = ctx.body().asJsonObject();
             // input validation
             if (isEmptyString(webauthnResp, "id") ||
                     isEmptyString(webauthnResp, "rawId") ||

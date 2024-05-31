@@ -115,7 +115,7 @@ public class IntrospectionServiceTest {
         accessToken.setClientId("client-id");
         accessToken.setCreatedAt(new Date());
         accessToken.setExpireAt(new Date());
-        accessToken.setAdditionalInformation(Collections.singletonMap(Claims.aud, "test-aud"));
+        accessToken.setAdditionalInformation(Collections.singletonMap(Claims.AUD, "test-aud"));
         when(tokenService.introspect(token)).thenReturn(Single.just(accessToken));
 
         IntrospectionRequest introspectionRequest = new IntrospectionRequest(token);
@@ -124,6 +124,6 @@ public class IntrospectionServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValue(introspectionResponse -> !introspectionResponse.containsKey(Claims.aud));
+        testObserver.assertValue(introspectionResponse -> !introspectionResponse.containsKey(Claims.AUD));
     }
 }

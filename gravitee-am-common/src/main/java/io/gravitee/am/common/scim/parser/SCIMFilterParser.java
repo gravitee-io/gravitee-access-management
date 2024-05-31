@@ -19,6 +19,8 @@ import io.gravitee.am.common.scim.Schema;
 import io.gravitee.am.common.scim.filter.AttributePath;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.scim.filter.Operator;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -30,6 +32,7 @@ import java.util.Stack;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public final class SCIMFilterParser {
 
     /**
@@ -46,7 +49,7 @@ public final class SCIMFilterParser {
     /**
      * The position one higher than the last character.
      */
-    private int endPos;
+    private final int endPos;
 
     /**
      * The current character position.
@@ -77,9 +80,9 @@ public final class SCIMFilterParser {
     /**
      * Parse the filter provided in the constructor.
      *
-     * @return  A parsed SCIM filter.
+     * @return A parsed SCIM filter.
      *
-     * @throws  IllegalArgumentException  If the filter string could not be parsed.
+     * @throws IllegalArgumentException  If the filter string could not be parsed.
      */
     public static Filter parse(final String filterString) throws IllegalArgumentException {
         try {
@@ -97,12 +100,11 @@ public final class SCIMFilterParser {
      * Most attribute operators require a value but 'pr' (presence) requires
      * no value.
      *
-     * @return  The parsed filter component.
+     * @return The parsed filter component.
      */
     private Filter readFilterComponent() {
         String word = readWord();
-        if (word == null)
-        {
+        if (word == null) {
             final String msg = String.format(
                     "End of input at position %d but expected a filter expression",
                     markPos);
@@ -155,23 +157,23 @@ public final class SCIMFilterParser {
                 attributeOperator,
                 filterAttribute,
                 filterValueString,
-                (filterValue != null) && (filterValue instanceof String),
+                (filterValue instanceof String),
                 null);
     }
 
     /**
      * Read a filter expression.
      *
-     * @return  The SCIM filter.
+     * @return The SCIM filter.
      */
     private Filter readFilter() {
-        final Stack<Node> expressionStack = new Stack<Node>();
+        final Stack<Node> expressionStack = new Stack<>();
 
         // Employ the shunting-yard algorithm to parse into reverse polish notation,
         // where the operands are filter components and the operators are the
         // logical AND and OR operators. This algorithm ensures that operator
         // precedence and parentheses are respected.
-        final List<Node> reversePolish = new ArrayList<Node>();
+        final List<Node> reversePolish = new ArrayList<>();
         for (String word = readWord(); word != null; word = readWord()) {
             if (word.equalsIgnoreCase("and") || word.equalsIgnoreCase("or")) {
                 final OperatorNode currentOperator;
@@ -180,8 +182,7 @@ public final class SCIMFilterParser {
                 } else {
                     currentOperator = new OperatorNode(Operator.OR, markPos);
                 }
-                while (!expressionStack.empty() && (expressionStack.peek() instanceof OperatorNode)) {
-                    final OperatorNode previousOperator = (OperatorNode) expressionStack.peek();
+                while (!expressionStack.empty() && (expressionStack.peek() instanceof OperatorNode previousOperator)) {
                     if (previousOperator.getPrecedence() < currentOperator.getPrecedence()) {
                         break;
                     }
@@ -221,12 +222,11 @@ public final class SCIMFilterParser {
         }
 
         // Evaluate the reverse polish notation to create a single complex filter.
-        final Stack<FilterNode> filterStack = new Stack<FilterNode>();
+        final Stack<FilterNode> filterStack = new Stack<>();
         for (final Node node : reversePolish) {
-            if (node instanceof OperatorNode) {
+            if (node instanceof OperatorNode operatorNode) {
                 final FilterNode rightOperand = filterStack.pop();
                 final FilterNode leftOperand = filterStack.pop();
-                final OperatorNode operatorNode = (OperatorNode)node;
                 if (operatorNode.getOperator().equals(Operator.AND)) {
                     final Filter filter = createAndFilter(
                             Arrays.asList(leftOperand.getFilterComponent(),
@@ -239,15 +239,14 @@ public final class SCIMFilterParser {
                     filterStack.push(new FilterNode(filter, leftOperand.getPos()));
                 }
             } else {
-                filterStack.push((FilterNode)node);
+                filterStack.push((FilterNode) node);
             }
         }
 
-        if (filterStack.size() == 0) {
-            final String msg = String.format("Empty filter expression");
+        if (filterStack.isEmpty()) {
+            final String msg = "Empty filter expression";
             throw new IllegalArgumentException(msg);
-        }
-        else if (filterStack.size() > 1) {
+        } else if (filterStack.size() > 1) {
             final String msg = String.format(
                     "Unexpected characters at position %d", expressionStack.get(1).pos);
             throw new IllegalArgumentException(msg);
@@ -360,8 +359,7 @@ public final class SCIMFilterParser {
                                 builder.append('\t');
                                 break;
                             case 'u':
-                                if (currentPos + 4 > endPos)
-                                {
+                                if (currentPos + 4 > endPos) {
                                     final String msg = String.format(
                                             "End of input in a string value that began at " +
                                                     "position %d", markPos);
@@ -369,7 +367,7 @@ public final class SCIMFilterParser {
                                 }
                                 final String hexChars =
                                         filterString.substring(currentPos, currentPos + 4);
-                                builder.append((char)Integer.parseInt(hexChars, 16));
+                                builder.append((char) Integer.parseInt(hexChars, 16));
                                 currentPos += 4;
                                 break;
                             default:
@@ -539,7 +537,7 @@ public final class SCIMFilterParser {
     }
 
     private static Object stringToValue(String string) {
-        if (string.equals("")) {
+        if (string.isEmpty()) {
             return string;
         } else if (string.equalsIgnoreCase("true")) {
             return Boolean.TRUE;
@@ -559,7 +557,7 @@ public final class SCIMFilterParser {
                     } else {
                         Long myLong = Long.valueOf(string);
                         if (string.equals(myLong.toString())) {
-                            if (myLong == (long)myLong.intValue()) {
+                            if (myLong == (long) myLong.intValue()) {
                                 return myLong.intValue();
                             }
 
@@ -567,6 +565,7 @@ public final class SCIMFilterParser {
                         }
                     }
                 } catch (Exception var3) {
+                    log.error("Failed to parse string '{}'", string, var3);
                 }
             }
 
@@ -590,7 +589,12 @@ public final class SCIMFilterParser {
      * Base class for expression stack nodes. The expression stack is needed to
      * employ the shunting-yard algorithm to parse the filter expression.
      */
-    class Node {
+    @Getter
+    static class Node {
+
+        /**
+         *  Position of the node in the filter string.
+         */
         private final int pos;
 
         /**
@@ -598,25 +602,20 @@ public final class SCIMFilterParser {
          *
          * @param pos  The position of the node in the filter string.
          */
-        public Node(final int pos)
-        {
+        public Node(final int pos) {
             this.pos = pos;
         }
 
-        /**
-         * Retrieve the position of the node in the filter string.
-         * @return  The position of the node in the filter string.
-         */
-        public int getPos()
-        {
-            return pos;
-        }
     }
 
     /**
      * A node representing a filter component.
      */
-    class FilterNode extends Node {
+    @Getter
+    static class FilterNode extends Node {
+        /**
+         *  Filter component.
+         */
         private final Filter filterComponent;
 
         /**
@@ -631,16 +630,6 @@ public final class SCIMFilterParser {
             this.filterComponent = filterComponent;
         }
 
-        /**
-         * Retrieve the filter component.
-         *
-         * @return  The filter component.
-         */
-        public Filter getFilterComponent()
-        {
-            return filterComponent;
-        }
-
         @Override
         public String toString() {
             return "FilterNode{" +
@@ -652,7 +641,12 @@ public final class SCIMFilterParser {
     /**
      * A node representing a logical operator.
      */
-    class OperatorNode extends Node {
+    @Getter
+    static class OperatorNode extends Node {
+        /**
+         * -- GETTER --
+         *  Operator, either SCIMFilterType.AND or CIMFilterType.OR.
+         */
         private final Operator operator;
 
         /**
@@ -669,28 +663,15 @@ public final class SCIMFilterParser {
         }
 
         /**
-         * Retrieve the type of operator.
-         *
-         * @return  The type of operator, either SCIMFilterType.AND or
-         *          SCIMFilterType.OR.
-         */
-        public Operator getOperator()
-        {
-            return operator;
-        }
-
-        /**
          * Retrieve the precedence of the operator.
          *
-         * @return  The precedence of the operator.
+         * @return The precedence of the operator.
          */
         public int getPrecedence() {
-            switch (operator) {
-                case AND:
-                    return 2;
-                case OR:
-                default:
-                    return 1;
+            if (operator == Operator.AND) {
+                return 2;
+            } else {
+                return 1;
             }
         }
 
@@ -705,14 +686,13 @@ public final class SCIMFilterParser {
     /**
      * A node representing an opening parenthesis.
      */
-    class LeftParenthesisNode extends Node {
+    static class LeftParenthesisNode extends Node {
         /**
          * Create a new opening parenthesis node.
          *
          * @param pos  The position of the parenthesis in the filter string.
          */
-        public LeftParenthesisNode(final int pos)
-        {
+        public LeftParenthesisNode(final int pos) {
             super(pos);
         }
     }

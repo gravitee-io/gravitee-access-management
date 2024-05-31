@@ -35,13 +35,10 @@ import io.gravitee.risk.assessment.api.devices.Devices;
 import io.gravitee.risk.assessment.api.geovelocity.GeoTimeCoordinate;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.functions.Function;
-import io.vertx.core.AsyncResult;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.core.eventbus.EventBus;
 import io.vertx.rxjava3.core.eventbus.Message;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -127,7 +124,7 @@ public class RiskAssessmentService {
             var ipReputationAssessment = ofNullable(riskAssessmentSettings.getIpReputationAssessment()).orElse(new AssessmentSettings());
             if (ipReputationAssessment.isEnabled()) {
                 logger.debug("Decorating assessment with IP reputation");
-                String ip = (String) authDetails.getPrincipal().getContext().get(Claims.ip_address);
+                String ip = (String) authDetails.getPrincipal().getContext().get(Claims.IP_ADDRESS);
                 assessmentMessage.getData().setCurrentIp(ip);
             }
             return Single.just(assessmentMessage);

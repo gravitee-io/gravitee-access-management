@@ -16,11 +16,15 @@
 package io.gravitee.am.botdetection.google.recaptcha;
 
 import io.gravitee.am.botdetection.api.BotDetectionConfiguration;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public class GoogleReCaptchaV3Configuration implements BotDetectionConfiguration {
     private String detectionType;
     private String siteKey;
@@ -34,47 +38,4 @@ public class GoogleReCaptchaV3Configuration implements BotDetectionConfiguration
         return detectionType;
     }
 
-    public void setDetectionType(String detectionType) {
-        this.detectionType = detectionType;
-    }
-
-    public void setSiteKey(String siteKey) {
-        this.siteKey = siteKey;
-    }
-
-    public void setSecretKey(String secretKey) {
-        this.secretKey = secretKey;
-    }
-
-    public void setServiceUrl(String serviceUrl) {
-        this.serviceUrl = serviceUrl;
-    }
-
-    public void setMinScore(float minScore) {
-        this.minScore = minScore;
-    }
-
-    public String getSiteKey() {
-        return siteKey;
-    }
-
-    public String getSecretKey() {
-        return secretKey;
-    }
-
-    public String getServiceUrl() {
-        return serviceUrl;
-    }
-
-    public float getMinScore() {
-        return minScore;
-    }
-
-    public String getTokenParameterName() {
-        return tokenParameterName;
-    }
-
-    public void setTokenParameterName(String tokenParameterName) {
-        this.tokenParameterName = tokenParameterName;
-    }
 }

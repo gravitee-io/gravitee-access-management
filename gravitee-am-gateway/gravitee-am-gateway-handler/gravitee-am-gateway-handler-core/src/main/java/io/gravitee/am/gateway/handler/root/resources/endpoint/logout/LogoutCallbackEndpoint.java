@@ -26,7 +26,6 @@ import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
@@ -36,8 +35,7 @@ import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.STATE;
@@ -46,11 +44,11 @@ import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.STA
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class LogoutCallbackEndpoint extends AbstractLogoutEndpoint {
-    private static final Logger logger = LoggerFactory.getLogger(LogoutCallbackEndpoint.class);
-    private CertificateManager certificateManager;
-    private ClientSyncService clientSyncService;
-    private JWTService jwtService;
+    private final CertificateManager certificateManager;
+    private final ClientSyncService clientSyncService;
+    private final JWTService jwtService;
 
     public LogoutCallbackEndpoint(Domain domain,
                                   ClientSyncService clientSyncService,
@@ -111,8 +109,8 @@ public class LogoutCallbackEndpoint extends AbstractLogoutEndpoint {
     private void restoreState(RoutingContext context, Handler<AsyncResult<Boolean>> handler) {
         final String state = context.request().getParam(Parameters.STATE);
 
-        if (StringUtils.isEmpty(state)) {
-            logger.error("No state on login callback");
+        if (!StringUtils.hasText(state)) {
+            log.error("No state on login callback");
             handler.handle(Future.failedFuture(new InvalidRequestException("Missing state query param")));
             return;
         }
@@ -127,7 +125,7 @@ public class LogoutCallbackEndpoint extends AbstractLogoutEndpoint {
                 .subscribe(
                         stateJwt -> handler.handle(Future.succeededFuture(true)),
                         ex -> {
-                            logger.error("An error occurs verifying state on login callback", ex);
+                            log.error("An error occurs verifying state on login callback", ex);
                             handler.handle(Future.failedFuture(new BadClientCredentialsException()));
                         });
     }
@@ -163,7 +161,7 @@ public class LogoutCallbackEndpoint extends AbstractLogoutEndpoint {
         }
 
         if (routingContext.get(Parameters.CLIENT_ID) == null) {
-            logger.error("Unable to restore client for logout callback");
+            log.error("Unable to restore client for logout callback");
             handler.handle(Future.failedFuture(new InvalidRequestException("Invalid state")));
             return;
         }
@@ -174,11 +172,11 @@ public class LogoutCallbackEndpoint extends AbstractLogoutEndpoint {
                 .subscribe(
                         client -> handler.handle(Future.succeededFuture(new UserToken(endUser, client))),
                         ex -> {
-                            logger.error("An error has occurred when getting client {}", clientId, ex);
+                            log.error("An error has occurred when getting client {}", clientId, ex);
                             handler.handle(Future.failedFuture(new BadClientCredentialsException()));
                         },
                         () -> {
-                            logger.error("Unknown client {}", clientId);
+                            log.error("Unknown client {}", clientId);
                             handler.handle(Future.failedFuture(new BadClientCredentialsException()));
                         }
                 );

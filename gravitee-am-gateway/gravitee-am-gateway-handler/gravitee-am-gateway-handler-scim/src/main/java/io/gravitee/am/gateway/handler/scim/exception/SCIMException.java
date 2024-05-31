@@ -23,15 +23,15 @@ import io.gravitee.am.gateway.handler.scim.model.ScimType;
  */
 public abstract class SCIMException extends RuntimeException {
 
-    public SCIMException() {
+    protected SCIMException() {
         super();
     }
 
-    public SCIMException(String message) {
+    protected SCIMException(String message) {
         super(message);
     }
 
-    public SCIMException(String message, Throwable cause) {
+    protected SCIMException(String message, Throwable cause) {
         super(message, cause);
     }
 

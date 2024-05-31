@@ -28,7 +28,7 @@ public class ClaimsRequestResolverTest {
     private ClaimsRequestResolver claimsRequestResolver = new ClaimsRequestResolver();
 
     @Test
-    public void shouldResolveClaimsRequest_userInfo() throws ClaimsRequestSyntaxException {
+    public void shouldResolveGetAllClaimsRequest_userInfo() throws ClaimsRequestSyntaxException {
         String claims = "{\"userinfo\": {\"name\": {\"essential\": true}, \"family_name\": null}}";
         ClaimsRequest claimsRequest = claimsRequestResolver.resolve(claims);
         Assert.assertNull(claimsRequest.getIdTokenClaims());
@@ -39,7 +39,7 @@ public class ClaimsRequestResolverTest {
     }
 
     @Test
-    public void shouldResolveClaimsRequest_userInfo_unrecognized_value() throws ClaimsRequestSyntaxException {
+    public void shouldResolveGetAllClaimsRequest_userInfo_unrecognized_value() throws ClaimsRequestSyntaxException {
         String claims = "{\"userinfo\": {\"name\": {\"essential\": true}, \"family_name\": \"unrecognized\"}}";
         ClaimsRequest claimsRequest = claimsRequestResolver.resolve(claims);
         Assert.assertNull(claimsRequest.getIdTokenClaims());
@@ -50,7 +50,7 @@ public class ClaimsRequestResolverTest {
     }
 
     @Test
-    public void shouldResolveClaimsRequest_idToken() throws ClaimsRequestSyntaxException {
+    public void shouldResolveGetAllClaimsRequest_idToken() throws ClaimsRequestSyntaxException {
         String claims = "{\"id_token\": {\"name\": {\"essential\": true}, \"family_name\": null}}";
         ClaimsRequest claimsRequest = claimsRequestResolver.resolve(claims);
         Assert.assertNull(claimsRequest.getUserInfoClaims());
@@ -61,7 +61,7 @@ public class ClaimsRequestResolverTest {
     }
 
     @Test
-    public void shouldResolveClaimsRequest_idToken_unrecognized_value() throws ClaimsRequestSyntaxException {
+    public void shouldResolveGetAllClaimsRequest_idToken_unrecognized_value() throws ClaimsRequestSyntaxException {
         String claims = "{\"id_token\": {\"name\": {\"essential\": true}, \"family_name\": \"unrecognized\"}}";
         ClaimsRequest claimsRequest = claimsRequestResolver.resolve(claims);
         Assert.assertNull(claimsRequest.getUserInfoClaims());
@@ -72,7 +72,7 @@ public class ClaimsRequestResolverTest {
     }
 
     @Test
-    public void shouldResolveClaimsRequest() throws ClaimsRequestSyntaxException {
+    public void shouldResolveGetAllClaimsRequest() throws ClaimsRequestSyntaxException {
         String claims = "{ \"userinfo\": {\"name\": {\"essential\": true}, \"family_name\": null}, " +
                 "\"id_token\": {\"name\": {\"essential\": true}, \"family_name\": null}}";
         ClaimsRequest claimsRequest = claimsRequestResolver.resolve(claims);
@@ -87,7 +87,7 @@ public class ClaimsRequestResolverTest {
     }
 
     @Test(expected = ClaimsRequestSyntaxException.class)
-    public void shouldNotResolveClaimsRequest() throws ClaimsRequestSyntaxException {
+    public void shouldNotResolveGetAllClaimsRequest() throws ClaimsRequestSyntaxException {
         String claims = "no_json";
         claimsRequestResolver.resolve(claims);
     }

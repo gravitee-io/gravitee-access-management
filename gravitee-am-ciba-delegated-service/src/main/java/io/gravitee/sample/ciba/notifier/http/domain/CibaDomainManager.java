@@ -27,7 +27,7 @@ import java.util.Optional;
  */
 public class CibaDomainManager {
 
-    private Map<String, DomainReference> domains = new HashMap<>();
+    private final Map<String, DomainReference> domains = new HashMap<>();
 
     public Optional<DomainReference> getDomainRef(String domain) {
         return Optional.ofNullable(this.domains.get(domain));

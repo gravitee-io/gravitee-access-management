@@ -152,11 +152,11 @@ public abstract class AuditBuilder<T> {
         if (principal != null) {
             setActor(principal.getId(), EntityType.USER, principal.getUsername(), getDisplayName(principal), getReferenceType(principal), getReferenceId(principal));
             if (principal.getAdditionalInformation() != null) {
-                if (principal.getAdditionalInformation().containsKey(Claims.ip_address)) {
-                    ipAddress((String) principal.getAdditionalInformation().get(Claims.ip_address));
+                if (principal.getAdditionalInformation().containsKey(Claims.IP_ADDRESS)) {
+                    ipAddress((String) principal.getAdditionalInformation().get(Claims.IP_ADDRESS));
                 }
-                if (principal.getAdditionalInformation().containsKey(Claims.user_agent)) {
-                    userAgent((String) principal.getAdditionalInformation().get(Claims.user_agent));
+                if (principal.getAdditionalInformation().containsKey(Claims.USER_AGENT)) {
+                    userAgent((String) principal.getAdditionalInformation().get(Claims.USER_AGENT));
                 }
             }
         }
@@ -175,11 +175,11 @@ public abstract class AuditBuilder<T> {
             return null;
         }
 
-        if (user.getAdditionalInformation().containsKey(Claims.domain)) {
+        if (user.getAdditionalInformation().containsKey(Claims.DOMAIN)) {
             return ReferenceType.DOMAIN;
         }
 
-        if (user.getAdditionalInformation().containsKey(Claims.organization)) {
+        if (user.getAdditionalInformation().containsKey(Claims.ORGANIZATION)) {
             return ReferenceType.ORGANIZATION;
         }
 
@@ -192,12 +192,12 @@ public abstract class AuditBuilder<T> {
             return null;
         }
 
-        if (user.getAdditionalInformation().containsKey(Claims.domain)) {
-            return (String) user.getAdditionalInformation().get(Claims.domain);
+        if (user.getAdditionalInformation().containsKey(Claims.DOMAIN)) {
+            return (String) user.getAdditionalInformation().get(Claims.DOMAIN);
         }
 
-        if (user.getAdditionalInformation().containsKey(Claims.organization)) {
-            return (String) user.getAdditionalInformation().get(Claims.organization);
+        if (user.getAdditionalInformation().containsKey(Claims.ORGANIZATION)) {
+            return (String) user.getAdditionalInformation().get(Claims.ORGANIZATION);
         }
 
         return null;

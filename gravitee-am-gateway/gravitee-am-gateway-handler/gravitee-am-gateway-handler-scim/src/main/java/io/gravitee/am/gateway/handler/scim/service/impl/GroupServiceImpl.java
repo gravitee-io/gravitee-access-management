@@ -22,7 +22,11 @@ import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
-import io.gravitee.am.gateway.handler.scim.model.*;
+import io.gravitee.am.gateway.handler.scim.model.Group;
+import io.gravitee.am.gateway.handler.scim.model.ListResponse;
+import io.gravitee.am.gateway.handler.scim.model.Member;
+import io.gravitee.am.gateway.handler.scim.model.Meta;
+import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
@@ -36,7 +40,11 @@ import io.gravitee.am.service.exception.GroupNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.GroupAuditBuilder;
-import io.reactivex.rxjava3.core.*;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +54,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -143,7 +153,7 @@ public class GroupServiceImpl implements GroupService {
                 .isEmpty()
                 .map(isEmpty -> {
                     if (!isEmpty) {
-                        throw new UniquenessException("Group with display name [" + group.getDisplayName()+ "] already exists");
+                        throw new UniquenessException("Group with display name [" + group.getDisplayName() + "] already exists");
                     }
                     return true;
                 })
@@ -176,7 +186,7 @@ public class GroupServiceImpl implements GroupService {
                         .map(group1 -> {
                             // if display name has changed check uniqueness
                             if (!existingGroup.getId().equals(group1.getId())) {
-                                throw new UniquenessException("Group with display name [" + group.getDisplayName()+ "] already exists");
+                                throw new UniquenessException("Group with display name [" + group.getDisplayName() + "] already exists");
                             }
                             return existingGroup;
                         })
@@ -262,9 +272,9 @@ public class GroupServiceImpl implements GroupService {
             List<String> memberIds = group.getMembers().stream().map(Member::getValue).collect(Collectors.toList());
             return userRepository.findByIdIn(memberIds)
                     .map(user -> {
-                        String display = (user.getDisplayName() != null) ? user.getDisplayName()
-                                : (user.getFirstName() != null) ? user.getFirstName() + " " + (user.getLastName() != null ? user.getLastName() : "")
-                                : user.getUsername();
+                        String display = ofNullable(user.getDisplayName())
+                                .orElse(ofNullable(user.getFirstName()).map(firstName -> firstName + " " + ofNullable(user.getLastName()).orElse(""))
+                                        .orElse(user.getUsername()));
                         String usersBaseUrl = baseUrl.substring(0, baseUrl.lastIndexOf("/Groups")).concat("/Users");
                         Member member = new Member();
                         member.setValue(user.getId());
@@ -307,7 +317,7 @@ public class GroupServiceImpl implements GroupService {
         }
         meta.setResourceType(Group.RESOURCE_TYPE);
         if (baseUrl != null) {
-            meta.setLocation(baseUrl + (listing ?  "/" + scimGroup.getId() : ""));
+            meta.setLocation(baseUrl + (listing ? "/" + scimGroup.getId() : ""));
         }
         scimGroup.setMeta(meta);
 

@@ -17,13 +17,10 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.user.activity;
 
 import io.gravitee.am.common.jwt.Claims;
-import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.root.resources.handler.dummies.DummySession;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserActivity.Type;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.rxjava3.core.Completable;
@@ -144,7 +141,7 @@ public class UserActivityHandlerTest {
     @Test
     public void must_log_error_and_do_next() {
         routingContext.session().put(GEOIP_KEY, Map.of("lon", 125, "lat", 75));
-        routingContext.session().put(Claims.user_agent, "some user agent");
+        routingContext.session().put(Claims.USER_AGENT, "some user agent");
         routingContext.session().put(LOGIN_ATTEMPT_KEY, 30);
 
         doReturn(Completable.error(new IllegalArgumentException("An unexpected error has occurred")))

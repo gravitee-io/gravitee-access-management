@@ -48,26 +48,15 @@ import static io.gravitee.am.common.utils.ConstantKeys.PROVIDER_METADATA_CONTEXT
 public class AuthenticationRequestParametersHandler implements Handler<RoutingContext> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationRequestParametersHandler.class);
 
-    private Domain domain;
-    private JWSService jwsService;
-    private JWKService jwkService;
-    private UserService userService;
-    private ScopeManager scopeManager;
-
     private final CibaAuthenticationRequestResolver cibaRequestResolver;
     private final int bindingMessageMaxLength;
 
     public AuthenticationRequestParametersHandler(Domain domain, JWSService jwsService, JWKService jwkService, UserService userService, ScopeManager scopeManager) {
-        this.domain = domain;
-        this.jwsService = jwsService;
-        this.jwkService = jwkService;
-        this.userService = userService;
-        this.scopeManager = scopeManager;
 
         this.bindingMessageMaxLength = domain.getOidc().getCibaSettings().getBindingMessageLength();
 
         cibaRequestResolver = new CibaAuthenticationRequestResolver(domain, jwsService, jwkService, userService);
-        cibaRequestResolver.setScopeManager(this.scopeManager);
+        cibaRequestResolver.setScopeManager(scopeManager);
     }
 
     @Override
@@ -108,14 +97,14 @@ public class AuthenticationRequestParametersHandler implements Handler<RoutingCo
     }
 
     private void validateAcrValue(OpenIDProviderMetadata openIDProviderMetadata, CibaAuthenticationRequest request) {
-        if (request.getAcrValues() != null && !request.getAcrValues().stream().anyMatch(openIDProviderMetadata.getAcrValuesSupported()::contains)) {
+        if (request.getAcrValues() != null && request.getAcrValues().stream().noneMatch(openIDProviderMetadata.getAcrValuesSupported()::contains)) {
             throw new InvalidRequestException("Unsupported acr values");
         }
     }
 
     private void validateHints(CibaAuthenticationRequest request) {
         final long hints = Stream.of(request.getLoginHint(), request.getLoginHintToken(), request.getIdTokenHint())
-                .filter(value -> !StringUtils.isEmpty(value))
+                .filter(StringUtils::hasText)
                 .count();
         if (hints != 1) {
             throw new InvalidRequestException("Only one of login_hint_token, id_token_hint, login_hint is accepted");
@@ -123,13 +112,13 @@ public class AuthenticationRequestParametersHandler implements Handler<RoutingCo
     }
 
     private void validateUserCode(Client client, CibaAuthenticationRequest request) {
-        if (StringUtils.isEmpty(request.getUserCode()) && client.getBackchannelUserCodeParameter()) {
+        if (!StringUtils.hasText(request.getUserCode()) && client.getBackchannelUserCodeParameter()) {
             throw new MissingUserCodeException("user_code is missing");
         }
     }
 
     private void validateBindingMessage(CibaAuthenticationRequest request) {
-        if (!StringUtils.isEmpty(request.getBindingMessage()) && request.getBindingMessage().length() > this.bindingMessageMaxLength) {
+        if (StringUtils.hasText(request.getBindingMessage()) && request.getBindingMessage().length() > this.bindingMessageMaxLength) {
             throw new InvalidBindingMessageException("binding_message is too long");
         }
     }

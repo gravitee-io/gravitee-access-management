@@ -25,8 +25,6 @@ import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationRespo
 import io.gravitee.am.gateway.handler.oauth2.service.response.ImplicitResponse;
 import io.vertx.rxjava3.core.MultiMap;
 
-import java.net.URISyntaxException;
-
 import static io.gravitee.am.common.oidc.Parameters.RESPONSE;
 
 /**
@@ -115,7 +113,7 @@ public abstract class JWTAuthorizationResponse<T extends AuthorizationResponse> 
         this.token = token;
     }
 
-    public static JWTAuthorizationResponse from(AuthorizationResponse response) {
+    public static JWTAuthorizationResponse<?> from(AuthorizationResponse response) {
         if (response == null) {
             return null;
         }

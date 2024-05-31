@@ -15,13 +15,17 @@
  */
 package io.gravitee.am.common.event;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public abstract class Event {
 
-    public static Enum valueOf(Type type, Action action) {
+    public static Enum<?> valueOf(Type type, Action action) {
         return switch (type) {
             case DOMAIN -> DomainEvent.actionOf(action);
             case APPLICATION -> ApplicationEvent.actionOf(action);

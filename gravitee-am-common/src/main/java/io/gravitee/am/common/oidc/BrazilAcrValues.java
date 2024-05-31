@@ -27,13 +27,13 @@ import java.util.List;
 public interface BrazilAcrValues {
 
     /**
-     * https://openbanking-brasil.github.io/specs-seguranca/open-banking-brasil-financial-api-1_ID2.html
+     * <a href="https://openbanking-brasil.github.io/specs-seguranca/open-banking-brasil-financial-api-1_ID2.html">open-banking-brasil-financial-api</a>
      * LoA2: Authentication performed using single factor;
      */
     String LoA2 = "urn:brasil:openbanking:loa2";
 
     /**
-     * https://openbanking-brasil.github.io/specs-seguranca/open-banking-brasil-financial-api-1_ID2.html
+     * <a href="https://openbanking-brasil.github.io/specs-seguranca/open-banking-brasil-financial-api-1_ID2.html">open-banking-brasil-financial-api</a>
      * LoA3: Authentication performed using multi factor (MFA)
      */
     String LoA3 = "urn:brasil:openbanking:loa3";

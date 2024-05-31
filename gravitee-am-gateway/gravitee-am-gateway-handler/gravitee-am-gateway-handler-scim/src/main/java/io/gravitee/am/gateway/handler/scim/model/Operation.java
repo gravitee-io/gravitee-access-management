@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.scim.filter.Operator;
+import lombok.Getter;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -44,6 +45,7 @@ import java.util.regex.Pattern;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "op")
 @JsonSubTypes({
         @JsonSubTypes.Type(value = Operation.AddOperation.class,
@@ -74,10 +76,6 @@ public abstract class Operation {
             String[] paths = path.replaceAll(SQUARE_BRACKETS_PATTERN, "").split(SPLIT_PATH_PATTERN);
             this.path = new Path(paths[0], paths.length > 1 ? paths[1] : null, filter);
         }
-    }
-
-    public Path getPath() {
-        return path;
     }
 
     public abstract void apply(final ObjectNode node);
@@ -266,7 +264,7 @@ public abstract class Operation {
             if (parentNode != null && parentNode.isArray()) {
                 ArrayNode arrayNode = (ArrayNode) parentNode;
                 // get indices to delete
-                List<Integer> indices = new LinkedList();
+                List<Integer> indices = new LinkedList<>();
                 for (int i = 0; i < arrayNode.size(); i++) {
                     JsonNode n = arrayNode.get(i);
                     if (filterMatch(n, getPath().getValuePath())) {
@@ -418,17 +416,12 @@ public abstract class Operation {
             return false;
         }
 
-        switch (operator) {
-            case EQUALITY:
-                return filterValue != null && attribute.asText().equals(filterValue);
-            case STARTS_WITH:
-                return filterValue != null && attribute.asText().startsWith(filterValue);
-            case ENDS_WITH:
-                return filterValue != null && attribute.asText().endsWith(filterValue);
-            case CONTAINS:
-                return filterValue != null && attribute.asText().contains(filterValue);
-            default:
-                return false;
-        }
+        return switch (operator) {
+            case EQUALITY -> filterValue != null && attribute.asText().equals(filterValue);
+            case STARTS_WITH -> filterValue != null && attribute.asText().startsWith(filterValue);
+            case ENDS_WITH -> filterValue != null && attribute.asText().endsWith(filterValue);
+            case CONTAINS -> filterValue != null && attribute.asText().contains(filterValue);
+            default -> false;
+        };
     }
 }

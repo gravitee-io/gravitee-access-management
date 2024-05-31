@@ -23,5 +23,5 @@ public enum Type {
 
     DATE_HISTO,
     COUNT,
-    GROUP_BY;
+    GROUP_BY
 }

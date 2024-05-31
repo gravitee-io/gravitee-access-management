@@ -31,8 +31,8 @@ import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.json.DecodeException;
-import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Optional;
 
@@ -40,6 +40,7 @@ import java.util.Optional;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class GroupsEndpoint extends AbstractGroupEndpoint {
 
     private static final int MAX_ITEMS_PER_PAGE = 100;
@@ -51,25 +52,26 @@ public class GroupsEndpoint extends AbstractGroupEndpoint {
 
     public void list(RoutingContext context) {
         // Pagination (https://tools.ietf.org/html/rfc7644#section-3.4.2.4)
-        Integer page = DEFAULT_START_INDEX;
-        Integer size = MAX_ITEMS_PER_PAGE;
+        int page = DEFAULT_START_INDEX;
+        int size = MAX_ITEMS_PER_PAGE;
 
 
         // The 1-based index of the first query result.
         // A value less than 1 SHALL be interpreted as 1.
         try {
             final String startIndex = context.request().getParam("startIndex");
-            page = Integer.valueOf(startIndex);
+            page = Integer.parseInt(startIndex);
         } catch (Exception ex) {
+            log.error("Error parsing 'startIndex' parameter", ex);
         }
         // Non-negative integer. Specifies the desired  results per page, e.g., 10.
         // A negative value SHALL be interpreted as "0".
         // A value of "0"  indicates that no resource results are to be returned except for "totalResults".
         try {
             final String count = context.request().getParam("count");
-            size = Integer.min(Integer.valueOf(count), MAX_ITEMS_PER_PAGE);
+            size = Integer.min(Integer.parseInt(count), MAX_ITEMS_PER_PAGE);
         } catch (Exception ex) {
-
+            log.error("Error parsing 'count' parameter", ex);
         }
 
         // Filter results
@@ -92,7 +94,7 @@ public class GroupsEndpoint extends AbstractGroupEndpoint {
                                 .putHeader(HttpHeaders.PRAGMA, "no-cache")
                                 .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
                                 .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(groups)),
-                        error -> context.fail(error));
+                        context::fail);
 
     }
 
@@ -138,11 +140,15 @@ public class GroupsEndpoint extends AbstractGroupEndpoint {
      */
     public void create(RoutingContext context) {
         try {
-            if(context.getBodyAsString() == null) {
+            if (context.body() == null) {
                 context.fail(new InvalidSyntaxException("Unable to parse body message"));
                 return;
             }
-            final Group group = Json.decodeValue(context.getBodyAsString(), Group.class);
+            final Group group = context.body().asPojo(Group.class);
+            if (group == null) {
+                context.fail(new InvalidSyntaxException("Unable to parse body message"));
+                return;
+            }
 
             // displayName is required
             if (group.getDisplayName() == null || group.getDisplayName().isEmpty()) {
@@ -172,7 +178,7 @@ public class GroupsEndpoint extends AbstractGroupEndpoint {
                                     .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
                                     .putHeader(HttpHeaders.LOCATION, group1.getMeta().getLocation())
                                     .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(group1)),
-                            error -> context.fail(error));
+                            context::fail);
         } catch (DecodeException ex) {
             context.fail(new InvalidSyntaxException("Unable to parse body message", ex));
         }

@@ -95,7 +95,7 @@ public class DefaultJWTBuilder implements JWTBuilder {
     @Override
     public String sign(JWT payload) {
         try {
-            if (issuer != null && !payload.containsKey(Claims.iss)) {
+            if (issuer != null && !payload.containsKey(Claims.ISS)) {
                 payload.setIss(issuer);
             }
             SignedJWT signedJWT = new SignedJWT(header, JWTClaimsSet.parse(payload));

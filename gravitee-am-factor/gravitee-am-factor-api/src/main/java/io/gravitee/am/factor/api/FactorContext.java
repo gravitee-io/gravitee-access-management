@@ -82,7 +82,7 @@ public class FactorContext {
             TemplateContext templateContext = templateEngine.getTemplateContext();
 
             if(data.get(KEY_REQUEST) != null) {
-                templateContext.setVariable("request", data.get(KEY_REQUEST));
+                templateContext.setVariable(KEY_REQUEST, data.get(KEY_REQUEST));
             }
             templateContext.setVariable("context", new EvaluableExecutionContext(this.getTemplateValues()));
         }

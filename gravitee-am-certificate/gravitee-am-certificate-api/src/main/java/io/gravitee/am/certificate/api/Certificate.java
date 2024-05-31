@@ -17,7 +17,6 @@ package io.gravitee.am.certificate.api;
 
 
 import io.gravitee.am.common.plugin.AmPlugin;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

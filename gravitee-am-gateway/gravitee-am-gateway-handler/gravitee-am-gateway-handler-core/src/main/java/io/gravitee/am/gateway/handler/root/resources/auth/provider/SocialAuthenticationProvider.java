@@ -75,8 +75,7 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
     private final EventManager eventManager;
     private final IdentityProviderManager identityProviderManager;
     private final Domain domain;
-
-    private GatewayMetricProvider gatewayMetricProvider;
+    private final GatewayMetricProvider gatewayMetricProvider;
 
     public SocialAuthenticationProvider(UserAuthenticationManager userAuthenticationManager,
                                         EventManager eventManager,
@@ -107,10 +106,10 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
         // create user authentication
         EndUserAuthentication endUserAuthentication = new EndUserAuthentication(username, password, authenticationContext);
         if (canSaveIp(context)) {
-            endUserAuthentication.getContext().set(Claims.ip_address, RequestUtils.remoteAddress(context.request()));
+            endUserAuthentication.getContext().set(Claims.IP_ADDRESS, RequestUtils.remoteAddress(context.request()));
         }
         if (canSaveUserAgent(context)) {
-            endUserAuthentication.getContext().set(Claims.user_agent, RequestUtils.userAgent(context.request()));
+            endUserAuthentication.getContext().set(Claims.USER_AGENT, RequestUtils.userAgent(context.request()));
         }
 
         // authenticate the user via the social provider
@@ -171,13 +170,14 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
     private Single<io.gravitee.am.identityprovider.api.User> checkDomainWhitelist(io.gravitee.am.identityprovider.api.User endUser, String identityProviderId) {
         final IdentityProvider identityProvider = this.identityProviderManager.getIdentityProvider(identityProviderId);
         var domainWhitelist = identityProvider.getDomainWhitelist();
-        // No whitelist mean we let everyone
-        if (nonNull(domainWhitelist) && !domainWhitelist.isEmpty()) {
-            // we reject the connection if neither the username nor the email are allowed
-            if (!isUsernameWhitelisted(domainWhitelist, endUser.getUsername()) && !isEmailWhitelisted(domainWhitelist, endUser.getEmail())) {
-                return Single.error(new LoginCallbackFailedException("could not authenticate user"));
-            }
+        // No whitelist mean we let everyone, so we reject the connection if neither the username nor the email are allowed
+        if (nonNull(domainWhitelist) &&
+                !domainWhitelist.isEmpty() &&
+                !isUsernameWhitelisted(domainWhitelist, endUser.getUsername()) &&
+                !isEmailWhitelisted(domainWhitelist, endUser.getEmail())) {
+            return Single.error(new LoginCallbackFailedException("could not authenticate user"));
         }
+
         return Single.just(endUser);
     }
 

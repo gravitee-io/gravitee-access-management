@@ -17,13 +17,13 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.logout;
 
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.Parameters;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
@@ -50,8 +50,7 @@ import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.client.HttpResponse;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -61,13 +60,13 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class LogoutEndpoint extends AbstractLogoutEndpoint {
-    private static final Logger logger = LoggerFactory.getLogger(LogoutEndpoint.class);
-    private IdentityProviderManager identityProviderManager;
-    private CertificateManager certificateManager;
-    private ClientSyncService clientSyncService;
-    private JWTService jwtService;
-    private WebClient webClient;
+    private final IdentityProviderManager identityProviderManager;
+    private final CertificateManager certificateManager;
+    private final ClientSyncService clientSyncService;
+    private final JWTService jwtService;
+    private final WebClient webClient;
 
     public LogoutEndpoint(Domain domain,
                           ClientSyncService clientSyncService,
@@ -247,12 +246,12 @@ public class LogoutEndpoint extends AbstractLogoutEndpoint {
             .subscribe(
                     response -> {
                         if (response.statusCode() >= 400) {
-                            logger.warn("Received response from {} endpoint with status code {} and response body {}", endpoint, response.statusCode(), response.bodyAsString());
+                            log.warn("Received response from {} endpoint with status code {} and response body {}", endpoint, response.statusCode(), response.bodyAsString());
                         }
                         invalidateSession(routingContext, false);
                     },
                     error -> {
-                        logger.error("An error has occurred when calling the delegated OP end_session_endpoint : {}", endpoint, error);
+                        log.error("An error has occurred when calling the delegated OP end_session_endpoint : {}", endpoint, error);
                         invalidateSession(routingContext, false);
                     });
     }

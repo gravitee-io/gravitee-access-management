@@ -35,7 +35,6 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.CommonUserRepository;
@@ -399,7 +398,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
             Map<String, Object> extraInformation = user.getAdditionalInformation() != null ? new HashMap<>(user.getAdditionalInformation()) : new HashMap<>();
             extraInformation.putAll(additionalInformation);
             if (user.getLoggedAt() != null) {
-                extraInformation.put(Claims.auth_time, user.getLoggedAt().getTime() / 1000);
+                extraInformation.put(Claims.AUTH_TIME, user.getLoggedAt().getTime() / 1000);
             }
             if (user.getUsername() != null) {
                 extraInformation.put(StandardClaims.PREFERRED_USERNAME, user.getUsername());

@@ -16,10 +16,7 @@
 package io.gravitee.am.certificate.pkcs12;
 
 import io.gravitee.am.certificate.api.Certificate;
-import io.gravitee.am.certificate.api.CertificateConfiguration;
-import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.certificate.pkcs12.provider.PKCS12Provider;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

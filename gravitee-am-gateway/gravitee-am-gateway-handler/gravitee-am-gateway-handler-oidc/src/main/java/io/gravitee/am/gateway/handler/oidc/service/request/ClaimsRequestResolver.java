@@ -77,8 +77,7 @@ public final class ClaimsRequestResolver {
         if (claimValue == null) {
             claimsParameter.put(claimName, null);
         } else {
-            if (claimValue instanceof JsonObject) {
-                JsonObject individualClaim = (JsonObject) claimValue;
+            if (claimValue instanceof JsonObject individualClaim) {
                 claimsParameter.put(claimName, individualClaim.mapTo(ClaimRequest.class));
             }
         }

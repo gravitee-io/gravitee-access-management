@@ -81,7 +81,7 @@ public class CockpitAuthenticationFilter extends GenericFilterBean {
     private UsernamePasswordAuthenticationToken convertToAuthentication(JWT jwt) {
 
         String username = (String) jwt.get(StandardClaims.PREFERRED_USERNAME);
-        String organizationId = (String) jwt.get(Claims.organization);
+        String organizationId = (String) jwt.get(Claims.ORGANIZATION);
 
         DefaultUser user = new DefaultUser(username);
         user.setId((String) jwt.get(StandardClaims.SUB));
@@ -91,7 +91,7 @@ public class CockpitAuthenticationFilter extends GenericFilterBean {
         HashMap<Object, Object> details = new HashMap<>();
         details.put("source", COCKPIT_SOURCE);
         details.put(StandardClaims.PREFERRED_USERNAME, username);
-        details.put(Claims.organization, organizationId);
+        details.put(Claims.ORGANIZATION, organizationId);
         authentication.setDetails(details);
         return authentication;
     }
@@ -133,7 +133,7 @@ public class CockpitAuthenticationFilter extends GenericFilterBean {
                     UsernamePasswordAuthenticationToken authentication = convertToAuthentication(jwt);
                     User principal = authenticationService.onAuthenticationSuccess(authentication);
 
-                    final Environment environment = environmentService.findById((String) jwt.get(Claims.environment), (String) jwt.get(Claims.organization)).blockingGet();
+                    final Environment environment = environmentService.findById((String) jwt.get(Claims.ENVIRONMENT), (String) jwt.get(Claims.ORGANIZATION)).blockingGet();
                     String redirectPath = "";
 
                     if (environment != null) {

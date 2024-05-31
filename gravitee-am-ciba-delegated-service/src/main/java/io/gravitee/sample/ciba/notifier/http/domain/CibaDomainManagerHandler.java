@@ -24,9 +24,9 @@ import org.slf4j.LoggerFactory;
 
 
 public class CibaDomainManagerHandler implements Handler<RoutingContext> {
-    private static Logger LOGGER = LoggerFactory.getLogger(CibaDomainManagerHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CibaDomainManagerHandler.class);
 
-    private CibaDomainManager manager;
+    private final CibaDomainManager manager;
 
     public CibaDomainManagerHandler(CibaDomainManager manager) {
         this.manager = manager;

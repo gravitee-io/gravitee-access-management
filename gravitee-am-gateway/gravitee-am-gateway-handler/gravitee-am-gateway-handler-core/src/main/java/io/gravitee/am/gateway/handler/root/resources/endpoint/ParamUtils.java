@@ -25,6 +25,8 @@ import io.gravitee.am.model.AuthenticationFlowContext;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +53,7 @@ import static java.util.Objects.nonNull;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ParamUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParamUtils.class);
 

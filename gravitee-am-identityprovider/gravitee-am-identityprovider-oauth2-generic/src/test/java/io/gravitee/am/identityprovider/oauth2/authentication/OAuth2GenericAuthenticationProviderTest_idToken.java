@@ -99,11 +99,11 @@ class OAuth2GenericAuthenticationProviderTest_idToken {
   void shouldLoadUserByUsername_authentication_and_filter_undesired_claims()
       throws ParseException, JOSEException, BadJOSEException {
     JWTClaimsSet claims = new JWTClaimsSet.Builder().subject("bob")
-        .claim(Claims.nbf, "value that won't appear")
-        .claim(Claims.iat, "value that won't appear")
-        .claim(Claims.exp, "value that won't appear")
-        .claim(Claims.updated_at, "value that won't appear")
-        .claim(Claims.auth_time, "value that won't appear")
+        .claim(Claims.NBF, "value that won't appear")
+        .claim(Claims.IAT, "value that won't appear")
+        .claim(Claims.EXP, "value that won't appear")
+        .claim(Claims.UPDATED_AT, "value that won't appear")
+        .claim(Claims.AUTH_TIME, "value that won't appear")
         .claim(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY, "value that won't appear")
         .claim(ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY, "value that won't appear")
         .build();
@@ -142,11 +142,11 @@ class OAuth2GenericAuthenticationProviderTest_idToken {
         )));
     testObserver.assertValue(u ->
         !u.getAdditionalInformation().keySet().containsAll(List.of(
-            Claims.nbf,
-            Claims.iat,
-            Claims.exp,
-            Claims.updated_at,
-            Claims.auth_time,
+            Claims.NBF,
+            Claims.IAT,
+            Claims.EXP,
+            Claims.UPDATED_AT,
+            Claims.AUTH_TIME,
             ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY,
             ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY
         )));

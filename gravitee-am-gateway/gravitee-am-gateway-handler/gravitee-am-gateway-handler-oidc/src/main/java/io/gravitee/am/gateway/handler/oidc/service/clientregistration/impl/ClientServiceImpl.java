@@ -45,7 +45,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -197,16 +196,12 @@ public class ClientServiceImpl implements ClientService {
             return ApplicationType.WEB;
         }
         // check application type
-        switch (client.getApplicationType()) {
-            case io.gravitee.am.common.oidc.ApplicationType.WEB:
-                return ApplicationType.WEB;
-            case io.gravitee.am.common.oidc.ApplicationType.NATIVE:
-                return ApplicationType.NATIVE;
-            case io.gravitee.am.common.oidc.ApplicationType.BROWSER:
-                return ApplicationType.BROWSER;
-            default:
-                return ApplicationType.SERVICE;
-        }
+        return switch (client.getApplicationType()) {
+            case io.gravitee.am.common.oidc.ApplicationType.WEB -> ApplicationType.WEB;
+            case io.gravitee.am.common.oidc.ApplicationType.NATIVE -> ApplicationType.NATIVE;
+            case io.gravitee.am.common.oidc.ApplicationType.BROWSER -> ApplicationType.BROWSER;
+            default -> ApplicationType.SERVICE;
+        };
     }
 
     private ApplicationSettings getSettings(Client client) {
@@ -323,8 +318,7 @@ public class ClientServiceImpl implements ClientService {
     private AssessmentSettings cloneAssessmentSettings(AssessmentSettings assessmentSettings) {
         AssessmentSettings result = new AssessmentSettings();
         result.setEnabled(assessmentSettings.isEnabled());
-        HashMap<Assessment, Double> thresholds = new HashMap<>();
-        thresholds.putAll(assessmentSettings.getThresholds());
+        HashMap<Assessment, Double> thresholds = new HashMap<>(assessmentSettings.getThresholds());
         result.setThresholds(thresholds);
         return result;
     }

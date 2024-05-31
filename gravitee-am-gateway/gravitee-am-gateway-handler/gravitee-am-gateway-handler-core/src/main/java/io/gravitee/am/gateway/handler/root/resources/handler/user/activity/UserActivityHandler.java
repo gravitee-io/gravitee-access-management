@@ -82,7 +82,7 @@ public class UserActivityHandler implements Handler<RoutingContext> {
     private void addUserAgent(RoutingContext context, HashMap<String, Object> data) {
         final String userAgent = RequestUtils.userAgent(context.request());
         if (canSaveUserAgent(context) && userAgent != null) {
-            data.put(Claims.user_agent, userAgent);
+            data.put(Claims.USER_AGENT, userAgent);
         }
     }
 

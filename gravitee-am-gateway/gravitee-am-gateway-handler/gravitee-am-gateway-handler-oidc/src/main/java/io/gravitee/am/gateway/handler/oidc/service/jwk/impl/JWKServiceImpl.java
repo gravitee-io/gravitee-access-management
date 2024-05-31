@@ -42,7 +42,7 @@ import java.util.function.Predicate;
  * @author GraviteeSource Team
  */
 public class JWKServiceImpl implements JWKService {
-    private final static Set<String> JWK_USAGE = Set.of("sig", "enc");
+    private static final Set<String> JWK_USAGE = Set.of("sig", "enc");
 
     @Autowired
     private CertificateManager certificateManager;
@@ -66,10 +66,9 @@ public class JWKServiceImpl implements JWKService {
 
     @Override
     public Maybe<JWKSet> getKeys(Client client) {
-        if(client.getJwks()!=null) {
+        if (client.getJwks() != null) {
             return Maybe.just(client.getJwks());
-        }
-        else if(client.getJwksUri()!=null) {
+        } else if (client.getJwksUri() != null) {
             return getKeys(client.getJwksUri());
         }
         return Maybe.empty();
@@ -89,23 +88,21 @@ public class JWKServiceImpl implements JWKService {
 
     @Override
     public Maybe<JWKSet> getKeys(String jwksUri) {
-        try{
+        try {
             return client.getAbs(UriBuilder.fromHttpUrl(jwksUri).build().toString())
                     .rxSend()
                     .map(HttpResponse::bodyAsString)
                     .map(new JWKSetDeserializer()::convert)
                     .flatMapMaybe(jwkSet -> {
-                        if(jwkSet!=null && jwkSet.isPresent()) {
+                        if (jwkSet != null && jwkSet.isPresent()) {
                             return Maybe.just(jwkSet.get());
                         }
                         return Maybe.empty();
                     })
                     .onErrorResumeNext(exception -> Maybe.error(new InvalidClientMetadataException("Unable to parse jwks from : " + jwksUri)));
-        }
-        catch(IllegalArgumentException | URISyntaxException ex) {
-            return Maybe.error(new InvalidClientMetadataException(jwksUri+" is not valid."));
-        }
-        catch(InvalidClientMetadataException ex) {
+        } catch (IllegalArgumentException | URISyntaxException ex) {
+            return Maybe.error(new InvalidClientMetadataException(jwksUri + " is not valid."));
+        } catch (InvalidClientMetadataException ex) {
             return Maybe.error(ex);
         }
     }
@@ -113,23 +110,20 @@ public class JWKServiceImpl implements JWKService {
     @Override
     public Maybe<JWK> getKey(JWKSet jwkSet, String kid) {
 
-        if(jwkSet==null || jwkSet.getKeys().isEmpty() || kid==null || kid.trim().isEmpty()) {
+        if (jwkSet == null || jwkSet.getKeys().isEmpty() || kid == null || kid.trim().isEmpty()) {
             return Maybe.empty();
         }
 
         //Else return matching key
         Optional<JWK> jwk = jwkSet.getKeys().stream().filter(key -> kid.equals(key.getKid())).findFirst();
-        if(jwk.isPresent()) {
-            return Maybe.just(jwk.get());
-        }
 
-        //No matching key found in JWKs...
-        return Maybe.empty();
+        //empty if no matching key found in JWKs...
+        return jwk.map(Maybe::just).orElseGet(Maybe::empty);
     }
 
     @Override
     public Maybe<JWK> filter(JWKSet jwkSet, Predicate<JWK> filter) {
-        if(jwkSet==null || jwkSet.getKeys()==null || jwkSet.getKeys().isEmpty()) {
+        if (jwkSet == null || jwkSet.getKeys() == null || jwkSet.getKeys().isEmpty()) {
             return Maybe.empty();
         }
 
@@ -138,9 +132,6 @@ public class JWKServiceImpl implements JWKService {
                 .filter(filter)
                 .findFirst();
 
-        if(jwk.isPresent()) {
-            return Maybe.just(jwk.get());
-        }
-        return Maybe.empty();
+        return jwk.map(Maybe::just).orElseGet(Maybe::empty);
     }
 }

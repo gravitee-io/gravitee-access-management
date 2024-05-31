@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.account.resources;
 
-import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.mfa.InvalidFactorAttributeException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.factor.FactorDataKeys;
@@ -32,7 +31,6 @@ import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.User;
@@ -61,6 +59,7 @@ import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.springframework.context.ApplicationContext;
+import org.springframework.util.StringUtils;
 
 import java.util.Collections;
 import java.util.Date;
@@ -78,11 +77,10 @@ import static io.gravitee.am.common.audit.EventType.MFA_RATE_LIMIT_REACHED;
 import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
 import static io.gravitee.am.factor.api.FactorContext.KEY_USER;
-import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
+import static io.gravitee.am.gateway.handler.common.utils.RoutingContextUtils.getEvaluableAttributes;
 import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
-import static org.springframework.util.StringUtils.isEmpty;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -90,11 +88,13 @@ import static org.springframework.util.StringUtils.isEmpty;
  */
 public class AccountFactorsEndpointHandler {
 
-    private AccountService accountService;
-    private FactorManager factorManager;
-    private ApplicationContext applicationContext;
-    private RateLimiterService rateLimiterService;
+    private final AccountService accountService;
+    private final FactorManager factorManager;
+    private final ApplicationContext applicationContext;
+    private final RateLimiterService rateLimiterService;
     private final AuditService auditService;
+
+    private static final String FACTOR_ID = "factorId";
 
     public AccountFactorsEndpointHandler(AccountService accountService,
                                          FactorManager factorManager,
@@ -117,7 +117,7 @@ public class AccountFactorsEndpointHandler {
         accountService.getFactors(user.getReferenceId())
                 .subscribe(
                         factors -> AccountResponseHandler.handleDefaultResponse(routingContext, filteredFactorCatalog(factors)),
-                        error -> routingContext.fail(error)
+                        routingContext::fail
                 );
     }
 
@@ -139,17 +139,19 @@ public class AccountFactorsEndpointHandler {
      */
     public void enrollFactor(RoutingContext routingContext) {
         try {
-            if (routingContext.getBodyAsString() == null) {
+            if (!validBody(routingContext)) {
+                return;
+            }
+            final io.gravitee.am.gateway.handler.account.model.Enrollment enrollment = routingContext.body().asPojo(io.gravitee.am.gateway.handler.account.model.Enrollment.class);
+            if (enrollment == null) {
                 routingContext.fail(new InvalidRequestException("Unable to parse body message"));
                 return;
             }
 
             final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
-            final io.gravitee.am.gateway.handler.account.model.Enrollment enrollment =
-                    Json.decodeValue(routingContext.getBodyAsString(), io.gravitee.am.gateway.handler.account.model.Enrollment.class);
 
             // factorId is required
-            if (isEmpty(enrollment.getFactorId())) {
+            if (!StringUtils.hasText(enrollment.getFactorId())) {
                 routingContext.fail(new InvalidRequestException("Field [factorId] is required"));
                 return;
             }
@@ -181,13 +183,13 @@ public class AccountFactorsEndpointHandler {
                 switch (factor.getFactorType()) {
                     case CALL:
                     case SMS:
-                        if (isNull(account) || isEmpty(account.getPhoneNumber())) {
+                        if (isNull(account) || !StringUtils.hasText(account.getPhoneNumber())) {
                             routingContext.fail(new InvalidRequestException("Field [phoneNumber] is required"));
                             return;
                         }
                         break;
                     case EMAIL:
-                        if (isNull(account) || isEmpty(account.getEmail())) {
+                        if (isNull(account) || !StringUtils.hasText(account.getEmail())) {
                             routingContext.fail(new InvalidRequestException("Field [email] is required"));
                             return;
                         }
@@ -234,13 +236,13 @@ public class AccountFactorsEndpointHandler {
                         accountService.upsertFactor(user.getId(), enrolledFactor, new DefaultUser(user))
                                 .subscribe(
                                         __ -> AccountResponseHandler.handleDefaultResponse(routingContext, enrolledFactor),
-                                        error -> routingContext.fail(error));
+                                        routingContext::fail);
                     });
                 });
             });
 
         } catch (DecodeException ex) {
-            routingContext.fail(new InvalidRequestException("Unable to parse body message"));
+            routingContext.fail(invalidBodyException());
         }
     }
 
@@ -265,18 +267,16 @@ public class AccountFactorsEndpointHandler {
      */
     public void verifyFactor(RoutingContext routingContext) {
         try {
-            if (routingContext.getBodyAsString() == null) {
-                routingContext.fail(new InvalidRequestException("Unable to parse body message"));
+            if (!validBody(routingContext)) {
                 return;
             }
-
             final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
             final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-            final String factorId = routingContext.request().getParam("factorId");
-            final String code = routingContext.getBodyAsJson().getString("code");
+            final String factorId = routingContext.request().getParam(FACTOR_ID);
+            final String code = routingContext.body().asJsonObject().getString("code");
 
             // code is required
-            if (isEmpty(code)) {
+            if (!StringUtils.hasText(code)) {
                 routingContext.fail(new InvalidRequestException("Field [code] is required"));
                 return;
             }
@@ -301,7 +301,7 @@ public class AccountFactorsEndpointHandler {
                         .filter(enrolledFactor -> factorId.equals(enrolledFactor.getFactorId()))
                         .findFirst();
 
-                if (!optionalEnrolledFactor.isPresent()) {
+                if (optionalEnrolledFactor.isEmpty()) {
                     routingContext.fail(new FactorNotFoundException(factorId));
                     return;
                 }
@@ -324,12 +324,12 @@ public class AccountFactorsEndpointHandler {
                             .flatMap(eF -> accountService.upsertFactor(user.getId(), eF, new DefaultUser(user)).map(__ -> eF))
                             .subscribe(
                                     eF -> AccountResponseHandler.handleDefaultResponse(routingContext, eF),
-                                    error -> routingContext.fail(error)
+                                    routingContext::fail
                             );
                 });
             });
         } catch (DecodeException ex) {
-            routingContext.fail(new InvalidRequestException("Unable to parse body message"));
+            routingContext.fail(invalidBodyException());
         }
     }
 
@@ -340,7 +340,7 @@ public class AccountFactorsEndpointHandler {
      */
     public void getEnrolledFactor(RoutingContext routingContext) {
         final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
-        final String factorId = routingContext.request().getParam("factorId");
+        final String factorId = routingContext.request().getParam(FACTOR_ID);
 
         if (user.getFactors() == null) {
             routingContext.fail(new FactorNotFoundException(factorId));
@@ -356,7 +356,7 @@ public class AccountFactorsEndpointHandler {
 
         // Remove recovery code from enrolled factor
         EnrolledFactor enrolledFactor = optionalEnrolledFactor.get();
-        if (RECOVERY_CODE.equals(enrolledFactor.getSecurity())) {
+        if (RECOVERY_CODE.equals(enrolledFactor.getSecurity().getValue())) {
             routingContext.fail(new FactorNotFoundException(factorId));
             return;
         }
@@ -370,7 +370,7 @@ public class AccountFactorsEndpointHandler {
      */
     public void getEnrolledFactorQrCode(RoutingContext routingContext) {
         final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
-        final String factorId = routingContext.request().getParam("factorId");
+        final String factorId = routingContext.request().getParam(FACTOR_ID);
 
         final FactorProvider factorProvider = factorManager.get(factorId);
 
@@ -395,21 +395,19 @@ public class AccountFactorsEndpointHandler {
         factorProvider.generateQrCode(user, enrolledFactor)
                 .subscribe(
                         barCode -> AccountResponseHandler.handleDefaultResponse(routingContext, new JsonObject().put("qrCode", barCode)),
-                        error -> routingContext.fail(error),
+                        routingContext::fail,
                         () -> routingContext.fail(404)
                 );
     }
 
     public void updateEnrolledFactor(RoutingContext routingContext) {
         try {
-            if (routingContext.getBodyAsString() == null) {
-                routingContext.fail(new InvalidRequestException("Unable to parse body message"));
+            if (!validBody(routingContext)) {
                 return;
             }
-
             final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
-            final String factorId = routingContext.request().getParam("factorId");
-            final UpdateEnrolledFactor updateEnrolledFactor = Json.decodeValue(routingContext.getBodyAsString(), UpdateEnrolledFactor.class);
+            final String factorId = routingContext.request().getParam(FACTOR_ID);
+            final UpdateEnrolledFactor updateEnrolledFactor = Json.decodeValue(routingContext.body().asString(), UpdateEnrolledFactor.class);
 
             // find factor
             findFactor(factorId, h -> {
@@ -435,28 +433,29 @@ public class AccountFactorsEndpointHandler {
                 accountService.upsertFactor(user.getId(), enrolledFactor, new DefaultUser(user))
                         .subscribe(
                                 __ -> AccountResponseHandler.handleDefaultResponse(routingContext, enrolledFactor),
-                                error -> routingContext.fail(error)
+                                routingContext::fail
                         );
             });
         } catch (DecodeException ex) {
-            routingContext.fail(new InvalidRequestException("Unable to parse body message"));
+            routingContext.fail(invalidBodyException());
         }
     }
 
     public void removeFactor(RoutingContext routingContext) {
         final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
-        final String factorId = routingContext.request().getParam("factorId");
+        final String factorId = routingContext.request().getParam(FACTOR_ID);
 
         accountService.removeFactor(user.getId(), factorId, new DefaultUser(user))
                 .subscribe(
                         () -> AccountResponseHandler.handleNoBodyResponse(routingContext),
-                        error -> routingContext.fail(error)
+                        routingContext::fail
                 );
     }
 
     /**
      * List recovery codes for the current user
-     * @param routingContext  the routingContext holding the current user
+     *
+     * @param routingContext the routingContext holding the current user
      */
     public void listRecoveryCodes(RoutingContext routingContext) {
         final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
@@ -471,7 +470,8 @@ public class AccountFactorsEndpointHandler {
     /**
      * Enroll user to recovery code factor and generate recovery code
      * in the process
-     * @param routingContext  the routingContext holding the current user
+     *
+     * @param routingContext the routingContext holding the current user
      */
     public void enrollRecoveryCode(RoutingContext routingContext) {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
@@ -498,7 +498,8 @@ public class AccountFactorsEndpointHandler {
 
     /**
      * Delete user recovery codes
-     * @param routingContext  the routingContext holding the current user
+     *
+     * @param routingContext the routingContext holding the current user
      */
     public void deleteRecoveryCode(RoutingContext routingContext) {
         final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
@@ -539,7 +540,7 @@ public class AccountFactorsEndpointHandler {
      */
     public void sendChallenge(RoutingContext routingContext) {
         final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
-        final String factorId = routingContext.request().getParam("factorId");
+        final String factorId = routingContext.request().getParam(FACTOR_ID);
 
         // find factor
         findFactor(factorId, h -> {
@@ -565,13 +566,13 @@ public class AccountFactorsEndpointHandler {
                     .filter(enrolledFactor -> factorId.equals(enrolledFactor.getFactorId()))
                     .findFirst();
 
-            if (!optionalEnrolledFactor.isPresent()) {
+            if (optionalEnrolledFactor.isEmpty()) {
                 routingContext.fail(new FactorNotFoundException(factorId));
                 return;
             }
 
             final EnrolledFactor enrolledFactor = optionalEnrolledFactor.get();
-            sendChallenge(factorProvider, enrolledFactor, user, routingContext , sh -> {
+            sendChallenge(factorProvider, enrolledFactor, user, routingContext, sh -> {
                 if (sh.failed()) {
                     routingContext.fail(sh.cause());
                     return;
@@ -582,7 +583,7 @@ public class AccountFactorsEndpointHandler {
         });
     }
 
-    private List<String> getUserRecoveryCodes(User user){
+    private List<String> getUserRecoveryCodes(User user) {
         final Optional<Object> securityCodes = user.getFactors()
                 .stream()
                 .filter(ef -> ef.getSecurity() != null && RECOVERY_CODE.equals(ef.getSecurity().getType()))
@@ -654,8 +655,7 @@ public class AccountFactorsEndpointHandler {
             return;
         }
 
-        Map<String, Object> factorData = new HashMap<>();
-        factorData.putAll(getEvaluableAttributes(routingContext));
+        Map<String, Object> factorData = new HashMap<>(getEvaluableAttributes(routingContext));
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         factorData.put(FactorContext.KEY_CLIENT, client);
         factorData.put(FactorContext.KEY_USER, endUser);
@@ -664,7 +664,7 @@ public class AccountFactorsEndpointHandler {
         FactorContext factorContext = new FactorContext(applicationContext, factorData);
         final Factor factor = factorManager.getFactor(enrolledFactor.getFactorId());
 
-        if(rateLimiterService.isRateLimitEnabled()){
+        if (rateLimiterService.isRateLimitEnabled()) {
             rateLimiterService.tryConsume(endUser.getId(), factor.getId(), endUser.getClient(), client.getDomain())
                     .subscribe(allowRequest -> {
                                 if (allowRequest) {
@@ -677,13 +677,13 @@ public class AccountFactorsEndpointHandler {
                             },
                             error -> handler.handle(Future.failedFuture(error))
                     );
-        }else {
+        } else {
             sendChallenge(routingContext, factorProvider, factorContext, endUser, client, enrolledFactor, factor, handler);
         }
     }
 
     private void sendChallenge(RoutingContext routingContext, FactorProvider factorProvider, FactorContext factorContext, User user, Client client,
-                               EnrolledFactor enrolledFactor, Factor factor, Handler<AsyncResult<Void>> handler){
+                               EnrolledFactor enrolledFactor, Factor factor, Handler<AsyncResult<Void>> handler) {
         factorProvider.sendChallenge(factorContext)
                 .subscribeOn(Schedulers.io())
                 .subscribe(
@@ -760,6 +760,7 @@ public class AccountFactorsEndpointHandler {
 
     /**
      * This method filter out recovery code factor
+     *
      * @param user current user in the context
      * @return list of EnrolledFactor without recovery codes
      */
@@ -772,10 +773,11 @@ public class AccountFactorsEndpointHandler {
 
     /**
      * This method filter out recovery code factor
+     *
      * @param factors list of Factor objects
      * @return list of Factor without recovery codes
      */
-    private List<Factor> filteredFactorCatalog(List<Factor> factors){
+    private List<Factor> filteredFactorCatalog(List<Factor> factors) {
         return factors
                 .stream()
                 .filter(factor -> !FactorType.RECOVERY_CODE.equals(factor.getFactorType()))
@@ -797,5 +799,17 @@ public class AccountFactorsEndpointHandler {
                 .throwable(cause, channel);
 
         auditService.report(builder);
+    }
+
+    private boolean validBody(RoutingContext routingContext) {
+        if (routingContext.body().asString() == null) {
+            routingContext.fail(new InvalidRequestException("Unable to parse body message"));
+            return false;
+        }
+        return true;
+    }
+
+    private InvalidRequestException invalidBodyException() {
+        throw new InvalidRequestException("Unable to parse body message");
     }
 }

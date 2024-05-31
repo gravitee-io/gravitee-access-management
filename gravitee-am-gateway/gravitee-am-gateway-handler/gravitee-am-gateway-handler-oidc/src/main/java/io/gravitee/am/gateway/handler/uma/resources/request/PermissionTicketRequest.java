@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.uma.resources.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
 
 import java.util.List;
 
@@ -24,6 +25,7 @@ import java.util.List;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PermissionTicketRequest {
 
@@ -33,11 +35,4 @@ public class PermissionTicketRequest {
     @JsonProperty("resource_scopes")
     private List<String> resourceScopes;
 
-    public String getResourceId() {
-        return resourceId;
-    }
-
-    public List<String> getResourceScopes() {
-        return resourceScopes;
-    }
 }

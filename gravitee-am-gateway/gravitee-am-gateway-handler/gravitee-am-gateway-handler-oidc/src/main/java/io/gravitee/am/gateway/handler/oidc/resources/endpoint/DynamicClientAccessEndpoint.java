@@ -42,6 +42,8 @@ import org.slf4j.LoggerFactory;
 public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoint {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DynamicClientAccessEndpoint.class);
+    public static final String NO_CACHE = "no-cache";
+    public static final String NO_STORE = "no-store";
 
     public DynamicClientAccessEndpoint(DynamicClientRegistrationService dcrService, ClientSyncService clientSyncService) {
         super(dcrService, clientSyncService);
@@ -52,7 +54,7 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
      * See <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ReadRequest">Read Request</a>
      * See <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ReadResponse">Read Response</a>
      *
-     * @param context
+     * @param context the routing context
      */
     public void read(RoutingContext context) {
         LOGGER.debug("Dynamic client registration GET endpoint");
@@ -67,18 +69,18 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
                 })
                 .subscribe(
                         result -> context.response()
-                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                                .putHeader(HttpHeaders.CACHE_CONTROL, NO_STORE)
+                                .putHeader(HttpHeaders.PRAGMA, NO_CACHE)
                                 .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
                                 .setStatusCode(HttpStatusCode.OK_200)
                                 .end(Json.encodePrettily(result))
-                        , error -> context.fail(error)
+                        , context::fail
                 );
     }
 
     /**
      * Patch client_metadata.
-     * @param context
+     * @param context the routing context
      */
     public void patch(RoutingContext context) {
         LOGGER.debug("Dynamic client registration PATCH endpoint");
@@ -91,8 +93,8 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
                 )
                 .subscribe(
                         client -> context.response()
-                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                                .putHeader(HttpHeaders.CACHE_CONTROL, NO_STORE)
+                                .putHeader(HttpHeaders.PRAGMA, NO_CACHE)
                                 .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
                                 .setStatusCode(HttpStatusCode.OK_200)
                                 .end(Json.encodePrettily(DynamicClientRegistrationResponse.fromClient(client)))
@@ -102,7 +104,7 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
 
     /**
      * Update/Override client_metadata.
-     * @param context
+     * @param context the routing context
      */
     public void update(RoutingContext context) {
         LOGGER.debug("Dynamic client registration UPDATE endpoint");
@@ -115,18 +117,18 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
                 )
                 .subscribe(
                         client -> context.response()
-                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                                .putHeader(HttpHeaders.CACHE_CONTROL, NO_STORE)
+                                .putHeader(HttpHeaders.PRAGMA, NO_CACHE)
                                 .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
                                 .setStatusCode(HttpStatusCode.OK_200)
                                 .end(Json.encodePrettily(DynamicClientRegistrationResponse.fromClient(client)))
-                        , error -> context.fail(error)
+                        , context::fail
                 );
     }
 
     /**
      * Delete client
-     * @param context
+     * @param context the routing context
      */
     public void delete(RoutingContext context) {
         LOGGER.debug("Dynamic client registration DELETE endpoint");
@@ -136,13 +138,13 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
                 .map(this.clientSyncService::removeDynamicClientRegistred)
                 .subscribe(
                         client -> context.response().setStatusCode(HttpStatusCode.NO_CONTENT_204).end()
-                        , error -> context.fail(error)
+                        , context::fail
                 );
     }
 
     /**
      * Renew client_secret
-     * @param context
+     * @param context the routing context
      */
     public void renewClientSecret(RoutingContext context) {
         LOGGER.debug("Dynamic client registration RENEW SECRET endpoint");
@@ -153,12 +155,12 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
                 .map(clientSyncService::addDynamicClientRegistred)
                 .subscribe(
                         client -> context.response()
-                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                                .putHeader(HttpHeaders.CACHE_CONTROL, NO_STORE)
+                                .putHeader(HttpHeaders.PRAGMA, NO_CACHE)
                                 .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
                                 .setStatusCode(HttpStatusCode.OK_200)
                                 .end(Json.encodePrettily(DynamicClientRegistrationResponse.fromClient(client)))
-                        , error -> context.fail(error)
+                        , context::fail
                 );
     }
 

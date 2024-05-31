@@ -53,7 +53,7 @@ public class TokenEnhancerImpl implements TokenEnhancer {
 
     private Single<Token> enhanceIDToken(Token accessToken, Client client, User user, OAuth2Request oAuth2Request, ExecutionContext executionContext) {
         if (oAuth2Request.isSupportAtHashValue()) {
-            oAuth2Request.getContext().put(Claims.at_hash, accessToken.getValue());
+            oAuth2Request.getContext().put(Claims.AT_HASH, accessToken.getValue());
         }
         return idTokenService.create(oAuth2Request, client, user, executionContext)
                 .map(idToken -> {

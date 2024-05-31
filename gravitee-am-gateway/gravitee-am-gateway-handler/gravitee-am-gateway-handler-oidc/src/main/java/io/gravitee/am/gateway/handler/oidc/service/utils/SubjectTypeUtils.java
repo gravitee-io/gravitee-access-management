@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.utils;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 import static io.gravitee.am.common.oidc.SubjectType.PUBLIC;
 
@@ -24,23 +26,25 @@ import static io.gravitee.am.common.oidc.SubjectType.PUBLIC;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class SubjectTypeUtils {
 
-    private static final Set<String> SUPPORTED_SUBJECT_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            PUBLIC
-    )));
+    private static final List<String> SUPPORTED_SUBJECT_TYPES = List.of(PUBLIC);
 
     /**
      * Return the supported list of subject types.
-     * @return
+     *
+     * @return an unmodifiable list of supported subject types.
      */
     public static List<String> getSupportedSubjectTypes() {
-        return Collections.unmodifiableList(SUPPORTED_SUBJECT_TYPES.stream().collect(Collectors.toList()));
+        return List.copyOf(SUPPORTED_SUBJECT_TYPES);
     }
 
     /**
-     * Throw InvalidClientMetadataException if null or contains unsupported subject type.
-     * @param subjectType String subject type to validate.
+     * Checks if the given subject type is valid.
+     *
+     * @param subjectType the subject type to validate.
+     * @return true if the subject type is supported, false otherwise.
      */
     public static boolean isValidSubjectType(String subjectType) {
         return SUPPORTED_SUBJECT_TYPES.contains(subjectType);

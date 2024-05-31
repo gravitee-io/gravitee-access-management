@@ -26,7 +26,6 @@ import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.AuditService;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -78,7 +77,7 @@ public class AbstractUserEndpoint {
     protected String userSource(RoutingContext context) {
         if (domain.getScim() != null
                 && domain.getScim().isIdpSelectionEnabled()
-                && !StringUtils.isEmpty(domain.getScim().getIdpSelectionRule())) {
+                && StringUtils.hasText(domain.getScim().getIdpSelectionRule())) {
             try {
                 SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(new VertxHttpServerRequest(context.request().getDelegate()));
                 authenticationContext.attributes().putAll(context.data());

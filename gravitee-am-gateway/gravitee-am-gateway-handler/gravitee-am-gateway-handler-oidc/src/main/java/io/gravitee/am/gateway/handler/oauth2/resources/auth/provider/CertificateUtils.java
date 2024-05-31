@@ -17,6 +17,8 @@ package io.gravitee.am.gateway.handler.oauth2.resources.auth.provider;
 
 import com.nimbusds.jose.util.Base64URL;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -35,6 +37,7 @@ import java.util.Optional;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class CertificateUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CertificateUtils.class);

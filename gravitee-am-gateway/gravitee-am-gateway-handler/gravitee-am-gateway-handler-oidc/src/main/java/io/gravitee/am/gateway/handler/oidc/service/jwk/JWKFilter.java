@@ -22,6 +22,8 @@ import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.util.Base64URL;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.jose.KeyType;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.math.BigInteger;
 import java.util.function.Predicate;
@@ -30,6 +32,7 @@ import java.util.function.Predicate;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class JWKFilter {
     /**
      * @return Filter to retrieve non weak (>=2048bits) RSA keys expected use for encryption.

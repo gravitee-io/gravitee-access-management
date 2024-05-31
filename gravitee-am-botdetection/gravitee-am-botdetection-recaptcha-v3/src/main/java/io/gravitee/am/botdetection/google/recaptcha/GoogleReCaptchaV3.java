@@ -17,7 +17,6 @@ package io.gravitee.am.botdetection.google.recaptcha;
 
 import io.gravitee.am.botdetection.api.BotDetection;
 import io.gravitee.am.botdetection.google.recaptcha.provider.GoogleReCaptchaV3Provider;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

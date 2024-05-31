@@ -46,9 +46,8 @@ import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.rxjava3.core.Single;
+import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -58,7 +57,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.Scope.FULL_PROFILE;
 import static io.gravitee.am.common.utils.ConstantKeys.ID_TOKEN_EXCLUDED_CLAIMS;
@@ -68,10 +66,10 @@ import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ID_
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class IDTokenServiceImpl implements IDTokenService {
 
-    private static final Logger logger = LoggerFactory.getLogger(IDTokenServiceImpl.class);
-    private static final String defaultDigestAlgorithm = "SHA-512";
+    private static final String DEFAULT_DIGEST_ALGORITHM = "SHA-512";
 
     @Autowired
     private Domain domain;
@@ -122,11 +120,13 @@ public class IDTokenServiceImpl implements IDTokenService {
                                     oAuth2Request.getContext().forEach((claimName, claimValue) -> {
                                         if (claimValue != null) {
                                             CertificateMetadata certificateMetadata = certificateProvider.getProvider().certificateMetadata();
-                                            String digestAlgorithm = defaultDigestAlgorithm;
+                                            String digestAlgorithm;
                                             if (certificateMetadata != null
                                                     && certificateMetadata.getMetadata() != null
                                                     && certificateMetadata.getMetadata().get(CertificateMetadata.DIGEST_ALGORITHM_NAME) != null) {
                                                 digestAlgorithm = (String) certificateMetadata.getMetadata().get(CertificateMetadata.DIGEST_ALGORITHM_NAME);
+                                            } else {
+                                                digestAlgorithm = DEFAULT_DIGEST_ALGORITHM;
                                             }
                                             idToken.addAdditionalClaim(claimName, getHashValue((String) claimValue, digestAlgorithm));
                                         }
@@ -258,7 +258,7 @@ public class IDTokenServiceImpl implements IDTokenService {
                 .map(Scope::valueOf)
                 .map(Scope::getClaims)
                 .flatMap(List::stream)
-                .collect(Collectors.toList());
+                .toList();
 
         // no OpenID Connect scopes requested continue
         if (scopesClaims.isEmpty()) {
@@ -320,7 +320,7 @@ public class IDTokenServiceImpl implements IDTokenService {
                             String claimExpression = tokenClaim.getClaimValue();
                             Object extValue = (claimExpression != null) ? executionContext.getTemplateEngine().getValue(claimExpression, Object.class) : null;
                             if (extValue != null) {
-                                if (Claims.aud.equals(claimName) && (extValue instanceof String[] || extValue instanceof List)) {
+                                if (Claims.AUD.equals(claimName) && (extValue instanceof String[] || extValue instanceof List)) {
                                     var audiences = new LinkedHashSet<>();
                                     audiences.add(jwt.getAud()); // make sure the client_id is the first entry of the aud array
                                     audiences.addAll(extValue instanceof List ? (List)extValue : List.of((String[]) extValue)); // Set will remove duplicate client_id if any
@@ -332,7 +332,7 @@ public class IDTokenServiceImpl implements IDTokenService {
                                 }
                             }
                         } catch (Exception ex) {
-                            logger.debug("An error occurs while parsing expression language : {}", tokenClaim.getClaimValue(), ex);
+                            log.debug("An error occurs while parsing expression language : {}", tokenClaim.getClaimValue(), ex);
                         }
                     });
         }
