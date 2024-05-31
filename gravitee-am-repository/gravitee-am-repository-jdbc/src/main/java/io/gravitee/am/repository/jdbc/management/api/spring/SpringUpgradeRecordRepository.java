@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.jdbc.management.api.model;
+package io.gravitee.am.repository.jdbc.management.api.spring;
 
+import io.gravitee.am.repository.jdbc.management.api.model.JdbcUpgradeRecord;
 import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 
 public interface SpringUpgradeRecordRepository extends RxJava3CrudRepository<JdbcUpgradeRecord, String> {

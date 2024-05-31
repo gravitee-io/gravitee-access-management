@@ -17,7 +17,7 @@ package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcUpgradeRecord;
-import io.gravitee.am.repository.jdbc.management.api.model.SpringUpgradeRecordRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.SpringUpgradeRecordRepository;
 import io.gravitee.node.api.upgrader.UpgradeRecord;
 import io.gravitee.node.api.upgrader.UpgraderRepository;
 import io.reactivex.rxjava3.core.Maybe;
