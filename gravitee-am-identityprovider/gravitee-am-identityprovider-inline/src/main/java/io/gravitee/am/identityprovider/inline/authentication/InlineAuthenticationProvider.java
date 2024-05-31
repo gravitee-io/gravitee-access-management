@@ -110,6 +110,7 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
             claims.put(StandardClaims.PREFERRED_USERNAME, inlineUser.getUsername());
             if (inlineUser.getEmail() != null) {
                 claims.put(StandardClaims.EMAIL, inlineUser.getEmail());
+                user.setEmail(inlineUser.getEmail());
             }
         }
         user.setAdditionalInformation(claims);
