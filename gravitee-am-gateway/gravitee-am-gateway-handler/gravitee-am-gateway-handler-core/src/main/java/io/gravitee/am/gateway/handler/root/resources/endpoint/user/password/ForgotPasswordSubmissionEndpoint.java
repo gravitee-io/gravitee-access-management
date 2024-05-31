@@ -67,9 +67,11 @@ public class ForgotPasswordSubmissionEndpoint extends UserRequestHandler {
                 .subscribe(
                         () -> {
                             queryParams.set(ConstantKeys.SUCCESS_PARAM_KEY, "forgot_password_completed");
+                            resetCookieSession(context);
                             redirectToPage(context, queryParams);
                         },
                         error -> {
+                            resetCookieSession(context);
                             // we don't want to expose potential security leaks such as guessing existing users
                             // the actual error continue to be stored in the audit logs
                             if (error instanceof UserNotFoundException || error instanceof AccountStatusException) {
@@ -87,6 +89,12 @@ public class ForgotPasswordSubmissionEndpoint extends UserRequestHandler {
                                 redirectToPage(context, queryParams, error);
                             }
                         });
+    }
+
+    private void resetCookieSession(RoutingContext context) {
+        if (context.session() != null) {
+            context.session().destroy();
+        }
     }
 
     @Override
