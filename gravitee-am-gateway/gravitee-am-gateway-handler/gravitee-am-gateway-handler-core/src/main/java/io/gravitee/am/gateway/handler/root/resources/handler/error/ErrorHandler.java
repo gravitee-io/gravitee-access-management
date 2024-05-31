@@ -40,8 +40,15 @@ import static java.util.Objects.isNull;
  */
 public class ErrorHandler extends AbstractErrorHandler {
 
+    private final boolean destroySession;
+
     public ErrorHandler(String errorPage) {
+        this(errorPage, false);
+    }
+
+    public ErrorHandler(String errorPage, boolean destroySession) {
         super(errorPage);
+        this.destroySession = destroySession;
     }
 
     @Override
@@ -103,11 +110,17 @@ public class ErrorHandler extends AbstractErrorHandler {
 
             // redirect
             String proxiedErrorPage = UriBuilderRequest.resolveProxyRequest(request, errorPageURL, parameters, true);
-            doRedirect(routingContext.response(), proxiedErrorPage);
+            doRedirect(routingContext, proxiedErrorPage);
         } catch (Exception e) {
             logger.error("Unable to handle root error response", e);
-            doRedirect(routingContext.response(), errorPageURL);
+            doRedirect(routingContext, errorPageURL);
         }
     }
 
+    private void doRedirect(RoutingContext context, String url) {
+        if (context.session() != null) {
+            context.session().destroy();
+        }
+        doRedirect(context.response(), url);
+    }
 }
