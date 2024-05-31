@@ -155,16 +155,28 @@ public abstract class Operation {
             JsonNode parentNode = node.get(getPath().getAttributePath());
             if (getPath().getSubAttribute() != null) {
                 if (parentNode != null) {
-                    ((ObjectNode) parentNode).set(getPath().getSubAttribute(), value);
+                    if (parentNode.isArray() && MultiValuedAttributes.isListOfObjects(getPath().getAttributePath())) {
+                        fillObjectAttributes(((ArrayNode) parentNode).addObject());
+                    } else {
+                        ((ObjectNode) parentNode).set(getPath().getSubAttribute(), value);
+                    }
                 } else {
-                    node.putObject(getPath().getAttributePath()).set(getPath().getSubAttribute(), value);
+                    if (MultiValuedAttributes.isListOfObjects(getPath().getAttributePath())) {
+                        fillObjectAttributes(node.putArray(getPath().getAttributePath()).addObject());
+                    } else {
+                        node.putObject(getPath().getAttributePath()).set(getPath().getSubAttribute(), value);
+                    }
                 }
             } else if (parentNode == null) {
-                node.set(getPath().getAttributePath(), value);
+                if (MultiValuedAttributes.isListOfSingular(getPath().getAttributePath())) {
+                    node.putArray(getPath().getAttributePath()).add(value);
+                } else {
+                    node.set(getPath().getAttributePath(), value);
+                }
             } else if (parentNode.isArray()) {
                 if (value.isArray()) {
                     value.forEach(n -> ((ArrayNode) parentNode).add(n));
-                } else if (value.isObject()) {
+                } else {
                     ((ArrayNode) parentNode).add(value);
                 }
             } else {
@@ -173,6 +185,19 @@ public abstract class Operation {
                 } else {
                     node.set(getPath().getAttributePath(), value);
                 }
+            }
+        }
+
+        private void fillObjectAttributes(ObjectNode newObjectEntry) {
+            if (getPath().getValuePath() != null && Operator.EQUALITY == getPath().getValuePath().getOperator()) {
+                // manage the Azure AD way of provisioning user emails using filters
+                // ex  "emails[type eq "work"].value"
+                // this looks invalid in regard of the RFC https://datatracker.ietf.org/doc/html/rfc7644#section-3.5.2.1
+                // as we should have an array with a single email object containing a type and value attributes.
+                newObjectEntry.put(getPath().getValuePath().getFilterAttribute().getSubAttributeName() != null ? getPath().getValuePath().getFilterAttribute().getSubAttributeName() : getPath().getValuePath().getFilterAttribute().getAttributeName(), getPath().getValuePath().getFilterValue());
+                newObjectEntry.put(getPath().getSubAttribute(), value);
+            } else {
+                newObjectEntry.set(getPath().getSubAttribute(), value);
             }
         }
     }

@@ -1,9 +1,10 @@
 {
 	"info": {
-		"_postman_id": "8c2b7d54-677a-48cb-b5d8-acad2688e63f",
+		"_postman_id": "712ac904-a213-4d52-ab81-5f7a75652929",
 		"name": "Gravitee.io - AM - SCIM - app version",
 		"description": "Test System for Cross-domain Identity Management\nSCIM 2.0 is released as RFC7642, RFC7643 and RFC7644",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31343100"
 	},
 	"item": [
 		{
@@ -2203,9 +2204,13 @@
 													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:User']);",
 													"    pm.expect(jsonData).to.have.property('emails');",
 													"    pm.expect(jsonData.emails[0].value).to.eql('bjensen@example.com');",
+													"    pm.expect(jsonData).to.have.property('phoneNumbers');",
+													"    pm.expect(jsonData.phoneNumbers[0].value).to.eql('0606060606');",
+													"    pm.expect(jsonData.phoneNumbers[0].type).to.eql('work');",
 													"});"
 												],
-												"type": "text/javascript"
+												"type": "text/javascript",
+												"packages": {}
 											}
 										}
 									],
@@ -2226,7 +2231,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Add\",\n        \"value\" : {\n            \"emails\": [\n                {\n                    \"value\": \"bjensen@example.com\",\n                    \"type\": \"work\",\n                    \"primary\": true\n                }\n            ]\n        }\n     }]\n\n}"
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Add\",\n        \"value\" : {\n            \"emails\": [\n                {\n                    \"value\": \"bjensen@example.com\",\n                    \"type\": \"work\",\n                    \"primary\": true\n                }\n            ]\n        }\n     },{\n        \"op\":\"Add\",\n        \"path\" : \"phoneNumbers[type eq \\\"work\\\"].value\",\n        \"value\" : \"0606060606\"\n     }]\n\n}"
 										},
 										"url": {
 											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/{{userSCIM}}",
