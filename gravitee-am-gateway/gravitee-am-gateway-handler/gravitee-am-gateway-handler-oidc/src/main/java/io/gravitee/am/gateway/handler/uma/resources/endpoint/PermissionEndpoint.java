@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.uma.resources.endpoint;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
-import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.uma.resources.request.PermissionTicketRequest;
 import io.gravitee.am.gateway.handler.uma.resources.response.PermissionTicketResponse;
@@ -30,12 +32,8 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
-import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -63,7 +61,6 @@ public class PermissionEndpoint implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
-        JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
         Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
 
         this.extractRequest(context)
@@ -78,7 +75,7 @@ public class PermissionEndpoint implements Handler<RoutingContext> {
                                 .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
                                 .setStatusCode(HttpStatusCode.CREATED_201)
                                 .end(Json.encodePrettily(permission))
-                        , error -> context.fail(error)
+                        , context::fail
                 );
     }
 
@@ -95,27 +92,13 @@ public class PermissionEndpoint implements Handler<RoutingContext> {
      */
     private Single<List<PermissionTicketRequest>> extractRequest(RoutingContext context) {
         List<PermissionTicketRequest> result;
-        Object json;
-
         try {
-            json = context.getBody().toJson();
-        }
-        catch (RuntimeException err) {
+            ObjectMapper objectMapper = new ObjectMapper().enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
+            return Single.just(objectMapper.readValue(context.body().asString(), new TypeReference<>() {
+            }));
+        } catch (Exception err) {
             return Single.error(new InvalidRequestException("Unable to parse body permission request"));
         }
-
-        if(json instanceof JsonArray) {
-            result = convert(((JsonArray)json).getList());
-        } else {
-            result = Arrays.asList(((JsonObject)json).mapTo(PermissionTicketRequest.class));
-        }
-        return Single.just(result);
-    }
-
-    private List<PermissionTicketRequest> convert(List<LinkedHashMap> list) {
-        return list.stream()
-                .map(map -> new JsonObject(map).mapTo(PermissionTicketRequest.class))
-                .collect(Collectors.toList());
     }
 
     private List<PermissionRequest> toPermissionRequest(List<PermissionTicketRequest> requestedPermissions) {
@@ -128,7 +111,7 @@ public class PermissionEndpoint implements Handler<RoutingContext> {
      * Both resource_id & resource_scopes are mandatory fields.
      */
     private Single<List<PermissionTicketRequest>> bodyValidation(List<PermissionTicketRequest> toValidate) {
-        if(toValidate.stream().filter(invalidPermissionRequest()).count() > 0) {
+        if (toValidate.stream().anyMatch(invalidPermissionRequest())) {
             return Single.error(new InvalidRequestException("resource_id and resource_scopes are mandatory."));
         }
         return Single.just(toValidate);
@@ -140,13 +123,21 @@ public class PermissionEndpoint implements Handler<RoutingContext> {
      * Requesting a permission with no scopes might be appropriate, for example, in cases where an access attempt involves an API call
      * that is ambiguous without further context (role-based scopes such as user and admin could have this ambiguous quality,
      * and an explicit client request for a particular scope at the token endpoint later can clarify the desired access).
-     * @return
+     *
+     * This predicate checks if a permission request is invalid based on the following rules:
+     * - The permission request is null.
+     * - The resource ID of the permission request is null or empty.
+     * - The permission request contains resource scopes, and any of these scopes are null or empty.
+     *
+     * @return a predicate that tests if a permission request is invalid.
      */
-    private static final Predicate<PermissionTicketRequest> invalidPermissionRequest() {
+    private static Predicate<PermissionTicketRequest> invalidPermissionRequest() {
         return permission -> permission == null ||
                 // Permission resource id is not correct
                 (permission.getResourceId() == null || permission.getResourceId().isEmpty()) ||
+                // Permission is empty list
+                (permission.getResourceScopes() != null && permission.getResourceScopes().isEmpty()) ||
                 // Or Permission request contains empty string scopes (only checking for empty scope values, scopes may not be informed as defined into the specification)
-                (permission.getResourceScopes() != null && !permission.getResourceScopes().isEmpty() && permission.getResourceScopes().stream().filter(s -> (s==null || s.isEmpty())).count()>0);
+                (permission.getResourceScopes() != null && !permission.getResourceScopes().isEmpty() && permission.getResourceScopes().stream().anyMatch(s -> (s == null || s.isEmpty())));
     }
 }

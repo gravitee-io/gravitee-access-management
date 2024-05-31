@@ -48,7 +48,7 @@ public class GoogleReCaptchaV3ProviderTest {
     public static final String TOKEN_PARAM_NAME = "X-TOKEN";
     public static final String URL = "https://www.google.com/recaptcha/api/siteverify";
 
-    protected WebClient client = WebClient.wrap(Vertx.vertx().createHttpClient());
+    protected final WebClient client = WebClient.wrap(Vertx.vertx().createHttpClient());
 
     @Mock
     private HttpResponse httpResponse;

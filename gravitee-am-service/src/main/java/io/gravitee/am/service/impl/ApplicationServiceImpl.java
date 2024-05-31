@@ -629,7 +629,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 })
                 // create the owner
                 .flatMap(application1 -> {
-                    if (principal == null || principal.getAdditionalInformation() == null || !hasText((String)principal.getAdditionalInformation().get(Claims.organization))) {
+                    if (principal == null || principal.getAdditionalInformation() == null || !hasText((String)principal.getAdditionalInformation().get(Claims.ORGANIZATION))) {
                         // There is no principal or we can not find the organization the user is attached to. Can't assign role.
                         return Single.just(application1);
                     }
@@ -644,7 +644,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 membership.setReferenceId(application1.getId());
                                 membership.setReferenceType(ReferenceType.APPLICATION);
                                 membership.setRoleId(role.getId());
-                                return membershipService.addOrUpdate((String) principal.getAdditionalInformation().get(Claims.organization), membership)
+                                return membershipService.addOrUpdate((String) principal.getAdditionalInformation().get(Claims.ORGANIZATION), membership)
                                         .map(updatedMembership -> application1);
                             });
                 })

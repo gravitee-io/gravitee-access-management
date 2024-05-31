@@ -19,7 +19,7 @@ import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 
 /**
  *
- * https://tools.ietf.org/html/rfc7009#section-2.2.1
+ * <a href="https://tools.ietf.org/html/rfc7009#section-2.2.1">https://tools.ietf.org/html/rfc7009#section-2.2.1</a>
  *
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -29,7 +29,7 @@ public class UnsupportedTokenType extends OAuth2Exception {
     public UnsupportedTokenType(String message) {
         super(message);
     }
-
+    @Override
     public String getOAuth2ErrorCode() {
         return "unsupported_token_type";
     }

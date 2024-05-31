@@ -443,7 +443,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.findByDomainAndClientId(eq(DOMAIN), eq(CLIENT_ID))).thenReturn(Maybe.empty());
 
         DefaultUser user = new DefaultUser("username");
-        user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
+        user.setAdditionalInformation(Collections.singletonMap(Claims.ORGANIZATION, ORGANIZATION_ID));
 
         TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -470,7 +470,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.findByDomainAndClientId(DOMAIN, CLIENT_ID)).thenReturn(Maybe.empty());
 
         DefaultUser user = new DefaultUser("username");
-        user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
+        user.setAdditionalInformation(Collections.singletonMap(Claims.ORGANIZATION, ORGANIZATION_ID));
 
         TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -517,7 +517,7 @@ public class ApplicationServiceTest {
         when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.just(lastestDefaultCert, firstDefaultCert, customCert));
 
         DefaultUser user = new DefaultUser("username");
-        user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
+        user.setAdditionalInformation(Collections.singletonMap(Claims.ORGANIZATION, ORGANIZATION_ID));
 
         doAnswer(invocation -> {
             Application mock = invocation.getArgument(0);
@@ -567,7 +567,7 @@ public class ApplicationServiceTest {
         when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.just(lastestDefaultCert, firstDefaultCert, customCert));
 
         DefaultUser user = new DefaultUser("username");
-        user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
+        user.setAdditionalInformation(Collections.singletonMap(Claims.ORGANIZATION, ORGANIZATION_ID));
 
         doAnswer(invocation -> {
             Application mock = invocation.getArgument(0);
@@ -612,7 +612,7 @@ public class ApplicationServiceTest {
         when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.just(customCert, firstDefaultCert));
 
         DefaultUser user = new DefaultUser("username");
-        user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
+        user.setAdditionalInformation(Collections.singletonMap(Claims.ORGANIZATION, ORGANIZATION_ID));
 
         doAnswer(invocation -> {
             Application mock = invocation.getArgument(0);

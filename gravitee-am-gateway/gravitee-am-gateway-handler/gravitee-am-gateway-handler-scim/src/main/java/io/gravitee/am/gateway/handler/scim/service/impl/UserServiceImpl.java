@@ -67,6 +67,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +79,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
@@ -223,17 +223,17 @@ public class UserServiceImpl implements UserService {
 
         // check if user is unique
         return Single.zip(
-                userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, domain.getId(), user.getUserName(), source).isEmpty(),
-                userRepository.findByExternalIdAndSource(ReferenceType.DOMAIN, domain.getId(), user.getExternalId(), source).isEmpty(),
-                (isNoUsername, isNoExternalId) -> {
-                    if (FALSE.equals(isNoUsername)) {
-                        throw new UniquenessException(MessageFormat.format(PARAMETER_EXIST_ERROR, "username", user.getUserName()));
-                    }
-                    if (FALSE.equals(isNoExternalId)) {
-                        throw new UniquenessException(MessageFormat.format(PARAMETER_EXIST_ERROR, "externalId", user.getExternalId()));
-                    }
-                    return true;
-                })
+                        userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, domain.getId(), user.getUserName(), source).isEmpty(),
+                        userRepository.findByExternalIdAndSource(ReferenceType.DOMAIN, domain.getId(), user.getExternalId(), source).isEmpty(),
+                        (isNoUsername, isNoExternalId) -> {
+                            if (FALSE.equals(isNoUsername)) {
+                                throw new UniquenessException(MessageFormat.format(PARAMETER_EXIST_ERROR, "username", user.getUserName()));
+                            }
+                            if (FALSE.equals(isNoExternalId)) {
+                                throw new UniquenessException(MessageFormat.format(PARAMETER_EXIST_ERROR, "externalId", user.getExternalId()));
+                            }
+                            return true;
+                        })
                 // check roles
                 .flatMapCompletable(__ -> checkRoles(user.getRoles()))
                 // and create the user
@@ -301,68 +301,19 @@ public class UserServiceImpl implements UserService {
         LOGGER.debug("Update a user {} for domain {}", user.getUserName(), domain.getName());
 
         return userRepository.findById(userId)
-                .switchIfEmpty(Single.error(() ->new UserNotFoundException(userId)))
+                .switchIfEmpty(Single.error(() -> new UserNotFoundException(userId)))
                 .flatMap(existingUser -> innerUpdate(existingUser, user, idp, baseUrl, principal, client));
     }
 
     public Single<User> innerUpdate(io.gravitee.am.model.User userIntoDb, User scimUser, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client) {
-        LOGGER.debug("Update a user {} for domain {}", scimUser.getUserName(), domain.getName());
 
         final var rawPassword = scimUser.getPassword();
-        return Single.just(userIntoDb).flatMap( existingUser -> {
+        return Single.just(userIntoDb).flatMap(existingUser -> {
                     // check roles
                     return checkRoles(scimUser.getRoles())
                             // and update the user
                             .andThen(Single.defer(() -> {
-                                io.gravitee.am.model.User userToUpdate = UserMapper.convert(scimUser);
-                                // set immutable attribute
-                                userToUpdate.setId(existingUser.getId());
-                                userToUpdate.setExternalId(existingUser.getExternalId());
-                                userToUpdate.setUsername(existingUser.getUsername());
-                                userToUpdate.setReferenceType(existingUser.getReferenceType());
-                                userToUpdate.setReferenceId(existingUser.getReferenceId());
-                                userToUpdate.setCreatedAt(existingUser.getCreatedAt());
-                                userToUpdate.setUpdatedAt(new Date());
-                                userToUpdate.setFactors(existingUser.getFactors());
-                                userToUpdate.setDynamicRoles(existingUser.getDynamicRoles());
-                                if (Objects.nonNull(existingUser.getAdditionalInformation())) {
-                                    // retrieve additionalInformation from the existing user.
-                                    // as SCIM doesn't define additionalInformation attributes, we have to
-                                    // copy them to avoid data loss
-                                    existingUser.getAdditionalInformation().forEach((k,v) -> {
-                                        if (!SCIM_DECLARED_CLAIMS.contains(k)) {
-                                            // some claims are defined by SCIM
-                                            // we do not want to copy them
-                                            // as they may be explicitly removed by the user
-                                            userToUpdate.getAdditionalInformation().putIfAbsent(k,v);
-                                        }
-                                    });
-                                }
-                                // keep previous login attempts information
-                                userToUpdate.setLoggedAt(existingUser.getLoggedAt());
-                                userToUpdate.setLoginsCount(existingUser.getLoginsCount());
-                                if (isNullOrEmpty(userToUpdate.getPassword())) {
-                                    // if password is missing, do not unlock the account
-                                    userToUpdate.setAccountLockedAt(existingUser.getAccountLockedAt());
-                                    userToUpdate.setAccountLockedUntil(existingUser.getAccountLockedUntil());
-                                    userToUpdate.setAccountNonLocked(existingUser.isAccountNonLocked());
-                                }
-
-                                // We remove the dynamic roles from the user roles to be updated in order to preserve
-                                // the roles that were assigned by the RoleMappers so that whenever the rule from the
-                                // said RoleMapper does not apply anymore, user loses the role.
-                                // If roles existed in the existing user roles, it means it has been assigned manually
-                                // we don't want them to be in dynamic roles until the existing static role is removed
-                                if (userToUpdate.getDynamicRoles() != null) {
-                                    var existingStaticRoles = ofNullable(existingUser.getRoles()).orElse(new ArrayList<>());
-                                    var toUpdateStaticRoles = ofNullable(userToUpdate.getRoles()).orElse(new ArrayList<>());
-                                    // create a workingCopy of DynamicRoles to avoid altering the one coming from the existing user
-                                    var workingCopyDynamicRoles = new ArrayList<>(userToUpdate.getDynamicRoles());
-                                    workingCopyDynamicRoles.removeAll(existingStaticRoles);
-                                    toUpdateStaticRoles.removeAll(workingCopyDynamicRoles);
-                                }
-
-                                UserFactorUpdater.updateFactors(existingUser.getFactors(), existingUser, userToUpdate);
+                                io.gravitee.am.model.User userToUpdate = convertUserToUpdate(existingUser, scimUser);
 
                                 // check password
                                 if (isInvalidUserPassword(userToUpdate.getPassword(), userToUpdate, client)) {
@@ -539,7 +490,7 @@ public class UserServiceImpl implements UserService {
                 .map(roles1 -> {
                     if (roles1.size() != roles.size()) {
                         // find difference between the two list
-                        roles.removeAll(roles1.stream().map(Role::getId).collect(Collectors.toList()));
+                        roles.removeAll(roles1.stream().map(Role::getId).toList());
                         throw new RoleNotFoundException(String.join(",", roles));
                     }
                     return roles1;
@@ -550,9 +501,63 @@ public class UserServiceImpl implements UserService {
     private Maybe<PasswordHistory> createPasswordHistory(Domain domain, io.gravitee.am.model.User user, String rawPassword, io.gravitee.am.identityprovider.api.User principal, Client client) {
         final var provider = identityProviderManager.getIdentityProvider(user.getSource());
         return passwordHistoryService
-                .addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword , principal, passwordPolicyManager.getPolicy(client, provider).orElse(null));
+                .addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword, principal, passwordPolicyManager.getPolicy(client, provider).orElse(null));
     }
 
+    private io.gravitee.am.model.User convertUserToUpdate(io.gravitee.am.model.User existingUser, User scimUser) {
+        io.gravitee.am.model.User userToUpdate = UserMapper.convert(scimUser);
+        // set immutable attribute
+        userToUpdate.setId(existingUser.getId());
+        userToUpdate.setExternalId(existingUser.getExternalId());
+        userToUpdate.setUsername(existingUser.getUsername());
+        userToUpdate.setReferenceType(existingUser.getReferenceType());
+        userToUpdate.setReferenceId(existingUser.getReferenceId());
+        userToUpdate.setCreatedAt(existingUser.getCreatedAt());
+        userToUpdate.setUpdatedAt(new Date());
+        userToUpdate.setFactors(existingUser.getFactors());
+        userToUpdate.setDynamicRoles(existingUser.getDynamicRoles());
+        if (Objects.nonNull(existingUser.getAdditionalInformation())) {
+            // retrieve additionalInformation from the existing user.
+            // as SCIM doesn't define additionalInformation attributes, we have to
+            // copy them to avoid data loss
+            existingUser.getAdditionalInformation().forEach((k, v) -> {
+                if (!SCIM_DECLARED_CLAIMS.contains(k)) {
+                    // some claims are defined by SCIM
+                    // we do not want to copy them
+                    // as they may be explicitly removed by the user
+                    userToUpdate.getAdditionalInformation().putIfAbsent(k, v);
+                }
+            });
+        }
+        // keep previous login attempts information
+        userToUpdate.setLoggedAt(existingUser.getLoggedAt());
+        userToUpdate.setLoginsCount(existingUser.getLoginsCount());
+        if (isNullOrEmpty(userToUpdate.getPassword())) {
+            // if password is missing, do not unlock the account
+            userToUpdate.setAccountLockedAt(existingUser.getAccountLockedAt());
+            userToUpdate.setAccountLockedUntil(existingUser.getAccountLockedUntil());
+            userToUpdate.setAccountNonLocked(existingUser.isAccountNonLocked());
+        }
+
+        // We remove the dynamic roles from the user roles to be updated in order to preserve
+        // the roles that were assigned by the RoleMappers so that whenever the rule from the
+        // said RoleMapper does not apply anymore, user loses the role.
+        // If roles existed in the existing user roles, it means it has been assigned manually
+        // we don't want them to be in dynamic roles until the existing static role is removed
+        if (userToUpdate.getDynamicRoles() != null) {
+            var existingStaticRoles = ofNullable(existingUser.getRoles()).orElse(new ArrayList<>());
+            var toUpdateStaticRoles = ofNullable(userToUpdate.getRoles()).orElse(new ArrayList<>());
+            // create a workingCopy of DynamicRoles to avoid altering the one coming from the existing user
+            var workingCopyDynamicRoles = new ArrayList<>(userToUpdate.getDynamicRoles());
+            workingCopyDynamicRoles.removeAll(existingStaticRoles);
+            toUpdateStaticRoles.removeAll(workingCopyDynamicRoles);
+        }
+
+        UserFactorUpdater.updateFactors(existingUser.getFactors(), existingUser, userToUpdate);
+        return userToUpdate;
+    }
+
+    @Getter
     private static class UserContainer {
         private User scimUser;
         private final io.gravitee.am.model.User amUser;
@@ -560,14 +565,6 @@ public class UserServiceImpl implements UserService {
         public UserContainer(User scimUser, io.gravitee.am.model.User amUser) {
             this.scimUser = scimUser;
             this.amUser = amUser;
-        }
-
-        public User getScimUser() {
-            return scimUser;
-        }
-
-        public io.gravitee.am.model.User getAmUser() {
-            return amUser;
         }
 
         public UserContainer replaceScimUserWith(User scimUser) {

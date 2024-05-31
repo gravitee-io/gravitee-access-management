@@ -58,9 +58,9 @@ public class CustomAuthenticationFailureHandler extends SimpleUrlAuthenticationF
         String organizationId = getOrganizationId(request);
 
         EndUserAuthentication authentication = new EndUserAuthentication(request.getParameter("username"), null, new SimpleAuthenticationContext());
-        authentication.getContext().set(Claims.ip_address, remoteAddress(request));
-        authentication.getContext().set(Claims.user_agent, userAgent(request));
-        authentication.getContext().set(Claims.organization, organizationId);
+        authentication.getContext().set(Claims.IP_ADDRESS, remoteAddress(request));
+        authentication.getContext().set(Claims.USER_AGENT, userAgent(request));
+        authentication.getContext().set(Claims.ORGANIZATION, organizationId);
 
         // audit event
         auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class).principal(authentication)

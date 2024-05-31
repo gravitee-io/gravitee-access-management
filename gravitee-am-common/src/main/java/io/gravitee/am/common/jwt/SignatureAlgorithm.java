@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.common.jwt;
 
-import java.util.Arrays;
-import java.util.Collections;
+import lombok.Getter;
+
 import java.util.List;
 
 /**
@@ -26,6 +26,7 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
 public enum SignatureAlgorithm {
 
     /**
@@ -100,11 +101,9 @@ public enum SignatureAlgorithm {
     PS512("PS512", "RSASSA-PSS using SHA-512 and MGF1 with SHA-512", "RSA", "RSASSA-PSS", "SHA-512", false, 512, 2048);
 
     //purposefully ordered higher to lower:
-    public static final List<SignatureAlgorithm> PREFERRED_HMAC_ALGS = Collections.unmodifiableList(Arrays.asList(
-            SignatureAlgorithm.HS512, SignatureAlgorithm.HS384, SignatureAlgorithm.HS256));
+    public static final List<SignatureAlgorithm> PREFERRED_HMAC_ALGS = List.of(SignatureAlgorithm.HS512, SignatureAlgorithm.HS384, SignatureAlgorithm.HS256);
     //purposefully ordered higher to lower:
-    public static final List<SignatureAlgorithm> PREFERRED_EC_ALGS = Collections.unmodifiableList(Arrays.asList(
-            SignatureAlgorithm.ES512, SignatureAlgorithm.ES384, SignatureAlgorithm.ES256));
+    public static final List<SignatureAlgorithm> PREFERRED_EC_ALGS = List.of(SignatureAlgorithm.ES512, SignatureAlgorithm.ES384, SignatureAlgorithm.ES256);
 
     private final String value;
     private final String description;
@@ -132,48 +131,12 @@ public enum SignatureAlgorithm {
         this.minKeyLength = minKeyLength;
     }
 
-    public String getValue() {
-        return value;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public String getFamilyName() {
-        return familyName;
-    }
-
-    public String getJcaName() {
-        return jcaName;
-    }
-
-    public String getDigestName() {
-        return digestName;
-    }
-
-    public boolean isJdkStandard() {
-        return jdkStandard;
-    }
-
     public boolean isHmac() {
         return familyName.equals("HMAC");
     }
 
     public boolean isRsa() {
         return familyName.equals("RSA");
-    }
-
-    public boolean isEllipticCurve() {
-        return familyName.equals("ECDSA");
-    }
-
-    public int getDigestLength() {
-        return digestLength;
-    }
-
-    public int getMinKeyLength() {
-        return this.minKeyLength;
     }
 
 }

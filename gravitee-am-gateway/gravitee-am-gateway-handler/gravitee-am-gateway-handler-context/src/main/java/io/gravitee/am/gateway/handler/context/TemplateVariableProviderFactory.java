@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.context;
 
 import io.gravitee.el.TemplateVariableProvider;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.support.SpringFactoriesLoader;
@@ -24,13 +25,13 @@ import org.springframework.util.ClassUtils;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class TemplateVariableProviderFactory {
 
     @Autowired
@@ -42,17 +43,14 @@ public class TemplateVariableProviderFactory {
                 TemplateVariableProvider.class, Thread.currentThread().getContextClassLoader()));
 
         return factories.stream()
-                .map(new Function<String, TemplateVariableProvider>() {
-                    @Override
-                    public TemplateVariableProvider apply(String name) {
-                        try {
-                            Class<TemplateVariableProvider> instanceClass =
-                                    (Class<TemplateVariableProvider>) ClassUtils.forName(name, classLoader);
-                            return applicationContext.getBean(instanceClass);
-                        } catch (ClassNotFoundException e) {
-                            e.printStackTrace();
-                            return null;
-                        }
+                .map(name -> {
+                    try {
+                        Class<TemplateVariableProvider> instanceClass =
+                                (Class<TemplateVariableProvider>) ClassUtils.forName(name, classLoader);
+                        return applicationContext.getBean(instanceClass);
+                    } catch (ClassNotFoundException e) {
+                        log.error("Cannot find template variable provider class", e);
+                        return null;
                     }
                 }).collect(Collectors.toList());
     }

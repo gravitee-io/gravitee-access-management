@@ -17,6 +17,7 @@ package io.gravitee.am.common.scim.filter;
 
 import io.gravitee.am.common.scim.CommonAttribute;
 import io.gravitee.am.common.scim.Schema;
+import lombok.Getter;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,6 +32,7 @@ import java.util.regex.Pattern;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
 public class AttributePath {
     /**
      * A regular expression to match the components of an attribute path.
@@ -133,20 +135,5 @@ public class AttributePath {
             builder.append('.');
             builder.append(subAttributeName);
         }
-    }
-
-    public String getAttributeSchema()
-    {
-        return attributeSchema;
-    }
-
-    public String getAttributeName()
-    {
-        return attributeName;
-    }
-
-    public String getSubAttributeName()
-    {
-        return subAttributeName;
     }
 }

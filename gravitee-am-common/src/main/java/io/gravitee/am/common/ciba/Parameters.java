@@ -16,7 +16,7 @@
 package io.gravitee.am.common.ciba;
 
 /**
- * See https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#rfc.section.7.1
+ * See <a href="https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#rfc.section.7.1">openid-client-initiated-backchannel-authentication-core</a>
  *
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team

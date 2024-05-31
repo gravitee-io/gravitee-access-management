@@ -28,9 +28,9 @@ import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
  */
 public abstract class AuthenticationErrorException extends OAuth2Exception {
 
-    public AuthenticationErrorException() { super(); }
+    protected AuthenticationErrorException() { super(); }
 
-    public AuthenticationErrorException(String message) {
+    protected AuthenticationErrorException(String message) {
         super(message);
     }
 

@@ -375,7 +375,7 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
         subId.put("format", "email");
         subId.put("email", "user@email.com");
         jwtBody.put("sub_id", subId);
-        jwtBody.put(Claims.exp, Instant.now().minusSeconds(10).getEpochSecond());
+        jwtBody.put(Claims.EXP, Instant.now().minusSeconds(10).getEpochSecond());
         JwtHintBuilder hint = new JwtHintBuilder(jwtBody);
 
         CibaAuthenticationRequest cibaRequest = new CibaAuthenticationRequest();
@@ -459,7 +459,7 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
     public void shouldAcceptRequest_IdTokenHint() throws Exception {
         final JSONObject jwtBody = new JSONObject();
         jwtBody.put("sub", UUID.randomUUID().toString());
-        jwtBody.put(Claims.exp, Instant.now().plusSeconds(10).getEpochSecond());
+        jwtBody.put(Claims.EXP, Instant.now().plusSeconds(10).getEpochSecond());
         JwtHintBuilder hint = new JwtHintBuilder(jwtBody);
 
         CibaAuthenticationRequest cibaRequest = new CibaAuthenticationRequest();

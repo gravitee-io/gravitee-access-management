@@ -22,7 +22,6 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.mapper.UserMapper;
-import io.gravitee.am.gateway.handler.scim.model.EnterpriseUser;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
@@ -105,7 +104,7 @@ public class UserEndpoint extends AbstractUserEndpoint {
      */
     public void update(RoutingContext context) {
         try {
-            final String body = context.getBodyAsString();
+            final String body = context.body().asString();
             if (body == null) {
                 context.fail(new InvalidSyntaxException("Unable to parse body message"));
                 return;
@@ -179,11 +178,15 @@ public class UserEndpoint extends AbstractUserEndpoint {
      */
     public void patch(RoutingContext context) {
         try {
-            if(context.getBodyAsString() == null) {
+            if (context.body() == null) {
                 context.fail(new InvalidSyntaxException("Unable to parse body message"));
                 return;
             }
-            final PatchOp patchOp = Json.decodeValue(context.getBodyAsString(), PatchOp.class);
+            final PatchOp patchOp = context.body().asPojo(PatchOp.class);
+            if (patchOp == null) {
+                context.fail(new InvalidSyntaxException("Unable to parse body message"));
+                return;
+            }
             final String userId = context.request().getParam("id");
 
             // schemas field is REQUIRED and MUST contain valid values and MUST not contain duplicate values

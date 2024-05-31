@@ -33,15 +33,15 @@ import static org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class UriBuilderTest {
 
-    private String uri;
-    private String scheme;
-    private String host;
-    private int port;
-    private String userinfo;
-    private String path;
-    private String query;
-    private String fragment;
-    private boolean isHttp;
+    private final String uri;
+    private final String scheme;
+    private final String host;
+    private final int port;
+    private final String userinfo;
+    private final String path;
+    private final String query;
+    private final String fragment;
+    private final boolean isHttp;
 
     public UriBuilderTest(String uri, int port, String[] params, boolean isHttp) {
         this.uri = uri;

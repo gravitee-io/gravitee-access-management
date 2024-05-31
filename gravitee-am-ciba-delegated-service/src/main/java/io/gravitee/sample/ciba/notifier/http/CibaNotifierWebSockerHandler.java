@@ -48,15 +48,14 @@ import static io.gravitee.sample.ciba.notifier.http.Constants.*;
 public class CibaNotifierWebSockerHandler implements Handler<ServerWebSocket> {
     private static final Logger LOGGER = LoggerFactory.getLogger(CibaNotifierWebSockerHandler.class);
 
-    private final EventBus eventBus;
     private final WebClient webClient;
     private final CibaDomainManager domainManager;
 
     private final Map<String, ServerWebSocket> serverWebSocket = new HashMap<>();
 
     public CibaNotifierWebSockerHandler(Vertx vertx, CibaDomainManager domainManager) {
-        this.eventBus = vertx.eventBus();
-        this.eventBus.consumer(TOPIC_NOTIFICATION_REQUEST, (msg) -> {
+        EventBus eventBus = vertx.eventBus();
+        eventBus.consumer(TOPIC_NOTIFICATION_REQUEST, (msg) -> {
             final String json = msg.body().toString();
             final NotifierRequest notifierRequest = Json.decodeValue(json, NotifierRequest.class);
             if (this.serverWebSocket.containsKey(notifierRequest.getSubject())) {
@@ -75,7 +74,7 @@ public class CibaNotifierWebSockerHandler implements Handler<ServerWebSocket> {
     @Override
     public void handle(ServerWebSocket ws) {
         ws.textMessageHandler(msg -> {
-            LOGGER.debug("Received user message: " + msg);
+            LOGGER.debug("Received user message: {}", msg);
             final JsonObject jsonMsg = (JsonObject)Json.decodeValue(msg);
 
             final String action = jsonMsg.getString(ACTION);
@@ -121,7 +120,7 @@ public class CibaNotifierWebSockerHandler implements Handler<ServerWebSocket> {
                                 optCallback.get().getClientSecret()))
                         .sendForm(formData)
                         .onSuccess(res -> LOGGER.info("Callback succeeded for tid {}", transactionId))
-                        .onFailure(err -> LOGGER.warn("Callback failed for tid {} : {}", transactionId, err));
+                        .onFailure(err -> LOGGER.warn("Callback failed for tid {}", transactionId, err));
             } else {
                 LOGGER.warn("Missing domain reference for domainId {}", domainId);
             }

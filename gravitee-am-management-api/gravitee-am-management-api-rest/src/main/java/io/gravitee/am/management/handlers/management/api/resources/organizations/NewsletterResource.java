@@ -79,7 +79,7 @@ public class NewsletterResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         // Get the organization the current user is logged on.
-        String organizationId = (String) authenticatedUser.getAdditionalInformation().getOrDefault(Claims.organization, Organization.DEFAULT);
+        String organizationId = (String) authenticatedUser.getAdditionalInformation().getOrDefault(Claims.ORGANIZATION, Organization.DEFAULT);
 
         userService.findById(ReferenceType.ORGANIZATION, organizationId, authenticatedUser.getId())
                 .flatMap(user -> {

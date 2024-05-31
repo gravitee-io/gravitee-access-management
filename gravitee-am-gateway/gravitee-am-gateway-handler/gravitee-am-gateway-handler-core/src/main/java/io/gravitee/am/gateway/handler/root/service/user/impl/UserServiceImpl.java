@@ -115,8 +115,6 @@ import static java.util.stream.Collectors.toList;
  */
 public class UserServiceImpl implements UserService {
 
-    private static final String DEFAULT_IDP_PREFIX = "default-idp-";
-
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -722,7 +720,7 @@ public class UserServiceImpl implements UserService {
         if (additionalInformation != null) {
             Map<String, Object> extraInformation = new HashMap<>(additionalInformation);
             if (user.getLoggedAt() != null) {
-                extraInformation.put(io.gravitee.am.common.oidc.idtoken.Claims.auth_time, user.getLoggedAt().getTime() / 1000);
+                extraInformation.put(io.gravitee.am.common.oidc.idtoken.Claims.AUTH_TIME, user.getLoggedAt().getTime() / 1000);
             }
             extraInformation.put(StandardClaims.SUB, user.getId());
             extraInformation.put(StandardClaims.PREFERRED_USERNAME, user.getUsername());

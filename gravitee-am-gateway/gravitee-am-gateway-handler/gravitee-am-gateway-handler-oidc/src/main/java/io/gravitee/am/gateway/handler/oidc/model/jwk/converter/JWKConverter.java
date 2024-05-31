@@ -21,6 +21,8 @@ import io.gravitee.am.model.jose.OCTKey;
 import io.gravitee.am.model.jose.OKPKey;
 import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.JWKSet;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.util.stream.Collectors;
 
@@ -28,6 +30,7 @@ import java.util.stream.Collectors;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class JWKConverter {
 
     public static io.gravitee.am.gateway.handler.oidc.model.jwk.JWKSet convert(JWKSet jwkSet) {
@@ -45,17 +48,12 @@ public class JWKConverter {
     }
 
     public static io.gravitee.am.gateway.handler.oidc.model.jwk.JWK convert(io.gravitee.am.model.jose.JWK jwk) {
-        switch (KeyType.parse(jwk.getKty())) {
-            case EC:
-                return io.gravitee.am.gateway.handler.oidc.model.jwk.ECKey.from((ECKey) jwk);
-            case RSA:
-                return io.gravitee.am.gateway.handler.oidc.model.jwk.RSAKey.from((RSAKey) jwk);
-            case OCT:
-                return io.gravitee.am.gateway.handler.oidc.model.jwk.OCTKey.from((OCTKey) jwk);
-            case OKP:
-                return io.gravitee.am.gateway.handler.oidc.model.jwk.OKPKey.from((OKPKey) jwk);
-            default:
-                return null;
-        }
+        return switch (KeyType.parse(jwk.getKty())) {
+            case EC -> io.gravitee.am.gateway.handler.oidc.model.jwk.ECKey.from((ECKey) jwk);
+            case RSA -> io.gravitee.am.gateway.handler.oidc.model.jwk.RSAKey.from((RSAKey) jwk);
+            case OCT -> io.gravitee.am.gateway.handler.oidc.model.jwk.OCTKey.from((OCTKey) jwk);
+            case OKP -> io.gravitee.am.gateway.handler.oidc.model.jwk.OKPKey.from((OKPKey) jwk);
+            default -> null;
+        };
     }
 }

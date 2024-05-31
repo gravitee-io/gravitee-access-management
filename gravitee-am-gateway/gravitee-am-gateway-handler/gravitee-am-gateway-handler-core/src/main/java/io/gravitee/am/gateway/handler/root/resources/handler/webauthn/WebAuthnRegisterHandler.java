@@ -47,7 +47,6 @@ import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_AUTH_ACTION_
 public class WebAuthnRegisterHandler extends WebAuthnHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnRegisterHandler.class);
-    private static final String DEFAULT_ORIGIN = "http://localhost:8092";
     private final WebAuthn webAuthn;
     private final String origin;
 
@@ -89,7 +88,7 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
     }
 
     private void registerV0(RoutingContext ctx) {
-        final JsonObject webauthnRegister = ctx.getBodyAsJson();
+        final JsonObject webauthnRegister = ctx.body().asJsonObject();
         final Session session = ctx.session();
 
         // session validation

@@ -41,7 +41,7 @@ public abstract class AbstractErrorHandler implements Handler<RoutingContext> {
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
     protected final String errorPage;
 
-    public AbstractErrorHandler(String errorPage) {
+    protected AbstractErrorHandler(String errorPage) {
         this.errorPage = errorPage;
     }
 

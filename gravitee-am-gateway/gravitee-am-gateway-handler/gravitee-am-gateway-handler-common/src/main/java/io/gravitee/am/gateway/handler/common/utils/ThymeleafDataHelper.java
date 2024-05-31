@@ -24,6 +24,8 @@ import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.am.model.safe.UserProperties;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,6 +41,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ThymeleafDataHelper {
 
     public static Map<String, Object> generateData(RoutingContext context, Domain domain, Client client) {

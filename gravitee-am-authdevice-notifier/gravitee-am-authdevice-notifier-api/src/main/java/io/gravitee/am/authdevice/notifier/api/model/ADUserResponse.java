@@ -15,10 +15,13 @@
  */
 package io.gravitee.am.authdevice.notifier.api.model;
 
+import lombok.Getter;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
 public class ADUserResponse {
     private final String tid;
     private final String state;
@@ -30,15 +33,4 @@ public class ADUserResponse {
         this.validated = validated;
     }
 
-    public boolean isValidated() {
-        return validated;
-    }
-
-    public String getState() {
-        return state;
-    }
-
-    public String getTid() {
-        return tid;
-    }
 }

@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.certificate.api;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 import java.io.ByteArrayInputStream;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
@@ -26,6 +29,7 @@ import java.util.Base64;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class X509CertUtils {
 
     private static final Base64.Encoder b64Enc = Base64.getEncoder();

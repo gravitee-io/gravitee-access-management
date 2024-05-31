@@ -123,9 +123,6 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
     protected abstract KeyStore keyStore() throws KeyStoreException;
 
     @Override
-    public abstract CertificateMetadata certificateMetadata();
-
-    @Override
     public Optional<Date> getExpirationDate() {
         return Optional.ofNullable(this.expirationDate);
     }
@@ -200,13 +197,7 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
 
     private JWK createKey(com.nimbusds.jose.jwk.JWK nimbusJwk, boolean includePrivate, String use) {
         String keyType = nimbusJwk.getKeyType().toString();
-        JWK jwk;
-        if (keyType.equals(RSA)) {
-            jwk = new RSAKey();
-        }
-        else {
-            jwk = new ECKey();
-        }
+        JWK jwk = keyType.equals(RSA) ? new RSAKey() : new ECKey();
 
         if (use != null) {
             jwk.setUse(use);

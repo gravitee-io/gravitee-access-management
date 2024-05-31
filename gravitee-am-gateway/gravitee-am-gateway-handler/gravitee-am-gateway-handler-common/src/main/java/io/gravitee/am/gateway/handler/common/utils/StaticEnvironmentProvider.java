@@ -15,8 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.common.utils;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.springframework.core.env.Environment;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class StaticEnvironmentProvider {
 
     private static Environment env = null;

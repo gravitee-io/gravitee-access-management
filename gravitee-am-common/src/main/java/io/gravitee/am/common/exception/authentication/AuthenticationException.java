@@ -16,6 +16,8 @@
 package io.gravitee.am.common.exception.authentication;
 
 import io.gravitee.common.http.HttpStatusCode;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Map;
 
@@ -23,6 +25,8 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Setter
+@Getter
 public abstract class AuthenticationException extends RuntimeException {
 
     private Map<String, String> details;
@@ -58,11 +62,4 @@ public abstract class AuthenticationException extends RuntimeException {
         return HttpStatusCode.UNAUTHORIZED_401;
     }
 
-    public Map<String, String> getDetails() {
-        return details;
-    }
-
-    public void setDetails(Map<String, String> details) {
-        this.details = details;
-    }
 }

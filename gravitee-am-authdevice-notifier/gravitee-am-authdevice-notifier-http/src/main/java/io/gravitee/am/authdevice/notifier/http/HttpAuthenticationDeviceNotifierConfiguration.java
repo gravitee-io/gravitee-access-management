@@ -16,11 +16,15 @@
 package io.gravitee.am.authdevice.notifier.http;
 
 import io.gravitee.am.authdevice.notifier.api.AuthenticationDeviceNotifierConfiguration;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Setter
+@Getter
 public class HttpAuthenticationDeviceNotifierConfiguration implements AuthenticationDeviceNotifierConfiguration {
 
     private String headerName = "Authorization";
@@ -30,51 +34,4 @@ public class HttpAuthenticationDeviceNotifierConfiguration implements Authentica
     private Integer idleTimeout = 10000;
     private Integer maxPoolSize = 10;
 
-    public String getHeaderName() {
-        return headerName;
-    }
-
-    public void setHeaderName(String headerName) {
-        this.headerName = headerName;
-    }
-
-    public String getHeaderValue() {
-        return headerValue;
-    }
-
-    public void setHeaderValue(String headerValue) {
-        this.headerValue = headerValue;
-    }
-
-    public String getEndpoint() {
-        return endpoint;
-    }
-
-    public void setEndpoint(String endpoint) {
-        this.endpoint = endpoint;
-    }
-
-    public Integer getConnectTimeout() {
-        return connectTimeout;
-    }
-
-    public void setConnectTimeout(Integer connectTimeout) {
-        this.connectTimeout = connectTimeout;
-    }
-
-    public Integer getIdleTimeout() {
-        return idleTimeout;
-    }
-
-    public void setIdleTimeout(Integer idleTimeout) {
-        this.idleTimeout = idleTimeout;
-    }
-
-    public Integer getMaxPoolSize() {
-        return maxPoolSize;
-    }
-
-    public void setMaxPoolSize(Integer maxPoolSize) {
-        this.maxPoolSize = maxPoolSize;
-    }
 }

@@ -49,12 +49,12 @@ import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.utils.ResponseTypeUtils;
-import io.reactivex.rxjava3.core.*;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.JsonArray;
 import io.vertx.rxjava3.ext.web.client.HttpResponse;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,10 +66,19 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
-import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.*;
+import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isContentEncCompliantWithFapiBrazil;
+import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isKeyEncCompliantWithFapiBrazil;
+import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isSignAlgCompliantWithFapi;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -200,10 +209,11 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
      * Software_id is based on id field and not client_id because:
      * this field is not intended to be human readable and is usually opaque to the client and authorization server.
      * the client may switch back from template to real client and then this is better to not expose it's client_id.
-     * @param request
-     * @param basePath
-     * @return
      * </pre>
+     *
+     * @param request  the dynamic client registration request containing the software_id
+     * @param basePath the base path for the client registration
+     * @return a Single emitting the created Client
      */
     private Single<Client> createClientFromTemplate(DynamicClientRegistrationRequest request, String basePath) {
         return clientService.findById(request.getSoftwareId().get())
@@ -212,9 +222,9 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .map(request::patch)
                 .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
                 .flatMap(clientService::create)
-                .flatMap(client -> copyFlows(request.getSoftwareId().get(), client))
-                .flatMap(client -> copyForms(request.getSoftwareId().get(), client))
-                .flatMap(client -> copyEmails(request.getSoftwareId().get(), client));
+                .flatMap(c -> copyFlows(request.getSoftwareId().get(), c))
+                .flatMap(c -> copyForms(request.getSoftwareId().get(), c))
+                .flatMap(c -> copyEmails(request.getSoftwareId().get(), c));
     }
 
     private Single<Client> sanitizeTemplate(Client template) {
@@ -258,6 +268,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     /**
      * Identity provider is not part of dynamic client registration but needed on the client.
      * So we set the first identity provider available on the domain.
+     *
      * @param client App to create
      * @return
      */
@@ -276,6 +287,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     /**
      * Certificate provider is not part of dynamic client registration but needed on the client.
      * So we set the first certificate provider available on the domain.
+     *
      * @param client App to create
      * @return
      */
@@ -371,67 +383,66 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
             try {
 
                 com.nimbusds.jwt.JWT jwt = JWTParser.parse(request.getSoftwareStatement().get());
-                if (jwt instanceof SignedJWT signedJWT) {
-                    if (isSignAlgCompliantWithFapi(signedJWT.getHeader().getAlgorithm().getName())) {
-                        return jwkService.getKeys(directoryJwksUri)
-                                .flatMap(jwk -> jwkService.getKey(jwk, signedJWT.getHeader().getKeyID()))
-                                .switchIfEmpty(Single.error(new TechnicalManagementException("Invalid jwks_uri for OpenBanking Directory")))
-                                .filter(jwk -> jwsService.isValidSignature(signedJWT, jwk))
-                                .switchIfEmpty(Single.error(new InvalidClientMetadataException("Invalid signature for software_statement")))
-                                .map(__ -> {
-                                    LOGGER.debug("software_statement is valid, check claims regarding the registration request information");
-                                    JSONObject softwareStatement = new JSONObject(signedJWT.getPayload().toJSONObject());
-                                    final Number iat = softwareStatement.getAsNumber("iat");
-                                    if (iat == null || (Instant.now().getEpochSecond() - (iat.longValue())) > FIVE_MINUTES_IN_SEC) {
-                                        throw new InvalidClientMetadataException("software_statement older than 5 minutes");
+                if (jwt instanceof SignedJWT signedJWT && isSignAlgCompliantWithFapi(signedJWT.getHeader().getAlgorithm().getName())) {
+                    return jwkService.getKeys(directoryJwksUri)
+                            .flatMap(jwk -> jwkService.getKey(jwk, signedJWT.getHeader().getKeyID()))
+                            .switchIfEmpty(Single.error(new TechnicalManagementException("Invalid jwks_uri for OpenBanking Directory")))
+                            .filter(jwk -> jwsService.isValidSignature(signedJWT, jwk))
+                            .switchIfEmpty(Single.error(new InvalidClientMetadataException("Invalid signature for software_statement")))
+                            .map(__ -> {
+                                LOGGER.debug("software_statement is valid, check claims regarding the registration request information");
+                                JSONObject softwareStatement = new JSONObject(signedJWT.getPayload().toJSONObject());
+                                final Number iat = softwareStatement.getAsNumber("iat");
+                                if (iat == null || (Instant.now().getEpochSecond() - (iat.longValue())) > FIVE_MINUTES_IN_SEC) {
+                                    throw new InvalidClientMetadataException("software_statement older than 5 minutes");
+                                }
+
+                                if (request.getJwks() != null && request.getJwks().isPresent()) {
+                                    throw new InvalidClientMetadataException("jwks is forbidden, prefer jwks_uri");
+                                }
+
+                                if (request.getJwksUri() == null || request.getJwksUri().isEmpty()) {
+                                    throw new InvalidClientMetadataException("jwks_uri is required");
+                                }
+
+                                if (!request.getJwksUri().get().equals(softwareStatement.getAsString("software_jwks_uri"))) {
+                                    throw new InvalidClientMetadataException("jwks_uri doesn't match the software_jwks_uri");
+                                }
+
+                                final Object software_redirect_uris = softwareStatement.get("software_redirect_uris");
+                                if (software_redirect_uris != null) {
+                                    if (request.getRedirectUris() == null || request.getRedirectUris().isEmpty()) {
+                                        throw new InvalidClientMetadataException("redirect_uris are missing");
                                     }
 
-                                    if (request.getJwks() != null && request.getJwks().isPresent()) {
-                                        throw new InvalidClientMetadataException("jwks is forbidden, prefer jwks_uri");
+                                    final List<String> redirectUris = request.getRedirectUris().get();
+                                    if (software_redirect_uris instanceof List<?>) {
+                                        redirectUris.forEach(uri -> {
+                                            if (!((List<?>) software_redirect_uris).contains(uri)) {
+                                                throw new InvalidClientMetadataException("redirect_uris contains unknown uri from software_statement");
+                                            }
+                                        });
+                                    } else if (software_redirect_uris instanceof String && (redirectUris.size() > 1 || !software_redirect_uris.equals(redirectUris.get(0)))) {
+                                        throw new InvalidClientMetadataException("redirect_uris contains unknown uri from software_statement");
+                                    }
+                                }
+
+                                if (request.getTokenEndpointAuthMethod() != null && request.getTokenEndpointAuthMethod().isPresent()) {
+
+                                    if (!(ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH.equals(request.getTokenEndpointAuthMethod().get()) ||
+                                            ClientAuthenticationMethod.TLS_CLIENT_AUTH.equals(request.getTokenEndpointAuthMethod().get()) ||
+                                            ClientAuthenticationMethod.PRIVATE_KEY_JWT.equals(request.getTokenEndpointAuthMethod().get()))) {
+                                        throw new InvalidClientMetadataException("invalid token_endpoint_auth_method");
                                     }
 
-                                    if (request.getJwksUri() == null || request.getJwksUri().isEmpty()) {
-                                        throw new InvalidClientMetadataException("jwks_uri is required");
+                                    if (ClientAuthenticationMethod.TLS_CLIENT_AUTH.equals(request.getTokenEndpointAuthMethod().get()) && (request.getTlsClientAuthSubjectDn() == null || request.getTlsClientAuthSubjectDn().isEmpty())) {
+                                        throw new InvalidClientMetadataException("tls_client_auth_subject_dn is required with tls_client_auth as client authentication method");
                                     }
+                                }
 
-                                    if (!request.getJwksUri().get().equals(softwareStatement.getAsString("software_jwks_uri"))) {
-                                        throw new InvalidClientMetadataException("jwks_uri doesn't match the software_jwks_uri");
-                                    }
+                                return request;
+                            });
 
-                                    final Object software_redirect_uris = softwareStatement.get("software_redirect_uris");
-                                    if (software_redirect_uris != null) {
-                                        if (request.getRedirectUris() == null || request.getRedirectUris().isEmpty()) {
-                                            throw new InvalidClientMetadataException("redirect_uris are missing");
-                                        }
-
-                                        final List<String> redirectUris = request.getRedirectUris().get();
-                                        if (software_redirect_uris instanceof List<?>) {
-                                            redirectUris.forEach(uri -> {
-                                                if (!((List<?>) software_redirect_uris).contains(uri)) {
-                                                    throw new InvalidClientMetadataException("redirect_uris contains unknown uri from software_statement");
-                                                }
-                                            });
-                                        } else if (software_redirect_uris instanceof String && (redirectUris.size() > 1 || !software_redirect_uris.equals(redirectUris.get(0)))) {
-                                            throw new InvalidClientMetadataException("redirect_uris contains unknown uri from software_statement");
-                                        }
-                                    }
-
-                                    if (request.getTokenEndpointAuthMethod() != null && request.getTokenEndpointAuthMethod().isPresent()) {
-
-                                        if (!(ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH.equals(request.getTokenEndpointAuthMethod().get()) ||
-                                                ClientAuthenticationMethod.TLS_CLIENT_AUTH.equals(request.getTokenEndpointAuthMethod().get()) ||
-                                                ClientAuthenticationMethod.PRIVATE_KEY_JWT.equals(request.getTokenEndpointAuthMethod().get()))) {
-                                            throw new InvalidClientMetadataException("invalid token_endpoint_auth_method");
-                                        }
-
-                                        if (ClientAuthenticationMethod.TLS_CLIENT_AUTH.equals(request.getTokenEndpointAuthMethod().get()) && (request.getTlsClientAuthSubjectDn() == null || request.getTlsClientAuthSubjectDn().isEmpty())) {
-                                            throw new InvalidClientMetadataException("tls_client_auth_subject_dn is required with tls_client_auth as client authentication method");
-                                        }
-                                    }
-
-                                    return request;
-                                });
-                    }
                 }
 
                 return Single.error(new InvalidClientMetadataException("software_statement isn't signed or doesn't use PS256"));
@@ -446,6 +457,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     /**
      * According to openid specification, redirect_uris are REQUIRED in the request for creation.
      * But according to the grant type, it may be null or empty.
+     *
      * @param request DynamicClientRegistrationRequest
      * @param isPatch true if only updating some fields (else means all fields will overwritten)
      * @return DynamicClientRegistrationRequest
@@ -462,20 +474,20 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     private Single<DynamicClientRegistrationRequest> validateResponseType(DynamicClientRegistrationRequest request) {
         //if response_type provided, they must be valid.
-        if (request.getResponseTypes() != null) {
-            if (!ResponseTypeUtils.isSupportedResponseType(request.getResponseTypes().orElse(Collections.emptyList()))) {
-                return Single.error(new InvalidClientMetadataException("Invalid response type."));
-            }
+        if (request.getResponseTypes() != null
+                && !ResponseTypeUtils.isSupportedResponseType(request.getResponseTypes().orElse(Collections.emptyList()))) {
+            return Single.error(new InvalidClientMetadataException("Invalid response type."));
+
         }
         return Single.just(request);
     }
 
     private Single<DynamicClientRegistrationRequest> validateGrantType(DynamicClientRegistrationRequest request) {
         //if grant_type provided, they must be valid.
-        if (request.getGrantTypes() != null) {
-            if (!GrantTypeUtils.isSupportedGrantType(request.getGrantTypes().orElse(Collections.emptyList()))) {
-                return Single.error(new InvalidClientMetadataException("Missing or invalid grant type."));
-            }
+        if (request.getGrantTypes() != null &&
+                !GrantTypeUtils.isSupportedGrantType(request.getGrantTypes().orElse(Collections.emptyList()))) {
+            return Single.error(new InvalidClientMetadataException("Missing or invalid grant type."));
+
         }
         return Single.just(request);
     }
@@ -576,10 +588,10 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     private Single<DynamicClientRegistrationRequest> validateIdTokenSigningAlgorithm(DynamicClientRegistrationRequest request) {
         //if userinfo_signed_response_alg is provided, it must be valid.
-        if (request.getIdTokenSignedResponseAlg() != null && request.getIdTokenSignedResponseAlg().isPresent()) {
-            if (!JWAlgorithmUtils.isValidIdTokenSigningAlg(request.getIdTokenSignedResponseAlg().get())) {
-                return Single.error(new InvalidClientMetadataException("Unsupported id_token signing algorithm"));
-            }
+        if (request.getIdTokenSignedResponseAlg() != null &&
+                request.getIdTokenSignedResponseAlg().isPresent() &&
+                !JWAlgorithmUtils.isValidIdTokenSigningAlg(request.getIdTokenSignedResponseAlg().get())) {
+            return Single.error(new InvalidClientMetadataException("Unsupported id_token signing algorithm"));
         }
         return Single.just(request);
     }
@@ -671,14 +683,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         if (request.getJwksUri() != null && request.getJwksUri().isPresent()) {
             return jwkService.getKeys(request.getJwksUri().get())
                     .switchIfEmpty(Single.error(new InvalidClientMetadataException("No JWK found behind jws uri...")))
-                    .flatMap(jwkSet -> {
-                        /* Uncomment if we expect to save it as fallback
-                        if(jwkSet!=null && jwkSet.isPresent()) {
-                            request.setJwks(jwkSet);
-                        }
-                        */
-                        return Single.just(request);
-                    });
+                    .map(jwkSet -> request);
         }
 
         return Single.just(request);
@@ -687,6 +692,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     /**
      * Remove not allowed scopes (if feature is enabled) and then apply default scopes.
      * The scopes validations are done later (validateMetadata) on the process.
+     *
      * @param request DynamicClientRegistrationRequest
      * @return DynamicClientRegistrationRequest
      */
@@ -763,9 +769,9 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     /**
      * <p>
-     *    A client using the "tls_client_auth" authentication method MUST use exactly one of the
-     *    below metadata parameters to indicate the certificate subject value that the authorization server is
-     *    to expect when authenticating the respective client.
+     * A client using the "tls_client_auth" authentication method MUST use exactly one of the
+     * below metadata parameters to indicate the certificate subject value that the authorization server is
+     * to expect when authenticating the respective client.
      * </p>
      * <a href="https://tools.ietf.org/html/rfc8705#section-2.1.2">Client Registration Metadata</a>
      *
@@ -790,31 +796,31 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                             (request.getTlsClientAuthSanEmail() != null && request.getTlsClientAuthSanEmail().isPresent()) ||
                             (request.getTlsClientAuthSanIp() != null && request.getTlsClientAuthSanIp().isPresent()) ||
                             (request.getTlsClientAuthSanUri() != null && request.getTlsClientAuthSanUri().isPresent()))) {
-                return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
+                return tlsClientMustUseOneOfTlsParametersError();
             } else if (request.getTlsClientAuthSanDns() != null && request.getTlsClientAuthSanDns().isPresent() && (
                     (request.getTlsClientAuthSubjectDn() != null && request.getTlsClientAuthSubjectDn().isPresent()) ||
                             (request.getTlsClientAuthSanEmail() != null && request.getTlsClientAuthSanEmail().isPresent()) ||
                             (request.getTlsClientAuthSanIp() != null && request.getTlsClientAuthSanIp().isPresent()) ||
                             (request.getTlsClientAuthSanUri() != null && request.getTlsClientAuthSanUri().isPresent()))) {
-                return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
+                return tlsClientMustUseOneOfTlsParametersError();
             } else if (request.getTlsClientAuthSanIp() != null && request.getTlsClientAuthSanIp().isPresent() && (
                     (request.getTlsClientAuthSubjectDn() != null && request.getTlsClientAuthSubjectDn().isPresent()) ||
                             (request.getTlsClientAuthSanDns() != null && request.getTlsClientAuthSanDns().isPresent()) ||
                             (request.getTlsClientAuthSanEmail() != null && request.getTlsClientAuthSanEmail().isPresent()) ||
                             (request.getTlsClientAuthSanUri() != null && request.getTlsClientAuthSanUri().isPresent()))) {
-                return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
+                return tlsClientMustUseOneOfTlsParametersError();
             } else if (request.getTlsClientAuthSanEmail() != null && request.getTlsClientAuthSanEmail().isPresent() && (
                     (request.getTlsClientAuthSubjectDn() != null && request.getTlsClientAuthSubjectDn().isPresent()) ||
                             (request.getTlsClientAuthSanDns() != null && request.getTlsClientAuthSanDns().isPresent()) ||
                             (request.getTlsClientAuthSanIp() != null && request.getTlsClientAuthSanIp().isPresent()) ||
                             (request.getTlsClientAuthSanUri() != null && request.getTlsClientAuthSanUri().isPresent()))) {
-                return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
+                return tlsClientMustUseOneOfTlsParametersError();
             } else if (request.getTlsClientAuthSanUri() != null && request.getTlsClientAuthSanUri().isPresent() && (
                     (request.getTlsClientAuthSubjectDn() != null && request.getTlsClientAuthSubjectDn().isPresent()) ||
                             (request.getTlsClientAuthSanDns() != null && request.getTlsClientAuthSanDns().isPresent()) ||
                             (request.getTlsClientAuthSanIp() != null && request.getTlsClientAuthSanIp().isPresent()) ||
                             (request.getTlsClientAuthSanEmail() != null && request.getTlsClientAuthSanEmail().isPresent()))) {
-                return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
+                return tlsClientMustUseOneOfTlsParametersError();
             }
 
             // because only TLS parameter is authorized, we force the missing options to empty to avoid
@@ -852,12 +858,12 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     /**
      * <p>
-     *    This method of mutual-TLS OAuth client authentication is intended to
-     *    support client authentication using self-signed certificates.  As a
-     *    prerequisite, the client registers its X.509 certificates (using
-     *    "jwks" defined in [RFC7591]) or a reference to a trusted source for
-     *    its X.509 certificates (using "jwks_uri" from [RFC7591]) with the
-     *    authorization server.
+     * This method of mutual-TLS OAuth client authentication is intended to
+     * support client authentication using self-signed certificates.  As a
+     * prerequisite, the client registers its X.509 certificates (using
+     * "jwks" defined in [RFC7591]) or a reference to a trusted source for
+     * its X.509 certificates (using "jwks_uri" from [RFC7591]) with the
+     * authorization server.
      * </p>
      * <a href="https://tools.ietf.org/html/rfc8705#section-2.2.2">Client Registration Metadata</a>
      *
@@ -867,11 +873,10 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     private Single<DynamicClientRegistrationRequest> validateSelfSignedClientAuth(DynamicClientRegistrationRequest request) {
         if (request.getTokenEndpointAuthMethod() != null &&
                 request.getTokenEndpointAuthMethod().isPresent() &&
-                ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH.equalsIgnoreCase(request.getTokenEndpointAuthMethod().get())) {
-            if ((request.getJwks() == null || request.getJwks().isEmpty()) &&
-                    (request.getJwksUri() == null || request.getJwksUri().isEmpty())) {
-                return Single.error(new InvalidClientMetadataException("The self_signed_tls_client_auth requires at least a jwks or a valid jwks_uri."));
-            }
+                ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH.equalsIgnoreCase(request.getTokenEndpointAuthMethod().get()) &&
+                (request.getJwks() == null || request.getJwks().isEmpty()) &&
+                (request.getJwksUri() == null || request.getJwksUri().isEmpty())) {
+            return Single.error(new InvalidClientMetadataException("The self_signed_tls_client_auth requires at least a jwks or a valid jwks_uri."));
         }
         return Single.just(request);
     }
@@ -879,11 +884,11 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     private Single<DynamicClientRegistrationRequest> validateCibaSettings(DynamicClientRegistrationRequest request) {
         final boolean useCibaGrantType = request.getGrantTypes() != null && request.getGrantTypes().isPresent() && request.getGrantTypes().get().contains(GrantType.CIBA_GRANT_TYPE);
 
-        if(!domain.useCiba() && useCibaGrantType) {
+        if (!domain.useCiba() && useCibaGrantType) {
             return Single.error(new InvalidClientMetadataException("CIBA flow not supported"));
         }
 
-        if(domain.useCiba() && useCibaGrantType) {
+        if (domain.useCiba() && useCibaGrantType) {
             if (request.getBackchannelTokenDeliveryMode() == null || request.getBackchannelTokenDeliveryMode().isEmpty()) {
                 return Single.error(new InvalidClientMetadataException("The backchannel_token_delivery_mode is required for CIBA Flow."));
             }
@@ -895,7 +900,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
             if ((deliveryMode.equals(CIBADeliveryMode.PING) || deliveryMode.equals(CIBADeliveryMode.PUSH)) &&
                     ((request.getBackchannelClientNotificationEndpoint() == null || request.getBackchannelClientNotificationEndpoint().isEmpty()) ||
-                            (!request.getBackchannelClientNotificationEndpoint().get().startsWith("https")) )) {
+                            (!request.getBackchannelClientNotificationEndpoint().get().startsWith("https")))) {
                 return Single.error(new InvalidClientMetadataException("Missing or Invalid backchannel_client_notification_endpoint"));
             }
 
@@ -909,6 +914,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     /**
      * Check Uri is well formatted
+     *
      * @param uri String
      * @return URI if well formatted, else throw an InvalidClientMetadataException
      */
@@ -918,5 +924,9 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         } catch (IllegalArgumentException | URISyntaxException ex) {
             throw new InvalidClientMetadataException(uri + " is not valid.");
         }
+    }
+
+    private Single<DynamicClientRegistrationRequest> tlsClientMustUseOneOfTlsParametersError() {
+        return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
     }
 }

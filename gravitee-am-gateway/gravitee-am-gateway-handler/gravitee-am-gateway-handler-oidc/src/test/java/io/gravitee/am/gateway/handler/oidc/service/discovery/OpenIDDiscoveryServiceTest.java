@@ -45,7 +45,6 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -118,14 +117,14 @@ public class OpenIDDiscoveryServiceTest {
     @Test
     public void shouldContain_acr_claim_supported() {
         OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
-        assertTrue(openIDProviderMetadata.getClaimsSupported().contains(Claims.acr));
+        assertTrue(openIDProviderMetadata.getClaimsSupported().contains(Claims.ACR));
     }
 
     @Test
     public void shouldContain_brazil_claim_supported() {
         when(domain.useFapiBrazilProfile()).thenReturn(true);
         OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
-        assertTrue(openIDProviderMetadata.getClaimsSupported().contains(Claims.acr));
+        assertTrue(openIDProviderMetadata.getClaimsSupported().contains(Claims.ACR));
         assertTrue(openIDProviderMetadata.getClaimsSupported().containsAll(OpenIDDiscoveryServiceImpl.BRAZIL_CLAIMS));
     }
 

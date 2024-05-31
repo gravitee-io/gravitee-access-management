@@ -26,7 +26,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
-import io.gravitee.common.http.HttpHeaders;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
@@ -95,7 +95,7 @@ public class WebAuthnRegisterEndpoint extends WebAuthnHandler {
             final UserProperties userProperties = new UserProperties(user);
 
             final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true);
-            final String skipAction = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams.set("skipWebAuthN", "true"), true);
+            final String skipAction = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams.set(SKIP_WEBAUTHN_PARAM_KEY, "true"), true);
             if(isEnrollingFido2Factor(routingContext)){
                 routingContext.put(ConstantKeys.MFA_ENROLLING_FIDO2_FACTOR, "true");
             }

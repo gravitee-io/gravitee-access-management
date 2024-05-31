@@ -56,11 +56,23 @@ import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.JsonObject;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.gravitee.am.common.oauth2.Parameters.*;
+import static io.gravitee.am.common.oauth2.Parameters.CLAIM_TOKEN;
+import static io.gravitee.am.common.oauth2.Parameters.CLAIM_TOKEN_FORMAT;
+import static io.gravitee.am.common.oauth2.Parameters.PCT;
+import static io.gravitee.am.common.oauth2.Parameters.RPT;
+import static io.gravitee.am.common.oauth2.Parameters.TICKET;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
 
 /**
@@ -363,6 +375,7 @@ public class UMATokenGranter extends AbstractTokenGranter {
      * While oauth2 imply user approvals (RO grant access to his resources to an application),
      * here the subject is a Requesting Party that request grant access to someone else resources.
      */
+    @Override
     protected Single<TokenRequest> resolveRequest(TokenRequest tokenRequest, Client client, User endUser) {
         return Single.error(new TechnicalException("Should not be used"));
     }

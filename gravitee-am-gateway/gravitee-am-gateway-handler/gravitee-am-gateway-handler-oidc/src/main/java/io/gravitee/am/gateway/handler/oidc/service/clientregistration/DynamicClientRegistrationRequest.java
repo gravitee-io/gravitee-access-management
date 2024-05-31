@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
@@ -616,7 +615,7 @@ public class DynamicClientRegistrationRequest {
 
     @Override
     public String toString() {
-        return "ClientPayload{clientName='" + (clientName!=null?clientName.orElse(""):"") + "\'}";
+        return "ClientPayload{clientName='" + (clientName != null ? clientName.orElse("") : "") + "\'}";
     }
 
     public Client patch(Client client) {
@@ -756,14 +755,12 @@ public class DynamicClientRegistrationRequest {
 
     private void updateScopeSettings(Client client) {
         if (this.getScope() != null) {
-            final List<ApplicationScopeSettings> currentClientScopeSettings = client.getScopeSettings() == null ? new ArrayList<ApplicationScopeSettings>() : client.getScopeSettings();
-            final Optional<List<ApplicationScopeSettings>> scopeSettingsToUpdate = this.getScope().map(scopes -> {
-                return scopes.stream().map(scope -> {
-                    ApplicationScopeSettings newSetting = new ApplicationScopeSettings();
-                    newSetting.setScope(scope);
-                    return getScopeSettings(currentClientScopeSettings, scope).orElse(newSetting);
-                }).collect(Collectors.toList());
-            });
+            final List<ApplicationScopeSettings> currentClientScopeSettings = client.getScopeSettings() == null ? new ArrayList<>() : client.getScopeSettings();
+            final Optional<List<ApplicationScopeSettings>> scopeSettingsToUpdate = this.getScope().map(scopes -> scopes.stream().map(s -> {
+                ApplicationScopeSettings newSetting = new ApplicationScopeSettings();
+                newSetting.setScope(s);
+                return getScopeSettings(currentClientScopeSettings, s).orElse(newSetting);
+            }).toList());
             SetterUtils.safeSet(client::setScopeSettings, scopeSettingsToUpdate);
         }
     }

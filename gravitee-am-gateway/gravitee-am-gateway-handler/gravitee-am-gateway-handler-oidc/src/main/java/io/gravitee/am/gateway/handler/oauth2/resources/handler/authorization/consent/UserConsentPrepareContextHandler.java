@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent;
 
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
@@ -29,12 +28,6 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
  * @author GraviteeSource Team
  */
 public class UserConsentPrepareContextHandler implements Handler<RoutingContext> {
-
-    private final ClientSyncService clientSyncService;
-
-    public UserConsentPrepareContextHandler(ClientSyncService clientSyncService) {
-        this.clientSyncService = clientSyncService;
-    }
 
     @Override
     public void handle(RoutingContext routingContext) {

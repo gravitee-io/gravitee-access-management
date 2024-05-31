@@ -268,7 +268,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .failureHandler(new AuthorizationRequestFailureHandler(openIDDiscoveryService, jwtService, jweService, environment));
 
         // Authorization consent endpoint
-        Handler<RoutingContext> userConsentPrepareContextHandler = new UserConsentPrepareContextHandler(clientSyncService);
+        Handler<RoutingContext> userConsentPrepareContextHandler = new UserConsentPrepareContextHandler();
         oauth2Router.route(HttpMethod.GET, "/consent")
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))

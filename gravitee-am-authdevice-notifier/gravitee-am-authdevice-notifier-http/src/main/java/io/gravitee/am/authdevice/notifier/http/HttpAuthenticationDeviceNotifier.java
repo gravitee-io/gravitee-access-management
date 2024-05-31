@@ -16,9 +16,7 @@
 package io.gravitee.am.authdevice.notifier.http;
 
 import io.gravitee.am.authdevice.notifier.api.AuthenticationDeviceNotifier;
-import io.gravitee.am.authdevice.notifier.api.AuthenticationDeviceNotifierProvider;
 import io.gravitee.am.authdevice.notifier.http.provider.HttpAuthenticationDeviceNotifierProvider;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

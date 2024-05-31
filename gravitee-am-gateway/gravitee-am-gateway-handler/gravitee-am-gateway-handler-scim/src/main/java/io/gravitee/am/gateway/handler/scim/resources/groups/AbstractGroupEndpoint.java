@@ -51,7 +51,7 @@ public class AbstractGroupEndpoint {
         if (schemas == null || schemas.isEmpty()) {
             throw new InvalidValueException("Field [schemas] is required");
         }
-        Set<String> schemaSet = new HashSet();
+        Set<String> schemaSet = new HashSet<>();
         // check duplicate and check if values are supported
         schemas.forEach(schema -> {
             if (!schemaSet.add(schema)) {

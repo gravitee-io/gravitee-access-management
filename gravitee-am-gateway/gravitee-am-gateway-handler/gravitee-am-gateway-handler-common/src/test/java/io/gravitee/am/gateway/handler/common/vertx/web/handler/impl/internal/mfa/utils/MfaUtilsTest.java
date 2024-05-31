@@ -56,5 +56,12 @@ class MfaUtilsTest {
         assertFalse(canSkip);
     }
 
+    @Test
+    void getMfaStepUp(){
+        Mockito.when(client.getMfaSettings()).thenReturn(null);
+        StepUpAuthenticationSettings mfaStepUp = MfaUtils.getMfaStepUp(client);
+        assertNotNull(mfaStepUp);
+    }
+
 
 }

@@ -42,24 +42,24 @@ import java.util.stream.Collectors;
 public class ExceptionHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(ExceptionHandler.class);
+    public static final String NO_CACHE = "no-cache";
+    public static final String NO_STORE = "no-store";
 
     @Override
     public void handle(RoutingContext routingContext) {
         if (routingContext.failed()) {
             Throwable throwable = routingContext.failure();
-            if (throwable instanceof OAuth2Exception) {
-                OAuth2Exception oAuth2Exception = (OAuth2Exception) throwable;
+            if (throwable instanceof OAuth2Exception oAuth2Exception) {
                 OAuth2ErrorResponse oAuth2ErrorResponse = new OAuth2ErrorResponse(oAuth2Exception.getOAuth2ErrorCode());
                 oAuth2ErrorResponse.setDescription(oAuth2Exception.getMessage());
                 routingContext
                         .response()
                         .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                        .putHeader(HttpHeaders.CACHE_CONTROL, NO_STORE)
+                        .putHeader(HttpHeaders.PRAGMA, NO_CACHE)
                         .setStatusCode(oAuth2Exception.getHttpStatusCode())
                         .end(Json.encodePrettily(oAuth2ErrorResponse));
-            } else if (throwable instanceof UmaException) {
-                UmaException umaException = (UmaException) throwable;
+            } else if (throwable instanceof UmaException umaException) {
                 UMAErrorResponse umaErrorResponse = new UMAErrorResponse(umaException.getError())
                         .setTicket(umaException.getTicket())
                         .setRedirectUser(umaException.getRedirectUser())
@@ -68,19 +68,18 @@ public class ExceptionHandler implements Handler<RoutingContext> {
                 routingContext
                         .response()
                         .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                        .putHeader(HttpHeaders.CACHE_CONTROL, NO_STORE)
+                        .putHeader(HttpHeaders.PRAGMA, NO_CACHE)
                         .setStatusCode(umaException.getStatus())
                         .end(Json.encodePrettily(umaErrorResponse));
-            } else if (throwable instanceof PolicyChainException) {
-                PolicyChainException policyChainException = (PolicyChainException) throwable;
+            } else if (throwable instanceof PolicyChainException policyChainException) {
                 OAuth2ErrorResponse oAuth2ErrorResponse = new OAuth2ErrorResponse(ErrorCode.INVALID_GRANT);
                 oAuth2ErrorResponse.setDescription(policyChainException.getMessage());
                 routingContext
                         .response()
                         .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                        .putHeader(HttpHeaders.CACHE_CONTROL, NO_STORE)
+                        .putHeader(HttpHeaders.PRAGMA, NO_CACHE)
                         .setStatusCode(policyChainException.statusCode())
                         .end(Json.encodePrettily(oAuth2ErrorResponse));
             } else if (throwable instanceof HttpException) {
@@ -106,7 +105,7 @@ public class ExceptionHandler implements Handler<RoutingContext> {
     }
 
     private List<UMARequiredClaimsError> from(UmaException umaException) {
-        if(umaException.getRequiredClaims()!=null) {
+        if (umaException.getRequiredClaims() != null) {
             return umaException.getRequiredClaims().stream().map(UMARequiredClaimsError::from).collect(Collectors.toList());
         }
         return null;

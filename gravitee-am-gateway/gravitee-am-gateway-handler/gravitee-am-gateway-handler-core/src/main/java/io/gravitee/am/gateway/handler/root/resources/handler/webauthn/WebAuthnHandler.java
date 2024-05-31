@@ -74,10 +74,10 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
     private UserAuthenticationManager userAuthenticationManager;
     protected Domain domain;
 
-    public WebAuthnHandler() {
+    protected WebAuthnHandler() {
     }
 
-    public WebAuthnHandler(TemplateEngine templateEngine) {
+    protected WebAuthnHandler(TemplateEngine templateEngine) {
         super(templateEngine);
     }
 
@@ -103,14 +103,11 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
 
     protected static boolean isEmptyString(JsonObject json, String key) {
         try {
-            if (json == null) {
+            if (json == null || !json.containsKey(key)) {
                 return true;
             }
-            if (!json.containsKey(key)) {
-                return true;
-            }
-            String s = json.getString(key);
-            return s == null || "".equals(s);
+            String value = json.getString(key);
+            return value == null || value.isEmpty();
         } catch (RuntimeException e) {
             return true;
         }
@@ -152,7 +149,6 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
     }
 
     protected void enrollFido2Factor(RoutingContext ctx, User authenticatedUser, EnrolledFactor enrolledFactor, Credential credential) {
-        final var credentialId = enrolledFactor.getSecurity().getValue();
         factorService.enrollFactor(authenticatedUser, enrolledFactor)
                 .ignoreElement()
                 .subscribe(
@@ -232,12 +228,12 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
         HttpServerRequest httpServerRequest = context.request();
         SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(new VertxHttpServerRequest(httpServerRequest.getDelegate()));
         if (canSaveIp(context)) {
-            authenticationContext.set(Claims.ip_address, RequestUtils.remoteAddress(httpServerRequest));
+            authenticationContext.set(Claims.IP_ADDRESS, RequestUtils.remoteAddress(httpServerRequest));
         }
         if (canSaveUserAgent(context)) {
-            authenticationContext.set(Claims.user_agent, RequestUtils.userAgent(httpServerRequest));
+            authenticationContext.set(Claims.USER_AGENT, RequestUtils.userAgent(httpServerRequest));
         }
-        authenticationContext.set(Claims.domain, domain.getId());
+        authenticationContext.set(Claims.DOMAIN, domain.getId());
         authenticationContext.setAttribute(DEVICE_ID, context.request().getParam(DEVICE_ID));
         return authenticationContext;
     }
@@ -262,7 +258,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
                 .firstElement()
                 .switchIfEmpty(Single.error(() -> new CredentialNotFoundException(credentialId)))
                 .flatMap(credential -> userAuthenticationManager.connectWithPasswordless(client, credential.getUserId(), new EndUserAuthentication(username, null, authenticationContext)))
-                .map(user -> new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user))
+                .map(io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User::new)
                 .doOnError(error -> {
                     if (error instanceof AccountEnforcePasswordException) {
                         logger.debug("Password required for user '{}': {}", username, error.getMessage());
@@ -305,8 +301,8 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
                 .filter(credentialToUpdate -> credentialToUpdate.getUserId() == null || credentialToUpdate.getUserId().equals(userId))
                 .map(credential -> {
                     credential.setUserId(userId);
-                    credential.setUserAgent(String.valueOf(authenticationContext.get(Claims.user_agent)));
-                    credential.setIpAddress(String.valueOf(authenticationContext.get(Claims.ip_address)));
+                    credential.setUserAgent(String.valueOf(authenticationContext.get(Claims.USER_AGENT)));
+                    credential.setIpAddress(String.valueOf(authenticationContext.get(Claims.IP_ADDRESS)));
                     return credential;
                 })
                 .map(credential -> {

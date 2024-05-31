@@ -21,6 +21,7 @@ import java.util.List;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+
 public class NotifierRequest {
     private String tid;
     private String state;

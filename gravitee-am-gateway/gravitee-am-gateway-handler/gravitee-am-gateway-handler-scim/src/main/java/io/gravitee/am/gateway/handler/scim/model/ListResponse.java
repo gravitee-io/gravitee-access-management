@@ -16,6 +16,8 @@
 package io.gravitee.am.gateway.handler.scim.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +28,9 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+
+@Setter
+@Getter
 public class ListResponse<T extends Resource> extends Resource {
 
     private static final List<String> SCHEMAS = Collections.singletonList("urn:ietf:params:scim:api:messages:2.0:ListResponse");
@@ -76,35 +81,4 @@ public class ListResponse<T extends Resource> extends Resource {
         return SCHEMAS;
     }
 
-    public long getTotalResults() {
-        return totalResults;
-    }
-
-    public void setTotalResults(long totalResults) {
-        this.totalResults = totalResults;
-    }
-
-    public List<T> getResources() {
-        return resources;
-    }
-
-    public void setResources(List<T> resources) {
-        this.resources = resources;
-    }
-
-    public Integer getStartIndex() {
-        return startIndex;
-    }
-
-    public void setStartIndex(Integer startIndex) {
-        this.startIndex = startIndex;
-    }
-
-    public Integer getItemsPerPage() {
-        return itemsPerPage;
-    }
-
-    public void setItemsPerPage(Integer itemsPerPage) {
-        this.itemsPerPage = itemsPerPage;
-    }
 }

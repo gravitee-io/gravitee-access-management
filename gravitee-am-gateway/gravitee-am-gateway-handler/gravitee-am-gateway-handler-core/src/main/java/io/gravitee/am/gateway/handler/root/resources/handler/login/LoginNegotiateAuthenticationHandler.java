@@ -76,11 +76,11 @@ public class LoginNegotiateAuthenticationHandler implements Handler<RoutingConte
                     .put(Parameters.CLIENT_ID, clientId);
 
             if (canSaveIp(context)) {
-                authInfo.put(Claims.ip_address, ipAddress);
+                authInfo.put(Claims.IP_ADDRESS, ipAddress);
             }
 
             if (canSaveUserAgent(context)) {
-                authInfo.put(Claims.user_agent, userAgent);
+                authInfo.put(Claims.USER_AGENT, userAgent);
             }
 
             authProvider.authenticate(context, authInfo, res -> {

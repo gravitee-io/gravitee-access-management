@@ -71,7 +71,6 @@ import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
-import static java.lang.Boolean.TRUE;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -109,13 +108,14 @@ import static io.gravitee.am.common.utils.ConstantKeys.RATE_LIMIT_ERROR_PARAM_KE
 import static io.gravitee.am.common.utils.ConstantKeys.VERIFY_ATTEMPT_ERROR_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY;
 import static io.gravitee.am.factor.api.FactorContext.KEY_USER;
-import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
+import static io.gravitee.am.gateway.handler.common.utils.RoutingContextUtils.getEvaluableAttributes;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
 import static io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnHandler.getOrigin;
 import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
 import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
+import static java.lang.Boolean.TRUE;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -536,7 +536,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                 .stream()
                 .filter(enrolledFactor -> factors.contains(enrolledFactor.getFactorId()))
                 .sorted(Comparator.comparing(EnrolledFactor::getCreatedAt))
-                .collect(Collectors.toList());
+                .toList();
 
         if (enrolledFactors.isEmpty()) {
             throw FactorNotFoundException.withMessage("No factor found for the end user");
@@ -598,7 +598,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
             if (factorProvider.useVariableFactorSecurity(factorContext)) {
                 enrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET,
                         routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY)));
-                Map<String, Object> additionalData = new Maps.MapBuilder(new HashMap())
+                Map<String, Object> additionalData = new Maps.MapBuilder<String, Object>(new HashMap<>())
                         .put(FactorDataKeys.KEY_MOVING_FACTOR, MovingFactorUtils.generateInitialMovingFactor(endUser.getId()))
                         .build();
                 getEnrolledFactor(factor, endUser).ifPresent(ef -> {
@@ -650,35 +650,33 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
 
         // redirect to mfa challenge page with error message
         QueryStringDecoder queryStringDecoder = new QueryStringDecoder(req.uri());
-        Map<String, String> parameters = new LinkedHashMap<>();
-        parameters.putAll(queryStringDecoder.parameters().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0))));
+        Map<String, String> parameters = new LinkedHashMap<>(queryStringDecoder.parameters().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0))));
         parameters.put(errorKey, errorValue);
         String uri = UriBuilderRequest.resolveProxyRequest(req, req.path(), parameters, true);
         doRedirect(resp, uri);
     }
 
     private RememberDeviceSettings getRememberDeviceSettings(Client client) {
-        return ofNullable(client.getMfaSettings()).filter(Objects::nonNull)
+        return ofNullable(client.getMfaSettings())
                 .map(MFASettings::getRememberDevice)
                 .orElse(new RememberDeviceSettings());
     }
 
     private void saveDeviceAndRedirect(RoutingContext routingContext, Client client, String userId, RememberDeviceSettings settings, String redirectUrl) {
-        var domain = client.getDomain();
         var deviceId = routingContext.session().<String>get(DEVICE_ID);
         var rememberDeviceId = settings.getDeviceIdentifierId();
         if (isNullOrEmpty(deviceId)) {
             routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, false);
             doRedirect(routingContext.response(), redirectUrl);
         } else {
-            this.deviceService.deviceExists(domain, client.getClientId(), userId, rememberDeviceId, deviceId).flatMapMaybe(isEmpty -> {
+            this.deviceService.deviceExists(client.getDomain(), client.getClientId(), userId, rememberDeviceId, deviceId).flatMapMaybe(isEmpty -> {
                 if (Boolean.FALSE.equals(isEmpty)) {
                     routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
                     return Maybe.empty();
                 }
                 var deviceType = routingContext.session().<String>get(DEVICE_TYPE);
                 return this.deviceService.create(
-                                domain,
+                                client.getDomain(),
                                 client.getClientId(),
                                 userId,
                                 rememberDeviceId,

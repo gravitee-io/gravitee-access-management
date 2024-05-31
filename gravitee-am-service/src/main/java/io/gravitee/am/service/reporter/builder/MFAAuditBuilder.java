@@ -65,11 +65,11 @@ public class MFAAuditBuilder extends GatewayAuditBuilder<MFAAuditBuilder> {
         if (user != null) {
             setActor(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId());
             if (user.getAdditionalInformation() != null) {
-                if (user.getAdditionalInformation().containsKey(Claims.ip_address)) {
-                    ipAddress((String) user.getAdditionalInformation().get(Claims.ip_address));
+                if (user.getAdditionalInformation().containsKey(Claims.IP_ADDRESS)) {
+                    ipAddress((String) user.getAdditionalInformation().get(Claims.IP_ADDRESS));
                 }
-                if (user.getAdditionalInformation().containsKey(Claims.user_agent)) {
-                    userAgent((String) user.getAdditionalInformation().get(Claims.user_agent));
+                if (user.getAdditionalInformation().containsKey(Claims.USER_AGENT)) {
+                    userAgent((String) user.getAdditionalInformation().get(Claims.USER_AGENT));
                 }
             }
         }

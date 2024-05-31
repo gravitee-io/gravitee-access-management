@@ -233,11 +233,11 @@ public interface ConstantKeys {
     Set<String> ID_TOKEN_EXCLUDED_CLAIMS = Set.of(
             ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY,
             ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY,
-            Claims.iat,
-            Claims.exp,
-            Claims.nbf,
-            Claims.auth_time,
-            Claims.updated_at
+            Claims.IAT,
+            Claims.EXP,
+            Claims.NBF,
+            Claims.AUTH_TIME,
+            Claims.UPDATED_AT
     );
 
     String REGISTRATION_VERIFY_SUCCESS = "registration_verify_success";

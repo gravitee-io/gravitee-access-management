@@ -67,8 +67,8 @@ public class ScopeManagerImpl extends AbstractService implements ScopeManager, I
         logger.info("Initializing scopes for domain {}", domain.getName());
         scopeService.findByDomain(domain.getId(), 0, Integer.MAX_VALUE)
                 .subscribe(
-                        scopes -> {
-                            updateScopes(scopes);
+                        s -> {
+                            updateScopes(s);
                             logger.info("Scopes loaded for domain {}", domain.getName());
                         },
                         error -> logger.error("Unable to initialize scopes for domain {}", domain.getName(), error));
@@ -148,7 +148,7 @@ public class ScopeManagerImpl extends AbstractService implements ScopeManager, I
     }
 
     public boolean isParameterizedScope(String scopeKey) {
-        return Optional.ofNullable(this.scopes.get(scopeKey)).map(scope -> scope.isParameterized()).orElse(false);
+        return Optional.ofNullable(this.scopes.get(scopeKey)).map(Scope::isParameterized).orElse(false);
     }
 
     @Override

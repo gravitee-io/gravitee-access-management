@@ -126,12 +126,12 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
         Map<String, Object> additionalInformation = new HashMap<>(user.getAdditionalInformation());
         // add ip address and user agent
         if (canSaveIp(context)) {
-            additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(request));
+            additionalInformation.put(Claims.IP_ADDRESS, RequestUtils.remoteAddress(request));
         }
         if (canSaveUserAgent(context)){
-            additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(request));
+            additionalInformation.put(Claims.USER_AGENT, RequestUtils.userAgent(request));
         }
-        additionalInformation.put(Claims.domain, domain.getId());
+        additionalInformation.put(Claims.DOMAIN, domain.getId());
         authenticatedUser.setAdditionalInformation(additionalInformation);
         return authenticatedUser;
     }

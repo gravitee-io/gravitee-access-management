@@ -16,11 +16,13 @@
 package io.gravitee.am.authdevice.notifier.api.model;
 
 import io.vertx.rxjava3.core.MultiMap;
+import lombok.Getter;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
 public class ADCallbackContext {
     private final MultiMap headers;
     private final MultiMap params;
@@ -30,27 +32,7 @@ public class ADCallbackContext {
         this.params = params;
     }
 
-    public MultiMap getParams() {
-        return params;
-    }
-
     public String getParam(String name) {
         return params.get(name);
-    }
-
-    public MultiMap getHeaders() {
-        return headers;
-    }
-
-    public String getHeader(String name) {
-        return headers.get(name);
-    }
-
-    public boolean containsParam(String name) {
-        return this.params != null && this.params.contains(name);
-    }
-
-    public boolean containsHeader(String name) {
-        return this.headers != null && this.headers.contains(name);
     }
 }

@@ -20,13 +20,11 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
-import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
@@ -48,7 +46,6 @@ import static io.gravitee.am.common.utils.ConstantKeys.ID_TOKEN_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.ISSUING_REASON_CLOSE_IDP_SESSION;
 import static io.gravitee.am.common.utils.ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.STATUS_FAILURE;
 import static io.gravitee.am.common.utils.ConstantKeys.STATUS_SIGNED_IN;
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
@@ -85,12 +82,13 @@ public class LoginCallbackEndpoint extends AbstractEndpoint implements Handler<R
         }
 
         AuthenticationProvider authProvider = routingContext.get(ConstantKeys.PROVIDER_CONTEXT_KEY);
-        // the login process is done and we want to close the session after the authentication
+        // the login process is done, so we want to close the session after the authentication
         if (authProvider instanceof SocialAuthenticationProvider socialIdp && socialIdp.closeSessionAfterSignIn() == CloseSessionMode.REDIRECT) {
             final User endUser = routingContext.get(ConstantKeys.USER_CONTEXT_KEY) != null ?
                     routingContext.get(ConstantKeys.USER_CONTEXT_KEY) :
                     (routingContext.user() != null ? ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser() : null);
-            final Authentication authentication = new EndUserAuthentication(endUser, null, new SimpleAuthenticationContext(new VertxHttpServerRequest(routingContext.request().getDelegate())));
+            SimpleAuthenticationContext simpleAuthenticationContext = new SimpleAuthenticationContext(new VertxHttpServerRequest(routingContext.request().getDelegate()));
+            final Authentication authentication = new EndUserAuthentication(endUser, null, simpleAuthenticationContext);
             final var logoutRequest = socialIdp.signOutUrl(authentication);
 
             final var stateJwt = new JWT();
@@ -102,24 +100,24 @@ public class LoginCallbackEndpoint extends AbstractEndpoint implements Handler<R
 
             jwtService.encode(stateJwt, certificateManager.defaultCertificateProvider())
                     .flatMapMaybe(state ->
-                        logoutRequest.map(req -> {
-                            var callbackUri = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + PATH_LOGIN_CALLBACK);
-                            return UriBuilder.fromHttpUrl(req.getUri())
-                                    .addParameter(io.gravitee.am.common.oidc.Parameters.ID_TOKEN_HINT, encodeURIComponent(routingContext.get(OIDC_PROVIDER_ID_TOKEN_KEY)))
-                                    .addParameter(Parameters.STATE, encodeURIComponent(state))
-                                    .addParameter(io.gravitee.am.common.oidc.Parameters.POST_LOGOUT_REDIRECT_URI, encodeURIComponent(callbackUri))
-                                    .buildString();
-                        })
+                            logoutRequest.map(req -> {
+                                var callbackUri = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + PATH_LOGIN_CALLBACK);
+                                return UriBuilder.fromHttpUrl(req.getUri())
+                                        .addParameter(io.gravitee.am.common.oidc.Parameters.ID_TOKEN_HINT, encodeURIComponent(routingContext.get(OIDC_PROVIDER_ID_TOKEN_KEY)))
+                                        .addParameter(Parameters.STATE, encodeURIComponent(state))
+                                        .addParameter(io.gravitee.am.common.oidc.Parameters.POST_LOGOUT_REDIRECT_URI, encodeURIComponent(callbackUri))
+                                        .buildString();
+                            })
                     )
                     // if the Maybe is empty, we redirect the user to the original request
                     .switchIfEmpty(Maybe.just(returnURL))
                     .subscribe(
                             url -> {
-                                LOGGER.debug("Call logout on provider '{}'", (String)routingContext.get(ConstantKeys.PROVIDER_ID_PARAM_KEY));
+                                LOGGER.debug("Call logout on provider '{}'", (String) routingContext.get(ConstantKeys.PROVIDER_ID_PARAM_KEY));
                                 doRedirect(routingContext.response(), url);
                             },
                             err -> {
-                                LOGGER.error("Session can't be closed on provider '{}': {}", routingContext.get(ConstantKeys.PROVIDER_ID_PARAM_KEY), err);
+                                LOGGER.error("Session can't be closed on provider '{}'", routingContext.get(ConstantKeys.PROVIDER_ID_PARAM_KEY), err);
                                 doRedirect(routingContext.response(), returnURL);
                             });
         } else {

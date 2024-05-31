@@ -33,10 +33,10 @@ import org.slf4j.LoggerFactory;
 import static io.gravitee.sample.ciba.notifier.http.Constants.*;
 
 public class CibaNotifierApiHandler implements Handler<RoutingContext> {
-    private static Logger LOGGER = LoggerFactory.getLogger(CibaNotifierApiHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CibaNotifierApiHandler.class);
 
-    private EventBus eventBus;
-    private String authBearer;
+    private final EventBus eventBus;
+    private final String authBearer;
 
     public CibaNotifierApiHandler(CommandLine parameters, Vertx vertx) {
         this.eventBus = vertx.eventBus();

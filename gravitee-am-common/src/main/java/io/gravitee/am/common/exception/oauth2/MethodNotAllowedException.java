@@ -45,5 +45,4 @@ public class MethodNotAllowedException extends OAuth2Exception {
     public int getHttpStatusCode() {
         return HttpStatusCode.METHOD_NOT_ALLOWED_405;
     }
-
 }

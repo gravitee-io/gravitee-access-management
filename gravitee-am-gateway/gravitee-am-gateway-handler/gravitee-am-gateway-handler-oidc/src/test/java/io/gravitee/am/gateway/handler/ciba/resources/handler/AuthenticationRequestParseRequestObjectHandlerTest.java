@@ -58,7 +58,7 @@ public class AuthenticationRequestParseRequestObjectHandlerTest extends RxWebTes
     public void setUp() throws Exception {
         super.setUp();
         router.route(HttpMethod.POST, "/oidc/ciba/authenticate")
-                .handler(new AuthenticationRequestParseRequestObjectHandler(requestObjectService, domain))
+                .handler(new AuthenticationRequestParseRequestObjectHandler(requestObjectService))
                 .handler(rc -> rc.response().end())
                 .failureHandler(rc -> rc.response().setStatusCode(400).end());
     }

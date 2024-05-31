@@ -25,7 +25,6 @@ import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.jwt.DefaultJWTParser;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -37,7 +36,9 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
 
-import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.REQUEST_OBJECT_KEY;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -47,11 +48,9 @@ public class AuthenticationRequestParseRequestObjectHandler implements Handler<R
 
     private final RequestObjectService requestObjectService;
 
-    private final Domain domain;
-
-    public AuthenticationRequestParseRequestObjectHandler(RequestObjectService requestObjectService, Domain domain) {
+    public AuthenticationRequestParseRequestObjectHandler(RequestObjectService requestObjectService) {
         this.requestObjectService = requestObjectService;
-        this.domain = domain;
+
     }
 
     @Override
@@ -113,7 +112,7 @@ public class AuthenticationRequestParseRequestObjectHandler implements Handler<R
             final JWTClaimsSet claims = jwt.getJWTClaimsSet();
 
             // aud : The Audience claim MUST contain the value of the Issuer Identifier for the OP, which identifies the Authorization Server as an intended audience.
-            final Object aud = claims.getClaim(Claims.aud);
+            final Object aud = claims.getClaim(Claims.AUD);
             if (aud == null ||
                     (aud instanceof String && !oidcMeta.getIssuer().equals(aud)) ||
                     (aud instanceof Collection && (((Collection) aud).isEmpty() || !((Collection) aud).stream().anyMatch(oidcMeta.getIssuer()::equals)))
@@ -122,33 +121,33 @@ public class AuthenticationRequestParseRequestObjectHandler implements Handler<R
             }
 
             // iss : The Issuer claim MUST be the client_id of the OAuth Client.
-            final String iss = claims.getStringClaim(Claims.iss);
+            final String iss = claims.getStringClaim(Claims.ISS);
             if (iss == null || !client.getClientId().equals(iss)) {
                 return Single.error(new InvalidRequestException("iss is missing or invalid"));
             }
 
             // exp : An expiration time that limits the validity lifetime of the signed authentication request.
-            final Date exp = claims.getDateClaim(Claims.exp);
+            final Date exp = claims.getDateClaim(Claims.EXP);
             if (exp == null) {
                 return Single.error(new InvalidRequestException("exp is missing"));
             }
             DefaultJWTParser.evaluateExp(exp.getTime() / 1000, Instant.now(), 0);
 
             // iat : The time at which the signed authentication request was created.
-            final Date iat = claims.getDateClaim(Claims.iat);
+            final Date iat = claims.getDateClaim(Claims.IAT);
             if (iat == null) {
                 return Single.error(new InvalidRequestException("iat is missing"));
             }
 
             // nbf : The time before which the signed authentication request is unacceptable.
-            final Date nbf = claims.getDateClaim(Claims.nbf);
+            final Date nbf = claims.getDateClaim(Claims.NBF);
             if (nbf == null) {
                 return Single.error(new InvalidRequestException("nbf is missing"));
             }
             DefaultJWTParser.evaluateNbf(nbf.getTime() / 1000, Instant.now(), 0);
 
             // jti : A unique identifier for the signed authentication request.
-            if (claims.getStringClaim(Claims.jti) == null) {
+            if (claims.getStringClaim(Claims.JTI) == null) {
                 return Single.error(new InvalidRequestException("jti is missing"));
             }
 

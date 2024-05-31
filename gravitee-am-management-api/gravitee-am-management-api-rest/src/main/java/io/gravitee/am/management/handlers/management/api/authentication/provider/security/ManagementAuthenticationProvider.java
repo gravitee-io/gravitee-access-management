@@ -70,13 +70,13 @@ public class ManagementAuthenticationProvider implements AuthenticationProvider 
         Map<String, String> details = new HashMap<>();
 
         if (webAuthenticationDetails != null) {
-            details.put(Claims.ip_address, webAuthenticationDetails.getRemoteAddress());
-            details.put(Claims.user_agent, webAuthenticationDetails.getUserAgent());
-            details.put(Claims.organization, webAuthenticationDetails.getOrganizationId());
+            details.put(Claims.IP_ADDRESS, webAuthenticationDetails.getRemoteAddress());
+            details.put(Claims.USER_AGENT, webAuthenticationDetails.getUserAgent());
+            details.put(Claims.ORGANIZATION, webAuthenticationDetails.getOrganizationId());
         }
 
-        details.putIfAbsent(Claims.organization, Organization.DEFAULT);
-        String organizationId = details.get(Claims.organization);
+        details.putIfAbsent(Claims.ORGANIZATION, Organization.DEFAULT);
+        String organizationId = details.get(Claims.ORGANIZATION);
 
         // get organization identity providers
         Organization organization = null;

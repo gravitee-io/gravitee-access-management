@@ -17,8 +17,6 @@ package io.gravitee.am.certificate.javakeystore;
 
 import io.gravitee.am.certificate.api.Certificate;
 import io.gravitee.am.certificate.javakeystore.provider.JavaKeyStoreProvider;
-import io.gravitee.plugin.core.api.Plugin;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team

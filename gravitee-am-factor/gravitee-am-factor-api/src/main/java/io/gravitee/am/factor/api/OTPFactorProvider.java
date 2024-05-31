@@ -22,8 +22,7 @@ import io.gravitee.am.factor.utils.SharedSecret;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -35,9 +34,8 @@ import java.time.Instant;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public abstract class OTPFactorProvider implements FactorProvider {
-
-    private Logger logger = LoggerFactory.getLogger(OTPFactorProvider.class);
 
     @Override
     public boolean useVariableFactorSecurity() {
@@ -64,16 +62,16 @@ public abstract class OTPFactorProvider implements FactorProvider {
             try {
                 final String otpCode = generateOTP(enrolledFactor, returnDigits);
                 if (!code.equals(otpCode)) {
-                    emitter.onError(new InvalidCodeException("Invalid 2FA Code"));
+                    emitter.onError(invalid2faCodeException());
                 }
                 // get last connection date of the user to test code
                 if (Instant.now().isAfter(Instant.ofEpochMilli(enrolledFactor.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Long.class)))) {
-                    emitter.onError(new InvalidCodeException("Invalid 2FA Code"));
+                    emitter.onError(invalid2faCodeException());
                 }
                 emitter.onComplete();
             } catch (Exception ex) {
-                logger.error("An error occurs while validating 2FA code", ex);
-                emitter.onError(new InvalidCodeException("Invalid 2FA Code"));
+                log.error("An error occurs while validating 2FA code", ex);
+                emitter.onError(invalid2faCodeException());
             }
         });
     }
@@ -87,5 +85,9 @@ public abstract class OTPFactorProvider implements FactorProvider {
     protected void incrementMovingFactor(EnrolledFactor factor) {
         long counter = factor.getSecurity().getData(FactorDataKeys.KEY_MOVING_FACTOR, Number.class).longValue();
         factor.getSecurity().putData(FactorDataKeys.KEY_MOVING_FACTOR, counter + 1);
+    }
+
+    private InvalidCodeException invalid2faCodeException() {
+        return new InvalidCodeException("Invalid 2FA Code");
     }
 }

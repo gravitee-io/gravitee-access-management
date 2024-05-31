@@ -39,9 +39,9 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
 
     private static final String BEARER = "Bearer";
-    private static final String realm = "gravitee-io";
+    private static final String REALM = "gravitee-io";
     private static final String ACCESS_TOKEN = "access_token";
-    private OAuth2AuthProvider oAuth2AuthProvider;
+    private final OAuth2AuthProvider oAuth2AuthProvider;
     private String requiredScope;
     private boolean extractRawToken;
     private boolean extractToken;
@@ -100,36 +100,31 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
                 // check if current subject can access its own resources
                 if (selfResource) {
                     final String resourceId = context.request().getParam(resourceParameter);
-                    if (resourceId != null && resourceId.equals(token.getSub())) {
-                        if (resourceRequiredScope == null || token.hasScope(resourceRequiredScope)) {
-                            context.next();
-                            return;
-                        }
-                    }
-                }
+                    boolean isResourceIdValid = resourceId != null && resourceId.equals(token.getSub());
+                    boolean hasRequiredScope = resourceRequiredScope == null || token.hasScope(resourceRequiredScope);
 
-                if (forceEndUserToken) {
-                    if(token.getSub().equals(token.getAud())) {
-                        // token for end user must not contain clientId as subject
-                        processException(context, new InvalidTokenException("The access token was not issued for an End-User"));
+                    if (isResourceIdValid && hasRequiredScope) {
+                        context.next();
                         return;
                     }
                 }
 
-                if (forceClientToken) {
-                    if(!token.getSub().equals(token.getAud())) {
-                        // token for end user must not contain clientId as subject
-                        processException(context, new InvalidTokenException("The access token was not issued for a Client"));
-                        return;
-                    }
+                if (forceEndUserToken && token.getSub().equals(token.getAud())) {
+                    // token for end user must not contain clientId as subject
+                    processException(context, new InvalidTokenException("The access token was not issued for an End-User"));
+                    return;
+                }
+
+                if (forceClientToken && !token.getSub().equals(token.getAud())) {
+                    // token for end user must not contain clientId as subject
+                    processException(context, new InvalidTokenException("The access token was not issued for a Client"));
+                    return;
                 }
 
                 // check required scope
-                if (requiredScope != null) {
-                    if (!token.hasScope(requiredScope)) {
-                        processException(context, new InsufficientScopeException("Invalid access token scopes. The access token should have at least '"+ requiredScope +"' scope"));
-                        return;
-                    }
+                if (requiredScope != null && !token.hasScope(requiredScope)) {
+                    processException(context, new InsufficientScopeException("Invalid access token scopes. The access token should have at least '" + requiredScope + "' scope"));
+                    return;
                 }
                 context.next();
             });
@@ -173,7 +168,7 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
     private void parseAuthorization(RoutingContext context, Handler<AsyncResult<String>> handler) {
         final HttpServerRequest request = context.request();
         final String authorization = request.headers().get(io.vertx.core.http.HttpHeaders.AUTHORIZATION);
-        String authToken = null;
+        String authToken;
         try {
             if (authorization != null) {
                 // authorization header has been found check the value
@@ -200,7 +195,7 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
             }
 
             handler.handle(Future.succeededFuture(authToken));
-        }  catch (RuntimeException e) {
+        } catch (RuntimeException e) {
             handler.handle(Future.failedFuture(e));
         }
     }
@@ -221,6 +216,6 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
     }
 
     private String authenticateHeader() {
-        return "Bearer realm=\"" + realm + "\"";
+        return "Bearer realm=\"" + REALM + "\"";
     }
 }

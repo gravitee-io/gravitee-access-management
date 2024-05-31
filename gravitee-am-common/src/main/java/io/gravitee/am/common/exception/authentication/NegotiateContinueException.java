@@ -15,10 +15,13 @@
  */
 package io.gravitee.am.common.exception.authentication;
 
+import lombok.Getter;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
 public class NegotiateContinueException extends AuthenticationException {
     private final String token;
 
@@ -32,7 +35,4 @@ public class NegotiateContinueException extends AuthenticationException {
         return "negotiate_continue";
     }
 
-    public String getToken() {
-        return token;
-    }
 }

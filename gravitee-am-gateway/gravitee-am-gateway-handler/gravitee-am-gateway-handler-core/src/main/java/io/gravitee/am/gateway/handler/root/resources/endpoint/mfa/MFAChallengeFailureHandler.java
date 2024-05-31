@@ -27,8 +27,7 @@ import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
@@ -36,8 +35,8 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class MFAChallengeFailureHandler extends AbstractErrorHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MFAChallengeFailureHandler.class);
     private static final String ERROR_CODE_VALUE = "send_challenge_failed";
 
     private final AuthenticationFlowContextService authenticationFlowContextService;
@@ -73,7 +72,7 @@ public class MFAChallengeFailureHandler extends AbstractErrorHandler {
         queryParams.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
 
         if (context.request().getParam(Parameters.LOGIN_HINT) != null) {
-            // encode login_hint parameter (to not replace '+' sign by a space ' ')
+            // encode login_hint parameter (to not replace '+' sign by a space ' ').
             queryParams.set(Parameters.LOGIN_HINT, StaticEnvironmentProvider.sanitizeParametersEncoding() ?
                     UriBuilder.encodeURIComponent(context.request().getParam(Parameters.LOGIN_HINT)) : context.request().getParam(Parameters.LOGIN_HINT));
         }
@@ -83,9 +82,9 @@ public class MFAChallengeFailureHandler extends AbstractErrorHandler {
 
     private void logoutUser(RoutingContext context) {
         if (context.user() != null) {
-            // clear AuthenticationFlowContext. data of this context have a TTL so we can fire and forget in case on error.
+            // clear AuthenticationFlowContext. data of this context have a TTL, so we can fire and forget in case on error.
             authenticationFlowContextService.clearContext(context.session().get(ConstantKeys.TRANSACTION_ID_KEY))
-                    .doOnError((error) -> LOGGER.info("Deletion of authentication flow data fails '{}'", error.getMessage()))
+                    .doOnError(error -> log.info("Deletion of authentication flow data fails '{}'", error.getMessage()))
                     .subscribe();
 
             context.clearUser();

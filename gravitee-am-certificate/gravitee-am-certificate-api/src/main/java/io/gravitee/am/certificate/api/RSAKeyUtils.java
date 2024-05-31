@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.certificate.api;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -26,6 +29,7 @@ import java.util.Base64;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class RSAKeyUtils {
 
     public static String toSSHRSAString(RSAPublicKey publicKey) throws IOException {

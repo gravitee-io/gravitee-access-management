@@ -45,7 +45,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS;
 import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;
-import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
+import static io.gravitee.am.gateway.handler.common.utils.RoutingContextUtils.getEvaluableAttributes;
 import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
 import static java.lang.Boolean.TRUE;
 import static java.util.Objects.isNull;

@@ -26,7 +26,7 @@ public abstract class AuthenticationFlowStep {
 
     private final Handler<RoutingContext> handler;
 
-    public AuthenticationFlowStep(Handler<RoutingContext> handler) {
+    protected AuthenticationFlowStep(Handler<RoutingContext> handler) {
         this.handler = handler;
     }
 

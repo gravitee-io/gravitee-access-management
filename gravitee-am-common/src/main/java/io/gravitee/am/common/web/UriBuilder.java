@@ -15,11 +15,11 @@
  */
 package io.gravitee.am.common.web;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,8 +30,6 @@ import java.util.regex.Pattern;
  * @author GraviteeSource Team
  */
 public class UriBuilder {
-
-    //private static final Pattern QUERY_PARAM_PATTERN = Pattern.compile("([^&=]+)(=?)([^&]+)?");
 
     private static final String SCHEME_REGEX = "([^:/?#]+):";
 
@@ -97,7 +95,7 @@ public class UriBuilder {
             builder.scheme(scheme);
             builder.host(host);
             if (port != null && !port.isEmpty()) {
-                builder.port(Integer.valueOf(port));
+                builder.port(Integer.parseInt(port));
             }
             builder.userInfo(userInfo);
             builder.path(path);
@@ -124,7 +122,7 @@ public class UriBuilder {
             builder.host(host);
             String port = matcher.group(7);
             if (port != null && !port.isEmpty()) {
-                builder.port(Integer.valueOf(port));
+                builder.port(Integer.parseInt(port));
             }
             builder.path(matcher.group(8));
             builder.query(matcher.group(10));
@@ -141,18 +139,14 @@ public class UriBuilder {
      */
     public static String encodeURIComponent(String s) {
         String result;
-        try {
-            result = URLEncoder.encode(s, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            result = s;
-        }
+        result = URLEncoder.encode(s, StandardCharsets.UTF_8);
         return result;
     }
 
     public static String decodeURIComponent(String s) {
         String result;
         try {
-            result = URLDecoder.decode(s, "UTF-8");
+            result = URLDecoder.decode(s, StandardCharsets.UTF_8);
         } catch (Exception e) {
             result = s;
         }
@@ -196,7 +190,7 @@ public class UriBuilder {
 
     public UriBuilder parameters(Map<String, String> parameters) {
         if (parameters != null) {
-            parameters.forEach((k, v) -> addParameter(k, v));
+            parameters.forEach(this::addParameter);
         }
         return this;
     }
@@ -212,7 +206,7 @@ public class UriBuilder {
         if (query == null) {
             query = "";
         }
-        if (query.length() > 0) {
+        if (!query.isEmpty()) {
             query += "&";
         }
         query += parameter + "=" + value;
@@ -223,7 +217,7 @@ public class UriBuilder {
         if (fragment == null) {
             fragment = "";
         }
-        if (fragment.length() > 0) {
+        if (!fragment.isEmpty()) {
             fragment += "&";
         }
         fragment += parameter + "=" + value;

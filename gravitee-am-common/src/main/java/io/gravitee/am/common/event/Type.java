@@ -22,7 +22,6 @@ package io.gravitee.am.common.event;
 public enum Type {
 
     DOMAIN,
-    CLIENT,
     APPLICATION,
     IDENTITY_PROVIDER,
     CERTIFICATE,

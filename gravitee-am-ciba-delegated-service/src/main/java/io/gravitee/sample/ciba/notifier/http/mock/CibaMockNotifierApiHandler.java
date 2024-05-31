@@ -120,14 +120,14 @@ public class CibaMockNotifierApiHandler implements Handler<RoutingContext> {
                         .onSuccess(res -> LOGGER.info("Callback succeeded for tid {}", transactionId))
                         .onFailure(err -> {
                             if (retry) {
-                                LOGGER.info("Retry the callback for tid {} (err: {})", transactionId, err);
+                                LOGGER.info("Retry the callback for tid {}", transactionId, err);
                                 sendResponse(transactionId, optCallback, formData, false);
                             } else {
-                                LOGGER.warn("Callback failed for tid {} : {}", transactionId, err);
+                                LOGGER.warn("Callback failed for tid {}", transactionId, err);
                             }
                         });
             } catch (Exception e) {
-                LOGGER.warn("Callback request failed for tid {} : {}", transactionId, e);
+                LOGGER.warn("Callback request failed for tid {}", transactionId, e);
             }
         }).start();
     }

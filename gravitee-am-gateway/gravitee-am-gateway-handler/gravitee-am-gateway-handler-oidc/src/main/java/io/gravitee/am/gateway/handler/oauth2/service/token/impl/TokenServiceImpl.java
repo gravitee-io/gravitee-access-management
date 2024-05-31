@@ -79,6 +79,7 @@ import static org.springframework.util.ObjectUtils.isEmpty;
 public class TokenServiceImpl implements TokenService {
 
     private static final Logger logger = LoggerFactory.getLogger(TokenServiceImpl.class);
+    private static final String PERMISSIONS = "permissions";
 
     @Autowired
     private AccessTokenRepository accessTokenRepository;
@@ -193,8 +194,8 @@ public class TokenServiceImpl implements TokenService {
                         return Single.error(new InvalidGrantException("Refresh token was issued to another client"));
                     }
                     // Propagate UMA 2.0 permissions
-                    if (refreshToken1.getAdditionalInformation().get("permissions") != null) {
-                        tokenRequest.setPermissions((List<PermissionRequest>)refreshToken1.getAdditionalInformation().get("permissions"));
+                    if (refreshToken1.getAdditionalInformation().get(PERMISSIONS) != null) {
+                        tokenRequest.setPermissions((List<PermissionRequest>)refreshToken1.getAdditionalInformation().get(PERMISSIONS));
                     }
 
                     // if client has disabled refresh token rotation, do not remove the refresh token
@@ -345,7 +346,7 @@ public class TokenServiceImpl implements TokenService {
         jwt.setExp(Instant.ofEpochSecond(jwt.getIat()).plusSeconds(client.getRefreshTokenValiditySeconds()).getEpochSecond());
         // set custom claims from the current access token
         Map<String, Object> customClaims = new HashMap<>(accessToken);
-        Claims.claims().forEach(claim ->  customClaims.remove(claim));
+        Claims.getAllClaims().forEach(customClaims::remove);
         jwt.putAll(customClaims);
 
         return jwt;
@@ -370,7 +371,7 @@ public class TokenServiceImpl implements TokenService {
         // set permissions (UMA 2.0)
         List<PermissionRequest> permissions = oAuth2Request.getPermissions();
         if(permissions!=null && !permissions.isEmpty()) {
-            jwt.put("permissions",permissions);
+            jwt.put(PERMISSIONS,permissions);
         }
 
         return jwt;
@@ -387,7 +388,7 @@ public class TokenServiceImpl implements TokenService {
                             String claimExpression = tokenClaim.getClaimValue();
                             Object extValue = (claimExpression != null) ? executionContext.getTemplateEngine().getValue(claimExpression, Object.class) : null;
                             if (extValue != null) {
-                                if (Claims.aud.equals(claimName) && (extValue instanceof String[] || extValue instanceof List)) {
+                                if (Claims.AUD.equals(claimName) && (extValue instanceof String[] || extValue instanceof List)) {
                                     var audiences = new LinkedHashSet<>();
                                     audiences.add(jwt.getAud()); // make sure the client_id is the first entry of the aud array
                                     audiences.addAll(extValue instanceof List ? (List)extValue : List.of((String[]) extValue)); // Set will remove duplicate client_id if any

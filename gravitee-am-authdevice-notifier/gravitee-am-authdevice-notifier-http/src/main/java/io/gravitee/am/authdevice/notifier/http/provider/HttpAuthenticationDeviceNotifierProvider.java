@@ -37,11 +37,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 import java.util.Optional;
 
-import static org.springframework.util.StringUtils.isEmpty;
+import static org.springframework.util.StringUtils.hasText;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -61,8 +60,6 @@ public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationD
     public static final String RESPONSE_ATTR_DATA = "data";
     public static final String CALLBACK_VALIDATE = "validated";
 
-    public static final String URL_TO_GET_FROM_DOMAIN_SETTINGS = System.getProperty("ciba.ades", "http://localhost:8080/ciba/ades");
-
     @Autowired
     @Qualifier("authDeviceNotifierWebClient")
     private WebClient client;
@@ -73,31 +70,18 @@ public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationD
     @Override
     public Single<ADNotificationResponse> notify(ADNotificationRequest request) {
         LOGGER.debug("Call notifier service '{}' (tid: {}) ", this.configuration.getEndpoint(), request.getTransactionId());
-        final MultiMap formData = MultiMap.caseInsensitiveMultiMap();
 
-        formData.set(TRANSACTION_ID, request.getTransactionId());
-        formData.set(STATE, request.getState());
-        formData.set(PARAM_SUBJECT, request.getSubject());
-        formData.set(PARAM_SCOPE, request.getScopes());
-        formData.set(PARAM_EXPIRE, Integer.toString(request.getExpiresIn()));
-
-        if (!CollectionUtils.isEmpty(request.getAcrValues())) {
-            formData.set(PARAM_ACR, request.getAcrValues());
-        }
-
-        if (!isEmpty(request.getMessage())) {
-            formData.set(PARAM_MESSAGE, request.getMessage());
-        }
+        MultiMap formData = prepareFormData(request);
 
         final HttpRequest<Buffer> notificationRequest = this.client.requestAbs(HttpMethod.POST, this.configuration.getEndpoint());
-        if (!StringUtils.isEmpty(this.configuration.getHeaderValue())) {
+        if (hasText(this.configuration.getHeaderValue())) {
             notificationRequest
                     .putHeader(this.configuration.getHeaderName(), this.configuration.getHeaderValue());
         }
 
         return notificationRequest
                 .rxSendForm(formData)
-                .doOnError((error) -> LOGGER.warn("Unexpected error during device notification : {}", error.getMessage(), error))
+                .doOnError(error -> LOGGER.warn("Unexpected error during device notification : {}", error.getMessage(), error))
                 .onErrorResumeNext(exception -> Single.error(new DeviceNotificationException("Unexpected error during device notification")))
                 .flatMap(response -> {
                     final int status = response.statusCode();
@@ -125,7 +109,7 @@ public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationD
                     }
 
                     if ( !request.getTransactionId().equals(result.getString(TRANSACTION_ID)) || !request.getState().equals(result.getString(STATE))) {
-                        LOGGER.warn("Device notification response contains invalid tid or state", request.getTransactionId(), status);
+                        LOGGER.warn("Device notification response contains invalid tid or state. Request {} with status {}", request.getTransactionId(), status);
                         return Single.error(new DeviceNotificationException("Invalid device notification response"));
                     }
 
@@ -138,16 +122,35 @@ public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationD
                 });
     }
 
+    private MultiMap prepareFormData(ADNotificationRequest request) {
+        final MultiMap formData = MultiMap.caseInsensitiveMultiMap();
+
+        formData.set(TRANSACTION_ID, request.getTransactionId());
+        formData.set(STATE, request.getState());
+        formData.set(PARAM_SUBJECT, request.getSubject());
+        formData.set(PARAM_SCOPE, request.getScopes());
+        formData.set(PARAM_EXPIRE, Integer.toString(request.getExpiresIn()));
+
+        if (!CollectionUtils.isEmpty(request.getAcrValues())) {
+            formData.set(PARAM_ACR, request.getAcrValues());
+        }
+
+        if (hasText(request.getMessage())) {
+            formData.set(PARAM_MESSAGE, request.getMessage());
+        }
+        return formData;
+    }
+
     @Override
     public Single<Optional<ADUserResponse>> extractUserResponse(ADCallbackContext callbackContext) {
         final String state = callbackContext.getParam(STATE);
         final String tid = callbackContext.getParam(TRANSACTION_ID);
         final String validated = callbackContext.getParam(CALLBACK_VALIDATE);
         LOGGER.debug("User response received: state={}, tid={}, validated={}", state, tid, validated);
-        if (isEmpty(state) || isEmpty(tid) || isEmpty(validated)) {
+        if (!hasText(state) || !hasText(tid) || !hasText(validated)) {
             return Single.just(Optional.empty());
         } else {
-            return Single.just(Optional.of(new ADUserResponse(tid, state, Boolean.valueOf(validated))));
+            return Single.just(Optional.of(new ADUserResponse(tid, state, Boolean.parseBoolean(validated))));
         }
     }
 }

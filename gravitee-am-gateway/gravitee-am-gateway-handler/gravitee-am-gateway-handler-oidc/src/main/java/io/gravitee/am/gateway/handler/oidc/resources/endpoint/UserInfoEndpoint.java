@@ -24,7 +24,6 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
-import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequest;
 import io.gravitee.am.model.Role;
@@ -33,7 +32,6 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.UserService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
@@ -71,10 +69,10 @@ import static java.util.Optional.ofNullable;
  */
 public class UserInfoEndpoint implements Handler<RoutingContext> {
 
-    private UserService userService;
-    private JWTService jwtService;
-    private JWEService jweService;
-    private OpenIDDiscoveryService openIDDiscoveryService;
+    private final UserService userService;
+    private final JWTService jwtService;
+    private final JWEService jweService;
+    private final OpenIDDiscoveryService openIDDiscoveryService;
 
     private final boolean legacyOpenidScope;
 
@@ -113,8 +111,8 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
                                 jwt.setIss(openIDDiscoveryService.getIssuer(UriBuilderRequest.resolveProxyRequest(context)));
                                 jwt.setSub(accessToken.getSub());
                                 jwt.setAud(accessToken.getAud());
-                                jwt.setIat(new Date().getTime() / 1000l);
-                                jwt.setExp(accessToken.getExp() / 1000l);
+                                jwt.setIat(new Date().getTime() / 1000L);
+                                jwt.setExp(accessToken.getExp() / 1000L);
 
                                 return jwtService.encodeUserinfo(jwt, client)//Sign if needed, else return unsigned JWT
                                         .flatMap(userinfo -> jweService.encryptUserinfo(userinfo, client));//Encrypt if needed, else return JWT
@@ -127,7 +125,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
                                 .putHeader(HttpHeaders.PRAGMA, "no-cache")
                                 .end(buffer)
                         ,
-                        error -> context.fail(error)
+                        context::fail
                 );
     }
 
@@ -203,7 +201,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
                 .map(Scope::valueOf)
                 .map(Scope::getClaims)
                 .flatMap(List::stream)
-                .collect(Collectors.toList());
+                .toList();
 
         // no OpenID Connect scopes requested continue
         if (scopesClaimKeys.isEmpty()) {
@@ -251,7 +249,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
      * @return enhanced user
      */
     private Single<User> enhance(User user, JWT accessToken) {
-        if (!loadRoles(user, accessToken) && !loadGroups(accessToken)) {
+        if (!loadRoles(accessToken) && !loadGroups(accessToken)) {
             return Single.just(user);
         }
 
@@ -280,7 +278,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
         return client.getUserinfoSignedResponseAlg() != null || client.getUserinfoEncryptedResponseAlg() != null;
     }
 
-    private boolean loadRoles(User user, JWT accessToken) {
+    private boolean loadRoles(JWT accessToken) {
         return accessToken.hasScope(Scope.ROLES.getKey());
     }
 

@@ -66,12 +66,12 @@ public class AbstractUserConsentEndpointHandler {
                                 user.getAdditionalInformation() != null ? new HashMap<>(user.getAdditionalInformation()) : new HashMap<>();
                         // add ip address and user agent
                         if (canSaveIp(context)) {
-                            additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(context.request()));
+                            additionalInformation.put(Claims.IP_ADDRESS, RequestUtils.remoteAddress(context.request()));
                         }
                         if (canSaveIp(context)) {
-                            additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(context.request()));
+                            additionalInformation.put(Claims.USER_AGENT, RequestUtils.userAgent(context.request()));
                         }
-                        additionalInformation.put(Claims.domain, domain.getId());
+                        additionalInformation.put(Claims.DOMAIN, domain.getId());
                         ((DefaultUser) principal).setAdditionalInformation(additionalInformation);
                         return principal;
                     })
@@ -85,12 +85,12 @@ public class AbstractUserConsentEndpointHandler {
                         Map<String, Object> additionalInformation = new HashMap<>();
                         // add ip address and user agent
                         if (canSaveIp(context)) {
-                            additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(context.request()));
+                            additionalInformation.put(Claims.IP_ADDRESS, RequestUtils.remoteAddress(context.request()));
                         }
                         if (canSaveUserAgent(context)) {
-                            additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(context.request()));
+                            additionalInformation.put(Claims.USER_AGENT, RequestUtils.userAgent(context.request()));
                         }
-                        additionalInformation.put(Claims.domain, domain.getId());
+                        additionalInformation.put(Claims.DOMAIN, domain.getId());
                         ((DefaultUser) principal).setAdditionalInformation(additionalInformation);
                         return principal;
                     })
@@ -105,9 +105,9 @@ public class AbstractUserConsentEndpointHandler {
         ((DefaultUser) principal).setId(username);
         Map<String, Object> additionalInformation = new HashMap<>();
         // add ip address and user agent
-        additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(context.request()));
-        additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(context.request()));
-        additionalInformation.put(Claims.domain, domain.getId());
+        additionalInformation.put(Claims.IP_ADDRESS, RequestUtils.remoteAddress(context.request()));
+        additionalInformation.put(Claims.USER_AGENT, RequestUtils.userAgent(context.request()));
+        additionalInformation.put(Claims.DOMAIN, domain.getId());
         ((DefaultUser) principal).setAdditionalInformation(additionalInformation);
         return principal;
     }

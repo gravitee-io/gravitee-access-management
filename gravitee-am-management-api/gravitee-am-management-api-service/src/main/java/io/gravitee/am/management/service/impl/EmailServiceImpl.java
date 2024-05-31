@@ -239,11 +239,11 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
         // generate a JWT to store user's information and for security purpose
         final Map<String, Object> claims = new HashMap<>();
         Instant now = Instant.now();
-        claims.put(Claims.iat, now.getEpochSecond());
-        claims.put(Claims.exp, now.plusSeconds(expiresAfter).getEpochSecond());
-        claims.put(Claims.sub, user.getId());
+        claims.put(Claims.IAT, now.getEpochSecond());
+        claims.put(Claims.EXP, now.plusSeconds(expiresAfter).getEpochSecond());
+        claims.put(Claims.SUB, user.getId());
         if (user.getClient() != null) {
-            claims.put(Claims.aud, user.getClient());
+            claims.put(Claims.AUD, user.getClient());
         }
 
         String token = jwtBuilder.sign(new JWT(claims));

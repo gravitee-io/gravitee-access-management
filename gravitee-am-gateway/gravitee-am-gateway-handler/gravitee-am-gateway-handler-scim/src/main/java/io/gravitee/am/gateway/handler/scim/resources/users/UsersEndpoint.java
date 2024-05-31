@@ -34,6 +34,8 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Collections;
 import java.util.List;
@@ -46,6 +48,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class UsersEndpoint extends AbstractUserEndpoint {
 
     private static final int MAX_ITEMS_PER_PAGE = 100;
@@ -63,19 +66,17 @@ public class UsersEndpoint extends AbstractUserEndpoint {
 
         // The 1-based index of the first query result.
         // A value less than 1 SHALL be interpreted as 1.
-        try {
-            final String startIndex = context.request().getParam("startIndex");
+        final String startIndex = context.request().getParam("startIndex");
+        if (StringUtils.isNumeric(startIndex)) {
             page = Integer.valueOf(startIndex);
-        } catch (Exception ex) {
         }
+
         // Non-negative integer. Specifies the desired  results per page, e.g., 10.
         // A negative value SHALL be interpreted as "0".
         // A value of "0"  indicates that no resource results are to be returned except for "totalResults".
-        try {
-            final String count = context.request().getParam("count");
-            size = Integer.min(Integer.valueOf(count), MAX_ITEMS_PER_PAGE);
-        } catch (Exception ex) {
-
+        final String count = context.request().getParam("count");
+        if (StringUtils.isNumeric(count)) {
+            size = Integer.min(Integer.parseInt(count), MAX_ITEMS_PER_PAGE);
         }
 
         // Filter results
@@ -142,7 +143,7 @@ public class UsersEndpoint extends AbstractUserEndpoint {
      */
     public void create(RoutingContext context) {
         try {
-            final String body = context.getBodyAsString();
+            final String body = context.body().asString();
             if (body == null) {
                 context.fail(new InvalidSyntaxException("Unable to parse body message"));
                 return;

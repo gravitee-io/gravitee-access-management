@@ -108,7 +108,7 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
             sessionObs = session.setValue(sessionCookie.getValue())
                     .flatMap(currentSession -> {
                         String userId = currentSession.get(USER_ID_KEY);
-                        if (!StringUtils.isEmpty(userId)) {
+                        if (StringUtils.hasText(userId)) {
                             // Load the user and put it back in the context.
                             return userService.findById(userId)
                                     .doOnSuccess(user -> context.getDelegate().setUser(new User(user)))

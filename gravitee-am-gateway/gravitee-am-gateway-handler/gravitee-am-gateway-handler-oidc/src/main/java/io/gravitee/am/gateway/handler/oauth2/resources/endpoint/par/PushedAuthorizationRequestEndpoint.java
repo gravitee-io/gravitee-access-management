@@ -31,8 +31,6 @@ import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 
@@ -41,8 +39,6 @@ import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
  * @author GraviteeSource Team
  */
 public class PushedAuthorizationRequestEndpoint implements Handler<RoutingContext> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(PushedAuthorizationRequestEndpoint.class);
 
     private final PushedAuthorizationRequestService parService;
 
@@ -79,9 +75,7 @@ public class PushedAuthorizationRequestEndpoint implements Handler<RoutingContex
                                     .putHeader(io.gravitee.common.http.HttpHeaders.PRAGMA, "no-cache")
                                     .end(Json.encodePrettily(response));
                         },
-                        throwable -> {
-                            context.fail(throwable);
-                        }
+                        context::fail
                 );
     }
 

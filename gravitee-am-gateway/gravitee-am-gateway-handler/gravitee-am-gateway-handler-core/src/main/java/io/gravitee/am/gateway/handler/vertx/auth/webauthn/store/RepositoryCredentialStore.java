@@ -68,7 +68,7 @@ public class RepositoryCredentialStore {
                         // PublicKeyCredentialRequestOptions object that is populated with plausible imaginary values.
                         // Prevent 14.6.2. Username Enumeration (https://www.w3.org/TR/webauthn-2/#sctn-username-enumeration)
                         return Single.zip(
-                                generateCredID(query.getUserName(), Claims.sub),
+                                generateCredID(query.getUserName(), Claims.SUB),
                                 generateCredID(query.getUserName(), StandardClaims.PREFERRED_USERNAME), (part1, part2) -> {
                                     MessageDigest md = MessageDigest.getInstance("SHA-512");
                                     SecureRandom secureRandom = SecureRandom.getInstance(MovingFactorUtils.SHA_1_PRNG);

@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.authdevice.notifier.api.model;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 import java.util.Set;
 
@@ -22,6 +25,8 @@ import java.util.Set;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Setter
+@Getter
 public class ADNotificationRequest {
     private String deviceNotifierId;
     private String transactionId;
@@ -31,68 +36,4 @@ public class ADNotificationRequest {
     private List<String> acrValues;
     private String state;
     private String message;
-
-    public String getTransactionId() {
-        return transactionId;
-    }
-
-    public void setTransactionId(String transactionId) {
-        this.transactionId = transactionId;
-    }
-
-    public String getSubject() {
-        return subject;
-    }
-
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
-
-    public int getExpiresIn() {
-        return expiresIn;
-    }
-
-    public List<String> getAcrValues() {
-        return acrValues;
-    }
-
-    public void setAcrValues(List<String> acrValues) {
-        this.acrValues = acrValues;
-    }
-
-    public void setExpiresIn(int expiresIn) {
-        this.expiresIn = expiresIn;
-    }
-
-    public Set<String> getScopes() {
-        return scopes;
-    }
-
-    public void setScopes(Set<String> scopes) {
-        this.scopes = scopes;
-    }
-
-    public String getState() {
-        return state;
-    }
-
-    public void setState(String state) {
-        this.state = state;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public String getDeviceNotifierId() {
-        return deviceNotifierId;
-    }
-
-    public void setDeviceNotifierId(String deviceNotifierId) {
-        this.deviceNotifierId = deviceNotifierId;
-    }
 }

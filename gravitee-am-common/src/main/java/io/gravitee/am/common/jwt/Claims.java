@@ -31,90 +31,90 @@ public interface Claims {
     /**
      * The "iss" (issuer) claim identifies the principal that issued the JWT.
      */
-    String iss = "iss";
+    String ISS = "iss";
 
     /**
      * The "sub" (subject) claim identifies the principal that is the subject of the JWT.
      */
-    String sub = "sub";
+    String SUB = "sub";
 
     /**
      * The "aud" (audience) claim identifies the recipients that the JWT is intended for.
      */
-    String aud = "aud";
+    String AUD = "aud";
 
     /**
      * The "exp" (expiration time) claim identifies the expiration time on or after which the JWT MUST NOT be accepted for processing.
      */
-    String exp = "exp";
+    String EXP = "exp";
 
     /**
      * The "nbf" (not before) claim identifies the time before which the JWT MUST NOT be accepted for processing.
      */
-    String nbf = "nbf";
+    String NBF = "nbf";
 
     /**
      * The "iat" (issued at) claim identifies the time at which the JWT was issued.
      */
-    String iat = "iat";
+    String IAT = "iat";
 
     /**
      * The "jti" (JWT ID) claim provides a unique identifier for the JWT.
      */
-    String jti = "jti";
+    String JTI = "jti";
 
     /**
      * The "domain" (domain) claim identifies the domain that the JWT is intended for.
      */
-    String domain = "domain";
+    String DOMAIN = "domain";
 
     /**
      * The "org" (organization) claim identifies the organization that the JWT is intended for.
      */
-    String organization = "org";
+    String ORGANIZATION = "org";
 
     /**
      * The "env" (environment) claim identifies the environment that the JWT is intended for.
      */
-    String environment = "env";
+    String ENVIRONMENT = "env";
 
     /**
      * The claims parameter used to request that specific Claims be returned
      */
-    String claims = "claims_request_parameter";
+    String CLAIMS = "claims_request_parameter";
 
     /**
      * The "ip_address" (IP Address) claim identifies the remote client ip used for the JWT.
      */
-    String ip_address = "ip_address";
+    String IP_ADDRESS = "ip_address";
 
     /**
      * The "user_agent" (User Agent) claim identifies the user agent used for the JWT.
      */
-    String user_agent = "user_agent";
+    String USER_AGENT = "user_agent";
 
     /**
      * The oauth 2.0 "scopes"
      */
-    String scope = "scope";
+    String SCOPE = "scope";
     /**
      * The oauth 2.0 confirmation method
      */
-    String cnf = "cnf";
+    String CNF = "cnf";
 
     /**
      * Time when the End-User authentication occurred.
      */
-    String auth_time = "auth_time";
+    String AUTH_TIME = "auth_time";
 
     /**
      * Time the End-User's information was last updated.
      */
-    String updated_at = "updated_at";
+    String UPDATED_AT = "updated_at";
 
-    static List<String> claims() {
-        return Arrays.asList(iss, sub, aud, exp, nbf, iat, auth_time, updated_at,
-                jti, domain, claims, ip_address, user_agent, scope, cnf);
+    static List<String> getAllClaims() {
+        return Arrays.asList(ISS, SUB, AUD, EXP, NBF, IAT, AUTH_TIME, UPDATED_AT,
+                JTI, DOMAIN, CLAIMS, IP_ADDRESS, USER_AGENT, SCOPE, CNF);
     }
 
 }

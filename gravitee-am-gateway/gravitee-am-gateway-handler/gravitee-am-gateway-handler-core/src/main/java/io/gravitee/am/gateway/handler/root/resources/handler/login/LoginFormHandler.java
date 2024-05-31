@@ -78,11 +78,11 @@ public class LoginFormHandler implements Handler<RoutingContext> {
                 final String userAgent = RequestUtils.userAgent(req);
 
                 if (canSaveIp(context)) {
-                    authInfo.put(Claims.ip_address, ipAddress);
+                    authInfo.put(Claims.IP_ADDRESS, ipAddress);
                 }
 
                 if (canSaveUserAgent(context)) {
-                    authInfo.put(Claims.user_agent, userAgent);
+                    authInfo.put(Claims.USER_AGENT, userAgent);
                 }
 
                 authProvider.authenticate(context, authInfo, res -> {

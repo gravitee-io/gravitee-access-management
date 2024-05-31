@@ -36,17 +36,17 @@ import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
 import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
-
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 /**
@@ -61,10 +61,10 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
     private static final String DEFAULT_TARGET_URL = "/";
 
     protected Domain domain;
-    private AuthenticationFlowContextService authenticationFlowContextService;
+    private final AuthenticationFlowContextService authenticationFlowContextService;
     protected UserService userService;
 
-    public AbstractLogoutEndpoint(Domain domain,
+    protected AbstractLogoutEndpoint(Domain domain,
                                   UserService userService,
                                   AuthenticationFlowContextService authenticationFlowContextService) {
         this.domain = domain;
@@ -127,6 +127,8 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
         // The OP also MUST NOT perform post-logout redirection if the post_logout_redirect_uri value supplied
         // does not exactly match one of the previously registered post_logout_redirect_uris values.
         // if client is null, check security domain options
+
+
         List<String> registeredUris = client != null && !isEmpty(client.getPostLogoutRedirectUris()) ? client.getPostLogoutRedirectUris() : (domain.getOidc() != null ? domain.getOidc().getPostLogoutRedirectUris() : null);
         if (!isMatchingRedirectUri(logoutRedirectUrl, registeredUris, domain.isRedirectUriStrictMatching() || domain.usePlainFapiProfile())) {
             routingContext.fail(new InvalidRequestException("The post_logout_redirect_uri MUST match the registered callback URLs"));
@@ -138,10 +140,17 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
     }
 
     private String getLogoutRedirectUrl(MultiMap params) {
-        String logoutRedirectUrl = !StringUtils.isEmpty(params.get(LOGOUT_URL_PARAMETER)) ?
-                params.get(LOGOUT_URL_PARAMETER) : (!StringUtils.isEmpty(params.get(Parameters.POST_LOGOUT_REDIRECT_URI)) ?
-                params.get(Parameters.POST_LOGOUT_REDIRECT_URI) : DEFAULT_TARGET_URL);
-        return logoutRedirectUrl;
+        String logoutUrl = params.get(LOGOUT_URL_PARAMETER);
+        if (StringUtils.hasText(logoutUrl)) {
+            return logoutUrl;
+        }
+
+        String postLogoutRedirectUri = params.get(Parameters.POST_LOGOUT_REDIRECT_URI);
+        if (StringUtils.hasText(postLogoutRedirectUri)) {
+            return postLogoutRedirectUri;
+        }
+
+        return DEFAULT_TARGET_URL;
     }
 
     /**
@@ -187,7 +196,7 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
                                 routingContext.response().setStatusCode(200).end();
                             }
                         },
-                        error -> routingContext.fail(error)
+                        routingContext::fail
                 );
     }
 
@@ -201,7 +210,7 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
                 invalidateTokens = initialQueryParam.get(INVALIDATE_TOKENS_PARAMETER);
             }
         }
-        return Boolean.TRUE.valueOf(invalidateTokens);
+        return Boolean.parseBoolean(invalidateTokens);
     }
 
     private void doRedirect0(RoutingContext routingContext, String url) {
@@ -209,7 +218,7 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
         // If included in the logout request, the OP passes this value back to the RP using the state parameter when redirecting the User Agent back to the RP.
         UriBuilder uriBuilder = UriBuilder.fromURIString(url);
         final String state = routingContext.request().getParam(io.gravitee.am.common.oauth2.Parameters.STATE);
-        if (!StringUtils.isEmpty(state)) {
+        if (StringUtils.hasText(state)) {
             uriBuilder.addParameter(io.gravitee.am.common.oauth2.Parameters.STATE, state);
         }
 
@@ -252,13 +261,13 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
         Map<String, Object> additionalInformation = new HashMap<>();
         if (routingContext.session() != null) {
             if (canSaveIp(routingContext)) {
-                additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(routingContext.request()));
+                additionalInformation.put(Claims.IP_ADDRESS, RequestUtils.remoteAddress(routingContext.request()));
             }
             if (canSaveUserAgent(routingContext)) {
-                additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(routingContext.request()));
+                additionalInformation.put(Claims.USER_AGENT, RequestUtils.userAgent(routingContext.request()));
             }
         }
-        additionalInformation.put(Claims.domain, domain.getId());
+        additionalInformation.put(Claims.DOMAIN, domain.getId());
         if (!ObjectUtils.isEmpty(endUser.getDisplayName())) {
             additionalInformation.put(StandardClaims.NAME, endUser.getDisplayName());
         }

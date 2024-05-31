@@ -81,9 +81,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         final DefaultUser principal = (DefaultUser) auth.getPrincipal();
         final EndUserAuthentication authentication = new EndUserAuthentication(principal.getUsername(), null, new SimpleAuthenticationContext());
         Map<String, String> details = auth.getDetails() == null ? new HashMap<>() : new HashMap<>((Map<String, String>) auth.getDetails());
-        details.putIfAbsent(Claims.organization, Organization.DEFAULT);
+        details.putIfAbsent(Claims.ORGANIZATION, Organization.DEFAULT);
 
-        String organizationId = details.get(Claims.organization);
+        String organizationId = details.get(Claims.ORGANIZATION);
 
         final String source = details.get(SOURCE);
         try {
@@ -146,7 +146,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
             principal.getAdditionalInformation().put(StandardClaims.SUB, endUser.getId());
             principal.getAdditionalInformation().put(StandardClaims.PREFERRED_USERNAME, endUser.getUsername());
-            principal.getAdditionalInformation().put(Claims.organization, endUser.getReferenceId());
+            principal.getAdditionalInformation().put(Claims.ORGANIZATION, endUser.getReferenceId());
             principal.getAdditionalInformation().put("login_count", endUser.getLoginsCount());
             principal.getAdditionalInformation().computeIfAbsent(StandardClaims.EMAIL, val -> endUser.getEmail());
             principal.getAdditionalInformation().computeIfAbsent(StandardClaims.NAME, val -> endUser.getDisplayName());

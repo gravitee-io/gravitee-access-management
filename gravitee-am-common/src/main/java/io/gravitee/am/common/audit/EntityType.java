@@ -22,7 +22,6 @@ package io.gravitee.am.common.audit;
  * @author GraviteeSource Team
  */
 public interface EntityType {
-    String CLIENT = "CLIENT";
     String APPLICATION = "APPLICATION";
     String DOMAIN = "DOMAIN";
     String CERTIFICATE = "CERTIFICATE";
@@ -36,7 +35,6 @@ public interface EntityType {
     String FORM = "FORM";
     String REPORTER = "REPORTER";
     String TAG = "TAG";
-    String POLICY = "POLICY";
     String MEMBERSHIP = "MEMBERSHIP";
     String FACTOR = "FACTOR";
     String ORGANIZATION = "ORGANIZATION";

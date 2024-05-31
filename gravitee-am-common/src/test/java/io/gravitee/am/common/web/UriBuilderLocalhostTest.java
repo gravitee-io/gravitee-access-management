@@ -32,9 +32,9 @@ import static org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class UriBuilderLocalhostTest {
 
-    private String hostType;
-    private String host;
-    private boolean result;
+    private final String hostType;
+    private final String host;
+    private final boolean result;
 
     public UriBuilderLocalhostTest(String hostType, String host, boolean result) {
         this.hostType = hostType;

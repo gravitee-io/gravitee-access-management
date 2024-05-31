@@ -15,52 +15,25 @@
  */
 package io.gravitee.am.certificate.api;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public class CertificateKey {
 
     private String fmt;
     private String payload;
     private Map<String, Object> metadata;
 
-    public CertificateKey() {
-    }
-
     public CertificateKey(String fmt, String payload) {
         this.fmt = fmt;
         this.payload = payload;
-    }
-
-    public CertificateKey(String fmt, String payload, Map<String, Object> metadata) {
-        this(fmt, payload);
-        this.metadata = metadata;
-    }
-
-    public String getFmt() {
-        return fmt;
-    }
-
-    public void setFmt(String fmt) {
-        this.fmt = fmt;
-    }
-
-    public String getPayload() {
-        return payload;
-    }
-
-    public void setPayload(String payload) {
-        this.payload = payload;
-    }
-
-    public Map<String, Object> getMetadata() {
-        return metadata;
-    }
-
-    public void setMetadata(Map<String, Object> metadata) {
-        this.metadata = metadata;
     }
 }

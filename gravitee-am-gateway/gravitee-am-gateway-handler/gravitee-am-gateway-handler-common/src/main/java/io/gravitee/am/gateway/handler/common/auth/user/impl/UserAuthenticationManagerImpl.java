@@ -113,12 +113,12 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                 .filter(appIdp -> selectionRuleMatches(appIdp.getSelectionRule(), authentication.copy()))
                 .switchIfEmpty(Observable.error(() -> getInternalAuthenticationServiceException(client)))
                 .concatMapMaybe(appIdp -> authenticate0(client, authentication.copy(), appIdp.getIdentity(), preAuthenticated))
-                .takeUntil(userAuthentication -> userAuthentication.getUser() != null || userAuthentication.getLastException() instanceof AccountLockedException)
+                .takeUntil(userAuthentication -> userAuthentication.user() != null || userAuthentication.lastException() instanceof AccountLockedException)
                 .lastOrError()
                 .flatMap(userAuthentication -> {
-                    io.gravitee.am.identityprovider.api.User user = userAuthentication.getUser();
+                    io.gravitee.am.identityprovider.api.User user = userAuthentication.user();
                     if (user == null) {
-                        Throwable lastException = userAuthentication.getLastException();
+                        Throwable lastException = userAuthentication.lastException();
                         if (lastException != null) {
                             if (lastException instanceof BadCredentialsException) {
                                 return Single.error(new BadCredentialsException("The credentials you entered are invalid", lastException));
@@ -200,7 +200,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                             .switchIfEmpty(Maybe.error(() -> new UsernameNotFoundException(authentication.getPrincipal().toString())));
                 })
                 .map(user -> {
-                    logger.debug("Successfully Authenticated: " + authentication.getPrincipal() + " with provider authentication provider " + authProvider);
+                    logger.debug("Successfully Authenticated: {} with provider authentication provider {}", authentication.getPrincipal(), authProvider);
                     Map<String, Object> additionalInformation = user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());
                     additionalInformation.put("source", authProvider);
                     additionalInformation.put(Parameters.CLIENT_ID, client.getId());
@@ -254,11 +254,11 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                     }
 
                     // no exception clear login attempt
-                    if (userAuthentication.getLastException() == null) {
+                    if (userAuthentication.lastException() == null) {
                         return loginAttemptService.loginSucceeded(criteria);
                     }
 
-                    if (userAuthentication.getLastException() instanceof BadCredentialsException) {
+                    if (userAuthentication.lastException() instanceof BadCredentialsException) {
                         // do not execute login attempt feature for non-existing users
                         // normally the IdP should respond with Maybe.empty() or UsernameNotFoundException
                         // but we can't control custom IdP that's why we have to check user existence
@@ -320,24 +320,6 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
         return new InternalAuthenticationServiceException("No identity provider found for client : " + client.getClientId());
     }
 
-    private class UserAuthentication {
-        private io.gravitee.am.identityprovider.api.User user;
-        private Throwable lastException;
-
-        public UserAuthentication() {
-        }
-
-        public UserAuthentication(io.gravitee.am.identityprovider.api.User user, Throwable lastException) {
-            this.user = user;
-            this.lastException = lastException;
-        }
-
-        public io.gravitee.am.identityprovider.api.User getUser() {
-            return user;
-        }
-
-        public Throwable getLastException() {
-            return lastException;
-        }
+    private record UserAuthentication(io.gravitee.am.identityprovider.api.User user, Throwable lastException) {
     }
 }

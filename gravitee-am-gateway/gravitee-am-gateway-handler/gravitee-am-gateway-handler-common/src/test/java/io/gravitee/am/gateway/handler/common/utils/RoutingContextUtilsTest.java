@@ -41,7 +41,7 @@ import static org.mockito.BDDMockito.given;
  */
 
 @RunWith(MockitoJUnitRunner.class)
-public class RoutingContextHelperTest {
+public class RoutingContextUtilsTest {
     @Mock
     private RoutingContext routingContext;
     @Mock
@@ -50,7 +50,7 @@ public class RoutingContextHelperTest {
     public void shouldGetUserFromContext() {
         given(routingContext.get(USER_CONTEXT_KEY)).willReturn(new User());
         given(routingContext.data()).willReturn(Map.of("context-data-key1", "context-data-key1-value"));
-        var data = RoutingContextHelper.getEvaluableAttributes(routingContext);
+        var data = RoutingContextUtils.getEvaluableAttributes(routingContext);
         assertThat(data.get(USER_CONTEXT_KEY), instanceOf(User.class));
     }
     @Test
@@ -62,7 +62,7 @@ public class RoutingContextHelperTest {
 
         given(routingContext.session()).willReturn(session);
 
-        var data = RoutingContextHelper.getEvaluableAttributes(routingContext);
+        var data = RoutingContextUtils.getEvaluableAttributes(routingContext);
         assertEquals(data.get(RISK_ASSESSMENT_KEY),RISK_ASSESSMENT_KEY+"value");
         assertEquals(data.get(MFA_CHALLENGE_COMPLETED_KEY),MFA_CHALLENGE_COMPLETED_KEY+"value");
         assertEquals(data.get(WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY),WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY+"value");

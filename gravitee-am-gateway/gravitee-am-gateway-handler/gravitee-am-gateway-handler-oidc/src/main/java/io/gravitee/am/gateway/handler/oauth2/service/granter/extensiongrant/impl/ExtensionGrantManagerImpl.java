@@ -39,15 +39,16 @@ import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -56,9 +57,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class ExtensionGrantManagerImpl extends AbstractService implements ExtensionGrantManager, InitializingBean, EventListener<ExtensionGrantEvent, Payload> {
 
     private static final Logger logger = LoggerFactory.getLogger(ExtensionGrantManagerImpl.class);
-    private TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
-    private ConcurrentMap<String, ExtensionGrant> extensionGrants = new ConcurrentHashMap<>();
-    private ConcurrentMap<String, ExtensionGrantGranter> extensionGrantGranters = new ConcurrentHashMap<>();
+    private final TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
+    private final ConcurrentMap<String, ExtensionGrant> extensionGrants = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, ExtensionGrantGranter> extensionGrantGranters = new ConcurrentHashMap<>();
     private Date minDate;
 
     @Autowired
@@ -102,7 +103,11 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
                 .subscribe(
                         extensionGrant -> {
                             // backward compatibility, get the oldest extension grant to set the good one for the old clients
-                            minDate = minDate == null ? extensionGrant.getCreatedAt() : minDate.after(extensionGrant.getCreatedAt()) ? extensionGrant.getCreatedAt() : minDate;
+                            if (minDate == null) {
+                                minDate = extensionGrant.getCreatedAt();
+                            } else if (minDate.after(extensionGrant.getCreatedAt())) {
+                                minDate = extensionGrant.getCreatedAt();
+                            }
                             updateExtensionGrantProvider(extensionGrant);
                             logger.info("Extension grants loaded for domain {}", domain.getName());
                         },

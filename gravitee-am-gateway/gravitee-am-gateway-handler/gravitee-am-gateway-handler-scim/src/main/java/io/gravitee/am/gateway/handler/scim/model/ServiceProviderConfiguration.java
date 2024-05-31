@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.scim.model;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -25,6 +28,8 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Setter
+@Getter
 public class ServiceProviderConfiguration extends Resource {
 
     private static final List<String> SCHEMAS = Collections.singletonList("urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig");
@@ -77,67 +82,4 @@ public class ServiceProviderConfiguration extends Resource {
         return SCHEMAS;
     }
 
-    public String getDocumentationUri() {
-        return documentationUri;
-    }
-
-    public void setDocumentationUri(String documentationUri) {
-        this.documentationUri = documentationUri;
-    }
-
-    public ComplexType getPatch() {
-        return patch;
-    }
-
-    public void setPatch(ComplexType patch) {
-        this.patch = patch;
-    }
-
-    public ComplexType getBulk() {
-        return bulk;
-    }
-
-    public void setBulk(ComplexType bulk) {
-        this.bulk = bulk;
-    }
-
-    public ComplexType getFilter() {
-        return filter;
-    }
-
-    public void setFilter(ComplexType filter) {
-        this.filter = filter;
-    }
-
-    public ComplexType getChangePassword() {
-        return changePassword;
-    }
-
-    public void setChangePassword(ComplexType changePassword) {
-        this.changePassword = changePassword;
-    }
-
-    public ComplexType getSort() {
-        return sort;
-    }
-
-    public void setSort(ComplexType sort) {
-        this.sort = sort;
-    }
-
-    public ComplexType getEtag() {
-        return etag;
-    }
-
-    public void setEtag(ComplexType etag) {
-        this.etag = etag;
-    }
-
-    public List<AuthenticationScheme> getAuthenticationSchemes() {
-        return authenticationSchemes;
-    }
-
-    public void setAuthenticationSchemes(List<AuthenticationScheme> authenticationSchemes) {
-        this.authenticationSchemes = authenticationSchemes;
-    }
 }

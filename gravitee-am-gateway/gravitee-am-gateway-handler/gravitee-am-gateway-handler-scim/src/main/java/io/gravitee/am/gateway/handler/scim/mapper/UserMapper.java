@@ -18,12 +18,24 @@ package io.gravitee.am.gateway.handler.scim.mapper;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.scim.model.*;
+import io.gravitee.am.gateway.handler.scim.model.Address;
+import io.gravitee.am.gateway.handler.scim.model.Attribute;
+import io.gravitee.am.gateway.handler.scim.model.Certificate;
+import io.gravitee.am.gateway.handler.scim.model.GraviteeUser;
+import io.gravitee.am.gateway.handler.scim.model.Meta;
+import io.gravitee.am.gateway.handler.scim.model.Name;
+import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,6 +46,7 @@ import static java.util.stream.Collectors.toList;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserMapper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserMapper.class);
@@ -41,7 +54,7 @@ public class UserMapper {
     public static User convert(io.gravitee.am.model.User user, String baseUrl, boolean listing) {
         Map<String, Object> additionalInformation = user.getAdditionalInformation() != null ? user.getAdditionalInformation() : Collections.emptyMap();
 
-        User scimUser = new GraviteeUser();
+        GraviteeUser scimUser = new GraviteeUser();
         scimUser.setSchemas(User.SCHEMAS);
         scimUser.setId(user.getId());
         scimUser.setExternalId(user.getExternalId());
@@ -110,7 +123,7 @@ public class UserMapper {
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         if (!customClaims.isEmpty()) {
             scimUser.setSchemas(GraviteeUser.SCHEMAS);
-            ((GraviteeUser) scimUser).setAdditionalInformation(customClaims);
+            scimUser.setAdditionalInformation(customClaims);
         }
 
         return scimUser;
@@ -179,11 +192,8 @@ public class UserMapper {
         user.setX509Certificates(toModelCertificates(scimUser.getX509Certificates()));
 
         // set additional information
-        if (scimUser instanceof GraviteeUser) {
-            GraviteeUser graviteeUser = (GraviteeUser) scimUser;
-            if (graviteeUser.getAdditionalInformation() != null) {
-                additionalInformation.putAll(graviteeUser.getAdditionalInformation());
-            }
+        if (scimUser instanceof GraviteeUser graviteeUser && graviteeUser.getAdditionalInformation() != null) {
+            additionalInformation.putAll(graviteeUser.getAdditionalInformation());
         }
         user.setAdditionalInformation(additionalInformation);
         return user;
@@ -220,7 +230,7 @@ public class UserMapper {
             additionalInformation.put(StandardClaims.EMAIL, user.getEmail());
         }
         if (user.getAdditionalInformation() != null) {
-            user.getAdditionalInformation().forEach((k, v) -> additionalInformation.putIfAbsent(k, v));
+            user.getAdditionalInformation().forEach(additionalInformation::putIfAbsent);
         }
         idpUser.setAdditionalInformation(additionalInformation);
         return idpUser;
@@ -323,7 +333,7 @@ public class UserMapper {
     }
 
     private static List<String> restrictedClaims() {
-        return List.of(Claims.auth_time,
+        return List.of(Claims.AUTH_TIME,
                 ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY,
                 ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY);
     }

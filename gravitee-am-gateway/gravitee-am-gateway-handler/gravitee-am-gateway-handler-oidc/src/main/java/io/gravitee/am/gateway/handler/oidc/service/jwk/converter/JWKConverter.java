@@ -25,6 +25,8 @@ import com.nimbusds.jose.util.Base64URL;
 import io.gravitee.am.common.exception.oauth2.ServerErrorException;
 import io.gravitee.am.model.jose.*;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.net.URI;
 import java.text.ParseException;
@@ -36,6 +38,7 @@ import java.util.stream.Collectors;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class JWKConverter {
 
     /*********************************
@@ -93,7 +96,7 @@ public class JWKConverter {
                         new Base64URL(ecKey.getX()),
                         new Base64URL(ecKey.getY()),
                         ecKey.getUse() != null ? com.nimbusds.jose.jwk.KeyUse.parse(ecKey.getUse()) : null,
-                        ecKey.getKeyOps() != null ? KeyOperation.parse(ecKey.getKeyOps().stream().collect(Collectors.toList())) : null,
+                        ecKey.getKeyOps() != null ? KeyOperation.parse(new ArrayList<>(ecKey.getKeyOps())) : null,
                         ecKey.getAlg() != null ? new Algorithm(ecKey.getAlg()) : null,
                         ecKey.getKid(),
                         ecKey.getX5u() != null ? URI.create(ecKey.getX5u()) : null,
@@ -109,7 +112,7 @@ public class JWKConverter {
                         new Base64URL(ecKey.getY()),
                         new Base64URL(ecKey.getD()),
                         ecKey.getUse() != null ? com.nimbusds.jose.jwk.KeyUse.parse(ecKey.getUse()) : null,
-                        ecKey.getKeyOps() != null ? KeyOperation.parse(ecKey.getKeyOps().stream().collect(Collectors.toList())) : null,
+                        ecKey.getKeyOps() != null ? KeyOperation.parse(new ArrayList<>(ecKey.getKeyOps())) : null,
                         ecKey.getAlg() != null ? new Algorithm(ecKey.getAlg()) : null,
                         ecKey.getKid(),
                         ecKey.getX5u() != null ? URI.create(ecKey.getX5u()) : null,
@@ -131,7 +134,7 @@ public class JWKConverter {
                         Curve.parse(okpKey.getCrv()),
                         new Base64URL(okpKey.getX()),
                         okpKey.getUse() != null ? com.nimbusds.jose.jwk.KeyUse.parse(okpKey.getUse()) : null,
-                        okpKey.getKeyOps() != null ? KeyOperation.parse(okpKey.getKeyOps().stream().collect(Collectors.toList())) : null,
+                        okpKey.getKeyOps() != null ? KeyOperation.parse(new ArrayList<>(okpKey.getKeyOps())) : null,
                         okpKey.getAlg() != null ? new Algorithm(okpKey.getAlg()) : null,
                         okpKey.getKid(),
                         okpKey.getX5u() != null ? URI.create(okpKey.getX5u()) : null,
@@ -146,7 +149,7 @@ public class JWKConverter {
                         new Base64URL(okpKey.getX()),
                         new Base64URL(okpKey.getD()),
                         okpKey.getUse() != null ? com.nimbusds.jose.jwk.KeyUse.parse(okpKey.getUse()) : null,
-                        okpKey.getKeyOps() != null ? KeyOperation.parse(okpKey.getKeyOps().stream().collect(Collectors.toList())) : null,
+                        okpKey.getKeyOps() != null ? KeyOperation.parse(new ArrayList<>(okpKey.getKeyOps())) : null,
                         okpKey.getAlg() != null ? new Algorithm(okpKey.getAlg()) : null,
                         okpKey.getKid(),
                         okpKey.getX5u() != null ? URI.create(okpKey.getX5u()) : null,
@@ -166,7 +169,7 @@ public class JWKConverter {
             return new OctetSequenceKey(
                     new Base64URL(octKey.getK()),
                     octKey.getUse() != null ? com.nimbusds.jose.jwk.KeyUse.parse(octKey.getUse()) : null,
-                    octKey.getKeyOps()!=null?KeyOperation.parse(octKey.getKeyOps().stream().collect(Collectors.toList())):null,
+                    octKey.getKeyOps()!=null?KeyOperation.parse(new ArrayList<>(octKey.getKeyOps())):null,
                     octKey.getAlg()!=null?new Algorithm(octKey.getAlg()):null,
                     octKey.getKid(),
                     octKey.getX5u() != null ? URI.create(octKey.getX5u()) : null,
@@ -189,18 +192,13 @@ public class JWKConverter {
             return null;
         }
 
-        switch (KeyType.parse(jwk.getKeyType().getValue())) {
-            case EC:
-                return convert((com.nimbusds.jose.jwk.ECKey) jwk);
-            case RSA:
-                return convert((com.nimbusds.jose.jwk.RSAKey) jwk);
-            case OCT:
-                return convert((com.nimbusds.jose.jwk.OctetSequenceKey) jwk);
-            case OKP:
-                return convert((com.nimbusds.jose.jwk.OctetKeyPair) jwk);
-            default:
-                throw new InvalidClientMetadataException("Unknown JWK Key Type (kty)");
-        }
+        return switch (KeyType.parse(jwk.getKeyType().getValue())) {
+            case EC -> convert((com.nimbusds.jose.jwk.ECKey) jwk);
+            case RSA -> convert((com.nimbusds.jose.jwk.RSAKey) jwk);
+            case OCT -> convert((OctetSequenceKey) jwk);
+            case OKP -> convert((OctetKeyPair) jwk);
+            default -> throw new InvalidClientMetadataException("Unknown JWK Key Type (kty)");
+        };
     }
 
     public static JWK convert(com.nimbusds.jose.jwk.RSAKey jwk) {

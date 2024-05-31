@@ -40,7 +40,6 @@ import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
-import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -197,12 +196,12 @@ public class IDTokenServiceTest {
 
         TokenClaim customClaim = new TokenClaim();
         customClaim.setTokenType(TokenTypeHint.ID_TOKEN);
-        customClaim.setClaimName(Claims.iss);
+        customClaim.setClaimName(Claims.ISS);
         customClaim.setClaimValue("https://custom-iss");
 
         TokenClaim customAudClaim = new TokenClaim();
         customAudClaim.setTokenType(TokenTypeHint.ID_TOKEN);
-        customAudClaim.setClaimName(io.gravitee.am.common.jwt.Claims.aud);
+        customAudClaim.setClaimName(io.gravitee.am.common.jwt.Claims.AUD);
         String customClaimExpression = "{T(java.lang.String).valueOf(\"client_id_value,other_value,client-id\").split(\",\")}";
         customAudClaim.setClaimValue(customClaimExpression);
 
@@ -232,11 +231,11 @@ public class IDTokenServiceTest {
 
         JWT jwt = jwtCaptor.getValue();
         assertNotNull(jwt);
-        assertTrue(jwt.get(Claims.iss) != null && "https://custom-iss".equals(jwt.get(Claims.iss)));
+        assertTrue(jwt.get(Claims.ISS) != null && "https://custom-iss".equals(jwt.get(Claims.ISS)));
         assertTrue("client-id".equals(jwt.getAud()));
-        assertTrue(jwt.get(Claims.aud) != null
-                && jwt.get(Claims.aud) instanceof List
-                && ((List)jwt.get(Claims.aud)).size() == 3);
+        assertTrue(jwt.get(Claims.AUD) != null
+                && jwt.get(Claims.AUD) instanceof List
+                && ((List)jwt.get(Claims.AUD)).size() == 3);
 
         verify(certificateManager, times(1)).findByAlgorithm(any());
         verify(certificateManager, times(1)).get(anyString());
@@ -279,11 +278,11 @@ public class IDTokenServiceTest {
         user.setAdditionalInformation(
             Map.of(
                 "userClaim", "Some that will exist",
-                Claims.nbf, "Some value that won't exist",
-                Claims.iat, "Some value that won't exist",
-                Claims.exp, "Some value that won't exist",
-                Claims.auth_time, "Some value that won't exist",
-                Claims.updated_at, "Some value that won't exist",
+                Claims.NBF, "Some value that won't exist",
+                Claims.IAT, "Some value that won't exist",
+                Claims.EXP, "Some value that won't exist",
+                Claims.AUTH_TIME, "Some value that won't exist",
+                Claims.UPDATED_AT, "Some value that won't exist",
                 ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY, "Some value that won't exist",
                 ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY, "Some value that won't exist"
             )
@@ -299,11 +298,11 @@ public class IDTokenServiceTest {
         assertNotNull(jwt);
         assertEquals("https://custom-iss", jwt.get("iss"));
         assertEquals("Some that will exist", jwt.get("userClaim"));
-        assertNotEquals("Some value that won't exist", jwt.get(Claims.nbf));
-        assertNotEquals("Some value that won't exist", jwt.get(Claims.iat));
-        assertNotEquals("Some value that won't exist", jwt.get(Claims.exp));
-        assertNotEquals("Some value that won't exist", jwt.get(Claims.auth_time));
-        assertNotEquals("Some value that won't exist", jwt.get(Claims.updated_at));
+        assertNotEquals("Some value that won't exist", jwt.get(Claims.NBF));
+        assertNotEquals("Some value that won't exist", jwt.get(Claims.IAT));
+        assertNotEquals("Some value that won't exist", jwt.get(Claims.EXP));
+        assertNotEquals("Some value that won't exist", jwt.get(Claims.AUTH_TIME));
+        assertNotEquals("Some value that won't exist", jwt.get(Claims.UPDATED_AT));
         assertNull(jwt.get(ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY));
         assertNull(jwt.get(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY));
 
@@ -419,7 +418,7 @@ public class IDTokenServiceTest {
         ArgumentCaptor<JWT> tokenArgumentCaptor = ArgumentCaptor.forClass(JWT.class);
         verify(jwtService).encode(tokenArgumentCaptor.capture(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class));
         JWT idToken = tokenArgumentCaptor.getValue();
-        assertTrue(idToken.containsKey(Claims.acr) && idToken.get(Claims.acr).equals("urn:mace:incommon:iap:silver"));
+        assertTrue(idToken.containsKey(Claims.ACR) && idToken.get(Claims.ACR).equals("urn:mace:incommon:iap:silver"));
     }
 
     @Test

@@ -16,6 +16,8 @@
 package io.gravitee.am.certificate.javakeystore;
 
 import io.gravitee.am.certificate.api.CertificateConfiguration;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Set;
 
@@ -23,6 +25,8 @@ import java.util.Set;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Setter
+@Getter
 public class JavaKeyStoreConfiguration implements CertificateConfiguration {
 
     private String jks;
@@ -31,52 +35,4 @@ public class JavaKeyStoreConfiguration implements CertificateConfiguration {
     private Set<String> use;
     private String keypass;
     private String algorithm;
-
-    public String getJks() {
-        return jks;
-    }
-
-    public void setJks(String jks) {
-        this.jks = jks;
-    }
-
-    public String getStorepass() {
-        return storepass;
-    }
-
-    public void setStorepass(String storepass) {
-        this.storepass = storepass;
-    }
-
-    public String getAlias() {
-        return alias;
-    }
-
-    public void setAlias(String alias) {
-        this.alias = alias;
-    }
-
-    public String getKeypass() {
-        return keypass;
-    }
-
-    public void setKeypass(String keypass) {
-        this.keypass = keypass;
-    }
-
-    public String getAlgorithm() {
-        return algorithm;
-    }
-
-    public void setAlgorithm(String algorithm) {
-        this.algorithm = algorithm;
-    }
-
-    public Set<String> getUse() {
-        return use;
-    }
-
-    public void setUse(Set<String> use) {
-        this.use = use;
-    }
 }

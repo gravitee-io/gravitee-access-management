@@ -58,7 +58,7 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
         Set<String> invalidScopes = new HashSet<>();
         // client scopes
         if (client.getScopeSettings() != null && !client.getScopeSettings().isEmpty()) {
-            final List<String> clientScopes = client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).collect(Collectors.toList());
+            final List<String> clientScopes = client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).toList();
             final List<String> defaultScopes = client.getScopeSettings().stream().filter(ApplicationScopeSettings::isDefaultScope).map(ApplicationScopeSettings::getScope).collect(Collectors.toList());
             final List<String> parameterizedScopes = this.scopeManager == null ? new ArrayList<>() : client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).filter(scopeManager::isParameterizedScope).collect(Collectors.toList());
 
@@ -103,11 +103,11 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
         }
 
         if (!invalidScopes.isEmpty()) {
-            return Single.error(new InvalidScopeException("Invalid scope(s): " + invalidScopes.stream().collect(Collectors.joining(SCOPE_DELIMITER))));
+            return Single.error(new InvalidScopeException("Invalid scope(s): " + String.join(SCOPE_DELIMITER, invalidScopes)));
         }
 
         if (resolvedScopes.isEmpty() && (requestScopes != null && !requestScopes.isEmpty())) {
-            return Single.error(new InvalidScopeException("Invalid scope(s): " + requestScopes.stream().collect(Collectors.joining(SCOPE_DELIMITER))));
+            return Single.error(new InvalidScopeException("Invalid scope(s): " + String.join(SCOPE_DELIMITER, requestScopes)));
         }
 
         // only put default values if there are no requested scopes or only 'openid'

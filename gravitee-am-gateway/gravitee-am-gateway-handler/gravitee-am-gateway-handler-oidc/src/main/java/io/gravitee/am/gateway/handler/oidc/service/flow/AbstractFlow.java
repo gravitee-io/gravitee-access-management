@@ -44,7 +44,7 @@ public abstract class AbstractFlow implements Flow {
     private JWEService jweService;
     private int codeValidityInSec;
 
-    public AbstractFlow(final List<String> responseTypes) {
+    protected AbstractFlow(final List<String> responseTypes) {
         Objects.requireNonNull(responseTypes);
         this.responseTypes = responseTypes;
     }
@@ -57,19 +57,19 @@ public abstract class AbstractFlow implements Flow {
     @Override
     public Single<AuthorizationResponse> run(AuthorizationRequest authorizationRequest, Client client, User endUser) {
         return prepareResponse(authorizationRequest, client, endUser)
-                .flatMap(response -> processResponse(response, authorizationRequest, client, endUser));
+                .flatMap(response -> processResponse(response, authorizationRequest, client));
     }
 
     protected abstract Single<AuthorizationResponse> prepareResponse(AuthorizationRequest authorizationRequest, Client client, User endUser);
 
-    private Single<AuthorizationResponse> processResponse(AuthorizationResponse authorizationResponse, AuthorizationRequest authorizationRequest, Client client, User endUser) {
+    private Single<AuthorizationResponse> processResponse(AuthorizationResponse authorizationResponse, AuthorizationRequest authorizationRequest, Client client) {
         // Response Mode is not supplied by the client, process the response as usual
         if (authorizationRequest.getResponseMode() == null || !authorizationRequest.getResponseMode().endsWith("jwt")) {
             return Single.just(authorizationResponse);
         }
 
         // Create JWT Response
-        JWTAuthorizationResponse jwtAuthorizationResponse = JWTAuthorizationResponse.from(authorizationResponse);
+        JWTAuthorizationResponse<?> jwtAuthorizationResponse = JWTAuthorizationResponse.from(authorizationResponse);
         jwtAuthorizationResponse.setIss(openIDDiscoveryService.getIssuer(authorizationRequest.getOrigin()));
         jwtAuthorizationResponse.setAud(client.getClientId());
         // JWT contains Authorization code, this JWT duration should be short
