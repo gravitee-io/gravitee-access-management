@@ -34,7 +34,7 @@ export class AuthGuard {
 
   canActivate(route: ActivatedRouteSnapshot): Observable<boolean> | Promise<boolean> | boolean {
     // if no permission required, continue
-    if (!route.data?.perms?.only) {
+    if (!route.data || !route.data.perms || !route.data.perms.only) {
       return true;
     }
     // check if we need to load some data
@@ -86,7 +86,7 @@ export class AuthGuard {
       return true;
     }
     // display SAML menu on the app settings only if the domain has enabled the SAML Protocol
-    if (path.data?.protocol === 'SAML' && !route.data['domain']?.saml.enabled) {
+    if (path.data?.protocol === 'SAML' && (!route.data['domain'].saml || !route.data['domain'].saml.enabled)) {
       return false;
     }
     // if resource (application) should not display a settings page, continue
@@ -97,7 +97,7 @@ export class AuthGuard {
       }
     }
     // if no permission required, continue
-    if (!path.data.perms?.only) {
+    if (!path.data.perms || !path.data.perms.only) {
       return true;
     }
     // check if the authenticated user can display UI items
