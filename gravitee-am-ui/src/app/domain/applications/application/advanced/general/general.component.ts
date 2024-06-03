@@ -111,7 +111,7 @@ export class ApplicationGeneralComponent implements OnInit {
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
     this.deleteMode = this.authService.hasPermissions(['application_settings_delete']);
     this.renewSecretMode = this.authService.hasPermissions(['application_openid_update']);
-    if (!this.domain.uma?.enabled) {
+    if (!this.domain.uma || !this.domain.uma.enabled) {
       remove(this.applicationTypes, { type: 'RESOURCE_SERVER' });
     }
   }

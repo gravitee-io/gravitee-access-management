@@ -79,7 +79,7 @@ export class WidgetDataTableComponent implements OnInit, OnChanges {
   }
 
   private static resourceDeleted(key, metadata) {
-    if (!metadata?.[key]) {
+    if (!metadata || !metadata[key]) {
       return true;
     }
     return metadata[key].deleted;

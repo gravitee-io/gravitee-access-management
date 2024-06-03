@@ -35,7 +35,7 @@ export class LicenseGuard {
   }
 
   getLicenseOptions(route: ActivatedRouteSnapshot | Route): LicenseOptions {
-    if (!route.data?.licenseOptions) {
+    if (!route.data || !route.data.licenseOptions) {
       return undefined;
     }
     return route.data.licenseOptions;
