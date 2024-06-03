@@ -118,7 +118,7 @@ public class ErrorHandler extends AbstractErrorHandler {
     }
 
     private void doRedirect(RoutingContext context, String url) {
-        if (context.session() != null) {
+        if (destroySession && context.session() != null) {
             context.session().destroy();
         }
         doRedirect(context.response(), url);
