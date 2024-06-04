@@ -129,6 +129,7 @@ public class DomainServiceImpl implements DomainService {
      * Arbitrarily fix the maximum value to 2048 characters that seems enough to display a message on a mobile device.
      */
     private static final int CIBA_MAX_BINDING_MESSAGE_LENGTH = 2048;
+    public static final String IS_MALFORMED = " is malformed";
 
     private final Logger LOGGER = LoggerFactory.getLogger(DomainServiceImpl.class);
 
@@ -741,7 +742,7 @@ public class DomainServiceImpl implements DomainService {
                     final URI uri = logoutRedirectUri.contains("*") ? new URI(logoutRedirectUri) : UriBuilder.fromURIString(logoutRedirectUri).build();
 
                     if (uri.getScheme() == null) {
-                        throw new InvalidTargetUrlException("post_logout_redirect_uri : " + logoutRedirectUri + " is malformed");
+                        throw new InvalidTargetUrlException("post_logout_redirect_uri : " + logoutRedirectUri + IS_MALFORMED);
                     }
 
                     final String host = isHttp(uri.getScheme()) ? uri.toURL().getHost() : uri.getHost();
@@ -764,7 +765,7 @@ public class DomainServiceImpl implements DomainService {
                         throw new InvalidTargetUrlException("post_logout_redirect_uri with fragment is forbidden");
                     }
                 } catch (IllegalArgumentException | URISyntaxException ex) {
-                    throw new InvalidTargetUrlException("post_logout_redirect_uri : " + logoutRedirectUri + " is malformed");
+                    throw new InvalidTargetUrlException("post_logout_redirect_uri : " + logoutRedirectUri + IS_MALFORMED);
                 }
             }
         }
@@ -778,7 +779,7 @@ public class DomainServiceImpl implements DomainService {
                     final URI uri = requestUri.contains("*") ? new URI(requestUri) : UriBuilder.fromURIString(requestUri).build();
 
                     if (uri.getScheme() == null) {
-                        throw new InvalidRequestUriException("request_uri : " + requestUri + " is malformed");
+                        throw new InvalidRequestUriException("request_uri : " + requestUri + IS_MALFORMED);
                     }
 
                     final String host = isHttp(uri.getScheme()) ? uri.toURL().getHost() : uri.getHost();
@@ -797,7 +798,7 @@ public class DomainServiceImpl implements DomainService {
                         throw new InvalidRequestUriException("Wildcard are forbidden");
                     }
                 } catch (IllegalArgumentException | URISyntaxException ex) {
-                    throw new InvalidRequestUriException("request_uri : " + requestUri + " is malformed");
+                    throw new InvalidRequestUriException("request_uri : " + requestUri + IS_MALFORMED);
                 }
             }
         }
@@ -808,7 +809,7 @@ public class DomainServiceImpl implements DomainService {
         // Get environment domain restrictions and validate all data are correctly defined.
         return domainValidator.validate(domain, environment.getDomainRestrictions())
                 .andThen(listAll()
-                        .toList()
+                        .collect(Collectors.toList())
                         .flatMapCompletable(domains -> virtualHostValidator.validateDomainVhosts(domain, domains)));
     }
 

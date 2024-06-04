@@ -17,7 +17,10 @@ package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oauth2.Scope;
-import io.gravitee.am.service.*;
+import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.model.NewScope;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
@@ -29,6 +32,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.SCOPE_UPGRADER;
@@ -83,8 +87,8 @@ public class ScopeUpgrader implements Upgrader, Ordered {
 
     private Single<List<Scope>> createAppScopes(Domain domain) {
         return applicationService.findByDomain(domain.getId())
-                .filter(applications -> applications != null)
-                .flatMapObservable(applications -> Observable.fromIterable(applications))
+                .filter(Objects::nonNull)
+                .flatMapObservable(Observable::fromIterable)
                 .filter(app -> app.getSettings() != null && app.getSettings().getOauth() != null)
                 .flatMap(app -> Observable.fromIterable(app.getSettings().getOauth().getScopes()))
                 .flatMapSingle(scope -> createScope(domain.getId(), scope))
@@ -93,8 +97,8 @@ public class ScopeUpgrader implements Upgrader, Ordered {
 
     private Single<List<Scope>> createRoleScopes(Domain domain) {
         return roleService.findByDomain(domain.getId())
-                .filter(roles -> roles != null)
-                .flatMapObservable(roles -> Observable.fromIterable(roles))
+                .filter(Objects::nonNull)
+                .flatMapObservable(Observable::fromIterable)
                 .filter(role -> role.getOauthScopes() != null)
                 .flatMap(role -> Observable.fromIterable(role.getOauthScopes()))
                 .flatMapSingle(scope -> createScope(domain.getId(), scope))

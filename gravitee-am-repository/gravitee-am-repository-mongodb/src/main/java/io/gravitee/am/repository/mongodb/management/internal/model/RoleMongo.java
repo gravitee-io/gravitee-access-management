@@ -19,7 +19,9 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import org.bson.codecs.pojo.annotations.BsonId;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

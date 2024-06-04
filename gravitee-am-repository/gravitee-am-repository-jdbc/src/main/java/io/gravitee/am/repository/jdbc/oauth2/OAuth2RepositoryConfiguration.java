@@ -51,7 +51,6 @@ public class OAuth2RepositoryConfiguration extends AbstractRepositoryConfigurati
     @Override
     @Bean
     public ConnectionFactory connectionFactory() {
-        //return new DelegatedConnectionFactory(getOauth2Pool());
         return getOauth2Pool().getClient();
     }
 

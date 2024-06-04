@@ -237,7 +237,7 @@ public class UMATokenGranter extends AbstractTokenGranter {
                 .flatMap(permissionRequests -> {
                     List<String> resourceIds = permissionRequests.stream().map(PermissionRequest::getResourceId).collect(Collectors.toList());
                     return resourceService.findByResources(resourceIds)
-                            .toList()
+                            .collect(Collectors.toList())
                             .flatMap(resourceSet -> this.checkRequestedScopesMatchResource(tokenRequest, resourceSet))
                             .flatMap(resourceMap -> this.resolveScopeRequestAssessment(tokenRequest, permissionRequests, resourceMap))
                             .flatMap(resolvedPermissionRequests -> this.extendPermissionWithRPT(tokenRequest, client, endUser, resolvedPermissionRequests))

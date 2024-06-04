@@ -17,19 +17,18 @@ package io.gravitee.am.management.service.impl.plugins;
 
 import io.gravitee.am.management.service.BotDetectionPluginService;
 import io.gravitee.am.plugins.botdetection.core.BotDetectionPluginManager;
-import io.gravitee.am.service.exception.PluginNotDeployedException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.plugin.BotDetectionPlugin;
 import io.gravitee.plugin.core.api.Plugin;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

@@ -18,10 +18,11 @@ package io.gravitee.am.management.service.alerts.risk;
 import io.gravitee.alert.api.condition.StringCondition;
 import io.gravitee.alert.api.trigger.Dampening;
 import io.gravitee.am.model.alert.AlertTrigger;
-import io.gravitee.risk.assessment.api.assessment.Assessment;
 import org.springframework.core.env.Environment;
 
-import static io.gravitee.am.common.event.AlertEventKeys.*;
+import static io.gravitee.am.common.event.AlertEventKeys.PROPERTY_DOMAIN;
+import static io.gravitee.am.common.event.AlertEventKeys.PROPERTY_RISK_ASSESSMENT;
+import static io.gravitee.am.common.event.AlertEventKeys.PROPERTY_UNKNOWN_DEVICES;
 import static io.gravitee.am.management.service.alerts.AlertTriggerFactory.AUTHENTICATION_SOURCE;
 import static io.gravitee.risk.assessment.api.assessment.Assessment.HIGH;
 import static java.util.Collections.singletonList;

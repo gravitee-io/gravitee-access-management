@@ -16,7 +16,6 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.model.Form;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.flow.Flow;
 import io.reactivex.rxjava3.core.Completable;

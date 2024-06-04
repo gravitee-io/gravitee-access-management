@@ -48,6 +48,7 @@ public class DefaultIdentityProviderRoleMapper implements IdentityProviderRoleMa
         this.roles = roles;
     }
 
+    @Override
     public List<String> apply(AuthenticationContext context, Map<String, Object> userInfo) {
         Set<String> mappedRoles = new HashSet<>();
         if (this.getRoles() != null) {

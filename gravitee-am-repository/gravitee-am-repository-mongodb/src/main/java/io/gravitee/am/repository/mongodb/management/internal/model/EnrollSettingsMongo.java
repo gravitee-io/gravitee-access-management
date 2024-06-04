@@ -17,12 +17,14 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.MfaEnrollType;
-import static java.lang.Boolean.TRUE;
-import java.util.Objects;
-import java.util.Optional;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.Objects;
+import java.util.Optional;
+
+import static java.lang.Boolean.TRUE;
 
 @Getter
 @Setter

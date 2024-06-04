@@ -44,7 +44,10 @@ import java.util.List;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
-import static reactor.adapter.rxjava.RxJava3Adapter.*;
+import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToMaybe;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -80,9 +83,10 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
             COL_CREATED_AT,
             COL_UPDATED_AT
     );
+    public static final String SCOPE_ID = "scope_id";
 
-    private String INSERT_STATEMENT;
-    private String UPDATE_STATEMENT;
+    private String insertStatement;
+    private String updateStatement;
 
     @Autowired
     private SpringScopeRepository scopeRepository;
@@ -100,8 +104,8 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.INSERT_STATEMENT = createInsertStatement("scopes", columns);
-        this.UPDATE_STATEMENT = createUpdateStatement("scopes", columns, List.of(COL_ID));
+        this.insertStatement = createInsertStatement("scopes", columns);
+        this.updateStatement = createUpdateStatement("scopes", columns, List.of(COL_ID));
     }
 
     @Override
@@ -198,7 +202,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(insertStatement);
 
         insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_NAME, item.getName(), String.class);
@@ -225,7 +229,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
 
     private Mono<Long> insertClaim(String claim, Scope item) {
         return getTemplate().getDatabaseClient().sql("INSERT INTO scope_claims(scope_id, claim) VALUES(:scope_id, :claim)")
-                .bind("scope_id", item.getId())
+                .bind(SCOPE_ID, item.getId())
                 .bind("claim", claim)
                 .fetch().rowsUpdated();
     }
@@ -236,9 +240,9 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
         Mono<Long> deleteClaims = getTemplate().delete(JdbcScope.Claims.class)
-                .matching(Query.query(where("scope_id").is(item.getId()))).all();
+                .matching(Query.query(where(SCOPE_ID).is(item.getId()))).all();
 
-        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
+        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(updateStatement);
 
         update = addQuotedField(update, COL_ID, item.getId(), String.class);
         update = addQuotedField(update, COL_NAME, item.getName(), String.class);
@@ -270,7 +274,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
         Mono<Long> deleteClaim = getTemplate().delete(JdbcScope.Claims.class)
-                .matching(Query.query(where("scope_id").is(id))).all();
+                .matching(Query.query(where(SCOPE_ID).is(id))).all();
 
         Mono<Long> delete = getTemplate().delete(JdbcScope.class)
                 .matching(Query.query(where(COL_ID).is(id))).all();

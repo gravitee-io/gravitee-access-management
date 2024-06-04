@@ -15,12 +15,19 @@
  */
 package io.gravitee.am.repository.oauth2.model;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Setter
+@Getter
+@EqualsAndHashCode(callSuper = false)
 public class AccessToken extends Token {
 
     /**
@@ -41,27 +48,4 @@ public class AccessToken extends Token {
      */
     private Map<String, Object> confirmationMethod;
 
-    public Map<String, Object> getConfirmationMethod() {
-        return confirmationMethod;
-    }
-
-    public void setConfirmationMethod(Map<String, Object> confirmationMethod) {
-        this.confirmationMethod = confirmationMethod;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
-    }
-
-    public String getAuthorizationCode() {
-        return authorizationCode;
-    }
-
-    public void setAuthorizationCode(String authorizationCode) {
-        this.authorizationCode = authorizationCode;
-    }
 }

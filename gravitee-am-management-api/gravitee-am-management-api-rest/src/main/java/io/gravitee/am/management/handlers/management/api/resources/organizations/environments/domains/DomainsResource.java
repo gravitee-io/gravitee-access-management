@@ -108,7 +108,7 @@ public class DomainsResource extends AbstractDomainResource {
                 .map(this::filterDomainInfos)
                 .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
                 .toList()
-                .map(domains -> new Page<Domain>(domains.stream().skip((long) page * size).limit(size).collect(Collectors.toList()), page, domains.size()))
+                .map(domains -> new Page<>(domains.stream().skip((long) page * size).limit(size).collect(Collectors.toList()), page, domains.size()))
                 .subscribe(response::resume, response::resume);
     }
 

@@ -79,6 +79,8 @@ import static io.gravitee.am.model.Acl.UPDATE;
 @Component
 public class RoleServiceImpl implements RoleService {
 
+    public static final String CREATE_ERROR = "An error occurs while trying to create a role";
+    public static final String UPDATE_ERROR = "An error occurs while trying to update a role";
     private final Logger LOGGER = LoggerFactory.getLogger(RoleServiceImpl.class);
 
     @Lazy
@@ -221,8 +223,8 @@ public class RoleServiceImpl implements RoleService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to create a role", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to create a role", ex));
+                    LOGGER.error(CREATE_ERROR, ex);
+                    return Single.error(new TechnicalManagementException(CREATE_ERROR, ex));
                 })
                 .doOnSuccess(role -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_CREATED).role(role)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_CREATED).throwable(throwable)));
@@ -275,8 +277,8 @@ public class RoleServiceImpl implements RoleService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to update a role", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to update a role", ex));
+                    LOGGER.error(UPDATE_ERROR, ex);
+                    return Single.error(new TechnicalManagementException(UPDATE_ERROR, ex));
                 });
     }
 
@@ -351,7 +353,7 @@ public class RoleServiceImpl implements RoleService {
                                         return Single.error(ex);
                                     }
                                     LOGGER.error("An error occurs while trying to create a system role {}", role.getAssignableType() + ":" + role.getName(), ex);
-                                    return Single.error(new TechnicalManagementException("An error occurs while trying to create a role", ex));
+                                    return Single.error(new TechnicalManagementException(CREATE_ERROR, ex));
                                 })
                                 .doOnSuccess(role1 -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_CREATED).role(role1)))
                                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_CREATED).throwable(throwable))));
@@ -376,7 +378,7 @@ public class RoleServiceImpl implements RoleService {
                                         return Single.error(ex);
                                     }
                                     LOGGER.error("An error occurs while trying to update a system role {}", role.getAssignableType() + ":" + role.getName(), ex);
-                                    return Single.error(new TechnicalManagementException("An error occurs while trying to update a role", ex));
+                                    return Single.error(new TechnicalManagementException(UPDATE_ERROR, ex));
                                 })
                                 .doOnSuccess(role1 -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_UPDATED).oldValue(currentRole).role(role1)))
                                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_UPDATED).throwable(throwable))));

@@ -16,8 +16,9 @@
 
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
-import java.util.Date;
 import org.bson.codecs.pojo.annotations.BsonId;
+
+import java.util.Date;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

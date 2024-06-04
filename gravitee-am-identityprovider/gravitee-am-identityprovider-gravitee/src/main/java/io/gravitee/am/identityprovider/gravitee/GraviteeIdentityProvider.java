@@ -37,6 +37,7 @@ public class GraviteeIdentityProvider extends IdentityProvider<GraviteeIdentityP
         return GraviteeAuthenticationProvider.class;
     }
 
+    @Override
     public Class<? extends UserProvider> userProvider() {
         return GraviteeUserProvider.class;
     }

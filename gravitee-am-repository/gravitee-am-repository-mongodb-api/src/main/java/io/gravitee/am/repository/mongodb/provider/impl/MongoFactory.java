@@ -61,6 +61,8 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
  * @author GraviteeSource Team
  */
 public class MongoFactory implements FactoryBean<MongoClient> {
+    public static final String PASSWORD = "password";
+    public static final String SERVERS = "servers[";
     private final String DEFAULT_TLS_PROTOCOL = "TLSv1.2";
 
     private final Logger logger = LoggerFactory.getLogger(MongoFactory.class);
@@ -108,7 +110,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
     }
 
     @Override
-    public MongoClient getObject() throws Exception {
+    public MongoClient getObject() {
         // Client settings
         MongoClientSettings.Builder builder = MongoClientSettings.builder();
         builder.writeConcern(WriteConcern.ACKNOWLEDGED);
@@ -182,7 +184,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
 
             // credentials option
             String username = readPropertyValue(propertyPrefix + "username");
-            String password = readPropertyValue(propertyPrefix + "password");
+            String password = readPropertyValue(propertyPrefix + PASSWORD);
             MongoCredential credentials = null;
             if (username != null || password != null) {
                 String authSource = readPropertyValue(propertyPrefix + "authSource", String.class, "gravitee-am");
@@ -265,7 +267,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
         int idx = 0;
 
         while (found) {
-            String serverHost = environment.getProperty(propertyPrefix + "servers[" + (idx++) + "].host");
+            String serverHost = environment.getProperty(propertyPrefix + SERVERS + (idx++) + "].host");
             found = (serverHost != null);
         }
 
@@ -273,8 +275,8 @@ public class MongoFactory implements FactoryBean<MongoClient> {
     }
 
     private ServerAddress buildServerAddress(int idx) {
-        String host = environment.getProperty(propertyPrefix + "servers[" + idx + "].host");
-        int port = readPropertyValue(propertyPrefix + "servers[" + idx + "].port", int.class, 27017);
+        String host = environment.getProperty(propertyPrefix + SERVERS + idx + "].host");
+        int port = readPropertyValue(propertyPrefix + SERVERS + idx + "].port", int.class, 27017);
 
         return new ServerAddress(host, port);
     }
@@ -313,7 +315,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
                 readPropertyValue(propertyPrefix + "keystore", String.class)
         );
         String keystorePassword = readPropertyValue(
-                keystorePropertyPrefix + "password",
+                keystorePropertyPrefix + PASSWORD,
                 String.class,
                 readPropertyValue(propertyPrefix + "keystorePassword", String.class, "")
         );
@@ -343,7 +345,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
         String truststorePropertyPrefix = propertyPrefix + "truststore.";
         String truststorePath = readPropertyValue(truststorePropertyPrefix + "path", String.class);
         String truststoreType = readPropertyValue(truststorePropertyPrefix + "type", String.class);
-        String truststorePassword = readPropertyValue(truststorePropertyPrefix + "password", String.class, "");
+        String truststorePassword = readPropertyValue(truststorePropertyPrefix + PASSWORD, String.class, "");
 
         if (truststorePath == null) {
             return null;

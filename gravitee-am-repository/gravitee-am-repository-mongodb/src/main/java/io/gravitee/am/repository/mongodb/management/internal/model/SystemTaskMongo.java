@@ -16,13 +16,8 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.model.SystemTask;
-import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import org.bson.codecs.pojo.annotations.BsonId;
-
-import java.util.Date;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

@@ -293,13 +293,10 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
 
         return getUserRepository().findById(userId)
                 .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
-                .flatMap(user -> {
-                    /// delete WebAuthn credentials
-                    return credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())
+                .flatMap(user -> credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())
                             .flatMapCompletable(credential -> credentialService.delete(credential.getId(), false))
                             .andThen(getUserRepository().delete(userId))
-                            .toSingleDefault(user);
-                })
+                            .toSingleDefault(user))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);

@@ -252,7 +252,7 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
 
                         return query(sql, args)
                                 .flatMap(Result::getRowsUpdated)
-                                .first(0l)
+                                .first(0L)
                                 .map(result -> user);
                     }
                 });

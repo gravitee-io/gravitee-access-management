@@ -40,7 +40,9 @@ import java.util.List;
 
 import static io.gravitee.am.common.utils.RandomString.generate;
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static reactor.adapter.rxjava.RxJava3Adapter.*;
+import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 @Repository
 public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository implements I18nDictionaryRepository, InitializingBean {

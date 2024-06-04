@@ -45,6 +45,7 @@ import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 @Repository
 public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implements ScopeApprovalRepository {
 
+    public static final String DOMAIN = "domain";
     @Autowired
     private SpringScopeApprovalRepository scopeApprovalRepository;
 
@@ -100,7 +101,7 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
     public Completable deleteByDomainAndScopeKey(String domain, String scope) {
         LOGGER.debug("deleteByDomainAndScopeKey({}, {})", domain, scope);
         return monoToCompletable(getTemplate().delete(JdbcScopeApproval.class)
-                .matching(Query.query(where("domain").is(domain)
+                .matching(Query.query(where(DOMAIN).is(domain)
                         .and(where("scope").is(scope)))).all());
     }
 
@@ -108,7 +109,7 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
     public Completable deleteByDomainAndUserAndClient(String domain, String user, String client) {
         LOGGER.debug("deleteByDomainAndUserAndClient({}, {}, {})", domain, user, client);
         return monoToCompletable(getTemplate().delete(JdbcScopeApproval.class)
-                .matching(Query.query(where("domain").is(domain)
+                .matching(Query.query(where(DOMAIN).is(domain)
                         .and(where("user_id").is(user)
                         .and(where("client_id").is(client))))).all());
     }
@@ -117,7 +118,7 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
     public Completable deleteByDomainAndUser(String domain, String user) {
         LOGGER.debug("deleteByDomainAndUser({}, {})", domain, user);
         return monoToCompletable(getTemplate().delete(JdbcScopeApproval.class)
-                .matching(Query.query(where("domain").is(domain)
+                .matching(Query.query(where(DOMAIN).is(domain)
                         .and(where("user_id").is(user)))).all());
     }
 

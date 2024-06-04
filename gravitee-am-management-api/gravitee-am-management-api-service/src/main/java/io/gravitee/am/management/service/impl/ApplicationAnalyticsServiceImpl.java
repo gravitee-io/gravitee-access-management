@@ -19,7 +19,13 @@ import io.gravitee.am.common.analytics.Field;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.management.service.ApplicationAnalyticsService;
 import io.gravitee.am.management.service.AuditService;
-import io.gravitee.am.model.analytics.*;
+import io.gravitee.am.model.analytics.AnalyticsCountResponse;
+import io.gravitee.am.model.analytics.AnalyticsGroupByResponse;
+import io.gravitee.am.model.analytics.AnalyticsHistogramResponse;
+import io.gravitee.am.model.analytics.AnalyticsQuery;
+import io.gravitee.am.model.analytics.AnalyticsResponse;
+import io.gravitee.am.model.analytics.Bucket;
+import io.gravitee.am.model.analytics.Timestamp;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.service.UserService;
 import io.reactivex.rxjava3.core.Single;
@@ -41,15 +47,11 @@ public class ApplicationAnalyticsServiceImpl implements ApplicationAnalyticsServ
 
     @Override
     public Single<AnalyticsResponse> execute(AnalyticsQuery query) {
-        switch (query.getType()) {
-            case DATE_HISTO:
-                return executeDateHistogram(query);
-            case GROUP_BY:
-                return executeGroupBy(query);
-            case COUNT:
-                return executeCount(query);
-        }
-        return Single.just(new AnalyticsResponse() {});
+        return switch (query.getType()) {
+            case DATE_HISTO -> executeDateHistogram(query);
+            case GROUP_BY -> executeGroupBy(query);
+            case COUNT -> executeCount(query);
+        };
     }
 
     private Single<AnalyticsResponse> executeGroupBy(AnalyticsQuery query) {
@@ -60,11 +62,11 @@ public class ApplicationAnalyticsServiceImpl implements ApplicationAnalyticsServ
         queryBuilder.size(query.getSize());
         queryBuilder.accessPointId(query.getApplication());
 
-        switch (query.getField()) {
-            case Field.USER_STATUS:
-                return userService.statistics(query).map(AnalyticsGroupByResponse::new);
-            default :
-                return Single.just(new AnalyticsResponse() {});
+        if (query.getField().equals(Field.USER_STATUS)) {
+            return userService.statistics(query).map(AnalyticsGroupByResponse::new);
+        } else {
+            return Single.just(new AnalyticsResponse() {
+            });
         }
     }
 
@@ -77,12 +79,11 @@ public class ApplicationAnalyticsServiceImpl implements ApplicationAnalyticsServ
         queryBuilder.status(Status.SUCCESS);
         queryBuilder.accessPointId(query.getApplication());
 
-        switch (query.getField()) {
-            case Field.USER:
-                return userService.countByApplication(query.getDomain(), query.getApplication()).map(AnalyticsCountResponse::new);
-            default:
-                return auditService.aggregate(query.getDomain(), queryBuilder.build(), query.getType())
-                        .map(values -> new AnalyticsCountResponse((Long) values.values().iterator().next()));
+        if (query.getField().equals(Field.USER)) {
+            return userService.countByApplication(query.getDomain(), query.getApplication()).map(AnalyticsCountResponse::new);
+        } else {
+            return auditService.aggregate(query.getDomain(), queryBuilder.build(), query.getType())
+                    .map(values -> new AnalyticsCountResponse((Long) values.values().iterator().next()));
         }
     }
 

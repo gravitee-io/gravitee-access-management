@@ -26,12 +26,12 @@ import io.vertx.core.buffer.Buffer;
  */
 public class CsvFormatter<T extends ReportEntry> implements Formatter<T> {
 
-    private final static AuditFormatter AUDIT_FORMATTER = new AuditFormatter();
+    private static final AuditFormatter AUDIT_FORMATTER = new AuditFormatter();
 
     @Override
     public Buffer format(T data) {
-        if (data instanceof AuditEntry) {
-            return AUDIT_FORMATTER.format((AuditEntry) data);
+        if (data instanceof AuditEntry entry) {
+            return AUDIT_FORMATTER.format(entry);
         }
         return null;
     }

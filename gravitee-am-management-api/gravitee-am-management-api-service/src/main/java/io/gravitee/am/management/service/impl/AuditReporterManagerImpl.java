@@ -249,7 +249,7 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
                                         .entrySet()
                                         .stream()
                                         .filter(entry -> reporter.getId().equals(entry.getKey().getId()))
-                                        .map(entry -> entry.getValue())
+                                        .map(Entry::getValue)
                                         .findFirst()
                                         .ifPresentOrElse(auditReporter -> {
                                                     try {
@@ -335,7 +335,7 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
                     .entrySet()
                     .stream()
                     .filter(entry -> reporterId.equals(entry.getKey().getId()))
-                    .map(entry -> entry.getValue())
+                    .map(Entry::getValue)
                     .findFirst();
 
             if (optionalReporter.isPresent()) {

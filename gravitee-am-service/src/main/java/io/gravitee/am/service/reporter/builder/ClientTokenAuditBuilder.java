@@ -34,7 +34,6 @@ import static java.lang.String.format;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAuditBuilder> {
-    private static final String ADDITIONAL_INFO = "additionalInfo";
     private static final String REVOKE_MSG_KEY = "revokedMessage";
     private final Map<String, Object> tokenNewValue;
 

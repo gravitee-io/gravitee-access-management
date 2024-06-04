@@ -109,8 +109,7 @@ public class PasswordDictionaryImpl implements PasswordDictionary, Runnable {
 
     @Override
     public void run() {
-        try {
-            WatchService watcherService = FileSystems.getDefault().newWatchService();
+        try (WatchService watcherService = FileSystems.getDefault().newWatchService()) {
             final File file = new File(filename);
             Path path = file.toPath();
             Path directory = path.getParent();

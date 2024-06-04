@@ -24,26 +24,23 @@ import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.identityprovider.api.oidc.jwt.JWKSourceResolver;
 import io.gravitee.am.identityprovider.api.oidc.jwt.KeyProcessor;
+import lombok.Setter;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Setter
 public abstract class AbstractKeyProcessor<C extends SecurityContext> implements KeyProcessor {
 
     private JWKSourceResolver<C> jwkSourceResolver;
 
     @Override
-    public JWTProcessor create(SignatureAlgorithm signature) {
-        JWKSource jwkSource = jwkSourceResolver.resolve();
+    public JWTProcessor<C> create(SignatureAlgorithm signature) {
+        JWKSource<C> jwkSource = jwkSourceResolver.resolve();
         ConfigurableJWTProcessor<C> jwtProcessor = new DefaultJWTProcessor<>();
         jwtProcessor.setJWSKeySelector(jwsKeySelector(jwkSource, signature));
-
         return jwtProcessor;
-    }
-
-    public void setJwkSourceResolver(JWKSourceResolver<C> jwkSourceResolver) {
-        this.jwkSourceResolver = jwkSourceResolver;
     }
 
     abstract JWSKeySelector<C> jwsKeySelector(JWKSource<C> jwkSource, SignatureAlgorithm signature);

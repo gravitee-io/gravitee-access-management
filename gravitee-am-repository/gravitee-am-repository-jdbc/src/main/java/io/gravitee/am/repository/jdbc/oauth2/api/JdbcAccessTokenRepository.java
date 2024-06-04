@@ -25,7 +25,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
@@ -45,6 +44,7 @@ import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
  */
 @Repository
 public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements AccessTokenRepository {
+    public static final String SUBJECT = "subject";
     @Autowired
     private SpringAccessTokenRepository accessTokenRepository;
 
@@ -148,7 +148,7 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
     public Completable deleteByUserId(String userId) {
         LOGGER.debug("deleteByUserId({})", userId);
         return monoToCompletable(getTemplate().delete(JdbcAccessToken.class)
-                .matching(Query.query(where("subject").is(userId)))
+                .matching(Query.query(where(SUBJECT).is(userId)))
                 .all())
                 .doOnError(error -> LOGGER.error("Unable to delete access tokens with subject {}",
                 userId, error));
@@ -159,7 +159,7 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
         LOGGER.debug("deleteByDomainIdClientIdAndUserId({},{},{})", domainId, clientId, userId);
         return monoToCompletable(getTemplate().delete(JdbcAccessToken.class)
                 .matching(Query.query(
-                        where("subject").is(userId)
+                        where(SUBJECT).is(userId)
                                 .and(where("domain").is(domainId))
                                 .and(where("client").is(clientId))))
                 .all())
@@ -172,7 +172,7 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
         LOGGER.debug("deleteByDomainIdAndUserId({},{})", domainId, userId);
         return monoToCompletable(getTemplate().delete(JdbcAccessToken.class)
                 .matching(Query.query(
-                        where("subject").is(userId)
+                        where(SUBJECT).is(userId)
                                 .and(where("domain").is(domainId))))
                 .all())
                 .doOnError(error -> LOGGER.error("Unable to delete access tokens with domain {} and subject {}",

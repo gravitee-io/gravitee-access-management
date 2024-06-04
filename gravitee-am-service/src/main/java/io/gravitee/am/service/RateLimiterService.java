@@ -52,7 +52,7 @@ public interface RateLimiterService {
         long tokenLeft = Math.max(0, rateLimit.getTokenLeft() + newTokens);
 
         if (tokenLeft > limit) {
-            rateLimit.setTokenLeft(limit - consumeOne);
+            rateLimit.setTokenLeft((long) limit - consumeOne);
             rateLimit.setAllowRequest(true);
         } else {
             if (tokenLeft > 0) {

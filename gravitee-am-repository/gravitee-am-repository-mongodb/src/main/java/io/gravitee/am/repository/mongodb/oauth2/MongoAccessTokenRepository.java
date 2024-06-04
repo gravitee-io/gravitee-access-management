@@ -25,7 +25,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.PostConstruct;
-
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
@@ -63,14 +62,6 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
 
         // expire after index
         super.createIndex(accessTokenCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().name("e1").expireAfter(0L, TimeUnit.SECONDS));
-    }
-
-    private Maybe<AccessToken> findById(String id) {
-        return Observable
-                .fromPublisher(accessTokenCollection.find(and(eq(FIELD_ID, id),
-                        or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))).limit(1).first())
-                .firstElement()
-                .map(this::convert);
     }
 
     @Override

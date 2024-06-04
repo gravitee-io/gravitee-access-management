@@ -277,7 +277,7 @@ public class CertificateServiceImpl implements CertificateService {
                 .flatMap(oldCertificate -> {
                     boolean oldWithMTls = usageContains(oldCertificate.getCertificate().getConfiguration(), "mtls");
                     boolean newWithMTls = usageContains(updateCertificate.getConfiguration(), "mtls");
-                    if(oldWithMTls && !newWithMTls){
+                    if (oldWithMTls && !newWithMTls){
                         return checkIdentityProviderUsage(oldCertificate.getCertificate())
                                 .map(cert -> oldCertificate);
                     } else {

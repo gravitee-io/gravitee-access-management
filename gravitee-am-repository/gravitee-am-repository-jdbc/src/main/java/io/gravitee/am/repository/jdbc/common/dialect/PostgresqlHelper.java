@@ -32,6 +32,11 @@ import java.util.Map;
  */
 public class PostgresqlHelper extends AbstractDialectHelper {
 
+    public static final String SQL_LIKE = "LIKE ";
+    public static final String VALUE_PARAM = ":value";
+    public static final String SQL_LIKE_2 = "' like ";
+    public static final String ARROW = " ->> '";
+
     public PostgresqlHelper(R2dbcDialect dialect, String collation) {
         super(dialect, collation);
     }
@@ -69,26 +74,26 @@ public class PostgresqlHelper extends AbstractDialectHelper {
         final String bindValueKey = bindValueName.substring(1);
         switch (operator) {
             case "eq":
-                queryBuilder.append(path[0] + " ->> '" + path[1] + "' = " + bindValueName + " ");
+                queryBuilder.append(path[0] + ARROW + path[1] + "' = " + bindValueName + " ");
                 search.addBinding(bindValueKey, value);
                 break;
             case "ne":
-                queryBuilder.append(path[0] + " ->> '" + path[1] + "' != " + bindValueName + " ");
+                queryBuilder.append(path[0] + ARROW + path[1] + "' != " + bindValueName + " ");
                 search.addBinding(bindValueKey, value);
                 break;
             case "pr":
                 queryBuilder.append(path[0] + " ? '" + path[1] + "'");
                 break;
             case "co":
-                queryBuilder.append(path[0] + " ->> '" + path[1] + "' like " + bindValueName + " ");
+                queryBuilder.append(path[0] + ARROW + path[1] + SQL_LIKE_2 + bindValueName + " ");
                 search.addBinding(bindValueKey, "%" + value + "%");
                 break;
             case "sw":
-                queryBuilder.append(path[0] + " ->> '" + path[1] + "' like " + bindValueName + " ");
+                queryBuilder.append(path[0] + ARROW + path[1] + SQL_LIKE_2 + bindValueName + " ");
                 search.addBinding(bindValueKey, value + "%");
                 break;
             case "ew":
-                queryBuilder.append(path[0] + " ->> '" + path[1] + "' like " + bindValueName + " ");
+                queryBuilder.append(path[0] + ARROW + path[1] + SQL_LIKE_2 + bindValueName + " ");
                 search.addBinding(bindValueKey, "%" + value);
                 break;
             default:
@@ -104,18 +109,18 @@ public class PostgresqlHelper extends AbstractDialectHelper {
         return builder.append("u.reference_id = :refId")
                 .append(" AND u.reference_type = :refType")
                 .append(" AND (")
-                .append(" u.username ").append(wildcard ? "LIKE " : "= ")
-                .append(":value")
-                .append(" OR u.email ").append(wildcard ? "LIKE " : "= ")
-                .append(":value")
-                .append(" OR  u.additional_information->>email ").append(wildcard ? "LIKE " : "= ")
-                .append(":value")
-                .append(" OR u.display_name ").append(wildcard ? "LIKE " : "= ")
-                .append(":value")
-                .append(" OR u.first_name ").append(wildcard ? "LIKE " : "= ")
-                .append(":value")
-                .append(" OR u.last_name ").append(wildcard ? "LIKE " : "= ")
-                .append(":value")
+                .append(" u.username ").append(wildcard ? SQL_LIKE : "= ")
+                .append(VALUE_PARAM)
+                .append(" OR u.email ").append(wildcard ? SQL_LIKE : "= ")
+                .append(VALUE_PARAM)
+                .append(" OR  u.additional_information->>email ").append(wildcard ? SQL_LIKE : "= ")
+                .append(VALUE_PARAM)
+                .append(" OR u.display_name ").append(wildcard ? SQL_LIKE : "= ")
+                .append(VALUE_PARAM)
+                .append(" OR u.first_name ").append(wildcard ? SQL_LIKE : "= ")
+                .append(VALUE_PARAM)
+                .append(" OR u.last_name ").append(wildcard ? SQL_LIKE : "= ")
+                .append(VALUE_PARAM)
                 .append(" ) ");
     }
 
@@ -123,10 +128,10 @@ public class PostgresqlHelper extends AbstractDialectHelper {
     protected StringBuilder buildSearchApplications(boolean wildcard, StringBuilder builder) {
         return builder.append("a.domain = :domain")
                 .append(" AND (")
-                .append(" upper(a.name) ").append(wildcard ? "LIKE " : "= ")
-                .append(":value")
-                .append(" OR upper(a.settings->'oauth'->>'clientId') ").append(wildcard ? "LIKE " : "= ")
-                .append(":value")
+                .append(" upper(a.name) ").append(wildcard ? SQL_LIKE : "= ")
+                .append(VALUE_PARAM)
+                .append(" OR upper(a.settings->'oauth'->>'clientId') ").append(wildcard ? SQL_LIKE : "= ")
+                .append(VALUE_PARAM)
                 .append(" ) ");
     }
 

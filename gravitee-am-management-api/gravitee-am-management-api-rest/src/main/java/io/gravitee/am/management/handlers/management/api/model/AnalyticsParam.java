@@ -150,14 +150,12 @@ public class AnalyticsParam {
                     .build());
         }
 
-        if (field != null && !field.isEmpty()) {
-            // check if field is valid
-            if (!EventType.types().contains(field.toUpperCase()) && !Field.types().contains(field.toLowerCase())) {
+        if (field != null && !field.isEmpty() && !EventType.types().contains(field.toUpperCase()) && !Field.types().contains(field.toLowerCase())) {
                 throw new WebApplicationException(Response
                         .status(Response.Status.BAD_REQUEST)
                         .entity("'field' query parameter is invalid")
                         .build());
             }
-        }
+
     }
 }

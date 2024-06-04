@@ -45,10 +45,6 @@ public class Attribute {
         this.type = type;
     }
 
-    public Boolean getPrimary() {
-        return primary;
-    }
-
     public Boolean isPrimary() {
         return primary;
     }

@@ -21,7 +21,6 @@ import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.repository.jdbc.common.JSONMapper;
 
 import java.util.List;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 /**

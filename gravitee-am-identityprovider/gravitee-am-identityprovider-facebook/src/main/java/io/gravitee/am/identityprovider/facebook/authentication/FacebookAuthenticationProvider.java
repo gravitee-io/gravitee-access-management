@@ -219,10 +219,10 @@ public class FacebookAuthenticationProvider extends AbstractSocialAuthentication
 
         Object value = source.getValue(sourceName);
         if (value != null) {
-            if (value instanceof JsonObject) {
-                dest.put(destName, ((JsonObject) value).getMap());
-            } else if (value instanceof JsonArray) {
-                dest.put(destName, ((JsonArray) value).getList());
+            if (value instanceof JsonObject jsonObject) {
+                dest.put(destName, jsonObject.getMap());
+            } else if (value instanceof JsonArray jsonArray) {
+                dest.put(destName, jsonArray.getList());
             } else {
                 dest.put(destName, value);
             }

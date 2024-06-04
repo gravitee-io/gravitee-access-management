@@ -51,7 +51,7 @@ public class DeviceServiceImpl implements DeviceService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceServiceImpl.class);
     //Ten hours
-    private static final long DEFAULT_DEVICE_EXPIRATION_TIME_SECONDS = 10 * 60 * 60;
+    private static final long DEFAULT_DEVICE_EXPIRATION_TIME_SECONDS = 10L * 60L * 60L;
 
     @Lazy
     @Autowired

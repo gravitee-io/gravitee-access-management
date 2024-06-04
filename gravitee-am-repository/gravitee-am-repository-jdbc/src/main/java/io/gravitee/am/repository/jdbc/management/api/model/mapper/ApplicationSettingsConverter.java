@@ -17,7 +17,6 @@ package io.gravitee.am.repository.jdbc.management.api.model.mapper;
 
 import com.github.dozermapper.core.DozerConverter;
 import io.gravitee.am.model.application.ApplicationSettings;
-import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.repository.jdbc.common.JSONMapper;
 
 /**

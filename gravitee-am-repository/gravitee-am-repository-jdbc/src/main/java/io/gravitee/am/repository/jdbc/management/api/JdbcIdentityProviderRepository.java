@@ -79,8 +79,8 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
             COL_PASSWORD_POLICY
     );
 
-    private String INSERT_STATEMENT;
-    private String UPDATE_STATEMENT;
+    private String insertStatement;
+    private String updateStatement;
 
     @Autowired
     private SpringIdentityProviderRepository identityProviderRepository;
@@ -100,8 +100,8 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.INSERT_STATEMENT = createInsertStatement("identities", columns);
-        this.UPDATE_STATEMENT = createUpdateStatement("identities", columns, List.of(COL_ID));
+        this.insertStatement = createInsertStatement("identities", columns);
+        this.updateStatement = createUpdateStatement("identities", columns, List.of(COL_ID));
     }
 
     @Override
@@ -151,7 +151,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create identityProvider with id {}", item.getId());
 
-        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(insertStatement);
 
         insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_TYPE, item.getType(), String.class);
@@ -178,7 +178,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
     public Single<IdentityProvider> update(IdentityProvider item) {
         LOGGER.debug("update identityProvider with id {}", item.getId());
 
-        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
+        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(updateStatement);
 
         update = addQuotedField(update, COL_ID, item.getId(), String.class);
         update = addQuotedField(update, COL_TYPE, item.getType(), String.class);

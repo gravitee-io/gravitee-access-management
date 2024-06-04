@@ -36,12 +36,32 @@ import java.util.Optional;
 public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
 
     public static final DateTimeFormatter UTC_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+    public static final String ACTIVE = "active";
+    public static final String META_CREATED = "meta.created";
+    public static final String META_LAST_MODIFIED = "meta.lastModified";
+    public static final String EMAILS_VALUE = "emails.value";
+    public static final String LOCALE = "locale";
+    public static final String ORGANIZATION_USERS = "organization_users";
+    public static final String USERS = "users";
+    public static final String U_WHERE = " u WHERE ";
+    public static final String VALUE = ":value";
+    public static final String LIKE = "LIKE ";
+    public static final String ID = "id";
+    public static final String DISPLAY_NAME = "displayName";
+    public static final String USER_NAME = "userName";
+    public static final String NAME_FAMILY_NAME = "name.familyName";
+    public static final String NAME_GIVEN_NAME = "name.givenName";
+    public static final String NAME_MIDDLE_NAME = "name.middleName";
+    public static final String PROFILE_URL = "profileUrl";
+    public static final String TIMEZONE = "timezone";
+    public static final String ADDITIONAL_INFORMATION_DOT = "additional_information.";
+    public static final String ADDITIONAL_INFORMATION_CAMEL_CASE_DOT = "additionalInformation.";
 
     private final R2dbcDialect dialect;
 
     protected final String collation;
 
-    public AbstractDialectHelper(R2dbcDialect dialect, String collation) {
+    protected AbstractDialectHelper(R2dbcDialect dialect, String collation) {
         this.dialect = dialect;
         this.collation = collation;
         try {
@@ -123,24 +143,11 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
             return false;
         }
 
-        switch (filterName) {
-            case "id":
-            case "userName":
-            case "active":
-            case "meta.created":
-            case "meta.lastModified":
-            case "emails.value":
-                return false;
-            case "name.familyName":
-            case "name.givenName":
-            case "name.middleName":
-            case "profileUrl":
-            case "locale":
-            case "timezone":
-                return true;
-        }
-
-        return filterName.startsWith("additional_information.") || filterName.startsWith("additionalInformation.");
+        return switch (filterName) {
+            case ID, USER_NAME, ACTIVE, META_CREATED, META_LAST_MODIFIED, EMAILS_VALUE -> false;
+            case NAME_FAMILY_NAME, NAME_GIVEN_NAME, NAME_MIDDLE_NAME, PROFILE_URL, LOCALE, TIMEZONE -> true;
+            default -> filterName.startsWith(ADDITIONAL_INFORMATION_DOT) || filterName.startsWith(ADDITIONAL_INFORMATION_CAMEL_CASE_DOT);
+        };
     }
 
     protected final String convertFieldName(FilterCriteria criteria) {
@@ -150,31 +157,31 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
         }
 
         switch (filterName) {
-            case "id":
-                return "id";
-            case "userName":
+            case ID:
+                return ID;
+            case USER_NAME:
                 return "username";
-            case "name.familyName":
+            case NAME_FAMILY_NAME:
                 return "additional_information.family_name";
-            case "name.givenName":
+            case NAME_GIVEN_NAME:
                 return "additional_information.given_name";
-            case "name.middleName":
+            case NAME_MIDDLE_NAME:
                 return "additional_information.middle_name";
-            case "meta.created":
+            case META_CREATED:
                 return "created_at";
-            case "meta.lastModified":
+            case META_LAST_MODIFIED:
                 return "updated_at";
-            case "profileUrl":
+            case PROFILE_URL:
                 return "additional_information.profile";
-            case "locale":
+            case LOCALE:
                 return "additional_information.locale";
-            case "timezone":
+            case TIMEZONE:
                 return "additional_information.zoneinfo";
-            case "active":
+            case ACTIVE:
                 return "enabled";
-            case "emails.value":
+            case EMAILS_VALUE:
                 return "email";
-            case "displayName":
+            case DISPLAY_NAME:
                 return "display_name";
             case "meta.loggedAt":
                 return "logged_at";
@@ -189,7 +196,7 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
             case "meta.accountLockedUntil":
                 return "account_locked_until";
             default:
-                if (filterName.startsWith("additionalInformation.")) {
+                if (filterName.startsWith(ADDITIONAL_INFORMATION_CAMEL_CASE_DOT)) {
                     return filterName.replaceFirst("additionalInformation", "additional_information");
                 } else {
                     return filterName;
@@ -203,60 +210,33 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
             return null;
         }
 
-        switch (filterName) {
-            case "id":
-                return "id";
-            case "meta.created":
-                return "created_at";
-            case "meta.lastModified":
-                return "updated_at";
-            case "displayName":
-                return "name";
-            default:
-                return filterName;
-        }
+        return switch (filterName) {
+            case ID -> ID;
+            case META_CREATED -> "created_at";
+            case META_LAST_MODIFIED -> "updated_at";
+            case DISPLAY_NAME -> "name";
+            default -> filterName;
+        };
     }
 
     protected final String operatorConverter(FilterCriteria criteria) {
-        String result = " ";
-        if ( criteria.getOperator() != null) {
+        if (criteria.getOperator() != null) {
             final String operator = criteria.getOperator().toLowerCase().trim();
-            switch (operator) {
-                case "and":
-                    result = " AND ";
-                    break;
-                case "or":
-                    result = " OR ";
-                    break;
-                case "eq":
-                    result = " = ";
-                    break;
-                case "ne":
-                    result = " <> ";
-                    break;
-                case "gt":
-                    result = " > ";
-                    break;
-                case "ge":
-                    result = " >= ";
-                    break;
-                case "lt":
-                    result = " < ";
-                    break;
-                case "le":
-                    result = " <= ";
-                    break;
-                case "pr":
-                    result = " IS NOT NULL ";
-                    break;
-                case "co":
-                case "sw":
-                case "ew":
-                    result = " LIKE ";
-                    break;
-            }
+            return switch (operator) {
+                case "and" -> " AND ";
+                case "or" -> " OR ";
+                case "eq" -> " = ";
+                case "ne" -> " <> ";
+                case "gt" -> " > ";
+                case "ge" -> " >= ";
+                case "lt" -> " < ";
+                case "le" -> " <= ";
+                case "pr" -> " IS NOT NULL ";
+                case "co", "sw", "ew" -> " LIKE ";
+                default -> " ";
+            };
         }
-        return result;
+        return " ";
     }
 
     protected final Optional<Object> fieldValue(FilterCriteria criteria) {
@@ -272,27 +252,21 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
 
         String result = criteria.getFilterValue();
         final String operator = criteria.getOperator().toLowerCase().trim();
-        switch (operator) {
-            case "co":
-                result = "%"+result+"%";
-                break;
-            case "sw":
-                result = result+"%";
-                break;
-            case "ew":
-                result = "%"+result;
-                break;
-            case "pr":
+        return switch (operator) {
+            case "co" ->  Optional.of("%" + result + "%");
+            case "sw" ->  Optional.of(result + "%");
+            case "ew" ->  Optional.of("%" + result);
+            case "pr" ->
                 // IS NOT NULL operator doesn't need value
-                return Optional.empty();
-        }
-        return Optional.of(result);
+                    Optional.empty();
+            default -> Optional.of(result);
+        };
     }
 
 
     private boolean isDateInput(String filterName) {
-        return "meta.created".equals(filterName) ||
-                "meta.lastModified".equals(filterName) ||
+        return META_CREATED.equals(filterName) ||
+                META_LAST_MODIFIED.equals(filterName) ||
                 "meta.loggedAt".equals(filterName) ||
                 "meta.lastLoginWithCredentials".equals(filterName) ||
                 "meta.lastPasswordReset".equals(filterName) ||
@@ -302,14 +276,14 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     }
 
     private boolean isBooleanInput(String filterName) {
-        return "active".equals(filterName);
+        return ACTIVE.equals(filterName);
     }
 
     protected abstract ScimSearch processJsonFilter(StringBuilder queryBuilder, FilterCriteria criteria, ScimSearch search);
 
     @Override
     public String buildSearchUserQuery(boolean wildcard, int page, int size, boolean organizationUser) {
-        StringBuilder builder = new StringBuilder("SELECT * FROM " + (organizationUser ? "organization_users" : "users" )+ " u WHERE ");
+        StringBuilder builder = new StringBuilder("SELECT * FROM " + (organizationUser ? ORGANIZATION_USERS : USERS) + U_WHERE);
         return buildSearchUser(wildcard, builder)
                 .append(buildPagingClause("username", page, size))
                 .toString();
@@ -317,7 +291,7 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
 
     @Override
     public String buildCountUserQuery(boolean wildcard, boolean organizationUser) {
-        StringBuilder builder = new StringBuilder("SELECT COUNT(DISTINCT u.id) FROM " + (organizationUser ? "organization_users" : "users" )+ " u WHERE ");
+        StringBuilder builder = new StringBuilder("SELECT COUNT(DISTINCT u.id) FROM " + (organizationUser ? ORGANIZATION_USERS : USERS) + U_WHERE);
         return buildSearchUser(wildcard, builder)
                 .toString();
     }
@@ -339,7 +313,10 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
 
     private StringBuilder buildSearchScope(boolean wildcardSearch, StringBuilder builder) {
         return builder.append("domain = :domain ")
-                .append(" AND upper(s."+toSql(SqlIdentifier.quoted("key"))+") " + (wildcardSearch ? "LIKE" : "="))
+                .append(" AND upper(s.")
+                .append(toSql(SqlIdentifier.quoted("key")))
+                .append(") ")
+                .append(wildcardSearch ? "LIKE" : "=")
                 .append(" :value");
     }
 
@@ -347,25 +324,25 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
         return builder.append("u.reference_id = :refId")
                 .append(" AND u.reference_type = :refType")
                 .append(" AND (")
-                .append(" u.username ").append(wildcard ? "LIKE " : "= ")
-                .append(":value")
-                .append(" OR u.email ").append(wildcard ? "LIKE " : "= ")
-                .append(":value")
-                .append(" OR u.additional_information_email ").append(wildcard ? "LIKE " : "= ")
-                .append(":value")
-                .append(" OR u.display_name ").append(wildcard ? "LIKE " : "= ")
-                .append(":value")
-                .append(" OR u.first_name ").append(wildcard ? "LIKE " : "= ")
-                .append(":value")
-                .append(" OR u.last_name ").append(wildcard ? "LIKE " : "= ")
-                .append(":value")
+                .append(" u.username ").append(wildcard ? LIKE : "= ")
+                .append(VALUE)
+                .append(" OR u.email ").append(wildcard ? LIKE : "= ")
+                .append(VALUE)
+                .append(" OR u.additional_information_email ").append(wildcard ? LIKE : "= ")
+                .append(VALUE)
+                .append(" OR u.display_name ").append(wildcard ? LIKE : "= ")
+                .append(VALUE)
+                .append(" OR u.first_name ").append(wildcard ? LIKE : "= ")
+                .append(VALUE)
+                .append(" OR u.last_name ").append(wildcard ? LIKE : "= ")
+                .append(VALUE)
                 .append(" ) ");
     }
 
     @Override
     public String buildFindUserByReferenceAndEmail(ReferenceType referenceType, String referenceId, String email, boolean strict) {
         boolean organizationUser = (ReferenceType.ORGANIZATION == referenceType);
-        return new StringBuilder("SELECT * FROM " + (organizationUser ? "organization_users" : "users" )+ " u WHERE ")
+        return new StringBuilder("SELECT * FROM " + (organizationUser ? ORGANIZATION_USERS : USERS)+ U_WHERE)
                 .append(" u.reference_type = :refType ")
                 .append(" AND u.reference_id = :refId AND (")
                 .append(strict ? "u.email" : "UPPER(u.email)")
@@ -394,10 +371,10 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     protected StringBuilder buildSearchApplications(boolean wildcard, StringBuilder builder) {
         return builder.append("a.domain = :domain")
                 .append(" AND (")
-                .append(" upper(a.name) ").append(wildcard ? "LIKE " : "= ")
-                .append(":value")
-                .append(" OR upper(a.settings_client_id) ").append(wildcard ? "LIKE " : "= ")
-                .append(":value")
+                .append(" upper(a.name) ").append(wildcard ? LIKE : "= ")
+                .append(VALUE)
+                .append(" OR upper(a.settings_client_id) ").append(wildcard ? LIKE : "= ")
+                .append(VALUE)
                 .append(" ) ");
     }
 

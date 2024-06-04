@@ -58,6 +58,7 @@ import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 @Repository
 public class JdbcDomainRepository extends AbstractJdbcRepository implements DomainRepository {
 
+    public static final String DOMAIN = "domain";
     @Autowired
     private SpringDomainRepository domainRepository;
     @Autowired
@@ -229,7 +230,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
         if (identities != null && !identities.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(identities).concatMap(idp ->
                             getTemplate().getDatabaseClient().sql("INSERT INTO domain_identities(domain_id, identity_id) VALUES(:domain, :idp)")
-                                    .bind("domain", item.getId())
+                                    .bind(DOMAIN, item.getId())
                                     .bind("idp", idp)
                                     .fetch().rowsUpdated())
                     .reduce(Long::sum));
@@ -239,7 +240,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
         if (tags != null && !tags.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(tags).concatMap(tagValue ->
                             getTemplate().getDatabaseClient().sql("INSERT INTO domain_tags(domain_id, tag) VALUES(:domain, :tag)")
-                                    .bind("domain", item.getId())
+                                    .bind(DOMAIN, item.getId())
                                     .bind("tag", tagValue)
                                     .fetch().rowsUpdated())
                     .reduce(Long::sum));
@@ -250,7 +251,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
             actionFlow = actionFlow.then(Flux.fromStream(virtualHosts.stream().map(this::toJdbcVHost)).concatMap(jdbcVHost -> {
                 jdbcVHost.setDomainId(item.getId());
                 DatabaseClient.GenericExecuteSpec insert = getTemplate().getDatabaseClient().sql("INSERT INTO domain_vhosts(domain_id, host, path, override_entrypoint) VALUES(:domain, :host, :path, :override)")
-                        .bind("domain", item.getId());
+                        .bind(DOMAIN, item.getId());
                 insert = jdbcVHost.getHost() != null ? insert.bind("host", jdbcVHost.getHost()) : insert.bindNull("host", String.class);
                 insert = jdbcVHost.getPath() != null ? insert.bind("path", jdbcVHost.getPath()) : insert.bindNull("path", String.class);
                 return insert.bind("override", jdbcVHost.isOverrideEntrypoint())

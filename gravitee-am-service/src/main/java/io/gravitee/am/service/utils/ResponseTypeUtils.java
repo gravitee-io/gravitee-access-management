@@ -16,6 +16,8 @@
 package io.gravitee.am.service.utils;
 
 import io.gravitee.am.model.oidc.Client;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,6 +40,7 @@ import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ResponseTypeUtils {
 
     private static final Set<String> SUPPORTED_RESPONSE_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(

@@ -27,11 +27,16 @@ import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.repository.jdbc.common.dialect.ScimSearch;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcUser;
-import io.gravitee.am.repository.jdbc.management.api.model.JdbcUser.AbstractRole;
 import io.gravitee.am.repository.jdbc.management.api.model.mapper.EnrolledFactorsConverter;
 import io.gravitee.am.repository.jdbc.management.api.model.mapper.MapToStringConverter;
 import io.gravitee.am.repository.jdbc.management.api.model.mapper.X509Converter;
-import io.gravitee.am.repository.jdbc.management.api.spring.user.*;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringDynamicUserRoleRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserAddressesRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserAttributesRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserEntitlementRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserIdentitiesRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserRoleRepository;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.rxjava3.core.Completable;
@@ -215,15 +220,19 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
             USER_COL_LINKED_AT,
             USER_COL_ADDITIONAL_INFORMATION
     );
+    private static final String REF_ID = "refId";
+    private static final String REF_TYPE = "refType";
+    private static final String EMAIL = "email";
+    private static final String USER_ID = "user_id";
 
 
-    private static short CONCURRENT_FLATMAP = 1;
+    private static short concurrentFlatmap = 1;
 
-    private String UPDATE_USER_STATEMENT;
-    private String INSERT_USER_STATEMENT;
-    private String INSERT_ADDRESS_STATEMENT;
-    private String INSERT_ATTRIBUTES_STATEMENT;
-    private String INSERT_IDENTITIES_STATEMENT;
+    private String updateUserStatement;
+    private String insertUserStatement;
+    private String insertAddressStatement;
+    private String insertAttributesStatement;
+    private String insertIdentitiesStatement;
 
     @Autowired
     protected SpringUserRepository userRepository;
@@ -391,11 +400,11 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.INSERT_USER_STATEMENT = createInsertStatement("users", USER_COLUMNS);
-        this.UPDATE_USER_STATEMENT = createUpdateStatement("users", USER_COLUMNS, List.of(USER_COL_ID));
-        this.INSERT_ADDRESS_STATEMENT = createInsertStatement("user_addresses", ADDRESS_COLUMNS);
-        this.INSERT_ATTRIBUTES_STATEMENT = createInsertStatement("user_attributes", ATTRIBUTES_COLUMNS);
-        this.INSERT_IDENTITIES_STATEMENT = createInsertStatement("user_identities", IDENTITIES_COLUMNS);
+        this.insertUserStatement = createInsertStatement("users", USER_COLUMNS);
+        this.updateUserStatement = createUpdateStatement("users", USER_COLUMNS, List.of(USER_COL_ID));
+        this.insertAddressStatement = createInsertStatement("user_addresses", ADDRESS_COLUMNS);
+        this.insertAttributesStatement = createInsertStatement("user_attributes", ATTRIBUTES_COLUMNS);
+        this.insertIdentitiesStatement = createInsertStatement("user_identities", IDENTITIES_COLUMNS);
     }
 
     @Override
@@ -416,7 +425,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                         .with(PageRequest.of(page, size))
                 ).all())
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toFlowable(), CONCURRENT_FLATMAP)
+                .flatMap(user -> completeUser(user).toFlowable(), concurrentFlatmap)
                 .toList()
                 .flatMap(content -> userRepository.countByReference(referenceType.name(), referenceId)
                         .map((count) -> new Page<>(content, page, count)));
@@ -434,16 +443,16 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
         return fluxToFlowable(getTemplate().getDatabaseClient().sql(search)
                 .bind(ATTR_COL_VALUE, wildcardSearch ? wildcardValue : query)
-                .bind("refId", referenceId)
-                .bind("refType", referenceType.name())
+                .bind(REF_ID, referenceId)
+                .bind(REF_TYPE, referenceType.name())
                 .map((row, rowMetadata) -> rowMapper.read(JdbcUser.class, row)).all())
                 .map(this::toEntity)
-                .flatMap(app -> completeUser(app).toFlowable(), CONCURRENT_FLATMAP) // single thread to keep order
+                .flatMap(app -> completeUser(app).toFlowable(), concurrentFlatmap) // single thread to keep order
                 .toList()
                 .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
                         .bind(ATTR_COL_VALUE, wildcardSearch ? wildcardValue : query)
-                        .bind("refId", referenceId)
-                        .bind("refType", referenceType.name())
+                        .bind(REF_ID, referenceId)
+                        .bind(REF_TYPE, referenceType.name())
                         .map((row, rowMetadata) -> row.get(0, Long.class))
                         .first())
                         .map(total -> new Page<>(data, page, total)));
@@ -459,7 +468,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
         // execute query
         org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeSelect = getTemplate().getDatabaseClient().sql(search.getSelectQuery());
-        executeSelect = executeSelect.bind("refType", referenceType.name()).bind("refId", referenceId);
+        executeSelect = executeSelect.bind(REF_TYPE, referenceType.name()).bind(REF_ID, referenceId);
         for (Map.Entry<String, Object> entry : search.getBinding().entrySet()) {
             executeSelect = executeSelect.bind(entry.getKey(), entry.getValue());
         }
@@ -467,7 +476,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
         // execute count to provide total in the Page
         org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeCount = getTemplate().getDatabaseClient().sql(search.getCountQuery());
-        executeCount = executeCount.bind("refType", referenceType.name()).bind("refId", referenceId);
+        executeCount = executeCount.bind(REF_TYPE, referenceType.name()).bind(REF_ID, referenceId);
         for (Map.Entry<String, Object> entry : search.getBinding().entrySet()) {
             executeCount = executeCount.bind(entry.getKey(), entry.getValue());
         }
@@ -490,7 +499,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
         // execute query
         org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeSelect = getTemplate().getDatabaseClient().sql(search.getSelectQuery());
-        executeSelect = executeSelect.bind("refType", referenceType.name()).bind("refId", referenceId);
+        executeSelect = executeSelect.bind(REF_TYPE, referenceType.name()).bind(REF_ID, referenceId);
         for (Map.Entry<String, Object> entry : search.getBinding().entrySet()) {
             executeSelect = executeSelect.bind(entry.getKey(), entry.getValue());
         }
@@ -504,9 +513,9 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     @Override
     public Flowable<User> findByDomainAndEmail(String domain, String email, boolean strict) {
         return fluxToFlowable(getTemplate().getDatabaseClient().sql(databaseDialectHelper.buildFindUserByReferenceAndEmail(DOMAIN, domain, email, strict))
-                .bind("refId", domain)
-                .bind("refType", DOMAIN.name())
-                .bind("email", email)
+                .bind(REF_ID, domain)
+                .bind(REF_TYPE, DOMAIN.name())
+                .bind(EMAIL, email)
                 .map((row, rowMetadata) -> rowMapper.read(JdbcUser.class, row))
                 .all())
                 .map(this::toEntity)
@@ -554,7 +563,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         }
         return userRepository.findByIdIn(ids)
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toFlowable(), CONCURRENT_FLATMAP);
+                .flatMap(user -> completeUser(user).toFlowable(), concurrentFlatmap);
     }
 
     @Override
@@ -577,14 +586,12 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
     @Override
     public Single<Map<Object, Object>> statistics(AnalyticsQuery query) {
-        switch (query.getField()) {
-            case Field.USER_STATUS:
-                return usersStatusRepartition(query);
-            case Field.USER_REGISTRATION:
-                return registrationsStatusRepartition(query);
-        }
+        return switch (query.getField()) {
+            case Field.USER_STATUS -> usersStatusRepartition(query);
+            case Field.USER_REGISTRATION -> registrationsStatusRepartition(query);
+            default -> Single.just(Collections.emptyMap());
+        };
 
-        return Single.just(Collections.emptyMap());
     }
 
     private Single<Map<Object, Object>> usersStatusRepartition(AnalyticsQuery query) {
@@ -654,7 +661,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         LOGGER.debug("Create user with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_USER_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(insertUserStatement);
 
         insertSpec = addQuotedField(insertSpec, USER_COL_ID, item.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_EXTERNAL_ID, item.getExternalId(), String.class);
@@ -716,7 +723,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         LOGGER.debug("Update User with id {}", item.getId());
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(UPDATE_USER_STATEMENT);
+        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(updateUserStatement);
 
         update = addQuotedField(update, USER_COL_ID, item.getId(), String.class);
         update = addQuotedField(update, USER_COL_EXTERNAL_ID, item.getExternalId(), String.class);
@@ -785,16 +792,16 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("deleteByReference({}, {})", referenceType, referenceId);
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Long> delete = getTemplate().getDatabaseClient().sql("DELETE FROM users WHERE reference_type = :refType AND reference_id = :refId").bind("refType", referenceType.name()).bind("refId", referenceId).fetch().rowsUpdated();
+        Mono<Long> delete = getTemplate().getDatabaseClient().sql("DELETE FROM users WHERE reference_type = :refType AND reference_id = :refId").bind(REF_TYPE, referenceType.name()).bind(REF_ID, referenceId).fetch().rowsUpdated();
         return monoToCompletable(deleteChildEntitiesByRef(referenceType.name(), referenceId).then(delete).as(trx::transactional));
     }
 
     private Mono<Long> deleteChildEntitiesByRef(String refType, String refId) {
-        Mono<Long> deleteRoles =  getTemplate().getDatabaseClient().sql("DELETE FROM user_roles WHERE user_id IN (SELECT id FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind("refType", refType).bind("refId", refId).fetch().rowsUpdated();
-        Mono<Long> deleteAddresses = getTemplate().getDatabaseClient().sql("DELETE FROM user_addresses WHERE user_id IN (SELECT id FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind("refType", refType).bind("refId", refId).fetch().rowsUpdated();
-        Mono<Long> deleteAttributes = getTemplate().getDatabaseClient().sql("DELETE FROM user_attributes WHERE user_id IN (SELECT id FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind("refType", refType).bind("refId", refId).fetch().rowsUpdated();
-        Mono<Long> deleteEntitlements = getTemplate().getDatabaseClient().sql("DELETE FROM user_entitlements WHERE user_id IN (SELECT id FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind("refType", refType).bind("refId", refId).fetch().rowsUpdated();
-        Mono<Long> deleteIdentities = getTemplate().getDatabaseClient().sql("DELETE FROM user_identities WHERE user_id IN (SELECT id FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind("refType", refType).bind("refId", refId).fetch().rowsUpdated();
+        Mono<Long> deleteRoles =  getTemplate().getDatabaseClient().sql("DELETE FROM user_roles WHERE user_id IN (SELECT id FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind(REF_TYPE, refType).bind(REF_ID, refId).fetch().rowsUpdated();
+        Mono<Long> deleteAddresses = getTemplate().getDatabaseClient().sql("DELETE FROM user_addresses WHERE user_id IN (SELECT id FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind(REF_TYPE, refType).bind(REF_ID, refId).fetch().rowsUpdated();
+        Mono<Long> deleteAttributes = getTemplate().getDatabaseClient().sql("DELETE FROM user_attributes WHERE user_id IN (SELECT id FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind(REF_TYPE, refType).bind(REF_ID, refId).fetch().rowsUpdated();
+        Mono<Long> deleteEntitlements = getTemplate().getDatabaseClient().sql("DELETE FROM user_entitlements WHERE user_id IN (SELECT id FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind(REF_TYPE, refType).bind(REF_ID, refId).fetch().rowsUpdated();
+        Mono<Long> deleteIdentities = getTemplate().getDatabaseClient().sql("DELETE FROM user_identities WHERE user_id IN (SELECT id FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind(REF_TYPE, refType).bind(REF_ID, refId).fetch().rowsUpdated();
         return deleteRoles
                 .then(deleteAddresses)
                 .then(deleteAttributes)
@@ -806,7 +813,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         final List<Address> addresses = item.getAddresses();
         if (addresses != null && !addresses.isEmpty() && updateActions.updateAddresses()) {
             actionFlow = actionFlow.then(Flux.fromIterable(addresses).concatMap(address -> {
-                DatabaseClient.GenericExecuteSpec insert = getTemplate().getDatabaseClient().sql(INSERT_ADDRESS_STATEMENT).bind(FK_USER_ID, item.getId());
+                DatabaseClient.GenericExecuteSpec insert = getTemplate().getDatabaseClient().sql(insertAddressStatement).bind(FK_USER_ID, item.getId());
                 insert = address.getType() != null ? insert.bind(ADDR_COL_TYPE, address.getType()) : insert.bindNull(ADDR_COL_TYPE, String.class);
                 insert = address.getFormatted() != null ? insert.bind(ADDR_COL_FORMATTED, address.getFormatted()) : insert.bindNull(ADDR_COL_FORMATTED, String.class);
                 insert = address.getStreetAddress() != null ? insert.bind(ADDR_COL_STREET_ADDRESS, address.getStreetAddress()) : insert.bindNull(ADDR_COL_STREET_ADDRESS, String.class);
@@ -842,7 +849,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                             convertAttributes(item, item.getIms(), ATTRIBUTE_USER_FIELD_IM)),
                     convertAttributes(item, item.getPhotos(), ATTRIBUTE_USER_FIELD_PHOTO))
                     .map(jdbcAttr -> {
-                        DatabaseClient.GenericExecuteSpec insert = getTemplate().getDatabaseClient().sql(INSERT_ATTRIBUTES_STATEMENT)
+                        DatabaseClient.GenericExecuteSpec insert = getTemplate().getDatabaseClient().sql(insertAttributesStatement)
                                 .bind(FK_USER_ID, item.getId())
                                 .bind(ATTR_COL_USER_FIELD, jdbcAttr.getUserField());
                         insert = jdbcAttr.getValue() != null ? insert.bind(ATTR_COL_VALUE, jdbcAttr.getValue()) : insert.bindNull(ATTR_COL_VALUE, String.class);
@@ -860,7 +867,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         final List<UserIdentity> identities = item.getIdentities();
         if (identities != null && !identities.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(identities).concatMap(identity -> {
-                DatabaseClient.GenericExecuteSpec insert = getTemplate().getDatabaseClient().sql(INSERT_IDENTITIES_STATEMENT).bind(FK_USER_ID, item.getId());
+                DatabaseClient.GenericExecuteSpec insert = getTemplate().getDatabaseClient().sql(insertIdentitiesStatement).bind(FK_USER_ID, item.getId());
                 insert = identity.getUserId() != null ? insert.bind(USER_COL_IDENTITY_ID, identity.getUserId()) : insert.bindNull(USER_COL_IDENTITY_ID, String.class);
                 insert = identity.getUsername() != null ? insert.bind(USER_COL_USERNAME, identity.getUsername()) : insert.bindNull(USER_COL_USERNAME, String.class);
                 insert = identity.getProviderId() != null ? insert.bind(USER_COL_PROVIDER_ID, identity.getProviderId()) : insert.bindNull(USER_COL_PROVIDER_ID, String.class);
@@ -873,8 +880,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         return actionFlow;
     }
 
-    private <T extends AbstractRole> Mono<Long> addJdbcRoles(Mono<Long> actionFlow,
-                                                                User item, List<String> roles, String roleTable) {
+    private Mono<Long> addJdbcRoles(Mono<Long> actionFlow, User item, List<String> roles, String roleTable) {
         if (roles != null && !roles.isEmpty()) {
             return actionFlow.then(Flux.fromIterable(roles).concatMap(role -> {
                 try {
@@ -904,7 +910,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     }
 
     private Mono<Long> deleteChildEntities(String userId, UpdateActions actions) {
-        final Query criteria = Query.query(where("user_id").is(userId));
+        final Query criteria = Query.query(where(USER_ID).is(userId));
         var result = Mono.<Long>empty();
         if (actions.updateRole()) {
             Mono<Long> deleteRoles = getTemplate().delete(JdbcUser.Role.class).matching(criteria).all();

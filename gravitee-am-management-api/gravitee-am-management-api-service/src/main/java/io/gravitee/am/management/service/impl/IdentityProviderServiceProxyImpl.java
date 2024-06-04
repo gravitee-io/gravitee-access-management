@@ -90,7 +90,6 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
 
     @Override
     public Maybe<IdentityProvider> findById(String id) {
-        // do not refactor to identityProviderService.findById(id).flatMap(reporter -> filterSensitiveData(reporter).toMaybe());
         // As the IDP maybe missing, using the flatMapSingle will rise an Exception
         return identityProviderService.findById(id).flatMap(idp -> this.filterSensitiveData(idp).toMaybe());
     }

@@ -23,7 +23,6 @@ import io.gravitee.am.management.service.AbstractSensitiveProxy;
 import io.gravitee.am.management.service.AlertNotifierServiceProxy;
 import io.gravitee.am.management.service.exception.NotifierPluginSchemaNotFoundException;
 import io.gravitee.am.management.service.impl.plugins.NotifierPluginService;
-import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.alert.AlertNotifier;
 import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;

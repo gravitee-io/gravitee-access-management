@@ -17,30 +17,24 @@ package io.gravitee.am.management.handlers.management.api.model;
 
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
+import lombok.Getter;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
 public abstract class AbstractParam<V> {
     private final V value;
     private final String originalParam;
 
-    public AbstractParam(String param) throws WebApplicationException {
+    protected AbstractParam(String param) throws WebApplicationException {
         this.originalParam = param;
         try {
             this.value = parse(param);
         } catch (Throwable e) {
             throw new WebApplicationException(onError(param, e));
         }
-    }
-
-    public V getValue() {
-        return value;
-    }
-
-    public String getOriginalParam() {
-        return originalParam;
     }
 
     @Override

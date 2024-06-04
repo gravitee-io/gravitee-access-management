@@ -133,7 +133,7 @@ public class GroupServiceImpl implements GroupService {
         LOGGER.debug("Find groups by member : {}", memberId);
         return groupRepository.findByMember(memberId)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a groups using member ", memberId, ex);
+                    LOGGER.error("An error occurs while trying to find a groups using member {} ", memberId, ex);
                     return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a user using member: %s", memberId), ex));
                 });
@@ -202,9 +202,7 @@ public class GroupServiceImpl implements GroupService {
         return findByName(referenceType, referenceId, newGroup.getName())
                 .isEmpty()
                 .map(isEmpty -> {
-                    if (!isEmpty) {
-                        throw new GroupAlreadyExistsException(newGroup.getName());
-                    } else {
+                    if (isEmpty) {
                         String groupId = RandomString.generate();
                         Group group = new Group();
                         group.setId(groupId);
@@ -216,6 +214,8 @@ public class GroupServiceImpl implements GroupService {
                         group.setCreatedAt(new Date());
                         group.setUpdatedAt(group.getCreatedAt());
                         return group;
+                    } else {
+                        throw new GroupAlreadyExistsException(newGroup.getName());
                     }
                 })
                 .flatMap(this::setMembers)

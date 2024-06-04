@@ -23,6 +23,8 @@ import io.gravitee.am.model.alert.AlertNotifier;
 import io.gravitee.am.model.alert.AlertTrigger;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.notifier.api.Notification;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.springframework.core.env.Environment;
 
 import java.util.List;
@@ -33,6 +35,7 @@ import static java.util.stream.Collectors.toList;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class AlertTriggerFactory {
 
     public static final String AUTHENTICATION_SOURCE = "AUTHENTICATION";

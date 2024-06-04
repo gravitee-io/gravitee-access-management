@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.service.utils;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.springframework.core.env.Environment;
 
 import java.net.URI;
@@ -23,6 +25,7 @@ import java.net.URI;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class BackendConfigurationUtils {
 
     public static String getMongoDatabaseName(Environment environment) {

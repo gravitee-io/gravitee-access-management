@@ -50,12 +50,19 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static java.util.stream.Collectors.toCollection;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
-import static reactor.adapter.rxjava.RxJava3Adapter.*;
+import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -93,6 +100,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
             COL_METADATA,
             COL_SETTINGS,
             COL_SECRET_SETTINGS);
+    public static final String IDENTITY = "identity";
 
     @Autowired
     private SpringApplicationRepository applicationRepository;
@@ -109,8 +117,8 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     @Autowired
     private SpringApplicationIdentityRepository identityRepository;
 
-    private String INSERT_STATEMENT;
-    private String UPDATE_STATEMENT;
+    private String insertStatement;
+    private String updateStatement;
 
     protected Application toEntity(JdbcApplication entity) {
         return mapper.map(entity, Application.class);
@@ -122,8 +130,8 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.INSERT_STATEMENT = createInsertStatement("applications", columns);
-        this.UPDATE_STATEMENT = createUpdateStatement("applications", columns, List.of(COL_ID));
+        this.insertStatement = createInsertStatement("applications", columns);
+        this.updateStatement = createUpdateStatement("applications", columns, List.of(COL_ID));
     }
 
     private Single<Application> completeApplication(Application entity) {
@@ -243,10 +251,10 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         LOGGER.debug("findByIdentityProvider({})", identityProvider);
 
         // identity is a keyword with mssql
-        final String identity = databaseDialectHelper.toSql(SqlIdentifier.quoted("identity"));
+        final String identity = databaseDialectHelper.toSql(SqlIdentifier.quoted(IDENTITY));
         return fluxToFlowable(getTemplate().getDatabaseClient()
                 .sql("SELECT a.* FROM applications a INNER JOIN application_identities i ON a.id = i.application_id AND i." + identity + " = :identity")
-                .bind("identity", identityProvider)
+                .bind(IDENTITY, identityProvider)
                 .map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row)).all())
                 .map(this::toEntity)
                 .flatMap(app -> completeApplication(app).toFlowable());
@@ -317,7 +325,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient().sql(insertStatement);
         sql = addQuotedField(sql, COL_ID, item.getId(), String.class);
         sql = addQuotedField(sql, COL_TYPE, item.getType() == null ? null : item.getType().name(), String.class);
         sql = addQuotedField(sql, COL_ENABLED, item.isEnabled(), Boolean.class);
@@ -345,7 +353,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
+        DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient().sql(updateStatement);
         sql = addQuotedField(sql, COL_ID, item.getId(), String.class);
         sql = addQuotedField(sql, COL_TYPE, item.getType() == null ? null : item.getType().name(), String.class);
         sql = addQuotedField(sql, COL_ENABLED, item.isEnabled(), Boolean.class);
@@ -399,7 +407,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                         .bind("id", secret.getId())
                         .bind("application_id", app.getId())
                         .bind("name", secret.getName())
-                        .bind("created_at", dateConverter.convertTo(secret.getCreatedAt(), null))
+                        .bind(COL_CREATED_AT, dateConverter.convertTo(secret.getCreatedAt(), null))
                         .bind("settings_id", secret.getSettingsId())
                         .bind("secret", secret.getSecret());
                 return sql.fetch().rowsUpdated();
@@ -409,7 +417,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         var identities = app.getIdentityProviders();
         if (identities != null && !identities.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(identities).concatMap(idp -> {
-                final String identity = databaseDialectHelper.toSql(SqlIdentifier.quoted("identity"));
+                final String identity = databaseDialectHelper.toSql(SqlIdentifier.quoted(IDENTITY));
                 final String selectionRule = databaseDialectHelper.toSql(SqlIdentifier.quoted("selection_rule"));
                 final String priority = databaseDialectHelper.toSql(SqlIdentifier.quoted("priority"));
                 String INSERT_STMT = "INSERT INTO application_identities" +

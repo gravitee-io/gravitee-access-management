@@ -78,6 +78,8 @@ public class ReporterServiceImpl implements ReporterService {
     private static final String REPORTER_AM_FILE= "reporter-am-file";
     private static final String REPORTER_CONFIG_FILENAME = "filename";
     private static final String ADMIN_DOMAIN = "admin";
+    public static final String MANAGEMENT_TYPE = "management.type";
+    public static final String MONGODB = "mongodb";
     // Regex as defined into the Reporter plugin schema in order to apply the same validation rule
     // when a REST call is performed and not only check on the UI
     private final Pattern filenamePattern = Pattern.compile("^([A-Za-z0-9][A-Za-z0-9\\-_.]*)$");
@@ -131,7 +133,7 @@ public class ReporterServiceImpl implements ReporterService {
         LOGGER.debug("Create default reporter for domain {}", domain);
         NewReporter newReporter = createInternal(domain);
         if (newReporter == null) {
-            return Single.error(new ReporterNotFoundException("Reporter type " + this.environment.getProperty("management.type") + " not found"));
+            return Single.error(new ReporterNotFoundException("Reporter type " + this.environment.getProperty(MANAGEMENT_TYPE) + " not found"));
         }
         return create(domain, newReporter);
     }
@@ -289,7 +291,7 @@ public class ReporterServiceImpl implements ReporterService {
         newReporter.setId(RandomString.generate());
         newReporter.setEnabled(true);
         newReporter.setName("MongoDB Reporter");
-        newReporter.setType("mongodb");
+        newReporter.setType(MONGODB);
         newReporter.setConfiguration(createReporterConfig(domain));
 
         return newReporter;
@@ -418,12 +420,12 @@ public class ReporterServiceImpl implements ReporterService {
     }
 
     private boolean useMongoReporter() {
-        String managementBackend = this.environment.getProperty("management.type", "mongodb");
-        return "mongodb".equalsIgnoreCase(managementBackend);
+        String managementBackend = this.environment.getProperty(MANAGEMENT_TYPE, MONGODB);
+        return MONGODB.equalsIgnoreCase(managementBackend);
     }
 
     private boolean useJdbcReporter() {
-        String managementBackend = this.environment.getProperty("management.type", "mongodb");
+        String managementBackend = this.environment.getProperty(MANAGEMENT_TYPE, MONGODB);
         return "jdbc".equalsIgnoreCase(managementBackend);
     }
 }

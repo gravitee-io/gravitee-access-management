@@ -104,7 +104,7 @@ public class ManagementAuthenticationProvider implements AuthenticationProvider 
 
         // Create a end-user authentication for underlying providers associated to the organization
         final SimpleAuthenticationContext context = new SimpleAuthenticationContext();
-        details.forEach( (k,v) -> context.setAttribute(k,v));
+        details.forEach(context::setAttribute);
 
         io.gravitee.am.identityprovider.api.Authentication provAuthentication = new EndUserAuthentication(
                 authentication.getName(),
@@ -115,7 +115,7 @@ public class ManagementAuthenticationProvider implements AuthenticationProvider 
 
             IdentityProvider identityProvider = identityProviderManager.getIdentityProvider(provider);
 
-            if(identityProvider == null || identityProvider.isExternal()) {
+            if (identityProvider == null || identityProvider.isExternal()) {
                 // Skip external identity provider for authentication with credentials.
                 continue;
             }

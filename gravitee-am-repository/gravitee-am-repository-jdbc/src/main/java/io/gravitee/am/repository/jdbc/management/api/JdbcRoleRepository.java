@@ -45,7 +45,9 @@ import java.util.List;
 import java.util.function.Function;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static reactor.adapter.rxjava.RxJava3Adapter.*;
+import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -77,9 +79,10 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
             COL_CREATED_AT,
             COL_UPDATED_AT,
             COL_PERMISSION_ACLS);
+    public static final String ROLE_ID = "role_id";
 
-    private String INSERT_STATEMENT;
-    private String UPDATE_STATEMENT;
+    private String insertStatement;
+    private String updateStatement;
 
     @Autowired
     private SpringRoleRepository roleRepository;
@@ -97,8 +100,8 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.INSERT_STATEMENT = createInsertStatement("roles", columns);
-        this.UPDATE_STATEMENT = createUpdateStatement("roles", columns, List.of(COL_ID));
+        this.insertStatement = createInsertStatement("roles", columns);
+        this.updateStatement = createUpdateStatement("roles", columns, List.of(COL_ID));
     }
 
     @Override
@@ -121,7 +124,7 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
                 .flatMap(role -> completeWithScopes(Maybe.just(role), role.getId()).toFlowable())
                 .toList()
                 .flatMap(content -> roleRepository.countByReference(referenceType.name(), referenceId)
-                        .map((count) -> new Page<Role>(content, page, count)));
+                        .map(count -> new Page<>(content, page, count)));
     }
 
     @Override
@@ -199,7 +202,7 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(insertStatement);
 
         insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_NAME, item.getName(), String.class);
@@ -223,7 +226,7 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         }
 
         return monoToSingle(action.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle());
+                .flatMap(i -> this.findById(item.getId()).toSingle());
     }
 
     @Override
@@ -232,9 +235,9 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
         Mono<Void> deleteScopes = getTemplate().delete(JdbcRole.OAuthScope.class)
-                .matching(Query.query(where("role_id").is(item.getId()))).all().then();
+                .matching(Query.query(where(ROLE_ID).is(item.getId()))).all().then();
 
-        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
+        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(updateStatement);
 
         update = addQuotedField(update, COL_ID, item.getId(), String.class);
         update = addQuotedField(update, COL_NAME, item.getName(), String.class);
@@ -257,13 +260,13 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         }
 
         return monoToSingle(deleteScopes.then(action).as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle());
+                .flatMap(i -> this.findById(item.getId()).toSingle());
     }
 
     private Function<String, Publisher<? extends Long>> insertScopr(Role item) {
         return scope ->
                 getTemplate().getDatabaseClient().sql("INSERT INTO role_oauth_scopes(role_id, scope) VALUES(:role_id, :scope)")
-                        .bind("role_id", item.getId())
+                        .bind(ROLE_ID, item.getId())
                         .bind("scope", scope)
                         .fetch().rowsUpdated();
     }
@@ -274,7 +277,7 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
         Mono<Long> deleteScopes = getTemplate().delete(JdbcRole.OAuthScope.class)
-                .matching(Query.query(where("role_id").is(id))).all();
+                .matching(Query.query(where(ROLE_ID).is(id))).all();
 
         Mono<Long> delete = getTemplate().delete(JdbcRole.class)
                 .matching(Query.query(where(COL_ID).is(id))).all();

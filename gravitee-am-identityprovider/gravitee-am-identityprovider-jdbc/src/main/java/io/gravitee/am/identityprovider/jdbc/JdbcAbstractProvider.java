@@ -89,13 +89,13 @@ public class JdbcAbstractProvider<T extends LifecycleComponent<T>> extends Abstr
     protected void doStop() throws Exception {
         super.doStop();
         try {
-            if (connectionPool instanceof ConnectionPool && !((ConnectionPool)connectionPool).isDisposed()) {
+            if (connectionPool instanceof ConnectionPool connection && !connection.isDisposed()) {
                 LOGGER.info("Disposing connection pool for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
-                ((ConnectionPool)connectionPool).disposeLater().subscribe();
+                connection.disposeLater().subscribe();
                 LOGGER.info("Connection pool disposed for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
-            } else if (connectionPool instanceof Closeable) {
+            } else if (connectionPool instanceof Closeable closeable) {
                 LOGGER.info("Releasing Connection pool for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
-                ((Closeable) connectionPool).close();
+                closeable.close();
                 LOGGER.info("Connection pool released for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
             }
         } catch (Exception ex) {
@@ -111,6 +111,7 @@ public class JdbcAbstractProvider<T extends LifecycleComponent<T>> extends Abstr
         try {
             claims.putAll(objectMapper.readValue(claims.get(configuration.getMetadataAttribute()).toString(), Map.class));
         } catch (Exception e) {
+            LOGGER.warn("Error on compute metadata", e);
         }
     }
 

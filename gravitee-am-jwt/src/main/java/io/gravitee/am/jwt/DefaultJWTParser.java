@@ -54,16 +54,16 @@ public class DefaultJWTParser implements JWTParser {
     private JWSVerifier verifier;
 
     public DefaultJWTParser(final Key key) throws InvalidKeyException {
-        if (key instanceof PublicKey) {
-            initialiseVerifier((PublicKey) key);
+        if (key instanceof PublicKey publicKey) {
+            initialiseVerifier(publicKey);
             // if JCA doesn't support at least the PS256 algorithm (jdk <= 8)
             // add BouncyCastle JCA provider
             if (!JCASupport.isSupported(JWSAlgorithm.PS256)) {
                 verifier.getJCAContext().setProvider(BouncyCastleProviderSingleton.getInstance());
             }
-        } else if (key instanceof SecretKey) {
+        } else if (key instanceof SecretKey secretKey) {
             try {
-                this.verifier = new MACVerifier((SecretKey) key);
+                this.verifier = new MACVerifier(secretKey);
             } catch (JOSEException e) {
                 throw new InvalidKeyException(e);
             }
@@ -73,11 +73,11 @@ public class DefaultJWTParser implements JWTParser {
     }
 
     private void initialiseVerifier(PublicKey key) throws InvalidKeyException {
-        if (key instanceof RSAPublicKey){
-            verifier = new RSASSAVerifier((RSAPublicKey) key);
-        } else if (key instanceof ECPublicKey) {
+        if (key instanceof RSAPublicKey rsaPublicKey){
+            verifier = new RSASSAVerifier(rsaPublicKey);
+        } else if (key instanceof ECPublicKey ecPublicKey) {
             try {
-                verifier = new ECDSAVerifier((ECPublicKey) key);
+                verifier = new ECDSAVerifier(ecPublicKey);
             } catch (JOSEException e) {
                 throw new InvalidKeyException(e);
             }

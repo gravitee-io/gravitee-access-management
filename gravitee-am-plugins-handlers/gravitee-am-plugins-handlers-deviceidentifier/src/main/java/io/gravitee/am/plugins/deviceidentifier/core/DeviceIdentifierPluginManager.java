@@ -37,7 +37,7 @@ public class DeviceIdentifierPluginManager
         extends ProviderPluginManager<DeviceIdentifier<?, DeviceIdentifierProvider>, DeviceIdentifierProvider, ProviderConfiguration>
         implements AmPluginManager<DeviceIdentifier<?, DeviceIdentifierProvider>> {
 
-    private final static Logger logger = LoggerFactory.getLogger(DeviceIdentifierPluginManager.class);
+    private static final Logger logger = LoggerFactory.getLogger(DeviceIdentifierPluginManager.class);
     private final ConfigurationFactory<DeviceIdentifierConfiguration> configurationFactory;
 
     public DeviceIdentifierPluginManager(

@@ -121,7 +121,7 @@ public class JdbcEntrypointRepository extends AbstractJdbcRepository implements 
         Mono<Long> action = getTemplate().update(toJdbcEntity(item)).map(__ -> 1L);
 
         final List<String> tags = item.getTags();
-        if (tags != null & !tags.isEmpty()) {
+        if (tags != null && !tags.isEmpty()) {
             action = action.then(Flux.fromIterable(tags).concatMap(tagValue -> insertTag(tagValue, item)).reduce(Long::sum));
         }
 

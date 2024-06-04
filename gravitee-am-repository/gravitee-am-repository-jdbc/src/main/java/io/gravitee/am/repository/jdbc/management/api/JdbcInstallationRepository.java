@@ -54,8 +54,8 @@ public class JdbcInstallationRepository extends AbstractJdbcRepository implement
             COL_ADDITIONAL_INFORMATION
     );
 
-    private String INSERT_STATEMENT;
-    private String UPDATE_STATEMENT;
+    private String insertStatement;
+    private String updateStatement;
 
     @Autowired
     private SpringInstallationRepository installationRepository;
@@ -76,8 +76,8 @@ public class JdbcInstallationRepository extends AbstractJdbcRepository implement
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.INSERT_STATEMENT = createInsertStatement("installations", columns);
-        this.UPDATE_STATEMENT = createUpdateStatement("installations", columns, List.of(COL_ID));
+        this.insertStatement = createInsertStatement("installations", columns);
+        this.updateStatement = createUpdateStatement("installations", columns, List.of(COL_ID));
     }
 
     @Override
@@ -99,7 +99,7 @@ public class JdbcInstallationRepository extends AbstractJdbcRepository implement
         installation.setId(installation.getId() == null ? RandomString.generate() : installation.getId());
         LOGGER.debug("create installation with id {}", installation.getId());
 
-        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(insertStatement);
 
         insertSpec = addQuotedField(insertSpec, COL_ID, installation.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(installation.getCreatedAt(), null), LocalDateTime.class);
@@ -114,7 +114,7 @@ public class JdbcInstallationRepository extends AbstractJdbcRepository implement
     public Single<Installation> update(Installation installation) {
         LOGGER.debug("update installation with id {}", installation.getId());
 
-        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
+        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(updateStatement);
 
         update = addQuotedField(update, COL_ID, installation.getId(), String.class);
         update = addQuotedField(update, COL_CREATED_AT, dateConverter.convertTo(installation.getCreatedAt(), null), LocalDateTime.class);

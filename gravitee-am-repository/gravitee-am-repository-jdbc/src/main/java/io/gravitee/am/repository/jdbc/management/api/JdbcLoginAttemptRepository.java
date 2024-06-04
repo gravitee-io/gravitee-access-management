@@ -37,7 +37,9 @@ import java.time.LocalDateTime;
 
 import static java.time.ZoneOffset.UTC;
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static reactor.adapter.rxjava.RxJava3Adapter.*;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToMaybe;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -46,6 +48,7 @@ import static reactor.adapter.rxjava.RxJava3Adapter.*;
 @Repository
 public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implements LoginAttemptRepository {
 
+    public static final String EXPIRE_AT = "expire_at";
     @Autowired
     protected SpringLoginAttemptRepository loginAttemptRepository;
 
@@ -64,8 +67,8 @@ public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implement
         Criteria whereClause = buildWhereClause(criteria);
 
         whereClause = whereClause.and(
-                where("expire_at").greaterThan(LocalDateTime.now(UTC))
-                .or(where("expire_at").isNull()));
+                where(EXPIRE_AT).greaterThan(LocalDateTime.now(UTC))
+                .or(where(EXPIRE_AT).isNull()));
 
         return monoToMaybe(getTemplate().select(Query.query(whereClause).with(PageRequest.of(0,1, Sort.by("id"))), JdbcLoginAttempt.class).singleOrEmpty())
                 .map(this::toEntity);
@@ -138,6 +141,6 @@ public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implement
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(getTemplate().delete(JdbcLoginAttempt.class).matching(Query.query(where("expire_at").lessThan(now))).all());
+        return monoToCompletable(getTemplate().delete(JdbcLoginAttempt.class).matching(Query.query(where(EXPIRE_AT).lessThan(now))).all());
     }
 }

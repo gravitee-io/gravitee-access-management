@@ -23,6 +23,10 @@ import java.util.regex.Pattern;
 
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
+
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 import static org.apache.commons.codec.digest.Sha2Crypt.sha256Crypt;
 import static org.apache.commons.codec.digest.Sha2Crypt.sha512Crypt;
 
@@ -30,6 +34,7 @@ import static org.apache.commons.codec.digest.Sha2Crypt.sha512Crypt;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class HashedKeyUtils {
 
     static final String SHA256_PREFIX = "$5$";
@@ -45,15 +50,14 @@ public class HashedKeyUtils {
     }
 
     private static String getHash(Algorithm algorithm, String userId, String salt, byte[] userIdBytes) {
-        switch (algorithm) {
-            case SHA256:
-                return sha256Crypt(userIdBytes, ofNullable(salt).map(s -> SHA256_PREFIX + s).orElse(null)).replaceAll(
-                        Pattern.quote(SHA256_PREFIX) + "(.*)" + "\\$", "");
-            case SHA512:
-                return sha512Crypt(userIdBytes, ofNullable(salt).map(s -> SHA512_PREFIX + s).orElse(null)).replaceAll(
-                        Pattern.quote(SHA512_PREFIX) + "(.*)" + "\\$", "");
-            default:
-                return userId;
-        }
+        return switch (algorithm) {
+            case SHA256 ->
+                    sha256Crypt(userIdBytes, ofNullable(salt).map(s -> SHA256_PREFIX + s).orElse(null)).replaceAll(
+                            Pattern.quote(SHA256_PREFIX) + "(.*)" + "\\$", "");
+            case SHA512 ->
+                    sha512Crypt(userIdBytes, ofNullable(salt).map(s -> SHA512_PREFIX + s).orElse(null)).replaceAll(
+                            Pattern.quote(SHA512_PREFIX) + "(.*)" + "\\$", "");
+            default -> userId;
+        };
     }
 }

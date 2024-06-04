@@ -31,6 +31,9 @@ import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Maybe;
+
+import java.util.Objects;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,12 +91,10 @@ public class EmailManagerImpl extends AbstractService<EmailManager> implements E
 
     @Override
     public void onEvent(Event<EmailEvent, Payload> event) {
-        switch (event.type()) {
-            case UNDEPLOY:
-                removeEmail(event.content().getId());
-                break;
-            default:
-                logger.debug("{} event received for EmailTemplate {}, ignore it as it will be loaded on demand", event.type(), event.content().getId());
+        if (Objects.requireNonNull(event.type()) == EmailEvent.UNDEPLOY) {
+            removeEmail(event.content().getId());
+        } else {
+            logger.debug("{} event received for EmailTemplate {}, ignore it as it will be loaded on demand", event.type(), event.content().getId());
         }
     }
 

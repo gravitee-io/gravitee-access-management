@@ -41,8 +41,11 @@ public class CustomRequestRejectedHandler extends HttpStatusRequestRejectedHandl
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, RequestRejectedException requestRejectedException) throws IOException {
-        logger.debug(String.format("Rejecting request due to: %s", requestRejectedException.getMessage()), requestRejectedException);
+        if (logger.isDebugEnabled()) {
+            logger.debug("Rejecting request due to: {}", requestRejectedException.getMessage(), requestRejectedException);
+        }
         response.setStatus(SC_BAD_REQUEST);
         response.setContentType(MediaType.APPLICATION_JSON.toString());
         response.getWriter().write(objectMapper.writeValueAsString(new ErrorEntity(requestRejectedException.getMessage(), SC_BAD_REQUEST)));

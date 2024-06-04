@@ -15,7 +15,11 @@
  */
 package io.gravitee.am.management.service.impl.utils;
 
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.Organization;
+import io.gravitee.am.model.Platform;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.RoleService;
 import io.reactivex.rxjava3.core.Flowable;
@@ -26,7 +30,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static io.gravitee.am.model.permissions.DefaultRole.ORGANIZATION_OWNER;
 import static io.gravitee.am.model.permissions.DefaultRole.ORGANIZATION_USER;
@@ -85,7 +93,7 @@ public class InlineOrganizationProviderConfiguration extends OrganizationProvide
     @Override
     public IdentityProvider buildIdentityProvider() {
         IdentityProvider provider = new IdentityProvider();
-        provider.setId("memory");
+        provider.setId(MEMORY_TYPE);
 
         provider.setConfiguration(generateConfiguration());
 
@@ -158,7 +166,7 @@ public class InlineOrganizationProviderConfiguration extends OrganizationProvide
         return users;
     }
 
-    public final static class UserDefinition {
+    public static final class UserDefinition {
         private String username;
         private String email;
         private String firstname;

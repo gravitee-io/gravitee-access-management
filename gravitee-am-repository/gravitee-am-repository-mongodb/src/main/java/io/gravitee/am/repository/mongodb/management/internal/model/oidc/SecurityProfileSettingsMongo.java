@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model.oidc;
 
-import java.util.List;
-
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team

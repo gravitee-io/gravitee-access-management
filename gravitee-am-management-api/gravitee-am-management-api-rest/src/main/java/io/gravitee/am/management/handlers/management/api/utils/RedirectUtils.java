@@ -17,12 +17,15 @@ package io.gravitee.am.management.handlers.management.api.utils;
 
 import io.gravitee.common.http.HttpHeaders;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class RedirectUtils {
     public static UriComponentsBuilder preBuildLocationHeader(HttpServletRequest request) {
         UriComponentsBuilder builder = UriComponentsBuilder.newInstance();

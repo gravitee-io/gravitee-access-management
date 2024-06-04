@@ -24,7 +24,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -53,15 +52,10 @@ public class CertificateResendNotificationCondition implements ResendNotificatio
         final long remainingDays = lastUpdate.toInstant().isBefore(expirationDate.toInstant()) ? ChronoUnit.DAYS.between(lastUpdate.toInstant(), expirationDate.toInstant()) : 0;
         final int currentIndex = this.certificateExpiryThresholds.size() - (int)this.certificateExpiryThresholds.stream().filter(t -> t < remainingDays).count();
 
-        if (currentIndex < this.certificateExpiryThresholds.size() &&
+        return currentIndex < this.certificateExpiryThresholds.size() &&
                 ChronoUnit.DAYS.between(lastUpdate.toInstant(), Instant.now()) != 0 &&
                 Instant.now().plus(this.certificateExpiryThresholds.get(currentIndex), ChronoUnit.DAYS).isAfter(expirationDate.toInstant()) &&
-                Instant.now().isBefore(expirationDate.toInstant())
-        ) {
-            return true;
-        } else {
-            return false;
-        }
+                Instant.now().isBefore(expirationDate.toInstant());
     }
 
 }

@@ -71,9 +71,9 @@ public class DefaultJWTBuilder implements JWTBuilder {
             if (!JCASupport.isSupported(JWSAlgorithm.PS256)) {
                 signer.getJCAContext().setProvider(BouncyCastleProviderSingleton.getInstance());
             }
-        } else if (key instanceof SecretKey) {
+        } else if (key instanceof SecretKey secretKey) {
             try {
-                signer = new MACSigner((SecretKey) key);
+                signer = new MACSigner(secretKey);
             } catch (KeyLengthException e) {
                 throw new InvalidKeyException(e);
             }

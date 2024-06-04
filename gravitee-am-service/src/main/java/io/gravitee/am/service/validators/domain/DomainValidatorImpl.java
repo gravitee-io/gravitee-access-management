@@ -87,7 +87,7 @@ public class DomainValidatorImpl implements DomainValidator {
                     .getCertificates()
                     .values()
                     .stream()
-                    .anyMatch(cert -> !(cert instanceof String) || (((String) cert).startsWith("-----") || ((String) cert).endsWith("-----")));
+                    .anyMatch(cert -> !(cert instanceof String certificate) || (certificate.startsWith("-----") || certificate.endsWith("-----")));
             if (containsInvalidCertFormat) {
                 return Completable.error(new InvalidDomainException("WebAuthnSettings contains certificates with boundaries"));
             }

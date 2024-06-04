@@ -33,8 +33,8 @@ public class AlertNotificationCommandHandler implements TriggerProvider.OnComman
 
     @Override
     public void doOnCommand(Command command) {
-        if (command instanceof AlertNotificationCommand) {
-            LOGGER.info("Received a notification from alert engine: {}", ((AlertNotificationCommand) command).getMessage());
+        if (command instanceof AlertNotificationCommand alertCommand) {
+            LOGGER.info("Received a notification from alert engine: {}", alertCommand.getMessage());
         } else {
             LOGGER.warn("Unknown alert command: {}", command);
         }

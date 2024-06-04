@@ -19,17 +19,18 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.common.dialect.ScimSearch;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcGroup;
 import io.gravitee.am.repository.jdbc.management.api.spring.group.SpringGroupMemberRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.group.SpringGroupRoleRepository;
 import io.gravitee.am.repository.management.api.GroupRepository;
+import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
@@ -44,10 +45,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-import static io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper.ScimRepository.GROUPS;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.quoted;
-import static reactor.adapter.rxjava.RxJava3Adapter.*;
+import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToMaybe;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -73,11 +76,15 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
             COL_CREATED_AT,
             COL_UPDATED_AT
     );
+    public static final String GROUPS = "groups";
+    public static final String SELECT_FROM = "SELECT * FROM ";
+    public static final String REF_ID = "refId";
+    public static final String REF_TYPE = "refType";
 
-    private final int CONCURRENT_FLATMAP = 1;
+    private final int concurrentFlatmap = 1;
 
-    private String INSERT_STATEMENT;
-    private String UPDATE_STATEMENT;
+    private String insertStatement;
+    private String updateStatement;
 
     @Autowired
     private SpringGroupRoleRepository roleRepository;
@@ -95,38 +102,38 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.INSERT_STATEMENT = createInsertStatement(databaseDialectHelper.toSql(SqlIdentifier.quoted("groups")), columns);
-        this.UPDATE_STATEMENT = createUpdateStatement(databaseDialectHelper.toSql(SqlIdentifier.quoted("groups")), columns, List.of(COL_ID));
+        this.insertStatement = createInsertStatement(databaseDialectHelper.toSql(SqlIdentifier.quoted(GROUPS)), columns);
+        this.updateStatement = createUpdateStatement(databaseDialectHelper.toSql(SqlIdentifier.quoted(GROUPS)), columns, List.of(COL_ID));
     }
 
     @Override
     public Flowable<Group> findByMember(String memberId) {
         LOGGER.debug("findByMember({})", memberId);
 
-        Flowable<JdbcGroup> flow = fluxToFlowable(getTemplate().getDatabaseClient().sql("SELECT * FROM " +
-                databaseDialectHelper.toSql(quoted("groups")) +
+        Flowable<JdbcGroup> flow = fluxToFlowable(getTemplate().getDatabaseClient().sql(SELECT_FROM +
+                databaseDialectHelper.toSql(quoted(GROUPS)) +
                 " g INNER JOIN group_members m ON g.id = m.group_id where m.member = :mid")
                 .bind("mid", memberId)
                 .map((row, rowMetadata) ->rowMapper.read(JdbcGroup.class, row))
                 .all());
 
         return flow.map(this::toEntity)
-                .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), CONCURRENT_FLATMAP);
+                .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), concurrentFlatmap);
     }
 
     @Override
     public Flowable<Group> findAll(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("findAll({}, {})", referenceType, referenceId);
-        Flowable<JdbcGroup> flow = fluxToFlowable(getTemplate().getDatabaseClient().sql("SELECT * FROM " +
-                databaseDialectHelper.toSql(quoted("groups")) +
+        Flowable<JdbcGroup> flow = fluxToFlowable(getTemplate().getDatabaseClient().sql(SELECT_FROM +
+                databaseDialectHelper.toSql(quoted(GROUPS)) +
                 " g WHERE g.reference_id = :refId AND g.reference_type = :refType")
-                .bind("refId", referenceId)
-                .bind("refType", referenceType.name())
+                .bind(REF_ID, referenceId)
+                .bind(REF_TYPE, referenceType.name())
                 .map((row, rowMetadata) ->rowMapper.read(JdbcGroup.class, row))
                 .all());
 
         return flow.map(this::toEntity)
-                .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), CONCURRENT_FLATMAP);
+                .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), concurrentFlatmap);
     }
 
     @Override
@@ -134,24 +141,24 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
         LOGGER.debug("findAll({}, {}, {}, {})", referenceType, referenceId, page, size);
 
         Single<Long> counter = monoToSingle(getTemplate().getDatabaseClient().sql("SELECT count(*) FROM " +
-                databaseDialectHelper.toSql(quoted("groups")) +
+                databaseDialectHelper.toSql(quoted(GROUPS)) +
                 " g WHERE g.reference_id = :refId AND g.reference_type = :refType")
-                .bind("refId", referenceId)
-                .bind("refType", referenceType.name())
+                .bind(REF_ID, referenceId)
+                .bind(REF_TYPE, referenceType.name())
                 .map((row, rowMetadata) ->row.get(0, Long.class))
                 .first());
 
-        return fluxToFlowable(getTemplate().getDatabaseClient().sql("SELECT * FROM " +
-                        databaseDialectHelper.toSql(quoted("groups")) +
+        return fluxToFlowable(getTemplate().getDatabaseClient().sql(SELECT_FROM +
+                        databaseDialectHelper.toSql(quoted(GROUPS)) +
                         " g WHERE g.reference_id = :refId AND g.reference_type = :refType " + databaseDialectHelper.buildPagingClause(page, size))
-                        .bind("refId", referenceId)
-                        .bind("refType", referenceType.name())
+                        .bind(REF_ID, referenceId)
+                        .bind(REF_TYPE, referenceType.name())
                 .map((row, rowMetadata) ->rowMapper.read(JdbcGroup.class, row))
                 .all())
                 .map(this::toEntity)
-                .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), CONCURRENT_FLATMAP)
+                .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), concurrentFlatmap)
                 .toList()
-                .flatMap(content -> counter.map((count) -> new Page<Group>(content, page, count)));
+                .flatMap(content -> counter.map(count -> new Page<>(content, page, count)));
     }
 
     @Override
@@ -159,12 +166,12 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
         LOGGER.debug("search({}, {}, {}, {}, {})", referenceType, referenceId, criteria, page, size);
 
         StringBuilder queryBuilder = new StringBuilder();
-        queryBuilder.append(" FROM " + databaseDialectHelper.toSql(quoted("groups"))  + " WHERE reference_id = :refId AND reference_type = :refType AND ");
-        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, page, size, GROUPS);
+        queryBuilder.append(" FROM " + databaseDialectHelper.toSql(quoted(GROUPS))  + " WHERE reference_id = :refId AND reference_type = :refType AND ");
+        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, page, size, DatabaseDialectHelper.ScimRepository.GROUPS);
 
         // execute query
         org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeSelect = getTemplate().getDatabaseClient().sql(search.getSelectQuery());
-        executeSelect = executeSelect.bind("refType", referenceType.name()).bind("refId", referenceId);
+        executeSelect = executeSelect.bind(REF_TYPE, referenceType.name()).bind(REF_ID, referenceId);
         for (Map.Entry<String, Object> entry : search.getBinding().entrySet()) {
             executeSelect = executeSelect.bind(entry.getKey(), entry.getValue());
         }
@@ -174,7 +181,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
         // execute count to provide total in the Page
         org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeCount = getTemplate().getDatabaseClient().sql(search.getCountQuery());
 
-        executeCount = executeCount.bind("refType", referenceType.name()).bind("refId", referenceId);
+        executeCount = executeCount.bind(REF_TYPE, referenceType.name()).bind(REF_ID, referenceId);
         for (Map.Entry<String, Object> entry : search.getBinding().entrySet()) {
             executeCount = executeCount.bind(entry.getKey(), entry.getValue());
         }
@@ -182,9 +189,9 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
 
         return fluxToFlowable(groupFlux)
                 .map(this::toEntity)
-                .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), CONCURRENT_FLATMAP)
+                .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), concurrentFlatmap)
                 .toList()
-                .flatMap(list -> monoToSingle(groupCount).map(total -> new Page<Group>(list, page, total)));
+                .flatMap(list -> monoToSingle(groupCount).map(total -> new Page<>(list, page, total)));
 
     }
 
@@ -195,24 +202,24 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
             return Flowable.empty();
         }
 
-        Flowable<JdbcGroup> flow = fluxToFlowable(getTemplate().getDatabaseClient().sql("SELECT * FROM " +
-                databaseDialectHelper.toSql(quoted("groups")) +
+        Flowable<JdbcGroup> flow = fluxToFlowable(getTemplate().getDatabaseClient().sql(SELECT_FROM +
+                databaseDialectHelper.toSql(quoted(GROUPS)) +
                 " g WHERE g.id IN (:ids)")
                 .bind("ids", ids)
                 .map((row, rowMetadata) ->rowMapper.read(JdbcGroup.class, row))
                 .all());
 
-        return flow.map(this::toEntity).flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), CONCURRENT_FLATMAP);
+        return flow.map(this::toEntity).flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), concurrentFlatmap);
     }
 
     @Override
     public Maybe<Group> findByName(ReferenceType referenceType, String referenceId, String groupName) {
         LOGGER.debug("findByName({}, {}, {})", referenceType, referenceId, groupName);
-        Maybe<JdbcGroup> maybe = monoToMaybe(getTemplate().getDatabaseClient().sql("SELECT * FROM " +
-                databaseDialectHelper.toSql(quoted("groups")) +
+        Maybe<JdbcGroup> maybe = monoToMaybe(getTemplate().getDatabaseClient().sql(SELECT_FROM +
+                databaseDialectHelper.toSql(quoted(GROUPS)) +
                 " g WHERE g.reference_id = :refId AND g.reference_type = :refType AND g.name = :name")
-                .bind("refId", referenceId)
-                .bind("refType", referenceType.name())
+                .bind(REF_ID, referenceId)
+                .bind(REF_TYPE, referenceType.name())
                 .bind("name", groupName)
                 .map((row, rowMetadata) ->rowMapper.read(JdbcGroup.class, row))
                 .first());
@@ -224,11 +231,11 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
     @Override
     public Maybe<Group> findById(ReferenceType referenceType, String referenceId, String id) {
         LOGGER.debug("findById({}, {}, {})", referenceType, referenceId, id);
-        Maybe<JdbcGroup> maybe = monoToMaybe(getTemplate().getDatabaseClient().sql("SELECT * FROM " +
-                databaseDialectHelper.toSql(quoted("groups")) +
+        Maybe<JdbcGroup> maybe = monoToMaybe(getTemplate().getDatabaseClient().sql(SELECT_FROM +
+                databaseDialectHelper.toSql(quoted(GROUPS)) +
                 " g WHERE g.reference_id = :refId AND g.reference_type = :refType AND g.id = :id")
-                .bind("refId", referenceId)
-                .bind("refType", referenceType.name())
+                .bind(REF_ID, referenceId)
+                .bind(REF_TYPE, referenceType.name())
                 .bind("id", id)
                 .map((row, rowMetadata) ->rowMapper.read(JdbcGroup.class, row))
                 .first());
@@ -239,8 +246,8 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
     @Override
     public Maybe<Group> findById(String id) {
         LOGGER.debug("findById({})", id);
-        Maybe<JdbcGroup> maybe = monoToMaybe(getTemplate().getDatabaseClient().sql("SELECT * FROM " +
-                databaseDialectHelper.toSql(quoted("groups")) +
+        Maybe<JdbcGroup> maybe = monoToMaybe(getTemplate().getDatabaseClient().sql(SELECT_FROM +
+                databaseDialectHelper.toSql(quoted(GROUPS)) +
                 " g WHERE g.id = :id")
                 .bind("id", id)
                 .map((row, rowMetadata) ->rowMapper.read(JdbcGroup.class, row))
@@ -278,7 +285,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
         LOGGER.debug("create Group with id {}", item.getId());
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(insertStatement);
 
         insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_REFERENCE_ID, item.getReferenceId(), String.class);
@@ -293,7 +300,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
         action = persistChildEntities(action, item);
 
         return monoToSingle(action.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle());
+                .flatMap(i -> this.findById(item.getId()).toSingle());
     }
 
     private Mono<Long> persistChildEntities(Mono<Long> actionFlow, Group item) {
@@ -326,7 +333,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
+        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(updateStatement);
 
         update = addQuotedField(update, COL_ID, item.getId(), String.class);
         update = addQuotedField(update, COL_REFERENCE_ID, item.getReferenceId(), String.class);
@@ -341,7 +348,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
         action = persistChildEntities(action, item);
 
         return monoToSingle(action.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle());
+                .flatMap(i -> this.findById(item.getId()).toSingle());
     }
 
     private Mono<Long> deleteChildEntities(String groupId) {
@@ -355,7 +362,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
     public Completable delete(String id) {
         LOGGER.debug("delete Group with id {}", id);
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Long> delete = getTemplate().getDatabaseClient().sql("DELETE FROM " + databaseDialectHelper.toSql(quoted("groups")) + " WHERE id = :id").bind(COL_ID, id).fetch().rowsUpdated();
+        Mono<Long> delete = getTemplate().getDatabaseClient().sql("DELETE FROM " + databaseDialectHelper.toSql(quoted(GROUPS)) + " WHERE id = :id").bind(COL_ID, id).fetch().rowsUpdated();
         return monoToCompletable(delete.then(deleteChildEntities(id)).as(trx::transactional));
     }
 }

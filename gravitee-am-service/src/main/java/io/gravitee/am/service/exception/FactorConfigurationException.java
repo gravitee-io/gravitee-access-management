@@ -23,8 +23,8 @@ import io.gravitee.common.http.HttpStatusCode;
  */
 public class FactorConfigurationException extends AbstractManagementException {
 
-    private String field;
-    private String value;
+    private final String field;
+    private final String value;
 
     public FactorConfigurationException(String field, String value) {
         this.field = field;

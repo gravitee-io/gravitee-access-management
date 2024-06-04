@@ -59,7 +59,7 @@ public class CustomAuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         response.addCookie(jwtAuthenticationCookie);
 
         // Replay the original request.
-        logger.debug("Redirecting to Url: " + redirectUri);
+        logger.debug("Redirecting to Url: {}", redirectUri);
         getRedirectStrategy().sendRedirect(request, response, redirectUri);
     }
 }

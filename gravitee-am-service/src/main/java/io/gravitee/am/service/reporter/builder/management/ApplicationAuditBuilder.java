@@ -45,8 +45,8 @@ public class ApplicationAuditBuilder extends ManagementAuditBuilder<ApplicationA
 
     @Override
     protected Object removeSensitiveData(Object value) {
-        if (value != null && value instanceof Application) {
-            Application safeApp = new Application((Application)value);
+        if (value != null && value instanceof Application application) {
+            Application safeApp = new Application(application);
             if (safeApp.getSettings() != null && safeApp.getSettings().getOauth() != null) {
                 safeApp.getSettings().getOauth().setClientSecret(null);
             }

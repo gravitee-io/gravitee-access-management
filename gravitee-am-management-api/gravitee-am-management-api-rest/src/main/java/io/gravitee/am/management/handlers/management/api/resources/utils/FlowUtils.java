@@ -19,6 +19,8 @@ import io.gravitee.am.management.service.PolicyPluginService;
 import io.gravitee.am.service.model.Flow;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,6 +31,7 @@ import java.util.stream.Stream;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FlowUtils {
     public static Completable checkPoliciesDeployed(PolicyPluginService policyPluginService, List<Flow> flows) {
         return Flowable.fromIterable(flows).concatMapCompletable(flow -> checkPoliciesDeployed(policyPluginService, flow));
@@ -36,8 +39,8 @@ public class FlowUtils {
 
     public static Completable checkPoliciesDeployed(PolicyPluginService policyPluginService, Flow flow) {
         if (flow != null) {
-            var pre = Optional.ofNullable(flow.getPre()).orElseGet(() -> Collections.emptyList());
-            var post = Optional.ofNullable(flow.getPost()).orElseGet(() -> Collections.emptyList());
+            var pre = Optional.ofNullable(flow.getPre()).orElseGet(Collections::emptyList);
+            var post = Optional.ofNullable(flow.getPost()).orElseGet(Collections::emptyList);
             return Flowable.fromStream(Stream.concat(pre.stream(), post.stream())).concatMapCompletable(step -> policyPluginService.checkPluginDeployment(step.getPolicy()));
         }
         return Completable.complete();

@@ -206,8 +206,8 @@ public class DefaultUser implements User {
 
     @Override
     public boolean equals(Object rhs) {
-        if (rhs instanceof User) {
-            return username.equals(((User) rhs).getUsername());
+        if (rhs instanceof User user) {
+            return username.equals(user.getUsername());
         }
         return false;
     }

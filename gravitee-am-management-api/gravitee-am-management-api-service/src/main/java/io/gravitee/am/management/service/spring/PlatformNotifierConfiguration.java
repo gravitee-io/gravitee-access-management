@@ -31,6 +31,7 @@ import org.springframework.context.annotation.Configuration;
 public class PlatformNotifierConfiguration extends NotifierConfiguration {
 
     @Bean
+    @Override
     public NotifierPluginFactory getNotifierPluginFactory() {
         return new PlatformNotifierPluginFactoryImpl();
     }

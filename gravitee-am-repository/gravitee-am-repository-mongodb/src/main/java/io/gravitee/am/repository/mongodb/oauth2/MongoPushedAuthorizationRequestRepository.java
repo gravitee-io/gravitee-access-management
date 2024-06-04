@@ -27,16 +27,18 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
-
-import jakarta.annotation.PostConstruct;
 
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.gt;
+import static com.mongodb.client.model.Filters.or;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -95,9 +97,7 @@ public class MongoPushedAuthorizationRequestRepository extends AbstractOAuth2Mon
 
         if (par.getParameters() != null) {
             Document document = new Document();
-            par.getParameters().forEach((key, value) -> {
-                document.append(key, value);
-            });
+            par.getParameters().forEach(document::append);
             parMongo.setParameters(document);
         }
 

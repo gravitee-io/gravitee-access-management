@@ -42,6 +42,7 @@ public class DefaultIdentityProviderMapper implements IdentityProviderMapper {
         this.mappers = mappers;
     }
 
+    @Override
     public Map<String, Object> apply(AuthenticationContext context, Map<String, Object> userInfo) {
         if (this.mappers == null || this.mappers.isEmpty()) {
             return userInfo;

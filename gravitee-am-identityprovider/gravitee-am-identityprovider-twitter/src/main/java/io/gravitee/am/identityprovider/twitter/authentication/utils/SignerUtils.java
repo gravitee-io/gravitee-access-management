@@ -16,9 +16,12 @@
 package io.gravitee.am.identityprovider.twitter.authentication.utils;
 
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Map;
@@ -32,6 +35,7 @@ import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class SignerUtils {
     private static final String HMAC_SHA1_JAVA_ALGO = "HmacSHA1";
 
@@ -67,14 +71,13 @@ public class SignerUtils {
     }
 
     private static String signRequest(String secret, String tokenSecret, String signatureBaseString) throws Exception {
-        Mac mac = Mac.getInstance("HmacSHA1");
+        Mac mac = Mac.getInstance(HMAC_SHA1_JAVA_ALGO);
         SecretKeySpec signingKey = new SecretKeySpec((percentEncode(secret) + '&' + (tokenSecret == null ? "" : percentEncode(tokenSecret))).getBytes(), HMAC_SHA1_JAVA_ALGO);
         mac.init(signingKey);
-        byte[] text = signatureBaseString.getBytes("UTF-8");
+        byte[] text = signatureBaseString.getBytes(StandardCharsets.UTF_8);
         byte[] signatureBytes = mac.doFinal(text);
         signatureBytes = Base64.getEncoder().encode(signatureBytes);
-        String signature = new String(signatureBytes, "UTF-8");
-        return signature;
+        return new String(signatureBytes, StandardCharsets.UTF_8);
     }
 
     public static String getAuthorizationHeader(String method, String url, Map<String, String> parameters, Map<String, String> oauthParams, OAuthCredentials credentials) {

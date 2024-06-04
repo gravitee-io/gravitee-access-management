@@ -30,7 +30,7 @@ public abstract class OrganizationProviderConfiguration {
 
     private final boolean enabled;
 
-    public OrganizationProviderConfiguration(String type, Environment env, int index) {
+    protected OrganizationProviderConfiguration(String type, Environment env, int index) {
         this.type = type;
         final String propertyBase = getPropertyBase(index);
         this.name = env.getProperty(propertyBase + "name", StringUtils.capitalize(this.type) + " users");

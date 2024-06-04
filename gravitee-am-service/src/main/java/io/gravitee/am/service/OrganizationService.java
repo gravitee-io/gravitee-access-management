@@ -19,12 +19,8 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.model.NewOrganization;
 import io.gravitee.am.service.model.PatchOrganization;
-import io.gravitee.am.service.model.UpdateOrganization;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-
-import java.util.List;
 
 /**
  * @author Florent CHAMFROY (florent.chamfroy at graviteesource.com)
@@ -40,4 +36,3 @@ public interface OrganizationService {
 
     Single<Organization> update(String organizationId, PatchOrganization patchOrganization, User authenticatedUser);
 }
- 

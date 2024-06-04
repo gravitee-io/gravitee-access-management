@@ -102,7 +102,7 @@ public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAu
         return Completable.fromAction(() -> getOpenIDProviderConfiguration(configuration))
                 .doOnError((error) -> LOGGER.warn("Unable to load configuration from '{}' due to : {}", configuration.getWellKnownUri(), error.getMessage()))
                 .retryWhen(retryHandler)
-                .andThen(Completable.fromAction(() -> generateJWTProcessor(configuration)));
+                .andThen(Completable.fromAction(this::generateJWTProcessor));
     }
 
     private void getOpenIDProviderConfiguration(OAuth2GenericIdentityProviderConfiguration configuration) {

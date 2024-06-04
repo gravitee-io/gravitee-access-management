@@ -54,6 +54,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class UserConsentsResource extends AbstractResource {
 
+    public static final String UNKNOWN_ID = "unknown-id";
     @Context
     private ResourceContext resourceContext;
 
@@ -146,7 +147,7 @@ public class UserConsentsResource extends AbstractResource {
     private Single<ApplicationEntity> getClient(String domain, String clientId) {
         return applicationService.findByDomainAndClientId(domain, clientId)
                 .map(ApplicationEntity::new)
-                .defaultIfEmpty(new ApplicationEntity("unknown-id", clientId, "unknown-client-name"))
+                .defaultIfEmpty(new ApplicationEntity(UNKNOWN_ID, clientId, "unknown-client-name"))
                 .cache();
     }
 
@@ -154,12 +155,12 @@ public class UserConsentsResource extends AbstractResource {
         return scopeService.findByDomainAndKey(domain, scopeKey)
                 .switchIfEmpty(scopeService.findByDomainAndKey(domain, getScopeBase(scopeKey)).map(entity -> {
                     // set the right scopeKey since the one returned by the service contains the scope definition without parameter
-                    entity.setId("unknown-id");
+                    entity.setId(UNKNOWN_ID);
                     entity.setKey(scopeKey);
                     return entity;
                 }))
                 .map(ScopeEntity::new)
-                .defaultIfEmpty(new ScopeEntity("unknown-id", scopeKey, "unknown-scope-name", "unknown-scope-description"))
+                .defaultIfEmpty(new ScopeEntity(UNKNOWN_ID, scopeKey, "unknown-scope-name", "unknown-scope-description"))
                 .cache();
     }
 

@@ -32,6 +32,7 @@ public class UpdatePasswordPolicy extends AbstractPasswordPolicy {
 
     private Boolean defaultPolicy;
 
+    @Override
     public PasswordPolicy toPasswordPolicy(ReferenceType referenceType, String referenceId) {
         PasswordPolicy passwordPolicy = super.toPasswordPolicy(referenceType, referenceId);
         passwordPolicy.setDefaultPolicy(defaultPolicy);

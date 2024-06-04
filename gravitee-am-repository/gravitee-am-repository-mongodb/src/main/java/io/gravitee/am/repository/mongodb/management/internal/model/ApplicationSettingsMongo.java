@@ -15,11 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
-import io.gravitee.am.repository.mongodb.management.internal.model.risk.AssessmentSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.risk.RiskAssessmentSettingsMongo;
-import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
-
-import static java.util.Objects.isNull;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

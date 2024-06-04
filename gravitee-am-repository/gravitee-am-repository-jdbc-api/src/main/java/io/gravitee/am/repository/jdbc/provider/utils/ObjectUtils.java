@@ -15,10 +15,14 @@
  */
 package io.gravitee.am.repository.jdbc.provider.utils;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ObjectUtils {
 
     public static Object stringToValue(String string) {

@@ -16,7 +16,6 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.model.SAMLSettings;
-import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

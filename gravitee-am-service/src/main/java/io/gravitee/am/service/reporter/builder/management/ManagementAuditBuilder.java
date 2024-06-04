@@ -31,7 +31,7 @@ public abstract class ManagementAuditBuilder<T> extends AuditBuilder<T> {
     private static final String ADMIN_CLIENT = "admin";
     private static final String SYSTEM = "system";
 
-    public ManagementAuditBuilder() {
+    protected ManagementAuditBuilder() {
         super();
         client(ADMIN_CLIENT);
         setActor(SYSTEM, SYSTEM, SYSTEM, SYSTEM, ReferenceType.PLATFORM, Platform.DEFAULT);

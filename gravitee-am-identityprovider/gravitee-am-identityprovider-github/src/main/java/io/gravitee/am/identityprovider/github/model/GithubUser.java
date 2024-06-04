@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.identityprovider.github.model;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 /**
  * GitHub User claims
  *
@@ -23,6 +26,7 @@ package io.gravitee.am.identityprovider.github.model;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public abstract class GithubUser {
 
     public static final String LOGIN = "login";

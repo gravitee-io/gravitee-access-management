@@ -81,7 +81,7 @@ public abstract class AuditBuilder<T> {
         }
     }
 
-    public AuditBuilder() {
+    protected AuditBuilder() {
         id = RandomString.generate();
         transactionalId = RandomString.generate();
         timestamp = Instant.now();
@@ -202,7 +202,7 @@ public abstract class AuditBuilder<T> {
 
         return null;
     }
-    
+
     protected String getType() {
         return type;
     }

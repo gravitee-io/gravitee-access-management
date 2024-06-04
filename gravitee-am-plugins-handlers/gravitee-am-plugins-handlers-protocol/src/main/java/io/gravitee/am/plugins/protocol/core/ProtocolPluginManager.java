@@ -79,8 +79,8 @@ public class ProtocolPluginManager extends
 
                 context.getAutowireCapableBeanFactory().autowireBean(protocolProvider);
 
-                if (protocolProvider instanceof InitializingBean) {
-                    ((InitializingBean) protocolProvider).afterPropertiesSet();
+                if (protocolProvider instanceof InitializingBean bean) {
+                    bean.afterPropertiesSet();
                 }
                 return protocolProvider;
             } catch (Exception ex) {

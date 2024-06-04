@@ -35,7 +35,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static reactor.adapter.rxjava.RxJava3Adapter.*;
+import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToMaybe;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -65,8 +68,8 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
             COL_KIND
     );
 
-    private String INSERT_STATEMENT;
-    private String UPDATE_STATEMENT;
+    private String insertStatement;
+    private String updateStatement;
 
     protected final LocalDateConverter dateConverter = new LocalDateConverter();
 
@@ -80,9 +83,9 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.INSERT_STATEMENT = createInsertStatement("system_tasks", columns);
+        this.insertStatement = createInsertStatement("system_tasks", columns);
         // the operation_id used in the where clause may be different from the one present into the bean, so we append a suffix
-        this.UPDATE_STATEMENT = createUpdateStatement("system_tasks", columns, List.of(COL_ID, COL_OPERATION_ID))+WHERE_SUFFIX;
+        this.updateStatement = createUpdateStatement("system_tasks", columns, List.of(COL_ID, COL_OPERATION_ID))+WHERE_SUFFIX;
     }
 
     @Override
@@ -97,7 +100,7 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("Create SystemTask with id {}", item.getId());
 
-        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(insertStatement);
         insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_TYPE, item.getType(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_STATUS, item.getStatus(), String.class);
@@ -108,7 +111,7 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
         insertSpec = addQuotedField(insertSpec, COL_KIND, item.getKind(), String.class);
 
         Mono<Long> action = insertSpec.fetch().rowsUpdated();
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
+        return monoToSingle(action).flatMap(i -> this.findById(item.getId()).toSingle());
     }
 
     @Override
@@ -120,7 +123,7 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
     public Single<SystemTask> updateIf(SystemTask item, String operationId) {
         LOGGER.debug("Update SystemTask with id {} and operationId {}", item.getId(), operationId);
 
-        DatabaseClient.GenericExecuteSpec updateSpec = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
+        DatabaseClient.GenericExecuteSpec updateSpec = getTemplate().getDatabaseClient().sql(updateStatement);
 
         updateSpec = addQuotedField(updateSpec, COL_ID, item.getId(), String.class);
         updateSpec = addQuotedField(updateSpec, COL_TYPE, item.getType(), String.class);
@@ -133,7 +136,7 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
         updateSpec = addQuotedField(updateSpec, COL_OPERATION_ID + WHERE_SUFFIX, operationId, String.class);
 
         Mono<Long> action = updateSpec.fetch().rowsUpdated();
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
+        return monoToSingle(action).flatMap(i -> this.findById(item.getId()).toSingle());
     }
 
     @Override

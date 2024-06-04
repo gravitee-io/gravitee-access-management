@@ -23,7 +23,6 @@ import io.gravitee.cockpit.api.command.v1.organization.OrganizationCommand;
 import io.gravitee.cockpit.api.command.v1.organization.OrganizationCommandPayload;
 import io.gravitee.cockpit.api.command.v1.organization.OrganizationReply;
 import io.gravitee.exchange.api.command.CommandHandler;
-import io.gravitee.exchange.api.command.CommandStatus;
 import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

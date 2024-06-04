@@ -26,7 +26,6 @@ import io.gravitee.am.management.service.alerts.handlers.ResolvePropertyCommandH
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.alert.AlertTrigger;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
 import io.gravitee.am.repository.management.api.search.AlertTriggerCriteria;
 import io.gravitee.am.repository.management.api.search.DomainCriteria;
@@ -38,9 +37,6 @@ import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.core.SingleSource;
-import io.reactivex.rxjava3.functions.Function;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;

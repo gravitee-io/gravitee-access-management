@@ -123,18 +123,17 @@ public class AuthenticationFlowContextServiceImpl implements AuthenticationFlowC
         }
 
         @Override
-        public Publisher<?> apply(@NonNull Flowable<Throwable> attempts) throws Exception {
+        public Publisher<?> apply(@NonNull Flowable<Throwable> attempts) {
             return attempts
                     .flatMap((throwable) -> {
                         // perform retry only on Consistency exception
-                        if (throwable instanceof AuthenticationFlowConsistencyException) {
-                            if (++retryCount < maxRetries) {
+                        if (throwable instanceof AuthenticationFlowConsistencyException && ++retryCount < maxRetries) {
                                 // When this Observable calls onNext, the original
                                 // Observable will be retried (i.e. re-subscribed).
-                                return Flowable.timer(retryDelayMillis * (retryCount + 1),
+                                return Flowable.timer((long) retryDelayMillis * (retryCount + 1),
                                         TimeUnit.MILLISECONDS);
                             }
-                        }
+
                         // Max retries hit. Just pass the error along.
                         return Flowable.error(throwable);
                     });

@@ -66,7 +66,7 @@ public class TokenServiceImpl implements TokenService {
     public Single<TotalToken> findTotalTokensByDomain(String domain) {
         LOGGER.debug("Find total tokens by domain: {}", domain);
         return applicationService.findByDomain(domain)
-                .flatMapObservable(pagedApplications -> Observable.fromIterable(pagedApplications))
+                .flatMapObservable(Observable::fromIterable)
                 .flatMapSingle(this::countByClientId)
                 .toList()
                 .flatMap(totalAccessTokens -> {

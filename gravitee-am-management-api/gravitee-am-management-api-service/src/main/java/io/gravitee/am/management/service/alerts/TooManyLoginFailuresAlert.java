@@ -24,9 +24,10 @@ import org.springframework.core.env.Environment;
 
 import java.util.concurrent.TimeUnit;
 
+import static io.gravitee.am.common.event.AlertEventKeys.PROPERTY_AUTHENTICATION_STATUS;
+import static io.gravitee.am.common.event.AlertEventKeys.PROPERTY_DOMAIN;
 import static io.gravitee.am.management.service.alerts.AlertTriggerFactory.AUTHENTICATION_SOURCE;
 import static java.util.Collections.singletonList;
-import static io.gravitee.am.common.event.AlertEventKeys.*;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -45,7 +46,7 @@ public class TooManyLoginFailuresAlert extends Trigger {
 
     protected TooManyLoginFailuresAlert(AlertTrigger alertTrigger, Environment environment) {
 
-        super(alertTrigger.getId(), "Too many login failures detected", DEFAULT_SEVERITY, AUTHENTICATION_SOURCE, alertTrigger.isEnabled());
+        super(alertTrigger.getId(), DEFAULT_NAME, DEFAULT_SEVERITY, AUTHENTICATION_SOURCE, alertTrigger.isEnabled());
         final double threshold = environment.getProperty("alerts.too_many_login_failures.threshold", Double.class, DEFAULT_THRESHOLD);
         final int sampleSize = environment.getProperty("alerts.too_many_login_failures.sampleSize", Integer.class, DEFAULT_SAMPLE_SIZE);
         final int windowSeconds = environment.getProperty("alerts.too_many_login_failures.window", Integer.class, DEFAULT_WINDOW_SECONDS);

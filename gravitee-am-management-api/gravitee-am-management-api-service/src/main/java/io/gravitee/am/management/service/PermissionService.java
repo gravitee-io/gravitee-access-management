@@ -17,18 +17,32 @@ package io.gravitee.am.management.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Group;
+import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
-import io.gravitee.am.repository.utils.RepositoryConstants;
-import io.gravitee.am.service.*;
+import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.EnvironmentService;
+import io.gravitee.am.service.GroupService;
+import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -182,7 +196,7 @@ public class PermissionService {
 
         return groupService.findByMember(user.getId())
                 .map(Group::getId)
-                .toList()
+                .collect(Collectors.toList())
                 .flatMap(userGroupIds -> {
                     MembershipCriteria criteria = new MembershipCriteria();
                     criteria.setUserId(user.getId());

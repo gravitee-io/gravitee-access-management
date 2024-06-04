@@ -34,7 +34,6 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectAuthenticationProvider;
-import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.api.oidc.jwt.KeyResolver;
 import io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.hmac.MACJWKSourceResolver;
 import io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.remote.RemoteJWKSourceResolver;
@@ -279,7 +278,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
         return user;
     }
 
-    protected void generateJWTProcessor(OpenIDConnectIdentityProviderConfiguration configuration) {
+    protected void generateJWTProcessor() {
         if (getConfiguration().isUseIdTokenForUserInfo() || ResponseType.ID_TOKEN.equals(getConfiguration().getResponseType())) {
             if (getConfiguration().getPublicKeyResolver() == null || getConfiguration().getResolverParameter() == null) {
                 throw new IllegalStateException("An public key resolver must be supply to verify the ID Token");

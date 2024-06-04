@@ -20,6 +20,7 @@ import io.gravitee.am.model.UserActivity;
 import io.gravitee.am.model.UserActivity.Type;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 

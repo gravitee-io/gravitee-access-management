@@ -56,7 +56,7 @@ public class PermissionTicketServiceImpl implements PermissionTicketService {
     @Override
     public Single<PermissionTicket> create(List<PermissionRequest> requestedPermission, String domain, String client) {
         //Get list of requested resources (same Id may appear twice with difference scopes)
-        List<String> requestedResourcesIds = requestedPermission.stream().map(PermissionRequest::getResourceId).distinct().collect(Collectors.toList());
+        List<String> requestedResourcesIds = requestedPermission.stream().map(PermissionRequest::getResourceId).distinct().toList();
         //Compare with current registered resource set and return permission ticket if everything's correct.
         return resourceService.findByDomainAndClientAndResources(domain, client, requestedResourcesIds)
                 .toList()

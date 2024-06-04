@@ -21,12 +21,14 @@ import io.gravitee.am.resource.api.mfa.MFALink;
 import io.gravitee.am.resource.api.mfa.MFAResourceProvider;
 import io.gravitee.am.resource.mock.MFAResourceConfiguration;
 import io.reactivex.rxjava3.core.Completable;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class MFAMockProvider implements MFAResourceProvider {
 
     @Autowired
@@ -34,13 +36,13 @@ public class MFAMockProvider implements MFAResourceProvider {
 
     @Override
     public Completable send(MFALink target) {
-        System.out.println("MFAMockProvider: SEND CODE " + configuration.getCode());
+        log.info("MFAMockProvider: SEND CODE {}", configuration.getCode());
         return Completable.complete();
     }
 
     @Override
     public Completable verify(MFAChallenge challenge) {
-        System.out.println("MFAMockProvider: VERIFY CODE " + configuration.getCode());
+        log.info("MFAMockProvider: VERIFY CODE {}", configuration.getCode());
         if (!configuration.getCode().equals(challenge.getCode())) {
             return Completable.error(new InvalidCodeException("Invalid 2FA code"));
         }

@@ -48,6 +48,7 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
 
     private static final Logger logger = LoggerFactory.getLogger(CertificateManagerImpl.class);
     private static final long RETRY_TIMEOUT = 10000;
+    public static final String DELETE_NOTIFICATION_ERROR = "Unable to delete notification acknowledge for certificate {} due to: {}";
     private final ConcurrentMap<String, CertificateProvider> certificateProviders = new ConcurrentHashMap<>();
 
     @Autowired
@@ -135,7 +136,7 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
         logger.info("Management API has received a deploy certificate event for {}", certificateId);
         notifierService.unregisterCertificateExpiration(domainId, certificateId);
         notifierService.deleteCertificateExpirationAcknowledgement(certificateId)
-                .doOnError(err -> logger.warn("Unable to delete notification acknowledge for certificate {} due to: {}", certificateId, err.getMessage()))
+                .doOnError(err -> logger.warn(DELETE_NOTIFICATION_ERROR, certificateId, err.getMessage()))
                 .subscribe();
         deployCertificate(certificateId);
     }
@@ -145,7 +146,7 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
         certificateProviders.remove(certificateId);
         notifierService.unregisterCertificateExpiration(domainId, certificateId);
         notifierService.deleteCertificateExpirationAcknowledgement(certificateId)
-                .doOnError(err -> logger.warn("Unable to delete notification acknowledge for certificate {} due to: {}", certificateId, err.getMessage()))
+                .doOnError(err -> logger.warn(DELETE_NOTIFICATION_ERROR, certificateId, err.getMessage()))
                 .subscribe();
     }
 
@@ -172,7 +173,7 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
             } else {
                 notifierService.unregisterCertificateExpiration(certificate.getDomain(), certificate.getId());
                 notifierService.deleteCertificateExpirationAcknowledgement(certificate.getId())
-                        .doOnError(err -> logger.warn("Unable to delete notification acknowledge for certificate {} due to: {}", certificate.getId(), err.getMessage()))
+                        .doOnError(err -> logger.warn(DELETE_NOTIFICATION_ERROR, certificate.getId(), err.getMessage()))
                         .subscribe();
                 certificateProviders.remove(certificate.getId());
             }

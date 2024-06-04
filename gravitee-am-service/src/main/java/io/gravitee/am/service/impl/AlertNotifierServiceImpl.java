@@ -127,7 +127,7 @@ public class AlertNotifierServiceImpl implements io.gravitee.am.service.AlertNot
         LOGGER.debug("Create alert notifier for {} {}: {}", referenceType, referenceId, newAlertNotifier);
 
         final AlertNotifier alertNotifier = newAlertNotifier.toAlertNotifier(referenceType, referenceId);
-        return this.createInternal(alertNotifier, byUser);
+        return createInternal(alertNotifier);
     }
 
     /**
@@ -169,14 +169,11 @@ public class AlertNotifierServiceImpl implements io.gravitee.am.service.AlertNot
                 .flatMapCompletable(alertNotifier -> deleteInternal(alertNotifier, byUser));
     }
 
-    private Single<AlertNotifier> createInternal(AlertNotifier toCreate, User byUser) {
-
+    private Single<AlertNotifier> createInternal(AlertNotifier toCreate) {
         Date now = new Date();
-
         toCreate.setId(RandomString.generate());
         toCreate.setCreatedAt(now);
         toCreate.setUpdatedAt(now);
-
         return alertNotifierRepository.create(toCreate)
                 .flatMap(updated -> eventService.create(new Event(Type.ALERT_NOTIFIER, new Payload(updated.getId(), updated.getReferenceType(), updated.getReferenceId(), Action.CREATE))).ignoreElement().andThen(Single.just(updated)));
     }

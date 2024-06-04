@@ -83,11 +83,11 @@ public class JdbcAccessPolicyRepository extends AbstractJdbcRepository implement
             COL_CREATED_AT,
             COL_UPDATED_AT);
 
-    private String INSERT_STATEMENT;
+    private String insertStatement;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.INSERT_STATEMENT = createInsertStatement("uma_access_policies", columns);
+        this.insertStatement = createInsertStatement("uma_access_policies", columns);
     }
 
     @Override
@@ -133,7 +133,7 @@ public class JdbcAccessPolicyRepository extends AbstractJdbcRepository implement
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create AccessPolicy with id {}", item.getId());
 
-        DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient().sql(insertStatement);
         sql = addQuotedField(sql, COL_ID, item.getId(), String.class);
         sql = addQuotedField(sql, COL_TYPE, item.getType() == null ? null : item.getType().name(), String.class);
         sql = addQuotedField(sql, COL_ENABLED, item.isEnabled(), Boolean.class);

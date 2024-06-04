@@ -16,6 +16,7 @@
 package io.gravitee.am.service.spring.email;
 
 import io.gravitee.common.util.EnvironmentUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -34,12 +35,13 @@ import static java.util.Objects.isNull;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 @Configuration
 public class EmailConfiguration {
 
     private static final String EMAIL_ALLOW_LIST = "email.allowedfrom[%d]";
-    private final static String EMAIL_PROPERTIES_PREFIX = "email.properties";
-    private final static String MAILAPI_PROPERTIES_PREFIX = "mail.smtp.";
+    private static final String EMAIL_PROPERTIES_PREFIX = "email.properties";
+    private static final String MAILAPI_PROPERTIES_PREFIX = "mail.smtp.";
     private static final String DEFAULT_ALLOWED_FORM = "*@*.*";
 
     private final ConfigurableEnvironment environment;
@@ -60,6 +62,7 @@ public class EmailConfiguration {
         try {
             javaMailSender.setPort(Integer.valueOf(getPort()));
         } catch (Exception e) {
+            log.warn("Cannot configure JavaMail Sender", e);
         }
         javaMailSender.setUsername(getUsername());
         javaMailSender.setPassword(getPassword());

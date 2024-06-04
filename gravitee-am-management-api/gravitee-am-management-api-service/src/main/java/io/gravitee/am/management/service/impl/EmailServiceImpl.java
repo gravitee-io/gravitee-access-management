@@ -151,7 +151,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     }
 
     private Completable refreshDomainDictionaries(Domain domain) {
-        return Completable.fromAction(() -> this.dictionaryProvider.resetDictionaries())
+        return Completable.fromAction(this.dictionaryProvider::resetDictionaries)
                 .andThen(this.i18nDictionaryService.findAll(ReferenceType.DOMAIN, domain.getId())
                 .map(dict -> {
                     this.dictionaryProvider.loadDictionary(dict);

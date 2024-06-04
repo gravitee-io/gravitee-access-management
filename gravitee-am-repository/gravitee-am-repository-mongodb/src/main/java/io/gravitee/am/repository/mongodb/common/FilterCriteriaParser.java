@@ -49,6 +49,7 @@ public final class FilterCriteriaParser {
             add("$");
         }
     };
+    public static final String FOUND_IN_THE_THE_SEARCH_QUERY = "] found in the the search query";
 
     private FilterCriteriaParser() {}
 
@@ -98,31 +99,18 @@ public final class FilterCriteriaParser {
             return null;
         }
 
-        switch (operator) {
-            case "or":
-                return "$or";
-            case "and":
-                return "$and";
-            case "eq":
-                return "$eq";
-            case "ne":
-            case "pr":
-                return "$ne";
-            case "gt":
-                return "$gt";
-            case "ge":
-                return "$gte";
-            case "lt":
-                return "$lt";
-            case "le":
-                return "$lte";
-            case "co":
-            case "sw":
-            case "ew":
-                return "$regex";
-            default:
-                throw new IllegalArgumentException("Invalid operator [" + operator + "] found in the search query");
-        }
+        return switch (operator) {
+            case "or" -> "$or";
+            case "and" -> "$and";
+            case "eq" -> "$eq";
+            case "ne", "pr" -> "$ne";
+            case "gt" -> "$gt";
+            case "ge" -> "$gte";
+            case "lt" -> "$lt";
+            case "le" -> "$lte";
+            case "co", "sw", "ew" -> "$regex";
+            default -> throw new IllegalArgumentException("Invalid operator [" + operator + "] found in the search query");
+        };
     }
 
     private static String convertFilterName(String filterName) {
@@ -130,59 +118,40 @@ public final class FilterCriteriaParser {
             return null;
         }
 
-        if (nameSpecialCharsList.stream().anyMatch(s -> filterName.contains(s))) {
-            throw new IllegalArgumentException("Invalid filter name [" + filterName + "] found in the the search query");
+        if (nameSpecialCharsList.stream().anyMatch(filterName::contains)) {
+            throw new IllegalArgumentException("Invalid filter name [" + filterName + FOUND_IN_THE_THE_SEARCH_QUERY);
         }
 
         if (filterName.length() > MAX_SIZE) {
-            throw new IllegalArgumentException("Invalid filter name [" + filterName + "] found in the the search query");
+            throw new IllegalArgumentException("Invalid filter name [" + filterName + FOUND_IN_THE_THE_SEARCH_QUERY);
         }
 
-        switch (filterName) {
-            case "id":
-                return "_id";
-            case "userName":
-                return "username";
-            case "name.familyName":
-                return "additionalInformation.family_name";
-            case "name.givenName":
-                return "additionalInformation.given_name";
-            case "name.middleName":
-                return "additionalInformation.middle_name";
-            case "meta.created":
-                return "createdAt";
-            case "meta.lastModified":
-                return "updatedAt";
-            case "profileUrl":
-                return "additionalInformation.profile";
-            case "locale":
-                return "additionalInformation.locale";
-            case "timezone":
-                return "additionalInformation.zoneinfo";
-            case "active":
-                return "enabled";
-            case "emails.value":
-                return "email";
-            case "meta.loggedAt":
-                return "loggedAt";
-            case "meta.lastLoginWithCredentials":
-                return "lastLoginWithCredentials";
-            case "meta.lastPasswordReset":
-                return "lastPasswordReset";
-            case "meta.mfaEnrollmentSkippedAt":
-                return "mfaEnrollmentSkippedAt";
-            case "meta.accountLockedAt":
-                return "accountLockedAt";
-            case "meta.accountLockedUntil":
-                return "accountLockedUntil";
-            default:
-                return filterName;
-        }
+        return switch (filterName) {
+            case "id" -> "_id";
+            case "userName" -> "username";
+            case "name.familyName" -> "additionalInformation.family_name";
+            case "name.givenName" -> "additionalInformation.given_name";
+            case "name.middleName" -> "additionalInformation.middle_name";
+            case "meta.created" -> "createdAt";
+            case "meta.lastModified" -> "updatedAt";
+            case "profileUrl" -> "additionalInformation.profile";
+            case "locale" -> "additionalInformation.locale";
+            case "timezone" -> "additionalInformation.zoneinfo";
+            case "active" -> "enabled";
+            case "emails.value" -> "email";
+            case "meta.loggedAt" -> "loggedAt";
+            case "meta.lastLoginWithCredentials" -> "lastLoginWithCredentials";
+            case "meta.lastPasswordReset" -> "lastPasswordReset";
+            case "meta.mfaEnrollmentSkippedAt" -> "mfaEnrollmentSkippedAt";
+            case "meta.accountLockedAt" -> "accountLockedAt";
+            case "meta.accountLockedUntil" -> "accountLockedUntil";
+            default -> filterName;
+        };
     }
 
     private static String convertFilterValue(FilterCriteria criteria, String filterName, String operator) {
         if (valueSpecialCharsList.stream().anyMatch(s -> criteria.getFilterValue().contains(s))) {
-            throw new IllegalArgumentException("Invalid filter value [" + criteria.getFilterValue() + "] found in the the search query");
+            throw new IllegalArgumentException("Invalid filter value [" + criteria.getFilterValue() + FOUND_IN_THE_THE_SEARCH_QUERY);
         }
 
         String filterValue = criteria.getFilterValue();

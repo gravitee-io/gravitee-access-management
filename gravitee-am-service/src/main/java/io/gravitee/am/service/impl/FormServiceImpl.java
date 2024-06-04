@@ -120,7 +120,7 @@ public class FormServiceImpl implements FormService {
 
     @Override
     public Flowable<Form> findByDomainAndClient(String domain, String client) {
-        LOGGER.debug("Find form by domain {} and client", domain, client);
+        LOGGER.debug("Find form by domain {} and client {}", domain, client);
         return findByClient(ReferenceType.DOMAIN, domain, client);
     }
 

@@ -98,13 +98,13 @@ public class PoliciesToFlowsUpgrader implements Upgrader, Ordered {
             epPolicies.getValue().sort((p1, p2) -> p1.getOrder() - p2.getOrder());
             switch (epPolicies.getKey()) {
                 case ROOT:
-                    flows.get(Type.ROOT).setPre(epPolicies.getValue().stream().map(this::createStep).collect(Collectors.toList()));
+                    flows.get(Type.ROOT).setPre(epPolicies.getValue().stream().map(this::createStep).toList());
                     break;
                 case PRE_CONSENT:
-                    flows.get(Type.CONSENT).setPre(epPolicies.getValue().stream().map(this::createStep).collect(Collectors.toList()));
+                    flows.get(Type.CONSENT).setPre(epPolicies.getValue().stream().map(this::createStep).toList());
                     break;
                 case POST_CONSENT:
-                    flows.get(Type.CONSENT).setPost(epPolicies.getValue().stream().map(this::createStep).collect(Collectors.toList()));
+                    flows.get(Type.CONSENT).setPost(epPolicies.getValue().stream().map(this::createStep).toList());
                     break;
                 default:
                     LOGGER.info("ExtensionPoint '{}' shouldn't be present before version 3.5, ignore it", epPolicies.getKey());

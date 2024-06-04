@@ -46,12 +46,15 @@ import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
 @Setter
 public abstract class AbstractDialect implements DialectHelper {
 
+    private static final String STATUS = "status";
+    private static final String SLOT = "slot";
+    private static final String ATTEMPTS = "attempts";
     private String auditsTable;
     private String auditAccessPointsTable;
     private String auditOutcomesTable;
     private String auditEntitiesTable;
 
-    public static final String INNER_JOIN = " INNER JOIN ";
+    private static final String INNER_JOIN = " INNER JOIN ";
     private static final String AUDIT_OUTCOME_JOIN_CONDITION = " o ON a.id = o.audit_id ";
     private static final String AUDIT_ENTITIES_JOIN_CONDITION = " e ON a.id = e.audit_id ";
     private static final String AUDIT_ACCESS_POINT_JOIN_CONDITION = " p ON a.id = p.audit_id ";
@@ -158,7 +161,7 @@ public abstract class AbstractDialect implements DialectHelper {
             outcomeJoin = true;
 
             whereClauseBuilder.append(" AND o.status = :status");
-            bindings.put("status", criteria.status());
+            bindings.put(STATUS, criteria.status());
         }
 
         // event user
@@ -237,7 +240,7 @@ public abstract class AbstractDialect implements DialectHelper {
     }
 
     protected Map<String, Object> toHistogramSlotValue(Row row, RowMetadata rowMetadata) {
-        return Map.of("slot", row.get("slot"), "status", row.get("status"), "attempts", row.get("attempts"));
+        return Map.of(SLOT, row.get(SLOT), STATUS, row.get(STATUS), ATTEMPTS, row.get(ATTEMPTS));
     }
 
 }

@@ -45,7 +45,9 @@ public class UserValidatorImpl implements UserValidator {
     public static final String NAME_LAX_PATTERN = "^[^±!£$%^&*§¡€¢¶•ªº«»\\\\/<>?|=]{0," + DEFAULT_MAX_LENGTH + "}$";
     public static final String USERNAME_PATTERN = "^[^±!£$%^&*§¡€¢¶•ªº«»\\\\/<>?:;|=,]{1," + DEFAULT_MAX_LENGTH + "}$";
 
-    private final Pattern nameStrictPattern, nameLaxPattern, usernamePattern;
+    private final Pattern nameStrictPattern;
+    private final Pattern nameLaxPattern;
+    private final Pattern usernamePattern;
     private final EmailValidator emailValidator;
 
     @Autowired
