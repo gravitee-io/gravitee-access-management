@@ -15,9 +15,11 @@
  */
 package io.gravitee.am.identityprovider.api.oidc;
 
+import com.nimbusds.jose.util.JSONObjectUtils;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 
+import java.util.Map;
 import java.util.Optional;
 
 public class OpenIDConnectConfigurationUtilsTest {
@@ -50,4 +52,23 @@ public class OpenIDConnectConfigurationUtilsTest {
         Optional<String> certId = OpenIDConnectConfigurationUtils.extractCertificateId(cfg);
         Assertions.assertTrue(certId.isEmpty());
     }
+
+    @Test
+    public void shouldNotRemoveCertificateIfClientAuthMethodIsTls () {
+        String cfg = "{\"clientId\":\"aaa\",\"clientSecret\":\"aaa\",\"clientAuthenticationMethod\":\"tls_client_auth\",\"clientAuthenticationCertificate\":\"32d89a07-c7a9-48c4-989a-07c7a9b8c4ef\",\"wellKnownUri\":\"https://localhost:9092/test/oidc/.well-known/openid-configuration\",\"responseType\":\"code\",\"encodeRedirectUri\":false,\"useIdTokenForUserInfo\":false,\"signature\":\"RSA_RS256\",\"publicKeyResolver\":\"GIVEN_KEY\",\"connectTimeout\":10000,\"idleTimeout\":10000,\"maxPoolSize\":200,\"storeOriginalTokens\":false}";
+        String validated = OpenIDConnectConfigurationUtils.sanitizeClientAuthMethod(cfg);
+        Assertions.assertEquals(validated, cfg);
+    }
+
+    @Test
+    public void shouldRemoveCertificateIfClientAuthMethodIsNotTls () throws Exception{
+        String cfg = "{\"clientId\":\"aaa\",\"clientSecret\":\"aaa\",\"clientAuthenticationMethod\":\"client_secret_post\",\"clientAuthenticationCertificate\":\"32d89a07-c7a9-48c4-989a-07c7a9b8c4ef\",\"wellKnownUri\":\"https://localhost:9092/test/oidc/.well-known/openid-configuration\",\"responseType\":\"code\",\"encodeRedirectUri\":false,\"useIdTokenForUserInfo\":false,\"signature\":\"RSA_RS256\",\"publicKeyResolver\":\"GIVEN_KEY\",\"connectTimeout\":10000,\"idleTimeout\":10000,\"maxPoolSize\":200,\"storeOriginalTokens\":false}";
+        String validated = OpenIDConnectConfigurationUtils.sanitizeClientAuthMethod(cfg);
+        Assertions.assertNotEquals(validated, cfg);
+
+        Map<String, Object> map = JSONObjectUtils.parse(validated);
+        Assertions.assertFalse(map.containsKey("clientAuthenticationCertificate"));
+    }
+
+
 }
