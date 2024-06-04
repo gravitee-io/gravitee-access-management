@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.api.oidc;
 
 import com.nimbusds.jose.util.JSONObjectUtils;
+import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,6 +39,23 @@ public final class OpenIDConnectConfigurationUtils {
         } catch (ParseException e) {
             log.warn("Problem at parsing certificate configuration, msg={}", e.getMessage());
             return Optional.empty();
+        }
+    }
+
+    public static String sanitizeClientAuthMethod(String configuration) {
+        if (configuration == null) {
+            return configuration;
+        }
+        try {
+            Map<String, Object> cfg = JSONObjectUtils.parse(configuration);
+            String authMethod = JSONObjectUtils.getString(cfg, "clientAuthenticationMethod");
+            if (!ClientAuthenticationMethod.TLS_CLIENT_AUTH.equals(authMethod)) {
+                cfg.remove("clientAuthenticationCertificate");
+            }
+            return JSONObjectUtils.toJSONString(cfg);
+        } catch (ParseException e) {
+            log.warn("Problem at parsing OpenId configuration, msg={}", e.getMessage());
+            return configuration;
         }
     }
 }
