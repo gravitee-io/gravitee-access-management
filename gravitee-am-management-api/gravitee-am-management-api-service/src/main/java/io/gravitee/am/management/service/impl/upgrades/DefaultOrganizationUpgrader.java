@@ -17,10 +17,19 @@ package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.impl.upgrades.helpers.MembershipHelper;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.Organization;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.DefaultRole;
-import io.gravitee.am.service.*;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.OrganizationService;
+import io.gravitee.am.service.OrganizationUserService;
+import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.PatchOrganization;
 import org.slf4j.Logger;
@@ -42,10 +51,9 @@ import java.util.Optional;
 public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultOrganizationUpgrader.class);
-    private static final String ADMIN_DOMAIN = "admin";
+    private static final String ADMIN = "admin";
     private static final int PAGE_SIZE = 10;
-    public static String ADMIN_USERNAME = "admin";
-    public static String DEFAULT_INLINE_IDP_CONFIG = "{\"users\":[{\"firstname\":\"Administrator\",\"lastname\":\"Administrator\",\"username\":\"" + ADMIN_USERNAME + "\",\"password\":\"adminadmin\"}]}";
+    public static String DEFAULT_INLINE_IDP_CONFIG = "{\"users\":[{\"firstname\":\"Administrator\",\"lastname\":\"Administrator\",\"username\":\"" + ADMIN + "\",\"password\":\"adminadmin\"}]}";
 
     private final OrganizationService organizationService;
 
@@ -100,7 +108,7 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
                 logger.info("Default organization successfully created");
 
                 // check if old domain admin exists
-                Domain adminDomain = domainService.findById(ADMIN_DOMAIN).blockingGet();
+                Domain adminDomain = domainService.findById(ADMIN).blockingGet();
                 if (adminDomain != null) {
                     // update organization identities
                     PatchOrganization patchOrganization = new PatchOrganization();
@@ -119,7 +127,7 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
                     } while (userPage.getData().size() == PAGE_SIZE);
 
                     // then delete the domain
-                    domainService.delete(ADMIN_DOMAIN).blockingAwait();
+                    domainService.delete(ADMIN).blockingAwait();
                 } else if (useDefaultAdmin) {
                     // Need to create an inline provider and an admin user for this newly created default organization.
                     IdentityProvider inlineProvider = createInlineProvider();
@@ -151,10 +159,10 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
                 // If inline idp doesn't exist or is not enabled, it is probably an administrator choice. So do not go further.
                 if (inlineIdp != null) {
                     // If inline idp doesn't have "admin" user in its configuration, it is probably an administrator choice. So do not go further.
-                    if (inlineIdp.getConfiguration().contains(",\"username\":\"" + ADMIN_USERNAME + "\",") && inlineIdp.getRoleMapper().isEmpty()) {
+                    if (inlineIdp.getConfiguration().contains(",\"username\":\"" + ADMIN + "\",") && inlineIdp.getRoleMapper().isEmpty()) {
 
                         // Check the user admin exists.
-                        User adminUser = userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, Organization.DEFAULT, ADMIN_USERNAME, inlineIdp.getId()).blockingGet();
+                        User adminUser = userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, Organization.DEFAULT, ADMIN, inlineIdp.getId()).blockingGet();
 
                         if (adminUser == null) {
                             // Create the admin user with organization primary owner role on the default organization.
@@ -197,7 +205,7 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
 
         final User newUser = new User();
         newUser.setInternal(false);
-        newUser.setUsername(ADMIN_USERNAME);
+        newUser.setUsername(ADMIN);
         newUser.setSource(inlineIdp.getId());
         newUser.setReferenceType(ReferenceType.ORGANIZATION);
         newUser.setReferenceId(Organization.DEFAULT);

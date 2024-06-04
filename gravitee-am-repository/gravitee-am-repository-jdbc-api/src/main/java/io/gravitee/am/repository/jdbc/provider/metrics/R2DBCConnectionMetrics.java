@@ -37,11 +37,11 @@ public class R2DBCConnectionMetrics {
 
     public void register(ConnectionPool pool) {
         pool.getMetrics().ifPresent(metrics -> {
-            Gauge.builder("r2dbc_pool_acquiredSize", () -> metrics.acquiredSize()).tags(tags).register(registry);
-            Gauge.builder("r2dbc_pool_allocatedSize", () -> metrics.allocatedSize()).tags(tags).register(registry);
-            Gauge.builder("r2dbc_pool_pendingAcquireSize", () -> metrics.pendingAcquireSize()).tags(tags).register(registry);
-            Gauge.builder("r2dbc_pool_idleSize", () -> metrics.idleSize()).tags(tags).register(registry);
-            Gauge.builder("r2dbc_pool_maxAllocatedSize", () -> metrics.getMaxAllocatedSize()).tags(tags).register(registry);
+            Gauge.builder("r2dbc_pool_acquiredSize", metrics::acquiredSize).tags(tags).register(registry);
+            Gauge.builder("r2dbc_pool_allocatedSize", metrics::allocatedSize).tags(tags).register(registry);
+            Gauge.builder("r2dbc_pool_pendingAcquireSize", metrics::pendingAcquireSize).tags(tags).register(registry);
+            Gauge.builder("r2dbc_pool_idleSize", metrics::idleSize).tags(tags).register(registry);
+            Gauge.builder("r2dbc_pool_maxAllocatedSize", metrics::getMaxAllocatedSize).tags(tags).register(registry);
         });
     }
 }

@@ -23,15 +23,22 @@ import io.gravitee.am.model.alert.AlertTriggerType;
 import io.gravitee.am.repository.management.api.AlertTriggerRepository;
 import io.gravitee.am.repository.management.api.search.AlertTriggerCriteria;
 import io.gravitee.am.repository.mongodb.management.internal.model.AlertTriggerMongo;
-import io.reactivex.rxjava3.core.*;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
+import jakarta.annotation.PostConstruct;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.in;
+import static com.mongodb.client.model.Filters.or;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)

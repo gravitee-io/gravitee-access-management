@@ -76,13 +76,13 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
             COL_CREATED_AT,
             COL_UPDATED_AT
     );
-    private String INSERT_STATEMENT;
-    private String UPDATE_STATEMENT;
+    private String insertStatement;
+    private String updateStatement;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.INSERT_STATEMENT = createInsertStatement("reporters", columns);
-        this.UPDATE_STATEMENT = createUpdateStatement("reporters", columns, List.of(COL_ID));
+        this.insertStatement = createInsertStatement("reporters", columns);
+        this.updateStatement = createUpdateStatement("reporters", columns, List.of(COL_ID));
     }
 
     @Override
@@ -113,7 +113,7 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(insertStatement);
 
         insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_DOMAIN, item.getDomain(), String.class);
@@ -136,7 +136,7 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
         LOGGER.debug("Update reporter with id '{}'", item.getId());
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec updateSpec = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
+        DatabaseClient.GenericExecuteSpec updateSpec = getTemplate().getDatabaseClient().sql(updateStatement);
 
         updateSpec = addQuotedField(updateSpec, COL_ID, item.getId(), String.class);
         updateSpec = addQuotedField(updateSpec, COL_DOMAIN, item.getDomain(), String.class);

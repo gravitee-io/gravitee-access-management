@@ -26,6 +26,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  */
 public class MsSqlHelper extends AbstractDialectHelper {
 
+    public static final String SQL_LIKE = " LIKE ";
     // used to escape keyword in SQLServer... in v1.1.0 of SpringData R2dbc,
     // the toSql() method present into AbstractDialectHelper was enough
     // but after the upgrade to 1.4.0, we have to do it in that way.
@@ -65,15 +66,15 @@ public class MsSqlHelper extends AbstractDialectHelper {
                 queryBuilder.append(path[0]+"_"+path[1] +" IS NOT NULL ");
                 break;
             case "co":
-                queryBuilder.append(path[0]+"_"+path[1] +" LIKE " + bindValueName + "");
+                queryBuilder.append(path[0]+"_"+path[1] + SQL_LIKE + bindValueName + "");
                 search.addBinding(bindValueKey, "%" + value + "%");
                 break;
             case "sw":
-                queryBuilder.append(path[0]+"_"+path[1] +" LIKE " + bindValueName + "");
+                queryBuilder.append(path[0]+"_"+path[1] + SQL_LIKE + bindValueName + "");
                 search.addBinding(bindValueKey, value + "%");
                 break;
             case "ew":
-                queryBuilder.append(path[0]+"_"+path[1] +" LIKE " + bindValueName + "");
+                queryBuilder.append(path[0]+"_"+path[1] + SQL_LIKE + bindValueName + "");
                 search.addBinding(bindValueKey, "%" + value);
                 break;
             default:

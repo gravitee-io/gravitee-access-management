@@ -53,6 +53,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -80,6 +81,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     // For postgres table name length is 63 (MySQL : 64 / SQL Server : 128) but the domain is prefixed by 'idp_users_' of length 10
     // set to 50 in order to also check the length of the ID field (max 64 with prefix of 12)
     private static final int TABLE_NAME_MAX_LENGTH = 50;
+    public static final String PASSWORD = "password";
 
     private final ConcurrentMap<String, UserProvider> userProviders = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, IdentityProvider> identityProviders = new ConcurrentHashMap<>();
@@ -124,12 +126,10 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
 
     @Override
     public void onEvent(Event<IdentityProviderEvent, Payload> event) {
-        switch (event.type()) {
-            case UNDEPLOY:
-                removeUserProvider(event.content().getId());
-                break;
-            default:
-                logger.debug("{} event received for IdentityProvider {}, ignore it as it will be loaded on demand", event.type(), event.content().getId());
+        if (Objects.requireNonNull(event.type()) == IdentityProviderEvent.UNDEPLOY) {
+            removeUserProvider(event.content().getId());
+        } else {
+            logger.debug("{} event received for IdentityProvider {}, ignore it as it will be loaded on demand", event.type(), event.content().getId());
         }
     }
 
@@ -158,15 +158,13 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             String type = environment.getProperty("security.providers[" + idx + "].type");
             found = (type != null);
             if (found) {
-                switch (type) {
-                    case MEMORY_TYPE:
-                        InlineOrganizationProviderConfiguration providerConfig = new InlineOrganizationProviderConfiguration(roleService, environment, idx);
-                        if (providerConfig.isEnabled()) {
-                            providers.add(providerConfig.buildIdentityProvider());
-                        }
-                        break;
-                    default:
-                        logger.warn("Unsupported provider with type '{}'", type);
+                if (type.equals(MEMORY_TYPE)) {
+                    InlineOrganizationProviderConfiguration providerConfig = new InlineOrganizationProviderConfiguration(roleService, environment, idx);
+                    if (providerConfig.isEnabled()) {
+                        providers.add(providerConfig.buildIdentityProvider());
+                    }
+                } else {
+                    logger.warn("Unsupported provider with type '{}'", type);
                 }
             }
             idx++;

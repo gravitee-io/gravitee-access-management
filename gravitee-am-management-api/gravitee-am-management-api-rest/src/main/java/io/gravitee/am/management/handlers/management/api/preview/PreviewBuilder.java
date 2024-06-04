@@ -51,7 +51,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
@@ -282,7 +281,7 @@ public class PreviewBuilder {
                 break;
 
             case MFA_RECOVERY_CODE:
-                variables.put(TEMPLATE_KEY_RECOVERY_CODES_KEY, IntStream.range(0, 6).mapToObj(i -> UUID.randomUUID().toString()).collect(Collectors.toList()));
+                variables.put(TEMPLATE_KEY_RECOVERY_CODES_KEY, IntStream.range(0, 6).mapToObj(i -> UUID.randomUUID().toString()).toList());
                 variables.put(TEMPLATE_KEY_RECOVERY_CODES_URL_KEY, EMPTY_STRING);
                 break;
 

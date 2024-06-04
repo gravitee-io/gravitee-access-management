@@ -28,6 +28,7 @@ public abstract class SocialIdentityProvider<
         P extends AuthenticationProvider
         > extends IdentityProvider<C, P> {
 
+    @Override
     public boolean external() {
         return true;
     }

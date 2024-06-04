@@ -33,7 +33,10 @@ import java.time.ZoneOffset;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
-import static reactor.adapter.rxjava.RxJava3Adapter.*;
+import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToMaybe;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -43,7 +46,6 @@ import static reactor.adapter.rxjava.RxJava3Adapter.*;
 public class JdbcUserNotificationRepository extends AbstractJdbcRepository implements UserNotificationRepository {
 
     public static final String COL_ID = "id";
-    public static final String COL_TYPE = "type";
     public static final String COL_STATUS = "status";
     public static final String COL_AUDIENCE = "audience";
     public static final String COL_CREATED_AT = "created_at";
@@ -102,7 +104,7 @@ public class JdbcUserNotificationRepository extends AbstractJdbcRepository imple
     public Completable updateNotificationStatus(String id, UserNotificationStatus status) {
         return monoToCompletable(getTemplate().getDatabaseClient().sql("UPDATE user_notifications SET updated_at = :update, status = :status WHERE id = :id")
                 .bind("update", LocalDateTime.now(ZoneOffset.UTC))
-                .bind("status", status.name())
+                .bind(COL_STATUS, status.name())
                 .bind("id", id).fetch().rowsUpdated());
     }
 }

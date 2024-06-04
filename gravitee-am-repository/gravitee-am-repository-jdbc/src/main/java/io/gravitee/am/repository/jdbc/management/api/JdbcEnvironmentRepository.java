@@ -17,7 +17,6 @@ package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Environment;
-import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcEnvironment;
 import io.gravitee.am.repository.jdbc.management.api.spring.environment.SpringEnvironmentDomainRestrictionRepository;
@@ -39,8 +38,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
-import static reactor.adapter.rxjava.RxJava3Adapter.*;
+import static reactor.adapter.rxjava.RxJava3Adapter.maybeToMono;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -49,6 +49,7 @@ import static reactor.adapter.rxjava.RxJava3Adapter.*;
 @Repository
 public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements EnvironmentRepository {
 
+    public static final String ENVIRONMENT_ID = "environment_id";
     @Autowired
     private SpringEnvironmentRepository environmentRepository;
     @Autowired
@@ -73,7 +74,7 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
                 .flatMapSingle(this::retrieveDomainRestrictions)
                 .flatMapSingle(this::retrieveHrids);
 
-        return result.doOnError((error) -> LOGGER.error("unable to retrieve all environments", error));
+        return result.doOnError(error -> LOGGER.error("unable to retrieve all environments", error));
     }
 
     @Override
@@ -202,7 +203,7 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
                             })
                             .concatMap(dbDomainRestriction -> getTemplate().getDatabaseClient()
                                     .sql("INSERT INTO environment_domain_restrictions(environment_id, domain_restriction) VALUES (:environment_id, :domain_restriction)")
-                                    .bind("environment_id", dbDomainRestriction.getEnvironmentId())
+                                    .bind(ENVIRONMENT_ID, dbDomainRestriction.getEnvironmentId())
                                     .bind("domain_restriction", dbDomainRestriction.getDomainRestriction())
                                     .fetch().rowsUpdated()).then())
                     .ignoreElements();
@@ -233,7 +234,7 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
                     concatMap(hrid ->
                             getTemplate().getDatabaseClient()
                                     .sql("INSERT INTO environment_hrids(environment_id, hrid, pos) VALUES (:environment_id, :hrid, :pos)")
-                                    .bind("environment_id", hrid.getEnvironmentId())
+                                    .bind(ENVIRONMENT_ID, hrid.getEnvironmentId())
                                     .bind("hrid", hrid.getHrid())
                                     .bind("pos", hrid.getPos())
                                     .fetch().rowsUpdated().then()
@@ -245,10 +246,10 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
     }
 
     private Mono<Void> deleteDomainRestrictions(String environmentId) {
-        return getTemplate().delete(JdbcEnvironment.DomainRestriction.class).matching(Query.query(where("environment_id").is(environmentId))).all().then();
+        return getTemplate().delete(JdbcEnvironment.DomainRestriction.class).matching(Query.query(where(ENVIRONMENT_ID).is(environmentId))).all().then();
     }
 
     private Mono<Void> deleteHrids(String environmentId) {
-        return getTemplate().delete(JdbcEnvironment.Hrid.class).matching(Query.query(where("environment_id").is(environmentId))).all().then();
+        return getTemplate().delete(JdbcEnvironment.Hrid.class).matching(Query.query(where(ENVIRONMENT_ID).is(environmentId))).all().then();
     }
 }

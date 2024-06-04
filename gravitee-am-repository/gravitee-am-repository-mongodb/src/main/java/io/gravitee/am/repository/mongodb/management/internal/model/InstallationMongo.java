@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)

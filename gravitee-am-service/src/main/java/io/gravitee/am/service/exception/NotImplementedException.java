@@ -23,7 +23,7 @@ import io.gravitee.common.http.HttpStatusCode;
  */
 public class NotImplementedException extends AbstractManagementException {
 
-    private final static String MESSAGE = "Not Implemented";
+    private static final String MESSAGE = "Not Implemented";
 
     public NotImplementedException() {
         super(MESSAGE);

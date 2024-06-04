@@ -21,7 +21,13 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.management.service.AnalyticsService;
 import io.gravitee.am.management.service.AuditService;
-import io.gravitee.am.model.analytics.*;
+import io.gravitee.am.model.analytics.AnalyticsCountResponse;
+import io.gravitee.am.model.analytics.AnalyticsGroupByResponse;
+import io.gravitee.am.model.analytics.AnalyticsHistogramResponse;
+import io.gravitee.am.model.analytics.AnalyticsQuery;
+import io.gravitee.am.model.analytics.AnalyticsResponse;
+import io.gravitee.am.model.analytics.Bucket;
+import io.gravitee.am.model.analytics.Timestamp;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.UserService;
@@ -107,10 +113,9 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 queryBuilder.field("accessPoint.id");
                 return executeGroupBy(query.getDomain(), queryBuilder.build(), query.getType())
                         .flatMap(analyticsResponse -> fetchMetadata((AnalyticsGroupByResponse) analyticsResponse));
-            case Field.USER_STATUS:
-            case Field.USER_REGISTRATION:
+            case Field.USER_STATUS, Field.USER_REGISTRATION:
                 return userService.statistics(query).map(AnalyticsGroupByResponse::new);
-            default :
+            default:
                 return executeGroupBy(query.getDomain(), queryBuilder.build(), query.getType());
         }
     }
@@ -148,15 +153,13 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         queryBuilder.to(query.getTo());
         queryBuilder.status(Status.SUCCESS);
 
-        switch (query.getField()) {
-            case Field.APPLICATION:
-                return applicationService.countByDomain(query.getDomain()).map(AnalyticsCountResponse::new);
-            case Field.USER:
-                return userService.countByDomain(query.getDomain()).map(AnalyticsCountResponse::new);
-            default :
-                return auditService.aggregate(query.getDomain(), queryBuilder.build(), query.getType())
-                        .map(values -> values.values().isEmpty() ? new AnalyticsCountResponse(0L) : new AnalyticsCountResponse((Long) values.values().iterator().next()));
-        }
+        return switch (query.getField()) {
+            case Field.APPLICATION ->
+                    applicationService.countByDomain(query.getDomain()).map(AnalyticsCountResponse::new);
+            case Field.USER -> userService.countByDomain(query.getDomain()).map(AnalyticsCountResponse::new);
+            default -> auditService.aggregate(query.getDomain(), queryBuilder.build(), query.getType())
+                    .map(values -> values.values().isEmpty() ? new AnalyticsCountResponse(0L) : new AnalyticsCountResponse((Long) values.values().iterator().next()));
+        };
     }
 
     private Single<AnalyticsResponse> executeGroupBy(String domain, AuditReportableCriteria criteria, Type type) {

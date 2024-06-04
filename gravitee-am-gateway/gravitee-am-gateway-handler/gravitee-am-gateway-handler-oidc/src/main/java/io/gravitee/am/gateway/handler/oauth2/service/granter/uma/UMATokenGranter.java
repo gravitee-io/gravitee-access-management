@@ -56,11 +56,23 @@ import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.JsonObject;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.gravitee.am.common.oauth2.Parameters.*;
+import static io.gravitee.am.common.oauth2.Parameters.CLAIM_TOKEN;
+import static io.gravitee.am.common.oauth2.Parameters.CLAIM_TOKEN_FORMAT;
+import static io.gravitee.am.common.oauth2.Parameters.PCT;
+import static io.gravitee.am.common.oauth2.Parameters.RPT;
+import static io.gravitee.am.common.oauth2.Parameters.TICKET;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
 
 /**
@@ -225,7 +237,7 @@ public class UMATokenGranter extends AbstractTokenGranter {
                 .flatMap(permissionRequests -> {
                     List<String> resourceIds = permissionRequests.stream().map(PermissionRequest::getResourceId).collect(Collectors.toList());
                     return resourceService.findByResources(resourceIds)
-                            .toList()
+                            .collect(Collectors.toList())
                             .flatMap(resourceSet -> this.checkRequestedScopesMatchResource(tokenRequest, resourceSet))
                             .flatMap(resourceMap -> this.resolveScopeRequestAssessment(tokenRequest, permissionRequests, resourceMap))
                             .flatMap(resolvedPermissionRequests -> this.extendPermissionWithRPT(tokenRequest, client, endUser, resolvedPermissionRequests))

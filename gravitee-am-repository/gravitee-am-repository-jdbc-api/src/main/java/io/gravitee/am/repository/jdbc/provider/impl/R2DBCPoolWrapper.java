@@ -81,12 +81,11 @@ public class R2DBCPoolWrapper implements ClientWrapper<ConnectionFactory>, Conne
 
     void shutdown() {
         this.reference.set(0);
-        if (this.connectionFactory != null && connectionFactory instanceof ConnectionPool) {
-            if (!((ConnectionPool) connectionFactory).isDisposed()) {
+        if (this.connectionFactory != null && connectionFactory instanceof ConnectionPool pool && !pool.isDisposed()) {
                 // dispose is a blocking call, use the non blocking one to avoid error
-                ((ConnectionPool) connectionFactory).disposeLater().subscribe();
+                pool.disposeLater().subscribe();
             }
-        }
+
     }
 
     public String getJdbcDriver() {

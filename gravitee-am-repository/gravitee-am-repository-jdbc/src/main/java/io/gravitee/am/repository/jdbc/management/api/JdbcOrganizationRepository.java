@@ -39,7 +39,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static reactor.adapter.rxjava.RxJava3Adapter.*;
+import static reactor.adapter.rxjava.RxJava3Adapter.maybeToMono;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -48,6 +50,7 @@ import static reactor.adapter.rxjava.RxJava3Adapter.*;
 @Component
 public class JdbcOrganizationRepository extends AbstractJdbcRepository implements OrganizationRepository {
 
+    public static final String ORGANIZATION_ID = "organization_id";
     @Autowired
     private SpringOrganizationRepository organizationRepository;
     @Autowired
@@ -189,7 +192,7 @@ public class JdbcOrganizationRepository extends AbstractJdbcRepository implement
                     })
                     .concatMap(dbIdentity ->  getTemplate().getDatabaseClient()
                             .sql("INSERT INTO organization_identities(organization_id, identity_id) VALUES (:organization_id, :identity_id)")
-                            .bind("organization_id", dbIdentity.getOrganizationId())
+                            .bind(ORGANIZATION_ID, dbIdentity.getOrganizationId())
                             .bind("identity_id", dbIdentity.getIdentity())
                             .fetch().rowsUpdated().then()))
                     .ignoreElements();
@@ -218,7 +221,7 @@ public class JdbcOrganizationRepository extends AbstractJdbcRepository implement
                     })
                     .concatMap(dbDomainRestriction -> getTemplate().getDatabaseClient()
                             .sql("INSERT INTO organization_domain_restrictions(organization_id, domain_restriction) VALUES (:organization_id, :domain_restriction)")
-                            .bind("organization_id", dbDomainRestriction.getOrganizationId())
+                            .bind(ORGANIZATION_ID, dbDomainRestriction.getOrganizationId())
                             .bind("domain_restriction", dbDomainRestriction.getDomainRestriction())
                             .fetch().rowsUpdated().then()))
                     .ignoreElements();
@@ -248,7 +251,7 @@ public class JdbcOrganizationRepository extends AbstractJdbcRepository implement
             return delete.thenMany(Flux.fromIterable(dbHrids)).
                     concatMap(hrid -> getTemplate().getDatabaseClient()
                             .sql("INSERT INTO organization_hrids(organization_id, hrid, pos) VALUES (:organization_id, :hrid, :pos)")
-                            .bind("organization_id", hrid.getOrganizationId())
+                            .bind(ORGANIZATION_ID, hrid.getOrganizationId())
                             .bind("hrid", hrid.getHrid())
                             .bind("pos", hrid.getPos())
                             .fetch().rowsUpdated().then())
@@ -259,14 +262,14 @@ public class JdbcOrganizationRepository extends AbstractJdbcRepository implement
     }
 
     private Mono<Void> deleteIdentities(String organizationId) {
-        return getTemplate().delete(JdbcOrganization.Identity.class).matching(Query.query(where("organization_id").is(organizationId))).all().then();
+        return getTemplate().delete(JdbcOrganization.Identity.class).matching(Query.query(where(ORGANIZATION_ID).is(organizationId))).all().then();
     }
 
     private Mono<Void> deleteDomainRestrictions(String organizationId) {
-        return getTemplate().delete(JdbcOrganization.DomainRestriction.class).matching(Query.query(where("organization_id").is(organizationId))).all().then();
+        return getTemplate().delete(JdbcOrganization.DomainRestriction.class).matching(Query.query(where(ORGANIZATION_ID).is(organizationId))).all().then();
     }
 
     private Mono<Void> deleteHrids(String organizationId) {
-        return getTemplate().delete(JdbcOrganization.Hrid.class).matching(Query.query(where("organization_id").is(organizationId))).all().then();
+        return getTemplate().delete(JdbcOrganization.Hrid.class).matching(Query.query(where(ORGANIZATION_ID).is(organizationId))).all().then();
     }
 }

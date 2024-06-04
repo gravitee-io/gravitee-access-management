@@ -21,6 +21,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 /**
  * Facebook User claims
  *
@@ -29,6 +32,7 @@ import java.util.stream.Stream;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public abstract class FacebookUser {
 
     public static final String ID = "id";

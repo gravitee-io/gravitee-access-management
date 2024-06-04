@@ -79,7 +79,8 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
         createOrUpdateIndex();
     }
 
-    public UserProvider stop() throws Exception {
+    @Override
+    public UserProvider stop() {
         if (this.clientWrapper != null) {
             this.clientWrapper.releaseClient();
         }

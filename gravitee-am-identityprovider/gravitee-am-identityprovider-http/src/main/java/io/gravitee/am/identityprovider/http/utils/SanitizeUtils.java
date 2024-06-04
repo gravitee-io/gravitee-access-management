@@ -18,6 +18,8 @@ package io.gravitee.am.identityprovider.http.utils;
 import io.gravitee.common.http.HttpHeader;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +28,7 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class SanitizeUtils {
 
     /**

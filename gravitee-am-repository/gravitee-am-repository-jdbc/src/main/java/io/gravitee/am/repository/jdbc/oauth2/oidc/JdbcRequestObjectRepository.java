@@ -27,7 +27,6 @@ import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
-import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 

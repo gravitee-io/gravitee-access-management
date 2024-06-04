@@ -16,7 +16,6 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.model.ApplicationFactorSettings;
-import io.gravitee.am.model.StepUpAuthenticationSettings;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

@@ -18,10 +18,12 @@ package io.gravitee.am.management.service.permissions;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.Role;
 import io.gravitee.am.model.permissions.Permission;
 
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 

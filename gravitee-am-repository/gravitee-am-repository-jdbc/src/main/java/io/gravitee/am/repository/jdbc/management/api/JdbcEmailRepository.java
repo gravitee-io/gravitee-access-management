@@ -75,8 +75,8 @@ public class JdbcEmailRepository extends AbstractJdbcRepository implements Email
             COL_UPDATED_AT
     );
 
-    private String INSERT_STATEMENT;
-    private String UPDATE_STATEMENT;
+    private String insertStatement;
+    private String updateStatement;
 
     @Autowired
     private SpringEmailRepository emailRepository;
@@ -93,8 +93,8 @@ public class JdbcEmailRepository extends AbstractJdbcRepository implements Email
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.INSERT_STATEMENT = createInsertStatement("emails", columns);
-        this.UPDATE_STATEMENT = createUpdateStatement("emails", columns, List.of(COL_ID));
+        this.insertStatement = createInsertStatement("emails", columns);
+        this.updateStatement = createUpdateStatement("emails", columns, List.of(COL_ID));
     }
 
     @Override
@@ -161,7 +161,7 @@ public class JdbcEmailRepository extends AbstractJdbcRepository implements Email
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create email with id {}", item.getId());
 
-        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(insertStatement);
 
         insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_ENABLED, item.isEnabled(), Boolean.class);
@@ -185,7 +185,7 @@ public class JdbcEmailRepository extends AbstractJdbcRepository implements Email
     public Single<Email> update(Email item) {
         LOGGER.debug("update email with id {}", item.getId());
 
-        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
+        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(updateStatement);
 
         update = addQuotedField(update, COL_ID, item.getId(), String.class);
         update = addQuotedField(update, COL_ENABLED, item.isEnabled(), Boolean.class);

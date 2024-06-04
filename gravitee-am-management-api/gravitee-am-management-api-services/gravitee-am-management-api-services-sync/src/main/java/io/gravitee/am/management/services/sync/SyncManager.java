@@ -17,7 +17,6 @@ package io.gravitee.am.management.services.sync;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import static io.gravitee.am.common.event.Event.valueOf;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.monitoring.metrics.Constants;
 import io.gravitee.am.monitoring.metrics.GaugeHelper;
@@ -37,6 +36,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BinaryOperator;
 
+import static io.gravitee.am.common.event.Event.valueOf;
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toMap;
 

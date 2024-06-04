@@ -42,6 +42,7 @@ import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 @Repository
 public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implements RefreshTokenRepository {
 
+    public static final String SUBJECT = "subject";
     @Autowired
     private SpringRefreshTokenRepository refreshTokenRepository;
 
@@ -66,7 +67,7 @@ public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implement
         refreshToken.setId(refreshToken.getId() == null ? RandomString.generate() : refreshToken.getId());
         LOGGER.debug("Create refreshToken with id {}", refreshToken.getId());
         return monoToSingle(getTemplate().insert(toJdbcEntity(refreshToken))).map(this::toEntity)
-                .doOnError((error) -> LOGGER.error("Unable to create refreshToken with id {}", refreshToken.getId(), error));
+                .doOnError(error -> LOGGER.error("Unable to create refreshToken with id {}", refreshToken.getId(), error));
     }
 
     @Override
@@ -81,7 +82,7 @@ public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implement
     public Completable deleteByUserId(String userId) {
         LOGGER.debug("deleteByUserId({})", userId);
         return monoToCompletable(getTemplate().delete(JdbcRefreshToken.class)
-                .matching(Query.query(where("subject").is(userId)))
+                .matching(Query.query(where(SUBJECT).is(userId)))
                 .all())
                 .doOnError(error -> LOGGER.error("Unable to delete refresh token with subject {}", userId, error));
     }
@@ -90,7 +91,7 @@ public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implement
     public Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, String userId) {
         LOGGER.debug("deleteByDomainIdClientIdAndUserId({},{},{})", domainId, clientId, userId);
         return monoToCompletable(getTemplate().delete(JdbcRefreshToken.class)
-                .matching(Query.query(where("subject").is(userId)
+                .matching(Query.query(where(SUBJECT).is(userId)
                         .and(where("domain").is(domainId))
                         .and(where("client").is(clientId)))).all())
                 .doOnError(error -> LOGGER.error("Unable to delete refresh token with domain {}, client {} and subject {}",
@@ -101,13 +102,14 @@ public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implement
     public Completable deleteByDomainIdAndUserId(String domainId, String userId) {
         LOGGER.debug("deleteByDomainIdAndUserId({},{})", domainId, userId);
         return monoToCompletable(getTemplate().delete(JdbcRefreshToken.class)
-                .matching(Query.query(where("subject").is(userId)
+                .matching(Query.query(where(SUBJECT).is(userId)
                         .and(where("domain").is(domainId))))
                 .all())
                 .doOnError(error -> LOGGER.error("Unable to delete refresh token with domain {} and subject {}",
                         domainId, userId, error));
     }
 
+    @Override
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);

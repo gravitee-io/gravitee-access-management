@@ -19,8 +19,6 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import org.bson.codecs.pojo.annotations.BsonId;
 
-import java.util.Date;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team

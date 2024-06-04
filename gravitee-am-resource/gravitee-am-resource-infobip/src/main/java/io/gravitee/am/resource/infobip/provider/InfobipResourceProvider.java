@@ -92,7 +92,7 @@ public class InfobipResourceProvider implements MFAResourceProvider {
                     emitter.onComplete();
                 }
             } catch (com.infobip.ApiException e) {
-                this.LOGGER.error("Challenge emission fails", e);
+                LOGGER.error("Challenge emission fails", e);
                 emitter.onError(new SendChallengeException("Unable to send challenge"));
             }
         });

@@ -18,6 +18,8 @@ package io.gravitee.am.service.utils;
 import com.google.common.base.Strings;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.model.User;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.util.Locale;
 import java.util.Objects;
@@ -26,6 +28,7 @@ import java.util.Objects;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserProfileUtils {
     public static String buildDisplayName(User user) {
         String result = null;

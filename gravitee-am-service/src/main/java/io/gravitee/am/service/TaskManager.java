@@ -23,7 +23,6 @@ import io.gravitee.am.repository.management.api.SystemTaskRepository;
 import io.gravitee.am.service.tasks.Task;
 import io.gravitee.am.service.tasks.TaskDefinition;
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

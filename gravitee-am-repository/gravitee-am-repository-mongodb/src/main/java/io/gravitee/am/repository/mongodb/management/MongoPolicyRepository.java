@@ -26,9 +26,6 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
  * @author GraviteeSource Team

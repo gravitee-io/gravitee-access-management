@@ -22,7 +22,6 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.AbstractSensitiveProxy;
 import io.gravitee.am.management.service.CertificateServiceProxy;
 import io.gravitee.am.model.Certificate;
-import io.gravitee.am.model.Reporter;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.CertificateService;

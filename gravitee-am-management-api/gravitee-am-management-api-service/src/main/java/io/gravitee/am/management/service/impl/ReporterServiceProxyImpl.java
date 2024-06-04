@@ -111,7 +111,7 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
     @Override
     public String createReporterConfig(String domain){
         return reporterService.createReporterConfig(domain);
-    };
+    }
 
     private Single<Reporter> filterSensitiveData(Reporter reporter) {
         return reporterPluginService.getSchema(reporter.getType())

@@ -22,7 +22,11 @@ import io.gravitee.am.model.Device;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.DeviceRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.DeviceMongo;
-import io.reactivex.rxjava3.core.*;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -31,7 +35,9 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.gte;
 import static java.util.Optional.ofNullable;
 
 /**

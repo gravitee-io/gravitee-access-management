@@ -15,10 +15,8 @@
  */
 package io.gravitee.am.repository.jdbc.management.api;
 
-import io.gravitee.am.model.Application;
 import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
-import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcAuthenticationFlowContext;
 import io.gravitee.am.repository.management.api.AuthenticationFlowContextRepository;
 import io.reactivex.rxjava3.core.Completable;
@@ -34,12 +32,13 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 import static java.time.ZoneOffset.UTC;
-import static org.springframework.data.relational.core.query.Criteria.from;
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static reactor.adapter.rxjava.RxJava3Adapter.*;
+import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToMaybe;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -62,11 +61,11 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
             COL_EXPIRE_AT,
             COL_DATA);
 
-    private String INSERT_STATEMENT;
+    private String insertStatement;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.INSERT_STATEMENT = createInsertStatement("auth_flow_ctx", columns);
+        this.insertStatement = createInsertStatement("auth_flow_ctx", columns);
     }
 
     protected AuthenticationFlowContext toEntity(JdbcAuthenticationFlowContext entity) {
@@ -94,7 +93,7 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
         if (transactionId == null) {
             return Maybe.empty();
         }
-        
+
         LocalDateTime now = LocalDateTime.now(UTC);
         return monoToMaybe(getTemplate().select(JdbcAuthenticationFlowContext.class)
                 .matching(Query.query(where(COL_TRANSACTION_ID).is(transactionId).and(where(COL_EXPIRE_AT).greaterThan(now)))
@@ -122,7 +121,7 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
        String id = context.getTransactionId() + "-" + context.getVersion();
         LOGGER.debug("Create AuthenticationContext with id {}", id);
 
-        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(insertStatement);
 
         insertSpec = addQuotedField(insertSpec,COL_ID, id, String.class);
         insertSpec = addQuotedField(insertSpec,COL_TRANSACTION_ID, context.getTransactionId(), String.class);

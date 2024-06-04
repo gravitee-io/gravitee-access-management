@@ -70,6 +70,7 @@ public class LinkedinAuthenticationProvider extends AbstractSocialAuthentication
     // r_fullprofile seems to be available only if the application owner belong to LinkedIn partner program
     // https://docs.microsoft.com/en-us/linkedin/shared/integrations/people/profile-api?context=linkedin/consumer/context
     private static final String SCOPE_EMAIL = "r_emailaddress";
+    public static final String ELEMENTS = "elements";
 
     @Autowired
     @Qualifier("linkedinWebClient")
@@ -235,7 +236,7 @@ public class LinkedinAuthenticationProvider extends AbstractSocialAuthentication
         JsonObject profilePicture = json.getJsonObject("profilePicture");
         if (profilePicture != null) {
             JsonObject displayImage = profilePicture.getJsonObject("displayImage~");
-            JsonArray elements = displayImage.getJsonArray("elements");
+            JsonArray elements = displayImage.getJsonArray(ELEMENTS);
             if (elements != null && !elements.isEmpty()) {
                 JsonArray imgIdentifiers = elements.getJsonObject(0).getJsonArray("identifiers");
                 if (imgIdentifiers != null) {

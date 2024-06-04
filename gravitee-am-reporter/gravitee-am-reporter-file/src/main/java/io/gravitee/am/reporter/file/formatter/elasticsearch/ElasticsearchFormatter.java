@@ -20,6 +20,8 @@ import io.gravitee.am.reporter.file.audit.ReportEntry;
 import io.gravitee.am.reporter.file.formatter.AbstractFormatter;
 import io.gravitee.am.reporter.file.formatter.elasticsearch.freemarker.FreeMarkerComponent;
 import io.vertx.core.buffer.Buffer;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.ByteArrayOutputStream;
@@ -61,8 +63,8 @@ public class ElasticsearchFormatter<T extends ReportEntry> extends AbstractForma
 
     @Override
     public Buffer format0(T data) {
-        if (data instanceof AuditEntry) {
-            return getSource((AuditEntry) data);
+        if (data instanceof AuditEntry auditEntry) {
+            return getSource(auditEntry);
         }
 
         return null;
@@ -97,6 +99,7 @@ public class ElasticsearchFormatter<T extends ReportEntry> extends AbstractForma
         }
     }
 
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
     static final class Fields {
         static final String SPECIAL_TIMESTAMP = "@timestamp";
     }

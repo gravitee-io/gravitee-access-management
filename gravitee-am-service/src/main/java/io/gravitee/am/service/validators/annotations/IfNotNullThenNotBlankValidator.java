@@ -15,10 +15,9 @@
  */
 package io.gravitee.am.service.validators.annotations;
 
-import org.apache.commons.lang3.StringUtils;
-
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import org.apache.commons.lang3.StringUtils;
 
 public class IfNotNullThenNotBlankValidator implements ConstraintValidator<IfNotNullThenNotBlank, String> {
 

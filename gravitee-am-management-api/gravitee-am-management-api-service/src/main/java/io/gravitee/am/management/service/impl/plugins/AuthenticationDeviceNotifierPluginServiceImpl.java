@@ -120,11 +120,10 @@ public class AuthenticationDeviceNotifierPluginServiceImpl extends AbstractPlugi
         authenticationDeviceNotifierPlugin.setDescription(plugin.manifest().description());
         authenticationDeviceNotifierPlugin.setVersion(plugin.manifest().version());
         authenticationDeviceNotifierPlugin.setDeployed(plugin.deployed());
-        if (expand != null) {
-            if (expand.contains(AuthenticationDeviceNotifierPluginService.EXPAND_ICON)) {
+        if (expand != null && expand.contains(AuthenticationDeviceNotifierPluginService.EXPAND_ICON)) {
                 this.getIcon(authenticationDeviceNotifierPlugin.getId()).subscribe(authenticationDeviceNotifierPlugin::setIcon);
             }
-        }
+
         authenticationDeviceNotifierPlugin.setFeature(plugin.manifest().feature());
         return authenticationDeviceNotifierPlugin;
     }

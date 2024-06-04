@@ -25,9 +25,8 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import org.springframework.stereotype.Component;
-
 import jakarta.annotation.PostConstruct;
+import org.springframework.stereotype.Component;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;

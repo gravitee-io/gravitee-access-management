@@ -32,7 +32,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.query.Query;
-import org.springframework.data.relational.core.sql.In;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
@@ -42,7 +41,9 @@ import java.util.List;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
-import static reactor.adapter.rxjava.RxJava3Adapter.*;
+import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -52,6 +53,7 @@ import static reactor.adapter.rxjava.RxJava3Adapter.*;
 public class JdbcResourceRepository extends AbstractJdbcRepository implements ResourceRepository {
 
     public static final int MAX_CONCURRENCY = 1;
+    public static final String RESOURCE_ID = "resource_id";
     @Autowired
     protected SpringResourceRepository resourceRepository;
 
@@ -81,7 +83,7 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
                 .flatMap(res -> completeWithScopes(Maybe.just(res), res.getId()).toFlowable(), MAX_CONCURRENCY)
                 .toList()
                 .flatMap(content -> resourceRepository.countByDomain(domain)
-                        .map((count) -> new Page<Resource>(content, page, count)));
+                        .map(count -> new Page<>(content, page, count)));
     }
 
     private Maybe<Resource> completeWithScopes(Maybe<Resource> maybeResource, String id) {
@@ -160,7 +162,7 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
         }
 
         return monoToSingle(insertResult.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle());
+                .flatMap(i -> this.findById(item.getId()).toSingle());
     }
 
     @Override
@@ -168,7 +170,7 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
         LOGGER.debug("update Resource with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Long> deleteScopes = getTemplate().delete(Query.query(where("resource_id").is(item.getId())), JdbcResource.Scope.class);
+        Mono<Long> deleteScopes = getTemplate().delete(Query.query(where(RESOURCE_ID).is(item.getId())), JdbcResource.Scope.class);
 
         Mono<Long> updateResource = getTemplate().update(toJdbcEntity(item)).map(__ -> 1L);
         final List<String> resourceScopes = item.getResourceScopes();
@@ -185,7 +187,7 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
     private Mono<Long> insertScope(Resource item, String scope) {
         return getTemplate().getDatabaseClient()
                 .sql("INSERT INTO uma_resource_scopes(resource_id, scope) VALUES (:resource_id, :scope)")
-                .bind("resource_id", item.getId())
+                .bind(RESOURCE_ID, item.getId())
                 .bind("scope", scope)
                 .fetch().rowsUpdated();
     }
@@ -195,7 +197,7 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
         LOGGER.debug("Delete Resource with id {}", id);
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Long> deleteScopes = getTemplate().delete(Query.query(where("resource_id").is(id)), JdbcResource.Scope.class);
+        Mono<Long> deleteScopes = getTemplate().delete(Query.query(where(RESOURCE_ID).is(id)), JdbcResource.Scope.class);
         Mono<Long> delete = getTemplate().delete(Query.query(where("id").is(id)), JdbcResource.class);
 
         return monoToCompletable(delete.then(deleteScopes).as(trx::transactional));

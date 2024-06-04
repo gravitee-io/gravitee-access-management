@@ -28,11 +28,11 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.PostConstruct;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -58,6 +58,8 @@ import static io.gravitee.am.model.ReferenceType.DOMAIN;
 public class MongoUserRepository extends AbstractUserRepository<UserMongo> implements UserRepository {
 
     private static final String FIELD_PRE_REGISTRATION = "preRegistration";
+    public static final String TOTAL = "total";
+    public static final String $_COND = "$cond";
 
     @PostConstruct
     public void init() {
@@ -104,14 +106,12 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
 
     @Override
     public Single<Map<Object, Object>> statistics(AnalyticsQuery query) {
-        switch (query.getField()) {
-            case Field.USER_STATUS:
-                return usersStatusRepartition(query);
-            case Field.USER_REGISTRATION:
-                return registrationsStatusRepartition(query);
-        }
+        return switch (query.getField()) {
+            case Field.USER_STATUS -> usersStatusRepartition(query);
+            case Field.USER_REGISTRATION -> registrationsStatusRepartition(query);
+            default -> Single.just(Collections.emptyMap());
+        };
 
-        return Single.just(Collections.emptyMap());
     }
 
     @Override
@@ -138,20 +138,20 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
                         Aggregates.match(and(filters)),
                         Aggregates.group(
                                 new BasicDBObject("_id", query.getField()),
-                                Accumulators.sum("total", 1),
-                                Accumulators.sum("disabled", new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$enabled", false)), 1, 0))),
-                                Accumulators.sum("locked", new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$and", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$accountNonLocked", false)), new BasicDBObject("$gte", Arrays.asList("$accountLockedUntil", new Date())))), 1, 0))),
-                                Accumulators.sum("inactive", new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$lte", Arrays.asList("$loggedAt", new Date(Instant.now().minus(90, ChronoUnit.DAYS).toEpochMilli()))), 1, 0)))
+                                Accumulators.sum(TOTAL, 1),
+                                Accumulators.sum("disabled", new BasicDBObject($_COND, Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$enabled", false)), 1, 0))),
+                                Accumulators.sum("locked", new BasicDBObject($_COND, Arrays.asList(new BasicDBObject("$and", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$accountNonLocked", false)), new BasicDBObject("$gte", Arrays.asList("$accountLockedUntil", new Date())))), 1, 0))),
+                                Accumulators.sum("inactive", new BasicDBObject($_COND, Arrays.asList(new BasicDBObject("$lte", Arrays.asList("$loggedAt", new Date(Instant.now().minus(90, ChronoUnit.DAYS).toEpochMilli()))), 1, 0)))
                         )
                 ), Document.class)))
                 .map(doc -> {
                     Long nonActiveUsers = ((Number) doc.get("disabled")).longValue() + ((Number) doc.get("locked")).longValue() + ((Number) doc.get("inactive")).longValue();
-                    Long activeUsers = ((Number) doc.get("total")).longValue() - nonActiveUsers;
+                    Long activeUsers = ((Number) doc.get(TOTAL)).longValue() - nonActiveUsers;
                     Map<Object, Object> users = new HashMap<>();
                     users.put("active", activeUsers);
                     users.putAll(doc.entrySet()
                             .stream()
-                            .filter(e -> !"_id".equals(e.getKey()) && !"total".equals(e.getKey()))
+                            .filter(e -> !"_id".equals(e.getKey()) && !TOTAL.equals(e.getKey()))
                             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
                     return users;
                 })
@@ -163,8 +163,8 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
                 Arrays.asList(
                         Aggregates.match(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, query.getDomain()), eq(FIELD_PRE_REGISTRATION, true))),
                         Aggregates.group(new BasicDBObject("_id", query.getField()),
-                                Accumulators.sum("total", 1),
-                                Accumulators.sum("completed", new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$registrationCompleted", true)), 1, 0))))
+                                Accumulators.sum(TOTAL, 1),
+                                Accumulators.sum("completed", new BasicDBObject($_COND, Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$registrationCompleted", true)), 1, 0))))
                 ), Document.class)))
                 .map(doc -> {
                     Map<Object, Object> registrations = new HashMap<>();

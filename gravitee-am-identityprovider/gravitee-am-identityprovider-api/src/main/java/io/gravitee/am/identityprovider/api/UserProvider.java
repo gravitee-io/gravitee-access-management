@@ -66,7 +66,7 @@ public interface UserProvider extends Service<UserProvider> {
 
     default Single<UserProvider> asyncStart() {
         try {
-            return Single.fromCallable(() -> this.start());
+            return Single.fromCallable(this::start);
         } catch (Exception e) {
             return Single.error(e);
         }

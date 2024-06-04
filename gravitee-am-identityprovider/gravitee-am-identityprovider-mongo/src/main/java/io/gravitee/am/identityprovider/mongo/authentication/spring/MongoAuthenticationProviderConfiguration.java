@@ -46,6 +46,7 @@ import static java.util.Optional.ofNullable;
 @Configuration
 public class MongoAuthenticationProviderConfiguration {
 
+    public static final String BASE_64 = "Base64";
     @Autowired
     private MongoIdentityProviderConfiguration configuration;
 
@@ -65,7 +66,7 @@ public class MongoAuthenticationProviderConfiguration {
 
         if (MD5.equals(configuration.getPasswordEncoder())) {
             MessageDigestPasswordEncoder passwordEncoder = new MD5PasswordEncoder();
-            passwordEncoder.setEncodeSaltAsBase64("Base64".equals(configuration.getPasswordEncoding()));
+            passwordEncoder.setEncodeSaltAsBase64(BASE_64.equals(configuration.getPasswordEncoding()));
             passwordEncoder.setSaltLength(configuration.getPasswordSaltLength());
             passwordEncoder.setPasswordSaltFormat(configuration.getPasswordSaltFormat());
             return passwordEncoder;
@@ -78,7 +79,7 @@ public class MongoAuthenticationProviderConfiguration {
             } else {
                 passwordEncoder = new SHAPasswordEncoder(configuration.getPasswordEncoder());
             }
-            passwordEncoder.setEncodeSaltAsBase64("Base64".equals(configuration.getPasswordEncoding()));
+            passwordEncoder.setEncodeSaltAsBase64(BASE_64.equals(configuration.getPasswordEncoding()));
             passwordEncoder.setSaltLength(configuration.getPasswordSaltLength());
             passwordEncoder.setPasswordSaltFormat(configuration.getPasswordSaltFormat());
             if (configuration.getPasswordEncoderOptions() != null && configuration.getPasswordEncoderOptions().getRounds() > 0) {
@@ -96,7 +97,7 @@ public class MongoAuthenticationProviderConfiguration {
             return new NoneEncoder();
         }
 
-        if ("Base64".equals(configuration.getPasswordEncoding())) {
+        if (BASE_64.equals(configuration.getPasswordEncoding())) {
             return new Base64Encoder();
         }
 

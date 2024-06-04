@@ -64,7 +64,7 @@ public abstract class AbstractSocialAuthenticationProvider<T extends SocialIdent
                 builder.addParameter(Parameters.SCOPE, String.join(SCOPE_DELIMITER, getConfiguration().getScopes()));
             }
 
-            if(StringUtils.hasText(state)) {
+            if (StringUtils.hasText(state)) {
                 builder.addParameter(Parameters.STATE, state);
             }
 

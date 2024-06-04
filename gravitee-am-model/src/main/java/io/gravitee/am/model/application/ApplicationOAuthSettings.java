@@ -35,9 +35,9 @@ import java.util.Map;
  */
 public class ApplicationOAuthSettings {
 
-    private final static int DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS = 7200;
-    private final static int DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS = 14400;
-    private final static int DEFAULT_ID_TOKEN_VALIDITY_SECONDS = 14400;
+    private static final int DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS = 7200;
+    private static final int DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS = 14400;
+    private static final int DEFAULT_ID_TOKEN_VALIDITY_SECONDS = 14400;
 
     /**
      * The client identifier

@@ -43,10 +43,12 @@ public class NotifierPlugin extends AbstractPlugin {
         this.icon = icon;
     }
 
+    @Override
     public String getFeature() {
         return feature;
     }
 
+    @Override
     public void setFeature(String feature) {
         this.feature = feature;
     }

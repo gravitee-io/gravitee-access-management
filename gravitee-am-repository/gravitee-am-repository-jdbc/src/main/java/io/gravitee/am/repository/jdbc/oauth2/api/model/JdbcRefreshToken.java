@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.jdbc.oauth2.api.model;
 
-import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 /**

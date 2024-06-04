@@ -70,16 +70,16 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
             COL_SYSTEM
     );
 
-    private String INSERT_STATEMENT;
-    private String UPDATE_STATEMENT;
+    private String insertStatement;
+    private String updateStatement;
 
     @Autowired
     private SpringCertificateRepository certificateRepository;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.INSERT_STATEMENT = createInsertStatement("certificates", columns);
-        this.UPDATE_STATEMENT = createUpdateStatement("certificates", columns, List.of(COL_ID));
+        this.insertStatement = createInsertStatement("certificates", columns);
+        this.updateStatement = createUpdateStatement("certificates", columns, List.of(COL_ID));
     }
 
     protected Certificate toEntity(JdbcCertificate entity) {
@@ -126,7 +126,7 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create certificate with id {}", item.getId());
 
-        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(insertStatement);
 
         insertSpec = addQuotedField(insertSpec,COL_ID, item.getId(), String.class);
         insertSpec = addQuotedField(insertSpec,COL_TYPE, item.getType(), String.class);
@@ -148,7 +148,7 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
     public Single<Certificate> update(Certificate item) {
         LOGGER.debug("update Certificate with id {}", item.getId());
 
-        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
+        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(updateStatement);
 
         update = addQuotedField(update,COL_ID, item.getId(), String.class);
         update = addQuotedField(update,COL_TYPE, item.getType(), String.class);

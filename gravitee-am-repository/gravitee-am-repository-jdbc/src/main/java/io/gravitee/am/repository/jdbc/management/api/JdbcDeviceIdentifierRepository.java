@@ -27,11 +27,12 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
-import reactor.core.publisher.Mono;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
-import static reactor.adapter.rxjava.RxJava3Adapter.*;
+import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToMaybe;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

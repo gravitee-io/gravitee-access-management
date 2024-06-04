@@ -116,6 +116,12 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationServiceImpl.class);
     private static final String AM_V2_VERSION = "AM_V2_VERSION";
+    public static final String ERROR_ON_CREATE = "An error occurs while trying to create an application";
+    public static final String ERROR_ON_PATCH = "An error occurs while trying to patch an application";
+    public static final String LOCALHOST_IS_FORBIDDEN = "localhost is forbidden";
+    public static final String UNSECURED_HTTP_SCHEME = "Unsecured http scheme is forbidden";
+    public static final String WILDCARD_ARE_FORBIDDEN = "Wildcard are forbidden";
+    public static final String IS_MALFORMED = " is malformed";
 
     @Lazy
     @Autowired
@@ -267,7 +273,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find an application using its domain: {} and client_id : {}", domain, clientId, ex);
                     return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find an application using its domain: %s, and client_id", domain, clientId), ex));
+                            String.format("An error occurs while trying to find an application using its domain: %s, and client_id %s", domain, clientId), ex));
                 });
     }
 
@@ -292,8 +298,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         applicationSettings.setOauth(oAuthSettings);
 
         // apply default SAML 2.0 settings
-        if (ApplicationType.SERVICE != application.getType()) {
-            if (!ObjectUtils.isEmpty(newApplication.getRedirectUris())) {
+        if (ApplicationType.SERVICE != application.getType() && !ObjectUtils.isEmpty(newApplication.getRedirectUris())) {
                 try {
                     final String url = newApplication.getRedirectUris().get(0);
                     ApplicationSAMLSettings samlSettings = new ApplicationSAMLSettings();
@@ -306,7 +311,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     LOGGER.debug("An error has occurred when generating SAML attribute consume service url", ex);
                 }
             }
-        }
+
         application.setSettings(applicationSettings);
 
         // apply templating
@@ -317,8 +322,8 @@ public class ApplicationServiceImpl implements ApplicationService {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to create an application", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to create an application", ex));
+                    LOGGER.error(ERROR_ON_CREATE, ex);
+                    return Single.error(new TechnicalManagementException(ERROR_ON_CREATE, ex));
                 });
     }
 
@@ -335,8 +340,8 @@ public class ApplicationServiceImpl implements ApplicationService {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to create an application", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to create an application", ex));
+                    LOGGER.error(ERROR_ON_CREATE, ex);
+                    return Single.error(new TechnicalManagementException(ERROR_ON_CREATE, ex));
                 });
     }
 
@@ -350,7 +355,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         return applicationRepository.findById(application.getId())
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(application.getId())))
-                .flatMap(application1 -> update0(application1.getDomain(), application1, application, null))
+                .flatMap(application1 -> update0(application1, application, null))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
@@ -370,14 +375,14 @@ public class ApplicationServiceImpl implements ApplicationService {
                     Application toPatch = new Application(existingApplication);
                     toPatch.setType(type);
                     applicationTemplateManager.changeType(toPatch);
-                    return update0(domain, existingApplication, toPatch, principal);
+                    return update0(existingApplication, toPatch, principal);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to patch an application", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to patch an application", ex));
+                    LOGGER.error(ERROR_ON_PATCH, ex);
+                    return Single.error(new TechnicalManagementException(ERROR_ON_PATCH, ex));
                 });
     }
 
@@ -402,14 +407,14 @@ public class ApplicationServiceImpl implements ApplicationService {
                     if (Boolean.FALSE.equals(accountSettingsValidator.validate(accountSettings))) {
                         return Single.error(new InvalidParameterException("Unexpected forgot password field"));
                     }
-                    return update0(domain, existingApplication, toPatch, principal);
+                    return update0(existingApplication, toPatch, principal);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to patch an application", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to patch an application", ex));
+                    LOGGER.error(ERROR_ON_PATCH, ex);
+                    return Single.error(new TechnicalManagementException(ERROR_ON_PATCH, ex));
                 });
     }
 
@@ -476,7 +481,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 });
     }
 
-    private static Boolean doesAppReferenceSecretSettings(Application application, ApplicationSecretSettings secretSettings) {
+    private static boolean doesAppReferenceSecretSettings(Application application, ApplicationSecretSettings secretSettings) {
         return ofNullable(application.getSecretSettings())
                 .map(settings -> settings
                         .stream()
@@ -529,8 +534,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                         return Single.error(ex);
                     }
                     LOGGER.error("An error occurs while trying to count applications", ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to count applications"), ex));
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to count applications", ex));
                 });
     }
 
@@ -657,8 +661,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CREATED).throwable(throwable)));
     }
 
-    //TODO Boualem : domain never used
-    private Single<Application> update0(String domain, Application currentApplication, Application applicationToUpdate, User principal) {
+    private Single<Application> update0(Application currentApplication, Application applicationToUpdate, User principal) {
         // updated date
         applicationToUpdate.setUpdatedAt(new Date());
 
@@ -827,30 +830,30 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 URI uri = redirectUri.contains("*") ? new URI(redirectUri) : UriBuilder.fromURIString(redirectUri).build();
 
                                 if (uri.getScheme() == null) {
-                                    return Single.error(new InvalidRedirectUriException("redirect_uri : " + redirectUri + " is malformed"));
+                                    return Single.error(new InvalidRedirectUriException("redirect_uri : " + redirectUri + IS_MALFORMED));
                                 }
 
                                 final String host = isHttp(uri.getScheme()) ? uri.toURL().getHost() : uri.getHost();
 
                                 //check localhost allowed
                                 if (!domain.isRedirectUriLocalhostAllowed() && isHttp(uri.getScheme()) && UriBuilder.isLocalhost(host)) {
-                                    return Single.error(new InvalidRedirectUriException("localhost is forbidden"));
+                                    return Single.error(new InvalidRedirectUriException(LOCALHOST_IS_FORBIDDEN));
                                 }
                                 //check http scheme
                                 if (!domain.isRedirectUriUnsecuredHttpSchemeAllowed() && uri.getScheme().equalsIgnoreCase("http")) {
-                                    return Single.error(new InvalidRedirectUriException("Unsecured http scheme is forbidden"));
+                                    return Single.error(new InvalidRedirectUriException(UNSECURED_HTTP_SCHEME));
                                 }
                                 //check wildcard
                                 if (!domain.isRedirectUriWildcardAllowed() &&
                                         (nonNull(uri.getPath()) && uri.getPath().contains("*") || nonNull(host) && host.contains("*"))) {
-                                    return Single.error(new InvalidRedirectUriException("Wildcard are forbidden"));
+                                    return Single.error(new InvalidRedirectUriException(WILDCARD_ARE_FORBIDDEN));
                                 }
                                 // check fragment
                                 if (uri.getFragment() != null) {
                                     return Single.error(new InvalidRedirectUriException("redirect_uri with fragment is forbidden"));
                                 }
                             } catch (IllegalArgumentException | URISyntaxException ex) {
-                                return Single.error(new InvalidRedirectUriException("redirect_uri : " + redirectUri + " is malformed"));
+                                return Single.error(new InvalidRedirectUriException("redirect_uri : " + redirectUri + IS_MALFORMED));
                             }
                         }
                     }
@@ -897,51 +900,52 @@ public class ApplicationServiceImpl implements ApplicationService {
      */
     private Single<Application> validateTlsClientAuth(Application application) {
         ApplicationOAuthSettings settings = application.getSettings().getOauth();
-        if (settings.getTokenEndpointAuthMethod() != null &&
-                ClientAuthenticationMethod.TLS_CLIENT_AUTH.equalsIgnoreCase(settings.getTokenEndpointAuthMethod())) {
-
-            if ((settings.getTlsClientAuthSubjectDn() == null || settings.getTlsClientAuthSubjectDn().isEmpty()) &&
-                    (settings.getTlsClientAuthSanDns() == null || settings.getTlsClientAuthSanDns().isEmpty()) &&
-                    (settings.getTlsClientAuthSanIp() == null || settings.getTlsClientAuthSanIp().isEmpty()) &&
-                    (settings.getTlsClientAuthSanEmail() == null || settings.getTlsClientAuthSanEmail().isEmpty()) &&
-                    (settings.getTlsClientAuthSanUri() == null || settings.getTlsClientAuthSanUri().isEmpty())) {
+        if (settings.getTokenEndpointAuthMethod() != null && ClientAuthenticationMethod.TLS_CLIENT_AUTH.equalsIgnoreCase(settings.getTokenEndpointAuthMethod())) {
+            if (checkTlsClientAuth(settings)) {
                 return Single.error(new InvalidClientMetadataException("Missing TLS parameter for tls_client_auth."));
             }
-
-            if (settings.getTlsClientAuthSubjectDn() != null && !settings.getTlsClientAuthSubjectDn().isEmpty() && (
-                    (settings.getTlsClientAuthSanDns() != null && !settings.getTlsClientAuthSanDns().isEmpty()) ||
-                            (settings.getTlsClientAuthSanEmail() != null && !settings.getTlsClientAuthSanEmail().isEmpty()) ||
-                            (settings.getTlsClientAuthSanIp() != null && !settings.getTlsClientAuthSanIp().isEmpty()) ||
-                            (settings.getTlsClientAuthSanUri() != null && !settings.getTlsClientAuthSanUri().isEmpty()))) {
-                return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
-            } else if (settings.getTlsClientAuthSanDns() != null && !settings.getTlsClientAuthSanDns().isEmpty() && (
-                    (settings.getTlsClientAuthSubjectDn() != null && !settings.getTlsClientAuthSubjectDn().isEmpty()) ||
-                            (settings.getTlsClientAuthSanEmail() != null && !settings.getTlsClientAuthSanEmail().isEmpty()) ||
-                            (settings.getTlsClientAuthSanIp() != null && !settings.getTlsClientAuthSanIp().isEmpty()) ||
-                            (settings.getTlsClientAuthSanUri() != null && !settings.getTlsClientAuthSanUri().isEmpty()))) {
-                return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
-            } else if (settings.getTlsClientAuthSanIp() != null && !settings.getTlsClientAuthSanIp().isEmpty() && (
-                    (settings.getTlsClientAuthSubjectDn() != null && !settings.getTlsClientAuthSubjectDn().isEmpty()) ||
-                            (settings.getTlsClientAuthSanDns() != null && !settings.getTlsClientAuthSanDns().isEmpty()) ||
-                            (settings.getTlsClientAuthSanEmail() != null && !settings.getTlsClientAuthSanEmail().isEmpty()) ||
-                            (settings.getTlsClientAuthSanUri() != null && !settings.getTlsClientAuthSanUri().isEmpty()))) {
-                return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
-            } else if (settings.getTlsClientAuthSanEmail() != null && !settings.getTlsClientAuthSanEmail().isEmpty() && (
-                    (settings.getTlsClientAuthSubjectDn() != null && !settings.getTlsClientAuthSubjectDn().isEmpty()) ||
-                            (settings.getTlsClientAuthSanDns() != null && !settings.getTlsClientAuthSanDns().isEmpty()) ||
-                            (settings.getTlsClientAuthSanIp() != null && !settings.getTlsClientAuthSanIp().isEmpty()) ||
-                            (settings.getTlsClientAuthSanUri() != null && !settings.getTlsClientAuthSanUri().isEmpty()))) {
-                return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
-            } else if (settings.getTlsClientAuthSanUri() != null && !settings.getTlsClientAuthSanUri().isEmpty() && (
-                    (settings.getTlsClientAuthSubjectDn() != null && !settings.getTlsClientAuthSubjectDn().isEmpty()) ||
-                            (settings.getTlsClientAuthSanDns() != null && !settings.getTlsClientAuthSanDns().isEmpty()) ||
-                            (settings.getTlsClientAuthSanIp() != null && !settings.getTlsClientAuthSanIp().isEmpty()) ||
-                            (settings.getTlsClientAuthSanEmail() != null && !settings.getTlsClientAuthSanEmail().isEmpty()))) {
+            if (checkOneClientAuth(settings)) {
                 return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
             }
         }
 
         return Single.just(application);
+    }
+
+    private static boolean checkOneClientAuth(ApplicationOAuthSettings settings) {
+        return (settings.getTlsClientAuthSubjectDn() != null && !settings.getTlsClientAuthSubjectDn().isEmpty() && (
+                (settings.getTlsClientAuthSanDns() != null && !settings.getTlsClientAuthSanDns().isEmpty()) ||
+                        (settings.getTlsClientAuthSanEmail() != null && !settings.getTlsClientAuthSanEmail().isEmpty()) ||
+                        (settings.getTlsClientAuthSanIp() != null && !settings.getTlsClientAuthSanIp().isEmpty()) ||
+                        (settings.getTlsClientAuthSanUri() != null && !settings.getTlsClientAuthSanUri().isEmpty())))
+                || (settings.getTlsClientAuthSanDns() != null && !settings.getTlsClientAuthSanDns().isEmpty() && (
+                (settings.getTlsClientAuthSubjectDn() != null && !settings.getTlsClientAuthSubjectDn().isEmpty()) ||
+                        (settings.getTlsClientAuthSanEmail() != null && !settings.getTlsClientAuthSanEmail().isEmpty()) ||
+                        (settings.getTlsClientAuthSanIp() != null && !settings.getTlsClientAuthSanIp().isEmpty()) ||
+                        (settings.getTlsClientAuthSanUri() != null && !settings.getTlsClientAuthSanUri().isEmpty())))
+                || (settings.getTlsClientAuthSanIp() != null && !settings.getTlsClientAuthSanIp().isEmpty() && (
+                (settings.getTlsClientAuthSubjectDn() != null && !settings.getTlsClientAuthSubjectDn().isEmpty()) ||
+                        (settings.getTlsClientAuthSanDns() != null && !settings.getTlsClientAuthSanDns().isEmpty()) ||
+                        (settings.getTlsClientAuthSanEmail() != null && !settings.getTlsClientAuthSanEmail().isEmpty()) ||
+                        (settings.getTlsClientAuthSanUri() != null && !settings.getTlsClientAuthSanUri().isEmpty())))
+                || (settings.getTlsClientAuthSanEmail() != null && !settings.getTlsClientAuthSanEmail().isEmpty() && (
+                (settings.getTlsClientAuthSubjectDn() != null && !settings.getTlsClientAuthSubjectDn().isEmpty()) ||
+                        (settings.getTlsClientAuthSanDns() != null && !settings.getTlsClientAuthSanDns().isEmpty()) ||
+                        (settings.getTlsClientAuthSanIp() != null && !settings.getTlsClientAuthSanIp().isEmpty()) ||
+                        (settings.getTlsClientAuthSanUri() != null && !settings.getTlsClientAuthSanUri().isEmpty())))
+                || (settings.getTlsClientAuthSanUri() != null && !settings.getTlsClientAuthSanUri().isEmpty() && (
+                (settings.getTlsClientAuthSubjectDn() != null && !settings.getTlsClientAuthSubjectDn().isEmpty()) ||
+                        (settings.getTlsClientAuthSanDns() != null && !settings.getTlsClientAuthSanDns().isEmpty()) ||
+                        (settings.getTlsClientAuthSanIp() != null && !settings.getTlsClientAuthSanIp().isEmpty()) ||
+                        (settings.getTlsClientAuthSanEmail() != null && !settings.getTlsClientAuthSanEmail().isEmpty())));
+    }
+
+    private static boolean checkTlsClientAuth(ApplicationOAuthSettings settings) {
+        return (settings.getTlsClientAuthSubjectDn() == null || settings.getTlsClientAuthSubjectDn().isEmpty()) &&
+                (settings.getTlsClientAuthSanDns() == null || settings.getTlsClientAuthSanDns().isEmpty()) &&
+                (settings.getTlsClientAuthSanIp() == null || settings.getTlsClientAuthSanIp().isEmpty()) &&
+                (settings.getTlsClientAuthSanEmail() == null || settings.getTlsClientAuthSanEmail().isEmpty()) &&
+                (settings.getTlsClientAuthSanUri() == null || settings.getTlsClientAuthSanUri().isEmpty());
     }
 
     private Single<Application> validatePostLogoutRedirectUris(Application application) {
@@ -956,30 +960,30 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 final URI uri = logoutRedirectUri.contains("*") ? new URI(logoutRedirectUri) : UriBuilder.fromURIString(logoutRedirectUri).build();
 
                                 if (uri.getScheme() == null) {
-                                    return Single.error(new InvalidTargetUrlException("post_logout_redirect_uri : " + logoutRedirectUri + " is malformed"));
+                                    return Single.error(new InvalidTargetUrlException("post_logout_redirect_uri : " + logoutRedirectUri + IS_MALFORMED));
                                 }
 
                                 final String host = isHttp(uri.getScheme()) ? uri.toURL().getHost() : uri.getHost();
 
                                 //check localhost allowed
                                 if (!domain.isRedirectUriLocalhostAllowed() && isHttp(uri.getScheme()) && UriBuilder.isLocalhost(host)) {
-                                    return Single.error(new InvalidTargetUrlException("localhost is forbidden"));
+                                    return Single.error(new InvalidTargetUrlException(LOCALHOST_IS_FORBIDDEN));
                                 }
                                 //check http scheme
                                 if (!domain.isRedirectUriUnsecuredHttpSchemeAllowed() && uri.getScheme().equalsIgnoreCase("http")) {
-                                    return Single.error(new InvalidTargetUrlException("Unsecured http scheme is forbidden"));
+                                    return Single.error(new InvalidTargetUrlException(UNSECURED_HTTP_SCHEME));
                                 }
                                 //check wildcard
                                 if (!domain.isRedirectUriWildcardAllowed() &&
                                         (nonNull(uri.getPath()) && uri.getPath().contains("*") || nonNull(host) && host.contains("*"))) {
-                                    return Single.error(new InvalidTargetUrlException("Wildcard are forbidden"));
+                                    return Single.error(new InvalidTargetUrlException(WILDCARD_ARE_FORBIDDEN));
                                 }
                                 // check fragment
                                 if (uri.getFragment() != null) {
                                     return Single.error(new InvalidTargetUrlException("post_logout_redirect_uri with fragment is forbidden"));
                                 }
                             } catch (IllegalArgumentException | URISyntaxException ex) {
-                                return Single.error(new InvalidTargetUrlException("post_logout_redirect_uri : " + logoutRedirectUri + " is malformed"));
+                                return Single.error(new InvalidTargetUrlException("post_logout_redirect_uri : " + logoutRedirectUri + IS_MALFORMED));
                             }
                         }
                     }
@@ -999,26 +1003,26 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 final URI uri = requestUri.contains("*") ? new URI(requestUri) : UriBuilder.fromURIString(requestUri).build();
 
                                 if (uri.getScheme() == null) {
-                                    return Single.error(new InvalidRequestUriException("request_uri : " + requestUri + " is malformed"));
+                                    return Single.error(new InvalidRequestUriException("request_uri : " + requestUri + IS_MALFORMED));
                                 }
 
                                 final String host = isHttp(uri.getScheme()) ? uri.toURL().getHost() : uri.getHost();
 
                                 //check localhost allowed
                                 if (!domain.isRedirectUriLocalhostAllowed() && isHttp(uri.getScheme()) && UriBuilder.isLocalhost(host)) {
-                                    return Single.error(new InvalidRequestUriException("localhost is forbidden"));
+                                    return Single.error(new InvalidRequestUriException(LOCALHOST_IS_FORBIDDEN));
                                 }
                                 //check http scheme
                                 if (!domain.isRedirectUriUnsecuredHttpSchemeAllowed() && uri.getScheme().equalsIgnoreCase("http")) {
-                                    return Single.error(new InvalidRequestUriException("Unsecured http scheme is forbidden"));
+                                    return Single.error(new InvalidRequestUriException(UNSECURED_HTTP_SCHEME));
                                 }
                                 //check wildcard
                                 if (!domain.isRedirectUriWildcardAllowed() &&
                                         (nonNull(uri.getPath()) && uri.getPath().contains("*") || nonNull(host) && host.contains("*"))) {
-                                    return Single.error(new InvalidRequestUriException("Wildcard are forbidden"));
+                                    return Single.error(new InvalidRequestUriException(WILDCARD_ARE_FORBIDDEN));
                                 }
                             } catch (IllegalArgumentException | URISyntaxException ex) {
-                                return Single.error(new InvalidRequestUriException("request_uri : " + requestUri + " is malformed"));
+                                return Single.error(new InvalidRequestUriException("request_uri : " + requestUri + IS_MALFORMED));
                             }
                         }
                     }

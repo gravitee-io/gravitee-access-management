@@ -18,7 +18,6 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)

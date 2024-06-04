@@ -37,7 +37,8 @@ import java.util.List;
 
 import static java.time.ZoneOffset.UTC;
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static reactor.adapter.rxjava.RxJava3Adapter.*;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -71,7 +72,7 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
             COL_REQUEST_PARAMETERS
     );
 
-    private String INSERT_STATEMENT;
+    private String insertStatement;
 
     @Autowired
     private SpringAuthorizationCodeRepository authorizationCodeRepository;
@@ -86,7 +87,7 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.INSERT_STATEMENT = createInsertStatement("authorization_codes", columns);
+        this.insertStatement = createInsertStatement("authorization_codes", columns);
     }
 
     @Override
@@ -94,7 +95,7 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
         authorizationCode.setId(authorizationCode.getId() == null ? RandomString.generate() : authorizationCode.getId());
         LOGGER.debug("Create authorizationCode with id {} and code {}", authorizationCode.getId(), authorizationCode.getCode());
 
-        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(insertStatement);
 
         insertSpec = addQuotedField(insertSpec, COL_ID, authorizationCode.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_CLIENT_ID, authorizationCode.getClientId(), String.class);

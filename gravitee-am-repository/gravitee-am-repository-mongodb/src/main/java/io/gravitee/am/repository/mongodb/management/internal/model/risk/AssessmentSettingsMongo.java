@@ -18,6 +18,7 @@ package io.gravitee.am.repository.mongodb.management.internal.model.risk;
 
 import io.gravitee.risk.assessment.api.assessment.Assessment;
 import io.gravitee.risk.assessment.api.assessment.settings.AssessmentSettings;
+
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;

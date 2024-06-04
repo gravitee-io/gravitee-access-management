@@ -143,7 +143,7 @@ public class IdentityProviderResource extends AbstractResource {
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> identityProviderService.update(domain, identity, updateIdentityProvider, authenticatedUser, false)))
-                .map(idp -> hideConfiguration(idp))
+                .map(this::hideConfiguration)
                 .subscribe(response::resume, response::resume);
     }
 

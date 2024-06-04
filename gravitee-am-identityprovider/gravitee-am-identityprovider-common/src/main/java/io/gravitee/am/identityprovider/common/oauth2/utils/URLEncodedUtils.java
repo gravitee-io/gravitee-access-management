@@ -16,6 +16,8 @@
 package io.gravitee.am.identityprovider.common.oauth2.utils;
 
 import io.gravitee.am.model.http.NameValuePair;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -24,6 +26,7 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class URLEncodedUtils {
 
     public static final String CONTENT_TYPE = "application/x-www-form-urlencoded";
@@ -35,7 +38,7 @@ public class URLEncodedUtils {
         for (final NameValuePair parameter : parameters) {
             final String parameterName = parameter.getName();
             final String parameterValue = parameter.getValue();
-            if (result.length() > 0) {
+            if (!result.isEmpty()) {
                 result.append(QP_SEP_A);
             }
             result.append(parameterName);
@@ -48,7 +51,7 @@ public class URLEncodedUtils {
     }
 
     public static Map<String, String> format(String query) {
-        Map<String, String> queryPairs = new LinkedHashMap<String, String>();
+        Map<String, String> queryPairs = new LinkedHashMap<>();
         String[] pairs = query.split("&");
         for (String pair : pairs) {
             int idx = pair.indexOf("=");

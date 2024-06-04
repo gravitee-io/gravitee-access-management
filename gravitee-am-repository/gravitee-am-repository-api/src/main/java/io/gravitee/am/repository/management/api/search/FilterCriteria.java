@@ -93,13 +93,12 @@ public class FilterCriteria {
                         .toString()
                         .replace(Schema.SCHEMA_URI_USER + ":", "")
                         .replace(Schema.SCHEMA_URI_GROUP + ":", "") : null;
-        FilterCriteria filterCriteria = new FilterCriteria(
+        return new FilterCriteria(
                 scimFilter.getOperator().getValue(),
                 filterAttribute,
                 scimFilter.getFilterValue(),
                 scimFilter.isQuoteFilterValue(),
                 scimFilter.getFilterComponents() != null ? scimFilter.getFilterComponents().stream().map(FilterCriteria::convert).collect(Collectors.toList()) : null);
-        return filterCriteria;
     }
 
     @Override

@@ -55,19 +55,15 @@ public class AuthenticationAuditBuilder extends AuditBuilder<AuthenticationAudit
     }
 
     private String getDisplayName(User user) {
-        final String displayName =
-                // display name
-                user.getDisplayName() != null ?
-                        user.getDisplayName() :
-                        // first name + last name
-                        user.getFirstName() != null ?
-                                user.getFirstName() + (user.getLastName() != null ? user.getLastName() : "") :
-                                // OIDC name claim
-                                user.getAdditionalInformation() != null && user.getAdditionalInformation().containsKey(StandardClaims.NAME) ?
-                                        (String) user.getAdditionalInformation().get(StandardClaims.NAME) :
-                                        // default to username
-                                        user.getUsername();
-
-        return displayName;
+        return user.getDisplayName() != null ?
+                user.getDisplayName() :
+                // first name + last name
+                user.getFirstName() != null ?
+                        user.getFirstName() + (user.getLastName() != null ? user.getLastName() : "") :
+                        // OIDC name claim
+                        user.getAdditionalInformation() != null && user.getAdditionalInformation().containsKey(StandardClaims.NAME) ?
+                                (String) user.getAdditionalInformation().get(StandardClaims.NAME) :
+                                // default to username
+                                user.getUsername();
     }
 }

@@ -34,6 +34,9 @@ import io.gravitee.am.identityprovider.mongo.authentication.spring.MongoAuthenti
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
+
+import java.util.stream.Collectors;
+
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.slf4j.Logger;

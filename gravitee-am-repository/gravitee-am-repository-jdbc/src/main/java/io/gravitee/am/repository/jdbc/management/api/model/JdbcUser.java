@@ -58,7 +58,7 @@ public class JdbcUser extends AbstractUser {
     public static class DynamicRole extends AbstractRole {
     }
 
-    public static abstract class AbstractRole {
+    public abstract static class AbstractRole {
         @Column("user_id")
         private String userId;
         private String role;

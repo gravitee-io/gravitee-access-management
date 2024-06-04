@@ -35,6 +35,7 @@ public abstract class MessageDigestPasswordEncoder implements PasswordEncoder {
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageDigestPasswordEncoder.class);
     private static final String PREFIX = "{";
     private static final String SUFFIX = "}";
+    private static final String MATCH_ERROR = "An error has occurred when performing password match operation";
     private final Base64.Encoder b64enc = Base64.getEncoder();
     private final Base64.Decoder b64dec = Base64.getDecoder();
     private String algorithm;
@@ -43,7 +44,7 @@ public abstract class MessageDigestPasswordEncoder implements PasswordEncoder {
     private String passwordSaltFormat = PasswordSaltFormat.DIGEST;
     int iterationsRounds = 1;
 
-    public MessageDigestPasswordEncoder(String algorithm) {
+    protected MessageDigestPasswordEncoder(String algorithm) {
         this.algorithm = algorithm;
         // try to load the MessageDIgest to throw Error on init phase
         // if the algorithm is not supported.
@@ -71,8 +72,7 @@ public abstract class MessageDigestPasswordEncoder implements PasswordEncoder {
             }
             final String saltedPassword = rawPassword + salt;
             final byte[] digest = hash(getMessageDigest(), saltedPassword, iterationsRounds);
-            final String rawPasswordEncoded = salt + (encodeSaltAsBase64 ? b64enc.encodeToString(digest) : Hex.encodeHexString(digest));
-            return rawPasswordEncoded;
+            return salt + (encodeSaltAsBase64 ? b64enc.encodeToString(digest) : Hex.encodeHexString(digest));
         } catch (Exception ex) {
             throw new IllegalStateException("Unable to encode raw password", ex);
         }
@@ -127,7 +127,7 @@ public abstract class MessageDigestPasswordEncoder implements PasswordEncoder {
             final String rawPasswordEncoded = salt + (encodeSaltAsBase64 ? b64enc.encodeToString(digest) : Hex.encodeHexString(digest));
             return encodedPassword.equals(rawPasswordEncoded);
         } catch (Exception ex) {
-            LOGGER.error("An error has occurred when performing password match operation", ex);
+            LOGGER.error(MATCH_ERROR, ex);
             return false;
         }
     }
@@ -141,7 +141,7 @@ public abstract class MessageDigestPasswordEncoder implements PasswordEncoder {
             final String presentedPassword = encode(rawPassword, salt);
             return encodedPassword.equals(presentedPassword);
         } catch (Exception ex) {
-            LOGGER.error("An error has occurred when performing password match operation", ex);
+            LOGGER.error(MATCH_ERROR, ex);
             return false;
         }
     }
@@ -162,7 +162,7 @@ public abstract class MessageDigestPasswordEncoder implements PasswordEncoder {
             final String rawPasswordEncoded = encodeSaltAsBase64 ? b64enc.encodeToString(digest) : Hex.encodeHexString(digest);
             return encodedPassword.equals(rawPasswordEncoded);
         } catch (Exception ex) {
-            LOGGER.error("An error has occurred when performing password match operation", ex);
+            LOGGER.error(MATCH_ERROR, ex);
             return false;
         }
     }

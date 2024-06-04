@@ -29,13 +29,13 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -54,6 +54,7 @@ import static com.mongodb.client.model.Filters.lte;
 public class MongoEventRepository extends AbstractManagementMongoRepository implements EventRepository {
 
     private static final Logger log = LoggerFactory.getLogger(MongoEventRepository.class);
+    public static final String ACTION = "action";
     private MongoCollection<EventMongo> eventsCollection;
 
     @PostConstruct
@@ -136,7 +137,7 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
         }
 
         Payload content = new Payload(document.get("content", Map.class));
-        content.put("action", Action.valueOf((String) content.get("action")));
+        content.put(ACTION, Action.valueOf((String) content.get(ACTION)));
         return content;
     }
 
@@ -146,7 +147,7 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
         }
 
         Document document = new Document();
-        payload.put("action", payload.getAction().toString());
+        payload.put(ACTION, payload.getAction().toString());
         document.put("content", payload);
 
         return document;

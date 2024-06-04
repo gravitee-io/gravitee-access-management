@@ -38,7 +38,7 @@ public class BotDetectionPluginManager
         extends ProviderPluginManager<BotDetection<?, BotDetectionProvider>, BotDetectionProvider, ProviderConfiguration>
         implements AmPluginManager<BotDetection<?, BotDetectionProvider>> {
 
-    private final static Logger logger = LoggerFactory.getLogger(BotDetectionPluginManager.class);
+    private static final Logger logger = LoggerFactory.getLogger(BotDetectionPluginManager.class);
     private final ConfigurationFactory<BotDetectionConfiguration> configurationFactory;
 
     public BotDetectionPluginManager(

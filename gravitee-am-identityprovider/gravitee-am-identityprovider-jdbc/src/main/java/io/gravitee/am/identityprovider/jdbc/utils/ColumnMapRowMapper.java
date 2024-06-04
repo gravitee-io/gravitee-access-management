@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.jdbc.utils;
 
+import io.r2dbc.spi.ReadableMetadata;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 
@@ -22,18 +23,21 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ColumnMapRowMapper {
 
     public static Map<String, Object> mapRow(Row row, RowMetadata rowMetadata) {
-        Map<String, Object> claims = new HashMap<>(rowMetadata.getColumnMetadatas()
+        return new HashMap<>(rowMetadata.getColumnMetadatas()
                 .stream()
-                .map(columMetadata -> columMetadata.getName())
+                .map(ReadableMetadata::getName)
                 .filter(c -> row.get(c) != null)
-                .collect(Collectors.toMap(c -> c, c -> row.get(c))));
-        return claims;
+                .collect(Collectors.toMap(c -> c, row::get)));
     }
 }

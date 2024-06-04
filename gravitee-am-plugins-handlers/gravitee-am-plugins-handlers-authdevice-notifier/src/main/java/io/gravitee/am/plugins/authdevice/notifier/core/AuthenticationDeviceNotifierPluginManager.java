@@ -38,7 +38,7 @@ public class AuthenticationDeviceNotifierPluginManager
         extends ProviderPluginManager<AuthenticationDeviceNotifier<?, AuthenticationDeviceNotifierProvider>, AuthenticationDeviceNotifierProvider, ProviderConfiguration>
         implements AmPluginManager<AuthenticationDeviceNotifier<?, AuthenticationDeviceNotifierProvider>> {
 
-    private final static Logger logger = LoggerFactory.getLogger(AuthenticationDeviceNotifierPluginManager.class);
+    private static final Logger logger = LoggerFactory.getLogger(AuthenticationDeviceNotifierPluginManager.class);
     private final ConfigurationFactory<AuthenticationDeviceNotifierConfiguration> configurationFactory;
 
     public AuthenticationDeviceNotifierPluginManager(

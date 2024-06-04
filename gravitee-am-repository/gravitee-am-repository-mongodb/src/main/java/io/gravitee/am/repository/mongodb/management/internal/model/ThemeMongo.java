@@ -18,8 +18,6 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import org.bson.codecs.pojo.annotations.BsonId;
 
-import java.util.Date;
-
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team

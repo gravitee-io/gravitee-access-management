@@ -19,25 +19,23 @@ import io.gravitee.am.reporter.file.formatter.csv.CsvFormatter;
 import io.gravitee.am.reporter.file.formatter.elasticsearch.ElasticsearchFormatter;
 import io.gravitee.am.reporter.file.formatter.json.JsonFormatter;
 import io.gravitee.am.reporter.file.formatter.msgpack.MsgPackFormatter;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class FormatterFactory {
 
     public static Formatter getFormatter(Type type) {
-        switch (type) {
-            case CSV:
-                return new CsvFormatter();
-            case MESSAGE_PACK:
-                return new MsgPackFormatter();
-            case JSON:
-                return new JsonFormatter();
-            case ELASTICSEARCH:
-                return new ElasticsearchFormatter();
-        }
+        return switch (type) {
+            case CSV -> new CsvFormatter();
+            case MESSAGE_PACK -> new MsgPackFormatter();
+            case JSON -> new JsonFormatter();
+            case ELASTICSEARCH -> new ElasticsearchFormatter();
+        };
 
-        return new JsonFormatter();
     }
 }

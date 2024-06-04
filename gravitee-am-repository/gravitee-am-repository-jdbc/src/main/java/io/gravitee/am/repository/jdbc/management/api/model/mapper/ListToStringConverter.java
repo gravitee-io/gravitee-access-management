@@ -20,7 +20,6 @@ import com.github.dozermapper.core.DozerConverter;
 import io.gravitee.am.repository.jdbc.common.JSONMapper;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

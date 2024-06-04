@@ -16,9 +16,9 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Group;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.model.NewGroup;
 import io.gravitee.am.service.model.UpdateGroup;
 import io.reactivex.rxjava3.core.Completable;

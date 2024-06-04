@@ -18,17 +18,13 @@ package io.gravitee.am.management.service.alerts.risk;
 
 import io.gravitee.alert.api.condition.Condition;
 import io.gravitee.alert.api.trigger.Trigger;
-import io.gravitee.am.common.event.AlertEventKeys;
-import io.gravitee.notifier.api.Period;
-import io.gravitee.risk.assessment.api.assessment.Assessment;
-import java.util.List;
+import org.springframework.core.env.Environment;
+
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-import org.springframework.core.env.Environment;
 
 import static io.gravitee.alert.api.condition.StringCondition.matches;
 import static io.gravitee.am.common.event.AlertEventKeys.PROPERTY_RISK_ASSESSMENT;
-import static io.gravitee.risk.assessment.api.assessment.Assessment.LOW;
 import static java.util.stream.Collectors.joining;
 
 /**

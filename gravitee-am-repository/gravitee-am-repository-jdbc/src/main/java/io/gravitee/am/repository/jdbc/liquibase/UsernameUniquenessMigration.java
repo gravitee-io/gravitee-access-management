@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.model.User;
 import liquibase.change.custom.CustomSqlChange;
 import liquibase.database.Database;
+import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.CustomChangeException;
 import liquibase.exception.DatabaseException;
 import liquibase.exception.SetupException;
@@ -30,11 +31,14 @@ import liquibase.statement.core.UpdateStatement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import liquibase.database.jvm.JdbcConnection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -43,6 +47,7 @@ import java.util.*;
 public class UsernameUniquenessMigration implements CustomSqlChange {
     public static final String TABLE_USERS = "users";
     public static final String TABLE_ORGANIZATION_USERS = "organization_users";
+    public static final String USERNAME = "username";
     private final Logger logger = LoggerFactory.getLogger(UsernameUniquenessMigration.class);
     private ObjectMapper mapper = new ObjectMapper();
 
@@ -133,7 +138,7 @@ public class UsernameUniquenessMigration implements CustomSqlChange {
                     duplicateToUpdate.getId());
 
             SqlStatement updateUsersTable = new UpdateStatement(database.getDefaultCatalogName(), database.getDefaultSchemaName(), TABLE_ORGANIZATION_USERS)
-                    .addNewColumnValue("username", updatedUsername)
+                    .addNewColumnValue(USERNAME, updatedUsername)
                     .setWhereClause(String.format("id='%s'", duplicateToUpdate.getId()));
             statementsToApply.add(updateUsersTable);
         }
@@ -154,7 +159,7 @@ public class UsernameUniquenessMigration implements CustomSqlChange {
                     duplicateToUpdate.getExternalId());
 
             SqlStatement updateUsersTable = new UpdateStatement(database.getDefaultCatalogName(), database.getDefaultSchemaName(), TABLE_USERS)
-                    .addNewColumnValue("username", updatedUsername)
+                    .addNewColumnValue(USERNAME, updatedUsername)
                     .setWhereClause(String.format("id='%s'", duplicateToUpdate.getId()));
             statementsToApply.add(updateUsersTable);
 
@@ -185,7 +190,7 @@ public class UsernameUniquenessMigration implements CustomSqlChange {
         while (duplicateUsers.next()) {
             User currentUser = new User();
             currentUser.setId(duplicateUsers.getString("id"));
-            currentUser.setUsername(duplicateUsers.getString("username"));
+            currentUser.setUsername(duplicateUsers.getString(USERNAME));
             currentUser.setExternalId(duplicateUsers.getString("external_id"));
             currentUser.setCreatedAt(duplicateUsers.getDate("created_at"));
             currentUser.setLoggedAt(duplicateUsers.getDate("logged_at"));

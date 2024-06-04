@@ -16,8 +16,6 @@
 package io.gravitee.am.repository.mongodb.oauth2;
 
 import com.mongodb.client.model.IndexOptions;
-import com.mongodb.client.model.InsertOneModel;
-import com.mongodb.client.model.WriteModel;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.RefreshTokenMongo;
@@ -27,17 +25,17 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.PostConstruct;
-
 import java.util.Date;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.gt;
+import static com.mongodb.client.model.Filters.or;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -109,10 +107,6 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
     @Override
     public Completable deleteByDomainIdAndUserId(String domainId, String userId) {
         return Completable.fromPublisher(refreshTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_SUBJECT, userId))));
-    }
-
-    private List<WriteModel<RefreshTokenMongo>> convert(List<RefreshToken> refreshTokens) {
-        return refreshTokens.stream().map(refreshToken -> new InsertOneModel<>(convert(refreshToken))).collect(Collectors.toList());
     }
 
     private RefreshTokenMongo convert(RefreshToken refreshToken) {

@@ -18,11 +18,14 @@ package io.gravitee.am.management.handlers.management.api.resources.utils;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.reporter.api.audit.model.AuditEntity;
 import io.gravitee.am.reporter.api.audit.model.AuditOutcome;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FilterUtils {
 
     public static Audit filterAuditInfos(Audit audit) {

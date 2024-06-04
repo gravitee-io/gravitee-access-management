@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
-import io.gravitee.am.model.application.ApplicationSecretSettings;
-import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import org.bson.Document;
 

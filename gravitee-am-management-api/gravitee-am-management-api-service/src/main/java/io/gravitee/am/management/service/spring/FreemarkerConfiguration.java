@@ -15,7 +15,12 @@
  */
 package io.gravitee.am.management.service.spring;
 
-import freemarker.cache.*;
+import freemarker.cache.ConditionalTemplateConfigurationFactory;
+import freemarker.cache.FileExtensionMatcher;
+import freemarker.cache.FileTemplateLoader;
+import freemarker.cache.MultiTemplateLoader;
+import freemarker.cache.StringTemplateLoader;
+import freemarker.cache.TemplateLoader;
 import freemarker.core.HTMLOutputFormat;
 import freemarker.core.TemplateClassResolver;
 import freemarker.core.TemplateConfiguration;
@@ -36,7 +41,7 @@ import java.io.IOException;
 public class FreemarkerConfiguration {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FreemarkerConfiguration.class);
-    private final static String HTML_TEMPLATE_EXTENSION = "html";
+    private static final String HTML_TEMPLATE_EXTENSION = "html";
 
     @Value("${templates.path:${gravitee.home}/templates}")
     private String templatesPath;

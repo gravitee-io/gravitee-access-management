@@ -17,11 +17,12 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.MfaChallengeType;
-import java.util.Objects;
-import java.util.Optional;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.Objects;
+import java.util.Optional;
 
 @Getter
 @Setter

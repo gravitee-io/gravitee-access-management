@@ -26,10 +26,14 @@ import java.net.URI;
 
 import static io.gravitee.am.common.utils.ConstantKeys.SUCCESS_PARAM_KEY;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class RequestUtils {
 
     public static String remoteAddress(HttpServerRequest httpServerRequest) {

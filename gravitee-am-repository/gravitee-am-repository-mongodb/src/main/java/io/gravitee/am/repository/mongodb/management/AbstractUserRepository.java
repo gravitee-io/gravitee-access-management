@@ -254,13 +254,13 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
 
     protected ArrayList<Bson> generateUserUpdates(User item, UpdateActions actions) {
         var updateFields = new ArrayList<Bson>();
-        updateFields.add(Updates.set("externalId", item.getExternalId()));
-        updateFields.add(Updates.set("username", item.getUsername()));
-        updateFields.add(Updates.set("email", item.getEmail()));
-        updateFields.add(Updates.set("displayName", item.getDisplayName()));
+        updateFields.add(Updates.set(FIELD_EXTERNAL_ID, item.getExternalId()));
+        updateFields.add(Updates.set(FIELD_USERNAME, item.getUsername()));
+        updateFields.add(Updates.set(FIELD_EMAIL, item.getEmail()));
+        updateFields.add(Updates.set(FIELD_DISPLAY_NAME, item.getDisplayName()));
         updateFields.add(Updates.set("nickName", item.getNickName()));
-        updateFields.add(Updates.set("firstName", item.getFirstName()));
-        updateFields.add(Updates.set("lastName", item.getLastName()));
+        updateFields.add(Updates.set(FIELD_FIRST_NAME, item.getFirstName()));
+        updateFields.add(Updates.set(FIELD_LAST_NAME, item.getLastName()));
         updateFields.add(Updates.set("accountNonExpired", item.isAccountNonExpired()));
         updateFields.add(Updates.set("accountLockedAt", item.getAccountLockedAt()));
         updateFields.add(Updates.set("accountLockedUntil", item.getAccountLockedUntil()));
@@ -275,7 +275,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         updateFields.add(Updates.set("registrationCompleted", item.isRegistrationCompleted()));
         updateFields.add(Updates.set("referenceType", item.getReferenceType().name()));
         updateFields.add(Updates.set("referenceId", item.getReferenceId()));
-        updateFields.add(Updates.set("source", item.getSource()));
+        updateFields.add(Updates.set(FIELD_SOURCE, item.getSource()));
         updateFields.add(Updates.set("lastIdentityUsed", item.getLastIdentityUsed()));
         updateFields.add(Updates.set("client", item.getClient()));
         updateFields.add(Updates.set("loginsCount", item.getLoginsCount()));

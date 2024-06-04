@@ -17,18 +17,18 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.EnrollSettings;
+import io.gravitee.am.model.EnrollmentSettings;
 import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.RememberDeviceSettings;
-import io.gravitee.am.model.EnrollmentSettings;
-
 import io.gravitee.am.model.StepUpAuthenticationSettings;
-import java.util.Objects;
-
-import static java.util.Optional.ofNullable;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.Objects;
+
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

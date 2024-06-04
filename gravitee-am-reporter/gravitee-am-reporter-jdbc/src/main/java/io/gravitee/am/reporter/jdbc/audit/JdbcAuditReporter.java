@@ -100,6 +100,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
     public static final String REPORTER_AUTO_PROVISIONING = "management.jdbc.reporter.provisioning";
     public static final String AUDIT_FIELD_ACTOR = "actor";
     public static final String AUDIT_FIELD_TARGET = "target";
+    public static final String NOT_BOOTSTRAPPED = "Reporter not yet bootstrapped";
 
     private final Pattern pattern = Pattern.compile("___");
 
@@ -207,7 +208,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
     public Single<Page<Audit>> search(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria, int page, int size) {
         LOGGER.debug("search on ({}, {})", referenceType, referenceType);
         if (!ready) {
-            LOGGER.debug("Reporter not yet bootstrapped");
+            LOGGER.debug(NOT_BOOTSTRAPPED);
             return Single.just(new Page<>(Collections.emptyList(), page, size));
         }
 
@@ -258,7 +259,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
         String fieldFailure = (criteria.types().get(0) + "_" + Status.FAILURE).toLowerCase();
 
         if (!ready) {
-            LOGGER.debug("Reporter not yet bootstrapped");
+            LOGGER.debug(NOT_BOOTSTRAPPED);
             Map<Object, Object> result = new HashMap<>();
             result.put(fieldSuccess, new ArrayList<>(intervals.values()));
             result.put(fieldFailure, new ArrayList<>(intervals.values()));
@@ -282,8 +283,8 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                 successResult.putIfAbsent(k, v);
                 failureResult.putIfAbsent(k, v);
             });
-            List<Long> successData = successResult.entrySet().stream().map(e -> e.getValue()).collect(Collectors.toList());
-            List<Long> failureData = failureResult.entrySet().stream().map(e -> e.getValue()).collect(Collectors.toList());
+            List<Long> successData = successResult.entrySet().stream().map(e -> e.getValue()).toList();
+            List<Long> failureData = failureResult.entrySet().stream().map(e -> e.getValue()).toList();
             Map<Object, Object> result = new HashMap<>();
             result.put(fieldSuccess, successData);
             result.put(fieldFailure, failureData);
@@ -299,7 +300,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
      */
     private Single<Map<Object, Object>> executeCount(SearchQuery searchQuery) {
         if (!ready) {
-            LOGGER.debug("Reporter not yet bootstrapped");
+            LOGGER.debug(NOT_BOOTSTRAPPED);
             return Single.just(Collections.singletonMap("data", 0l));
         }
         DatabaseClient.GenericExecuteSpec count = template.getDatabaseClient().sql(searchQuery.getCount());
@@ -319,7 +320,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
      */
     private Single<Map<Object, Object>> executeGroupBy(SearchQuery searchQuery, AuditReportableCriteria criteria) {
         if (!ready) {
-            LOGGER.debug("Reporter not yet bootstrapped");
+            LOGGER.debug(NOT_BOOTSTRAPPED);
             return Single.just(Collections.emptyMap());
         }
         DatabaseClient.GenericExecuteSpec groupBy = template.getDatabaseClient().sql(searchQuery.getQuery());
@@ -344,7 +345,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
     public Maybe<Audit> findById(ReferenceType referenceType, String referenceId, String id) {
         LOGGER.debug("findById({},{},{})", referenceType, referenceId, id);
         if (!ready) {
-            LOGGER.debug("Reporter not yet bootstrapped");
+            LOGGER.debug(NOT_BOOTSTRAPPED);
             return Maybe.empty();
         }
 
@@ -561,7 +562,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
         this.INSERT_OUTCOMES_STATEMENT = createInsertStatement(this.auditOutcomesTable, outcomesColumns);
         this.INSERT_ACCESSPOINT_STATEMENT = createInsertStatement(this.auditAccessPointsTable, accessPointColumns);
 
-        if (environment.getProperty(REPORTER_AUTO_PROVISIONING, Boolean.class, true)) {
+        if (Boolean.TRUE.equals(environment.getProperty(REPORTER_AUTO_PROVISIONING, Boolean.class, true))) {
             // for now simply get the file named <driver>.schema, more complex stuffs will be done if schema updates have to be done in the future
             final String sqlScript = "database/" + configuration.getDriver() + ".schema";
 
@@ -586,7 +587,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                                                 return finalLine;
                                             })
                                             .distinct()
-                                            .collect(Collectors.toList());
+                                            .toList();
 
                                     LOGGER.debug("Found {} statements to execute", sqlStatements.size());
                                     return Flowable.fromIterable(sqlStatements)
@@ -651,8 +652,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                 }
             }
 
-            if (this.connectionFactory != null && this.connectionFactory instanceof ConnectionPool) {
-                ConnectionPool connectionFactory = (ConnectionPool) this.connectionFactory;
+            if (this.connectionFactory != null && this.connectionFactory instanceof ConnectionPool connectionFactory) {
                 if (!connectionFactory.isDisposed()) {
                     // dispose is a blocking call, use the non blocking one to avoid error
                     connectionFactory.disposeLater().subscribe();

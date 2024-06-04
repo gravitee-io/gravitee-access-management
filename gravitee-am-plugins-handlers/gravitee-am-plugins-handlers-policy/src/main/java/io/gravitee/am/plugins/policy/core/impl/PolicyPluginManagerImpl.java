@@ -136,8 +136,8 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
                     // Create policy context instance and initialize context provider (if used)
                     PolicyContext context = new PolicyContextFactory().create(policyContextClass);
 
-                    if (context instanceof PolicyContextProviderAware) {
-                        ((PolicyContextProviderAware) context).setPolicyContextProvider(
+                    if (context instanceof PolicyContextProviderAware policyContextProviderAware) {
+                        policyContextProviderAware.setPolicyContextProvider(
                                 new SpringPolicyContextProvider(applicationContext)
                         );
                     }

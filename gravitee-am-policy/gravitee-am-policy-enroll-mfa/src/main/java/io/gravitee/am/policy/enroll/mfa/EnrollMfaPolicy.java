@@ -205,17 +205,17 @@ public class EnrollMfaPolicy {
                         break;
                     case SMS:
                         initiateVariableFactorSecurity(factorProvider, user)
-                                .ifPresent(security -> enrolledFactor.setSecurity(security));
+                                .ifPresent(enrolledFactor::setSecurity);
                         enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.SMS, enrollmentValue));
                         break;
                     case CALL:
                         initiateVariableFactorSecurity(factorProvider, user)
-                                .ifPresent(security -> enrolledFactor.setSecurity(security));
+                                .ifPresent(enrolledFactor::setSecurity);
                         enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.CALL, enrollmentValue));
                         break;
                     case EMAIL:
                         initiateVariableFactorSecurity(factorProvider, user)
-                                .ifPresent(security -> enrolledFactor.setSecurity(security));
+                                .ifPresent(enrolledFactor::setSecurity);
                         enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.EMAIL, enrollmentValue));
                         break;
                     case HTTP:

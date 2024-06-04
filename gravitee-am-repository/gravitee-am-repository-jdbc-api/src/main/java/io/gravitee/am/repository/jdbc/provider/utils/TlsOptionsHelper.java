@@ -17,6 +17,8 @@ package io.gravitee.am.repository.jdbc.provider.utils;
 
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.Option;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -27,6 +29,7 @@ import static io.r2dbc.spi.ConnectionFactoryOptions.SSL;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class TlsOptionsHelper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TlsOptionsHelper.class);
@@ -34,9 +37,15 @@ public class TlsOptionsHelper {
     private static final String MYSQL = "mysql";
     private static final String MARIADB = "mariadb";
     private static final String SQLSERVER = "sqlserver";
+    public static final String SSL_MODE = "sslMode";
+    public static final String SSL_SERVER_CERT = "sslServerCert";
+    public static final String VERIFY_CA = "VERIFY_CA";
+    public static final String TRUST_STORE_PATH = "trustStore.path";
+    public static final String TRUST_STORE_PASSWORD = "trustStore.password";
+    public static final String FALSE = "false";
 
     public static ConnectionFactoryOptions.Builder setSSLOptions(ConnectionFactoryOptions.Builder builder, Environment environment, String prefix, String driver) {
-        final boolean useSSL = Boolean.valueOf(environment.getProperty(prefix + "sslEnabled", "false"));
+        final boolean useSSL = Boolean.parseBoolean(environment.getProperty(prefix + "sslEnabled", FALSE));
         if (useSSL) {
             switch (driver) {
                 case POSTGRESQL:
@@ -57,16 +66,16 @@ public class TlsOptionsHelper {
         } else {
             switch (driver) {
                 case POSTGRESQL:
-                    builder.option(SSL, false).option(Option.valueOf("sslMode"), "disable");
+                    builder.option(SSL, false).option(Option.valueOf(SSL_MODE), "disable");
                     break;
                 case MARIADB:
                     builder.option(Option.valueOf("SslMode"), "disable");
                     break;
                 case MYSQL:
-                    builder.option(Option.valueOf("sslMode"), "DISABLED");
+                    builder.option(Option.valueOf(SSL_MODE), "DISABLED");
                     break;
                 case SQLSERVER:
-                    builder.option(Option.valueOf("encrypt"), "false");
+                    builder.option(Option.valueOf("encrypt"), FALSE);
                     break;
                 default:
                     LOGGER.warn("Unknown driver {}, skipping SSL disable configuration for JDBC url", driver);
@@ -77,39 +86,39 @@ public class TlsOptionsHelper {
     }
 
     private static ConnectionFactoryOptions.Builder postgresOptions(ConnectionFactoryOptions.Builder builder, Environment environment, String prefix) {
-        final String sslMode = environment.getProperty(prefix + "sslMode", "verify-ca");
-        final String sslServerCert = environment.getProperty(prefix + "sslServerCert");
+        final String sslMode = environment.getProperty(prefix + SSL_MODE, "verify-ca");
+        final String sslServerCert = environment.getProperty(prefix + SSL_SERVER_CERT);
         return builder
                 .option(SSL, true)
-                .option(Option.valueOf("sslMode"), sslMode)
+                .option(Option.valueOf(SSL_MODE), sslMode)
                 .option(Option.valueOf("sslRootCert"), sslServerCert);
     }
 
     private static ConnectionFactoryOptions.Builder mysqlOptions(ConnectionFactoryOptions.Builder builder, Environment environment, String prefix) {
-        final String sslMode = environment.getProperty(prefix + "sslMode", "VERIFY_CA");
+        final String sslMode = environment.getProperty(prefix + SSL_MODE, VERIFY_CA);
         final String tlsProtocol = environment.getProperty(prefix + "tlsProtocol", "TLSv1.2");
-        final String sslServerCert = environment.getProperty(prefix + "sslServerCert");
+        final String sslServerCert = environment.getProperty(prefix + SSL_SERVER_CERT);
         return builder
                 .option(SSL, true)
-                .option(Option.valueOf("sslMode"), sslMode)
+                .option(Option.valueOf(SSL_MODE), sslMode)
                 .option(Option.valueOf("sslCa"), sslServerCert)
                 .option(Option.valueOf("tlsVersion"), tlsProtocol);
     }
 
     private static ConnectionFactoryOptions.Builder mariadbOptions(ConnectionFactoryOptions.Builder builder, Environment environment, String prefix) {
-        final String sslMode = environment.getProperty(prefix + "sslMode", "VERIFY_CA");
+        final String sslMode = environment.getProperty(prefix + SSL_MODE, VERIFY_CA);
         final String tlsProtocol = environment.getProperty(prefix + "tlsProtocol", "TLSv1.2");
-        final String sslServerCert = environment.getProperty(prefix + "sslServerCert");
+        final String sslServerCert = environment.getProperty(prefix + SSL_SERVER_CERT);
         return builder
                 .option(SSL, true)
-                .option(Option.valueOf("sslMode"), sslMode)
+                .option(Option.valueOf(SSL_MODE), sslMode)
                 .option(Option.valueOf("serverSslCert"), sslServerCert)
                 .option(Option.valueOf("tlsVersion"), tlsProtocol);
     }
 
     private static ConnectionFactoryOptions.Builder sqlServerOptions(ConnectionFactoryOptions.Builder builder, Environment environment, String prefix) {
-        final String trustStore = environment.getProperty(prefix + "trustStore.path");
-        final String trustStorePassword = environment.getProperty(prefix + "trustStore.password");
+        final String trustStore = environment.getProperty(prefix + TRUST_STORE_PATH);
+        final String trustStorePassword = environment.getProperty(prefix + TRUST_STORE_PASSWORD);
         return builder
                 .option(SSL, true)
                 .option(Option.valueOf("trustStore"), trustStore)
@@ -117,7 +126,7 @@ public class TlsOptionsHelper {
     }
 
     public static String setSSLOptions(String jdbcUrl, Environment environment, String prefix, String driver) {
-        final boolean useSSL = Boolean.valueOf(environment.getProperty(prefix + "sslEnabled", "false"));
+        final boolean useSSL = Boolean.parseBoolean(environment.getProperty(prefix + "sslEnabled", FALSE));
         String jdbcUrlWithSSL = jdbcUrl;
 
         if (useSSL) {
@@ -161,8 +170,8 @@ public class TlsOptionsHelper {
 
 
     private static String postgresOptions(String jdbcUrl, Environment environment, String prefix) {
-        final String sslMode = environment.getProperty(prefix + "sslMode", "verify-ca");
-        final String sslServerCert = environment.getProperty(prefix + "sslServerCert");
+        final String sslMode = environment.getProperty(prefix + SSL_MODE, "verify-ca");
+        final String sslServerCert = environment.getProperty(prefix + SSL_SERVER_CERT);
 
         StringBuilder builder = new StringBuilder(jdbcUrl)
                 .append("?ssl=true")
@@ -176,9 +185,9 @@ public class TlsOptionsHelper {
     }
 
     private static String mysqlOptions(String jdbcUrl, Environment environment, String prefix) {
-        final String sslMode = environment.getProperty(prefix + "sslMode", "VERIFY_CA");
-        final String trustStore = environment.getProperty(prefix + "trustStore.path");
-        final String trustStorePassword = environment.getProperty(prefix + "trustStore.password");
+        final String sslMode = environment.getProperty(prefix + SSL_MODE, VERIFY_CA);
+        final String trustStore = environment.getProperty(prefix + TRUST_STORE_PATH);
+        final String trustStorePassword = environment.getProperty(prefix + TRUST_STORE_PASSWORD);
 
         StringBuilder builder = new StringBuilder(jdbcUrl)
                 .append("?sslMode=").append(sslMode);
@@ -195,8 +204,8 @@ public class TlsOptionsHelper {
     }
 
     private static String mariadbOptions(String jdbcUrl, Environment environment, String prefix) {
-        final String sslMode = environment.getProperty(prefix + "sslMode", "VERIFY_CA");
-        final String sslServerCert = environment.getProperty(prefix + "sslServerCert");
+        final String sslMode = environment.getProperty(prefix + SSL_MODE, VERIFY_CA);
+        final String sslServerCert = environment.getProperty(prefix + SSL_SERVER_CERT);
         final String disableSslHostnameVerification = environment.getProperty(prefix + "disableSslHostnameVerification");
 
         StringBuilder builder = new StringBuilder(jdbcUrl)
@@ -216,8 +225,8 @@ public class TlsOptionsHelper {
 
     private static String sqlServerOptions(String jdbcUrl, Environment environment, String prefix) {
         final String trustServerCertificate = environment.getProperty(prefix + "trustServerCertificate");
-        final String trustStore = environment.getProperty(prefix + "trustStore.path");
-        final String trustStorePassword = environment.getProperty(prefix + "trustStore.password");
+        final String trustStore = environment.getProperty(prefix + TRUST_STORE_PATH);
+        final String trustStorePassword = environment.getProperty(prefix + TRUST_STORE_PASSWORD);
 
         StringBuilder builder = new StringBuilder(jdbcUrl)
                 .append(";encrypt=true");

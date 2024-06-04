@@ -178,19 +178,19 @@ public class ConnectionFactoryProvider {
 
             builder = TlsOptionsHelper.setSSLOptions(builder, environment, prefix, driver);
 
-            connectionPool = (ConnectionPool)ConnectionFactories.get(builder.build());
+            connectionPool = ConnectionFactories.get(builder.build());
         }
 
         LOGGER.info("Connection pool created for {} database", prefix);
 
-        if (connectionPool instanceof ConnectionPool) {
+        if (connectionPool instanceof ConnectionPool connection) {
             final Tags tags = Tags.of(
                     Tag.of(TAG_SOURCE, "common-pool"),
                     Tag.of(TAG_DRIVER, getJdbcDriver()),
                     Tag.of(TAG_DATABASE, getJdbcDatabase()),
                     Tag.of(TAG_SERVER, Strings.isNullOrEmpty(getJdbcPort()) ? getJdbcHostname() : getJdbcHostname() + ":" + getJdbcPort()));
             new R2DBCConnectionMetrics(Metrics.getDefaultRegistry(), tags)
-                    .register((ConnectionPool) connectionPool);
+                    .register(connection);
         }
         return connectionPool;
     }

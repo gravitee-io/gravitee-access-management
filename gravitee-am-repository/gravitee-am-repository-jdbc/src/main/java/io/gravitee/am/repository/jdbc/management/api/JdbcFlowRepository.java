@@ -42,7 +42,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static reactor.adapter.rxjava.RxJava3Adapter.*;
+import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -99,9 +101,9 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
             COL_STEP_CONDITION
     );
 
-    private String INSERT_STATEMENT;
-    private String UPDATE_STATEMENT;
-    private String INSERT_STEP_STATEMENT;
+    private String insertStatement;
+    private String updateStatement;
+    private String insertStepStatement;
 
     @Autowired
     protected SpringFlowRepository flowRepository;
@@ -116,9 +118,9 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.INSERT_STATEMENT = createInsertStatement("flows", columns);
-        this.UPDATE_STATEMENT = createUpdateStatement("flows", columns, List.of(COL_ID));
-        this.INSERT_STEP_STATEMENT = createInsertStatement("flow_steps", stepsColumns);
+        this.insertStatement = createInsertStatement("flows", columns);
+        this.updateStatement = createUpdateStatement("flows", columns, List.of(COL_ID));
+        this.insertStepStatement = createInsertStatement("flow_steps", stepsColumns);
     }
 
     @Override
@@ -136,7 +138,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(INSERT_STATEMENT);
+        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(insertStatement);
 
         insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_NAME, item.getName(), String.class);
@@ -180,7 +182,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
             jdbcPostSteps.add(bean);
         }
         return Flux.fromIterable(jdbcPostSteps).concatMap(step -> {
-            DatabaseClient.GenericExecuteSpec insert = getTemplate().getDatabaseClient().sql(INSERT_STEP_STATEMENT);
+            DatabaseClient.GenericExecuteSpec insert = getTemplate().getDatabaseClient().sql(insertStepStatement);
             insert = step.getFlowId() != null ? insert.bind(COL_STEP_ID, step.getFlowId()) : insert.bindNull(COL_STEP_ID, String.class);
             insert = step.getStage() != null ? insert.bind(COL_STEP_STAGE, step.getStage()) : insert.bindNull(COL_STEP_STAGE, String.class);
             insert = step.getName() != null ? insert.bind(COL_STEP_NAME, step.getName()) : insert.bindNull(COL_STEP_NAME, String.class);
@@ -224,7 +226,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(UPDATE_STATEMENT);
+        DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(updateStatement);
 
         update = addQuotedField(update, COL_ID, item.getId(), String.class);
         update = addQuotedField(update, COL_NAME, item.getName(), String.class);

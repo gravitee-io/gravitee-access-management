@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
  */
 public class AuthenticationDeviceNotifierPluginHandler extends AmPluginHandler<AuthenticationDeviceNotifier<?, ?>> {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(AuthenticationDeviceNotifierPluginHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationDeviceNotifierPluginHandler.class);
     public static final String PLUGIN_TYPE_AUTHDEVICE_NOTIFIER = "authdevice-notifier";
 
     @Override

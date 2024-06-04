@@ -21,7 +21,6 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Theme;
 import io.gravitee.am.service.model.NewTheme;
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 

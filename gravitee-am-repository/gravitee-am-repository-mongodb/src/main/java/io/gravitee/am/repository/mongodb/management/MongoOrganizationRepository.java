@@ -20,10 +20,14 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.OrganizationMongo;
-import io.reactivex.rxjava3.core.*;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.PostConstruct;
 import java.util.List;
 
 import static com.mongodb.client.model.Filters.eq;

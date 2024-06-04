@@ -70,14 +70,14 @@ public class FreemarkerMessageResolver implements TemplateMethodModelEx {
 
     private Object convert(Object input) {
         if (input != null) {
-            if (input instanceof SimpleScalar) {
-                return ((SimpleScalar) input).getAsString();
+            if (input instanceof SimpleScalar scalar) {
+                return scalar.getAsString();
             }
-            if (input instanceof SimpleNumber) {
-                return ((SimpleNumber) input).getAsNumber();
+            if (input instanceof SimpleNumber number) {
+                return number.getAsNumber();
             }
-            if (input instanceof SimpleDate) {
-                return ((SimpleDate) input).getAsDate();
+            if (input instanceof SimpleDate date) {
+                return date.getAsDate();
             }
         }
         return input;

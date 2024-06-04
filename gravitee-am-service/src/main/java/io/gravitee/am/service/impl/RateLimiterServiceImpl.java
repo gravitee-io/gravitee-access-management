@@ -111,7 +111,7 @@ public class RateLimiterServiceImpl implements RateLimiterService {
                         rateLimit.setCreatedAt(new Date());
                         rateLimit.setUpdatedAt(rateLimit.getCreatedAt());
                         //value of left tokens should be "limit -1" for the first request
-                        rateLimit.setTokenLeft(limit - 1);
+                        rateLimit.setTokenLeft(limit - 1L);
                         rateLimit.setAllowRequest(true);
                         return rateLimitRepository.create(rateLimit);
                     }

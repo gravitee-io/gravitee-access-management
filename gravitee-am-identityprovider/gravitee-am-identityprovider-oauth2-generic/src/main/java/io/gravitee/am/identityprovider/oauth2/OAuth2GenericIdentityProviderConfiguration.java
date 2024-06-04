@@ -205,6 +205,7 @@ public class OAuth2GenericIdentityProviderConfiguration implements OpenIDConnect
         this.logoutUri = logoutUri;
     }
 
+    @Override
     public String getClientAuthenticationMethod() {
         return clientAuthenticationMethod;
     }

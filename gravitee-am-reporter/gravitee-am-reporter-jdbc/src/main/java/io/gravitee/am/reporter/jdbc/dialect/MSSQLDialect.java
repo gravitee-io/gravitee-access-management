@@ -43,10 +43,9 @@ public class MSSQLDialect extends AbstractDialect {
 
     @Override
     protected String groupByConcatQueryParts(AuditReportableCriteria criteria, StringBuilder queryBuilder, StringBuilder whereClauseBuilder, String field) {
-        String query = "SELECT TOP " + (criteria.size() == null ? 50 : + criteria.size()) + " " + field + ", COUNT(DISTINCT a.id) as counter, MAX(a.timestamp) " +
+        return "SELECT TOP " + (criteria.size() == null ? 50 : + criteria.size()) + " " + field + ", COUNT(DISTINCT a.id) as counter, MAX(a.timestamp) " +
                 queryBuilder.toString() +
                 whereClauseBuilder.toString() + " GROUP BY " + field ;
-        return query;
     }
 
     @Override

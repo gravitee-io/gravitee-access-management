@@ -23,20 +23,22 @@ import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
-
-import jakarta.annotation.PostConstruct;
 
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.gt;
+import static com.mongodb.client.model.Filters.or;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -59,14 +61,6 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
 
         // expire after index
         super.createIndex(authorizationCodeCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0l, TimeUnit.SECONDS).name("e1"));
-    }
-
-    private Maybe<AuthorizationCode> findById(String id) {
-        return Observable
-                .fromPublisher(authorizationCodeCollection.find(and(eq(FIELD_ID, id),
-                        or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))).first())
-                .firstElement()
-                .map(this::convert);
     }
 
     @Override

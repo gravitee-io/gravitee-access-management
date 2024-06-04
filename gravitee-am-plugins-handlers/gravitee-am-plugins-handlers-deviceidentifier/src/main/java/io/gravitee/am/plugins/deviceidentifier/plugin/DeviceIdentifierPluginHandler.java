@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DeviceIdentifierPluginHandler extends AmPluginHandler<DeviceIdentifier<?, ?>> {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(DeviceIdentifierPluginHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DeviceIdentifierPluginHandler.class);
     public static final String PLUGIN_TYPE_DEVICE_IDENTIFIER = "DEVICE_IDENTIFIER";
 
     @Override
