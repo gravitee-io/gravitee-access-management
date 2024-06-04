@@ -95,7 +95,7 @@ public class PasswordPolicyServiceTest {
     private User principal;
 
     @Test
-    public void shouldCreate_noDefaultPolicy() {
+    public void shouldCreate_noExistingDefaultPolicy() {
         PasswordPolicy newPasswordPolicy = createPolicy();
 
         when(passwordPolicyRepository.create(any())).thenAnswer(answer -> Single.just(answer.getArguments()[0]));
@@ -130,7 +130,7 @@ public class PasswordPolicyServiceTest {
     }
 
     @Test
-    public void shouldCreate_withDefaultPolicy() {
+    public void shouldCreate_withExistingDefaultPolicy() {
         var newPasswordPolicy = createPolicy();
 
         when(passwordPolicyRepository.create(any())).thenAnswer(answer -> Single.just(answer.getArguments()[0]));
@@ -158,6 +158,31 @@ public class PasswordPolicyServiceTest {
                         passwordPolicy.getLettersInMixedCase().equals(newPasswordPolicy.getLettersInMixedCase()) &&
                         passwordPolicy.getMaxConsecutiveLetters().equals(newPasswordPolicy.getMaxConsecutiveLetters()) &&
                         passwordPolicy.getPasswordHistoryEnabled().equals(newPasswordPolicy.getPasswordHistoryEnabled()) &&
+                        passwordPolicy.getDefaultPolicy().equals(Boolean.FALSE));
+
+        verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.SUCCESS)));
+        verify(eventService).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.CREATE)));
+    }
+
+    @Test
+    public void shouldCreate_withDefault_withExistingDefaultPolicy() {
+        var newPasswordPolicy = createPolicy();
+        newPasswordPolicy.setDefaultPolicy(Boolean.TRUE);
+
+        when(passwordPolicyRepository.create(any())).thenAnswer(answer -> Single.just(answer.getArguments()[0]));
+        when(passwordPolicyRepository.findByDefaultPolicy(any(), any())).thenReturn(Maybe.just(new PasswordPolicy()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<PasswordPolicy> observer = cut.create(newPasswordPolicy, principal).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertValue(passwordPolicy ->
+                passwordPolicy.getCreatedAt() != null &&
+                        passwordPolicy.getUpdatedAt() != null &&
+                        passwordPolicy.getReferenceId().equals(DOMAIN_ID) &&
+                        passwordPolicy.getReferenceType().equals(ReferenceType.DOMAIN) &&
+                        passwordPolicy.getName().equals(newPasswordPolicy.getName()) &&
                         passwordPolicy.getDefaultPolicy().equals(Boolean.FALSE));
 
         verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.SUCCESS)));
@@ -262,6 +287,64 @@ public class PasswordPolicyServiceTest {
                         passwordPolicy.getLettersInMixedCase().equals(updatePasswordPolicy.getLettersInMixedCase()) &&
                         passwordPolicy.getMaxConsecutiveLetters().equals(updatePasswordPolicy.getMaxConsecutiveLetters()) &&
                         passwordPolicy.getPasswordHistoryEnabled().equals(updatePasswordPolicy.getPasswordHistoryEnabled()));
+
+        verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.SUCCESS)));
+        verify(eventService).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.UPDATE)));
+    }
+
+    @Test
+    public void shouldUpdateDefaultPolicy() {
+        var existingPolicy = createPasswordPolicy();
+        existingPolicy.setDefaultPolicy(Boolean.TRUE);
+        var updatePasswordPolicy = new UpdatePasswordPolicy();
+        updatePasswordPolicy.setName(UUID.randomUUID().toString());
+        updatePasswordPolicy.setDefaultPolicy(Boolean.FALSE);
+
+        when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.just(existingPolicy));
+        when(passwordPolicyRepository.update(any())).thenAnswer(answer -> Single.just(answer.getArguments()[0]));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<PasswordPolicy> observer = cut.update(ReferenceType.DOMAIN, DOMAIN_ID, existingPolicy.getId(), updatePasswordPolicy, principal).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertValue(passwordPolicy ->
+                passwordPolicy.getId().equals(existingPolicy.getId()) &&
+                        passwordPolicy.getCreatedAt().equals(existingPolicy.getCreatedAt()) &&
+                        !passwordPolicy.getUpdatedAt().equals(existingPolicy.getUpdatedAt()) &&
+                        passwordPolicy.getReferenceId().equals(DOMAIN_ID) &&
+                        passwordPolicy.getReferenceType().equals(ReferenceType.DOMAIN) &&
+                        passwordPolicy.getName().equals(updatePasswordPolicy.getName()) &&
+                        passwordPolicy.getDefaultPolicy().equals(existingPolicy.getDefaultPolicy()));
+
+        verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.SUCCESS)));
+        verify(eventService).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.UPDATE)));
+    }
+
+    @Test
+    public void shouldUpdateNotDefaultPolicy() {
+        var existingPolicy = createPasswordPolicy();
+        existingPolicy.setDefaultPolicy(Boolean.FALSE);
+        var updatePasswordPolicy = new UpdatePasswordPolicy();
+        updatePasswordPolicy.setName(UUID.randomUUID().toString());
+        updatePasswordPolicy.setDefaultPolicy(Boolean.TRUE);
+
+        when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.just(existingPolicy));
+        when(passwordPolicyRepository.update(any())).thenAnswer(answer -> Single.just(answer.getArguments()[0]));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<PasswordPolicy> observer = cut.update(ReferenceType.DOMAIN, DOMAIN_ID, existingPolicy.getId(), updatePasswordPolicy, principal).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertValue(passwordPolicy ->
+                passwordPolicy.getId().equals(existingPolicy.getId()) &&
+                        passwordPolicy.getCreatedAt().equals(existingPolicy.getCreatedAt()) &&
+                        !passwordPolicy.getUpdatedAt().equals(existingPolicy.getUpdatedAt()) &&
+                        passwordPolicy.getReferenceId().equals(DOMAIN_ID) &&
+                        passwordPolicy.getReferenceType().equals(ReferenceType.DOMAIN) &&
+                        passwordPolicy.getName().equals(updatePasswordPolicy.getName()) &&
+                        passwordPolicy.getDefaultPolicy().equals(existingPolicy.getDefaultPolicy()));
 
         verify(auditService).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.SUCCESS)));
         verify(eventService).create(ArgumentMatchers.argThat(evt -> evt.getType().equals(Type.PASSWORD_POLICY) && evt.getPayload().getAction().equals(Action.UPDATE)));
