@@ -52,6 +52,7 @@ import org.springframework.stereotype.Component;
 import java.util.Date;
 import java.util.List;
 
+import static io.gravitee.am.identityprovider.api.oidc.OpenIDConnectConfigurationUtils.sanitizeClientAuthMethod;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -146,7 +147,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         identityProvider.setName(newIdentityProvider.getName());
         identityProvider.setType(newIdentityProvider.getType());
         identityProvider.setSystem(system);
-        identityProvider.setConfiguration(newIdentityProvider.getConfiguration());
+        identityProvider.setConfiguration(sanitizeClientAuthMethod(newIdentityProvider.getConfiguration()));
         identityProvider.setExternal(newIdentityProvider.isExternal());
         identityProvider.setDomainWhitelist(ofNullable(newIdentityProvider.getDomainWhitelist()).orElse(List.of()));
         identityProvider.setCreatedAt(new Date());
@@ -180,6 +181,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     identityToUpdate.setRoleMapper(updateIdentityProvider.getRoleMapper());
                     identityToUpdate.setDomainWhitelist(ofNullable(updateIdentityProvider.getDomainWhitelist()).orElse(List.of()));
                     identityToUpdate.setUpdatedAt(new Date());
+                    identityToUpdate.setConfiguration(sanitizeClientAuthMethod(identityToUpdate.getConfiguration()));
 
                     return identityProviderRepository.update(identityToUpdate)
                             .flatMap(identityProvider1 -> {
