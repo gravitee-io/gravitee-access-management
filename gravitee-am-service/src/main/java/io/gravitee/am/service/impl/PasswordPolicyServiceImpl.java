@@ -98,6 +98,9 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
         final var now = new Date();
         policy.setCreatedAt(now);
         policy.setUpdatedAt(now);
+        // setting default policy can be done only by /default endpoint
+        policy.setDefaultPolicy(Boolean.FALSE);
+
 
         return passwordPolicyRepository.findByDefaultPolicy(policy.getReferenceType(), policy.getReferenceId())
                 .map(__ -> policy)
@@ -137,6 +140,8 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
                     entityToUpdate.setCreatedAt(existingPolicy.getCreatedAt());
                     entityToUpdate.setReferenceType(existingPolicy.getReferenceType());
                     entityToUpdate.setReferenceId(existingPolicy.getReferenceId());
+                    // setting default policy can be done only by /default endpoint
+                    entityToUpdate.setDefaultPolicy(existingPolicy.getDefaultPolicy());
                     return updatePasswordPolicy(referenceType, referenceId, entityToUpdate, existingPolicy, principal);
                 })
                 .doOnError(error -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
