@@ -25,10 +25,10 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.DomainService;
 import io.reactivex.rxjava3.core.Single;
+import jakarta.ws.rs.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.inject.Named;
-import jakarta.ws.rs.BadRequestException;
 
 /**
  * @author Titouan COMPIEGNE (titouuan.compiegne at graviteesource.com)

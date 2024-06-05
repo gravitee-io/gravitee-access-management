@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.identityprovider.api;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 

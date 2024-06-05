@@ -17,7 +17,6 @@ package io.gravitee.am.management.handlers.management.api.preview;
 
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.common.http.HttpStatusCode;
-import org.thymeleaf.exceptions.TemplateEngineException;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

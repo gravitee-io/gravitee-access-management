@@ -18,10 +18,11 @@ package io.gravitee.am.service.validators.flow;
 import io.gravitee.am.service.model.Flow;
 import io.gravitee.am.service.validators.flow.policy.SendEmailPolicyValidator;
 import io.reactivex.rxjava3.core.Completable;
+import org.springframework.stereotype.Component;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
-import org.springframework.stereotype.Component;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

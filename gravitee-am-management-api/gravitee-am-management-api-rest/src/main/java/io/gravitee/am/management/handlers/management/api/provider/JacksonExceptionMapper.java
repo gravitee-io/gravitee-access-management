@@ -16,7 +16,6 @@
 package io.gravitee.am.management.handlers.management.api.provider;
 
 import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.common.http.HttpStatusCode;
 import jakarta.ws.rs.core.MediaType;

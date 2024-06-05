@@ -18,7 +18,6 @@ package io.gravitee.am.service.reporter.builder;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.model.User;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.service.reporter.builder.management.ManagementAuditBuilder;
 

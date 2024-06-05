@@ -16,7 +16,6 @@
 package io.gravitee.am.plugins.botdetection.plugin;
 
 import io.gravitee.am.botdetection.api.BotDetection;
-import io.gravitee.am.botdetection.api.BotDetectionConfiguration;
 import io.gravitee.am.plugins.handlers.api.plugin.AmPluginHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

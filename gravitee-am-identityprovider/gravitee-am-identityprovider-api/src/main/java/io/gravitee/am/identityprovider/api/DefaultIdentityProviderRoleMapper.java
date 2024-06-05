@@ -20,7 +20,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static io.gravitee.am.identityprovider.api.AuthenticationContext.CONTEXT_KEY_PROFILE;
 import static java.util.function.Predicate.not;

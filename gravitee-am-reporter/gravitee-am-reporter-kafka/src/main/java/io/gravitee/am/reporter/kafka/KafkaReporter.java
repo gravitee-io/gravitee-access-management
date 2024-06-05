@@ -16,10 +16,7 @@
 package io.gravitee.am.reporter.kafka;
 
 import io.gravitee.am.reporter.api.Reporter;
-import io.gravitee.am.reporter.api.ReporterConfiguration;
-import io.gravitee.am.reporter.api.audit.AuditReporter;
 import io.gravitee.am.reporter.kafka.audit.KafkaAuditReporter;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Florent Amaridon

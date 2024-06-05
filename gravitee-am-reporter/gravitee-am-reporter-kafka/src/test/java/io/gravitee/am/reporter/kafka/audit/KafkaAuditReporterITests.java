@@ -19,19 +19,6 @@ import io.gravitee.am.reporter.kafka.AuditValueFactory;
 import io.gravitee.am.reporter.kafka.JUnitConfiguration;
 import io.gravitee.am.reporter.kafka.KafkaReporterConfiguration;
 import io.gravitee.am.reporter.kafka.kafka.JacksonSerializerUTests;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
 import junit.framework.TestCase;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -48,6 +35,20 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 import org.testcontainers.containers.KafkaContainer;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = JUnitConfiguration.class, loader = AnnotationConfigContextLoader.class)

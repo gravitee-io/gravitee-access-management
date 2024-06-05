@@ -16,12 +16,9 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Policy;
-import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-
-import java.util.List;
 
 /**
  * NOTE: only use for the PoliciesToFlowsUpgrader Upgrader

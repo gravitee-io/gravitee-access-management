@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.repository.management.api.search;
 
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.alert.AlertTrigger;
 import io.gravitee.am.model.alert.AlertTriggerType;
 
 import java.util.List;

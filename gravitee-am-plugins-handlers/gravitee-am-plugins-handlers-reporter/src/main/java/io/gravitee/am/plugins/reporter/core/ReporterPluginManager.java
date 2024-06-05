@@ -16,12 +16,14 @@
 package io.gravitee.am.plugins.reporter.core;
 
 import io.gravitee.am.common.utils.GraviteeContext;
-import io.gravitee.am.plugins.handlers.api.core.*;
+import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
+import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
+import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
 import io.gravitee.am.reporter.api.Reporter;
 import io.gravitee.am.reporter.api.ReporterConfiguration;
 import io.gravitee.am.reporter.api.audit.AuditReporter;
 import io.gravitee.plugin.core.api.PluginContextFactory;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -20,7 +20,6 @@ import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.r2dbc.core.DatabaseClient;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 

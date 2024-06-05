@@ -24,7 +24,6 @@ import freemarker.template.TemplateModelException;
 import java.util.List;
 import java.util.Properties;
 
-import static io.gravitee.am.service.i18n.MessageFormatSanitizer.sanitizeSingleQuote;
 import static java.text.MessageFormat.format;
 import static java.util.Optional.ofNullable;
 

@@ -20,10 +20,11 @@ import io.gravitee.am.model.flow.Step;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.validators.EmailFromAware;
 import io.gravitee.am.service.validators.email.EmailDomainValidator;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+
+import java.util.Optional;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

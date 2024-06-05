@@ -23,18 +23,14 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.service.reporter.builder.gateway.GatewayAuditBuilder;
-import org.jsoup.internal.StringUtil;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Supplier;
 
 import static io.gravitee.am.common.audit.EventType.TOKEN_CREATED;
 import static io.gravitee.am.common.audit.EventType.TOKEN_REVOKED;
 import static java.lang.String.format;
-import static java.util.Objects.isNull;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAuditBuilder> {

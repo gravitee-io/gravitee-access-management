@@ -16,7 +16,6 @@
 package io.gravitee.am.management.handlers.management.api.model;
 
 import io.gravitee.am.model.Theme;
-
 import jakarta.validation.constraints.NotNull;
 
 /**

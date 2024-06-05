@@ -16,9 +16,15 @@
 package io.gravitee.am.management.handlers.management.api.authentication.http;
 
 import io.gravitee.gateway.api.http.HttpHeaders;
-
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.*;
+
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 

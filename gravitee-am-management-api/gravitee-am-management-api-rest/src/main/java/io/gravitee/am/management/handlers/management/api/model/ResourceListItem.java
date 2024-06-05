@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.management.handlers.management.api.model;
 
-import io.gravitee.am.model.uma.Resource;
-
 import java.util.List;
 import java.util.Map;
 

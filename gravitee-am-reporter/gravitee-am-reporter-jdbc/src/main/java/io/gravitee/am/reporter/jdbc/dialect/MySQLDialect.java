@@ -17,7 +17,6 @@ package io.gravitee.am.reporter.jdbc.dialect;
 
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
-import io.r2dbc.spi.Row;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.r2dbc.core.DatabaseClient;
 import reactor.core.publisher.Flux;

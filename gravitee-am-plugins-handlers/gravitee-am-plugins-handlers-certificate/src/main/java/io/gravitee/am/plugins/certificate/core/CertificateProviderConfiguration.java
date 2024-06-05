@@ -18,6 +18,7 @@ package io.gravitee.am.plugins.certificate.core;
 
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
+
 import java.util.Map;
 
 /**

@@ -19,13 +19,10 @@ import com.google.common.reflect.TypeToken;
 import io.gravitee.am.common.plugin.AmPlugin;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.plugin.core.api.AbstractPluginHandler;
-import io.gravitee.plugin.core.api.ConfigurablePlugin;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
-import java.lang.reflect.ParameterizedType;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.util.Assert;
 
 /**

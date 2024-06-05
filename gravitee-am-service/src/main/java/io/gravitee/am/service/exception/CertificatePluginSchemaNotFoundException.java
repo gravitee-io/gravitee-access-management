@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.service.exception;
 
-import io.gravitee.am.service.exception.AbstractNotFoundException;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team

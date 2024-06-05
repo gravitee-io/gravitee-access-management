@@ -16,10 +16,7 @@
 package io.gravitee.am.reporter.file;
 
 import io.gravitee.am.reporter.api.Reporter;
-import io.gravitee.am.reporter.api.ReporterConfiguration;
-import io.gravitee.am.reporter.api.audit.AuditReporter;
 import io.gravitee.am.reporter.file.audit.FileAuditReporter;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

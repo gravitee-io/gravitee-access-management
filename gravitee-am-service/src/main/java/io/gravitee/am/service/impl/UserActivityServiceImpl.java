@@ -25,13 +25,14 @@ import io.gravitee.am.service.impl.user.activity.configuration.UserActivityConfi
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.Map;
 
 import static io.gravitee.am.service.impl.user.activity.utils.CoordinateUtils.computeCoordinate;
 import static io.gravitee.am.service.impl.user.activity.utils.HashedKeyUtils.computeHash;

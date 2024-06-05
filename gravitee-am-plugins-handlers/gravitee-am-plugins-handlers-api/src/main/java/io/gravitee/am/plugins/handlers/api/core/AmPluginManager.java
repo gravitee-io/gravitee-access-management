@@ -16,6 +16,7 @@
 package io.gravitee.am.plugins.handlers.api.core;
 
 import io.gravitee.plugin.core.api.Plugin;
+
 import java.io.IOException;
 import java.util.Collection;
 

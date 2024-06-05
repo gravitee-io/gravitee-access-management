@@ -17,7 +17,6 @@ package io.gravitee.am.identityprovider.google;
 
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProvider;
 import io.gravitee.am.identityprovider.google.authentication.GoogleAuthenticationProvider;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

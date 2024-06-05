@@ -17,6 +17,7 @@
 package io.gravitee.am.service.impl.user.activity.utils;
 
 import io.gravitee.am.service.impl.user.activity.configuration.UserActivityConfiguration.Algorithm;
+
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 

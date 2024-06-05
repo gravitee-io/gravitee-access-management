@@ -19,6 +19,7 @@ package io.gravitee.am.plugins.idp.core;
 import io.gravitee.am.certificate.api.CertificateManager;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
+
 import java.util.Map;
 
 /**

@@ -16,12 +16,11 @@
 package io.gravitee.am.management.handlers.management.api.authentication.web;
 
 import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.RedirectCookieGenerator;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.util.UrlUtils;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

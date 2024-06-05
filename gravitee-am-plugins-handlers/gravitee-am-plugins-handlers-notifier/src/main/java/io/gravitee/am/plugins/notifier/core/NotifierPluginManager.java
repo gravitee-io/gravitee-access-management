@@ -16,21 +16,11 @@
 package io.gravitee.am.plugins.notifier.core;
 
 import io.gravitee.plugin.core.api.ConfigurablePluginManager;
-import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.internal.PluginManifestProperties;
 import io.gravitee.plugin.notifier.NotifierPlugin;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Base64;
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)

@@ -19,9 +19,10 @@ import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.validators.Validator;
 import io.gravitee.am.service.validators.resource.smtp.SmtpResourceValidator;
 import io.reactivex.rxjava3.core.Completable;
+import org.springframework.stereotype.Component;
+
 import java.util.List;
 import java.util.Optional;
-import org.springframework.stereotype.Component;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

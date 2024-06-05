@@ -17,7 +17,6 @@ package io.gravitee.am.identityprovider.linkedin;
 
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProvider;
 import io.gravitee.am.identityprovider.linkedin.authentication.LinkedinAuthenticationProvider;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

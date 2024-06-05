@@ -22,9 +22,6 @@ import io.gravitee.am.repository.common.CrudRepository;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
-
-import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

@@ -19,6 +19,7 @@ package io.gravitee.am.service.utils;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.model.PatchApplication;
 import io.gravitee.am.service.model.PatchApplicationSettings;
+
 import java.util.HashSet;
 import java.util.Set;
 

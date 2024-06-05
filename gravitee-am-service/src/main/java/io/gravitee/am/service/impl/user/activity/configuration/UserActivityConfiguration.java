@@ -16,14 +16,12 @@
 
 package io.gravitee.am.service.impl.user.activity.configuration;
 
-import java.time.temporal.ChronoUnit;
-import java.util.Optional;
-import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import static java.util.Objects.isNull;
-import static java.util.Optional.ofNullable;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
+import java.util.regex.Pattern;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

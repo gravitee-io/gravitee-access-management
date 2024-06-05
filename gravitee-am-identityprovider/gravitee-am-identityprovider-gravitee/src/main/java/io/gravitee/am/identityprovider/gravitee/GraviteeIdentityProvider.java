@@ -16,13 +16,10 @@
 package io.gravitee.am.identityprovider.gravitee;
 
 
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.IdentityProvider;
-import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.identityprovider.gravitee.authentication.GraviteeAuthenticationProvider;
 import io.gravitee.am.identityprovider.gravitee.user.GraviteeUserProvider;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

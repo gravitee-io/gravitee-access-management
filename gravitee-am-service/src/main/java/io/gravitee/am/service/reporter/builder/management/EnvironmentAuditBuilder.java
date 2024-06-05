@@ -18,7 +18,6 @@ package io.gravitee.am.service.reporter.builder.management;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Environment;
-import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 
 /**

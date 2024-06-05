@@ -17,7 +17,6 @@ package io.gravitee.am.reporter.file.formatter.csv;
 
  import io.gravitee.am.reporter.file.audit.ReportEntry;
  import io.gravitee.am.reporter.file.formatter.AbstractFormatter;
- import io.gravitee.reporter.api.Reportable;
  import io.vertx.core.buffer.Buffer;
 
  /**
@@ -25,13 +24,13 @@ package io.gravitee.am.reporter.file.formatter.csv;
   * @author GraviteeSource Team
   */
  abstract class SingleValueFormatter<T extends ReportEntry> extends AbstractFormatter<T> {
- 
+
      private final static String EMPTY_VALUE = "";
- 
+
      private static final char CSV_DELIMITER = ';';
- 
+
      private static final char CSV_QUOTE = '"';
- 
+
      /**
       * {@code \u000a} linefeed LF ('\n').
       *
@@ -40,7 +39,7 @@ package io.gravitee.am.reporter.file.formatter.csv;
       * @since 2.2
       */
      private static final char LF = '\n';
- 
+
      /**
       * {@code \u000d} carriage return CR ('\r').
       *
@@ -49,102 +48,102 @@ package io.gravitee.am.reporter.file.formatter.csv;
       * @since 2.2
       */
      private static final char CR = '\r';
- 
+
      final static byte [] END_OF_LINE = new byte [] { CR,  LF};
- 
+
      private final static byte FIELD_SEPARATOR = (byte) CSV_DELIMITER;
- 
+
      private final static byte FIELD_QUOTE = (byte) CSV_QUOTE;
- 
+
      private static final String CSV_QUOTE_STR = String.valueOf(CSV_QUOTE);
- 
+
      private static final char[] CSV_SEARCH_CHARS = { CSV_DELIMITER, CSV_QUOTE, CR, LF };
- 
+
      void appendEmpty(Buffer buffer) {
          appendString(buffer, null, false);
      }
- 
+
      void appendString(Buffer buffer, String value) {
          appendString(buffer, value, false);
      }
- 
+
      void appendString(Buffer buffer, String value, boolean last) {
          appendString(buffer, value, false, last);
      }
- 
+
      void appendString(Buffer buffer, String value, boolean escape, boolean last) {
          buffer.appendByte(FIELD_QUOTE);
- 
+
          if (! escape || value == null || containsNone(value, CSV_SEARCH_CHARS)) {
              buffer.appendString(value != null ? value : EMPTY_VALUE);
          } else {
              buffer.appendString(value.replace(CSV_QUOTE_STR, CSV_QUOTE_STR + CSV_QUOTE_STR));
          }
- 
+
          buffer.appendByte(FIELD_QUOTE);
- 
+
          if (!last) {
              buffer.appendByte(FIELD_SEPARATOR);
          }
      }
- 
+
      void appendShort(Buffer buffer, short value) {
          appendShort(buffer, value, false);
      }
- 
+
      void appendShort(Buffer buffer, short value, boolean last) {
          buffer.appendString(Short.toString(value));
- 
+
          if (!last) {
              buffer.appendByte(FIELD_SEPARATOR);
          }
      }
- 
+
      void appendInt(Buffer buffer, int value) {
          appendInt(buffer, value, false);
      }
- 
+
      void appendInt(Buffer buffer, int value, boolean last) {
          buffer.appendString(Integer.toString(value));
- 
+
          if (!last) {
              buffer.appendByte(FIELD_SEPARATOR);
          }
      }
- 
+
      void appendLong(Buffer buffer, long value) {
          appendLong(buffer, value, false);
      }
- 
+
      void appendLong(Buffer buffer, long value, boolean last) {
          buffer.appendString(Long.toString(value));
- 
+
          if (!last) {
              buffer.appendByte(FIELD_SEPARATOR);
          }
      }
- 
+
      void appendBoolean(Buffer buffer, boolean value) {
          appendBoolean(buffer, value, false);
      }
- 
+
      void appendBoolean(Buffer buffer, boolean value, boolean last) {
          buffer.appendString(value ? "true" : "false");
- 
+
          if (!last) {
              buffer.appendByte(FIELD_SEPARATOR);
          }
      }
- 
+
      void appendEndOfLine(Buffer buffer) {
          buffer.appendBytes(END_OF_LINE);
      }
- 
+
      private static boolean containsNone(final CharSequence cs, final char... searchChars) {
          if (cs == null || searchChars == null) {
              return true;
          }
- 
+
          final int csLen = cs.length();
          final int csLast = csLen - 1;
          final int searchLen = searchChars.length;

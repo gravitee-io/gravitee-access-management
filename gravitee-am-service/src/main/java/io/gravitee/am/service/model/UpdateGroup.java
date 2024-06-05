@@ -16,6 +16,7 @@
 package io.gravitee.am.service.model;
 
 import jakarta.validation.constraints.NotNull;
+
 import java.util.Arrays;
 import java.util.List;
 

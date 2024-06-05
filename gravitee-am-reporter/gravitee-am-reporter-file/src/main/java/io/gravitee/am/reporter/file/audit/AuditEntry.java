@@ -16,7 +16,6 @@
 package io.gravitee.am.reporter.file.audit;
 
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.reporter.api.Reportable;
 import io.gravitee.am.reporter.api.audit.model.AuditAccessPoint;
 import io.gravitee.am.reporter.api.audit.model.AuditEntity;
 

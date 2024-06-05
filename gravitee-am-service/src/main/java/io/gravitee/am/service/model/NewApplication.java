@@ -16,8 +16,8 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.application.ApplicationType;
-
 import jakarta.validation.constraints.NotNull;
+
 import java.util.List;
 import java.util.Map;
 

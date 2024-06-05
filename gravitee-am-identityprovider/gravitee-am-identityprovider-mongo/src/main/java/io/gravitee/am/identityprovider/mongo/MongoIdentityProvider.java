@@ -15,10 +15,10 @@
  */
 package io.gravitee.am.identityprovider.mongo;
 
-import io.gravitee.am.identityprovider.api.*;
+import io.gravitee.am.identityprovider.api.IdentityProvider;
+import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.identityprovider.mongo.authentication.MongoAuthenticationProvider;
 import io.gravitee.am.identityprovider.mongo.user.MongoUserProvider;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

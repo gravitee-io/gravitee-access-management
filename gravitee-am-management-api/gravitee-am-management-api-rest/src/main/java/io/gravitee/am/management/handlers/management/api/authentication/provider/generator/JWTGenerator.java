@@ -17,11 +17,12 @@ package io.gravitee.am.management.handlers.management.api.authentication.provide
 
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.CustomClaims;
-import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.node.api.configuration.Configuration;
+import jakarta.servlet.http.Cookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -29,7 +30,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 
-import jakarta.servlet.http.Cookie;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;

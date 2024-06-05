@@ -15,9 +15,8 @@
  */
 package io.gravitee.am.identityprovider.inline;
 
-import io.gravitee.am.identityprovider.api.*;
+import io.gravitee.am.identityprovider.api.IdentityProvider;
 import io.gravitee.am.identityprovider.inline.authentication.InlineAuthenticationProvider;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

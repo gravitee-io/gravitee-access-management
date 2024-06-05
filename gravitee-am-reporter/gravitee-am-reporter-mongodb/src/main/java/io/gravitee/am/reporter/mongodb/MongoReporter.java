@@ -16,9 +16,7 @@
 package io.gravitee.am.reporter.mongodb;
 
 import io.gravitee.am.reporter.api.Reporter;
-import io.gravitee.am.reporter.api.audit.AuditReporter;
 import io.gravitee.am.reporter.mongodb.audit.MongoAuditReporter;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

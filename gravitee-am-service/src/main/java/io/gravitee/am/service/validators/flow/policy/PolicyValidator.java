@@ -16,9 +16,8 @@
 package io.gravitee.am.service.validators.flow.policy;
 
 import io.gravitee.am.model.flow.Step;
-import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.validators.Validator;
-import io.reactivex.rxjava3.core.Completable;
+
 import java.util.Optional;
 
 /**

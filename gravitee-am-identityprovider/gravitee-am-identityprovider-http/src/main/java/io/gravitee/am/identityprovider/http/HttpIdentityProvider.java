@@ -20,7 +20,6 @@ import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.identityprovider.http.authentication.HttpAuthenticationProvider;
 import io.gravitee.am.identityprovider.http.configuration.HttpIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.http.user.HttpUserProvider;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

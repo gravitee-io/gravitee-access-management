@@ -21,14 +21,28 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.reactivex.rxjava3.core.Single;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static io.gravitee.am.common.oauth2.GrantType.*;
+import static io.gravitee.am.common.oauth2.GrantType.AUTHORIZATION_CODE;
+import static io.gravitee.am.common.oauth2.GrantType.CIBA_GRANT_TYPE;
+import static io.gravitee.am.common.oauth2.GrantType.CLIENT_CREDENTIALS;
+import static io.gravitee.am.common.oauth2.GrantType.IMPLICIT;
+import static io.gravitee.am.common.oauth2.GrantType.JWT_BEARER;
+import static io.gravitee.am.common.oauth2.GrantType.PASSWORD;
+import static io.gravitee.am.common.oauth2.GrantType.REFRESH_TOKEN;
+import static io.gravitee.am.common.oauth2.GrantType.UMA;
 import static io.gravitee.am.common.oauth2.ResponseType.CODE;
 import static io.gravitee.am.common.oauth2.ResponseType.TOKEN;
-import static io.gravitee.am.common.oidc.ResponseType.*;
+import static io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN;
+import static io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN;
+import static io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN;
+import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN;
+import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)

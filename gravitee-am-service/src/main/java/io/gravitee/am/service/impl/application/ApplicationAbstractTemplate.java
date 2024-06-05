@@ -22,7 +22,10 @@ import java.util.Set;
 
 import static io.gravitee.am.common.oauth2.ResponseType.CODE;
 import static io.gravitee.am.common.oauth2.ResponseType.TOKEN;
-import static io.gravitee.am.common.oidc.ResponseType.*;
+import static io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN;
+import static io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN;
+import static io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN;
+import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN;
 import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN;
 
 /**

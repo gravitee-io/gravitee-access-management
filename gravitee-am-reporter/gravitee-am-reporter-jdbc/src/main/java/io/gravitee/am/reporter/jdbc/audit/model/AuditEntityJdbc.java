@@ -15,11 +15,8 @@
  */
 package io.gravitee.am.reporter.jdbc.audit.model;
 
-import io.gravitee.am.model.ReferenceType;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
-
-import java.util.Map;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

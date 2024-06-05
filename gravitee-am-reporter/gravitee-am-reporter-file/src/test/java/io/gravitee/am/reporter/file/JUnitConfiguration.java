@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.reporter.file;
 
-import io.gravitee.am.reporter.file.formatter.elasticsearch.freemarker.FreeMarkerComponent;
 import io.gravitee.am.common.utils.GraviteeContext;
+import io.gravitee.am.reporter.file.formatter.elasticsearch.freemarker.FreeMarkerComponent;
 import io.gravitee.node.api.Node;
 import io.vertx.core.Vertx;
 import org.mockito.Mockito;

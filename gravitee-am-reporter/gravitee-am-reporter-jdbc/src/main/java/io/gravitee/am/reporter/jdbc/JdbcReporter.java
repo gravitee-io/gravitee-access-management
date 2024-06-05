@@ -16,10 +16,7 @@
 package io.gravitee.am.reporter.jdbc;
 
 import io.gravitee.am.reporter.api.Reporter;
-import io.gravitee.am.reporter.api.ReporterConfiguration;
-import io.gravitee.am.reporter.api.audit.AuditReporter;
 import io.gravitee.am.reporter.jdbc.audit.JdbcAuditReporter;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
