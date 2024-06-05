@@ -18,7 +18,6 @@ package io.gravitee.am.repository.oauth2.model;
 import io.gravitee.common.util.MultiValueMap;
 
 import java.util.Date;
-import java.util.Map;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

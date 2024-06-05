@@ -18,6 +18,7 @@ package io.gravitee.am.service.validators.flow;
 import io.gravitee.am.service.model.Flow;
 import io.gravitee.am.service.validators.Validator;
 import io.reactivex.rxjava3.core.Completable;
+
 import java.util.List;
 
 /**

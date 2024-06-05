@@ -15,9 +15,16 @@
  */
 package io.gravitee.am.service.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
 import java.util.Date;
 import java.util.Set;
-import lombok.*;
 
 /**
  * @author Antoine CORDIER (antoine.cordier at graviteesource.com)

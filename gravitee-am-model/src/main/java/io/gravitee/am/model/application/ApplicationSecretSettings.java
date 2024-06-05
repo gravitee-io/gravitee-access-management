@@ -18,7 +18,6 @@ package io.gravitee.am.model.application;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 

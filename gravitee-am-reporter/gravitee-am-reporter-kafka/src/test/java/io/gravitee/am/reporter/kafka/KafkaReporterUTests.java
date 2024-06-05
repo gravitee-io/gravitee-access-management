@@ -15,15 +15,10 @@
  */
 package io.gravitee.am.reporter.kafka;
 
-import static org.junit.Assert.assertEquals;
-
-import io.gravitee.am.reporter.api.audit.AuditReporter;
 import io.gravitee.am.reporter.kafka.audit.KafkaAuditReporter;
-
-import io.gravitee.plugin.core.api.PluginManifest;
-import java.net.URL;
-import java.nio.file.Path;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 
 public class KafkaReporterUTests {

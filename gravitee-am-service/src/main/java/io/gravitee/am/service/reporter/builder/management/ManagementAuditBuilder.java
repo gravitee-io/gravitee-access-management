@@ -15,10 +15,6 @@
  */
 package io.gravitee.am.service.reporter.builder.management;
 
-import io.gravitee.am.common.audit.EntityType;
-import io.gravitee.am.common.jwt.Claims;
-import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Platform;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;

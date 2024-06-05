@@ -17,7 +17,6 @@ package io.gravitee.am.resource.api;
 
 
 import io.gravitee.am.common.plugin.AmPlugin;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

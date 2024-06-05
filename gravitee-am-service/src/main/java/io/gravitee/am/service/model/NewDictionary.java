@@ -16,7 +16,6 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.service.validators.dictionary.ValidLocale;
-
 import jakarta.validation.constraints.NotBlank;
 
 /**

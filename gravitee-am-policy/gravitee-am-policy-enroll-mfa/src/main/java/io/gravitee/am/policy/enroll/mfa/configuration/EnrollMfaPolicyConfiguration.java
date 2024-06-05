@@ -17,9 +17,6 @@ package io.gravitee.am.policy.enroll.mfa.configuration;
 
 import io.gravitee.policy.api.PolicyConfiguration;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team

@@ -30,18 +30,24 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import java.util.SortedMap;
 
-import static io.gravitee.am.model.Acl.*;
+import static io.gravitee.am.model.Acl.DELETE;
+import static io.gravitee.am.model.Acl.READ;
+import static io.gravitee.am.model.Acl.UPDATE;
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static io.gravitee.am.model.permissions.Permission.DOMAIN_I18N_DICTIONARY;
 

@@ -34,23 +34,43 @@ import io.gravitee.am.repository.management.api.RoleRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.DefaultRoleUpdateException;
+import io.gravitee.am.service.exception.RoleAlreadyExistsException;
+import io.gravitee.am.service.exception.RoleNotFoundException;
+import io.gravitee.am.service.exception.SystemRoleDeleteException;
+import io.gravitee.am.service.exception.SystemRoleUpdateException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewRole;
 import io.gravitee.am.service.model.UpdateRole;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.RoleAuditBuilder;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.*;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static io.gravitee.am.model.Acl.*;
+import static io.gravitee.am.model.Acl.DELETE;
+import static io.gravitee.am.model.Acl.LIST;
+import static io.gravitee.am.model.Acl.READ;
+import static io.gravitee.am.model.Acl.UPDATE;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

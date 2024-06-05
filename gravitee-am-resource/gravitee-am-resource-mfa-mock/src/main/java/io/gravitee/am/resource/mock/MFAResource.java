@@ -16,10 +16,7 @@
 package io.gravitee.am.resource.mock;
 
 import io.gravitee.am.resource.api.Resource;
-import io.gravitee.am.resource.api.ResourceConfiguration;
-import io.gravitee.am.resource.api.ResourceProvider;
 import io.gravitee.am.resource.mock.provider.MFAMockProvider;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

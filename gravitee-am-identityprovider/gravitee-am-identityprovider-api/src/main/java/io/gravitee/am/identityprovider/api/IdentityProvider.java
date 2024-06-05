@@ -16,7 +16,6 @@
 package io.gravitee.am.identityprovider.api;
 
 import io.gravitee.am.common.plugin.AmPlugin;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

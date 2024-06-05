@@ -16,7 +16,6 @@
 package io.gravitee.am.service.model;
 
 import jakarta.validation.constraints.NotNull;
-import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

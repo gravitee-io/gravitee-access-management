@@ -15,11 +15,9 @@
  */
 package io.gravitee.am.service.model.openid;
 
-import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.SecurityProfileSettings;
 import io.gravitee.am.service.utils.SetterUtils;
 
-import java.util.List;
 import java.util.Optional;
 
 /**

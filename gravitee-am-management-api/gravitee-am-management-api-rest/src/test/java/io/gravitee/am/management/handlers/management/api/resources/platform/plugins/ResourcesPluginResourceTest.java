@@ -16,14 +16,12 @@
 package io.gravitee.am.management.handlers.management.api.resources.platform.plugins;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
-import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.model.plugin.IdentityProviderPlugin;
 import io.gravitee.am.service.model.plugin.ResourcePlugin;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Single;
+import jakarta.ws.rs.core.Response;
 import org.junit.Test;
 
-import jakarta.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.Collections;
 

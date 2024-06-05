@@ -32,7 +32,6 @@ import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.policy.enroll.mfa.configuration.EnrollMfaPolicyConfiguration;
-import io.gravitee.am.service.exception.FactorConfigurationException;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
@@ -51,7 +50,6 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
 
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
 

@@ -16,10 +16,13 @@
 package io.gravitee.am.management.handlers.management.api.authentication.csrf;
 
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.jwt.JWTParser;
-import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.JWTGenerator;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,9 +33,6 @@ import org.springframework.security.web.csrf.DefaultCsrfToken;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.WebUtils;
 
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import java.time.Instant;
 import java.util.UUID;
 

@@ -16,7 +16,6 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.Template;
-
 import jakarta.validation.constraints.NotNull;
 
 /**

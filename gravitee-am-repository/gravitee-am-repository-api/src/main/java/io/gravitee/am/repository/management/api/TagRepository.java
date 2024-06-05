@@ -19,9 +19,6 @@ import io.gravitee.am.model.Tag;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
-
-import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

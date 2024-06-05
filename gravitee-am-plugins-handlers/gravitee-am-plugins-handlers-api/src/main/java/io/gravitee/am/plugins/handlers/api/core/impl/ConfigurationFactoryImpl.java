@@ -19,9 +19,10 @@ package io.gravitee.am.plugins.handlers.api.core.impl;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
-import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

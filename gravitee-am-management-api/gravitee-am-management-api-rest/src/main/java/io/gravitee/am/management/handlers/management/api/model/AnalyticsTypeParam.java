@@ -16,7 +16,6 @@
 package io.gravitee.am.management.handlers.management.api.model;
 
 import io.gravitee.am.common.analytics.Type;
-
 import jakarta.ws.rs.WebApplicationException;
 
 /**

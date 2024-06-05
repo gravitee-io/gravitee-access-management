@@ -18,12 +18,14 @@ package io.gravitee.am.service.model;
 import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.MfaEnrollType;
 import io.gravitee.am.service.utils.SetterUtils;
-import java.util.Objects;
-import static java.util.Objects.isNull;
-import java.util.Optional;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.Objects;
+import java.util.Optional;
+
+import static java.util.Objects.isNull;
 
 @Getter
 @Setter

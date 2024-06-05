@@ -20,11 +20,9 @@ package io.gravitee.am.resource.infobip;
  * @author Ruan Ferreira (ruan@incentive.me)
  * @author Incentive.me
  */
+
 import io.gravitee.am.resource.api.Resource;
-import io.gravitee.am.resource.api.ResourceConfiguration;
-import io.gravitee.am.resource.api.ResourceProvider;
 import io.gravitee.am.resource.infobip.provider.InfobipResourceProvider;
-import io.gravitee.plugin.core.api.Plugin;
 
 public class InfobipResource extends Resource<InfobipResourceConfiguration, InfobipResourceProvider> {
 

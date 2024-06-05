@@ -18,7 +18,6 @@ package io.gravitee.am.service.reporter.builder.management;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Theme;
-import io.gravitee.am.service.reporter.builder.AuditBuilder;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -45,5 +44,5 @@ public class ThemeAuditBuilder extends ManagementAuditBuilder<ThemeAuditBuilder>
         }
         return this;
     }
-    
+
 }

@@ -16,11 +16,8 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.alert.AlertNotifier;
-import io.gravitee.am.model.alert.AlertTrigger;
-import io.gravitee.am.model.alert.AlertTriggerType;
 import io.gravitee.am.service.utils.SetterUtils;
 
-import jakarta.validation.constraints.NotNull;
 import java.util.Optional;
 
 /**

@@ -27,7 +27,6 @@ import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoderOptions;
 import io.gravitee.am.service.authentication.crypto.password.SHAMD5PasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.SHAPasswordEncoder;
-import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCrypt;
 import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;

@@ -15,13 +15,10 @@
  */
 package io.gravitee.am.reporter.file.formatter.elasticsearch;
 
-import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.reporter.file.audit.AuditEntry;
 import io.gravitee.am.reporter.file.audit.ReportEntry;
 import io.gravitee.am.reporter.file.formatter.AbstractFormatter;
 import io.gravitee.am.reporter.file.formatter.elasticsearch.freemarker.FreeMarkerComponent;
-import io.gravitee.node.api.Node;
-import io.gravitee.reporter.api.Reportable;
 import io.vertx.core.buffer.Buffer;
 import org.springframework.beans.factory.annotation.Autowired;
 

@@ -15,21 +15,22 @@
  */
 package io.gravitee.am.reporter.kafka.kafka;
 
-import static org.junit.Assert.assertEquals;
-
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.reporter.kafka.AuditValueFactory;
 import io.gravitee.am.reporter.kafka.DummyNode;
 import io.gravitee.am.reporter.kafka.audit.DtoMapper;
 import io.gravitee.am.reporter.kafka.dto.AuditMessageValueDto;
 import io.gravitee.node.api.Node;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 public class JacksonSerializerUTests {
 

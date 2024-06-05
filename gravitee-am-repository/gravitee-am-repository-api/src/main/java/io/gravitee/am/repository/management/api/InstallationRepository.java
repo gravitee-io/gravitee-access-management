@@ -16,10 +16,8 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Installation;
-import io.gravitee.am.model.Organization;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)

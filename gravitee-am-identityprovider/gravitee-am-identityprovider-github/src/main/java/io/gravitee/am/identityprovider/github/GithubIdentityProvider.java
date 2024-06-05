@@ -17,7 +17,6 @@ package io.gravitee.am.identityprovider.github;
 
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProvider;
 import io.gravitee.am.identityprovider.github.authentication.GithubAuthenticationProvider;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

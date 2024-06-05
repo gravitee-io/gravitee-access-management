@@ -15,10 +15,6 @@
  */
 package io.gravitee.am.identityprovider.mongo.user;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
@@ -28,7 +24,6 @@ import io.gravitee.am.identityprovider.mongo.authentication.spring.MongoAuthenti
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.util.Maps;
 import io.reactivex.rxjava3.observers.TestObserver;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,6 +34,10 @@ import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

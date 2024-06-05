@@ -17,17 +17,17 @@ package io.gravitee.am.management.handlers.management.api.authentication.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.service.ReCaptchaService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.MediaType;
-import org.springframework.web.filter.GenericFilterBean;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
+import org.springframework.web.filter.GenericFilterBean;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;

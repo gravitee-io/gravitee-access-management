@@ -16,8 +16,6 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.permissions.RoleScope;
-
 import jakarta.validation.constraints.NotNull;
 
 /**

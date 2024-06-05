@@ -22,7 +22,6 @@ import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.oidc.SecurityProfileSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.utils.SetterUtils;
-import io.netty.channel.ChannelInboundInvoker;
 
 import java.util.HashSet;
 import java.util.List;

@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.service.model.openid;
 
-import io.gravitee.am.model.oidc.CIBASettings;
 import io.gravitee.am.model.oidc.CIBASettingNotifier;
+import io.gravitee.am.model.oidc.CIBASettings;
 import io.gravitee.am.service.utils.SetterUtils;
 
 import java.util.List;

@@ -16,10 +16,6 @@
 package io.gravitee.am.reporter.api;
 
 import io.gravitee.am.common.plugin.AmPlugin;
-import io.gravitee.am.reporter.api.audit.AuditReporter;
-import io.gravitee.plugin.core.api.ConfigurablePlugin;
-import io.gravitee.plugin.core.api.Plugin;
-import org.checkerframework.checker.units.qual.C;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

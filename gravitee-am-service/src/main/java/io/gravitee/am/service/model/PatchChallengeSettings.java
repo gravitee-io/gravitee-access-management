@@ -18,10 +18,11 @@ package io.gravitee.am.service.model;
 import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.MfaChallengeType;
 import io.gravitee.am.service.utils.SetterUtils;
-import java.util.Optional;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.Optional;
 
 
 @Getter

@@ -27,7 +27,6 @@ import io.gravitee.am.identityprovider.jdbc.user.spring.JdbcUserProviderConfigur
 import io.gravitee.am.identityprovider.jdbc.utils.ColumnMapRowMapper;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
-import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Result;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;

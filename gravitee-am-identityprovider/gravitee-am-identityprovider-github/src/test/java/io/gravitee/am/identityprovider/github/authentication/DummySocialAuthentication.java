@@ -20,6 +20,7 @@ import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.DummyAuthenticationContext;
 import io.gravitee.am.identityprovider.api.DummyRequest;
+
 import java.util.List;
 import java.util.Map;
 

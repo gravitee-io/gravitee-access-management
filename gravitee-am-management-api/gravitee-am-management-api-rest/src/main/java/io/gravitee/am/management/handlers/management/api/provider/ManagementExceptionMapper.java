@@ -16,12 +16,11 @@
 package io.gravitee.am.management.handlers.management.api.provider;
 
 import io.gravitee.am.service.exception.AbstractManagementException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static jakarta.ws.rs.core.Response.Status.Family.familyOf;
 

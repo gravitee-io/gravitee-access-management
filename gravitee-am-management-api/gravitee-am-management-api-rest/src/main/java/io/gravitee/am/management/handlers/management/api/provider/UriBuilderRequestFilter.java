@@ -16,12 +16,12 @@
 package io.gravitee.am.management.handlers.management.api.provider;
 
 import io.gravitee.common.http.HttpHeaders;
-
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.PreMatching;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.ext.Provider;
+
 import java.io.IOException;
 import java.util.List;
 

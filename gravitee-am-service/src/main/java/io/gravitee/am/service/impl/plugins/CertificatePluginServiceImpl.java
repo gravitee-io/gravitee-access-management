@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.service.impl.plugins;
 
-import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
+import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.plugin.CertificatePlugin;
 import io.gravitee.plugin.core.api.Plugin;

@@ -17,14 +17,14 @@ package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.EnrollmentSettings;
 import io.gravitee.am.service.utils.SetterUtils;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.Objects;
 import java.util.Optional;
 
 import static java.util.Objects.isNull;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

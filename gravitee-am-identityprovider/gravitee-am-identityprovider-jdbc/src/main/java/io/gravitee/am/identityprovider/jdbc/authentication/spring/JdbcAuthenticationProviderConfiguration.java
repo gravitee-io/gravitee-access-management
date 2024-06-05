@@ -20,7 +20,13 @@ import io.gravitee.am.identityprovider.api.encoding.BinaryToTextEncoder;
 import io.gravitee.am.identityprovider.api.encoding.HexEncoder;
 import io.gravitee.am.identityprovider.api.encoding.NoneEncoder;
 import io.gravitee.am.identityprovider.jdbc.configuration.JdbcIdentityProviderConfiguration;
-import io.gravitee.am.service.authentication.crypto.password.*;
+import io.gravitee.am.service.authentication.crypto.password.MD5PasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.MessageDigestPasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.NoOpPasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.PasswordEncoderOptions;
+import io.gravitee.am.service.authentication.crypto.password.SHAMD5PasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.SHAPasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -28,7 +34,9 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.regex.Pattern;
 
-import static io.gravitee.am.identityprovider.jdbc.utils.PasswordEncoder.*;
+import static io.gravitee.am.identityprovider.jdbc.utils.PasswordEncoder.BCRYPT;
+import static io.gravitee.am.identityprovider.jdbc.utils.PasswordEncoder.MD5;
+import static io.gravitee.am.identityprovider.jdbc.utils.PasswordEncoder.SHA;
 import static java.util.Optional.ofNullable;
 
 /**

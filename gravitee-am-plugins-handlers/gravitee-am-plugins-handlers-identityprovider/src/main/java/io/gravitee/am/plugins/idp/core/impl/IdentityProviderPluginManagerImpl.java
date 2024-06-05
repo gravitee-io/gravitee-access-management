@@ -15,7 +15,11 @@
  */
 package io.gravitee.am.plugins.idp.core.impl;
 
-import io.gravitee.am.identityprovider.api.*;
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.IdentityProvider;
+import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.api.NoIdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginContextConfigurer;
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
@@ -37,7 +41,6 @@ import java.util.stream.Stream;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
-import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 

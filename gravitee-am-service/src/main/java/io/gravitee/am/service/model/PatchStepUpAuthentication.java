@@ -17,10 +17,11 @@ package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.StepUpAuthenticationSettings;
 import io.gravitee.am.service.utils.SetterUtils;
-import java.util.Optional;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.Optional;
 
 @Getter
 @Setter

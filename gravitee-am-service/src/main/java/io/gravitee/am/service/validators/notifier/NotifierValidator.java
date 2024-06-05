@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.service.validators.notifier;
 
-import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.validators.Validator;
 import io.gravitee.am.service.validators.notifier.NotifierValidator.NotifierHolder;
 import io.reactivex.rxjava3.core.Completable;

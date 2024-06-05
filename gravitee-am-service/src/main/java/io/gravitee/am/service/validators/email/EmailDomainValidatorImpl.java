@@ -17,10 +17,11 @@ package io.gravitee.am.service.validators.email;
 
 import io.gravitee.am.service.spring.email.EmailConfiguration;
 import io.gravitee.am.service.utils.WildcardUtils;
+import org.springframework.stereotype.Component;
+
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.springframework.stereotype.Component;
 
 import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.toList;

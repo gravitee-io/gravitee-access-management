@@ -19,7 +19,6 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.TaskManager;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

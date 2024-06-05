@@ -18,6 +18,7 @@ package io.gravitee.am.service.validators.notifier.email;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.validators.Validator;
 import io.gravitee.am.service.validators.notifier.NotifierValidator.NotifierHolder;
+
 import java.util.Optional;
 
 /**

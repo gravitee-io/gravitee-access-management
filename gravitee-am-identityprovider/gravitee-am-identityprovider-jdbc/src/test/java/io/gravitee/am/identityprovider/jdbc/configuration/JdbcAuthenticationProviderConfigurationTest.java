@@ -15,7 +15,12 @@
  */
 package io.gravitee.am.identityprovider.jdbc.configuration;
 
-import io.gravitee.am.identityprovider.api.*;
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.identityprovider.jdbc.authentication.JdbcAuthenticationProvider;
 import io.gravitee.am.identityprovider.jdbc.user.JdbcUserProvider;
 import io.gravitee.am.identityprovider.jdbc.utils.PasswordEncoder;

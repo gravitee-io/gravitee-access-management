@@ -29,9 +29,11 @@ import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.rxjava3.core.Vertx;
-import java.util.*;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
+
+import java.util.Optional;
+import java.util.Properties;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

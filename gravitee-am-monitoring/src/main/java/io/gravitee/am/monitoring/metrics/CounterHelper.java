@@ -17,7 +17,6 @@ package io.gravitee.am.monitoring.metrics;
 
 import io.gravitee.node.monitoring.metrics.Metrics;
 import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Tags;
 
 /**

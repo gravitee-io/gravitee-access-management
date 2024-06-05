@@ -20,13 +20,16 @@ import io.gravitee.am.extensiongrant.api.ExtensionGrantConfiguration;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.NoAuthenticationProvider;
-import io.gravitee.am.plugins.handlers.api.core.*;
+import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
+import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
+import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
 import io.gravitee.plugin.core.api.PluginContextFactory;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Optional;
 
 import static java.util.Optional.ofNullable;
 

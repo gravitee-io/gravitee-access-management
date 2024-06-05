@@ -16,13 +16,19 @@
 package io.gravitee.am.identityprovider.http.spring;
 
 import io.gravitee.am.identityprovider.http.configuration.HttpIdentityProviderConfiguration;
-import io.gravitee.am.service.authentication.crypto.password.*;
+import io.gravitee.am.service.authentication.crypto.password.MD5PasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.MessageDigestPasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.NoOpPasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.SHAPasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import static io.gravitee.am.identityprovider.http.utils.PasswordEncoder.*;
+import static io.gravitee.am.identityprovider.http.utils.PasswordEncoder.BCRYPT;
+import static io.gravitee.am.identityprovider.http.utils.PasswordEncoder.MD5;
+import static io.gravitee.am.identityprovider.http.utils.PasswordEncoder.SHA;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

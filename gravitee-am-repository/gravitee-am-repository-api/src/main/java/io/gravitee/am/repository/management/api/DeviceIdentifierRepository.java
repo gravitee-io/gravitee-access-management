@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.repository.management.api;
 
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.DeviceIdentifier;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.rxjava3.core.Flowable;
 

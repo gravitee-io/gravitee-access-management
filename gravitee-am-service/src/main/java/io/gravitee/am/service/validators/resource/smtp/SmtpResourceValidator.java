@@ -18,6 +18,7 @@ package io.gravitee.am.service.validators.resource.smtp;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.validators.Validator;
 import io.gravitee.am.service.validators.resource.ResourceValidator.ResourceHolder;
+
 import java.util.Optional;
 
 /**

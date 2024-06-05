@@ -17,10 +17,14 @@ package io.gravitee.am.plugins.handlers.api.core;
 
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
-import java.util.*;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Import;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

@@ -16,7 +16,6 @@
 package io.gravitee.am.service.exception;
 
 import io.gravitee.am.model.PasswordPolicy;
-import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.common.http.HttpStatusCode;
 
 public class PasswordHistoryException extends AbstractManagementException {

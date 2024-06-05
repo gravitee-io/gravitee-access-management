@@ -19,15 +19,16 @@ import io.gravitee.am.common.plugin.AmPlugin;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.common.service.Service;
-import io.gravitee.plugin.core.api.*;
-import java.util.*;
+import io.gravitee.plugin.core.api.AbstractConfigurablePluginManager;
+import io.gravitee.plugin.core.api.Plugin;
+import io.gravitee.plugin.core.api.PluginContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 
-import static java.util.Optional.ofNullable;
+import java.util.List;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

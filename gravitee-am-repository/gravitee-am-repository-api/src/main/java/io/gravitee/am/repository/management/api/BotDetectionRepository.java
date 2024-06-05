@@ -19,9 +19,6 @@ import io.gravitee.am.model.BotDetection;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Single;
-
-import java.util.Set;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

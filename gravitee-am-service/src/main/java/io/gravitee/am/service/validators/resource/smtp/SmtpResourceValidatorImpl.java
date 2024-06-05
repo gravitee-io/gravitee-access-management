@@ -20,8 +20,9 @@ import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.validators.EmailFromAware;
 import io.gravitee.am.service.validators.email.EmailDomainValidator;
 import io.gravitee.am.service.validators.resource.ResourceValidator.ResourceHolder;
-import java.util.Optional;
 import org.springframework.stereotype.Component;
+
+import java.util.Optional;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

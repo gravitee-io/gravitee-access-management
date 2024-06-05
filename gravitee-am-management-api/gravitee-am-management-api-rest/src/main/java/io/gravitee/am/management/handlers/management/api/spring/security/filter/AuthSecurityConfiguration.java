@@ -18,7 +18,13 @@ package io.gravitee.am.management.handlers.management.api.spring.security.filter
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.management.handlers.management.api.authentication.csrf.CookieCsrfSignedTokenRepository;
-import io.gravitee.am.management.handlers.management.api.authentication.filter.*;
+import io.gravitee.am.management.handlers.management.api.authentication.filter.BuiltInAuthenticationFilter;
+import io.gravitee.am.management.handlers.management.api.authentication.filter.CheckAuthenticationCookieFilter;
+import io.gravitee.am.management.handlers.management.api.authentication.filter.CheckRedirectUriFilter;
+import io.gravitee.am.management.handlers.management.api.authentication.filter.CheckRedirectionCookieFilter;
+import io.gravitee.am.management.handlers.management.api.authentication.filter.CockpitAuthenticationFilter;
+import io.gravitee.am.management.handlers.management.api.authentication.filter.RecaptchaFilter;
+import io.gravitee.am.management.handlers.management.api.authentication.filter.SocialAuthenticationFilter;
 import io.gravitee.am.management.handlers.management.api.authentication.handler.CookieClearingLogoutHandler;
 import io.gravitee.am.management.handlers.management.api.authentication.handler.CustomAuthenticationFailureHandler;
 import io.gravitee.am.management.handlers.management.api.authentication.handler.CustomAuthenticationSuccessHandler;

@@ -16,7 +16,6 @@
 package io.gravitee.am.management.handlers.management.api.provider;
 
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
-
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;

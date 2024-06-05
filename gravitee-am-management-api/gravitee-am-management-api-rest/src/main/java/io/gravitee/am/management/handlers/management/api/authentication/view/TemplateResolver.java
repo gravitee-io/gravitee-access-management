@@ -16,9 +16,6 @@
 package io.gravitee.am.management.handlers.management.api.authentication.view;
 
 import io.gravitee.am.model.Form;
-import io.gravitee.am.model.Organization;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 import org.thymeleaf.IEngineConfiguration;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.templateresolver.AbstractConfigurableTemplateResolver;

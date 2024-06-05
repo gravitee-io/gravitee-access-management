@@ -18,12 +18,16 @@ package io.gravitee.am.plugins.deviceidentifier.core;
 import io.gravitee.am.deviceidentifier.api.DeviceIdentifier;
 import io.gravitee.am.deviceidentifier.api.DeviceIdentifierConfiguration;
 import io.gravitee.am.deviceidentifier.api.DeviceIdentifierProvider;
-import io.gravitee.am.plugins.handlers.api.core.*;
+import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
+import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
+import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.plugin.core.api.PluginContextFactory;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 
 /**
  * @author Rémi Sultan  (remi.sultan at graviteesource.com)

@@ -18,7 +18,11 @@ package io.gravitee.am.identityprovider.facebook.authentication;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.identityprovider.api.*;
+import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.facebook.FacebookIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.facebook.model.FacebookUser;
@@ -47,9 +51,18 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 
-import static io.gravitee.am.identityprovider.facebook.model.FacebookUser.*;
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static io.gravitee.am.identityprovider.facebook.model.FacebookUser.LOCATION_CITY_FIELD;
+import static io.gravitee.am.identityprovider.facebook.model.FacebookUser.LOCATION_COUNTRY_FIELD;
+import static io.gravitee.am.identityprovider.facebook.model.FacebookUser.LOCATION_REGION_FIELD;
+import static io.gravitee.am.identityprovider.facebook.model.FacebookUser.LOCATION_STREET_FIELD;
+import static io.gravitee.am.identityprovider.facebook.model.FacebookUser.LOCATION_ZIP_FIELD;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)

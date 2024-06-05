@@ -26,11 +26,12 @@ import io.gravitee.am.reporter.kafka.dto.AuditAccessPointDto;
 import io.gravitee.am.reporter.kafka.dto.AuditEntityDto;
 import io.gravitee.am.reporter.kafka.dto.AuditMessageValueDto;
 import io.gravitee.node.api.Node;
+import org.junit.Assert;
+import org.junit.Test;
+
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-import org.junit.Assert;
-import org.junit.Test;
 
 public class DtoMapperUTests {
 

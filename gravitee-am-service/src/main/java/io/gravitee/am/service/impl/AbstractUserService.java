@@ -28,7 +28,6 @@ import io.gravitee.am.service.CommonUserService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.TechnicalManagementException;

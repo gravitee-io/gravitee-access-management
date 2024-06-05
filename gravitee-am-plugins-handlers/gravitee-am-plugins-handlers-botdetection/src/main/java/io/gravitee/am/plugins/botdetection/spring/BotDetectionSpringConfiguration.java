@@ -15,10 +15,8 @@
  */
 package io.gravitee.am.plugins.botdetection.spring;
 
-import io.gravitee.am.botdetection.api.BotDetection;
 import io.gravitee.am.botdetection.api.BotDetectionConfiguration;
 import io.gravitee.am.plugins.botdetection.core.BotDetectionPluginManager;
-import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
 import io.gravitee.am.plugins.handlers.api.core.impl.ConfigurationFactoryImpl;
 import io.gravitee.plugin.core.api.PluginContextFactory;

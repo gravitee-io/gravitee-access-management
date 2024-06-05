@@ -15,18 +15,6 @@
  */
 package io.gravitee.am.service.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.gravitee.am.model.IUser;
-import io.gravitee.am.model.ReferenceType;
-
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import java.util.Date;
-import java.util.Map;
-
-import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_MAX_LENGTH;
-
-
 /**
  * @@author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Teams

@@ -44,7 +44,13 @@ import org.thymeleaf.exceptions.TemplateEngineException;
 import org.thymeleaf.exceptions.TemplateInputException;
 import org.thymeleaf.exceptions.TemplateProcessingException;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -53,7 +59,6 @@ import static io.gravitee.am.common.utils.ConstantKeys.DOMAIN_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.REQUEST_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_RECOVERY_CODES_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_RECOVERY_CODES_URL_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.TOKEN_CONTEXT_KEY;
