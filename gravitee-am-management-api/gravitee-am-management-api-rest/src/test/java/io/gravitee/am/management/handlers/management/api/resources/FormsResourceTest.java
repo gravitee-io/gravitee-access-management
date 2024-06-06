@@ -26,18 +26,16 @@ import io.gravitee.am.service.model.NewForm;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
-
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -78,7 +76,7 @@ public class FormsResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final Form responseEntity = readEntity(response, Form.class);
-        assertTrue(responseEntity.getId().equals("form-1-id"));
+        assertEquals("form-1-id", responseEntity.getId());
     }
 
     @Test
@@ -100,7 +98,7 @@ public class FormsResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final Form responseEntity = readEntity(response, Form.class);
-        assertTrue(responseEntity.getId().equals("default-form-1-id"));
+        assertEquals("default-form-1-id", responseEntity.getId());
     }
 
     @Test

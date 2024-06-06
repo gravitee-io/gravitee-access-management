@@ -29,10 +29,10 @@ public class KeyTypeTest {
 
     @Test
     public void parse() {
-        Assert.assertTrue("Unable to parse RSA key", KeyType.parse("RSA").getName()!=null);
-        Assert.assertTrue("Unable to parse EC key", KeyType.parse("EC").getName()!=null);
-        Assert.assertTrue("Unable to parse OCT key", KeyType.parse("oct").getName()!=null);
-        Assert.assertTrue("Unable to parse OKP key", KeyType.parse("OKP").getName()!=null);
+        Assert.assertNotNull("Unable to parse RSA key", KeyType.parse("RSA").getName());
+        Assert.assertNotNull("Unable to parse EC key", KeyType.parse("EC").getName());
+        Assert.assertNotNull("Unable to parse OCT key", KeyType.parse("oct").getName());
+        Assert.assertNotNull("Unable to parse OKP key", KeyType.parse("OKP").getName());
     }
 
     @Test(expected = NullPointerException.class)

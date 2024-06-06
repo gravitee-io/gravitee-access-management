@@ -48,7 +48,9 @@ import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -243,7 +245,7 @@ public class ServiceResourceServiceTest {
         record.setReferenceType(ReferenceType.DOMAIN);
         record.setCreatedAt(new Date());
         record.setUpdatedAt(new Date());
-        
+
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(resourceRepository.findById(record.getId())).thenReturn(Maybe.just(record));
         when(resourceRepository.delete(record.getId())).thenReturn(Completable.complete());

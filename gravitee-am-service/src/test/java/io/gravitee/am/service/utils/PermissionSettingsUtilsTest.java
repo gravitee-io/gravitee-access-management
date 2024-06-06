@@ -20,15 +20,28 @@ import io.gravitee.am.model.CookieSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.model.*;
+import io.gravitee.am.service.model.PatchApplication;
+import io.gravitee.am.service.model.PatchApplicationAdvancedSettings;
+import io.gravitee.am.service.model.PatchApplicationIdentityProvider;
+import io.gravitee.am.service.model.PatchApplicationOAuthSettings;
+import io.gravitee.am.service.model.PatchApplicationSAMLSettings;
+import io.gravitee.am.service.model.PatchApplicationSettings;
+import io.gravitee.am.service.model.PatchMFASettings;
+import io.gravitee.am.service.model.PatchPasswordSettings;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
+import org.junit.Test;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import org.junit.Test;
 
-import static io.gravitee.am.model.permissions.Permission.*;
+import static io.gravitee.am.model.permissions.Permission.APPLICATION_CERTIFICATE;
+import static io.gravitee.am.model.permissions.Permission.APPLICATION_FACTOR;
+import static io.gravitee.am.model.permissions.Permission.APPLICATION_IDENTITY_PROVIDER;
+import static io.gravitee.am.model.permissions.Permission.APPLICATION_OPENID;
+import static io.gravitee.am.model.permissions.Permission.APPLICATION_SAML;
+import static io.gravitee.am.model.permissions.Permission.APPLICATION_SETTINGS;
 import static org.junit.Assert.assertTrue;
 
 /**

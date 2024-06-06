@@ -38,7 +38,7 @@ public class CredentialRepositoryTest extends AbstractManagementTest {
     private CredentialRepository credentialRepository;
 
     @Test
-    public void findByUserId() throws TechnicalException {
+    public void findByUserId() {
         // create credential
         Credential credential = buildCredential();
         credentialRepository.create(credential).blockingGet();
@@ -54,7 +54,7 @@ public class CredentialRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void findByUsername() throws TechnicalException {
+    public void findByUsername() {
         // create credential
         Credential credential = buildCredential();
         credentialRepository.create(credential).blockingGet();
@@ -70,7 +70,7 @@ public class CredentialRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void findByUsernameWithLimit() throws TechnicalException {
+    public void findByUsernameWithLimit() {
         // create credential
         Credential credential1 = buildCredential();
         Credential credential2 = buildCredential();
@@ -89,7 +89,7 @@ public class CredentialRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void findByCredentialId() throws TechnicalException {
+    public void findByCredentialId() {
         // create credential
         Credential credential = buildCredential();
         credentialRepository.create(credential).blockingGet();
@@ -120,7 +120,7 @@ public class CredentialRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindById() {
         // create credential
         Credential credential = buildCredential();
         Credential credentialCreated = credentialRepository.create(credential).blockingGet();
@@ -143,7 +143,7 @@ public class CredentialRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws TechnicalException {
+    public void testNotFoundById() {
         var observer = credentialRepository.findById("test").test();
         observer.awaitDone(5, TimeUnit.SECONDS);
         observer.assertComplete();
@@ -152,7 +152,7 @@ public class CredentialRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testCreate() throws TechnicalException {
+    public void testCreate() {
         Credential credential = buildCredential();
 
         TestObserver<Credential> testObserver = credentialRepository.create(credential).test();
@@ -164,7 +164,7 @@ public class CredentialRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testUpdate() throws TechnicalException {
+    public void testUpdate() {
         // create credential
         Credential credential = buildCredential();
         Credential credentialCreated = credentialRepository.create(credential).blockingGet();
@@ -183,7 +183,7 @@ public class CredentialRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDelete() throws TechnicalException {
+    public void testDelete() {
         // create credential
         Credential credential = buildCredential();
         Credential credentialCreated = credentialRepository.create(credential).blockingGet();
@@ -209,7 +209,7 @@ public class CredentialRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDeleteByUser() throws TechnicalException {
+    public void testDeleteByUser() {
         // create credential
         Credential credential = new Credential();
         credential.setCredentialId("credentialId");
@@ -239,7 +239,7 @@ public class CredentialRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDeleteByUser_invalid_user() throws TechnicalException {
+    public void testDeleteByUser_invalid_user() {
         // create credential
         Credential credential = new Credential();
         credential.setCredentialId("credentialId");
@@ -270,7 +270,7 @@ public class CredentialRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDeleteByReference() throws TechnicalException {
+    public void testDeleteByReference() {
         // create credentials
         Credential credential = new Credential();
         credential.setCredentialId("credentialId");

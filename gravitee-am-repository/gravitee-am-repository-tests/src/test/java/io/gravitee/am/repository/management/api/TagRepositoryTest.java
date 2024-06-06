@@ -17,7 +17,6 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Tag;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
@@ -36,7 +35,7 @@ public class TagRepositoryTest extends AbstractManagementTest {
     private TagRepository tagRepository;
 
     @Test
-    public void testFindAll() throws TechnicalException {
+    public void testFindAll() {
         // create tag
         Tag tag = new Tag();
         tag.setName("testName");
@@ -54,7 +53,7 @@ public class TagRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindById() {
         // create tag
         Tag tag = new Tag();
         tag.setName("testName");
@@ -70,7 +69,7 @@ public class TagRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws TechnicalException {
+    public void testNotFoundById() {
         var observer = tagRepository.findById("test").test();
         observer.awaitDone(5, TimeUnit.SECONDS);
         observer.assertComplete();
@@ -79,7 +78,7 @@ public class TagRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testCreate() throws TechnicalException {
+    public void testCreate() {
         // create tag
         Tag tag = new Tag();
         tag.setName("testName");
@@ -93,7 +92,7 @@ public class TagRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testUpdate() throws TechnicalException {
+    public void testUpdate() {
         // create tag
         Tag tag = new Tag();
         tag.setName("testName");
@@ -114,7 +113,7 @@ public class TagRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDelete() throws TechnicalException {
+    public void testDelete() {
         // create tag
         Tag tag = new Tag();
         tag.setName("testName");

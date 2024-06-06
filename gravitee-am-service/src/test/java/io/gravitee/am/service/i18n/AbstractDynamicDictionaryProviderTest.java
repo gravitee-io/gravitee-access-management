@@ -21,6 +21,7 @@ import org.junit.Test;
 import java.util.Collections;
 import java.util.Locale;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -31,7 +32,7 @@ import static org.junit.Assert.assertTrue;
 public abstract class AbstractDynamicDictionaryProviderTest {
 
     protected abstract DynamicDictionaryProvider provider();
-    
+
     @Test
     public void shouldHasDictionaryFor() {
         I18nDictionary i18nDictionary = new I18nDictionary();
@@ -64,7 +65,7 @@ public abstract class AbstractDynamicDictionaryProviderTest {
         i18nDictionary.setEntries(Collections.singletonMap("key", "value"));
         provider().loadDictionary(i18nDictionary);
         assertFalse(provider().getDictionaryFor(new Locale(i18nDictionary.getLocale())).isEmpty());
-        assertTrue(provider().getDictionaryFor(new Locale(i18nDictionary.getLocale())).getProperty("key").equals("value"));
+        assertEquals("value", provider().getDictionaryFor(new Locale(i18nDictionary.getLocale())).getProperty("key"));
     }
 
     @Test

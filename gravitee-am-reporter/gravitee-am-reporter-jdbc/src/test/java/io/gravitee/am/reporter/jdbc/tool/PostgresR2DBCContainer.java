@@ -29,7 +29,6 @@ public class PostgresR2DBCContainer implements R2dbcDatabaseContainer {
 
     public PostgresR2DBCContainer(PostgreSQLContainer dbContainer) {
         this.dbContainer = dbContainer;
-        //this.dbContainer.withCommand("postgres -c max_connections=200");
         this.r2dbcContainer = new PostgreSQLR2DBCDatabaseContainer(dbContainer);
     }
 

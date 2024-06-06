@@ -17,13 +17,9 @@ package io.gravitee.am.service.validators;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.service.validators.email.EmailDomainValidator;
-import io.gravitee.am.service.validators.notifier.NotifierValidator;
 import io.gravitee.am.service.validators.notifier.NotifierValidator.NotifierHolder;
 import io.gravitee.am.service.validators.notifier.email.EmailNotifierFromValidator;
 import io.gravitee.am.service.validators.notifier.email.EmailNotifierFromValidatorImpl;
-import io.gravitee.am.service.validators.resource.ResourceValidator.ResourceHolder;
-import io.gravitee.am.service.validators.resource.smtp.SmtpResourceValidatorImpl;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,6 +28,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -50,18 +48,18 @@ public class EmailNotifierFromValidatorTest {
     private EmailNotifierFromValidator emailNotifierFromValidator;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         emailNotifierFromValidator = new EmailNotifierFromValidatorImpl(new ObjectMapper(), emailDomainValidator);
     }
 
     @Test
-    public void must_not_validate_invalid() {
+    void must_not_validate_invalid() {
         assertTrue(emailNotifierFromValidator.validate(new NotifierHolder("other-policy", "{}")).isEmpty());
     }
 
     @ParameterizedTest
     @MethodSource("params_that_must_validate_regarding_configuration")
-    public void must_validate_invalid_regarding_configuration(String pattern, String configuration, boolean expected) {
+    void must_validate_invalid_regarding_configuration(String pattern, String configuration, boolean expected) {
         var resourceHolder = new NotifierHolder(EmailNotifierFromValidatorImpl.EMAIL_NOTIFIER, configuration);
         when(emailDomainValidator.validate(eq(pattern))).thenReturn(expected);
 

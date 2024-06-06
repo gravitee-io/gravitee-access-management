@@ -44,7 +44,9 @@ import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static io.reactivex.rxjava3.core.Maybe.just;
 import static java.util.Locale.ENGLISH;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.verify;
 import static org.mockito.Mockito.when;
@@ -152,7 +154,6 @@ public class I18nDictionaryServiceTest {
     @Test
     public void shouldFindByName() {
         var dictionary = new I18nDictionary();
-        String english = "English";
         dictionary.setLocale(ENGLISH.getLanguage());
         given(repository.findByLocale(eq(DOMAIN), any(), eq(ENGLISH.getLanguage()))).willReturn(just(dictionary));
         var observer = service.findByLocale(DOMAIN, "", ENGLISH.getLanguage()).test();

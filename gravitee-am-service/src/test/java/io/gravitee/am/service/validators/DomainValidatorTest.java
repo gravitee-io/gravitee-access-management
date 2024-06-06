@@ -22,7 +22,6 @@ import io.gravitee.am.service.validators.domain.DomainValidator;
 import io.gravitee.am.service.validators.domain.DomainValidatorImpl;
 import io.gravitee.am.service.validators.path.PathValidatorImpl;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidatorImpl;
-import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -30,7 +29,6 @@ import java.util.ArrayList;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.*;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -58,7 +56,7 @@ public class DomainValidatorTest {
         domain.setPath("");
 
         // Empty path is replaced with '/' but '/' is not allowed in context-path mode.
-        TestObserver<Void> test = domainValidator.validate(domain, emptyList()).test().assertError(InvalidDomainException.class);
+        domainValidator.validate(domain, emptyList()).test().assertError(InvalidDomainException.class);
     }
 
     @Test

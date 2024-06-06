@@ -20,8 +20,9 @@ import io.gravitee.am.service.model.NewEmail;
 import io.gravitee.am.service.model.UpdateEmail;
 import io.gravitee.am.service.validators.email.EmailDomainValidator;
 import io.gravitee.am.service.validators.email.resource.EmailTemplateValidatorImpl;
-import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -30,7 +31,7 @@ import static org.mockito.Mockito.when;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class EmailResourceValidatorTest {
+class EmailResourceValidatorTest {
 
     @Test
     void must_succeed_validation() {

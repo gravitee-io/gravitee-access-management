@@ -16,11 +16,8 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Environment;
-import io.gravitee.am.model.Form;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.rxjava3.observers.TestObserver;
-import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 

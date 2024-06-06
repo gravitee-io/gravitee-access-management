@@ -18,14 +18,17 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -43,7 +46,7 @@ public class ResourceRepositoryTest extends AbstractManagementTest {
     private static final String USER_ID = "userId";
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindById() {
         // create resource_set, resource_scopes being the most important field.
         Resource resource = buildResource();
         Resource rsCreated = repository.create(resource).blockingGet();
@@ -79,7 +82,7 @@ public class ResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void update() throws TechnicalException {
+    public void update() {
         // create resource_set, resource_scopes being the most important field.
         Resource resource = new Resource().setResourceScopes(Arrays.asList("a","b","c"));
         Resource rsCreated = repository.create(resource).blockingGet();
@@ -95,7 +98,7 @@ public class ResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void delete() throws TechnicalException {
+    public void delete() {
         // create resource_set, resource_scopes being the most important field.
         Resource resource = new Resource().setResourceScopes(Arrays.asList("a","b","c"));
         Resource rsCreated = repository.create(resource).blockingGet();
@@ -110,7 +113,7 @@ public class ResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void findByDomainAndClientAndUserAndResource() throws TechnicalException {
+    public void findByDomainAndClientAndUserAndResource() {
         // create resource_set, resource_scopes being the most important field.
         Resource resource = new Resource()
                 .setResourceScopes(Arrays.asList("a","b","c"))
@@ -130,7 +133,7 @@ public class ResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void findByDomainAndClientAndUser() throws TechnicalException {
+    public void findByDomainAndClientAndUser() {
         // create resource_set, resource_scopes being the most important field.
         Resource resource1 = new Resource().setResourceScopes(Arrays.asList("a","b","c")).setDomain(DOMAIN_ID).setClientId(CLIENT_ID).setUserId(USER_ID);
         Resource resource2 = new Resource().setResourceScopes(Arrays.asList("d","e","f")).setDomain(DOMAIN_ID).setClientId(CLIENT_ID).setUserId(USER_ID);
@@ -149,7 +152,7 @@ public class ResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindByDomain() throws TechnicalException {
+    public void testFindByDomain() {
         // create resource_set, resource_scopes being the most important field.
         Resource resource1 = new Resource().setResourceScopes(Arrays.asList("a","b","c")).setDomain(DOMAIN_ID).setClientId(CLIENT_ID).setUserId(USER_ID);
         Resource resource2 = new Resource().setResourceScopes(Arrays.asList("d","e","f")).setDomain(DOMAIN_ID).setClientId(CLIENT_ID).setUserId(USER_ID);
@@ -167,7 +170,7 @@ public class ResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindByDomain_page() throws TechnicalException {
+    public void testFindByDomain_page() {
         // create resource_set, resource_scopes being the most important field.
         Resource resource1 = new Resource().setResourceScopes(Arrays.asList("a","b","c")).setDomain(DOMAIN_ID).setClientId(CLIENT_ID).setUserId(USER_ID);
         Resource resource2 = new Resource().setResourceScopes(Arrays.asList("d","e","f")).setDomain(DOMAIN_ID).setClientId(CLIENT_ID).setUserId(USER_ID);
@@ -198,7 +201,7 @@ public class ResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindByResources() throws TechnicalException {
+    public void testFindByResources() {
         // create resource_set, resource_scopes being the most important field.
         Resource resource1 = new Resource().setResourceScopes(Arrays.asList("a","b","c")).setDomain("domainA").setClientId(CLIENT_ID).setUserId(USER_ID);
         Resource resource2 = new Resource().setResourceScopes(Arrays.asList("d","e","f")).setDomain("domainB").setClientId(CLIENT_ID).setUserId(USER_ID);
@@ -216,7 +219,7 @@ public class ResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindByDomainAndClientAndUserAndResources() throws TechnicalException {
+    public void testFindByDomainAndClientAndUserAndResources() {
         // create resource_set, resource_scopes being the most important field.
         Resource resource1 = new Resource().setResourceScopes(Arrays.asList("a")).setDomain(DOMAIN_ID).setClientId(CLIENT_ID).setUserId(USER_ID);
         Resource resource2 = new Resource().setResourceScopes(Arrays.asList("b")).setDomain(DOMAIN_ID).setClientId(CLIENT_ID).setUserId(USER_ID);

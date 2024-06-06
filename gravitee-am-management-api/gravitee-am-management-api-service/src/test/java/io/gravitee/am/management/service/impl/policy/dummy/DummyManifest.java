@@ -17,6 +17,7 @@ package io.gravitee.am.management.service.impl.policy.dummy;
 
 import io.gravitee.plugin.core.api.PluginDependency;
 import io.gravitee.plugin.core.api.PluginManifest;
+
 import java.util.List;
 import java.util.Map;
 

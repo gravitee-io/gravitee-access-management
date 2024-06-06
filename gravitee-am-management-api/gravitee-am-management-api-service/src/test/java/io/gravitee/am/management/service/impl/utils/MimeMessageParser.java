@@ -15,7 +15,22 @@
  */
 package io.gravitee.am.management.service.impl.utils;
 
+import jakarta.activation.DataHandler;
+import jakarta.activation.DataSource;
+import jakarta.mail.Address;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Multipart;
+import jakarta.mail.Part;
+import jakarta.mail.internet.ContentType;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeBodyPart;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimePart;
+import jakarta.mail.internet.MimeUtility;
+import jakarta.mail.internet.ParseException;
 import jakarta.mail.util.ByteArrayDataSource;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -29,21 +44,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import jakarta.activation.DataHandler;
-import jakarta.activation.DataSource;
-import jakarta.mail.Message;
-import jakarta.mail.MessagingException;
-import jakarta.mail.Multipart;
-import jakarta.mail.Part;
-import jakarta.mail.internet.ContentType;
-import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeBodyPart;
-import jakarta.mail.internet.MimeMessage;
-import jakarta.mail.internet.MimePart;
-import jakarta.mail.internet.MimeUtility;
-import jakarta.mail.internet.ParseException;
-import jakarta.mail.Address;
 
 /**
  * Parses a MimeMessage and stores the individual parts such a plain text,
@@ -238,9 +238,7 @@ public class MimeMessageParser
      * @throws MessagingException parsing the MimeMessage failed
      * @throws IOException        parsing the MimeMessage failed
      */
-    private boolean isMimeType(final MimePart part, final String mimeType)
-        throws MessagingException, IOException
-    {
+    private boolean isMimeType(final MimePart part, final String mimeType) throws MessagingException {
         // Do not use part.isMimeType(String) as it is broken for MimeBodyPart
         // and does not really check the actual content type.
 

@@ -18,13 +18,14 @@ package io.gravitee.am.management.service.impl.upgrades;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.RoleService;
 import io.reactivex.rxjava3.core.Completable;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 /**
@@ -32,26 +33,26 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
-public class DefaultRoleUpgraderTest {
+class DefaultRoleUpgraderTest {
 
-    @Mock
     private RoleService roleService;
 
     private DefaultRoleUpgrader cut;
 
-    @Before
+    @BeforeEach
     public void before() {
+        roleService = Mockito.mock(RoleService.class);
         cut = new DefaultRoleUpgrader(roleService);
     }
 
     @Test
-    public void shouldCreateSystemRoles() {
+    void shouldCreateSystemRoles() {
         when(roleService.createOrUpdateSystemRoles()).thenReturn(Completable.complete());
-        cut.upgrade();
+        assertTrue(cut.upgrade());
     }
 
     @Test
-    public void shouldCreateSystemRoles_technicalError() {
+    void shouldCreateSystemRoles_technicalError() {
         when(roleService.createOrUpdateSystemRoles()).thenReturn(Completable.error(TechnicalException::new));
         assertFalse(cut.upgrade());
     }

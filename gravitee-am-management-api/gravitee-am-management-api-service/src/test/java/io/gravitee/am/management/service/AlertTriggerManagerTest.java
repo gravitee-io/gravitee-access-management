@@ -50,7 +50,9 @@ import org.springframework.mock.env.MockEnvironment;
 import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -93,7 +95,7 @@ public class AlertTriggerManagerTest {
     }
 
     @Test
-    public void doOnConnect() throws Exception {
+    public void doOnConnect() {
 
         final Domain domain = new Domain();
         domain.setId(DOMAIN_ID);

@@ -20,23 +20,16 @@ import io.gravitee.am.service.validators.resource.ResourceValidator;
 import io.gravitee.am.service.validators.resource.ResourceValidator.ResourceHolder;
 import io.gravitee.am.service.validators.resource.ResourceValidatorImpl;
 import io.gravitee.am.service.validators.resource.smtp.SmtpResourceValidator;
-import io.gravitee.am.service.validators.resource.smtp.SmtpResourceValidatorImpl;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 /**
@@ -44,19 +37,19 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @ExtendWith(MockitoExtension.class)
-public class ResourceValidatorTest {
+class ResourceValidatorTest {
 
     @Mock
     private SmtpResourceValidator smtpResourceValidator;
     private ResourceValidator resourceValidator;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         resourceValidator = new ResourceValidatorImpl(smtpResourceValidator);
     }
 
     @Test
-    public void must_not_validate() {
+    void must_not_validate() {
         when(smtpResourceValidator.validate(any())).thenReturn(Optional.empty());
         var observer = resourceValidator.validate(new ResourceHolder("any-name", "any-config")).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
@@ -64,7 +57,7 @@ public class ResourceValidatorTest {
     }
 
     @Test
-    public void must_validate() {
+    void must_validate() {
         when(smtpResourceValidator.validate(any())).thenReturn(Optional.of(new InvalidParameterException("Invalid parameter")));
         var observer = resourceValidator.validate(new ResourceHolder("any-policy", "any-config")).test();
         observer.awaitDone(10, TimeUnit.SECONDS);

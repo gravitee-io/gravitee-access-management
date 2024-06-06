@@ -44,7 +44,7 @@ public class EnrichProfilePolicy {
     private static final Logger LOGGER = LoggerFactory.getLogger(EnrichProfilePolicy.class);
     private static final String GATEWAY_POLICY_ENRICH_PROFILE_ERROR_KEY = "GATEWAY_POLICY_ENRICH_PROFILE_ERROR";
 
-    public static final String errorMessage = "Unable to update user profile with context information";
+    public static final String ERROR_MESSAGE = "Unable to update user profile with context information";
 
     private EnrichProfilePolicyConfiguration configuration;
 
@@ -66,7 +66,7 @@ public class EnrichProfilePolicy {
                                 (error) -> {
                                     if (configuration.isExitOnError()) {
                                         LOGGER.warn("Update of user profile failed!", error.getMessage());
-                                        policyChain.failWith(PolicyResult.failure(errorMessage));
+                                        policyChain.failWith(PolicyResult.failure(ERROR_MESSAGE));
                                     } else {
                                         LOGGER.info("Update of user profile failed!", error.getMessage());
                                         policyChain.doNext(request, response);
@@ -77,10 +77,10 @@ public class EnrichProfilePolicy {
             }
         } catch (Exception e) {
             if (configuration.isExitOnError()) {
-                LOGGER.warn(errorMessage, e);
-                policyChain.failWith(PolicyResult.failure(GATEWAY_POLICY_ENRICH_PROFILE_ERROR_KEY, errorMessage));
+                LOGGER.warn(ERROR_MESSAGE, e);
+                policyChain.failWith(PolicyResult.failure(GATEWAY_POLICY_ENRICH_PROFILE_ERROR_KEY, ERROR_MESSAGE));
             } else {
-                LOGGER.info(errorMessage, e);
+                LOGGER.info(ERROR_MESSAGE, e);
                 policyChain.doNext(request, response);
             }
         }

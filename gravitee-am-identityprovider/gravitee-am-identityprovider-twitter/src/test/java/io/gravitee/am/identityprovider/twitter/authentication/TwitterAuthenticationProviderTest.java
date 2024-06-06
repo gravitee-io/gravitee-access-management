@@ -230,7 +230,7 @@ public class TwitterAuthenticationProviderTest {
     }
 
     @Test
-    public void testSignatureBaseString() throws Exception {
+    public void testSignatureBaseString() {
         // example from https://developer.twitter.com/en/docs/authentication/oauth-1-0a/creating-a-signature
         final String url = "https://api.twitter.com/1.1/statuses/update.json";
 

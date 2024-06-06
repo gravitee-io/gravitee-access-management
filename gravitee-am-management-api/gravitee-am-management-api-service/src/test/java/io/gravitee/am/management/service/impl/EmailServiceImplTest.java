@@ -28,12 +28,12 @@ import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.assertions.MimeMessageParserAssert;
+import io.gravitee.am.management.service.impl.utils.MimeMessageParser;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
-import io.gravitee.am.management.service.impl.utils.MimeMessageParser;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.service.AuditService;
@@ -95,7 +95,7 @@ public class EmailServiceImplTest {
     I18nDictionaryService i18nDictionaryService;
 
     @BeforeEach
-    public void init() throws Exception {
+    void init() throws Exception {
 
         mailSender = new JavaMailSenderImpl();
         mailSender.setJavaMailProperties(greenMail.getSmtp().getServerSetup().configureJavaMailSessionProperties(null, false));
@@ -119,7 +119,7 @@ public class EmailServiceImplTest {
             "REGISTRATION_VERIFY,Vérifiez votre compte,http://localhost:1234/unittest/verifyRegistration?param1=PARAM_1&param2=PARAM_2,fr",
             "REGISTRATION_VERIFY,New user registration,http://localhost:1234/unittest/verifyRegistration?param3=PARAM_3&param4=PARAM_4,en",
     })
-    public void validate_send_registration_confirmation_email(Template template, String subject, String registrationUrl, String lang) throws Exception {
+    void validate_send_registration_confirmation_email(Template template, String subject, String registrationUrl, String lang) throws Exception {
 
         when(jwtBuilder.sign(any())).thenReturn("TOKEN");
 
@@ -177,7 +177,7 @@ public class EmailServiceImplTest {
     }
 
     @Test
-    public void must_not_send_email_when_feature_is_disabled() throws Exception {
+    void must_not_send_email_when_feature_is_disabled() throws Exception {
         when(environment.getProperty("email.enabled", "false")).thenReturn("false");
         when(environment.getProperty("user.registration.email.subject", "New user registration")).thenReturn("New user registration");
         when(environment.getProperty("user.registration.token.expire-after", "86400")).thenReturn("86400");
@@ -201,7 +201,7 @@ public class EmailServiceImplTest {
     }
 
     @Test
-    public void must_not_send_email_when_error_occurred() throws Exception {
+    void must_not_send_email_when_error_occurred() throws Exception {
 
         var cut = Mockito.mock(EmailService.class);
         when(cut.send(any(), any(), any(), any())).thenReturn(Maybe.error(new IllegalStateException("Error")));

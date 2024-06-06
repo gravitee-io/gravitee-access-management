@@ -25,7 +25,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.when;
@@ -35,19 +34,19 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @ExtendWith(MockitoExtension.class)
-public class FactorPluginServiceTest {
+class FactorPluginServiceTest {
 
     @Mock
     private FactorPluginManager factorPluginManager;
     private FactorPluginService factorPluginService;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         factorPluginService = new FactorPluginServiceImpl(factorPluginManager);
     }
 
     @Test
-    public void must_accept_deployed_plugins() throws IOException {
+    void must_accept_deployed_plugins() {
         String pluginId = "pluginId";
         when(factorPluginManager.isPluginDeployed(pluginId)).thenReturn(true);
 
@@ -58,7 +57,7 @@ public class FactorPluginServiceTest {
     }
 
     @Test
-    public void must_reject_not_deployed_plugins() throws IOException {
+    void must_reject_not_deployed_plugins() {
         String pluginId = "pluginId";
 
         when(factorPluginManager.isPluginDeployed(pluginId)).thenReturn(false);

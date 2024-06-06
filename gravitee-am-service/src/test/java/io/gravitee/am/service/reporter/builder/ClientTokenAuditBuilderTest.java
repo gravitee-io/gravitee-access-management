@@ -16,18 +16,19 @@
 package io.gravitee.am.service.reporter.builder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import static io.gravitee.am.common.audit.EventType.TOKEN_CREATED;
-import static io.gravitee.am.common.audit.EventType.TOKEN_REVOKED;
-import static io.gravitee.am.common.audit.Status.FAILURE;
-import static io.gravitee.am.common.audit.Status.SUCCESS;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import org.junit.jupiter.api.Test;
+
+import static io.gravitee.am.common.audit.EventType.TOKEN_CREATED;
+import static io.gravitee.am.common.audit.EventType.TOKEN_REVOKED;
+import static io.gravitee.am.common.audit.Status.FAILURE;
+import static io.gravitee.am.common.audit.Status.SUCCESS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.Test;
 
 class ClientTokenAuditBuilderTest {
 

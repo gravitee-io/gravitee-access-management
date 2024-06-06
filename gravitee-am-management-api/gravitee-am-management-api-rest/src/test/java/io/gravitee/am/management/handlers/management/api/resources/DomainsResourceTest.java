@@ -16,16 +16,20 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Environment;
+import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.Organization;
+import io.gravitee.am.model.Reporter;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import org.junit.Test;
-
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
+import org.junit.Test;
+
 import java.util.List;
 import java.util.Map;
 
@@ -57,7 +61,7 @@ public class DomainsResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final Map responseEntity = readEntity(response, Map.class);
-        assertTrue(((List)responseEntity.get("data")).size() == 2);
+        assertEquals(2, ((List) responseEntity.get("data")).size());
     }
 
     @Test

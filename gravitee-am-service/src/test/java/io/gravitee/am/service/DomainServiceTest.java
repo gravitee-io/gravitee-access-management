@@ -16,7 +16,25 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.AuthenticationDeviceNotifier;
+import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.CorsSettings;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Email;
+import io.gravitee.am.model.Environment;
+import io.gravitee.am.model.ExtensionGrant;
+import io.gravitee.am.model.Factor;
+import io.gravitee.am.model.Form;
+import io.gravitee.am.model.Group;
+import io.gravitee.am.model.I18nDictionary;
+import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Reporter;
+import io.gravitee.am.model.Role;
+import io.gravitee.am.model.User;
+import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.account.FormField;
 import io.gravitee.am.model.alert.AlertNotifier;
@@ -58,7 +76,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import static org.mockito.Mockito.never;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -73,8 +90,16 @@ import java.util.concurrent.TimeUnit;
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static io.reactivex.rxjava3.core.Completable.complete;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.isNull;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

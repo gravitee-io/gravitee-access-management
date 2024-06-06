@@ -16,11 +16,20 @@
 package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.am.management.service.impl.upgrades.helpers.MembershipHelper;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.Organization;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-import io.gravitee.am.service.*;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.OrganizationService;
+import io.gravitee.am.service.OrganizationUserService;
+import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.PatchOrganization;
 import io.reactivex.rxjava3.core.Completable;
@@ -44,7 +53,15 @@ import java.util.stream.Stream;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.isNull;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -255,7 +272,7 @@ public class DefaultOrganizationUpgraderTest {
         organization.setId("orga-id");
 
         List<User> users = Stream.iterate(0, i -> i++).limit(10).map(i -> user)
-                .collect(Collectors.toList());
+                .toList();
 
         when(organizationService.createDefault()).thenReturn(Maybe.just(organization));
         when(organizationService.update(any(), any(), any())).thenReturn(Single.just(organization));

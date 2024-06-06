@@ -28,7 +28,6 @@ import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -42,7 +41,15 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static java.time.ZoneOffset.UTC;
@@ -60,7 +67,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     private UserRepository userRepository;
 
     @Test
-    public void testFindByDomain() throws TechnicalException {
+    public void testFindByDomain() {
         // create user
         User user = new User();
         user.setUsername("testsUsername");
@@ -78,7 +85,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindByUserAndSource() throws TechnicalException {
+    public void testFindByUserAndSource() {
         // create user
         User user = new User();
         user.setUsername("testsUsername");
@@ -97,7 +104,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindByUserAndSourceAndLinkedIDP() throws TechnicalException {
+    public void testFindByUserAndSourceAndLinkedIDP() {
         // create user
         User user = new User();
         user.setUsername("testsUsername");
@@ -138,7 +145,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindAll() throws TechnicalException {
+    public void testFindAll() {
         // create user
         User user = new User();
         user.setUsername("testsUsername");
@@ -156,7 +163,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindById() {
         // create user
         User user = buildUser();
         User userCreated = userRepository.create(user).blockingGet();
@@ -188,7 +195,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testGetPreferredLanguage() throws TechnicalException {
+    public void testGetPreferredLanguage() {
         // create user
         User user = buildUser();
         user.setPreferredLanguage("fr");
@@ -207,7 +214,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindByIdIn() throws TechnicalException {
+    public void testFindByIdIn() {
         // create user
         User user = buildUser();
         User userCreated = userRepository.create(user).blockingGet();
@@ -222,7 +229,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void shouldFindByExternalIdAndSource() throws TechnicalException {
+    public void shouldFindByExternalIdAndSource() {
         // create user
         User user = buildUser();
         User userCreated = userRepository.create(user).blockingGet();
@@ -255,7 +262,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void shouldNotFindByUnkownExternalIdAndSource() throws TechnicalException {
+    public void shouldNotFindByUnkownExternalIdAndSource() {
         // create user
         User user = buildUser();
         User userCreated = userRepository.create(user).blockingGet();
@@ -270,7 +277,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void shouldUpdate_AllProfile() throws TechnicalException {
+    public void shouldUpdate_AllProfile() {
         // create user
         User user = buildUser();
         user.setIdentities(of(getUserIdentity()));
@@ -345,9 +352,9 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void shouldUpdate_ProfileOnly() throws TechnicalException {
+    public void shouldUpdate_ProfileOnly() {
         Assume.assumeTrue(userRepository.getClass().getSimpleName().equals("JdbcUserRepository"));
-        
+
         // create user
         User user = buildUser();
         User userCreated = userRepository.create(user).blockingGet();
@@ -485,7 +492,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindById_referenceType() throws TechnicalException {
+    public void testFindById_referenceType() {
         // create user
         User user = new User();
         user.setUsername("testsUsername");
@@ -503,7 +510,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws TechnicalException {
+    public void testNotFoundById() {
         var observer = userRepository.findById("test").test();
         observer.awaitDone(5, TimeUnit.SECONDS);
         observer.assertComplete();
@@ -512,7 +519,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testCreate() throws TechnicalException {
+    public void testCreate() {
         User user = new User();
         user.setReferenceType(ReferenceType.DOMAIN);
         user.setReferenceId("domainId");
@@ -527,7 +534,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testCreate_withIdentities() throws TechnicalException {
+    public void testCreate_withIdentities() {
 
         UserIdentity userIdentity = getUserIdentity();
 
@@ -556,7 +563,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testUpdate() throws TechnicalException {
+    public void testUpdate() {
         // create user
         User user = new User();
         user.setReferenceType(ReferenceType.DOMAIN);
@@ -580,7 +587,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testUpdate_withIdentities() throws TechnicalException {
+    public void testUpdate_withIdentities() {
         User user = new User();
         user.setReferenceType(ReferenceType.DOMAIN);
         user.setReferenceId("domainId");
@@ -610,7 +617,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDelete() throws TechnicalException {
+    public void testDelete() {
         // create user
         User user = buildUser();
         User userCreated = userRepository.create(user).blockingGet();
@@ -635,7 +642,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDeleteByRef() throws TechnicalException {
+    public void testDeleteByRef() {
         final String DOMAIN_1 = "domain1";
         final String DOMAIN_2 = "domain2";
 
@@ -1330,7 +1337,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindByDomainAndEmail() throws TechnicalException {
+    public void testFindByDomainAndEmail() {
         final String domain = "domain";
         // create user
         User user = createUserWithRandomName();
@@ -1355,7 +1362,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindByDomainAndEmailWithStandardClaim() throws TechnicalException {
+    public void testFindByDomainAndEmailWithStandardClaim() {
         final String domain = "domain";
         // create user
         User user = createUserWithRandomName();
@@ -1447,7 +1454,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
 
 
     @Test
-    public void testStat_UserRegistration() throws TechnicalException {
+    public void testStat_UserRegistration() {
         final String domain = "domain";
         // create user
         User user = createUserWithRandomName();
@@ -1486,7 +1493,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
 
 
     @Test
-    public void testStat_StatusRepartition() throws TechnicalException {
+    public void testStat_StatusRepartition() {
         final String domain = "domain_status";
         // enabled used
         User user = createUserWithRandomName();
@@ -1546,7 +1553,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testStat_StatusRepartition_byClient() throws TechnicalException {
+    public void testStat_StatusRepartition_byClient() {
         final String domain = "domain_status";
         final String clientId1 = UUID.randomUUID().toString();;
         final String clientId2 = UUID.randomUUID().toString();;

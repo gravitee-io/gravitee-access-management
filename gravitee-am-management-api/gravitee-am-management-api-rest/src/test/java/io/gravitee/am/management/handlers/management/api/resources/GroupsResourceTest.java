@@ -25,10 +25,10 @@ import io.gravitee.am.service.model.NewGroup;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.junit.Test;
-
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
+import org.junit.Test;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -75,7 +75,7 @@ public class GroupsResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final Map entity = readEntity(response, Map.class);
-        assertTrue(((List)entity.get("data")).size() == 2);
+        assertEquals(2, ((List) entity.get("data")).size());
     }
 
     @Test

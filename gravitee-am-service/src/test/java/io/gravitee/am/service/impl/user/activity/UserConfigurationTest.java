@@ -18,9 +18,10 @@ package io.gravitee.am.service.impl.user.activity;
 
 import io.gravitee.am.service.impl.user.activity.configuration.UserActivityConfiguration;
 import io.gravitee.am.service.impl.user.activity.configuration.UserActivityConfiguration.Algorithm;
+import org.junit.Test;
+
 import java.time.temporal.ChronoUnit;
 import java.util.function.Supplier;
-import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

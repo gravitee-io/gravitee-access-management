@@ -17,12 +17,11 @@ package io.gravitee.am.management.handlers.management.api.resources.platform.plu
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.service.model.plugin.AuthenticationDeviceNotifierPlugin;
-import io.gravitee.am.service.model.plugin.BotDetectionPlugin;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Single;
+import jakarta.ws.rs.core.Response;
 import org.junit.Test;
 
-import jakarta.ws.rs.core.Response;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;

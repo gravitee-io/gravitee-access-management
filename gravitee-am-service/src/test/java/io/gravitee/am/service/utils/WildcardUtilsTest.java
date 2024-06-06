@@ -16,10 +16,11 @@
 package io.gravitee.am.service.utils;
 
 
-import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -31,7 +32,7 @@ public class WildcardUtilsTest {
 
     @ParameterizedTest(name = "Must transform [{0}] into [{1}]")
     @MethodSource("params_that_must_transform_wildcard_to_regex")
-    public void must_transform_wildcard_to_regex(String input, String expected) {
+    void must_transform_wildcard_to_regex(String input, String expected) {
         assertEquals(expected, WildcardUtils.toRegex(input));
     }
 

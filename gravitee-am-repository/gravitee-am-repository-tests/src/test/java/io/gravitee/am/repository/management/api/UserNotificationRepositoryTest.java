@@ -18,7 +18,6 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.notification.UserNotification;
 import io.gravitee.am.model.notification.UserNotificationStatus;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
@@ -39,7 +38,7 @@ public class UserNotificationRepositoryTest extends AbstractManagementTest {
     private UserNotificationRepository repository;
 
     @Test
-    public void testFindByAudienceAndStatus() throws TechnicalException {
+    public void testFindByAudienceAndStatus() {
         // Two unread notifications
         UserNotification userNotification = createUserNotification();
         userNotification.setAudienceId("audid");
@@ -72,7 +71,7 @@ public class UserNotificationRepositoryTest extends AbstractManagementTest {
 
 
     @Test
-    public void testMarkAsRead() throws TechnicalException {
+    public void testMarkAsRead() {
         UserNotification userNotification = createUserNotification();
         UserNotification createdNotification = repository.create(userNotification).blockingGet();
 
@@ -101,7 +100,7 @@ public class UserNotificationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindById() {
         UserNotification userNotification = createUserNotification();
         UserNotification notification = repository.create(userNotification).blockingGet();
 
@@ -114,7 +113,7 @@ public class UserNotificationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws TechnicalException {
+    public void testNotFoundById() {
         final TestObserver<UserNotification> test = repository.findById("test").test();
         test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoValues();
@@ -122,7 +121,7 @@ public class UserNotificationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testCreate() throws TechnicalException {
+    public void testCreate() {
         UserNotification userNotification = createUserNotification();
 
         TestObserver<UserNotification> testObserver = repository.create(userNotification).test();
@@ -155,7 +154,7 @@ public class UserNotificationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testUpdate() throws TechnicalException {
+    public void testUpdate() {
         UserNotification userNotification = createUserNotification();
         UserNotification notification = repository.create(userNotification).blockingGet();
 
@@ -173,7 +172,7 @@ public class UserNotificationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDelete() throws TechnicalException {
+    public void testDelete() {
         UserNotification userNotification = createUserNotification();
         UserNotification notification = repository.create(userNotification).blockingGet();
 

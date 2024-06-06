@@ -39,7 +39,7 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @ExtendWith(MockitoExtension.class)
-public class HelloReplyAdapterTest {
+class HelloReplyAdapterTest {
 
     private static final String INSTALLATION_ID = "installation#1";
     @Mock

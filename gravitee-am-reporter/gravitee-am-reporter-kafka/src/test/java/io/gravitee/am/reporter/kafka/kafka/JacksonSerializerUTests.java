@@ -21,7 +21,7 @@ import io.gravitee.am.reporter.kafka.DummyNode;
 import io.gravitee.am.reporter.kafka.audit.DtoMapper;
 import io.gravitee.am.reporter.kafka.dto.AuditMessageValueDto;
 import io.gravitee.node.api.Node;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -35,20 +35,20 @@ import static org.junit.Assert.assertEquals;
 public class JacksonSerializerUTests {
 
   @Test
-  public void Should_SerializeAnAuditAsJson() throws URISyntaxException, IOException {
+  void Should_SerializeAnAuditAsJson() throws URISyntaxException, IOException {
     DtoMapper mapper = new DtoMapper();
     GraviteeContext context = GraviteeContext.defaultContext("acme");
     Node node = new DummyNode("node-id", "main.srv.local");
     AuditMessageValueDto auditMessageValueDto = mapper
         .map(AuditValueFactory.createAudit(), context, node);
 
-    JacksonSerializer<AuditMessageValueDto> serializer = new JacksonSerializer<>();
-
-    byte[] bytes = serializer.serialize("topic", auditMessageValueDto);
+    byte[] bytes;
+    try (JacksonSerializer<AuditMessageValueDto> serializer = new JacksonSerializer<>()) {
+        bytes = serializer.serialize("topic", auditMessageValueDto);
+    }
 
     URL resource = JacksonSerializerUTests.class.getResource("/json/audit.json");
     byte[] expected = Files.readAllBytes(Paths.get(resource.toURI()));
-    assertEquals(new String(expected, StandardCharsets.UTF_8),
-        new String(bytes, StandardCharsets.UTF_8));
+    assertEquals(new String(expected, StandardCharsets.UTF_8), new String(bytes, StandardCharsets.UTF_8));
   }
 }

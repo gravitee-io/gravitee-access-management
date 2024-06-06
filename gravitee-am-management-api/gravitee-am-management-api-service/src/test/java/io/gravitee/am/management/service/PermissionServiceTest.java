@@ -16,11 +16,23 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Environment;
+import io.gravitee.am.model.Group;
+import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
-import io.gravitee.am.service.*;
+import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.EnvironmentService;
+import io.gravitee.am.service.GroupService;
+import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.EnvironmentNotFoundException;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -32,17 +44,29 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static io.gravitee.am.management.service.permissions.Permissions.and;
 import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.*;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
 import static io.gravitee.am.model.Acl.CREATE;
 import static io.gravitee.am.model.Acl.READ;
-import static io.gravitee.am.model.permissions.Permission.*;
+import static io.gravitee.am.model.permissions.Permission.APPLICATION;
+import static io.gravitee.am.model.permissions.Permission.DOMAIN;
+import static io.gravitee.am.model.permissions.Permission.ORGANIZATION;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)

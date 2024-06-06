@@ -20,11 +20,11 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.alert.AlertNotifier;
 import io.gravitee.am.model.alert.AlertTrigger;
 import io.gravitee.am.model.alert.AlertTriggerType;
-import java.util.List;
 import org.junit.Test;
 import org.springframework.mock.env.MockEnvironment;
 
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

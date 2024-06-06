@@ -25,8 +25,16 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.Environment;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -43,7 +51,7 @@ public class WebClientBuilderTest {
     private Vertx vertx;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         io.vertx.core.Vertx vertDelegate = mock(io.vertx.core.Vertx.class);
         vertx = mock(Vertx.class);
         when(vertx.getDelegate()).thenReturn(vertDelegate);
@@ -52,7 +60,7 @@ public class WebClientBuilderTest {
     }
 
     @Test
-    public void shouldApplySSLOptions_trustAll() {
+    void shouldApplySSLOptions_trustAll() {
         WebClientOptions webClientOptions = new WebClientOptions();
         when(environment.getProperty("httpClient.ssl.enabled", Boolean.class, false)).thenReturn(true);
         when(environment.getProperty("httpClient.ssl.trustAll", Boolean.class, false)).thenReturn(true);
@@ -63,7 +71,7 @@ public class WebClientBuilderTest {
     }
 
     @Test
-    public void shouldApplySSLOptions_invalidTrustStoreType() {
+    void shouldApplySSLOptions_invalidTrustStoreType() {
         WebClientOptions webClientOptions = new WebClientOptions();
         when(environment.getProperty("httpClient.ssl.enabled", Boolean.class, false)).thenReturn(true);
         when(environment.getProperty("httpClient.ssl.trustAll", Boolean.class, false)).thenReturn(false);
@@ -78,7 +86,7 @@ public class WebClientBuilderTest {
     }
 
     @Test
-    public void shouldApplySSLOptions_jksTrustStore() {
+    void shouldApplySSLOptions_jksTrustStore() {
         WebClientOptions webClientOptions = new WebClientOptions();
         when(environment.getProperty("httpClient.ssl.enabled", Boolean.class, false)).thenReturn(true);
         when(environment.getProperty("httpClient.ssl.trustAll", Boolean.class, false)).thenReturn(false);
@@ -94,7 +102,7 @@ public class WebClientBuilderTest {
     }
 
     @Test
-    public void shouldApplySSLOptions_pfxTrustStore() {
+    void shouldApplySSLOptions_pfxTrustStore() {
         WebClientOptions webClientOptions = new WebClientOptions();
         when(environment.getProperty("httpClient.ssl.enabled", Boolean.class, false)).thenReturn(true);
         when(environment.getProperty("httpClient.ssl.trustAll", Boolean.class, false)).thenReturn(false);
@@ -110,7 +118,7 @@ public class WebClientBuilderTest {
     }
 
     @Test
-    public void shouldApplySSLOptions_pemTrustStore() {
+    void shouldApplySSLOptions_pemTrustStore() {
         WebClientOptions webClientOptions = new WebClientOptions();
         when(environment.getProperty("httpClient.ssl.enabled", Boolean.class, false)).thenReturn(true);
         when(environment.getProperty("httpClient.ssl.trustAll", Boolean.class, false)).thenReturn(false);
@@ -125,7 +133,7 @@ public class WebClientBuilderTest {
     }
 
     @Test
-    public void shouldApplySSLOptions_invalidKeyStoreType() {
+    void shouldApplySSLOptions_invalidKeyStoreType() {
         WebClientOptions webClientOptions = new WebClientOptions();
         when(environment.getProperty("httpClient.ssl.enabled", Boolean.class, false)).thenReturn(true);
         when(environment.getProperty("httpClient.ssl.trustAll", Boolean.class, false)).thenReturn(false);
@@ -139,7 +147,7 @@ public class WebClientBuilderTest {
     }
 
     @Test
-    public void shouldApplySSLOptions_jksKeyStore() {
+    void shouldApplySSLOptions_jksKeyStore() {
         WebClientOptions webClientOptions = new WebClientOptions();
         when(environment.getProperty("httpClient.ssl.enabled", Boolean.class, false)).thenReturn(true);
         when(environment.getProperty("httpClient.ssl.trustAll", Boolean.class, false)).thenReturn(false);
@@ -155,7 +163,7 @@ public class WebClientBuilderTest {
     }
 
     @Test
-    public void shouldApplySSLOptions_pfxKeyStore() {
+    void shouldApplySSLOptions_pfxKeyStore() {
         WebClientOptions webClientOptions = new WebClientOptions();
         when(environment.getProperty("httpClient.ssl.enabled", Boolean.class, false)).thenReturn(true);
         when(environment.getProperty("httpClient.ssl.trustAll", Boolean.class, false)).thenReturn(false);
@@ -171,7 +179,7 @@ public class WebClientBuilderTest {
     }
 
     @Test
-    public void shouldApplySSLOptions_pemKeyStore() {
+    void shouldApplySSLOptions_pemKeyStore() {
         WebClientOptions webClientOptions = new WebClientOptions();
         when(environment.getProperty("httpClient.ssl.enabled", Boolean.class, false)).thenReturn(true);
         when(environment.getProperty("httpClient.ssl.trustAll", Boolean.class, false)).thenReturn(false);

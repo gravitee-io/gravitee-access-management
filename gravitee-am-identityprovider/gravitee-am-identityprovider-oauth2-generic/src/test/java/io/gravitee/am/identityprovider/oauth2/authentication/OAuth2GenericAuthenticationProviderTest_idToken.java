@@ -30,7 +30,7 @@ import io.gravitee.am.identityprovider.api.DummyRequest;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderConfiguration;
 import io.reactivex.rxjava3.observers.TestObserver;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -49,7 +49,7 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
-public class OAuth2GenericAuthenticationProviderTest_idToken {
+class OAuth2GenericAuthenticationProviderTest_idToken {
 
   @InjectMocks
   private OAuth2GenericAuthenticationProvider authenticationProvider = new OAuth2GenericAuthenticationProvider();
@@ -61,7 +61,7 @@ public class OAuth2GenericAuthenticationProviderTest_idToken {
   private JWTProcessor jwtProcessor;
 
   @Test
-  public void shouldLoadUserByUsername_authentication()
+  void shouldLoadUserByUsername_authentication()
       throws ParseException, JOSEException, BadJOSEException {
     JWTClaimsSet claims = new JWTClaimsSet.Builder().subject("bob").build();
 
@@ -96,7 +96,7 @@ public class OAuth2GenericAuthenticationProviderTest_idToken {
   }
 
   @Test
-  public void shouldLoadUserByUsername_authentication_and_filter_undesired_claims()
+  void shouldLoadUserByUsername_authentication_and_filter_undesired_claims()
       throws ParseException, JOSEException, BadJOSEException {
     JWTClaimsSet claims = new JWTClaimsSet.Builder().subject("bob")
         .claim(Claims.nbf, "value that won't appear")
@@ -153,7 +153,7 @@ public class OAuth2GenericAuthenticationProviderTest_idToken {
   }
 
   @Test
-  public void shouldLoadUserByUsername_authentication_badToken()
+  void shouldLoadUserByUsername_authentication_badToken()
       throws ParseException, JOSEException, BadJOSEException {
     when(jwtProcessor.process("test", null)).thenThrow(new JOSEException("jose exception"));
 

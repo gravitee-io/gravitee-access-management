@@ -26,8 +26,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -52,7 +52,7 @@ import java.util.UUID;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = JUnitConfiguration.class, loader = AnnotationConfigContextLoader.class)
-public class KafkaAuditReporterITests extends TestCase {
+class KafkaAuditReporterITests extends TestCase {
 
   private KafkaAuditReporter kafkaAuditReporter;
 
@@ -64,8 +64,8 @@ public class KafkaAuditReporterITests extends TestCase {
   @Autowired
   protected KafkaReporterConfiguration kafkaReporterConfiguration;
 
-  @Before
-  public void init() throws Exception {
+  @BeforeEach
+  void init() throws Exception {
     this.kafkaAuditReporter = new KafkaAuditReporter();
 
     context.getAutowireCapableBeanFactory().autowireBean(kafkaAuditReporter);
@@ -75,22 +75,22 @@ public class KafkaAuditReporterITests extends TestCase {
   }
 
   @Test
-  public void Should_ReturnFalse_When_CanSearchIsCalled() {
+  void Should_ReturnFalse_When_CanSearchIsCalled() {
     assertFalse(this.kafkaAuditReporter.canSearch());
   }
 
   @Test
-  public void Should_ReturnTrue_When_CanHandleReportableIsAnAudit() {
+  void Should_ReturnTrue_When_CanHandleReportableIsAnAudit() {
     assertTrue(this.kafkaAuditReporter.canHandle(AuditValueFactory.createAudit()));
   }
 
   @Test
-  public void Should_ReturnFalse_When_CanHandleReportableIsNotAnAudit() {
+  void Should_ReturnFalse_When_CanHandleReportableIsNotAnAudit() {
     assertTrue(this.kafkaAuditReporter.canHandle(AuditValueFactory.createAudit()));
   }
 
   @Test
-  public void Should_WriteEventAsJson_When_EventIsAudit() throws URISyntaxException, IOException {
+  void Should_WriteEventAsJson_When_EventIsAudit() throws URISyntaxException, IOException {
 
 
     this.kafkaAuditReporter.report(AuditValueFactory.createAudit());

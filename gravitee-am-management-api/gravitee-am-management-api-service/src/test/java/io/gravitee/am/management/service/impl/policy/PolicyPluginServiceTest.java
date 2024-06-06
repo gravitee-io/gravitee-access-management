@@ -25,11 +25,6 @@ import io.gravitee.am.service.exception.PluginNotDeployedException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.plugin.core.api.PluginManifest;
 import io.gravitee.plugin.policy.PolicyPlugin;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,6 +34,12 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
@@ -68,7 +69,7 @@ public class PolicyPluginServiceTest {
     private PolicyPluginService policyPluginService;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         policyPluginService = new PolicyPluginServiceImpl(
                 policyPluginManager, objectMapper
         );
@@ -76,7 +77,7 @@ public class PolicyPluginServiceTest {
 
     @ParameterizedTest
     @MethodSource("params_that_must_find_all")
-    public void must_find_all(Collection<PolicyPlugin> policies, List<String> expand, int expectedSize) {
+    void must_find_all(Collection<PolicyPlugin> policies, List<String> expand, int expectedSize) {
         when(policyPluginManager.getAll(eq(true))).thenReturn(policies);
 
         var observer = policyPluginService.findAll(expand).test();
@@ -117,7 +118,7 @@ public class PolicyPluginServiceTest {
 
     @ParameterizedTest
     @MethodSource("params_that_must_not_find_by_id")
-    public void must_not_find_by_id(String id, PolicyPlugin policy) {
+    void must_not_find_by_id(String id, PolicyPlugin policy) {
         when(policyPluginManager.get(id)).thenReturn(policy);
 
         var observer = policyPluginService.findById(id).test();
@@ -135,7 +136,7 @@ public class PolicyPluginServiceTest {
     }
 
     @Test
-    public void must_not_find_by_id_with_error() {
+    void must_not_find_by_id_with_error() {
         when(policyPluginManager.get("someId")).thenThrow(new RuntimeException("An error has occurred"));
 
         var observer = policyPluginService.findById("someId").test();
@@ -144,7 +145,7 @@ public class PolicyPluginServiceTest {
     }
 
     @Test
-    public void must_find_by_id() {
+    void must_find_by_id() {
         when(policyPluginManager.get(any())).thenReturn(new DummyPolicy(new DummyManifest("125")));
         var observer = policyPluginService.findById("125").test();
         observer.awaitDone(10, TimeUnit.SECONDS);
@@ -152,7 +153,7 @@ public class PolicyPluginServiceTest {
     }
 
     @Test
-    public void must_not_get_schema() throws IOException {
+    void must_not_get_schema() throws IOException {
         when(policyPluginManager.getSchema(any())).thenThrow(new IOException("Could not get schema"));
 
         var observer = policyPluginService.getSchema("125").test();
@@ -162,7 +163,7 @@ public class PolicyPluginServiceTest {
 
     @ParameterizedTest
     @MethodSource("params_that_must_get_schema")
-    public void must_get_schema(String schema, String expectedValue) throws IOException {
+    void must_get_schema(String schema, String expectedValue) throws IOException {
         when(policyPluginManager.getSchema(any())).thenReturn(schema);
 
         var observer = policyPluginService.getSchema("125").test();
@@ -180,7 +181,7 @@ public class PolicyPluginServiceTest {
 
 
     @Test
-    public void must_not_get_icon() throws IOException {
+    void must_not_get_icon() throws IOException {
         when(policyPluginManager.getIcon(any())).thenThrow(new IOException("Could not get icon"));
 
         var observer = policyPluginService.getIcon("125").test();
@@ -189,7 +190,7 @@ public class PolicyPluginServiceTest {
     }
 
     @Test
-    public void must_get_icon() throws IOException {
+    void must_get_icon() throws IOException {
         String icon = "icon.svg";
         when(policyPluginManager.getIcon(any())).thenReturn(icon);
 
@@ -200,7 +201,7 @@ public class PolicyPluginServiceTest {
     }
 
     @Test
-    public void must_not_get_documentation() throws IOException {
+    void must_not_get_documentation() throws IOException {
         when(policyPluginManager.getDocumentation(any())).thenThrow(new IOException("Could not get documentation"));
 
         var observer = policyPluginService.getDocumentation("125").test();
@@ -209,7 +210,7 @@ public class PolicyPluginServiceTest {
     }
 
     @Test
-    public void must_get_documentation() throws IOException {
+    void must_get_documentation() throws IOException {
         String documentation = "Some documentation";
         when(policyPluginManager.getDocumentation(any())).thenReturn(documentation);
 
@@ -228,7 +229,7 @@ public class PolicyPluginServiceTest {
     }
 
     @Test
-    public void must_accept_deployed_plugins() throws IOException {
+    void must_accept_deployed_plugins() throws IOException {
         String pluginId = "pluginId";
 
         DummyPolicy policy = new DummyPolicy(new DummyManifest(pluginId), true);
@@ -241,7 +242,7 @@ public class PolicyPluginServiceTest {
     }
 
     @Test
-    public void must_reject_not_deployed_plugins() throws IOException {
+    void must_reject_not_deployed_plugins() throws IOException {
         String pluginId = "pluginId";
 
         DummyPolicy policy = new DummyPolicy(new DummyManifest(pluginId), false);
@@ -253,7 +254,7 @@ public class PolicyPluginServiceTest {
     }
 
     @Test
-    public void must_reject_unknown_plugin() throws IOException {
+    void must_reject_unknown_plugin() throws IOException {
         String pluginId = "pluginId";
 
         when(policyPluginManager.get(pluginId)).thenReturn(null);

@@ -33,7 +33,6 @@ import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
@@ -65,7 +64,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
     private ApplicationRepository applicationRepository;
 
     @Test
-    public void testFindByDomain() throws TechnicalException {
+    public void testFindByDomain() {
         // create application
         Application application = new Application();
         application.setName("testApp");
@@ -150,7 +149,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindById() {
         // create app
         Application app = buildApplication();
         Application appCreated = applicationRepository.create(app).blockingGet();
@@ -297,7 +296,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws Exception {
+    public void testNotFoundById() {
         var observer = applicationRepository.findById("test").test();
 
         observer.awaitDone(5, TimeUnit.SECONDS);
@@ -307,7 +306,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testCreate() throws TechnicalException {
+    public void testCreate() {
         Application application = new Application();
         application.setName("testClientId");
 
@@ -320,7 +319,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testUpdate() throws TechnicalException {
+    public void testUpdate() {
         // create app
         Application app = buildApplication();
         Application appCreated = applicationRepository.create(app).blockingGet();
@@ -338,7 +337,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDelete() throws Exception {
+    public void testDelete() {
         // create app
         Application app = new Application();
         app.setName("testClientId");

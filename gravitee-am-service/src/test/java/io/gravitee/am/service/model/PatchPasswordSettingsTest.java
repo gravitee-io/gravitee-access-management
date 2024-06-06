@@ -18,14 +18,15 @@ package io.gravitee.am.service.model;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import org.junit.Assert;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import org.junit.Test;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.util.Optional;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

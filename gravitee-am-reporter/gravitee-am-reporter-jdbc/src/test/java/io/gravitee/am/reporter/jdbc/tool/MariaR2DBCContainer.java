@@ -29,7 +29,6 @@ public class MariaR2DBCContainer implements R2dbcDatabaseContainer {
 
     public MariaR2DBCContainer(MariaDBContainer dbContainer) {
         this.dbContainer = dbContainer;
-       // this.dbContainer.withCommand("mysqld --max-connections=200");
         this.r2dbcContainer = new MariaDBR2DBCDatabaseContainer(dbContainer);
     }
 

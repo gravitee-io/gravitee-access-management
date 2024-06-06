@@ -17,7 +17,6 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Theme;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
@@ -51,7 +50,7 @@ public class ThemeRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindById() {
         Theme theme = buildTheme(ReferenceType.DOMAIN, DOMAIN_ID);
         Theme themeCreated = themeRepository.create(theme).blockingGet();
 
@@ -81,7 +80,7 @@ public class ThemeRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindByReference_Domain() throws TechnicalException {
+    public void testFindByReference_Domain() {
         themeRepository.create(buildTheme(ReferenceType.DOMAIN, DOMAIN_ID)).blockingGet();
         themeRepository.create(buildTheme(ReferenceType.APPLICATION, APP_ID)).blockingGet();
 
@@ -94,7 +93,7 @@ public class ThemeRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindByReference_App() throws TechnicalException {
+    public void testFindByReference_App() {
         themeRepository.create(buildTheme(ReferenceType.DOMAIN, DOMAIN_ID)).blockingGet();
         themeRepository.create(buildTheme(ReferenceType.APPLICATION, APP_ID)).blockingGet();
 
@@ -107,14 +106,14 @@ public class ThemeRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindByReference_NotFound() throws TechnicalException {
+    public void testFindByReference_NotFound() {
         final TestObserver<Theme> testObserver = themeRepository.findByReference(ReferenceType.APPLICATION, "unknown").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoValues();
     }
 
     @Test
-    public void testCreate() throws TechnicalException {
+    public void testCreate() {
         Theme theme = buildTheme(ReferenceType.DOMAIN, DOMAIN_ID);
         TestObserver<Theme> testObserver = themeRepository.create(theme).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -133,7 +132,7 @@ public class ThemeRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testUpdate() throws TechnicalException {
+    public void testUpdate() {
         Theme theme = buildTheme(ReferenceType.DOMAIN, DOMAIN_ID);
         Theme themeCreated = themeRepository.create(theme).blockingGet();
 

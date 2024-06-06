@@ -27,7 +27,6 @@ import io.gravitee.am.model.oidc.CIBASettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.management.api.search.DomainCriteria;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -53,7 +52,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
     private DomainRepository domainRepository;
 
     @Test
-    public void testFindAll() throws TechnicalException {
+    public void testFindAll() {
         // create domain
         Domain domain = initDomain();
         domainRepository.create(domain).blockingGet();
@@ -157,7 +156,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindById() {
         // create domain
         Domain domain = initDomain();
         Domain domainCreated = domainRepository.create(domain).blockingGet();
@@ -199,7 +198,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws TechnicalException {
+    public void testNotFoundById() {
         var observer = domainRepository.findById("test").test();
         observer.awaitDone(5, TimeUnit.SECONDS);
         observer.assertComplete();
@@ -208,7 +207,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testCreate() throws TechnicalException {
+    public void testCreate() {
         Domain domain = initDomain();
 
         TestObserver<Domain> testObserver = domainRepository.create(domain).test();
@@ -220,7 +219,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testUpdate() throws TechnicalException {
+    public void testUpdate() {
         // create domain
         Domain domain = initDomain();
         Domain domainCreated = domainRepository.create(domain).blockingGet();
@@ -270,7 +269,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDelete() throws TechnicalException {
+    public void testDelete() {
         // create domain
         Domain domain = initDomain();
         Domain domainCreated = domainRepository.create(domain).blockingGet();

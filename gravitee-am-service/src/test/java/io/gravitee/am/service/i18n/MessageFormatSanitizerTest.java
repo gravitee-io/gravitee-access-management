@@ -26,11 +26,11 @@ import java.util.stream.Stream;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class MessageFormatSanitizerTest {
+class MessageFormatSanitizerTest {
 
     @ParameterizedTest
     @MethodSource("dataSet")
-    public void checkSingleQuote(String msg, String exptedMsg) {
+    void checkSingleQuote(String msg, String exptedMsg) {
         Assertions.assertEquals(exptedMsg, MessageFormatSanitizer.sanitizeSingleQuote(msg));
     }
 

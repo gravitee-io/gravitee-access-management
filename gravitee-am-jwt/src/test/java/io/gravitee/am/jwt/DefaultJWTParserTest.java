@@ -169,7 +169,7 @@ public class DefaultJWTParserTest {
 
         // check header
         String header = new String(Base64.getDecoder().decode(signedJWT.split("\\.")[0]), UTF_8);
-        assertTrue(header.equals("{\"kid\":\"123\",\"typ\":\"JWT\",\"alg\":\"HS256\"}"));
+        assertEquals("{\"kid\":\"123\",\"typ\":\"JWT\",\"alg\":\"HS256\"}", header);
 
         JWT parsedJWT = jwtParser.parse(signedJWT);
         assertEquals("alice", parsedJWT.getSub());

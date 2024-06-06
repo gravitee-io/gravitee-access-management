@@ -16,14 +16,15 @@
 package io.gravitee.am.service.reporter.builder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.oidc.Client;
+import org.junit.jupiter.api.Test;
+
 import static io.gravitee.am.common.audit.EventType.CLIENT_AUTHENTICATION;
 import static io.gravitee.am.common.audit.Status.FAILURE;
 import static io.gravitee.am.common.audit.Status.SUCCESS;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.oidc.Client;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import org.junit.jupiter.api.Test;
 
 class ClientAuthAuditBuilderTest {
     private final ObjectMapper objectMapper = new ObjectMapper();

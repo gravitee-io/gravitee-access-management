@@ -27,16 +27,16 @@ import io.gravitee.am.reporter.kafka.dto.AuditEntityDto;
 import io.gravitee.am.reporter.kafka.dto.AuditMessageValueDto;
 import io.gravitee.node.api.Node;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DtoMapperUTests {
+class DtoMapperUTests {
 
   @Test
-  public void Should_MapAuditToAuditDto() {
+  void Should_MapAuditToAuditDto() {
     // arrange
     DtoMapper mapper = new DtoMapper();
     GraviteeContext context = GraviteeContext.defaultContext("domain");
@@ -67,7 +67,7 @@ public class DtoMapperUTests {
   }
 
   @Test
-  public void Should_MapReferenceTypeIntoString() {
+  void Should_MapReferenceTypeIntoString() {
     DtoMapper mapper = new DtoMapper();
     Assert.assertEquals("APPLICATION", mapper.map(ReferenceType.APPLICATION));
     Assert.assertEquals("DOMAIN", mapper.map(ReferenceType.DOMAIN));
@@ -89,7 +89,7 @@ public class DtoMapperUTests {
   }
 
   @Test
-  public void Should_MapAuditEntryIntoAuditEntryDto() {
+  void Should_MapAuditEntryIntoAuditEntryDto() {
     DtoMapper mapper = new DtoMapper();
     AuditEntity auditEntity = new AuditEntity();
     auditEntity.setId("id");
@@ -115,7 +115,7 @@ public class DtoMapperUTests {
   }
 
   @Test
-  public void Should_MapAuditEntryIntoAuditEntryDto_Null_ReferenceType() {
+  void Should_MapAuditEntryIntoAuditEntryDto_Null_ReferenceType() {
     DtoMapper mapper = new DtoMapper();
     AuditEntity auditEntity = new AuditEntity();
     auditEntity.setId(null);
@@ -161,7 +161,7 @@ public class DtoMapperUTests {
   }
 
   @Test
-  public void Should_MapAuditAccessPointIntoAuditAccessPointDto() {
+  void Should_MapAuditAccessPointIntoAuditAccessPointDto() {
     DtoMapper mapper = new DtoMapper();
     AuditAccessPoint auditAccessPoint = new AuditAccessPoint();
     auditAccessPoint.setId("id");
@@ -179,7 +179,7 @@ public class DtoMapperUTests {
   }
 
   @Test
-  public void Should_MapAuditAccessPointIntoAuditAccessPointDto_When_IpIsInvalid() {
+  void Should_MapAuditAccessPointIntoAuditAccessPointDto_When_IpIsInvalid() {
     DtoMapper mapper = new DtoMapper();
     AuditAccessPoint auditAccessPoint = new AuditAccessPoint();
     auditAccessPoint.setId("id");

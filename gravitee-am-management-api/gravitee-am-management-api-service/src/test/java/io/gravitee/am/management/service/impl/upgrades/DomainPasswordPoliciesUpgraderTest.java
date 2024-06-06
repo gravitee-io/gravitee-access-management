@@ -53,7 +53,7 @@ import static org.mockito.Mockito.when;
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
-public class DomainPasswordPoliciesUpgraderTest {
+class DomainPasswordPoliciesUpgraderTest {
 
     @InjectMocks
     private DomainPasswordPoliciesUpgrader upgrader = new DomainPasswordPoliciesUpgrader();
@@ -68,7 +68,7 @@ public class DomainPasswordPoliciesUpgraderTest {
     private PasswordPolicyService passwordPolicyService;
 
     @Test
-    public void should_ignore_if_task_completed() {
+    void should_ignore_if_task_completed() {
         final SystemTask task = new SystemTask();
         task.setStatus(SystemTaskStatus.SUCCESS.name());
         when(systemTaskRepository.findById(any())).thenReturn(Maybe.just(task));
@@ -80,7 +80,7 @@ public class DomainPasswordPoliciesUpgraderTest {
     }
 
     @Test
-    public void should_ignore_domain_without_passwordSettings() {
+    void should_ignore_domain_without_passwordSettings() {
         initializeSystemTask();
         var domainNoPasswordSettings = new Domain();
 
@@ -93,7 +93,7 @@ public class DomainPasswordPoliciesUpgraderTest {
     }
 
     @Test
-    public void should_create_password_policy() {
+    void should_create_password_policy() {
         initializeSystemTask();
 
         final var domain = new Domain();
@@ -115,7 +115,7 @@ public class DomainPasswordPoliciesUpgraderTest {
     }
 
     @Test
-    public void should_create_password_policies() {
+    void should_create_password_policies() {
         initializeSystemTask();
 
         final var domainNoSettings = new Domain();

@@ -134,7 +134,7 @@ public class EnrichProfilePolicyTest {
         }.onRequest(request, response, executionContext, policyChain);
 
         lock.await(1, TimeUnit.SECONDS);
-        verify(policyChain).failWith(argThat(result -> result.message().equals(EnrichProfilePolicy.errorMessage)));
+        verify(policyChain).failWith(argThat(result -> result.message().equals(EnrichProfilePolicy.ERROR_MESSAGE)));
         verify(policyChain, never()).doNext(any(), any());
     }
 
@@ -160,7 +160,7 @@ public class EnrichProfilePolicyTest {
         }.onRequest(request, response, executionContext, policyChain);
 
         lock.await(1, TimeUnit.SECONDS);
-        verify(policyChain).failWith(argThat(result -> result.message().equals(EnrichProfilePolicy.errorMessage)));
+        verify(policyChain).failWith(argThat(result -> result.message().equals(EnrichProfilePolicy.ERROR_MESSAGE)));
         verify(policyChain, never()).doNext(any(), any());
     }
 
