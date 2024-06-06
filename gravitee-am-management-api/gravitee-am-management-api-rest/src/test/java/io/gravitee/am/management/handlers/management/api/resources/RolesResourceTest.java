@@ -26,19 +26,18 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.junit.Test;
-
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
+import org.junit.Test;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -71,7 +70,7 @@ public class RolesResourceTest extends JerseySpringTest {
         final Response response = target("domains").path(domainId).path("roles").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
         JsonArray pageArray = new JsonObject(readEntity(response, String.class)).getJsonArray("data");
-        assertTrue(pageArray.size() == 2);
+        assertEquals(2, pageArray.size());
     }
 
     @Test
@@ -100,7 +99,7 @@ public class RolesResourceTest extends JerseySpringTest {
         final Response response = target("domains").path(domainId).path("roles").queryParam("q", "*role-2-name*").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
         JsonArray pageArray = new JsonObject(readEntity(response, String.class)).getJsonArray("data");
-        assertTrue(pageArray.size() == 2);
+        assertEquals(2, pageArray.size());
     }
 
     @Test

@@ -45,7 +45,7 @@ public class JdbcRepositoriesTestInitializer implements RepositoriesTestInitiali
         this.dialect = dialect;
     }
 
-    public void truncateTables() throws Exception {
+    public void truncateTables() {
         Set<String> tables = new HashSet<>();
         tables.add("access_tokens");
         tables.add("authorization_codes");
@@ -142,12 +142,12 @@ public class JdbcRepositoriesTestInitializer implements RepositoriesTestInitiali
     }
 
     @Override
-    public void before(Class testClass) throws Exception {
+    public void before(Class testClass) {
         truncateTables();
     }
 
     @Override
-    public void after(Class testClass) throws Exception {
+    public void after(Class testClass) {
         truncateTables();
     }
 }

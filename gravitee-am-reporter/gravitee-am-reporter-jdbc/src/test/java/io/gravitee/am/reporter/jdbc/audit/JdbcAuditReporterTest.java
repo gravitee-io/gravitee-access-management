@@ -84,7 +84,6 @@ public class JdbcAuditReporterTest {
     @Test
     public void testReporter_aggregationHistogram() {
         int loop = 10;
-        Random random = new Random();
         Instant now = Instant.now();
         for (int i = 0; i < loop; ++i) {
             Audit reportable = buildRandomAudit(ReferenceType.DOMAIN, "testReporter_aggregationHistogram");

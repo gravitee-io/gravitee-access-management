@@ -17,7 +17,6 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.resource.ServiceResource;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.common.utils.UUID;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -38,7 +37,7 @@ public class ServiceResourceRepositoryTest extends AbstractManagementTest {
     private ServiceResourceRepository serviceResourceRepository;
 
     @Test
-    public void testFindByDomain() throws TechnicalException {
+    public void testFindByDomain() {
         // create res
         ServiceResource resource = buildResource();
         resource.setReferenceId("testDomain");
@@ -72,7 +71,7 @@ public class ServiceResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindById() {
         // create resource
         ServiceResource resource = buildResource();
         ServiceResource resourceCreated = serviceResourceRepository.create(resource).blockingGet();
@@ -92,7 +91,7 @@ public class ServiceResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws Exception {
+    public void testNotFoundById() {
         var observer = serviceResourceRepository.findById("test").test();
 
         observer.awaitDone(5, TimeUnit.SECONDS);
@@ -102,7 +101,7 @@ public class ServiceResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testCreate() throws TechnicalException {
+    public void testCreate() {
         ServiceResource resource = buildResource();
 
         TestObserver<ServiceResource> testObserver = serviceResourceRepository.create(resource).test();
@@ -119,7 +118,7 @@ public class ServiceResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testUpdate() throws TechnicalException {
+    public void testUpdate() {
         ServiceResource resource = buildResource();
         ServiceResource resourceCreated = serviceResourceRepository.create(resource).blockingGet();
 
@@ -141,7 +140,7 @@ public class ServiceResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDelete() throws Exception {
+    public void testDelete() {
         ServiceResource resource = buildResource();
         ServiceResource resourceCreated = serviceResourceRepository.create(resource).blockingGet();
 

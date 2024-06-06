@@ -16,21 +16,21 @@
 package io.gravitee.am.reporter.kafka;
 
 import io.gravitee.am.reporter.kafka.audit.KafkaAuditReporter;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.assertEquals;
 
 
-public class KafkaReporterUTests {
+class KafkaReporterUTests {
 
   @Test
-  public void Should_ReturnKafkaReporterConfiguration() {
+  void Should_ReturnKafkaReporterConfiguration() {
     KafkaReporter reporter = new KafkaReporter();
     assertEquals(KafkaReporterConfiguration.class, reporter.configuration());
   }
 
   @Test
-  public void Should_ReturnKafkaAuditReporter() {
+  void Should_ReturnKafkaAuditReporter() {
     KafkaReporter reporter = new KafkaReporter();
     assertEquals(KafkaAuditReporter.class, reporter.provider());
   }

@@ -25,15 +25,17 @@ import io.gravitee.am.service.model.NewMembership;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import org.junit.Test;
-
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
+import org.junit.Test;
+
 import java.util.Arrays;
 import java.util.HashMap;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 
 /**

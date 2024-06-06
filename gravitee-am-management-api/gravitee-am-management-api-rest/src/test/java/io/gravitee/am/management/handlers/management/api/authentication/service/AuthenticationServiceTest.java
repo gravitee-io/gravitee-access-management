@@ -17,9 +17,12 @@ package io.gravitee.am.management.handlers.management.api.authentication.service
 
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.management.handlers.management.api.authentication.service.impl.AuthenticationServiceImpl;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.Organization;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.membership.MemberType;
-import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.OrganizationUserService;
@@ -39,7 +42,11 @@ import org.springframework.security.core.Authentication;
 import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

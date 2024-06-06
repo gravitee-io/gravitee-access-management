@@ -18,7 +18,11 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Entrypoint;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
@@ -30,9 +34,8 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.junit.Test;
-
 import jakarta.ws.rs.core.Response;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;

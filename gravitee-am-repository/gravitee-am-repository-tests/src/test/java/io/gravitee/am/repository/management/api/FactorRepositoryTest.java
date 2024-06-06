@@ -16,7 +16,6 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Factor;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.common.utils.UUID;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -36,7 +35,7 @@ public class FactorRepositoryTest extends AbstractManagementTest {
     private FactorRepository factorRepository;
 
     @Test
-    public void testFindByDomain() throws TechnicalException {
+    public void testFindByDomain() {
         // create factor
         Factor factor = buildFactor();
         factor.setDomain("testDomain");
@@ -65,7 +64,7 @@ public class FactorRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindById() {
         // create factor
         Factor factor = buildFactor();
         Factor factorCreated = factorRepository.create(factor).blockingGet();
@@ -85,7 +84,7 @@ public class FactorRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws TechnicalException {
+    public void testNotFoundById() {
         var observer = factorRepository.findById("test").test();
         observer.awaitDone(5, TimeUnit.SECONDS);
         observer.assertComplete();
@@ -94,7 +93,7 @@ public class FactorRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testCreate() throws TechnicalException {
+    public void testCreate() {
         Factor factor = buildFactor();
 
         TestObserver<Factor> testObserver = factorRepository.create(factor).test();
@@ -111,7 +110,7 @@ public class FactorRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testUpdate() throws TechnicalException {
+    public void testUpdate() {
         // create factor
         Factor factor = buildFactor();
         Factor factorCreated = factorRepository.create(factor).blockingGet();
@@ -135,7 +134,7 @@ public class FactorRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDelete() throws TechnicalException {
+    public void testDelete() {
         // create factor
         Factor factor = buildFactor();
         Factor factorCreated = factorRepository.create(factor).blockingGet();

@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class DefaultPasswordValidatorTest {
+class DefaultPasswordValidatorTest {
     @ParameterizedTest
     @MethodSource("providerValidatePassword")
     void validatePassword(String password, boolean expected) {

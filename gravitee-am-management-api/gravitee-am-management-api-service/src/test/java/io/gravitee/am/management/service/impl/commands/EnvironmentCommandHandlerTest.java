@@ -36,7 +36,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -50,7 +49,7 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @ExtendWith(MockitoExtension.class)
-public class EnvironmentCommandHandlerTest {
+class EnvironmentCommandHandlerTest {
 
     @Mock
     private EnvironmentService environmentService;
@@ -58,17 +57,17 @@ public class EnvironmentCommandHandlerTest {
     public EnvironmentCommandHandler cut;
 
     @BeforeEach
-    public void before() {
+    void before() {
         cut = new EnvironmentCommandHandler(environmentService);
     }
 
     @Test
-    public void supportType() {
+    void supportType() {
         assertEquals(CockpitCommandType.ENVIRONMENT.name(), cut.supportType());
     }
 
     @Test
-    public void handle() {
+    void handle() {
 
         EnvironmentCommandPayload environmentPayload = EnvironmentCommandPayload.builder()
                 .id("env#1")
@@ -83,7 +82,7 @@ public class EnvironmentCommandHandlerTest {
                 argThat(newEnvironment -> newEnvironment.getHrids().equals(environmentPayload.hrids())
                         && newEnvironment.getDescription().equals(environmentPayload.description())
                         && newEnvironment.getName().equals(environmentPayload.name())
-                        && newEnvironment.getDomainRestrictions().equals(environmentPayload.accessPoints().stream().map(AccessPoint::getHost).collect(Collectors.toList()))),
+                        && newEnvironment.getDomainRestrictions().equals(environmentPayload.accessPoints().stream().map(AccessPoint::getHost).toList())),
                 isNull())).thenReturn(Single.just(new Environment()));
 
         TestObserver<EnvironmentReply> obs = cut.handle(command).test();
@@ -93,7 +92,7 @@ public class EnvironmentCommandHandlerTest {
     }
 
     @Test
-    public void handleWithException() {
+    void handleWithException() {
         EnvironmentCommandPayload environmentPayload = EnvironmentCommandPayload.builder()
                 .id("env#1")
                 .organizationId("orga#1")

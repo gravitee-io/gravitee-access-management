@@ -35,12 +35,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author GraviteeSource Team
  */
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
-public class ApplicationClientSecretServiceTest {
+class ApplicationClientSecretServiceTest {
 
     private ApplicationClientSecretService cut = new ApplicationClientSecretService();
 
     @Test
-    public void should_generate_secret_none_algo() {
+    void should_generate_secret_none_algo() {
         var secret = cut.generateClientSecret("toto", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.NONE.name(), Map.of()));
         assertThat(secret)
                 .isNotNull()
@@ -49,7 +49,7 @@ public class ApplicationClientSecretServiceTest {
     }
 
     @Test
-    public void should_generate_secret_bcrypt_algo() {
+    void should_generate_secret_bcrypt_algo() {
         var secret = cut.generateClientSecret("toto", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.BCRYPT.name(), Map.of(BCRYPT_ROUNDS.getKey(), BCRYPT_ROUNDS.getValue())));
         assertThat(secret)
                 .isNotNull()
@@ -58,7 +58,7 @@ public class ApplicationClientSecretServiceTest {
     }
 
     @Test
-    public void should_cache_the_encoder() {
+    void should_cache_the_encoder() {
         final var bcryptEncoder = cut.getOrCreatePasswordEncoder(new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.BCRYPT.name(), Map.of(BCRYPT_ROUNDS.getKey(), BCRYPT_ROUNDS.getValue())));
         assertThat(bcryptEncoder).isInstanceOf(BCryptPasswordEncoder.class);
         // provide settings with SHA512 but with the same ID, to test the cache
@@ -68,7 +68,7 @@ public class ApplicationClientSecretServiceTest {
     }
 
     @Test
-    public void should_provide_noop_encoder_with_null_settings() {
+    void should_provide_noop_encoder_with_null_settings() {
         final var noOpEncoder = cut.getOrCreatePasswordEncoder(null);
         assertThat(noOpEncoder).isInstanceOf(NoOpPasswordEncoder.class);
     }

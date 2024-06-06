@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.management.test.config;
 
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 /**

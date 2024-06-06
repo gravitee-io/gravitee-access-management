@@ -24,7 +24,9 @@ import org.junit.runners.JUnit4;
 
 import java.util.Optional;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)

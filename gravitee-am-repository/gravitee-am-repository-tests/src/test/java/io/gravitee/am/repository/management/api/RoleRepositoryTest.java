@@ -20,7 +20,6 @@ import io.gravitee.am.model.Platform;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
@@ -28,7 +27,13 @@ import org.junit.Test;
 import org.mockito.internal.util.collections.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -45,7 +50,7 @@ public class RoleRepositoryTest extends AbstractManagementTest {
     private RoleRepository roleRepository;
 
     @Test
-    public void testFindByDomain() throws TechnicalException {
+    public void testFindByDomain() {
         // create role
         Role role = new Role();
         role.setName("testName");
@@ -63,7 +68,7 @@ public class RoleRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindByNamesAndAssignable() throws TechnicalException {
+    public void testFindByNamesAndAssignable() {
         // create role
         Role role = new Role();
         final String NAME_1 = "testName";
@@ -107,7 +112,7 @@ public class RoleRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindById() {
         // create role
         Role role = buildRole();
         Role roleCreated = roleRepository.create(role).blockingGet();
@@ -153,7 +158,7 @@ public class RoleRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindById_referenceType() throws TechnicalException {
+    public void testFindById_referenceType() {
         // create role
         Role role = buildRole();
         role.setReferenceType(ReferenceType.DOMAIN);
@@ -170,7 +175,7 @@ public class RoleRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindAll() throws TechnicalException {
+    public void testFindAll() {
         // create role
         Role role1 = new Role();
         role1.setName("testName1");
@@ -211,7 +216,7 @@ public class RoleRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testCreate() throws TechnicalException {
+    public void testCreate() {
         Role role = new Role();
         role.setName("testName");
         TestObserver<Role> testObserver = roleRepository.create(role).test();
@@ -223,7 +228,7 @@ public class RoleRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testUpdate() throws TechnicalException {
+    public void testUpdate() {
         // create role
         Role role = new Role();
         role.setName("testName");
@@ -243,7 +248,7 @@ public class RoleRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDelete() throws TechnicalException {
+    public void testDelete() {
         // create role
         Role role = new Role();
         role.setName("testName");

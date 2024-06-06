@@ -27,8 +27,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
@@ -172,7 +170,7 @@ public class EmailRepositoryTest extends AbstractManagementTest {
                 .assertValue(result -> {
                     assertThat(result)
                             .hasSize(emails.size())
-                            .containsExactlyInAnyOrderElementsOf(emails.stream().map(Email::getId).collect(Collectors.toList()));
+                            .containsExactlyInAnyOrderElementsOf(emails.stream().map(Email::getId).toList());
                     return true;
                 });
     }
@@ -209,7 +207,7 @@ public class EmailRepositoryTest extends AbstractManagementTest {
                 .assertValue(result -> {
                     assertThat(result)
                             .hasSize(emails.size())
-                            .containsExactlyInAnyOrderElementsOf(emails.stream().map(Email::getId).collect(Collectors.toList()));
+                            .containsExactlyInAnyOrderElementsOf(emails.stream().map(Email::getId).toList());
                     return true;
                 });
     }
@@ -247,7 +245,7 @@ public class EmailRepositoryTest extends AbstractManagementTest {
                 .assertValue(result -> {
                     assertThat(result)
                             .hasSize(emails.size())
-                            .containsExactlyInAnyOrderElementsOf(emails.stream().map(Email::getId).collect(Collectors.toList()));
+                            .containsExactlyInAnyOrderElementsOf(emails.stream().map(Email::getId).toList());
                     return true;
                 });
     }

@@ -29,7 +29,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -47,20 +49,18 @@ public class ClientTest {
 
         Client from = new Client();
         from.setClientName("original");
-        from.setRedirectUris(Stream.of("http://host/callback", "http://host/login").collect(Collectors.toList()));
+        from.setRedirectUris(Stream.of("http://host/callback", "http://host/login").toList());
         from.setJwks(new JWKSet());
 
         Client to = from.clone();
         //client name
-        assertTrue("same name", from.getClientName().equals(to.getClientName()));
+        assertEquals("same name", from.getClientName(), to.getClientName());
 
         //redirect uris
         assertTrue("same redirect uris size", to.getRedirectUris() != null && to.getRedirectUris().size() == from.getRedirectUris().size());
         assertTrue("same redirect uris values", to.getRedirectUris().containsAll(from.getRedirectUris()));
-        assertFalse("not same object reference", from.getRedirectUris() == to.getRedirectUris());
-        //customs
-        //assertTrue("same customs information values",to.getIdTokenCustomClaims().);
-        assertFalse("not same object reference", from.getRedirectUris() == to.getRedirectUris());
+        assertNotSame("not same object reference", from.getRedirectUris(), to.getRedirectUris());
+        assertNotSame("not same object reference", from.getRedirectUris(), to.getRedirectUris());
     }
 
     @Test
@@ -100,11 +100,11 @@ public class ClientTest {
         Client safeClient = from.asSafeClient();
 
         //client name
-        assertTrue("same name",from.getClientName().equals(safeClient.getClientName()));
+        assertEquals("same name", from.getClientName(), safeClient.getClientName());
         //redirect uris
         assertTrue("same redirect uris size",safeClient.getRedirectUris()!=null && safeClient.getRedirectUris().size()==from.getRedirectUris().size());
         assertTrue("same redirect uris values",safeClient.getRedirectUris().containsAll(from.getRedirectUris()));
-        assertTrue("client secret should be null", safeClient.getClientSecret() == null);
+        assertNull("client secret should be null", safeClient.getClientSecret());
         assertTrue("list of client secrets should be empty", safeClient.getClientSecrets().isEmpty());
     }
 }

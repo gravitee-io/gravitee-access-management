@@ -16,12 +16,12 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.service.exception.AlertNotifierNotFoundException;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.alert.AlertNotifier;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.management.api.AlertNotifierRepository;
 import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
+import io.gravitee.am.service.exception.AlertNotifierNotFoundException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.impl.AlertNotifierServiceImpl;
 import io.gravitee.am.service.model.NewAlertNotifier;
@@ -47,7 +47,10 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)

@@ -52,7 +52,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.TYPE_EMAIL_NOTIFIER;
@@ -210,7 +209,7 @@ public class DomainNotificationServiceTest {
             user.setId("" + x);
             user.setEmail(x+"@acme.fr");
             return user;
-        }).collect(Collectors.toList());
+        }).toList();
         final User singleUser = new User();
         singleUser.setId("single");
         singleUser.setEmail("single@acme.fr");

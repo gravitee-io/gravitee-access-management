@@ -20,16 +20,14 @@ import io.gravitee.am.service.validators.notifier.NotifierValidator;
 import io.gravitee.am.service.validators.notifier.NotifierValidator.NotifierHolder;
 import io.gravitee.am.service.validators.notifier.NotifierValidatorImpl;
 import io.gravitee.am.service.validators.notifier.email.EmailNotifierFromValidator;
-import io.gravitee.am.service.validators.notifier.email.EmailNotifierFromValidatorImpl;
-import io.gravitee.am.service.validators.resource.ResourceValidator.ResourceHolder;
-import io.gravitee.am.service.validators.resource.smtp.SmtpResourceValidator;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;

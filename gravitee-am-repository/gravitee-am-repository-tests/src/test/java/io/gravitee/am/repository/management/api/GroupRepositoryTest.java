@@ -21,16 +21,26 @@ import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.rxjava3.observers.TestObserver;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -295,7 +305,7 @@ public class GroupRepositoryTest extends AbstractManagementTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(lg -> lg.size() == ids.size());
-        testObserver.assertValue(lg -> lg.stream().map(Group::getId).collect(Collectors.toList()).containsAll(ids));
+        testObserver.assertValue(lg -> lg.stream().map(Group::getId).toList().containsAll(ids));
     }
 
     @Test

@@ -23,7 +23,6 @@ import org.junit.Assume;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.Collections;
 
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;

@@ -56,7 +56,7 @@ public class AlertNotifierRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws Exception {
+    public void testNotFoundById() {
         TestObserver<AlertNotifier> observer = alertNotifierRepository.findById("UNKNOWN").test();
         observer.awaitDone(5, TimeUnit.SECONDS);
         observer.assertNoValues();
@@ -94,7 +94,7 @@ public class AlertNotifierRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDelete() throws Exception {
+    public void testDelete() {
         // create idp
         AlertNotifier alertNotifier = buildAlertNotifier();
         AlertNotifier alertNotifierCreated = alertNotifierRepository.create(alertNotifier).blockingGet();

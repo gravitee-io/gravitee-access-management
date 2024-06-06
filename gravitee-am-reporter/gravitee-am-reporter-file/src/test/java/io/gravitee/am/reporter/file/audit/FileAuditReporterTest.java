@@ -42,7 +42,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -97,18 +98,18 @@ public abstract class FileAuditReporterTest {
     protected abstract void checkAuditLogs(List<Audit> reportables, int loop) throws IOException;
 
     protected void assertReportEqualsTo(Audit audit, AuditEntry test) {
-        assertTrue( test.getType().equals(audit.getType()));
-        assertTrue( test.getTarget() != null);
-        assertTrue( test.getTarget().getAlternativeId().equals(audit.getTarget().getAlternativeId()));
+        assertEquals(test.getType(), audit.getType());
+        assertNotNull(test.getTarget());
+        assertEquals(test.getTarget().getAlternativeId(), audit.getTarget().getAlternativeId());
 
-        assertTrue( test.getActor() != null);
-        assertTrue( test.getActor().getAlternativeId().equals(audit.getActor().getAlternativeId()));
+        assertNotNull(test.getActor());
+        assertEquals(test.getActor().getAlternativeId(), audit.getActor().getAlternativeId());
 
-        assertTrue( test.getStatus() != null);
-        assertTrue( test.getStatus().equals(audit.getOutcome().getStatus()));
+        assertNotNull(test.getStatus());
+        assertEquals(test.getStatus(), audit.getOutcome().getStatus());
 
-        assertTrue( test.getAccessPoint() != null);
-        assertTrue( test.getAccessPoint().getId().equals(audit.getAccessPoint().getId()));
+        assertNotNull(test.getAccessPoint());
+        assertEquals(test.getAccessPoint().getId(), audit.getAccessPoint().getId());
     }
 
     protected Audit buildRandomAudit(ReferenceType refType, String refId) {

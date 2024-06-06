@@ -21,9 +21,9 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import jakarta.ws.rs.core.Response;
 import org.junit.Test;
 
-import jakarta.ws.rs.core.Response;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;

@@ -25,16 +25,15 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
-
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

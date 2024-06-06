@@ -54,7 +54,7 @@ public class GraviteeMessageResolverTest {
     private GraviteeMessageResolver messageResolver;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         Properties properties = new Properties();
         properties.setProperty(MSG_WITHOUT_PARAM, "hello world");
         properties.setProperty(MSG_WITH_PARAM, "hello user: {0}");

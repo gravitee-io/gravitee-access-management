@@ -17,7 +17,6 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.AuthenticationDeviceNotifier;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.common.utils.UUID;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -38,7 +37,7 @@ public class AuthenticationDeviceNotifierRepositoryTest extends AbstractManageme
     private AuthenticationDeviceNotifierRepository repository;
 
     @Test
-    public void testFindByDomain() throws TechnicalException {
+    public void testFindByDomain() {
         AuthenticationDeviceNotifier plugin = buildNotifierPlugin();
         plugin.setReferenceId("testDomain");
         plugin.setReferenceType(ReferenceType.DOMAIN);
@@ -66,7 +65,7 @@ public class AuthenticationDeviceNotifierRepositoryTest extends AbstractManageme
     }
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindById() {
         AuthenticationDeviceNotifier plugin = buildNotifierPlugin();
         AuthenticationDeviceNotifier pluginCreated = repository.create(plugin).blockingGet();
 
@@ -83,7 +82,7 @@ public class AuthenticationDeviceNotifierRepositoryTest extends AbstractManageme
     }
 
     @Test
-    public void testNotFoundById() throws TechnicalException {
+    public void testNotFoundById() {
         var observer = repository.findById("test").test();
         observer.awaitDone(5, TimeUnit.SECONDS);
         observer.assertComplete();
@@ -92,7 +91,7 @@ public class AuthenticationDeviceNotifierRepositoryTest extends AbstractManageme
     }
 
     @Test
-    public void testCreate() throws TechnicalException {
+    public void testCreate() {
         AuthenticationDeviceNotifier plugin = buildNotifierPlugin();
 
         TestObserver<AuthenticationDeviceNotifier> testObserver = repository.create(plugin).test();
@@ -108,7 +107,7 @@ public class AuthenticationDeviceNotifierRepositoryTest extends AbstractManageme
     }
 
     @Test
-    public void testUpdate() throws TechnicalException {
+    public void testUpdate() {
         AuthenticationDeviceNotifier plugin = buildNotifierPlugin();
         AuthenticationDeviceNotifier pluginCreated = repository.create(plugin).blockingGet();
 
@@ -129,7 +128,7 @@ public class AuthenticationDeviceNotifierRepositoryTest extends AbstractManageme
     }
 
     @Test
-    public void testDelete() throws TechnicalException {
+    public void testDelete() {
         AuthenticationDeviceNotifier plugin = buildNotifierPlugin();
         AuthenticationDeviceNotifier pluginCreated = repository.create(plugin).blockingGet();
 

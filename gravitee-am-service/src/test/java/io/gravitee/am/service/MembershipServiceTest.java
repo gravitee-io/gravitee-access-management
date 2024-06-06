@@ -16,14 +16,23 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Group;
+import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.Platform;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.MembershipRepository;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.exception.GroupNotFoundException;
+import io.gravitee.am.service.exception.InvalidRoleException;
+import io.gravitee.am.service.exception.RoleNotFoundException;
+import io.gravitee.am.service.exception.SinglePrimaryOwnerException;
+import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.impl.MembershipServiceImpl;
 import io.gravitee.am.service.model.NewMembership;
 import io.reactivex.rxjava3.core.Flowable;
@@ -40,7 +49,12 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

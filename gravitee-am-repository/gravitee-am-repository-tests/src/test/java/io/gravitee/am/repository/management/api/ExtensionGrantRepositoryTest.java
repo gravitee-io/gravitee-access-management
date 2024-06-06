@@ -16,9 +16,7 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.ExtensionGrant;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
@@ -38,7 +36,7 @@ public class ExtensionGrantRepositoryTest extends AbstractManagementTest {
     private ExtensionGrantRepository extensionGrantRepository;
 
     @Test
-    public void testFindByDomain() throws TechnicalException {
+    public void testFindByDomain(){
         // create extension grant
         ExtensionGrant extensionGrant = buildExtensionGrant();
         extensionGrant.setDomain("testDomain");
@@ -58,7 +56,7 @@ public class ExtensionGrantRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindById(){
         // create extension grant
         ExtensionGrant extensionGrant = buildExtensionGrant();
         ExtensionGrant extensionGrantCreated = extensionGrantRepository.create(extensionGrant).blockingGet();
@@ -97,7 +95,7 @@ public class ExtensionGrantRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws TechnicalException {
+    public void testNotFoundById(){
         var observer = extensionGrantRepository.findById("test").test();
         observer.awaitDone(5, TimeUnit.SECONDS);
         observer.assertComplete();
@@ -106,7 +104,7 @@ public class ExtensionGrantRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testCreate() throws TechnicalException {
+    public void testCreate(){
         ExtensionGrant extensionGrant = buildExtensionGrant();
 
         TestObserver<ExtensionGrant> testObserver = extensionGrantRepository.create(extensionGrant).test();
@@ -118,7 +116,7 @@ public class ExtensionGrantRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testUpdate() throws TechnicalException {
+    public void testUpdate(){
         // create extension grant
         ExtensionGrant extensionGrant = buildExtensionGrant();
         ExtensionGrant extensionGrantCreated = extensionGrantRepository.create(extensionGrant).blockingGet();
@@ -137,7 +135,7 @@ public class ExtensionGrantRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDelete() throws TechnicalException {
+    public void testDelete(){
         // create extension grant
         ExtensionGrant extensionGrant = buildExtensionGrant();
         ExtensionGrant extensionGrantCreated = extensionGrantRepository.create(extensionGrant).blockingGet();

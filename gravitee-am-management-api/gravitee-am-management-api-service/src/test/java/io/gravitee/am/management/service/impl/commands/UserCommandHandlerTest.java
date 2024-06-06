@@ -48,7 +48,7 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @ExtendWith(MockitoExtension.class)
-public class UserCommandHandlerTest {
+class UserCommandHandlerTest {
 
     @Mock
     private OrganizationUserService userService;
@@ -56,17 +56,17 @@ public class UserCommandHandlerTest {
     public UserCommandHandler userCommandHandler;
 
     @BeforeEach
-    public void before() {
+    void before() {
         userCommandHandler = new UserCommandHandler(userService);
     }
 
     @Test
-    public void support() {
+    void support() {
         assertEquals(CockpitCommandType.USER.name(), userCommandHandler.supportType());
     }
 
     @Test
-    public void handle() {
+    void handle() {
 
         HashMap<String, Object> additionalInformation = new HashMap<>();
         additionalInformation.put("info1", "value1");
@@ -102,7 +102,7 @@ public class UserCommandHandlerTest {
     }
 
     @Test
-    public void handleWithException() {
+    void handleWithException() {
 
         UserCommandPayload userPayload = UserCommandPayload.builder()
                 .id("user#1")
@@ -120,7 +120,7 @@ public class UserCommandHandlerTest {
     }
 
     @Test
-    public void shouldReturnErrorWhenUsernameIsNullInPayload() {
+    void shouldReturnErrorWhenUsernameIsNullInPayload() {
         var command = new UserCommand(UserCommandPayload.builder().build());
 
         TestObserver<UserReply> obs = userCommandHandler.handle(command).test();

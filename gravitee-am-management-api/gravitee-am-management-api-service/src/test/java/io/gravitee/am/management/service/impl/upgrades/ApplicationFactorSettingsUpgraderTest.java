@@ -58,10 +58,10 @@ import static org.mockito.Mockito.when;
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
-public class ApplicationFactorSettingsUpgraderTest {
-    private static String FACTOR_ID_RECOVERY_CODE = UUID.randomUUID().toString();
-    private static String FACTOR_ID_OTP = UUID.randomUUID().toString();
-    private static String FACTOR_ID_SMS = UUID.randomUUID().toString();
+ class ApplicationFactorSettingsUpgraderTest {
+    private static final String FACTOR_ID_RECOVERY_CODE = UUID.randomUUID().toString();
+    private static final String FACTOR_ID_OTP = UUID.randomUUID().toString();
+    private static final String FACTOR_ID_SMS = UUID.randomUUID().toString();
 
     @InjectMocks
     private ApplicationFactorSettingsUpgrader upgrader = new ApplicationFactorSettingsUpgrader();
@@ -76,7 +76,7 @@ public class ApplicationFactorSettingsUpgraderTest {
     private FactorService factorService;
 
     @Test
-    public void should_ignore_if_task_completed() {
+    void should_ignore_if_task_completed() {
         final SystemTask task = new SystemTask();
         task.setStatus(SystemTaskStatus.SUCCESS.name());
         when(systemTaskRepository.findById(any())).thenReturn(Maybe.just(task));
@@ -88,7 +88,7 @@ public class ApplicationFactorSettingsUpgraderTest {
     }
 
     @Test
-    public void should_ignore_application_without_factor() {
+    void should_ignore_application_without_factor() {
         initializeSystemTask();
         final var nullFactorsApp = new Application();
         nullFactorsApp.setFactors(null);
@@ -104,7 +104,7 @@ public class ApplicationFactorSettingsUpgraderTest {
     }
 
     @Test
-    public void should_update_factor_application_but_settings_are_empty() {
+    void should_update_factor_application_but_settings_are_empty() {
         initializeSystemTask();
         initializeFactors();
 
@@ -135,7 +135,7 @@ public class ApplicationFactorSettingsUpgraderTest {
     }
 
     @Test
-    public void should_update_factor_application_with_activate_mfa_to_optional() {
+    void should_update_factor_application_with_activate_mfa_to_optional() {
         initializeSystemTask();
         initializeFactors();
 
@@ -175,7 +175,7 @@ public class ApplicationFactorSettingsUpgraderTest {
     }
 
     @Test
-    public void should_update_factor_application_with_activate_mfa_to_required() {
+    void should_update_factor_application_with_activate_mfa_to_required() {
         initializeSystemTask();
         initializeFactors();
 
@@ -213,7 +213,7 @@ public class ApplicationFactorSettingsUpgraderTest {
     }
 
     @Test
-    public void should_update_factor_application_with_activate_mfa_to_conditional() {
+    void should_update_factor_application_with_activate_mfa_to_conditional() {
         initializeSystemTask();
         initializeFactors();
 
@@ -252,7 +252,7 @@ public class ApplicationFactorSettingsUpgraderTest {
     }
 
     @Test
-    public void should_update_factor_application_with_activate_mfa_to_risk_based() {
+    void should_update_factor_application_with_activate_mfa_to_risk_based() {
         initializeSystemTask();
         initializeFactors();
 
@@ -295,7 +295,7 @@ public class ApplicationFactorSettingsUpgraderTest {
     }
 
     @Test
-    public void should_update_factor_application_with_activate_mfa_to_conditional_and_stepUp() {
+    void should_update_factor_application_with_activate_mfa_to_conditional_and_stepUp() {
         initializeSystemTask();
         initializeFactors();
 

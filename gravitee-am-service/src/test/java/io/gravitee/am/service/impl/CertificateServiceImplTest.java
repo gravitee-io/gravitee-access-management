@@ -83,7 +83,7 @@ class CertificateServiceImplTest {
     private CertificateServiceImpl service;
 
     @Test
-    public void shouldDeleteCertificateWhenNoApplicationNorIdpIsAssociated() {
+    void shouldDeleteCertificateWhenNoApplicationNorIdpIsAssociated() {
         // given
         String certId = "certId";
         Certificate cert = new Certificate();
@@ -112,7 +112,7 @@ class CertificateServiceImplTest {
     }
 
     @Test
-    public void onCertificateDeleteShouldThrowExIfAnyApplicationIsAssociated() {
+    void onCertificateDeleteShouldThrowExIfAnyApplicationIsAssociated() {
         // given
         String certId = "certId";
         Certificate cert = new Certificate();
@@ -133,7 +133,7 @@ class CertificateServiceImplTest {
     }
 
     @Test
-    public void onCertificateDeleteShouldThrowExIfAnyIdpIsAssociated() {
+    void onCertificateDeleteShouldThrowExIfAnyIdpIsAssociated() {
         // given
         String certId = "32d89a07-c7a9-48c4-989a-07c7a9b8c4ef";
         Certificate cert = new Certificate();

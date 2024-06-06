@@ -17,7 +17,6 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.BotDetection;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.common.utils.UUID;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -38,7 +37,7 @@ public class BotDetectionRepositoryTest extends AbstractManagementTest {
     private BotDetectionRepository repository;
 
     @Test
-    public void testFindByDomain() throws TechnicalException {
+    public void testFindByDomain() {
         BotDetection botDetection = buildBotDetection();
         botDetection.setReferenceId("testDomain");
         botDetection.setReferenceType(ReferenceType.DOMAIN);
@@ -67,7 +66,7 @@ public class BotDetectionRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindById() {
         BotDetection bdectection = buildBotDetection();
         BotDetection bdetectionCreated = repository.create(bdectection).blockingGet();
 
@@ -84,7 +83,7 @@ public class BotDetectionRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws TechnicalException {
+    public void testNotFoundById() {
         var observer = repository.findById("test").test();
         observer.awaitDone(5, TimeUnit.SECONDS);
         observer.assertComplete();
@@ -93,7 +92,7 @@ public class BotDetectionRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testCreate() throws TechnicalException {
+    public void testCreate() {
         BotDetection bDetection = buildBotDetection();
 
         TestObserver<BotDetection> testObserver = repository.create(bDetection).test();
@@ -109,7 +108,7 @@ public class BotDetectionRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testUpdate() throws TechnicalException {
+    public void testUpdate() {
         BotDetection botDetection = buildBotDetection();
         BotDetection botDetectionCreated = repository.create(botDetection).blockingGet();
 
@@ -130,7 +129,7 @@ public class BotDetectionRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDelete() throws TechnicalException {
+    public void testDelete() {
         BotDetection botDetection = buildBotDetection();
         BotDetection botDetectionCreated = repository.create(botDetection).blockingGet();
 

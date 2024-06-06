@@ -85,7 +85,7 @@ public class I18nDictionaryRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void shouldNotFindById() throws Exception {
+    public void shouldNotFindById() {
         var observer = repository.findById("1234").test();
         observer.awaitDone(5, TimeUnit.SECONDS);
         observer.assertComplete();
@@ -94,7 +94,7 @@ public class I18nDictionaryRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void shouldNotFindByReferenceAndId() throws Exception {
+    public void shouldNotFindByReferenceAndId() {
         var observer = repository.findById(DOMAIN, "1234", "5678").test();
 
         observer.awaitDone(5, TimeUnit.SECONDS);
@@ -104,7 +104,7 @@ public class I18nDictionaryRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void shouldNotFindByName() throws Exception {
+    public void shouldNotFindByName() {
         var observer = repository.findByLocale(DOMAIN, "1234", null).test();
 
         observer.awaitDone(5, TimeUnit.SECONDS);
@@ -157,7 +157,7 @@ public class I18nDictionaryRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void shouldDelete() throws Exception {
+    public void shouldDelete() {
         String referenceId = randomUUID().toString();
         var created = repository.create(buildDictionary(referenceId)).blockingGet();
 

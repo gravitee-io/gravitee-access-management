@@ -17,7 +17,6 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Device;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.common.utils.UUID;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -88,7 +87,7 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindById() {
         Device device = buildDevice();
         Device deviceCreated = repository.create(device).blockingGet();
 
@@ -189,7 +188,7 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testCreate() throws TechnicalException {
+    public void testCreate() {
         Device device = buildDevice();
 
         TestObserver<Device> testObserver = repository.create(device).test();
@@ -208,7 +207,7 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testUpdate() throws TechnicalException {
+    public void testUpdate() {
         Device createdDevice = buildDevice();
         Device deviceCreated = repository.create(createdDevice).blockingGet();
 
@@ -232,7 +231,7 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDelete() throws TechnicalException {
+    public void testDelete() {
         Device device = buildDevice();
         Device deviceCreated = repository.create(device).blockingGet();
 

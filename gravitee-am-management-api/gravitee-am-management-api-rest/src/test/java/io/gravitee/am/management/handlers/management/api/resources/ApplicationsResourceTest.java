@@ -28,17 +28,20 @@ import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.junit.Test;
-
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
-import java.util.*;
+import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -81,7 +84,7 @@ public class ApplicationsResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final Map responseEntity = readEntity(response, Map.class);
-        assertTrue(((List) responseEntity.get("data")).size() == 2);
+        assertEquals(2, ((List) responseEntity.get("data")).size());
     }
 
     @Test

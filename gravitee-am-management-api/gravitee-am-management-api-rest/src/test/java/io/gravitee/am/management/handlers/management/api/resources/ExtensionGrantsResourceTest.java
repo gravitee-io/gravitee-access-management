@@ -26,10 +26,10 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.junit.Test;
-
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
+import org.junit.Test;
+
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -68,7 +68,7 @@ public class ExtensionGrantsResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final List<ExtensionGrant> responseEntity = readEntity(response, List.class);
-        assertTrue(responseEntity.size() == 2);
+        assertEquals(2, responseEntity.size());
     }
 
     @Test

@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.service;
 
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.DeviceIdentifier;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DeviceIdentifierRepository;
@@ -41,7 +41,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

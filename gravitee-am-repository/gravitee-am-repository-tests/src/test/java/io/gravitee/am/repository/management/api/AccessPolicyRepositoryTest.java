@@ -19,7 +19,6 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.uma.policy.AccessPolicy;
 import io.gravitee.am.model.uma.policy.AccessPolicyType;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +41,7 @@ public class AccessPolicyRepositoryTest extends AbstractManagementTest {
     private static final String RESOURCE_ID = "resourceId";
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindById() {
         AccessPolicy accessPolicy = new AccessPolicy();
         accessPolicy.setName("accessPolicyName");
         accessPolicy.setCondition("Condition");
@@ -72,7 +71,7 @@ public class AccessPolicyRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void update() throws TechnicalException {
+    public void update() {
         AccessPolicy accessPolicy = new AccessPolicy();
         accessPolicy.setName("accessPolicyName");
         AccessPolicy apCreated = repository.create(accessPolicy).blockingGet();
@@ -90,7 +89,7 @@ public class AccessPolicyRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void delete() throws TechnicalException {
+    public void delete() {
         AccessPolicy accessPolicy = new AccessPolicy();
         accessPolicy.setName("accessPolicyName");
         AccessPolicy apCreated = repository.create(accessPolicy).blockingGet();
@@ -105,7 +104,7 @@ public class AccessPolicyRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void findByDomain() throws TechnicalException {
+    public void findByDomain() {
         AccessPolicy accessPolicy = new AccessPolicy();
         accessPolicy.setName("accessPolicyName");
         final String DOMAIN_SINGLE = DOMAIN_ID + "single";
@@ -179,7 +178,7 @@ public class AccessPolicyRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindByDomainAndResource() throws TechnicalException {
+    public void testFindByDomainAndResource() {
         AccessPolicy accessPolicy = new AccessPolicy();
         accessPolicy.setName("accessPolicyName");
         accessPolicy.setDomain(DOMAIN_ID);
@@ -208,7 +207,7 @@ public class AccessPolicyRepositoryTest extends AbstractManagementTest {
 
 
     @Test
-    public void testFindByResources() throws TechnicalException {
+    public void testFindByResources() {
         AccessPolicy accessPolicy = new AccessPolicy();
         accessPolicy.setName("accessPolicyName");
         accessPolicy.setDomain(DOMAIN_ID);

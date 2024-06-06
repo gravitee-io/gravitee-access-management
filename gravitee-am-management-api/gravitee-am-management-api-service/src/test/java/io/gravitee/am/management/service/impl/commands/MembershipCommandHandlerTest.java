@@ -55,7 +55,7 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @ExtendWith(MockitoExtension.class)
-public class MembershipCommandHandlerTest {
+class MembershipCommandHandlerTest {
 
     @Mock
     private OrganizationUserService userService;
@@ -69,17 +69,17 @@ public class MembershipCommandHandlerTest {
     public MembershipCommandHandler cut;
 
     @BeforeEach
-    public void before() {
+    void before() {
         cut = new MembershipCommandHandler(userService, roleService, membershipService);
     }
 
     @Test
-    public void supportType() {
+    void supportType() {
         assertEquals(CockpitCommandType.MEMBERSHIP.name(), cut.supportType());
     }
 
     @Test
-    public void handleWithSystemRole() {
+    void handleWithSystemRole() {
 
         MembershipCommandPayload membershipPayload = MembershipCommandPayload
                 .builder()
@@ -116,7 +116,7 @@ public class MembershipCommandHandlerTest {
     }
 
     @Test
-    public void handleWithDefaultRole() {
+    void handleWithDefaultRole() {
 
         MembershipCommandPayload membershipPayload = MembershipCommandPayload
                 .builder()
@@ -153,7 +153,7 @@ public class MembershipCommandHandlerTest {
     }
 
     @Test
-    public void handleWithUnknownRole() {
+    void handleWithUnknownRole() {
 
         MembershipCommandPayload membershipPayload = MembershipCommandPayload
                 .builder()

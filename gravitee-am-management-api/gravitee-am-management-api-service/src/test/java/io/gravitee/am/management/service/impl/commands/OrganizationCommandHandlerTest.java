@@ -50,7 +50,7 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @ExtendWith(MockitoExtension.class)
-public class OrganizationCommandHandlerTest {
+class OrganizationCommandHandlerTest {
 
     @Mock
     private OrganizationService organizationService;
@@ -58,17 +58,17 @@ public class OrganizationCommandHandlerTest {
     public OrganizationCommandHandler cut;
 
     @BeforeEach
-    public void before() {
+    void before() {
         cut = new OrganizationCommandHandler(organizationService);
     }
 
     @Test
-    public void supportType() {
+    void supportType() {
         assertEquals(CockpitCommandType.ORGANIZATION.name(), cut.supportType());
     }
 
     @Test
-    public void handle() {
+    void handle() {
 
         OrganizationCommandPayload organizationPayload = OrganizationCommandPayload.builder()
                 .id("orga#1")
@@ -95,7 +95,7 @@ public class OrganizationCommandHandlerTest {
     }
 
     @Test
-    public void handleWithException() {
+    void handleWithException() {
 
         OrganizationCommandPayload organizationPayload = OrganizationCommandPayload.builder()
                 .id("orga#1")

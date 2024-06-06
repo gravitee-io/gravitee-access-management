@@ -16,7 +16,6 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Certificate;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
@@ -40,7 +39,7 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
     private CertificateRepository certificateRepository;
 
     @Test
-    public void testFindByDomain() throws TechnicalException {
+    public void testFindByDomain() {
         // create certificate
         Certificate certificate = buildCertificate();
         certificate.setDomain("DomainTestFindByDomain");
@@ -80,7 +79,7 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindById() {
         // create certificate
         Certificate certificate = buildCertificate();
         certificate.setName("testFindById");
@@ -105,7 +104,7 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws TechnicalException {
+    public void testNotFoundById() {
         var observer = certificateRepository.findById("test").test();
         observer.awaitDone(5, TimeUnit.SECONDS);
         observer.assertComplete();
@@ -114,7 +113,7 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testCreate() throws TechnicalException {
+    public void testCreate() {
         Certificate certificate = buildCertificate();
 
         TestObserver<Certificate> testObserver = certificateRepository.create(certificate).test();
@@ -126,7 +125,7 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testUpdate() throws TechnicalException {
+    public void testUpdate() {
         // create certificate
         Certificate certificate = buildCertificate();
         Certificate certificateCreated = certificateRepository.create(certificate).blockingGet();
@@ -145,7 +144,7 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testUpdateExpirationDate() throws TechnicalException {
+    public void testUpdateExpirationDate() {
         Certificate certificate = buildCertificate();
         Certificate certificateCreated = certificateRepository.create(certificate).blockingGet();
 
@@ -167,7 +166,7 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDelete() throws TechnicalException {
+    public void testDelete() {
         // create certificate
         Certificate certificate = buildCertificate();
         Certificate certificateCreated = certificateRepository.create(certificate).blockingGet();

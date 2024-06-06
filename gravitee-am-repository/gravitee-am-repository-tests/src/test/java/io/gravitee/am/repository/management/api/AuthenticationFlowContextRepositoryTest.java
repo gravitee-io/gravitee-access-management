@@ -30,7 +30,8 @@ import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -69,8 +70,6 @@ public class AuthenticationFlowContextRepositoryTest extends AbstractManagementT
 
     @Test
     public void shouldCreate() {
-        Instant now = Instant.now();
-
         AuthenticationFlowContext entity = generateAuthContext();
         TestObserver<AuthenticationFlowContext> observer = authenticationFlowContextRepository.create(entity).test();
         observer.awaitDone(10, TimeUnit.SECONDS);

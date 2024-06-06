@@ -102,7 +102,7 @@ public class ApplicationServiceTemplateTest {
         Assert.assertTrue(oAuthSettings.getClientId() != null && !oAuthSettings.getClientId().isEmpty());
         Assert.assertTrue(oAuthSettings.getClientSecret() != null && !oAuthSettings.getClientSecret().isEmpty());
         Assert.assertTrue((oAuthSettings.getGrantTypes().size() == 1 && oAuthSettings.getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS)));
-        Assert.assertTrue(oAuthSettings.getClientType().equals(ClientType.CONFIDENTIAL));
+        Assert.assertEquals(ClientType.CONFIDENTIAL, oAuthSettings.getClientType());
         Assert.assertTrue(oAuthSettings.getResponseTypes().isEmpty());
     }
 }

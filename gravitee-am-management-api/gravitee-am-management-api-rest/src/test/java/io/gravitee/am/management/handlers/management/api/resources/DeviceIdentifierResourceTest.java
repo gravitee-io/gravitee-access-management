@@ -16,14 +16,13 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.model.DeviceIdentifier;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.DeviceIdentifier;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
-import org.junit.Test;
-
 import jakarta.ws.rs.core.Response;
+import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.doReturn;

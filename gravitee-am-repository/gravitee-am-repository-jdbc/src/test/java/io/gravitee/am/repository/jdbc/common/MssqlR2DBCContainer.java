@@ -18,8 +18,6 @@ package io.gravitee.am.repository.jdbc.common;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import org.testcontainers.containers.MSSQLR2DBCDatabaseContainer;
 import org.testcontainers.containers.MSSQLServerContainer;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.PostgreSQLR2DBCDatabaseContainer;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

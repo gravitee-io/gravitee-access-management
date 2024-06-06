@@ -193,14 +193,14 @@ public class UserServiceTest {
     private IdentityProvider identityProvider;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         ((UserServiceImpl) userService).setExpireAfter(24 * 3600);
         lenient().when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.never());
         lenient().when(identityProviderManager.getIdentityProvider(any())).thenReturn(Optional.of(new IdentityProvider()));
     }
 
     @Test
-    public void shouldCreateUser_invalid_identity_provider() {
+    void shouldCreateUser_invalid_identity_provider() {
         String domainId = "domain";
         String clientId = "clientId";
 
@@ -225,7 +225,7 @@ public class UserServiceTest {
 
 
     @Test
-    public void shouldCreateUser_client_is_null() {
+    void shouldCreateUser_client_is_null() {
         String domainId = "domain";
         String clientId = "clientId";
 
@@ -260,7 +260,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldNotCreateUser_invalid_client() {
+    void shouldNotCreateUser_invalid_client() {
         String domainId = "domain";
 
         Domain domain = new Domain();
@@ -308,7 +308,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldNotCreateUser_user_already_exists() {
+    void shouldNotCreateUser_user_already_exists() {
         String domainId = "domain";
         String clientId = "clientId";
 
@@ -331,7 +331,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldPreRegisterUser() throws InterruptedException {
+    void shouldPreRegisterUser() throws InterruptedException {
 
         String domainId = "domain";
 
@@ -383,7 +383,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldPreRegisterUser_dynamicUserRegistration_domainLevel() {
+    void shouldPreRegisterUser_dynamicUserRegistration_domainLevel() {
 
         String domainId = "domain";
 
@@ -432,7 +432,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldPreRegisterUser_dynamicUserRegistration_clientLevel() {
+    void shouldPreRegisterUser_dynamicUserRegistration_clientLevel() {
 
         String domainId = "domain";
 
@@ -484,7 +484,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldResetPassword_externalIdEmpty() {
+    void shouldResetPassword_externalIdEmpty() {
         Domain domain = new Domain();
         domain.setId("domain");
 
@@ -518,7 +518,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldResetPassword_idpUserNotFound() {
+    void shouldResetPassword_idpUserNotFound() {
         Domain domain = new Domain();
         domain.setId("domain");
 
@@ -551,7 +551,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldAssignRoles() {
+    void shouldAssignRoles() {
         List<String> rolesIds = Arrays.asList("role-1", "role-2");
 
         User user = mock(User.class);
@@ -577,7 +577,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldAssignRoles_roleNotFound() {
+    void shouldAssignRoles_roleNotFound() {
         List<String> rolesIds = Arrays.asList("role-1", "role-2");
 
         User user = new User();
@@ -595,7 +595,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldRevokeRole() {
+    void shouldRevokeRole() {
         List<String> rolesIds = Arrays.asList("role-1", "role-2");
 
         User user = new User();
@@ -622,7 +622,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldRevokeRoles_roleNotFound() {
+    void shouldRevokeRoles_roleNotFound() {
         List<String> rolesIds = Arrays.asList("role-1", "role-2");
 
         User user = new User();
@@ -640,7 +640,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldNotCreate_invalid_password() {
+    void shouldNotCreate_invalid_password() {
         Domain domain = new Domain();
         domain.setId("domainId");
         String password = "myPassword";
@@ -662,7 +662,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldNotResetPassword_invalid_password() {
+    void shouldNotResetPassword_invalid_password() {
         Domain domain = new Domain();
         domain.setId("domain");
 
@@ -673,7 +673,7 @@ public class UserServiceTest {
         when(commonUserService.findById(eq(DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
-        
+
         userService.resetPassword(domain, user.getId(), PASSWORD, null)
                 .test()
                 .assertNotComplete()
@@ -682,7 +682,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void resetShouldReturnErrorWhenPasswordAlreadyInHistory() {
+    void resetShouldReturnErrorWhenPasswordAlreadyInHistory() {
         Domain domain = new Domain();
         domain.setId("domain");
 
@@ -703,7 +703,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void must_not_reset_username_username_invalid() {
+    void must_not_reset_username_username_invalid() {
         var observer = userService.updateUsername(DOMAIN, "domain", "any-id", "", null).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
@@ -713,7 +713,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void must_not_reset_username_user_not_found_by_id() {
+    void must_not_reset_username_user_not_found_by_id() {
         Domain domain = new Domain();
         domain.setId("domain");
 
@@ -734,7 +734,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void must_not_reset_username_with_existing_username() {
+    void must_not_reset_username_with_existing_username() {
         Domain domain = new Domain();
         domain.setId("domain");
 
@@ -757,7 +757,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void must_not_reset_username_user_provider_does_not_exist() {
+    void must_not_reset_username_user_provider_does_not_exist() {
         Domain domain = new Domain();
         domain.setId("domain");
 
@@ -781,7 +781,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void must_not_reset_username_does_not_exist() {
+    void must_not_reset_username_does_not_exist() {
         Domain domain = new Domain();
         domain.setId("domain");
 
@@ -807,7 +807,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void must_not_reset_username_error_when_updating() {
+    void must_not_reset_username_error_when_updating() {
         Domain domain = new Domain();
         domain.setId("domain");
 
@@ -838,7 +838,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void must_rollback_username_if_userService_fails() {
+    void must_rollback_username_if_userService_fails() {
         Domain domain = new Domain();
         domain.setId("domain");
 
@@ -885,7 +885,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void must_reset_username() {
+    void must_reset_username() {
         Domain domain = new Domain();
         domain.setId("domain");
 
@@ -930,7 +930,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void must_update_user_webauth_credential() {
+    void must_update_user_webauth_credential() {
         Domain domain = new Domain();
         domain.setId("domain");
 
@@ -979,7 +979,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void must_update_user_moving_factor() {
+    void must_update_user_moving_factor() {
         var domain = new Domain();
         domain.setId("domain");
 
@@ -1041,7 +1041,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void must_update_user_with_user_provider() {
+    void must_update_user_with_user_provider() {
         var domain = new Domain();
         domain.setId("domain");
 
@@ -1086,7 +1086,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void must_update_user_with_user_provider_even_if_user_absent() {
+    void must_update_user_with_user_provider_even_if_user_absent() {
         var domain = new Domain();
         domain.setId("domain");
 
@@ -1119,7 +1119,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void must_update_user_without_provider() {
+    void must_update_user_without_provider() {
         var domain = new Domain();
         domain.setId("domain");
 
@@ -1149,7 +1149,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void must_not_update_user_with_user_with_unexpected_error() {
+    void must_not_update_user_with_user_with_unexpected_error() {
         var domain = new Domain();
         domain.setId("domain");
 
@@ -1182,7 +1182,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void must_reset_username_and_unlock_user() {
+    void must_reset_username_and_unlock_user() {
         Domain domain = new Domain();
         domain.setId("domain");
 
@@ -1227,7 +1227,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void must_not_send_registration_confirmation_domain_not_found() {
+    void must_not_send_registration_confirmation_domain_not_found() {
         var domain = new Domain();
         domain.setId("domain");
 
@@ -1247,7 +1247,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void must_not_send_registration_confirmation_pre_registration_disabled() {
+    void must_not_send_registration_confirmation_pre_registration_disabled() {
         var domain = new Domain();
         domain.setId("domain");
 
@@ -1269,7 +1269,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldUnlinkIdentity_nominalCase() {
+    void shouldUnlinkIdentity_nominalCase() {
         String extraUserId = "user-id-2";
         UserIdentity userIdentity = new UserIdentity();
         userIdentity.setUserId(extraUserId);
@@ -1293,7 +1293,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldUnlinkIdentity_noLinkedAccount() {
+    void shouldUnlinkIdentity_noLinkedAccount() {
         String extraUserId = "user-id-2";
         UserIdentity userIdentity = new UserIdentity();
         userIdentity.setUserId(extraUserId);
@@ -1312,7 +1312,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void must_not_send_registration_confirmation_user_already_registered() {
+    void must_not_send_registration_confirmation_user_already_registered() {
         var domain = new Domain();
         domain.setId("domain");
 
@@ -1335,7 +1335,7 @@ public class UserServiceTest {
 
     @ParameterizedTest
     @MethodSource
-    public void must_send_the_good_template_based_on_configuration(Domain domain, Application application, Template template) {
+    void must_send_the_good_template_based_on_configuration(Domain domain, Application application, Template template) {
 
         var user = new User();
         user.setId("user-id");

@@ -22,11 +22,9 @@ import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Single;
+import jakarta.ws.rs.core.Response;
 import org.junit.Test;
 
-import jakarta.ws.rs.core.Response;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;

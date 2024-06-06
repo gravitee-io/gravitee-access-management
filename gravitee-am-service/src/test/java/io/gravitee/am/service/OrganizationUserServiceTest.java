@@ -24,7 +24,6 @@ import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.AccountAccessTokenRepository;
 import io.gravitee.am.repository.management.api.OrganizationUserRepository;
-import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.InvalidUserException;

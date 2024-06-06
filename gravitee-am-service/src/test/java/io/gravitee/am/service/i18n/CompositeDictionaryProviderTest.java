@@ -17,14 +17,9 @@ package io.gravitee.am.service.i18n;
 
 import io.gravitee.am.model.I18nDictionary;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;

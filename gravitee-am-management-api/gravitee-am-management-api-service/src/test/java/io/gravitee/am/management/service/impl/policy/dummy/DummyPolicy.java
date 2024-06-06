@@ -18,6 +18,7 @@ package io.gravitee.am.management.service.impl.policy.dummy;
 import io.gravitee.plugin.core.api.PluginManifest;
 import io.gravitee.plugin.policy.PolicyPlugin;
 import io.gravitee.policy.api.PolicyContext;
+
 import java.net.URL;
 import java.nio.file.Path;
 

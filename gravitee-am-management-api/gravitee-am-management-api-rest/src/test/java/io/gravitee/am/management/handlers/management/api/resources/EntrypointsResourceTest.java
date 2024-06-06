@@ -23,11 +23,11 @@ import io.gravitee.am.service.model.NewEntrypoint;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import org.junit.Test;
-
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
+import org.junit.Test;
+
 import java.util.Collections;
 import java.util.List;
 

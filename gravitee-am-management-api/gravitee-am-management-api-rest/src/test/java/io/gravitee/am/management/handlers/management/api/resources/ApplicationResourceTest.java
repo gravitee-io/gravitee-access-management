@@ -18,7 +18,11 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
@@ -33,12 +37,21 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import java.util.*;
 import jakarta.ws.rs.core.Response;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Optional;
+import java.util.SortedSet;
+import java.util.TreeSet;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 
 /**

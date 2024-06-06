@@ -45,7 +45,7 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
     private IdentityProviderRepository identityProviderRepository;
 
     @Test
-    public void testFindByDomain() throws TechnicalException {
+    public void testFindByDomain() {
         // create idp
         IdentityProvider identityProvider = buildIdentityProvider();
         identityProvider.setReferenceId("testDomain");
@@ -97,7 +97,7 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindById() {
         // create idp
         IdentityProvider identityProvider = buildIdentityProvider();
         IdentityProvider identityProviderCreated = identityProviderRepository.create(identityProvider).blockingGet();
@@ -126,7 +126,7 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindById_refrenceType() throws TechnicalException {
+    public void testFindById_refrenceType() {
         // create idp
         IdentityProvider identityProvider = buildIdentityProvider();
         identityProvider.setReferenceType(ReferenceType.ORGANIZATION);
@@ -154,7 +154,7 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testCreate() throws TechnicalException {
+    public void testCreate() {
         IdentityProvider identityProvider = buildIdentityProvider();
         identityProvider.setMappers(Collections.singletonMap("username", "johndoe"));
         identityProvider.setRoleMapper(Collections.singletonMap("username=johndoe", new String[]{"dev", "admin"}));
@@ -169,7 +169,7 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testUpdate() throws TechnicalException {
+    public void testUpdate() {
         // create idp
         IdentityProvider identityProvider = buildIdentityProvider();
         IdentityProvider identityProviderCreated = identityProviderRepository.create(identityProvider).blockingGet();
@@ -188,7 +188,7 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDelete() throws TechnicalException {
+    public void testDelete() {
         // create idp
         IdentityProvider identityProvider = buildIdentityProvider();
         IdentityProvider identityProviderCreated = identityProviderRepository.create(identityProvider).blockingGet();

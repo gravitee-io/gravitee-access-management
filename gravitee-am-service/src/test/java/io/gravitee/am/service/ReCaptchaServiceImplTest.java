@@ -17,11 +17,9 @@ package io.gravitee.am.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.service.impl.ReCaptchaServiceImpl;
-import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.node.api.configuration.Configuration;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
-import io.reactivex.rxjava3.schedulers.TestScheduler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.impl.ClientPhase;
@@ -41,8 +39,14 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)

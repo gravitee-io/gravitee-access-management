@@ -19,7 +19,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.security.SecureRandom;
 
@@ -27,7 +26,7 @@ import java.security.SecureRandom;
  * @@author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class SHAMD5PasswordEncoderTest extends AbstractPasswordEncoderTest {
+class SHAMD5PasswordEncoderTest extends AbstractPasswordEncoderTest {
 
     private MessageDigestPasswordEncoder messageDigestPasswordEncoder = new SHAMD5PasswordEncoder("SHA-256");
 
@@ -38,7 +37,7 @@ public class SHAMD5PasswordEncoderTest extends AbstractPasswordEncoderTest {
 
     @ParameterizedTest
     @ValueSource(ints = {1, 100, 1000})
-    public void testPassword_match_not_equals_dedicated_salt(int rounds) {
+    void testPassword_match_not_equals_dedicated_salt(int rounds) {
         messageDigestPasswordEncoder.setIterationsRounds(rounds);
         byte[] salt = new byte[32];
         SecureRandom secureRandom = new SecureRandom();
@@ -49,7 +48,7 @@ public class SHAMD5PasswordEncoderTest extends AbstractPasswordEncoderTest {
 
     @ParameterizedTest
     @ValueSource(ints = {1, 100, 1000})
-    public void testPassword_match_equals_dedicated_salt(int rounds) {
+    void testPassword_match_equals_dedicated_salt(int rounds) {
         messageDigestPasswordEncoder.setIterationsRounds(rounds);
         byte[] salt = new byte[32];
         SecureRandom secureRandom = new SecureRandom();
@@ -59,7 +58,7 @@ public class SHAMD5PasswordEncoderTest extends AbstractPasswordEncoderTest {
     }
 
     @Test
-    public void testPassword_match_equals_b64_encoded() {
+    void testPassword_match_equals_b64_encoded() {
         String b64EncodedSalt = "Da11RaXXUaGQ39oI/f8WyXxYJ3AWDg9UECmURKKQ1vE=";
         String b64EncodedPassword = "M/sMmBh2AH+S5jkaMvhab/akUQFGHwxG+Qi7AiC9kIU=";
         String rawPassword = "Test123!";
@@ -67,12 +66,12 @@ public class SHAMD5PasswordEncoderTest extends AbstractPasswordEncoderTest {
     }
 
     @Test
-    public void byDefaultIterationRoundsIsSetTo1() {
+    void byDefaultIterationRoundsIsSetTo1() {
         Assert.assertEquals(1, messageDigestPasswordEncoder.iterationsRounds);
     }
 
     @Test
-    public void negativeIterationRoundsNumberShouldNotChangeTheSettings() {
+    void negativeIterationRoundsNumberShouldNotChangeTheSettings() {
         Assert.assertEquals(1, messageDigestPasswordEncoder.iterationsRounds);
         messageDigestPasswordEncoder.setIterationsRounds(-5);
         Assert.assertEquals(1, messageDigestPasswordEncoder.iterationsRounds);

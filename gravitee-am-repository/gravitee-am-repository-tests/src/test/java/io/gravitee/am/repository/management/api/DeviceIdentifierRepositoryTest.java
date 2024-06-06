@@ -17,7 +17,6 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.DeviceIdentifier;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.common.utils.UUID;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -38,7 +37,7 @@ public class DeviceIdentifierRepositoryTest extends AbstractManagementTest {
     private DeviceIdentifierRepository repository;
 
     @Test
-    public void testFindByDomain() throws TechnicalException {
+    public void testFindByDomain() {
         DeviceIdentifier botDetection = buildDeviceIdentifier();
         botDetection.setReferenceId("testDomain");
         botDetection.setReferenceType(ReferenceType.DOMAIN);
@@ -66,7 +65,7 @@ public class DeviceIdentifierRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindById() {
         DeviceIdentifier deviceIdentifier = buildDeviceIdentifier();
         DeviceIdentifier deviceIdentifierCreated = repository.create(deviceIdentifier).blockingGet();
 
@@ -83,7 +82,7 @@ public class DeviceIdentifierRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws TechnicalException {
+    public void testNotFoundById() {
         var observer = repository.findById("test").test();
         observer.awaitDone(5, TimeUnit.SECONDS);
         observer.assertComplete();
@@ -92,7 +91,7 @@ public class DeviceIdentifierRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testCreate() throws TechnicalException {
+    public void testCreate() {
         DeviceIdentifier bDetection = buildDeviceIdentifier();
 
         TestObserver<DeviceIdentifier> testObserver = repository.create(bDetection).test();
@@ -108,7 +107,7 @@ public class DeviceIdentifierRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testUpdate() throws TechnicalException {
+    public void testUpdate() {
         DeviceIdentifier botDetection = buildDeviceIdentifier();
         DeviceIdentifier botDetectionCreated = repository.create(botDetection).blockingGet();
 
@@ -129,7 +128,7 @@ public class DeviceIdentifierRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDelete() throws TechnicalException {
+    public void testDelete() {
         DeviceIdentifier botDetection = buildDeviceIdentifier();
         DeviceIdentifier deviceIdentifierCreated = repository.create(botDetection).blockingGet();
 

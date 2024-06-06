@@ -21,20 +21,16 @@ import io.gravitee.am.model.Installation;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.InstallationService;
-import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.cockpit.api.command.v1.CockpitCommandType;
 import io.gravitee.cockpit.api.command.v1.hello.HelloCommand;
 import io.gravitee.cockpit.api.command.v1.hello.HelloCommandPayload;
 import io.gravitee.node.api.Node;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
-import org.junit.Before;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.concurrent.TimeUnit;
@@ -48,7 +44,7 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @ExtendWith(MockitoExtension.class)
-public class HelloCommandAdapterTest {
+class HelloCommandAdapterTest {
 
     private static final String HOSTNAME = "test.gravitee.io";
     private static final String CUSTOM_VALUE = "customValue";

@@ -34,12 +34,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CertificateTimeComparatorTest {
+class CertificateTimeComparatorTest {
 
     @ParameterizedTest
     @MethodSource
     @DisplayName("Sort Certificates based on expiration date order by desc")
-    public void shouldSortCertificate_ByExpiration_orderBy_DESC(List<Certificate> certificates, Certificate expectedCertificate) {
+    void shouldSortCertificate_ByExpiration_orderBy_DESC(List<Certificate> certificates, Certificate expectedCertificate) {
         final Optional<Certificate> first = certificates.stream().sorted(new CertificateTimeComparator()).findFirst();
         assertTrue(first.isPresent());
         assertEquals(expectedCertificate.getId(), first.get().getId());

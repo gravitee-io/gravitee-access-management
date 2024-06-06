@@ -15,9 +15,7 @@
  */
 package io.gravitee.am.service.utils;
 
-import io.gravitee.am.common.oidc.ClaimType;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.model.User;
 import org.junit.Test;
 

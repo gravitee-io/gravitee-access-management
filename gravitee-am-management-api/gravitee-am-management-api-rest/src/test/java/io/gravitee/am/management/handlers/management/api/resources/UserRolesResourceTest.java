@@ -24,10 +24,10 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import jakarta.ws.rs.core.Response;
 import org.junit.Before;
 import org.junit.Test;
 
-import jakarta.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;

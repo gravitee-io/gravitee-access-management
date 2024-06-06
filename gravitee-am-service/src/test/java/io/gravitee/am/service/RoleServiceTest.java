@@ -23,7 +23,12 @@ import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.RoleRepository;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.exception.DefaultRoleUpdateException;
+import io.gravitee.am.service.exception.RoleAlreadyExistsException;
+import io.gravitee.am.service.exception.RoleNotFoundException;
+import io.gravitee.am.service.exception.SystemRoleDeleteException;
+import io.gravitee.am.service.exception.SystemRoleUpdateException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.RoleServiceImpl;
 import io.gravitee.am.service.model.NewRole;
 import io.gravitee.am.service.model.UpdateRole;
@@ -44,9 +49,15 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyList;
 import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

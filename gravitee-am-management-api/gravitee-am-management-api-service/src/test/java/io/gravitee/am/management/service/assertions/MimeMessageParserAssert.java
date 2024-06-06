@@ -23,7 +23,6 @@ import org.assertj.core.internal.Iterables;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author Aurelien PACAUD (aurelien.pacaud at graviteesource.com)
@@ -62,7 +61,7 @@ public class MimeMessageParserAssert extends AbstractAssert<MimeMessageParserAss
             return this;
         }
 
-        Iterables.instance().assertContains(info, actual.getTo().stream().map(Address::toString).collect(Collectors.toList()), to.toArray());
+        Iterables.instance().assertContains(info, actual.getTo().stream().map(Address::toString).toList(), to.toArray());
 
         return this;
     }

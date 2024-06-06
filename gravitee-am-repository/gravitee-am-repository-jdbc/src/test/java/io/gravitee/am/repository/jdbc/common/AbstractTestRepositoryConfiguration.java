@@ -38,7 +38,10 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Optional;
 
-import static io.r2dbc.spi.ConnectionFactoryOptions.*;
+import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
+import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
+import static io.r2dbc.spi.ConnectionFactoryOptions.PROTOCOL;
+import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -49,7 +52,7 @@ public abstract class AbstractTestRepositoryConfiguration extends AbstractReposi
 
     @Autowired
     protected DatabaseUrlProvider provider;
-    
+
     @Autowired
     protected R2dbcDatabaseContainer container;
 
@@ -119,8 +122,8 @@ public abstract class AbstractTestRepositoryConfiguration extends AbstractReposi
     @Override
     @Bean
     public ConnectionFactory connectionFactory() {
-        R2dbcDatabaseContainer container = provider.getDatabaseContainer();
-        ConnectionFactoryOptions options = container.getOptions();
+        R2dbcDatabaseContainer dbContainer = provider.getDatabaseContainer();
+        ConnectionFactoryOptions options = dbContainer.getOptions();
         options = ConnectionFactoryOptions.builder()
                 .from(options)
                 .option(DRIVER, "pool")

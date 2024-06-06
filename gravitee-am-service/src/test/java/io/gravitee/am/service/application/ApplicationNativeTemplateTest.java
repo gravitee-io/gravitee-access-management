@@ -25,11 +25,19 @@ import io.gravitee.am.service.impl.application.ApplicationNativeTemplate;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static io.gravitee.am.common.oauth2.ResponseType.CODE;
 import static io.gravitee.am.common.oauth2.ResponseType.TOKEN;
-import static io.gravitee.am.common.oidc.ResponseType.*;
+import static io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN;
+import static io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN;
+import static io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN;
+import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN;
+import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -56,7 +64,7 @@ public class ApplicationNativeTemplateTest {
         Assert.assertTrue(oAuthSettings.getClientSecret() != null && !oAuthSettings.getClientSecret().isEmpty());
         Assert.assertTrue(oAuthSettings.getGrantTypes().containsAll(Arrays.asList(GrantType.AUTHORIZATION_CODE)));
         Assert.assertTrue(oAuthSettings.isForcePKCE());
-        Assert.assertTrue(oAuthSettings.getTokenEndpointAuthMethod().equals(ClientAuthenticationMethod.NONE));
+        Assert.assertEquals(ClientAuthenticationMethod.NONE, oAuthSettings.getTokenEndpointAuthMethod());
         Assert.assertTrue(oAuthSettings.getResponseTypes().containsAll(new ArrayList<>(defaultAuthorizationCodeResponseTypes())));
     }
 
@@ -111,7 +119,7 @@ public class ApplicationNativeTemplateTest {
         Assert.assertTrue(!oAuthSettings.getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS));
         Assert.assertTrue(oAuthSettings.getGrantTypes().containsAll(Arrays.asList(GrantType.AUTHORIZATION_CODE)));
         Assert.assertTrue(oAuthSettings.isForcePKCE());
-        Assert.assertTrue(oAuthSettings.getTokenEndpointAuthMethod().equals(ClientAuthenticationMethod.NONE));
+        Assert.assertEquals(ClientAuthenticationMethod.NONE, oAuthSettings.getTokenEndpointAuthMethod());
         Assert.assertTrue(oAuthSettings.getResponseTypes().containsAll(new ArrayList<>(defaultAuthorizationCodeResponseTypes())));
     }
 

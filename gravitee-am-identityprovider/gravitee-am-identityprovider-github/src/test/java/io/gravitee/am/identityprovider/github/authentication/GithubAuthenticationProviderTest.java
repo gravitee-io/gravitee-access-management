@@ -258,7 +258,7 @@ public class GithubAuthenticationProviderTest {
         testObserver.assertError(BadCredentialsException.class);
 
         assertNotNull(authentication.getContext().get("access_token"));
-        assertEquals(authentication.getContext().get("access_token"), "test_token");
+        assertEquals("test_token", authentication.getContext().get("access_token"));
     }
 
     @Test

@@ -23,7 +23,6 @@ import io.gravitee.exchange.api.command.goodbye.GoodByeCommandPayload;
 import io.gravitee.exchange.api.command.goodbye.GoodByeReply;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
-import junit.framework.TestCase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,7 +46,7 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @ExtendWith(MockitoExtension.class)
-public class GoodByeCommandHandlerTest {
+class GoodByeCommandHandlerTest {
 
     @Mock
     private InstallationService installationService;
@@ -55,17 +54,17 @@ public class GoodByeCommandHandlerTest {
     public GoodbyeCommandHandler cut;
 
     @BeforeEach
-    public void before() {
+    void before() {
         cut = new GoodbyeCommandHandler(installationService);
     }
 
     @Test
-    public void supportType() {
+    void supportType() {
         assertEquals(GoodByeCommand.COMMAND_TYPE, cut.supportType());
     }
 
     @Test
-    public void handle() {
+    void handle() {
         GoodByeCommand command = new GoodByeCommand(new GoodByeCommandPayload());
         final Installation installation = new Installation();
         when(installationService.addAdditionalInformation(any(Map.class))).thenReturn(Single.just(installation));
@@ -82,7 +81,7 @@ public class GoodByeCommandHandlerTest {
     }
 
     @Test
-    public void handleWithException() {
+    void handleWithException() {
         GoodByeCommand command = new GoodByeCommand(new GoodByeCommandPayload());
 
         when(installationService.addAdditionalInformation(any(Map.class))).thenReturn(Single.error(new RuntimeException("Unexpected error")));

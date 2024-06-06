@@ -61,7 +61,7 @@ public class AlertTriggerRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws Exception {
+    public void testNotFoundById() {
         var observer = alertTriggerRepository.findById("UNKNOWN").test();
 
         observer.awaitDone(5, TimeUnit.SECONDS);

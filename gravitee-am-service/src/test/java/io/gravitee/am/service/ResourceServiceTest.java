@@ -23,7 +23,12 @@ import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.model.uma.policy.AccessPolicy;
 import io.gravitee.am.repository.management.api.AccessPolicyRepository;
 import io.gravitee.am.repository.management.api.ResourceRepository;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.exception.AccessPolicyNotFoundException;
+import io.gravitee.am.service.exception.MalformedIconUriException;
+import io.gravitee.am.service.exception.MissingScopeException;
+import io.gravitee.am.service.exception.ResourceNotFoundException;
+import io.gravitee.am.service.exception.ScopeNotFoundException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.ResourceServiceImpl;
 import io.gravitee.am.service.model.NewResource;
 import io.reactivex.rxjava3.core.Completable;
@@ -42,11 +47,22 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyList;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)

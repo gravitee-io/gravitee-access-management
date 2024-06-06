@@ -25,7 +25,6 @@ import io.gravitee.cockpit.api.command.v1.installation.InstallationReply;
 import io.gravitee.exchange.api.command.CommandStatus;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
-import junit.framework.TestCase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,7 +45,7 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @ExtendWith(MockitoExtension.class)
-public class InstallationCommandHandlerTest {
+class InstallationCommandHandlerTest {
 
     private static final String CUSTOM_VALUE = "customValue";
     private static final String CUSTOM_KEY = "customKey";
@@ -58,17 +57,17 @@ public class InstallationCommandHandlerTest {
     public InstallationCommandHandler cut;
 
     @BeforeEach
-    public void before() {
+    void before() {
         cut = new InstallationCommandHandler(installationService);
     }
 
     @Test
-    public void supportType() {
+    void supportType() {
         assertEquals(CockpitCommandType.INSTALLATION.name(), cut.supportType());
     }
 
     @Test
-    public void handle() {
+    void handle() {
         final Installation installation = new Installation();
         installation.setId(INSTALLATION_ID);
         installation.getAdditionalInformation().put(CUSTOM_KEY, CUSTOM_VALUE);
@@ -94,7 +93,7 @@ public class InstallationCommandHandlerTest {
     }
 
     @Test
-    public void handleWithException() {
+    void handleWithException() {
 
         final Installation installation = new Installation();
         installation.setId(INSTALLATION_ID);

@@ -17,7 +17,6 @@ package io.gravitee.am.service.validators;
 
 import io.gravitee.am.service.spring.email.EmailConfiguration;
 import io.gravitee.am.service.validators.email.EmailDomainValidatorImpl;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -26,23 +25,26 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.ConfigurableEnvironment;
 
+import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
 @ExtendWith(MockitoExtension.class)
-public class EmailDomainValidatorTest {
+class EmailDomainValidatorTest {
 
     @Mock
     private ConfigurableEnvironment environment;
 
     @ParameterizedTest
     @MethodSource("params_that_must_validate_email")
-    public void must_validate_email(String email, boolean expectedResult) {
+    void must_validate_email(String email, boolean expectedResult) {
         when(environment.getProperty(eq("email.allowedfrom[0]"), eq(String.class))).thenReturn("*@example.com");
         when(environment.getProperty(eq("email.allowedfrom[1]"), eq(String.class))).thenReturn("another@mail.com");
         var validator = new EmailDomainValidatorImpl(getEmailConfiguration());
@@ -62,7 +64,7 @@ public class EmailDomainValidatorTest {
 
     @ParameterizedTest
     @MethodSource("params_that_must_validate_email_with_default_allow_list")
-    public void must_validate_email_with_default_allow_list(String email, boolean expectedResult) {
+    void must_validate_email_with_default_allow_list(String email, boolean expectedResult) {
         lenient().when(environment.getProperty(eq("email.allowlist[0]"), eq(String.class))).thenReturn(null);
         var validator = new EmailDomainValidatorImpl(getEmailConfiguration());
 
