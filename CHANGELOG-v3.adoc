@@ -1,21 +1,18 @@
 # Change Log
 
-==  - 3.21.26 (2024-05-24)
+==  - 3.21.27 (2024-06-06)
 
 == What's new !
 
 
-
 === Gateway
 
+* [AM] [3.21.18] User don't receive the email to recover his password with an uppercase email https://github.com/gravitee-io/issues/issues/9624[#9624]
 
 
-=== Management API
+==  - 3.21.26 (2024-05-24)
 
-
-
-=== Console
-
+== What's new !
 
 
 === Other
