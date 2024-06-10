@@ -26,7 +26,6 @@ import io.gravitee.am.service.PasswordPolicyService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -45,8 +44,7 @@ public class DomainPasswordPoliciesUpgrader extends SystemTaskUpgrader {
     private static final String TASK_ID = "domain_password_settings_migration";
     private static final String UPGRADE_NOT_SUCCESSFUL_ERROR_MESSAGE =
             "Domain Password Policy can't be upgraded, other instance may process them or an upgrader has failed previously";
-    @SuppressWarnings("squid:S2068") // not a hardcoded password
-    public static final String PASSWORD_POLICY_NAME_DEFAULT = "default";
+    public static final String DEFAULT_POLICY_NAME = "default";
 
     private final DomainService domainService;
 
@@ -80,7 +78,7 @@ public class DomainPasswordPoliciesUpgrader extends SystemTaskUpgrader {
                 .filter(domain -> domain.getPasswordSettings() != null)
                 .flatMapSingle(domain -> {
                         final var policy = domain.getPasswordSettings().toPasswordPolicy();
-                        policy.setName(PASSWORD_POLICY_NAME_DEFAULT);
+                        policy.setName(DEFAULT_POLICY_NAME);
                         policy.setDefaultPolicy(true);
                         policy.setReferenceId(domain.getId());
                         policy.setReferenceType(ReferenceType.DOMAIN);

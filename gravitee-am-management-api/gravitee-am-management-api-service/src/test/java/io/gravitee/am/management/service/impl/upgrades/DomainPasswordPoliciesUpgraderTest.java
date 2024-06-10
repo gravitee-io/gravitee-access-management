@@ -156,7 +156,7 @@ class DomainPasswordPoliciesUpgraderTest {
     private static ArgumentMatcher<PasswordPolicy> checkPolicy(Domain domain2, PasswordSettings passwordSettings2) {
         return policy -> policy.getReferenceType().equals(ReferenceType.DOMAIN) &&
                 policy.getReferenceId().equals(domain2.getId()) &&
-                policy.getName().equals(DomainPasswordPoliciesUpgrader.PASSWORD_POLICY_NAME_DEFAULT) &&
+                policy.getName().equals(DomainPasswordPoliciesUpgrader.DEFAULT_POLICY_NAME) &&
                 policy.getMaxLength().equals(passwordSettings2.getMaxLength()) &&
                 policy.getMinLength().equals(passwordSettings2.getMinLength()) &&
                 policy.getExcludePasswordsInDictionary() &&
