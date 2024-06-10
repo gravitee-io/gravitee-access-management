@@ -808,7 +808,7 @@ jobs:
           event: fail
           mentions: "@am_team"
           template: basic_fail_1
-  run_testcontainer_tests:
+  run_testcontainer_tests_mongo:
     executor:
       name: ubuntu
       class: "xlarge"
@@ -817,13 +817,33 @@ jobs:
           at: /tmp
       - checkout
       - restore-maven-job-cache:
-          jobName: run_testcontainer_tests
+          jobName: run_testcontainer_tests_mongo
       - run:
           name: Build
           command: |
             mvn install -pl \!gravitee-am-ui -P gio-artifactory-snapshot -Pcicd -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.gravitee.settings.xml
       - save-maven-job-cache:
-          jobName: run_testcontainer_tests
+          jobName: run_testcontainer_tests_mongo
+  run_testcontainer_tests_jdbc:
+    executor:
+      name: ubuntu
+      class: "xlarge"
+    parameters:
+      jdbcType:
+        type: enum
+        enum: [ "postgres", "mysql", "mariadb", "mssql" ]
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - checkout
+      - restore-maven-job-cache:
+          jobName: run_testcontainer_tests_jdbc
+      - run:
+          name: Build
+          command: |
+            mvn install -pl \!gravitee-am-ui -P gio-artifactory-snapshot -Pcicd-jdbc -P << parameters.jdbcType >> -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.gravitee.settings.xml
+      - save-maven-job-cache:
+          jobName: run_testcontainer_tests_jdbc
   publish-images-azure-registry:
     docker:
       - image: cimg/openjdk:17.0.11
@@ -1883,7 +1903,7 @@ workflows:
               ignore:
                 - master
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
-      - run_testcontainer_tests:
+      - run_testcontainer_tests_mongo:
           context: cicd-orchestrator
           requires:
             - setup
@@ -1892,6 +1912,18 @@ workflows:
               ignore:
                 - master
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+      - run_testcontainer_tests_jdbc:
+          context: cicd-orchestrator
+          requires:
+            - setup
+          filters:
+            branches:
+              ignore:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+          matrix:
+            parameters:
+              jdbcType: ["postgres", "mysql", "mariadb", "mssql"]
 
   build_branch:
     when:

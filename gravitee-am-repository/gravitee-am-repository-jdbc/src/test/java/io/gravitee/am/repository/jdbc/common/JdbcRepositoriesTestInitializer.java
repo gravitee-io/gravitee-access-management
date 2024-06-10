@@ -17,137 +17,177 @@ package io.gravitee.am.repository.jdbc.common;
 
 import io.gravitee.am.repository.RepositoriesTestInitializer;
 import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
+import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.schedulers.Schedulers;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.reactivex.rxjava3.core.Single;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class JdbcRepositoriesTestInitializer implements RepositoriesTestInitializer {
 
-    @Autowired
-    protected ConnectionFactory connectionFactory;
 
-    @Autowired
-    protected DatabaseDialectHelper dialect;
+    private static final int MAX_ATTEMPTS = 5;
+    protected final ConnectionFactory connectionFactory;
+    protected final DatabaseDialectHelper dialect;
 
-    public JdbcRepositoriesTestInitializer(ConnectionFactory connectionFactory, DatabaseDialectHelper dialect) {
-        this.connectionFactory = connectionFactory;
-        this.dialect = dialect;
+    public void removeAllData() {
+
+        var tables = List.of(
+                "access_tokens",
+                "authorization_codes",
+                "refresh_tokens",
+                "scope_approvals",
+                "request_objects",
+
+                "users",
+                "user_entitlements",
+                "user_roles",
+                "user_attributes",
+                "user_addresses",
+                "application_factors",
+                "application_identities",
+                "application_scope_settings",
+                "application_client_secrets",
+                "applications",
+                "tags",
+                "scope_claims",
+                "scopes",
+                "role_oauth_scopes",
+                "roles",
+                "uma_resource_scopes",
+                "uma_resource_set",
+                "reporters",
+                "memberships",
+                "login_attempts",
+                "identities",
+                dialect.toSql(SqlIdentifier.quoted("groups")),
+                "group_members",
+                "group_roles",
+                "forms",
+                "factors",
+                "extension_grants",
+                "events",
+                "entrypoints",
+                "emails",
+                "webauthn_credentials",
+                "certificates",
+                "uma_access_policies",
+                "domains",
+                "domain_identities",
+                "domain_tags",
+                "domain_vhosts",
+                "environments",
+                "environment_domain_restrictions",
+                "environment_hrids",
+                "organizations",
+                "organization_identities",
+                "organization_domain_restrictions",
+                "organization_hrids",
+                "installations",
+                "alert_triggers_alert_notifiers",
+                "alert_triggers",
+                "alert_notifiers",
+                "service_resources",
+                "node_monitoring",
+                "bot_detections",
+
+                "organization_users",
+                "organization_user_entitlements",
+                "organization_user_roles",
+                "organization_user_attributes",
+                "organization_user_addresses",
+
+                "pushed_authorization_requests",
+
+                "system_tasks",
+
+                "ciba_auth_requests",
+                "authentication_device_notifiers",
+
+                "notification_acknowledgements",
+                "user_notifications",
+
+                "i18n_dictionaries",
+                "i18n_dictionary_entries",
+
+                "themes",
+                "password_histories",
+                "rate_limit",
+                "verify_attempt",
+
+                "password_policies",
+                "account_access_tokens"
+        );
+
+        // in seconds
+        var timeoutPerTable = 2;
+        var timeoutTechnical = 1;
+        var timeoutTotal = 30;
+
+        var retryCounterTotal = new AtomicInteger(0);
+        Single.fromPublisher(connectionFactory.create())
+                .flatMapCompletable(connection -> Completable.fromPublisher(connection.beginTransaction())
+                        .andThen(Flowable.fromIterable(tables)
+                                .concatMapCompletable(table -> deleteAll(table, connection, timeoutPerTable))
+                                .andThen(Completable.fromPublisher(connection.commitTransaction())
+                                        .timeout(timeoutTechnical, TimeUnit.SECONDS, Completable.error(new TimeoutException("timeout: commit [%ds]".formatted(timeoutTechnical)))))
+                                .onErrorResumeNext(err -> {
+                                    log.error("Got an error while clearing database - rolling back", err);
+                                    return Completable.fromPublisher(connection.rollbackTransaction());
+                                })
+                        )
+                        .doFinally(() -> Completable.fromPublisher(connection.close()).subscribe()))
+                .timeout(timeoutTotal, TimeUnit.SECONDS,
+                        Completable.fromAction(() -> {
+                            throw new TimeoutException("[attempt #%d/%d] timeout: clearing database didn't finish within %ds".formatted(retryCounterTotal.incrementAndGet(), MAX_ATTEMPTS, timeoutTotal));
+                        }))
+                .doOnError(ex -> log.error("Error clearing database", ex))
+                .doOnComplete(() -> log.debug("DB cleared on attempt {}", retryCounterTotal.get()))
+                .retry(MAX_ATTEMPTS - 1, ex -> ex instanceof TimeoutException)
+                .blockingAwait();
+
+
     }
 
-    public void truncateTables() {
-        Set<String> tables = new HashSet<>();
-        tables.add("access_tokens");
-        tables.add("authorization_codes");
-        tables.add("refresh_tokens");
-        tables.add("scope_approvals");
-        tables.add("request_objects");
-
-        tables.add("users");
-        tables.add("user_entitlements");
-        tables.add("user_roles");
-        tables.add("user_attributes");
-        tables.add("user_addresses");
-        tables.add("application_factors");
-        tables.add("application_identities");
-        tables.add("application_scope_settings");
-        tables.add("application_client_secrets");
-        tables.add("applications");
-        tables.add("tags");
-        tables.add("scope_claims");
-        tables.add("scopes");
-        tables.add("role_oauth_scopes");
-        tables.add("roles");
-        tables.add("uma_resource_scopes");
-        tables.add("uma_resource_set");
-        tables.add("reporters");
-        tables.add("memberships");
-        tables.add("login_attempts");
-        tables.add("identities");
-        tables.add(dialect.toSql(SqlIdentifier.quoted("groups")));
-        tables.add("group_members");
-        tables.add("group_roles");
-        tables.add("forms");
-        tables.add("factors");
-        tables.add("extension_grants");
-        tables.add("events");
-        tables.add("entrypoints");
-        tables.add("emails");
-        tables.add("webauthn_credentials");
-        tables.add("certificates");
-        tables.add("uma_access_policies");
-        tables.add("domains");
-        tables.add("domain_identities");
-        tables.add("domain_tags");
-        tables.add("domain_vhosts");
-        tables.add("environments");
-        tables.add("environment_domain_restrictions");
-        tables.add("environment_hrids");
-        tables.add("organizations");
-        tables.add("organization_identities");
-        tables.add("organization_domain_restrictions");
-        tables.add("organization_hrids");
-        tables.add("installations");
-        tables.add("alert_triggers_alert_notifiers");
-        tables.add("alert_triggers");
-        tables.add("alert_notifiers");
-        tables.add("service_resources");
-        tables.add("node_monitoring");
-        tables.add("bot_detections");
-
-        tables.add("organization_users");
-        tables.add("organization_user_entitlements");
-        tables.add("organization_user_roles");
-        tables.add("organization_user_attributes");
-        tables.add("organization_user_addresses");
-
-        tables.add("pushed_authorization_requests");
-
-        tables.add("system_tasks");
-
-        tables.add("ciba_auth_requests");
-        tables.add("authentication_device_notifiers");
-
-        tables.add("notification_acknowledgements");
-        tables.add("user_notifications");
-
-        tables.add("i18n_dictionaries");
-        tables.add("i18n_dictionary_entries");
-
-        tables.add("themes");
-        tables.add("password_histories");
-        tables.add("rate_limit");
-        tables.add("verify_attempt");
-
-        tables.add("password_policies");
-        tables.add("account_access_tokens");
-
-        io.r2dbc.spi.Connection connection = Flowable.fromPublisher(connectionFactory.create()).blockingFirst();
-        connection.beginTransaction();
-        tables.stream().forEach(table -> {
-            Flowable.fromPublisher(connection.createStatement("delete from " + table).execute()).subscribeOn(Schedulers.single()).blockingSubscribe();
-        });
-        connection.commitTransaction();
-        connection.close();
+    private Completable deleteAll(String table, Connection connection, int timeoutSeconds) {
+        AtomicInteger retryCounter = new AtomicInteger(0);
+        return Single.fromPublisher(connection.createStatement("delete from " + table)
+                        .execute())
+                .flatMap(result -> Single.fromPublisher(result.getRowsUpdated()))
+                .ignoreElement()
+                .timeout(timeoutSeconds, TimeUnit.SECONDS,
+                        Completable.fromAction(() -> {
+                            throw new TimeoutException("[attempt #%d/%d] timeout: 'delete from %s' didn't finish within %ds".formatted(retryCounter.incrementAndGet(), MAX_ATTEMPTS, table, timeoutSeconds));
+                        }))
+                .doOnError(ex -> {
+                    if (!(ex instanceof TimeoutException)) {
+                        log.error("Error clearing table '{}'", table, ex);
+                    }
+                })
+                .doOnComplete(() -> log.debug("Table '{}' cleared on attempt {}", table, retryCounter.get()))
+                .retry(MAX_ATTEMPTS - 1, x -> x instanceof TimeoutException);
     }
+
 
     @Override
     public void before(Class testClass) {
-        truncateTables();
+        removeAllData();
     }
 
-    @Override
-    public void after(Class testClass) {
-        truncateTables();
-    }
 }
