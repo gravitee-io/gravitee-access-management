@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class RepositoryRepositoryTest extends AbstractManagementTest {
+public class ReporterRepositoryTest extends AbstractManagementTest {
 
     @Autowired
     private ReporterRepository repository;
