@@ -19,14 +19,12 @@ import io.gravitee.node.api.upgrader.UpgradeRecord;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.mariadb.r2dbc.codec.list.LocalDateTimeCodec;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
@@ -47,7 +45,8 @@ public class JdbcUpgradeRecord implements Persistable<String> {
     boolean isNew;
 
     public static JdbcUpgradeRecord newFrom(UpgradeRecord value) {
-        return new JdbcUpgradeRecord(value.getId(), LocalDateTime.from(value.getAppliedAt().toInstant()), true);
+        var appliedAt = value.getAppliedAt().toInstant().atOffset(ZoneOffset.UTC);
+        return new JdbcUpgradeRecord(value.getId(), LocalDateTime.from(appliedAt), true);
     }
 
     public UpgradeRecord toDomain() {
