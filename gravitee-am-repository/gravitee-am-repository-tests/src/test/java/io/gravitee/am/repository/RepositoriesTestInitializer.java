@@ -21,8 +21,8 @@ package io.gravitee.am.repository;
  */
 public interface RepositoriesTestInitializer {
 
-    void before(Class testClass) throws Exception;
+    default void before(Class testClass) throws Exception {}
 
-    void after(Class testClass) throws Exception;
+    default void after(Class testClass) throws Exception {}
 
 }

@@ -33,12 +33,7 @@ public class MongodbRepositoriesTestInitializer implements RepositoriesTestIniti
     private MongoDatabase mongoDatabase;
 
     @Override
-    public void before(Class testClass) throws Exception {
-        Thread.sleep(1000l);
-    }
-
-    @Override
-    public void after(Class testClass) throws Exception {
+    public void after(Class testClass) {
         Observable.fromPublisher(mongoDatabase.listCollectionNames())
                 .flatMap(collectionName -> Observable.fromPublisher(mongoDatabase.getCollection(collectionName).deleteMany(new Document())))
                 .blockingSubscribe();

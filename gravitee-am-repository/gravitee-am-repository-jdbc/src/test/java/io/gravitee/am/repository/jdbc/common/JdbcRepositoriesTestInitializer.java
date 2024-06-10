@@ -190,8 +190,4 @@ public class JdbcRepositoriesTestInitializer implements RepositoriesTestInitiali
         removeAllData();
     }
 
-    @Override
-    public void after(Class testClass) {
-        // nothing to do
-    }
 }
