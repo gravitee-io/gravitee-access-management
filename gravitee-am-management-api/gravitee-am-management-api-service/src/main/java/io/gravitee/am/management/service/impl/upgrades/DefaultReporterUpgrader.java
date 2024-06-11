@@ -41,7 +41,7 @@ public class DefaultReporterUpgrader implements Upgrader, Ordered {
     public boolean upgrade() {
         logger.info("Applying domain idp upgrade");
         reporterService.findAll()
-                .filter(reporter -> reporter.isSystem())
+                .filter(Reporter::isSystem)
                 .flatMapSingle(this::updateDefaultReporter)
                 .subscribe();
         return true;

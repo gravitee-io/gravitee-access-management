@@ -53,7 +53,7 @@ public class InstallationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws Exception {
+    public void testNotFoundById() {
         var observer = installationRepository.findById("UNKNOWN").test();
 
         observer.awaitDone(5, TimeUnit.SECONDS);

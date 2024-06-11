@@ -179,7 +179,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
                 .all()
                 .then(deleteChildEntities(domainId))
                 .as(trx::transactional))
-                .doOnError((error) -> LOGGER.error("unable to delete Domain with id {}", domainId, error));
+                .doOnError(error -> LOGGER.error("unable to delete Domain with id {}", domainId, error));
     }
 
     @Override

@@ -179,8 +179,8 @@ public class UsersResourceTest extends JerseySpringTest {
         Page<User> values = readEntity(response, new TypeReference<>() {
         });
 
-        assertEquals(values.getCurrentPage(), 0);
-        assertEquals(values.getTotalCount(), 2);
+        assertEquals(0, values.getCurrentPage());
+        assertEquals(2, values.getTotalCount());
         final Collection<User> data = values.getData();
 
         assertTrue(getFilteredElements(data, User::getId).containsAll(List.of("user-id-1", "domain-id-2")));
@@ -226,8 +226,8 @@ public class UsersResourceTest extends JerseySpringTest {
         Page<User> values = readEntity(response, new TypeReference<>() {
         });
 
-        assertEquals(values.getCurrentPage(), 0);
-        assertEquals(values.getTotalCount(), 2);
+        assertEquals(0, values.getCurrentPage());
+        assertEquals(2, values.getTotalCount());
         final Collection<User> data = values.getData();
 
         assertTrue(getFilteredElements(data, User::getId).containsAll(List.of("user-id-1", "domain-id-2")));
@@ -408,8 +408,8 @@ public class UsersResourceTest extends JerseySpringTest {
         Page<User> values = readEntity(response, new TypeReference<>() {
         });
 
-        assertEquals(values.getCurrentPage(), 0);
-        assertEquals(values.getTotalCount(), 3);
+        assertEquals(0, values.getCurrentPage());
+        assertEquals(3, values.getTotalCount());
         final Collection<User> data = values.getData();
 
         assertTrue(getFilteredElements(data, User::getId).containsAll(List.of("service-id-1", "user-id-2", "user-id-3")));

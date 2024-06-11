@@ -164,7 +164,7 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
     private String buildRedirectUri(HttpServletRequest request) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(request.getRequestURL().toString());
         // append provider query param to avoid redirect mismatch exception
-        builder.queryParam("provider", request.getParameter("provider"));
+        builder.queryParam(PROVIDER_PARAMETER, request.getParameter(PROVIDER_PARAMETER));
 
         return builder.build(false).toUriString();
     }

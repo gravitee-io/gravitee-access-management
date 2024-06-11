@@ -171,7 +171,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
 
         Mono<Long> action = insertSpec.fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
+        return monoToSingle(action).flatMap(i -> this.findById(item.getId()).toSingle());
     }
 
     @Override
@@ -197,7 +197,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
 
         Mono<Long> action = update.fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
+        return monoToSingle(action).flatMap(i -> this.findById(item.getId()).toSingle());
     }
 
     @Override

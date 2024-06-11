@@ -62,7 +62,7 @@ public class NonBCryptIterationsRoundsUpgraderTest {
     private NonBCryptIterationsRoundsUpgrader upgrader;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         SystemTask task = new SystemTask();
         task.setOperationId("op1");
         Mockito.when(systemTaskRepository.updateIf(any(), any()))

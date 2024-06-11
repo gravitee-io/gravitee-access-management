@@ -63,8 +63,8 @@ public abstract class IdentityProviderPluginManager extends
 
         pluginApplicationContext.getAutowireCapableBeanFactory().autowireBean(provider);
 
-        if (provider instanceof InitializingBean) {
-            ((InitializingBean) provider).afterPropertiesSet();
+        if (provider instanceof InitializingBean initializingBean) {
+            initializingBean.afterPropertiesSet();
         }
 
         return provider.asyncStart();

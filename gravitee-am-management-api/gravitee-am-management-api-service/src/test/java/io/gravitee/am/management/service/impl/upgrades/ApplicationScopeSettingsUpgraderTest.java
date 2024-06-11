@@ -110,7 +110,7 @@ public class ApplicationScopeSettingsUpgraderTest {
 
         when(applicationService.findAll()).thenReturn(Single.just(Set.of(appNoSettings, appNoOauthSetings, appNoScopes, appScopes, appScopesWithOptions)));
         when(applicationService.update(any())).thenReturn(Single.just(new Application()));
-        when(systemTaskRepository.updateIf(any(), anyString())).thenAnswer((args) -> {
+        when(systemTaskRepository.updateIf(any(), anyString())).thenAnswer(args -> {
             SystemTask sysTask = args.getArgument(0);
             sysTask.setOperationId(args.getArgument(1));
             return Single.just(sysTask);

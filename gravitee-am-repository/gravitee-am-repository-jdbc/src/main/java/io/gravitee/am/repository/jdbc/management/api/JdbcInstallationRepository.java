@@ -70,8 +70,7 @@ public class JdbcInstallationRepository extends AbstractJdbcRepository implement
     }
 
     protected JdbcInstallation toJdbcEntity(Installation installation) {
-        JdbcInstallation mapped = mapper.map(installation, JdbcInstallation.class);
-        return mapped;
+        return mapper.map(installation, JdbcInstallation.class);
     }
 
     @Override

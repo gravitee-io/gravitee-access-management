@@ -18,6 +18,7 @@ package io.gravitee.am.management.service.impl.plugins;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.service.exception.PluginNotDeployedException;
 import io.reactivex.rxjava3.core.Completable;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,8 +26,8 @@ import org.slf4j.LoggerFactory;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class AbstractPluginService {
-    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
     protected AmPluginManager pluginManager;
 
     protected AbstractPluginService(AmPluginManager pluginManager) {
@@ -35,7 +36,7 @@ public class AbstractPluginService {
 
     public Completable checkPluginDeployment(String type) {
         if (!this.pluginManager.isPluginDeployed(type)) {
-            LOGGER.debug("Plugin {} not deployed", type);
+            log.debug("Plugin {} not deployed", type);
             return Completable.error(PluginNotDeployedException.forType(type));
         }
         return Completable.complete();

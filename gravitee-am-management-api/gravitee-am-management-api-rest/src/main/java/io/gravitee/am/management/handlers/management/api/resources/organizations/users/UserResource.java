@@ -261,7 +261,7 @@ public class UserResource extends AbstractResource {
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.DELETE)
                 .andThen(organizationUserService.delete(ReferenceType.ORGANIZATION, organizationId, user, authenticatedUser))
-                .subscribe((u) -> response.resume(Response.noContent().build()), response::resume);
+                .subscribe(u-> response.resume(Response.noContent().build()), response::resume);
     }
 
     @POST

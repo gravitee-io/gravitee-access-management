@@ -418,7 +418,7 @@ public class ScopeServiceImpl implements ScopeService {
         }
 
         return findByDomain(domain, 0, Integer.MAX_VALUE)
-                .map(domainSet -> domainSet.getData().stream().map(scope -> scope.getKey()).collect(Collectors.toSet()))
+                .map(domainSet -> domainSet.getData().stream().map(Scope::getKey).collect(Collectors.toSet()))
                 .flatMap(domainScopes -> this.validateScope(domainScopes, scopes));
     }
 

@@ -27,8 +27,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -41,17 +39,8 @@ import java.util.Map;
 public class ElasticsearchFormatter<T extends ReportEntry> extends AbstractFormatter<T> {
 
     /** Index simple date format **/
-    private final DateTimeFormatter dtf, sdf;
-
-    private static String hostname;
-
-    static {
-        try {
-            hostname = InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException e) {
-            hostname = "unknown";
-        }
-    }
+    private final DateTimeFormatter dtf;
+    private final DateTimeFormatter sdf;
 
     @Autowired
     private FreeMarkerComponent freeMarkerComponent;

@@ -25,7 +25,7 @@ package io.gravitee.am.reporter.file.formatter.csv;
   */
  abstract class SingleValueFormatter<T extends ReportEntry> extends AbstractFormatter<T> {
 
-     private final static String EMPTY_VALUE = "";
+     private static final String EMPTY_VALUE = "";
 
      private static final char CSV_DELIMITER = ';';
 
@@ -49,11 +49,11 @@ package io.gravitee.am.reporter.file.formatter.csv;
       */
      private static final char CR = '\r';
 
-     final static byte [] END_OF_LINE = new byte [] { CR,  LF};
+     static final byte [] END_OF_LINE = new byte [] { CR,  LF};
 
-     private final static byte FIELD_SEPARATOR = (byte) CSV_DELIMITER;
+     private static final byte FIELD_SEPARATOR = (byte) CSV_DELIMITER;
 
-     private final static byte FIELD_QUOTE = (byte) CSV_QUOTE;
+     private static final byte FIELD_QUOTE = (byte) CSV_QUOTE;
 
      private static final String CSV_QUOTE_STR = String.valueOf(CSV_QUOTE);
 

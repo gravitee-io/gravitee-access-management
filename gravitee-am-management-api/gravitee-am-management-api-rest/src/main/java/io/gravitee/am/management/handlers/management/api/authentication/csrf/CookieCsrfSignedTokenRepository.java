@@ -23,8 +23,7 @@ import io.gravitee.am.management.handlers.management.api.authentication.provider
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -41,9 +40,8 @@ import java.util.UUID;
  * @author Titouan COMPIEGNE (titouan.compiegne at gravitesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class CookieCsrfSignedTokenRepository implements CsrfTokenRepository {
-
-    private final Logger LOGGER = LoggerFactory.getLogger(CookieCsrfSignedTokenRepository.class);
 
     public static final String TOKEN_CLAIM = "token";
 
@@ -104,7 +102,7 @@ public class CookieCsrfSignedTokenRepository implements CsrfTokenRepository {
             response.addCookie(cookie);
             request.setAttribute(DEFAULT_CSRF_COOKIE_NAME, true);
         } catch (Exception ex) {
-            LOGGER.error("Unable to generate CSRF token", ex);
+            log.error("Unable to generate CSRF token", ex);
         }
     }
 
@@ -128,7 +126,7 @@ public class CookieCsrfSignedTokenRepository implements CsrfTokenRepository {
             }
             return new DefaultCsrfToken(DEFAULT_CSRF_HEADER_NAME, DEFAULT_CSRF_PARAMETER_NAME, token);
         } catch (Exception ex) {
-            LOGGER.error("Unable to verify CSRF token", ex);
+            log.error("Unable to verify CSRF token", ex);
         }
         return null;
     }

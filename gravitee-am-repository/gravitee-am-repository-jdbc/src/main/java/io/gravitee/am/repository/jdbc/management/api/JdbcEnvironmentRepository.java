@@ -86,7 +86,7 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
                 .flatMapSingle(this::retrieveDomainRestrictions)
                 .flatMapSingle(this::retrieveHrids);
 
-        return result.doOnError((error) -> LOGGER.error("unable to retrieve Environments with organizationId {}", organizationId, error));
+        return result.doOnError(error -> LOGGER.error("unable to retrieve Environments with organizationId {}", organizationId, error));
     }
 
     @Override
@@ -114,7 +114,7 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
                 .flatMap(environment -> retrieveDomainRestrictions(environment).toMaybe())
                 .flatMap(environment -> retrieveHrids(environment).toMaybe());
 
-        return result.doOnError((error) -> LOGGER.error("unable to retrieve Environment with id {}", id, error));
+        return result.doOnError(error -> LOGGER.error("unable to retrieve Environment with id {}", id, error));
     }
 
     @Override

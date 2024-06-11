@@ -87,7 +87,7 @@ public class EnrichProfilePolicyTest {
     public void init() {
         reset(configuration, executionContext, request, response);
 
-        Request request = new RequestWrapper(mock(Request.class)) {
+        Request requestWrapper = new RequestWrapper(mock(Request.class)) {
             @Override
             public MultiValueMap<String, String> parameters() {
                 LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
@@ -97,7 +97,7 @@ public class EnrichProfilePolicyTest {
         };
 
         TemplateEngine tplEngine = new SpelTemplateEngineFactory().templateEngine();
-        tplEngine.getTemplateContext().setVariable("request", new EvaluableRequest(request));
+        tplEngine.getTemplateContext().setVariable("request", new EvaluableRequest(requestWrapper));
         when(executionContext.getTemplateEngine()).thenReturn(tplEngine);
         when(executionContext.getComponent(UserRepository.class)).thenReturn(userRepository);
     }

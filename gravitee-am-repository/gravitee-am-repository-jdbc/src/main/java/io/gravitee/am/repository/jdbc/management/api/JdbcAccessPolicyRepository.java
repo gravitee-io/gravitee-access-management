@@ -100,7 +100,7 @@ public class JdbcAccessPolicyRepository extends AbstractJdbcRepository implement
                                 .with(PageRequest.of(page, size))).all()).toList()
                 .map(content -> content.stream().map(this::toAccessPolicy).collect(Collectors.toList()))
                 .flatMap(content -> accessPolicyRepository.countByDomain(domain)
-                        .map((count) -> new Page<>(content, page, count)));
+                        .map(count -> new Page<>(content, page, count)));
     }
 
     @Override
@@ -146,7 +146,7 @@ public class JdbcAccessPolicyRepository extends AbstractJdbcRepository implement
         sql = addQuotedField(sql, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         sql = addQuotedField(sql, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
-        return monoToSingle(sql.fetch().rowsUpdated()).flatMap((i) -> this.findById(item.getId()).toSingle());
+        return monoToSingle(sql.fetch().rowsUpdated()).flatMap(i -> this.findById(item.getId()).toSingle());
     }
 
     @Override

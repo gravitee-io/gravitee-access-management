@@ -137,9 +137,7 @@ public class InlineOrganizationProviderConfiguration extends OrganizationProvide
         final Map<String, Role> organizationRoles = Flowable.merge(
                 roleService.findRolesByName(ReferenceType.PLATFORM, Platform.DEFAULT, ReferenceType.ORGANIZATION, roleNames),
                 roleService.findRolesByName(ReferenceType.ORGANIZATION, Organization.DEFAULT, ReferenceType.ORGANIZATION, roleNames))
-                .collect(HashMap<String, Role>::new, (acc, role) -> {
-                    acc.put(role.getName(), role);
-                }).blockingGet();
+                .collect(HashMap<String, Role>::new, (acc, role) -> acc.put(role.getName(), role)).blockingGet();
 
         users.forEach((username, def) -> {
             Role role = organizationRoles.get(def.getRole());

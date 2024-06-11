@@ -17,10 +17,14 @@ package io.gravitee.am.service.i18n;
 
 import java.util.regex.Pattern;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MessageFormatSanitizer {
 
     private static final Pattern singleQuote = Pattern.compile("'");

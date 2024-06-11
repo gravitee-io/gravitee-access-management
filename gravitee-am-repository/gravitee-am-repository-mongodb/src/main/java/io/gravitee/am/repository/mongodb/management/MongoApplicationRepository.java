@@ -438,7 +438,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettingsMongo.setClientSecretExpiresAt(other.getClientSecretExpiresAt());
         applicationOAuthSettingsMongo.setScopes(other.getScopes());
         applicationOAuthSettingsMongo.setDefaultScopes(other.getDefaultScopes());
-        applicationOAuthSettingsMongo.setScopeApprovals(other.getScopeApprovals() != null ? new Document((Map) other.getScopeApprovals()) : null);
+        applicationOAuthSettingsMongo.setScopeApprovals(other.getScopeApprovals() != null ? new Document(other.getScopeApprovals()) : null);
         applicationOAuthSettingsMongo.setEnhanceScopesWithUserPermissions(other.isEnhanceScopesWithUserPermissions());
         applicationOAuthSettingsMongo.setAccessTokenValiditySeconds(other.getAccessTokenValiditySeconds());
         applicationOAuthSettingsMongo.setRefreshTokenValiditySeconds(other.getRefreshTokenValiditySeconds());

@@ -114,7 +114,7 @@ public class PoliciesToFlowsUpgrader implements Upgrader, Ordered {
         return Observable.fromIterable(flows.values())
                 .flatMapCompletable(flow -> flowService.create(ReferenceType.DOMAIN, domain, flow).ignoreElement())
                 .doOnComplete(() -> LOGGER.info("Policies migrated to flows for domain {}", domain))
-                .doOnError((error) -> LOGGER.info("Error during policies migration for domain {}", domain, error));
+                .doOnError(error -> LOGGER.info("Error during policies migration for domain {}", domain, error));
     }
 
     private Step createStep(Policy policy) {

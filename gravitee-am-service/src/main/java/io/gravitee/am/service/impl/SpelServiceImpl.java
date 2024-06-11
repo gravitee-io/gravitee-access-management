@@ -100,7 +100,7 @@ public class SpelServiceImpl implements SpelService {
         List<Object> methods = Arrays
             .stream(securedMethodResolver.getMethods(classz))
             .filter(f -> Modifier.isPublic(f.getModifiers()))
-            .map((Function<Method, Object>) method -> new MethodWrapper(method))
+            .map((Function<Method, Object>) MethodWrapper::new)
             .collect(Collectors.toList());
         type.put("methods", methods);
         return type;
@@ -113,9 +113,9 @@ public class SpelServiceImpl implements SpelService {
             this.put("returnType", method.getReturnType().getSimpleName());
             List<Object> params = Arrays
                 .stream(method.getParameters())
-                .map((Function<Parameter, Object>) parameter -> new ParameterWrapper(parameter))
+                .map((Function<Parameter, Object>) ParameterWrapper::new)
                 .collect(Collectors.toList());
-            if (params.size() > 0) {
+            if (!params.isEmpty()) {
                 this.put("params", params);
             }
         }

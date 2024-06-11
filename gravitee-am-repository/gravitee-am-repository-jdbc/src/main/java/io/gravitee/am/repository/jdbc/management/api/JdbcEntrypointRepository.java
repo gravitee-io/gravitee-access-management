@@ -109,8 +109,8 @@ public class JdbcEntrypointRepository extends AbstractJdbcRepository implements 
         }
 
         return monoToSingle(action.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to create entrypoint with id {}", item.getId(), error));
+                .flatMap(i -> this.findById(item.getId()).toSingle())
+                .doOnError(error -> LOGGER.error("unable to create entrypoint with id {}", item.getId(), error));
     }
 
     @Override
@@ -126,8 +126,8 @@ public class JdbcEntrypointRepository extends AbstractJdbcRepository implements 
         }
 
         return monoToSingle(deleteTags(item.getId()).then(action).as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to create entrypoint with id {}", item.getId(), error));
+                .flatMap(i -> this.findById(item.getId()).toSingle())
+                .doOnError(error -> LOGGER.error("unable to create entrypoint with id {}", item.getId(), error));
     }
 
     private Mono<Long> insertTag(String tagValue, Entrypoint item) {

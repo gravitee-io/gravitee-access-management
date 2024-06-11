@@ -25,7 +25,6 @@ import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -116,7 +115,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindById()  {
         // create user
         User user = buildUser();
         User userCreated = organizationUserRepository.create(user).blockingGet();
@@ -229,7 +228,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws Exception {
+    public void testNotFoundById() {
         var observer = organizationUserRepository.findById("test").test();
 
         observer.awaitDone(5, TimeUnit.SECONDS);
@@ -239,7 +238,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testCreate() throws TechnicalException {
+    public void testCreate()  {
         User user = new User();
         user.setReferenceType(ReferenceType.ORGANIZATION);
         user.setReferenceId(ORGANIZATION_ID);
@@ -278,7 +277,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDelete() throws TechnicalException {
+    public void testDelete()  {
         // create user
         User user = new User();
         user.setReferenceType(ReferenceType.ORGANIZATION);

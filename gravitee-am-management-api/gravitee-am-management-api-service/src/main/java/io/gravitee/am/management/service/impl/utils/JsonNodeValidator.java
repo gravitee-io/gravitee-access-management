@@ -35,18 +35,10 @@ public class JsonNodeValidator {
     public static void validateConfiguration(JsonNode idpConfig) {
         idpConfig.elements().forEachRemaining(jsonNode -> {
             if (jsonNode instanceof NumericNode) {
-                boolean isNegative = false;
-                switch (jsonNode.numberType()) {
-                    case INT:
-                    case LONG:
-                    case BIG_INTEGER:
-                        isNegative = jsonNode.asInt() < 0;
-                        break;
-                    case FLOAT:
-                    case DOUBLE:
-                    case BIG_DECIMAL:
-                        isNegative = jsonNode.asDouble() < 0;
-                }
+                boolean isNegative = switch (jsonNode.numberType()) {
+                    case INT, LONG, BIG_INTEGER -> jsonNode.asInt() < 0;
+                    case FLOAT, DOUBLE, BIG_DECIMAL -> jsonNode.asDouble() < 0;
+                };
                 if (isNegative) {
                     throw new IllegalArgumentException("Negative numbers not allowed");
                 }

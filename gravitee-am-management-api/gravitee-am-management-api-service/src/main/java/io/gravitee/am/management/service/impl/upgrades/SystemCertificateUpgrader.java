@@ -92,11 +92,11 @@ public class SystemCertificateUpgrader extends SystemTaskUpgrader {
                 .doOnError(err -> updateSystemTask(task, (SystemTaskStatus.FAILURE), task.getOperationId()).subscribe())
                 .andThen(updateSystemTask(task, SystemTaskStatus.SUCCESS, task.getOperationId())
                         .map(__ -> true)
-                        .onErrorResumeNext((err) -> {
+                        .onErrorResumeNext(err -> {
                             logger.error("Unable to update status for system certificates task: {}", err.getMessage());
                             return Single.just(false);
                         }))
-                .onErrorResumeNext((err) -> {
+                .onErrorResumeNext(err -> {
                     logger.error("Unable to migrate system certificates: {}", err.getMessage());
                     return Single.just(false);
                 });

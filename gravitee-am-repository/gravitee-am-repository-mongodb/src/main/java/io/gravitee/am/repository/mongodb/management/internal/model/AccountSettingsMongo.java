@@ -18,7 +18,6 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 import io.gravitee.am.model.account.AccountSettings;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;

@@ -122,7 +122,7 @@ public class ApplicationsResource extends AbstractResource {
                                 .sorted((a1, a2) -> a2.getUpdatedAt().compareTo(a1.getUpdatedAt()))
                                 .toList()
                                 .map(applications -> new ApplicationPage(
-                                        applications.stream().skip(page * size).limit(size).collect(toList()),
+                                        applications.stream().skip((long) page * size).limit(size).collect(toList()),
                                         page,
                                         applications.size()))))
                 .subscribe(response::resume, response::resume);

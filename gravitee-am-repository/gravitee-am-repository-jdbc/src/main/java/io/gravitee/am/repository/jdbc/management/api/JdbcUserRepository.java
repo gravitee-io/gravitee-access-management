@@ -428,7 +428,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .flatMap(user -> completeUser(user).toFlowable(), concurrentFlatmap)
                 .toList()
                 .flatMap(content -> userRepository.countByReference(referenceType.name(), referenceId)
-                        .map((count) -> new Page<>(content, page, count)));
+                        .map(count -> new Page<>(content, page, count)));
     }
 
     @Override
@@ -611,19 +611,19 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 : userRepository.countInactiveUser(DOMAIN.name(), query.getDomain(), LocalDateTime.now(UTC).minus(90, ChronoUnit.DAYS));
 
         return Single.just(new HashMap<>())
-                .flatMap((stats) -> disabled.map(count -> {
+                .flatMap(stats -> disabled.map(count -> {
                     LOGGER.debug("usersStatusRepartition(disabled) = {}", count);
                     stats.put("disabled", count);
                     return stats;
-                })).flatMap((stats) -> locked.map(count -> {
+                })).flatMap(stats -> locked.map(count -> {
                     LOGGER.debug("usersStatusRepartition(locked) = {}", count);
                     stats.put("locked", count);
                     return stats;
-                })).flatMap((stats) -> inactive.map(count -> {
+                })).flatMap(stats -> inactive.map(count -> {
                     LOGGER.debug("usersStatusRepartition(inactive) = {}", count);
                     stats.put("inactive", count);
                     return stats;
-                })).flatMap((stats) -> total.map(count -> {
+                })).flatMap(stats -> total.map(count -> {
                     long value = count - (stats.values().stream().mapToLong(l -> (Long) l).sum());
                     stats.put("active", value);
                     LOGGER.debug("usersStatusRepartition(active) = {}", value);
@@ -636,11 +636,11 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         Single<Long> total = userRepository.countPreRegisteredUser(DOMAIN.name(), query.getDomain(), true);
         Single<Long> completed = userRepository.countRegistrationCompletedUser(DOMAIN.name(), query.getDomain(), true, true);
         return Single.just(new HashMap<>())
-                .flatMap((stats) -> total.map(count -> {
+                .flatMap(stats -> total.map(count -> {
                     LOGGER.debug("registrationsStatusRepartition(total) = {}", count);
                     stats.put("total", count);
                     return stats;
-                })).flatMap((stats) -> completed.map(count -> {
+                })).flatMap(stats -> completed.map(count -> {
                     LOGGER.debug("registrationsStatusRepartition(completed) = {}", count);
                     stats.put("completed", count);
                     return stats;
@@ -967,7 +967,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                         attributesRepository.findByUserId(user.getId())
                                 .toList()
                                 .map(attributes -> {
-                                    Map<String, List<Attribute>> map = attributes.stream().collect(StreamUtils.toMultiMap(JdbcUser.Attribute::getUserField, attr -> convertAttribute(attr)));
+                                    Map<String, List<Attribute>> map = attributes.stream().collect(StreamUtils.toMultiMap(JdbcUser.Attribute::getUserField, this::convertAttribute));
                                     if (map.containsKey(ATTRIBUTE_USER_FIELD_EMAIL)) {
                                         user.setEmails(map.get(ATTRIBUTE_USER_FIELD_EMAIL));
                                     }

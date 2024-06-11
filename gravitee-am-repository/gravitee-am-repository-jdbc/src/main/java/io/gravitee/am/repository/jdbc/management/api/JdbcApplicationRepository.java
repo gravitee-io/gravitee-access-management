@@ -188,7 +188,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                 .flatMap(app -> completeApplication(app).toFlowable(), MAX_CONCURRENCY)
                 .toList()
                 .flatMap(data -> applicationRepository.count().map(total -> new Page<>(data, page, total)))
-                .doOnError((error) -> LOGGER.error("Unable to retrieve all applications (page={}/size={})", page, size, error));
+                .doOnError(error -> LOGGER.error("Unable to retrieve all applications (page={}/size={})", page, size, error));
     }
 
     @Override
@@ -209,7 +209,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                 .flatMap(app -> completeApplication(app).toFlowable(), MAX_CONCURRENCY)
                 .toList()
                 .flatMap(data -> applicationRepository.countByDomain(domain).map(total -> new Page<Application>(data, page, total)))
-                .doOnError((error) -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error));
+                .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error));
     }
 
     @Override
@@ -235,7 +235,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                         .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
                         .map((row, rowMetadata) -> row.get(0, Long.class)).first())
                         .map(total -> new Page<Application>(data, page, total)))
-                .doOnError((error) -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error));
+                .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error));
     }
 
     @Override
@@ -344,7 +344,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         insertAction = persistChildEntities(insertAction, item);
 
         return monoToSingle(insertAction.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle());
+                .flatMap(i -> this.findById(item.getId()).toSingle());
     }
 
     @Override
@@ -373,7 +373,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         updateAction = persistChildEntities(updateAction, item);
 
         return monoToSingle(updateAction.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle());
+                .flatMap(i -> this.findById(item.getId()).toSingle());
     }
 
     @Override

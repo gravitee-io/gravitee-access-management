@@ -40,8 +40,7 @@ import io.gravitee.policy.api.PolicyResult;
 import io.gravitee.policy.api.annotations.OnRequest;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
@@ -57,10 +56,10 @@ import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class EnrollMfaPolicy {
 
     static final String GATEWAY_POLICY_ENROLL_MFA_ERROR_KEY = "GATEWAY_POLICY_ENROLL_MFA_ERROR";
-    private static Logger LOGGER = LoggerFactory.getLogger(EnrollMfaPolicy.class);
     private static Set<FactorType> UPDATABLE_FACTORS = Set.of(FactorType.SMS, FactorType.EMAIL, FactorType.CALL);
     private final EnrollMfaPolicyConfiguration configuration;
 
@@ -70,12 +69,12 @@ public class EnrollMfaPolicy {
 
     @OnRequest
     public void onRequest(Request request, Response response, ExecutionContext context, PolicyChain policyChain) {
-        LOGGER.debug("Start enroll MFA policy");
+        log.debug("Start enroll MFA policy");
         final String factorId = configuration.getFactorId();
         final String value = configuration.getValue();
 
         if (ObjectUtils.isEmpty(factorId)) {
-            LOGGER.warn("No factor ID configured for the enroll MFA policy");
+            log.warn("No factor ID configured for the enroll MFA policy");
             policyChain.doNext(request, response);
             return;
         }
@@ -88,13 +87,13 @@ public class EnrollMfaPolicy {
             final Optional<Factor> optFactor = factorManager.getClientFactor(client, factorId);
 
             if (optFactor.isEmpty()) {
-                LOGGER.warn("No active MFA factor with ID [{}] found", factorId);
+                log.warn("No active MFA factor with ID [{}] found", factorId);
                 policyChain.doNext(request, response);
                 return;
             }
 
             if (user == null) {
-                LOGGER.warn("No user found in context");
+                log.warn("No user found in context");
                 policyChain.doNext(request, response);
                 return;
             }
@@ -104,19 +103,19 @@ public class EnrollMfaPolicy {
                 boolean factorAlreadyExist = user.getFactors().stream().anyMatch(enrolledFactor -> enrolledFactor.getFactorId().equals(factorId));
                 if (!configuration.isRefresh() && factorAlreadyExist) {
                     // no need to enroll the same factor
-                    LOGGER.debug("MFA factor with ID [{}] already enrolled for the current user", factorId);
+                    log.debug("MFA factor with ID [{}] already enrolled for the current user", factorId);
                     policyChain.doNext(request, response);
                     return;
                 } else if (configuration.isRefresh() && factorAlreadyExist) {
                     // factor already exist but may need to be updated
-                    LOGGER.debug("MFA factor with ID [{}] already enrolled for the current user, update the factor information", factorId);
+                    log.debug("MFA factor with ID [{}] already enrolled for the current user, update the factor information", factorId);
                     var existingFactorOpt = user.getFactors().stream().filter(enrolledFactor -> enrolledFactor.getFactorId().equals(factorId)).findFirst();
                     refreshEnrolledFactor(existingFactorOpt.get(), factor, value, context)
                             .flatMapSingle(enrolledFactor -> userService.updateFactor(user.getId(), enrolledFactor, new DefaultUser(user)).map(Optional::ofNullable))
                             .switchIfEmpty(Single.just(Optional.empty()))
                             .subscribe(
                                     updatedUserOpt -> {
-                                        LOGGER.debug("MFA factor with ID [{}] enrolled for user {}", factorId, user.getId());
+                                        log.debug("MFA factor with ID [{}] enrolled for user {}", factorId, user.getId());
                                         // update inner context user profile with the new list of factors.
                                         // this is important to avoid losing the factors information on
                                         // user updates in the further policies execution (https://github.com/gravitee-io/issues/issues/9161)
@@ -124,7 +123,7 @@ public class EnrollMfaPolicy {
                                         policyChain.doNext(request, response);
                                     },
                                     error -> {
-                                        LOGGER.error("Unable to enroll MFA factor with ID [{}]", factorId, error.getMessage());
+                                        log.error("Unable to enroll MFA factor with ID [{}]", factorId, error.getMessage());
                                         policyChain.failWith(PolicyResult.failure(GATEWAY_POLICY_ENROLL_MFA_ERROR_KEY, error.getMessage()));
                                     });
                     return;
@@ -137,7 +136,7 @@ public class EnrollMfaPolicy {
             if (ObjectUtils.isEmpty(value) &&
                     !(FactorType.HTTP.getType().equals(factor.getFactorType().getType()) || FactorType.OTP.getType().equals(factor.getFactorType().getType()))
             ) {
-                LOGGER.error("Value field is missing");
+                log.error("Value field is missing");
                 policyChain.failWith(PolicyResult.failure(GATEWAY_POLICY_ENROLL_MFA_ERROR_KEY, "Value field is missing"));
                 return;
             }
@@ -166,17 +165,17 @@ public class EnrollMfaPolicy {
                     })
                     .subscribe(
                             __ -> {
-                                LOGGER.debug("MFA factor with ID [{}] enrolled for user {}", factorId, user.getId());
+                                log.debug("MFA factor with ID [{}] enrolled for user {}", factorId, user.getId());
                                 policyChain.doNext(request, response);
                             },
                             error -> {
-                                LOGGER.error("Unable to enroll MFA factor with ID [{}]", factorId, error.getMessage());
+                                log.error("Unable to enroll MFA factor with ID [{}]", factorId, error.getMessage());
                                 policyChain.failWith(PolicyResult.failure(GATEWAY_POLICY_ENROLL_MFA_ERROR_KEY, error.getMessage()));
                             });
 
 
         } catch (Exception ex) {
-            LOGGER.error("An error has occurred for [enroll-mfa] policy", ex);
+            log.error("An error has occurred for [enroll-mfa] policy", ex);
             policyChain.failWith(PolicyResult.failure(GATEWAY_POLICY_ENROLL_MFA_ERROR_KEY, ex.getMessage()));
         }
     }
@@ -187,7 +186,7 @@ public class EnrollMfaPolicy {
                 // compute value
                 String enrollmentValue = (!ObjectUtils.isEmpty(value)) ? context.getTemplateEngine().getValue(value, String.class) : null;
                 if (!ObjectUtils.isEmpty(value) && ObjectUtils.isEmpty(enrollmentValue)) {
-                    LOGGER.warn("The expression language set up for Enroll MFA has returned nothing");
+                    log.warn("The expression language set up for Enroll MFA has returned nothing");
                 }
                 // create the enrolled factor
                 EnrolledFactor enrolledFactor = new EnrolledFactor();
@@ -228,7 +227,7 @@ public class EnrollMfaPolicy {
                 enrolledFactor.setUpdatedAt(enrolledFactor.getCreatedAt());
                 return Single.just(enrolledFactor);
             } catch (Exception ex) {
-                LOGGER.error("An error has occurred when building the enrolled factor", ex);
+                log.error("An error has occurred when building the enrolled factor", ex);
                 return Single.error(ex);
             }
         });
@@ -248,7 +247,7 @@ public class EnrollMfaPolicy {
                 // compute value
                 String enrollmentValue = (!ObjectUtils.isEmpty(value)) ? context.getTemplateEngine().getValue(value, String.class) : null;
                 if (!ObjectUtils.isEmpty(value) && ObjectUtils.isEmpty(enrollmentValue)) {
-                    LOGGER.warn("The expression language set up for Enroll MFA has returned nothing");
+                    log.warn("The expression language set up for Enroll MFA has returned nothing");
                 }
                 // create the enrolled factor
                 if (UPDATABLE_FACTORS.contains(factor.getFactorType()) && !ObjectUtils.isEmpty(enrollmentValue) && !enrolledFactor.getChannel().getTarget().equals(enrollmentValue)) {
@@ -256,11 +255,11 @@ public class EnrollMfaPolicy {
                     enrolledFactor.setUpdatedAt(new Date());
                     return Maybe.just(enrolledFactor);
                 } else {
-                    LOGGER.debug("Only SMS/CALL/EMAIL factor can be refreshed by EnrollMfa Policy");
+                    log.debug("Only SMS/CALL/EMAIL factor can be refreshed by EnrollMfa Policy");
                 }
                 return Maybe.empty();
             } catch (Exception ex) {
-                LOGGER.error("An error has occurred when building the enrolled factor", ex);
+                log.error("An error has occurred when building the enrolled factor", ex);
                 return Maybe.error(ex);
             }
         });

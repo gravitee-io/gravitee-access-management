@@ -42,8 +42,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -59,10 +58,9 @@ import static java.nio.charset.Charset.defaultCharset;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@Slf4j
 @Component
 public class FormServiceImpl implements FormService {
-
-    private final Logger LOGGER = LoggerFactory.getLogger(FormServiceImpl.class);
 
     @Lazy
     @Autowired
@@ -76,10 +74,10 @@ public class FormServiceImpl implements FormService {
 
     @Override
     public Maybe<Form> findById(String id) {
-        LOGGER.debug("Find form by id {}", id);
+        log.debug("Find form by id {}", id);
         return formRepository.findById(id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a form using its id {}", id, ex);
+                    log.error("An error occurs while trying to find a form using its id {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a form using its id %s", id), ex));
                 });
@@ -87,10 +85,10 @@ public class FormServiceImpl implements FormService {
 
     @Override
     public Flowable<Form> findAll(ReferenceType referenceType, String referenceId) {
-        LOGGER.debug("Find form by {} {}", referenceType, referenceId);
+        log.debug("Find form by {} {}", referenceType, referenceId);
         return formRepository.findAll(referenceType, referenceId)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a form using its {} {}", referenceType, referenceId, ex);
+                    log.error("An error occurs while trying to find a form using its {} {}", referenceType, referenceId, ex);
                     return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a form using its %s %s", referenceType, referenceId), ex));
                 });
@@ -98,7 +96,7 @@ public class FormServiceImpl implements FormService {
 
     @Override
     public Flowable<Form> findAll(ReferenceType referenceType) {
-        LOGGER.debug("Find form by type {}", referenceType);
+        log.debug("Find form by type {}", referenceType);
         return formRepository.findAll(referenceType);
     }
 
@@ -109,10 +107,10 @@ public class FormServiceImpl implements FormService {
 
     @Override
     public Flowable<Form> findByClient(ReferenceType referenceType, String referenceId, String client) {
-        LOGGER.debug("Find form by {} {} and client {}", referenceType, referenceId, client);
+        log.debug("Find form by {} {} and client {}", referenceType, referenceId, client);
         return formRepository.findByClient(referenceType, referenceId, client)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a form using its {} {} and its client {}", referenceType, referenceId, client, ex);
+                    log.error("An error occurs while trying to find a form using its {} {} and its client {}", referenceType, referenceId, client, ex);
                     return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a form using its %s %s and client %s", referenceType, referenceId, client), ex));
                 });
@@ -120,16 +118,16 @@ public class FormServiceImpl implements FormService {
 
     @Override
     public Flowable<Form> findByDomainAndClient(String domain, String client) {
-        LOGGER.debug("Find form by domain {} and client {}", domain, client);
+        log.debug("Find form by domain {} and client {}", domain, client);
         return findByClient(ReferenceType.DOMAIN, domain, client);
     }
 
     @Override
     public Maybe<Form> findByTemplate(ReferenceType referenceType, String referenceId, String template) {
-        LOGGER.debug("Find form by {} {} and template {}", referenceType, referenceId, template);
+        log.debug("Find form by {} {} and template {}", referenceType, referenceId, template);
         return formRepository.findByTemplate(referenceType, referenceId, template)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a form using its {} {} and template {}", referenceType, referenceId, template, ex);
+                    log.error("An error occurs while trying to find a form using its {} {} and template {}", referenceType, referenceId, template, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a form using its domain %s %s and template %s", referenceType, referenceId, template), ex));
                 });
@@ -137,16 +135,16 @@ public class FormServiceImpl implements FormService {
 
     @Override
     public Maybe<Form> findByDomainAndTemplate(String domain, String template) {
-        LOGGER.debug("Find form by domain {} and template {}", domain, template);
+        log.debug("Find form by domain {} and template {}", domain, template);
         return findByTemplate(ReferenceType.DOMAIN, domain, template);
     }
 
     @Override
     public Maybe<Form> findByClientAndTemplate(ReferenceType referenceType, String referenceId, String client, String template) {
-        LOGGER.debug("Find form by {} {}, client {} and template {}", referenceType, referenceId, client, template);
+        log.debug("Find form by {} {}, client {} and template {}", referenceType, referenceId, client, template);
         return formRepository.findByClientAndTemplate(referenceType, referenceId, client, template)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a form using its {} {} its client {} and template {}", referenceType, referenceId, client, template, ex);
+                    log.error("An error occurs while trying to find a form using its {} {} its client {} and template {}", referenceType, referenceId, client, template, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a form using its %s %s its client %s and template %s", referenceType, referenceId, client, template), ex));
                 });
@@ -154,7 +152,7 @@ public class FormServiceImpl implements FormService {
 
     @Override
     public Maybe<Form> findByDomainAndClientAndTemplate(String domain, String client, String template) {
-        LOGGER.debug("Find form by domain {}, client {} and template {}", domain, client, template);
+        log.debug("Find form by domain {}, client {} and template {}", domain, client, template);
         return findByClientAndTemplate(ReferenceType.DOMAIN, domain, client, template);
     }
 
@@ -174,25 +172,25 @@ public class FormServiceImpl implements FormService {
 
     @Override
     public Single<Form> create(ReferenceType referenceType, String referenceId, NewForm newForm, User principal) {
-        LOGGER.debug("Create a new form {} for {} {}", newForm, referenceType, referenceId);
+        log.debug("Create a new form {} for {} {}", newForm, referenceType, referenceId);
         return create0(referenceType, referenceId, null, newForm, principal);
     }
 
     @Override
     public Single<Form> create(String domain, NewForm newForm, User principal) {
-        LOGGER.debug("Create a new form {} for domain {}", newForm, domain);
+        log.debug("Create a new form {} for domain {}", newForm, domain);
         return create0(ReferenceType.DOMAIN, domain, null, newForm, principal);
     }
 
     @Override
     public Single<Form> create(String domain, String client, NewForm newForm, User principal) {
-        LOGGER.debug("Create a new form {} for domain {} and client {}", newForm, domain, client);
+        log.debug("Create a new form {} for domain {} and client {}", newForm, domain, client);
         return create0(ReferenceType.DOMAIN, domain, client, newForm, principal);
     }
 
     @Override
     public Single<Form> update(ReferenceType referenceType, String referenceId, String id, UpdateForm updateForm, User principal) {
-        LOGGER.debug("Update a form {} for {}} {}", id, referenceType, referenceId);
+        log.debug("Update a form {} for {}} {}", id, referenceType, referenceId);
 
         return formRepository.findById(referenceType, referenceId, id)
                 .switchIfEmpty(Single.error(new FormNotFoundException(id)))
@@ -217,20 +215,20 @@ public class FormServiceImpl implements FormService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to update a form", ex);
+                    log.error("An error occurs while trying to update a form", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a form", ex));
                 });
     }
 
     @Override
     public Single<Form> update(String domain, String id, UpdateForm updateForm, User principal) {
-        LOGGER.debug("Update a form {} for domain {}", id, domain);
+        log.debug("Update a form {} for domain {}", id, domain);
         return update(ReferenceType.DOMAIN, domain, id, updateForm, principal);
     }
 
     @Override
     public Single<Form> update(String domain, String client, String id, UpdateForm updateForm, User principal) {
-        LOGGER.debug("Update a form {} for domain {} and client {}", id, domain, client);
+        log.debug("Update a form {} for domain {} and client {}", id, domain, client);
         return update(ReferenceType.DOMAIN, domain, id, updateForm, principal);
     }
 
@@ -263,7 +261,7 @@ public class FormServiceImpl implements FormService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to create a form", ex);
+                    log.error("An error occurs while trying to create a form", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a form", ex));
                 })
                 .doOnSuccess(form -> auditService.report(AuditBuilder.builder(FormTemplateAuditBuilder.class).principal(principal).type(EventType.FORM_TEMPLATE_CREATED).form(form)))
@@ -272,7 +270,7 @@ public class FormServiceImpl implements FormService {
 
     @Override
     public Completable delete(ReferenceType referenceType, String referenceId, String formId, User principal) {
-        LOGGER.debug("Delete form {}", formId);
+        log.debug("Delete form {}", formId);
         return formRepository.findById(referenceType, referenceId, formId)
                 .switchIfEmpty(Maybe.error(new FormNotFoundException(formId)))
                 .flatMapCompletable(page -> {
@@ -289,7 +287,7 @@ public class FormServiceImpl implements FormService {
                         return Completable.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to delete form: {}", formId, ex);
+                    log.error("An error occurs while trying to delete form: {}", formId, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete form: %s", formId), ex));
                 });
@@ -303,7 +301,7 @@ public class FormServiceImpl implements FormService {
 
     @Override
     public Single<Form> getDefaultByDomainAndTemplate(String domain, String template) {
-        LOGGER.debug("Default form by domain {} and template {}", domain, template);
+        log.debug("Default form by domain {} and template {}", domain, template);
 
         return Single.create(emitter -> {
             final String path = "views/default/" + template + ".html";

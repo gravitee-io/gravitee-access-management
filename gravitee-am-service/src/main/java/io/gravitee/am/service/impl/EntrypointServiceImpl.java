@@ -34,8 +34,7 @@ import io.gravitee.common.utils.UUID;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -52,10 +51,9 @@ import java.util.List;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 @Component
 public class EntrypointServiceImpl implements EntrypointService {
-
-    private final Logger LOGGER = LoggerFactory.getLogger(EntrypointServiceImpl.class);
 
     private final EntrypointRepository entrypointRepository;
     private final OrganizationService organizationService;
@@ -78,7 +76,7 @@ public class EntrypointServiceImpl implements EntrypointService {
     @Override
     public Single<Entrypoint> findById(String id, String organizationId) {
 
-        LOGGER.debug("Find entrypoint by id {} and organizationId {}", id, organizationId);
+        log.debug("Find entrypoint by id {} and organizationId {}", id, organizationId);
 
         return entrypointRepository.findById(id, organizationId)
                 .switchIfEmpty(Single.error(new EntrypointNotFoundException(id)));
@@ -87,7 +85,7 @@ public class EntrypointServiceImpl implements EntrypointService {
     @Override
     public Flowable<Entrypoint> findAll(String organizationId) {
 
-        LOGGER.debug("Find all entrypoints by organizationId {}", organizationId);
+        log.debug("Find all entrypoints by organizationId {}", organizationId);
 
         return entrypointRepository.findAll(organizationId);
     }
@@ -95,7 +93,7 @@ public class EntrypointServiceImpl implements EntrypointService {
     @Override
     public Single<Entrypoint> create(String organizationId, NewEntrypoint newEntrypoint, User principal) {
 
-        LOGGER.debug("Create a new entrypoint {} for organization {}", newEntrypoint, organizationId);
+        log.debug("Create a new entrypoint {} for organization {}", newEntrypoint, organizationId);
 
         Entrypoint toCreate = new Entrypoint();
         toCreate.setOrganizationId(organizationId);
@@ -142,7 +140,7 @@ public class EntrypointServiceImpl implements EntrypointService {
     @Override
     public Single<Entrypoint> update(String entrypointId, String organizationId, UpdateEntrypoint updateEntrypoint, User principal) {
 
-        LOGGER.debug("Update an existing entrypoint {}", updateEntrypoint);
+        log.debug("Update an existing entrypoint {}", updateEntrypoint);
 
         return findById(entrypointId, organizationId)
                 .flatMap(oldEntrypoint -> {
@@ -163,7 +161,7 @@ public class EntrypointServiceImpl implements EntrypointService {
     @Override
     public Completable delete(String id, String organizationId, User principal) {
 
-        LOGGER.debug("Delete entrypoint by id {} and organizationId {}", id, organizationId);
+        log.debug("Delete entrypoint by id {} and organizationId {}", id, organizationId);
 
         return findById(id, organizationId)
                 .flatMapCompletable(entrypoint -> entrypointRepository.delete(id)
@@ -191,14 +189,12 @@ public class EntrypointServiceImpl implements EntrypointService {
 
     private Completable validate(Entrypoint entrypoint, Entrypoint oldEntrypoint) {
 
-        if (oldEntrypoint != null && oldEntrypoint.isDefaultEntrypoint()) {
-            // Only the url of the default entrypoint can be updated.
-            if (!entrypoint.getName().equals(oldEntrypoint.getName())
+        if (oldEntrypoint != null && oldEntrypoint.isDefaultEntrypoint() && (!entrypoint.getName().equals(oldEntrypoint.getName())
                     || !entrypoint.getDescription().equals(oldEntrypoint.getDescription())
-                    || !entrypoint.getTags().equals(oldEntrypoint.getTags())) {
+                    || !entrypoint.getTags().equals(oldEntrypoint.getTags()))) {
                 return Completable.error(new InvalidEntrypointException("Only the url of the default entrypoint can be updated."));
             }
-        }
+
 
         try {
             // Try to instantiate uri to check if it's a valid endpoint url.

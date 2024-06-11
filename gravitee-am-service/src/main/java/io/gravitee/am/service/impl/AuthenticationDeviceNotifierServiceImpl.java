@@ -40,8 +40,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -52,12 +51,9 @@ import java.util.Date;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 @Component
 public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDeviceNotifierService {
-    /**
-     * Logger.
-     */
-    private final Logger LOGGER = LoggerFactory.getLogger(AuthenticationDeviceNotifierServiceImpl.class);
 
     @Lazy
     @Autowired
@@ -71,10 +67,10 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
 
     @Override
     public Maybe<AuthenticationDeviceNotifier> findById(String id) {
-        LOGGER.debug("Find authentication device notifier by ID: {}", id);
+        log.debug("Find authentication device notifier by ID: {}", id);
         return adNotifierRepository.findById(id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find an authentication device notifier using its ID: {}", id, ex);
+                    log.error("An error occurs while trying to find an authentication device notifier using its ID: {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find an authentication device notifier using its ID: %s", id), ex));
                 });
@@ -82,17 +78,17 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
 
     @Override
     public Flowable<AuthenticationDeviceNotifier> findByDomain(String domain) {
-        LOGGER.debug("Find authentication device notifiers by domain: {}", domain);
+        log.debug("Find authentication device notifiers by domain: {}", domain);
         return adNotifierRepository.findByReference(ReferenceType.DOMAIN, domain)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find authentication device notifiers by domain", ex);
+                    log.error("An error occurs while trying to find authentication device notifiers by domain", ex);
                     return Flowable.error(new TechnicalManagementException("An error occurs while trying to find authentication device notifiers by domain", ex));
                 });
     }
 
     @Override
     public Single<AuthenticationDeviceNotifier> create(String domain, NewAuthenticationDeviceNotifier newADNotifier, User principal) {
-        LOGGER.debug("Create a new authentication device notifier {} for domain {}", newADNotifier, domain);
+        log.debug("Create a new authentication device notifier {} for domain {}", newADNotifier, domain);
 
         AuthenticationDeviceNotifier notifier = new AuthenticationDeviceNotifier();
         notifier.setId(newADNotifier.getId() == null ? RandomString.generate() : newADNotifier.getId());
@@ -115,7 +111,7 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to create a notifier", ex);
+                    log.error("An error occurs while trying to create a notifier", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a notifier", ex));
                 })
                 .doOnSuccess(authDeviceNotifier -> auditService.report(AuditBuilder.builder(AuthDeviceNotifierAuditBuilder.class).principal(principal).type(EventType.AUTH_DEVICE_NOTIFIER_CREATED).authDeviceNotifier(authDeviceNotifier)))
@@ -124,7 +120,7 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
 
     @Override
     public Single<AuthenticationDeviceNotifier> update(String domain, String id, UpdateAuthenticationDeviceNotifier updateNotifier, User principal) {
-        LOGGER.debug("Update AuthenticationDevice Notifier {} for domain {}", id, domain);
+        log.debug("Update AuthenticationDevice Notifier {} for domain {}", id, domain);
 
         return adNotifierRepository.findById(id)
                 .switchIfEmpty(Single.error(new BotDetectionNotFoundException(id)))
@@ -148,14 +144,14 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to update authentication device notifier", ex);
+                    log.error("An error occurs while trying to update authentication device notifier", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update authentication device notifier", ex));
                 });
     }
 
     @Override
     public Completable delete(String domainId, String notifierId, User principal) {
-        LOGGER.debug("Delete authentication device notifier {}", notifierId);
+        log.debug("Delete authentication device notifier {}", notifierId);
 
         return adNotifierRepository.findById(notifierId)
                 .switchIfEmpty(Maybe.error(new AuthenticationDeviceNotifierNotFoundException(notifierId)))
@@ -172,7 +168,7 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
                         return Completable.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to delete authentication device notifier: {}", notifierId, ex);
+                    log.error("An error occurs while trying to delete authentication device notifier: {}", notifierId, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete authentication device notifier: %s", notifierId), ex));
                 });

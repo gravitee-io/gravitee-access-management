@@ -151,7 +151,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
         return extensionGrantRepository.findById(id)
                 .switchIfEmpty(Single.error(new ExtensionGrantNotFoundException(id)))
                 .flatMap(tokenGranter -> extensionGrantRepository.findByDomainAndName(domain, updateExtensionGrant.getName())
-                        .map(extensionGrant -> Optional.of(extensionGrant))
+                        .map(Optional::of)
                         .defaultIfEmpty(Optional.empty())
                         .flatMap(existingTokenGranter -> {
                             if (existingTokenGranter.isPresent() && !existingTokenGranter.get().getId().equals(id)) {
@@ -196,7 +196,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                 // check for clients using this extension grant
                 .flatMapSingle(extensionGrant -> applicationService.findByDomainAndExtensionGrant(domain, extensionGrant.getGrantType() + "~" + extensionGrant.getId())
                         .flatMap(applications -> {
-                            if (applications.size() > 0) {
+                            if (!applications.isEmpty()) {
                                 throw new ExtensionGrantWithApplicationsException();
                             }
                             // backward compatibility, check for old clients configuration
@@ -204,7 +204,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                                     applicationService.findByDomainAndExtensionGrant(domain, extensionGrant.getGrantType()),
                                     findByDomain(domain).toList(),
                                     (clients1, extensionGrants) -> {
-                                        if (clients1.size() == 0) {
+                                        if (clients1.isEmpty()) {
                                             return extensionGrant;
                                         }
                                         // if clients use this grant_type, check it is the oldest one

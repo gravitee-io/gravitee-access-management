@@ -61,13 +61,13 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
  * @author GraviteeSource Team
  */
 public class MongoFactory implements FactoryBean<MongoClient> {
-    public static final String PASSWORD = "password";
-    public static final String SERVERS = "servers[";
-    private final String DEFAULT_TLS_PROTOCOL = "TLSv1.2";
+    private static final String PASSWORD = "password";
+    private static final String SERVERS = "servers[";
+    private static final String DEFAULT_TLS_PROTOCOL = "TLSv1.2";
 
     private final Logger logger = LoggerFactory.getLogger(MongoFactory.class);
 
-    private Environment environment;
+    private final Environment environment;
 
     private final String propertyPrefix;
 
@@ -243,8 +243,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
                 throw new IllegalStateException("Error creating the SSLContext for mongodb", e);
             }
         }
-        final SslSettings sslSettings = sslBuilder.build();
-        return sslSettings;
+        return sslBuilder.build();
     }
 
     private ServerSettings buildServerSettings() {

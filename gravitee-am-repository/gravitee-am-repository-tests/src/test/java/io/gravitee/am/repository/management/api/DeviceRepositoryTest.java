@@ -55,7 +55,7 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFindByDomainAndApplicationAndUser_expired() throws Exception {
+    public void testNotFindByDomainAndApplicationAndUser_expired() {
         Device device = buildDevice(new Date(System.currentTimeMillis() - 10000));
         Device createdDevice = repository.create(device).blockingGet();
 

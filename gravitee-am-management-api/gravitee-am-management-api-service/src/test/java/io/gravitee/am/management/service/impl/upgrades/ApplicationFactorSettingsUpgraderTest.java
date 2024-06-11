@@ -362,7 +362,7 @@ import static org.mockito.Mockito.when;
         final SystemTask task = new SystemTask();
         task.setStatus(SystemTaskStatus.INITIALIZED.name());
         when(systemTaskRepository.create(any())).thenReturn(Single.just(task));
-        when(systemTaskRepository.updateIf(any(), anyString())).thenAnswer((args) -> {
+        when(systemTaskRepository.updateIf(any(), anyString())).thenAnswer(args -> {
             SystemTask sysTask = args.getArgument(0);
             sysTask.setOperationId(args.getArgument(1));
             return Single.just(sysTask);

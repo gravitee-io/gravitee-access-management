@@ -71,7 +71,7 @@ public class UsernameUniquenessMigration implements CustomSqlChange {
                 User referenceUser = duplicates.get(0);
 
                 PreparedStatement searchIdentityProviderStmt = connection.prepareStatement("select * from identities where id = ? ");
-                searchIdentityProviderStmt.setString((int)1, referenceUser.getSource());
+                searchIdentityProviderStmt.setString(1, referenceUser.getSource());
                 ResultSet idpResult = searchIdentityProviderStmt.executeQuery();
                 if (!idpResult.next()) {
                     logger.error("Username '{}' can't be processed due to unknown identity provider with id '{}'",

@@ -64,7 +64,7 @@ public class ClientTest {
     }
 
     @Test
-    public void testGetFactors_based_on_ApplicationFactorSetting() throws CloneNotSupportedException {
+    public void testGetFactors_based_on_ApplicationFactorSetting() {
         final var client = new Client();
         final var factorSettings = new FactorSettings();
         final var appSettings = new ApplicationFactorSettings();
@@ -79,7 +79,7 @@ public class ClientTest {
     }
 
     @Test
-    public void testGetFactors_fallback_on_deprecated_if_factorSettings_is_missing() throws CloneNotSupportedException {
+    public void testGetFactors_fallback_on_deprecated_if_factorSettings_is_missing() {
         final var client = new Client();
         final var factorSettings = new FactorSettings();
         client.setFactorSettings(factorSettings);
@@ -90,7 +90,7 @@ public class ClientTest {
     }
 
     @Test
-    public void testSafeClone() throws CloneNotSupportedException{
+    public void testSafeClone() {
         Client from = new Client();
         from.setClientName("original");
         from.setRedirectUris(Stream.of("http://host/callback","http://host/login").collect(Collectors.toList()));

@@ -37,7 +37,7 @@ import java.util.concurrent.Executors;
  */
 public class SmtpResourceProvider implements EmailSenderProvider {
 
-    private final static String MAILAPI_PROPERTIES_PREFIX = "mail.";
+    private static final String MAILAPI_PROPERTIES_PREFIX = "mail.";
 
     @Autowired
     private SmtpResourceConfiguration configuration;

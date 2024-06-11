@@ -229,7 +229,7 @@ public class PolicyPluginServiceTest {
     }
 
     @Test
-    void must_accept_deployed_plugins() throws IOException {
+    void must_accept_deployed_plugins() {
         String pluginId = "pluginId";
 
         DummyPolicy policy = new DummyPolicy(new DummyManifest(pluginId), true);
@@ -242,7 +242,7 @@ public class PolicyPluginServiceTest {
     }
 
     @Test
-    void must_reject_not_deployed_plugins() throws IOException {
+    void must_reject_not_deployed_plugins() {
         String pluginId = "pluginId";
 
         DummyPolicy policy = new DummyPolicy(new DummyManifest(pluginId), false);
@@ -254,7 +254,7 @@ public class PolicyPluginServiceTest {
     }
 
     @Test
-    void must_reject_unknown_plugin() throws IOException {
+    void must_reject_unknown_plugin() {
         String pluginId = "pluginId";
 
         when(policyPluginManager.get(pluginId)).thenReturn(null);

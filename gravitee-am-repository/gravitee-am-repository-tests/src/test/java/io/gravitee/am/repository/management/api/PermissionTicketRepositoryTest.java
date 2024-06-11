@@ -17,7 +17,6 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.model.uma.PermissionTicket;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
@@ -38,7 +37,7 @@ public class PermissionTicketRepositoryTest extends AbstractManagementTest {
     private static final PermissionRequest permission = new PermissionRequest().setResourceId("one").setResourceScopes(Arrays.asList("a","b"));
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindById() {
         // create permission_ticket
         PermissionTicket permissionTicket = new PermissionTicket().setPermissionRequest(Arrays.asList(permission));
         PermissionTicket ptCreated = repository.create(permissionTicket).blockingGet();
@@ -53,7 +52,7 @@ public class PermissionTicketRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void update() throws TechnicalException {
+    public void update() {
         // create resource_set, resource_scopes being the most important field.
         PermissionRequest source = new PermissionRequest().setResourceId("one").setResourceScopes(Arrays.asList("c","d"));
         PermissionTicket permissionTicket = new PermissionTicket().setPermissionRequest(Arrays.asList(source));
@@ -70,7 +69,7 @@ public class PermissionTicketRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void delete() throws TechnicalException {
+    public void delete() {
         // create permission_ticket
         PermissionTicket permissionTicket = new PermissionTicket().setPermissionRequest(Arrays.asList(permission));
         PermissionTicket ptCreated = repository.create(permissionTicket).blockingGet();

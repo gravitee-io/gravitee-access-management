@@ -220,7 +220,7 @@ public class MembershipServiceImpl implements MembershipService {
         List<String> roleIds = memberships.stream().map(Membership::getRoleId).distinct().collect(Collectors.toList());
 
         return Single.zip(orgUserService.findByIdIn(userIds).toMap(io.gravitee.am.model.User::getId, this::convert),
-                groupService.findByIdIn(groupIds).toMap(Group::getId, g -> this.convert(g)),
+                groupService.findByIdIn(groupIds).toMap(Group::getId, this::convert),
                 roleService.findByIdIn(roleIds), (users, groups, roles) -> {
             Map<String, Map<String, Object>> metadata = new HashMap<>();
             metadata.put("users", (Map)users);

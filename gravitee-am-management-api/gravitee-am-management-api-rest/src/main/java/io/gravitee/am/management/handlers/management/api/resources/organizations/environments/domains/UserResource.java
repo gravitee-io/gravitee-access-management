@@ -238,7 +238,7 @@ public class UserResource extends AbstractResource {
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(irrelevant -> userService.delete(ReferenceType.DOMAIN, domain, user, authenticatedUser)))
-                .subscribe((u) -> response.resume(Response.noContent().build()), response::resume);
+                .subscribe(u -> response.resume(Response.noContent().build()), response::resume);
     }
 
     @POST

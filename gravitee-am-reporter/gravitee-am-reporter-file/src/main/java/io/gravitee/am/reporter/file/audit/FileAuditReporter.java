@@ -214,7 +214,7 @@ public class FileAuditReporter extends AbstractService<Reporter> implements Audi
 
         Future writerInitialization = writer.initialize();
         writerInitialization.onComplete(__ -> LOGGER.info("File reporter successfully started"));
-        writerInitialization.onFailure((error) -> {
+        writerInitialization.onFailure(error -> {
             LOGGER.warn("An error occurs while starting file reporter", error);
             throw new FileReporterInitializationException("An error occurs while starting file reporter [" + filename + "]");
         });

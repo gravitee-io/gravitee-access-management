@@ -48,18 +48,18 @@ public class SmtpResourceValidatorTest {
     private SmtpResourceValidator smtpResourceValidator;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         smtpResourceValidator = new SmtpResourceValidatorImpl(new ObjectMapper(), emailDomainValidator);
     }
 
     @Test
-    public void must_not_validate_invalid() {
+    void must_not_validate_invalid() {
         assertTrue(smtpResourceValidator.validate(new ResourceHolder("other-policy", "{}")).isEmpty());
     }
 
     @ParameterizedTest
     @MethodSource("params_that_must_validate_regarding_configuration")
-    public void must_validate_invalid_regarding_configuration(String pattern, String configuration, boolean expected) {
+    void must_validate_invalid_regarding_configuration(String pattern, String configuration, boolean expected) {
         var resourceHolder = new ResourceHolder(SmtpResourceValidatorImpl.SMTP_AM_RESOURCE, configuration);
         when(emailDomainValidator.validate(eq(pattern))).thenReturn(expected);
 

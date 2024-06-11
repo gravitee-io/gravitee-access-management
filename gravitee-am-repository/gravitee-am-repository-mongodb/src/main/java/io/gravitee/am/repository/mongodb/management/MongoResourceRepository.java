@@ -30,8 +30,6 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.PostConstruct;
 
-import java.util.stream.Collectors;
-
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 

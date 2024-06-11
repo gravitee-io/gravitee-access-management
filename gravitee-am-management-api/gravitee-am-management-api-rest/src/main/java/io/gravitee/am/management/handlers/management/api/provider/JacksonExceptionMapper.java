@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
  */
 @Provider
 public class JacksonExceptionMapper extends AbstractExceptionMapper<JacksonException> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(JacksonException.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JacksonExceptionMapper.class);
 
     @Override
     public Response toResponse(JacksonException e) {

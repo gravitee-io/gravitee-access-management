@@ -36,7 +36,7 @@ public class NotificationAcknowledgeRepositoryTest extends AbstractManagementTes
     private NotificationAcknowledgeRepository repository;
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindById() {
         NotificationAcknowledge acknowledge = new NotificationAcknowledge();
         acknowledge.setId("testid");
         acknowledge.setType("email-notifier");
@@ -57,7 +57,7 @@ public class NotificationAcknowledgeRepositoryTest extends AbstractManagementTes
     }
 
     @Test
-    public void testUpdate() throws TechnicalException {
+    public void testUpdate() {
         NotificationAcknowledge acknowledge = new NotificationAcknowledge();
         acknowledge.setId("testid");
         acknowledge.setType("email-notifier");
@@ -97,7 +97,7 @@ public class NotificationAcknowledgeRepositoryTest extends AbstractManagementTes
     }
 
     @Test
-    public void testFindByResourceIdAndTypeAndAudienceId() throws TechnicalException {
+    public void testFindByResourceIdAndTypeAndAudienceId() {
         NotificationAcknowledge acknowledge = new NotificationAcknowledge();
         acknowledge.setId("testid");
         acknowledge.setType("email-notifier");
@@ -118,14 +118,14 @@ public class NotificationAcknowledgeRepositoryTest extends AbstractManagementTes
     }
 
     @Test
-    public void testNotFound() throws TechnicalException {
+    public void testNotFound() {
         final TestObserver<NotificationAcknowledge> test = repository.findByResourceIdAndTypeAndAudienceId("unknown", "unknown", "unknown", "unknonwn").test();
         test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoValues();
     }
 
     @Test
-    public void testDelete() throws TechnicalException {
+    public void testDelete() {
         NotificationAcknowledge acknowledge = new NotificationAcknowledge();
         acknowledge.setId("testid");
         acknowledge.setType("email-notifier");

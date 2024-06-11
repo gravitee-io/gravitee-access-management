@@ -66,7 +66,7 @@ public class ScopeUpgrader implements Upgrader, Ordered {
     public boolean upgrade() {
         logger.info("Applying scope upgrade");
         domainService.listAll()
-                .flatMapSingle(domain -> upgradeDomain(domain))
+                .flatMapSingle(this::upgradeDomain)
                 .subscribe();
         return true;
     }

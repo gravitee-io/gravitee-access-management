@@ -699,7 +699,7 @@ public class ScopeServiceTest {
     }
 
     @Test
-    public void shouldNotDeleteSystemScope() throws TechnicalException {
+    public void shouldNotDeleteSystemScope() {
         Scope scope = new Scope();
         scope.setKey("scope-key");
         scope.setSystem(true);

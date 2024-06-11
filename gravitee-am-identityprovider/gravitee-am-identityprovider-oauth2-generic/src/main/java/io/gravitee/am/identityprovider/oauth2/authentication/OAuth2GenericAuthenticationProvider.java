@@ -83,7 +83,7 @@ public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAu
     }
 
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
         OAuth2GenericIdentityProviderConfiguration configuration = this.configuration;
 
         // check configuration
@@ -100,7 +100,7 @@ public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAu
         // fetch OpenID Provider information
         final RetryWithDelay retryHandler = new RetryWithDelay();
         return Completable.fromAction(() -> getOpenIDProviderConfiguration(configuration))
-                .doOnError((error) -> LOGGER.warn("Unable to load configuration from '{}' due to : {}", configuration.getWellKnownUri(), error.getMessage()))
+                .doOnError(error -> LOGGER.warn("Unable to load configuration from '{}' due to : {}", configuration.getWellKnownUri(), error.getMessage()))
                 .retryWhen(retryHandler)
                 .andThen(Completable.fromAction(this::generateJWTProcessor));
     }

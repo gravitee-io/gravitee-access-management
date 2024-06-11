@@ -121,9 +121,9 @@ public abstract class SystemTaskUpgrader implements Upgrader, Ordered {
         }
 
         @Override
-        public Publisher<?> apply(@NonNull Flowable<Throwable> attempts) throws Exception {
+        public Publisher<?> apply(@NonNull Flowable<Throwable> attempts) {
             return attempts
-                    .flatMap((throwable) -> {
+                    .flatMap(throwable -> {
                         if (++retryCount < maxRetries) {
                             // When this Observable calls onNext, the original
                             // Observable will be retried (i.e. re-subscribed).

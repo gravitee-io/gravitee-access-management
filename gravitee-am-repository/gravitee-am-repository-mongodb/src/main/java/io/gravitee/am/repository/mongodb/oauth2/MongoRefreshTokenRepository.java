@@ -61,14 +61,6 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
         super.createIndex(refreshTokenCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().name("e1").expireAfter(0L, TimeUnit.SECONDS));
     }
 
-    private Maybe<RefreshToken> findById(String id) {
-        return Observable
-                .fromPublisher(refreshTokenCollection.find(and(eq(FIELD_ID, id),
-                        or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))).first())
-                .firstElement()
-                .map(this::convert);
-    }
-
     @Override
     public Maybe<RefreshToken> findByToken(String token) {
         return Observable

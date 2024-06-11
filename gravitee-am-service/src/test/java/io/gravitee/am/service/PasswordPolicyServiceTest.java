@@ -778,10 +778,10 @@ public class PasswordPolicyServiceTest {
         verify(auditService, times(2)).report(ArgumentMatchers.argThat(builder -> builder.build(MAPPER).getOutcome().getStatus().equals(Status.SUCCESS)));
         List<Event> allValues = eventArgumentCaptor.getAllValues();
         Assertions.assertEquals(allValues.size(), 2);
-        Assertions.assertEquals(allValues.get(0).getPayload().getAction(), Action.DELETE);
-        Assertions.assertEquals(allValues.get(0).getType(), Type.PASSWORD_POLICY);
-        Assertions.assertEquals(allValues.get(1).getPayload().getAction(), Action.UPDATE);
-        Assertions.assertEquals(allValues.get(1).getType(), Type.PASSWORD_POLICY);
+        Assertions.assertEquals(Action.DELETE, allValues.get(0).getPayload().getAction());
+        Assertions.assertEquals(Type.PASSWORD_POLICY, allValues.get(0).getType());
+        Assertions.assertEquals(Action.UPDATE, allValues.get(1).getPayload().getAction());
+        Assertions.assertEquals(Type.PASSWORD_POLICY, allValues.get(1).getType());
 
 
     }
