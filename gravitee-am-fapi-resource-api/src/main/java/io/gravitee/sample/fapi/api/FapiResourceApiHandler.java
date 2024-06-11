@@ -46,9 +46,9 @@ public class FapiResourceApiHandler implements Handler<RoutingContext> {
             String thumbprint256 = getThumbprint(x509Certificate.get(), "SHA-256");
 
             final String auth = routingContext.request().getHeader(HttpHeaders.AUTHORIZATION);
-            if (auth != null && auth.startsWith("Bearer ")) {
+            if (auth != null && auth.toLowerCase().startsWith("bearer ")) {
 
-                String jwtString = auth.replaceFirst("Bearer ", "");
+                String jwtString = auth.substring(auth.trim().indexOf(' ')+1);
                 final JsonObject jwt = JWT.parse(jwtString).getJsonObject("payload");
 
                 if (jwt.containsKey("cnf") && thumbprint256.equals(jwt.getJsonObject("cnf").getString("x5t#S256"))) {
@@ -62,7 +62,10 @@ public class FapiResourceApiHandler implements Handler<RoutingContext> {
                             .putHeader("x-fapi-interaction-id", Optional.ofNullable(routingContext.request().getHeader("x-fapi-interaction-id")).orElse(UUID.randomUUID().toString()))
                             .setStatusCode(statusCode)
                             .end(jwt.encodePrettily()); // return JWT as JSON object
+                    return;
                 }
+            } else {
+                LOGGER.debug("Unauthorized request: missing Authorization header");
             }
 
             // default response unauthorized

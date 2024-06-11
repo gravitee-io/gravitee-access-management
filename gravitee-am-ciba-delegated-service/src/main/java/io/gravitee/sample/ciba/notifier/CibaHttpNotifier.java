@@ -19,14 +19,17 @@ import io.gravitee.sample.ciba.notifier.http.CibaNotifierApiHandler;
 import io.gravitee.sample.ciba.notifier.http.CibaNotifierWebSockerHandler;
 import io.gravitee.sample.ciba.notifier.http.domain.CibaDomainManager;
 import io.gravitee.sample.ciba.notifier.http.domain.CibaDomainManagerHandler;
+import io.gravitee.sample.ciba.notifier.http.mock.CibaAutomatedTestActionApiHandler;
 import io.gravitee.sample.ciba.notifier.http.mock.CibaMockNotifierApiHandler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.net.JksOptions;
+import io.vertx.core.net.PemKeyCertOptions;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 import org.apache.commons.cli.*;
@@ -54,6 +57,9 @@ public class CibaHttpNotifier {
     public static final String CONF_KEY_STORE_PATH = "keyStorePath";
     public static final String CONF_KEY_STORE_TYPE = "keyStoreType";
     public static final String CONF_KEY_STORE_PASSWORD = "keyStorePassword";
+    public static final String CONF_CLIENT_KEY_STORE_PATH = "clientKeyStorePath";
+    public static final String CONF_CLIENT_KEY_STORE_TYPE = "clientKeyStoreType";
+    public static final String CONF_CLIENT_KEY_STORE_PASSWORD = "clientKeyStorePassword";
     public static final String CONF_CERT_HEADER = "certificateHeader";
     public static final String PATH_CIBA_NOTIFY = "/ciba/notify";
     public static final String PATH_CIBA_DOMAINS = "/ciba/domains";
@@ -63,6 +69,7 @@ public class CibaHttpNotifier {
         CommandLine cmd = parseArgs(args);
 
         HttpServerOptions options = buildHttpOptions(cmd);
+        WebClientOptions clientOptions = buildClientHttpOptions(cmd);
 
         Vertx vertx = Vertx.vertx();
         HttpServer server = vertx.createHttpServer(options);
@@ -72,19 +79,25 @@ public class CibaHttpNotifier {
 
         CibaDomainManager domainManager = new CibaDomainManager();
 
+        router.route(PATH_CIBA_NOTIFY + "/actionize")
+                .method(POST)
+                .produces("application/json")
+                .handler(BodyHandler.create())
+                .handler(new CibaAutomatedTestActionApiHandler(domainManager, vertx, clientOptions));
+
         router.route(PATH_CIBA_NOTIFY + "/accept-all")
                 .method(POST)
                 .consumes("application/x-www-form-urlencoded")
                 .produces("application/json")
                 .handler(BodyHandler.create())
-                .handler(new CibaMockNotifierApiHandler(true, cmd, domainManager, vertx));
+                .handler(new CibaMockNotifierApiHandler(true, cmd, domainManager, vertx, clientOptions));
 
         router.route(PATH_CIBA_NOTIFY + "/reject-all")
                 .method(POST)
                 .consumes("application/x-www-form-urlencoded")
                 .produces("application/json")
                 .handler(BodyHandler.create())
-                .handler(new CibaMockNotifierApiHandler(false, cmd, domainManager, vertx));
+                .handler(new CibaMockNotifierApiHandler(false, cmd, domainManager, vertx, clientOptions));
 
         router.route(PATH_CIBA_DOMAINS)
                 .method(POST)
@@ -99,7 +112,7 @@ public class CibaHttpNotifier {
                 .handler(BodyHandler.create())
                 .handler(new CibaNotifierApiHandler(cmd, vertx));
 
-        server.webSocketHandler(new CibaNotifierWebSockerHandler(vertx, domainManager));
+        server.webSocketHandler(new CibaNotifierWebSockerHandler(vertx, domainManager, clientOptions));
 
         server.requestHandler(router)
                 .listen();
@@ -140,6 +153,26 @@ public class CibaHttpNotifier {
                 options.setKeyStoreOptions(new JksOptions()
                         .setPath(cmd.getOptionValue(CONF_KEY_STORE_PATH))
                         .setPassword(cmd.getOptionValue(CONF_KEY_STORE_PASSWORD)));
+            }
+        }
+
+        return options;
+    }
+
+    private static WebClientOptions buildClientHttpOptions(CommandLine cmd) {
+        WebClientOptions options = new WebClientOptions().setUserAgent("AM CIBA Delegate HTTP Service / Conformance Automated Test");
+        options.setKeepAlive(false);
+        options.setSsl(cmd.getOptionValue(CONF_CLIENT_KEY_STORE_TYPE) != null);
+
+        if (options.isSsl()) {
+            if (cmd.getOptionValue(CONF_CLIENT_KEY_STORE_TYPE).equalsIgnoreCase("pkcs12")) {
+                options.setPfxKeyCertOptions(new PfxOptions()
+                        .setPath(cmd.getOptionValue(CONF_CLIENT_KEY_STORE_PATH))
+                        .setPassword(cmd.getOptionValue(CONF_CLIENT_KEY_STORE_PASSWORD)));
+            } else {
+                options.setKeyStoreOptions(new JksOptions()
+                        .setPath(cmd.getOptionValue(CONF_CLIENT_KEY_STORE_PATH))
+                        .setPassword(cmd.getOptionValue(CONF_CLIENT_KEY_STORE_PASSWORD)));
             }
         }
 
@@ -191,6 +224,18 @@ public class CibaHttpNotifier {
         final Option keystore_password = new Option(CONF_KEY_STORE_PASSWORD, true, "keystore password");
         keystore_password.setRequired(false);
         options.addOption(keystore_password);
+
+        final Option client_keystore_path = new Option(CONF_CLIENT_KEY_STORE_PATH, true, "Client keystore path");
+        client_keystore_path.setRequired(false);
+        options.addOption(client_keystore_path);
+
+        final Option client_keystore_type = new Option(CONF_CLIENT_KEY_STORE_TYPE, true, "Client keystore type");
+        client_keystore_type.setRequired(false);
+        options.addOption(client_keystore_type);
+
+        final Option client_keystore_password = new Option(CONF_CLIENT_KEY_STORE_PASSWORD, true, "Client keystore password");
+        client_keystore_password.setRequired(false);
+        options.addOption(client_keystore_password);
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse( options, args);

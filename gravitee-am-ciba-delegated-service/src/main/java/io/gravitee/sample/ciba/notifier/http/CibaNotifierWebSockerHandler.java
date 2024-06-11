@@ -54,7 +54,7 @@ public class CibaNotifierWebSockerHandler implements Handler<ServerWebSocket> {
 
     private final Map<String, ServerWebSocket> serverWebSocket = new HashMap<>();
 
-    public CibaNotifierWebSockerHandler(Vertx vertx, CibaDomainManager domainManager) {
+    public CibaNotifierWebSockerHandler(Vertx vertx, CibaDomainManager domainManager, WebClientOptions options) {
         this.eventBus = vertx.eventBus();
         this.eventBus.consumer(TOPIC_NOTIFICATION_REQUEST, (msg) -> {
             final String json = msg.body().toString();
@@ -64,11 +64,7 @@ public class CibaNotifierWebSockerHandler implements Handler<ServerWebSocket> {
             }
         });
 
-        WebClientOptions options = new WebClientOptions().setUserAgent("AM CIBA Delegate HTTP Service");
-        options.setKeepAlive(false);
-
         this.webClient = WebClient.create(vertx, options);
-
         this.domainManager = domainManager;
     }
 
