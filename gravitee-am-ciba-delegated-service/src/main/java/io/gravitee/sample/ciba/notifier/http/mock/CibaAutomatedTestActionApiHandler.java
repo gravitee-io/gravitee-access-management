@@ -17,41 +17,57 @@ package io.gravitee.sample.ciba.notifier.http.mock;
 
 import com.nimbusds.jose.JOSEObject;
 import io.gravitee.sample.ciba.notifier.http.domain.CibaDomainManager;
-import io.gravitee.sample.ciba.notifier.CibaHttpNotifier;
 import io.gravitee.sample.ciba.notifier.http.model.DomainReference;
-import io.gravitee.sample.ciba.notifier.http.model.NotifierResponse;
-import io.netty.util.internal.StringUtil;
+import io.gravitee.sample.ciba.notifier.http.model.NotifierRequest;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.Json;
 import io.vertx.ext.auth.authentication.UsernamePasswordCredentials;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
 import net.minidev.json.JSONObject;
-import org.apache.commons.cli.CommandLine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 
-import static io.gravitee.sample.ciba.notifier.http.Constants.*;
+import static io.gravitee.sample.ciba.notifier.http.Constants.CALLBACK_VALIDATE;
+import static io.gravitee.sample.ciba.notifier.http.Constants.STATE;
+import static io.gravitee.sample.ciba.notifier.http.Constants.TOPIC_NOTIFICATION_REQUEST;
+import static io.gravitee.sample.ciba.notifier.http.Constants.TRANSACTION_ID;
+/**
+ * Actionize handler used to accept or reject the next NotificationRequest according to the
+ * action parameter (allow or deny)
+ *
+ * This handler has been introduced to manage the "Automated Testing" for FAPI-CIBA conformance.
+ * https://openid.net/certification/fapi_ciba_op_testing/
+ *
+ */
+public class CibaAutomatedTestActionApiHandler implements Handler<RoutingContext> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CibaAutomatedTestActionApiHandler.class);
+    public static final String ACTION = "action";
+    public static final String ACTION_ALLOW = "allow";
+    public static final String ACTION_DISPLAY = "display";
 
-public class CibaMockNotifierApiHandler implements Handler<RoutingContext> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CibaMockNotifierApiHandler.class);
-
-    private final boolean accept;
-    private final String authBearer;
     private final CibaDomainManager domainManager;
     private final WebClient webClient;
 
-    public CibaMockNotifierApiHandler(boolean accept, CommandLine parameters, CibaDomainManager domainManager, Vertx vertx, WebClientOptions options) {
-        this.accept = accept;
+    private final AtomicReference<NotifierRequest> queue = new AtomicReference<>();
+
+    public CibaAutomatedTestActionApiHandler(CibaDomainManager domainManager, Vertx vertx, WebClientOptions options) {
         this.domainManager = domainManager;
-        this.authBearer = parameters.getOptionValue(CibaHttpNotifier.CONF_BEARER);
+        EventBus eventBus = vertx.eventBus();
+        eventBus.consumer(TOPIC_NOTIFICATION_REQUEST, (msg) -> {
+            final String json = msg.body().toString();
+            final NotifierRequest notifierRequest = Json.decodeValue(json, NotifierRequest.class);
+            this.queue.set(notifierRequest);
+        });
 
         this.webClient = WebClient.create(vertx, options);
     }
@@ -59,20 +75,28 @@ public class CibaMockNotifierApiHandler implements Handler<RoutingContext> {
     @Override
     public void handle(RoutingContext routingContext) {
         try {
+            final String action = routingContext.request().getParam(ACTION);
+            LOGGER.info("Actionize received with action '{}'", action);
 
-            final String auth = routingContext.request().getHeader(HttpHeaders.AUTHORIZATION);
-            if (auth != null && auth.startsWith(BEARER) && !StringUtil.isNullOrEmpty(authBearer)) {
-                // control the token
-                if (!authBearer.equals(auth.substring(BEARER.length()))) {
-                    routingContext.response()
-                            .putHeader("content-type", "application/json")
-                            .setStatusCode(401).end();
-                    return ;
-                }
+            final NotifierRequest notificationRequest = queue.get();
+            if (Objects.isNull(notificationRequest)) {
+                routingContext.response()
+                        .putHeader("content-type", "application/json")
+                        .setStatusCode(404)
+                        .end("missing notification request");
+                return;
             }
 
-            final String transactionId = routingContext.request().getFormAttribute(TRANSACTION_ID);
-            final String state = routingContext.request().getFormAttribute(STATE);
+            LOGGER.info("Actionize received with action '{}' for request {}", action, Json.encode(notificationRequest) );
+
+            if (ACTION_DISPLAY.equalsIgnoreCase(action)) {
+                routingContext.response()
+                        .putHeader("content-type", "application/json")
+                        .setStatusCode(200)
+                        .end(Json.encode(notificationRequest));
+            }
+
+            final String state = notificationRequest.getState();
             final JOSEObject parsedJWT = JOSEObject.parse(state);
             final String domainId = new JSONObject(parsedJWT.getPayload().toJSONObject()).getAsString("iss");
 
@@ -80,16 +104,16 @@ public class CibaMockNotifierApiHandler implements Handler<RoutingContext> {
             if (optCallback.isPresent()) {
                 final MultiMap formData = MultiMap.caseInsensitiveMultiMap();
 
-                formData.set(TRANSACTION_ID, transactionId);
+                formData.set(TRANSACTION_ID, notificationRequest.getTid());
                 formData.set(STATE, state);
-                formData.set(CALLBACK_VALIDATE, Boolean.toString(accept));
+                formData.set(CALLBACK_VALIDATE, Boolean.toString(ACTION_ALLOW.equalsIgnoreCase(action)));
 
                 routingContext.response()
                         .putHeader("content-type", "application/json")
                         .setStatusCode(200)
-                        .end(Json.encode(new NotifierResponse(transactionId, state)));
+                        .end();
 
-                sendResponse(transactionId, optCallback.get(), formData, true);
+                sendResponse(notificationRequest.getTid(), optCallback.get(), formData, true);
 
             } else {
                 routingContext.response()
@@ -108,6 +132,7 @@ public class CibaMockNotifierApiHandler implements Handler<RoutingContext> {
             try {
                 // give to the AM GW enough time to update the Request external ID
                 waitBeforeNotification();
+                LOGGER.info("Callback {} for tid {} with form params {}", optCallback.getDomainCallback(), transactionId, formData);
                 webClient
                         .postAbs(optCallback.getDomainCallback())
                         .authentication(new UsernamePasswordCredentials(
@@ -123,14 +148,14 @@ public class CibaMockNotifierApiHandler implements Handler<RoutingContext> {
                         })
                         .onFailure(err -> {
                             if (retry) {
-                                LOGGER.info("Retry the callback for tid {}", transactionId, err);
+                                LOGGER.info("Retry the callback for tid {} (err: {})", transactionId, err);
                                 sendResponse(transactionId, optCallback, formData, false);
                             } else {
-                                LOGGER.warn("Callback failed for tid {}", transactionId, err);
+                                LOGGER.warn("Callback failed for tid {} : {}", transactionId, err);
                             }
                         });
             } catch (Exception e) {
-                LOGGER.warn("Callback request failed for tid {}", transactionId, e);
+                LOGGER.warn("Callback request failed for tid {} : {}", transactionId, e);
             }
         }).start();
     }
