@@ -1,0 +1,41 @@
+suite: Test Gateway configmap section user
+templates:
+  - "gateway/gateway-configmap.yaml"
+tests:
+  - it: Test user config block
+    template: gateway/gateway-configmap.yaml
+    set:
+      userManagement:
+        password: password
+        name: name
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            user:
+              name: name
+              password: password
+
+  - it: Test more complicated block
+    template: gateway/gateway-configmap.yaml
+    set:
+      userManagement:
+        email:
+          policy:
+            pattern: '^[a-zA-Z0-9_+-]+(?:\.[a-zA-Z0-9_+-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,15}$'
+
+    asserts:
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            user:
+              email:
+                policy:
+                  pattern: .*
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "pattern: \\^\\[a\\-zA\\-Z0\\-9_\\+\\-\\]\\+\\(\\?\\:\\\\\\.\\[a\\-zA\\-Z0\\-9_\\+\\-\\]\\+\\)\\*\\@\\(\\?:\\[a\\-zA\\-Z0\\-9\\-\\]\\+\\\\.\\)\\+\\[a\\-zA\\-Z\\]\\{2,15\\}\\$"
