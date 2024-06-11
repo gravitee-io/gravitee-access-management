@@ -73,6 +73,8 @@ public class CibaNotifierApiHandler implements Handler<RoutingContext> {
             notifierRequest.setExpiresIn(Integer.parseInt(httpRequest.getFormAttribute(PARAM_EXPIRE)));
             notifierRequest.setScopes(httpRequest.formAttributes().getAll(PARAM_SCOPE));
 
+           LOGGER.info("Notification received : {}", Json.encode(notifierRequest));
+
             eventBus.publish(TOPIC_NOTIFICATION_REQUEST, Json.encode(notifierRequest));
 
             routingContext.response()

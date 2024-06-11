@@ -53,9 +53,9 @@ public class FapiConsentResourceApiHandler implements Handler<RoutingContext> {
             String thumbprint256 = getThumbprint(x509Certificate.get(), "SHA-256");
 
             final String auth = routingContext.request().getHeader(HttpHeaders.AUTHORIZATION);
-            if (auth != null && auth.startsWith("Bearer ")) {
+            if (auth != null && auth.toLowerCase().startsWith("bearer ")) {
 
-                String jwtString = auth.replaceFirst("Bearer ", "");
+                String jwtString = auth.substring(auth.trim().indexOf(' '));
                 final JsonObject jwt = JWT.parse(jwtString).getJsonObject("payload");
 
                 if (jwt.containsKey("cnf") && thumbprint256.equals(jwt.getJsonObject("cnf").getString("x5t#S256"))) {
@@ -78,12 +78,12 @@ public class FapiConsentResourceApiHandler implements Handler<RoutingContext> {
                             .setStatusCode(statusCode)
                             .end(response.encodePrettily()); // return JWT as JSON object
                 }
+            } else {
+                // default response unauthorized
+                routingContext.response()
+                        .putHeader("content-type", "application/json")
+                        .setStatusCode(401).end();
             }
-
-            // default response unauthorized
-            routingContext.response()
-                    .putHeader("content-type", "application/json")
-                    .setStatusCode(401).end();
         } catch (Exception e) {
             LOGGER.warn("Unable to process the FAPI consent resource request", e);
             routingContext.fail(500, e);
