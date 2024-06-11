@@ -44,8 +44,6 @@ public class CustomLogoutSuccessHandler extends SimpleUrlLogoutSuccessHandler {
 
     private final AuditService auditService;
 
-    private final Environment environment;
-
     private final JWTParser jwtParser;
 
     private final OrganizationUserService userService;
@@ -54,7 +52,6 @@ public class CustomLogoutSuccessHandler extends SimpleUrlLogoutSuccessHandler {
 
     public CustomLogoutSuccessHandler(AuditService auditService, Environment environment, JWTParser jwtParser, OrganizationUserService userService) {
         this.auditService = auditService;
-        this.environment = environment;
         this.jwtParser = jwtParser;
         this.userService = userService;
         this.authCookieName = environment.getProperty("jwt.cookie-name", "Auth-Graviteeio-AM");

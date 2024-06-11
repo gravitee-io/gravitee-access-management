@@ -80,7 +80,7 @@ public class NewsletterServiceImpl implements NewsletterService, InitializingBea
                 .rxSend()
                 .map(res -> {
                     if (res.statusCode() != 200) {
-                        LOGGER.error("An error has occurred when reading the newsletter taglines response: " + res.statusMessage());
+                        LOGGER.error("An error has occurred when reading the newsletter taglines response: {}", res.statusMessage());
                         return Collections.emptyList();
                     }
                     return mapper.readValue(res.bodyAsString(), List.class);

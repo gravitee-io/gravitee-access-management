@@ -107,7 +107,7 @@ public class NewsletterResource extends AbstractResource {
 
         newsletterService.getTaglines()
             .subscribe(
-                    taglines -> response.resume(taglines),
+                    response::resume,
                     error -> {
                         LOGGER.error("An error has occurred when reading the newsletter taglines response", error);
                         response.resume(Collections.emptyList());

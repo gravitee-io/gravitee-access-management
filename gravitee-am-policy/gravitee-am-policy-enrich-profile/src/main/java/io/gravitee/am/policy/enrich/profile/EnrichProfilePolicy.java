@@ -59,16 +59,16 @@ public class EnrichProfilePolicy {
             if (prepareUserProfile(context)) {
                 enrichProfile(context)
                         .subscribe(
-                                (user) -> {
-                                    LOGGER.debug("User profile updated", user.getId());
+                                user -> {
+                                    LOGGER.debug("User profile updated {}", user.getId());
                                     policyChain.doNext(request, response);
                                 },
-                                (error) -> {
+                                error -> {
                                     if (configuration.isExitOnError()) {
-                                        LOGGER.warn("Update of user profile failed!", error.getMessage());
+                                        LOGGER.warn("Update of user profile failed! {}", error.getMessage());
                                         policyChain.failWith(PolicyResult.failure(ERROR_MESSAGE));
                                     } else {
-                                        LOGGER.info("Update of user profile failed!", error.getMessage());
+                                        LOGGER.info("Update of user profile failed! {}", error.getMessage());
                                         policyChain.doNext(request, response);
                                     }
                                 });

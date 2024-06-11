@@ -71,7 +71,7 @@ public class InfobipResourceProvider implements MFAResourceProvider {
         String messageId = this.configuration.getMessageId();
         String applicationId = this.configuration.getApplicationId();
 
-        return Completable.create((emitter) -> {
+        return Completable.create(emitter -> {
             try{
                 TfaStartAuthenticationResponse sendCodeResponse = this.tfaApi.sendTfaPinCodeOverSms(true,
                         new TfaStartAuthenticationRequest()
@@ -100,7 +100,7 @@ public class InfobipResourceProvider implements MFAResourceProvider {
 
     @Override
     public Completable verify(MFAChallenge challenge) {
-        return Completable.create((emitter) -> {
+        return Completable.create(emitter -> {
             String pin = challenge.getCode();
             try {
                 TfaVerifyPinResponse verifyResponse = this.tfaApi.verifyTfaPhoneNumber(pinId,

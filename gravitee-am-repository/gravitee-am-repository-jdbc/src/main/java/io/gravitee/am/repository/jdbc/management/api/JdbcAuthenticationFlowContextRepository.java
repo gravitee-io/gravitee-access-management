@@ -132,7 +132,7 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
 
         Mono<Long> insertAction = insertSpec.fetch().rowsUpdated();
         return monoToSingle(insertAction)
-                .flatMap((i) -> this.findById(id).toSingle());
+                .flatMap(i -> this.findById(id).toSingle());
     }
 
     @Override

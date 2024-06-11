@@ -36,8 +36,7 @@ public class ValidationExceptionMapper implements ExceptionMapper<ValidationExce
 
     @Override
     public Response toResponse(ValidationException e) {
-        if (e instanceof ConstraintViolationException) {
-            ConstraintViolationException constraintViolationException = (ConstraintViolationException) e;
+        if (e instanceof ConstraintViolationException constraintViolationException) {
             return buildResponse(
                     "[" +
                             constraintViolationException

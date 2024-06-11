@@ -287,7 +287,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             configMap.put("findUserByUsernameQuery", "{username: ?}");
             configMap.put("findUserByEmailQuery", "{email: ?}");
             configMap.put("usernameField", "username");
-            configMap.put("passwordField", "password");
+            configMap.put("passwordField", PASSWORD);
             configMap.put("passwordEncoder", encoder);
             updatePasswordEncoderOptions(configMap, encoder);
 
@@ -313,13 +313,13 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             // dash are forbidden in table name, replace them in domainName by underscore
             configMap.put("usersTable", "idp_users_" + tableSuffix);
             configMap.put("user", jdbcUser());
-            configMap.put("password", (jdbcPassword() == null ? null :  jdbcPassword()));
+            configMap.put(PASSWORD, (jdbcPassword() == null ? null :  jdbcPassword()));
             configMap.put("autoProvisioning", idpProvisioning());
             configMap.put("selectUserByUsernameQuery", "SELECT * FROM idp_users_" + tableSuffix + " WHERE username = %s");
             configMap.put("selectUserByEmailQuery", "SELECT * FROM idp_users_" + tableSuffix + " WHERE email = %s");
             configMap.put("identifierAttribute", "id");
             configMap.put("usernameAttribute", "username");
-            configMap.put("passwordAttribute", "password");
+            configMap.put("passwordAttribute", PASSWORD);
             configMap.put("passwordEncoder", encoder);
             updatePasswordEncoderOptions(configMap, encoder);
         }

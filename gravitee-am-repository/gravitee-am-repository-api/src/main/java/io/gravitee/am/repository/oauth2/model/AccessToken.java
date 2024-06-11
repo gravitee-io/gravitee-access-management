@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.oauth2.model;
 
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,7 +26,6 @@ import java.util.Map;
  */
 @Setter
 @Getter
-@EqualsAndHashCode(callSuper = false)
 public class AccessToken extends Token {
 
     /**

@@ -17,7 +17,6 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.model.uma.PermissionTicket;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.jdbc.management.api.JdbcPermissionTicketRepository;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -42,7 +41,7 @@ public class PermissionTicketRepositoryPurgeTest extends AbstractManagementTest 
     private static final PermissionRequest permission = new PermissionRequest().setResourceId("one").setResourceScopes(Arrays.asList("a","b"));
 
     @Test
-    public void testPurge() throws TechnicalException {
+    public void testPurge() {
         // create permission_ticket
         PermissionTicket permissionTicketNoExpireAt = new PermissionTicket().setPermissionRequest(Arrays.asList(permission));
         PermissionTicket ptValid = repository.create(permissionTicketNoExpireAt).blockingGet();

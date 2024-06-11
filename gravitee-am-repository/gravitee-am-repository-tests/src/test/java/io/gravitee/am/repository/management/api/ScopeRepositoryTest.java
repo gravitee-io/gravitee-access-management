@@ -162,7 +162,7 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws Exception {
+    public void testNotFoundById() {
         TestObserver<Scope> observer = scopeRepository.findById("test").test();
         observer.awaitDone(5, TimeUnit.SECONDS);
         observer.assertComplete();
@@ -203,7 +203,7 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDelete() throws Exception {
+    public void testDelete() {
         // create scope
         Scope scope = new Scope();
         scope.setName("testName");

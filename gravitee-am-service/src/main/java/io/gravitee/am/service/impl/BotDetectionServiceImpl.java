@@ -45,8 +45,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.SingleSource;
 import io.reactivex.rxjava3.functions.Function;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -57,12 +56,9 @@ import java.util.Date;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 @Component
 public class BotDetectionServiceImpl implements BotDetectionService {
-    /**
-     * Logger.
-     */
-    private final Logger LOGGER = LoggerFactory.getLogger(BotDetectionServiceImpl.class);
 
     @Lazy
     @Autowired
@@ -82,10 +78,10 @@ public class BotDetectionServiceImpl implements BotDetectionService {
 
     @Override
     public Maybe<BotDetection> findById(String id) {
-        LOGGER.debug("Find bot detection by ID: {}", id);
+        log.debug("Find bot detection by ID: {}", id);
         return botDetectionRepository.findById(id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a bot detection using its ID: {}", id, ex);
+                    log.error("An error occurs while trying to find a bot detection using its ID: {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a bot detection using its ID: %s", id), ex));
                 });
@@ -93,17 +89,17 @@ public class BotDetectionServiceImpl implements BotDetectionService {
 
     @Override
     public Flowable<BotDetection> findByDomain(String domain) {
-        LOGGER.debug("Find bot detections by domain: {}", domain);
+        log.debug("Find bot detections by domain: {}", domain);
         return botDetectionRepository.findByReference(ReferenceType.DOMAIN, domain)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find bot detections by domain", ex);
+                    log.error("An error occurs while trying to find bot detections by domain", ex);
                     return Flowable.error(new TechnicalManagementException("An error occurs while trying to find bot detections by domain", ex));
                 });
     }
 
     @Override
     public Single<BotDetection> create(String domain, NewBotDetection newBotDetection, User principal) {
-        LOGGER.debug("Create a new bot detection {} for domain {}", newBotDetection, domain);
+        log.debug("Create a new bot detection {} for domain {}", newBotDetection, domain);
 
         BotDetection botDetection = new BotDetection();
         botDetection.setId(newBotDetection.getId() == null ? RandomString.generate() : newBotDetection.getId());
@@ -127,14 +123,14 @@ public class BotDetectionServiceImpl implements BotDetectionService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to create a detection", ex);
+                    log.error("An error occurs while trying to create a detection", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a detection", ex));
                 });
     }
 
     @Override
     public Single<BotDetection> update(String domain, String id, UpdateBotDetection updateBotDetection, User principal) {
-        LOGGER.debug("Update bot detection {} for domain {}", id, domain);
+        log.debug("Update bot detection {} for domain {}", id, domain);
 
         return botDetectionRepository.findById(id)
                 .switchIfEmpty(Single.error(new BotDetectionNotFoundException(id)))
@@ -156,14 +152,14 @@ public class BotDetectionServiceImpl implements BotDetectionService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to update bot detection", ex);
+                    log.error("An error occurs while trying to update bot detection", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update bot detection", ex));
                 });
     }
 
     @Override
     public Completable delete(String domainId, String botDetectionId, User principal) {
-        LOGGER.debug("Delete bot detection {}", botDetectionId);
+        log.debug("Delete bot detection {}", botDetectionId);
 
         return botDetectionRepository.findById(botDetectionId)
                 .switchIfEmpty(Single.error(new BotDetectionNotFoundException(botDetectionId)))
@@ -182,7 +178,7 @@ public class BotDetectionServiceImpl implements BotDetectionService {
                         return Completable.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to delete bot detection: {}", botDetectionId, ex);
+                    log.error("An error occurs while trying to delete bot detection: {}", botDetectionId, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete bot detection: %s", botDetectionId), ex));
                 });

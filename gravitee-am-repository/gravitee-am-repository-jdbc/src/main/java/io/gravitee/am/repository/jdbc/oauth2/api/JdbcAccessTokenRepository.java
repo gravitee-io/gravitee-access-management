@@ -97,7 +97,7 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
         accessToken.setId(accessToken.getId() == null ? RandomString.generate() : accessToken.getId());
         LOGGER.debug("Create accessToken with id {}", accessToken.getId());
         return monoToSingle(getTemplate().insert(toJdbcEntity(accessToken))).map(this::toEntity)
-                .doOnError((error) -> LOGGER.error("Unable to create accessToken with id {}", accessToken.getId(), error));
+                .doOnError(error -> LOGGER.error("Unable to create accessToken with id {}", accessToken.getId(), error));
     }
 
     @Override

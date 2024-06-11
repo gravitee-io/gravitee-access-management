@@ -25,6 +25,7 @@ import io.gravitee.am.service.tasks.AssignSystemCertificateDefinition;
 import io.gravitee.am.service.tasks.TaskType;
 import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.common.service.AbstractService;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,10 +41,9 @@ import org.springframework.stereotype.Component;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 @Component
 public class TasksLoader extends AbstractService<TasksLoader> implements LifecycleComponent<TasksLoader> {
-
-    private final Logger logger = LoggerFactory.getLogger(TaskManager.class);
 
     @Autowired
     private ObjectMapper mapper;
@@ -64,7 +64,7 @@ public class TasksLoader extends AbstractService<TasksLoader> implements Lifecyc
     @Override
     protected void doStart() throws Exception {
         super.doStart();
-        this.logger.info("Load scheduled tasks");
+        log.info("Load scheduled tasks");
         this.taskRepository.findByType(TaskType.SIMPLE.name())
                 // currently only one kind of Simple tasks, so we simply filter on this value for safety
                 .filter(systemTask -> AssignSystemCertificate.class.getSimpleName().equals(systemTask.getKind()))
@@ -75,7 +75,7 @@ public class TasksLoader extends AbstractService<TasksLoader> implements Lifecyc
                     return assignSystemCert;
                 })
                 .subscribe(task -> {
-                    logger.debug("Reschedule {} task of type {} with definition {}", task.type(), task.kind(), task.getDefinition());
+                    log.debug("Reschedule {} task of type {} with definition {}", task.type(), task.kind(), task.getDefinition());
                     task.registerScheduler(this.scheduler);
                     task.schedule();
                 });

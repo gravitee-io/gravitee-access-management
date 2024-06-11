@@ -232,12 +232,10 @@ public class PermissionService {
                 Map<Permission, Set<Acl>> rolePermissions = role.getPermissionAcls();
 
                 // Compute membership permission acls.
-                rolePermissions.forEach((permission, acls) -> {
-                    permissions.merge(permission, acls, (acls1, acls2) -> {
-                        acls1.addAll(acls2);
-                        return acls1;
-                    });
-                });
+                rolePermissions.forEach((permission, acls) -> permissions.merge(permission, acls, (acls1, acls2) -> {
+                    acls1.addAll(acls2);
+                    return acls1;
+                }));
             }
         });
 

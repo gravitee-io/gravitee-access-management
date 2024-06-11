@@ -156,7 +156,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         insertAction = persistChildEntities(insertAction, item);
 
         return monoToSingle(insertAction.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle());
+                .flatMap(i -> this.findById(item.getId()).toSingle());
     }
 
     private Mono<Long> persistChildEntities(Mono<Long> actionFlow, Flow item) {
@@ -245,7 +245,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         updateAction = updateAction.then(deleteChildEntities(item.getId()));
         updateAction = persistChildEntities(updateAction, item);
 
-        return monoToSingle(updateAction.as(trx::transactional)).flatMap((i) -> this.findById(item.getId()).toSingle());
+        return monoToSingle(updateAction.as(trx::transactional)).flatMap(i -> this.findById(item.getId()).toSingle());
     }
 
     private Mono<Long> deleteChildEntities(String flowId) {

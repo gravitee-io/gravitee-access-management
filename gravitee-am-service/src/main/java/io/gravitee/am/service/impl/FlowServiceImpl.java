@@ -40,8 +40,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -67,10 +66,10 @@ import static java.util.stream.Collectors.toList;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 @Component
 public class FlowServiceImpl implements FlowService {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(FlowServiceImpl.class);
     private static final String DEFINITION_PATH = "/flow/am-schema.json";
 
     @Lazy
@@ -85,7 +84,7 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public Flowable<Flow> findAll(ReferenceType referenceType, String referenceId, boolean excludeApps) {
-        LOGGER.debug("Find all flows for {} {}", referenceType, referenceId);
+        log.debug("Find all flows for {} {}", referenceType, referenceId);
         return flowRepository.findAll(referenceType, referenceId)
                 .filter(f -> !excludeApps || f.getApplication() == null)
                 .toMultimap(Flow::getType)
@@ -102,14 +101,14 @@ public class FlowServiceImpl implements FlowService {
                 .switchIfEmpty(Flowable.fromIterable(defaultFlows(referenceType, referenceId)))
                 .sorted(getFlowComparator())
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error has occurred while trying to find all flows for {} {}", referenceType, referenceId, ex);
+                    log.error("An error has occurred while trying to find all flows for {} {}", referenceType, referenceId, ex);
                     return Flowable.error(new TechnicalManagementException(String.format("An error has occurred while trying to find all flows for %s %s", referenceType, referenceId), ex));
                 });
     }
 
     @Override
     public Flowable<Flow> findByApplication(ReferenceType referenceType, String referenceId, String application) {
-        LOGGER.debug("Find all flows for {} {} and application {}", referenceType, referenceId, application);
+        log.debug("Find all flows for {} {} and application {}", referenceType, referenceId, application);
         return flowRepository.findByApplication(referenceType, referenceId, application)
                 .toMultimap(Flow::getType)
                 .flattenAsFlowable(flows -> Stream.of(Type.values())
@@ -133,7 +132,7 @@ public class FlowServiceImpl implements FlowService {
                         }))
                 .sorted(getFlowComparator())
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error has occurred while trying to find all flows for {} {} and application {}", referenceType, referenceId, application, ex);
+                    log.error("An error has occurred while trying to find all flows for {} {} and application {}", referenceType, referenceId, application, ex);
                     return Flowable.error(new TechnicalManagementException(String.format("An error has occurred while trying to find a all flows for %s %s and application %s", referenceType, referenceId, application), ex));
                 });
     }
@@ -147,14 +146,14 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public Maybe<Flow> findById(ReferenceType referenceType, String referenceId, String id) {
-        LOGGER.debug("Find flow by referenceType {}, referenceId {} and id {}", referenceType, referenceId, id);
+        log.debug("Find flow by referenceType {}, referenceId {} and id {}", referenceType, referenceId, id);
         if (id == null) {
             // flow id may be null for default flows
             return Maybe.empty();
         }
         return flowRepository.findById(referenceType, referenceId, id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error has occurred while trying to find a flow using its referenceType {}, referenceId {} and id {}", referenceType, referenceId, id, ex);
+                    log.error("An error has occurred while trying to find a flow using its referenceType {}, referenceId {} and id {}", referenceType, referenceId, id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error has occurred while trying to find a flow using its referenceType %s, referenceId %s and id %s", referenceType, referenceId, id), ex));
                 });
@@ -162,14 +161,14 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public Maybe<Flow> findById(String id) {
-        LOGGER.debug("Find flow by id {}", id);
+        log.debug("Find flow by id {}", id);
         if (id == null) {
             // flow id may be null for default flows
             return Maybe.empty();
         }
         return flowRepository.findById(id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error has occurred while trying to find a flow using its id {}", id, ex);
+                    log.error("An error has occurred while trying to find a flow using its id {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error has occurred while trying to find a flow using its id %s", id), ex));
                 });
@@ -177,19 +176,19 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public Single<Flow> create(ReferenceType referenceType, String referenceId, Flow flow, User principal) {
-        LOGGER.debug("Create a new flow {} for referenceType {} and referenceId {}", flow, referenceType, referenceId);
+        log.debug("Create a new flow {} for referenceType {} and referenceId {}", flow, referenceType, referenceId);
         return create0(referenceType, referenceId, null, flow, principal);
     }
 
     @Override
     public Single<Flow> create(ReferenceType referenceType, String referenceId, String application, Flow flow, User principal) {
-        LOGGER.debug("Create a new flow {} for referenceType {}, referenceId {} and application {}", flow, referenceType, referenceId, application);
+        log.debug("Create a new flow {} for referenceType {}, referenceId {} and application {}", flow, referenceType, referenceId, application);
         return create0(referenceType, referenceId, application, flow, principal);
     }
 
     @Override
     public Single<Flow> update(ReferenceType referenceType, String referenceId, String id, Flow flow, User principal) {
-        LOGGER.debug("Update a flow {} ", flow);
+        log.debug("Update a flow {} ", flow);
 
         return flowRepository.findById(referenceType, referenceId, id)
                 .switchIfEmpty(Single.error(new FlowNotFoundException(id)))
@@ -235,26 +234,26 @@ public class FlowServiceImpl implements FlowService {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error has occurred while trying to update a flow", ex);
+                    log.error("An error has occurred while trying to update a flow", ex);
                     return Single.error(new TechnicalManagementException("An error has occurred while trying to update a flow", ex));
                 });
     }
 
     @Override
     public Single<List<Flow>> createOrUpdate(ReferenceType referenceType, String referenceId, List<Flow> flows, User principal) {
-        LOGGER.debug("Create or update flows {} for domain {}", flows, referenceId);
+        log.debug("Create or update flows {} for domain {}", flows, referenceId);
         return createOrUpdate0(referenceType, referenceId, null, flows, principal);
     }
 
     @Override
     public Single<List<Flow>> createOrUpdate(ReferenceType referenceType, String referenceId, String application, List<Flow> flows, User principal) {
-        LOGGER.debug("Create or update flows {} for domain {} and application {}", flows, referenceId, application);
+        log.debug("Create or update flows {} for domain {} and application {}", flows, referenceId, application);
         return createOrUpdate0(referenceType, referenceId, application, flows, principal);
     }
 
     @Override
     public Completable delete(String id, User principal) {
-        LOGGER.debug("Delete flow {}", id);
+        log.debug("Delete flow {}", id);
         if (id == null) {
             // flow id may be null for default flows
             return Completable.complete();
@@ -275,7 +274,7 @@ public class FlowServiceImpl implements FlowService {
                         return Completable.error(ex);
                     }
 
-                    LOGGER.error("An error has occurred while trying to delete flow: {}", id, ex);
+                    log.error("An error has occurred while trying to delete flow: {}", id, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error has occurred while trying to delete flow: %s", id), ex));
                 });
@@ -350,7 +349,7 @@ public class FlowServiceImpl implements FlowService {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error has occurred while trying to update flows", ex);
+                    log.error("An error has occurred while trying to update flows", ex);
                     return Single.error(new TechnicalManagementException("An error has occurred while trying to update flows", ex));
                 });
     }
@@ -392,7 +391,7 @@ public class FlowServiceImpl implements FlowService {
                     return eventService.create(event).flatMap(__ -> Single.just(flow1));
                 })
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error has occurred while trying to create a flow", ex);
+                    log.error("An error has occurred while trying to create a flow", ex);
                     return Single.error(new TechnicalManagementException("An error has occurred while trying to create a flow", ex));
                 })
                 .doOnSuccess(flow1 -> auditService.report(AuditBuilder.builder(FlowAuditBuilder.class).principal(principal).type(EventType.FLOW_CREATED).flow(flow1)))

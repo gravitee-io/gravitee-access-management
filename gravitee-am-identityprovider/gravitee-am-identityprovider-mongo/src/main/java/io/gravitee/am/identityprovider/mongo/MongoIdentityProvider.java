@@ -35,6 +35,7 @@ public class MongoIdentityProvider extends IdentityProvider<MongoIdentityProvide
         return MongoAuthenticationProvider.class;
     }
 
+    @Override
     public Class<? extends UserProvider> userProvider() {
         return MongoUserProvider.class;
     }

@@ -111,8 +111,8 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
 
         Mono<Long> insertAction = insertSpec.fetch().rowsUpdated();
 
-        return monoToSingle(insertAction).flatMap((i) -> authorizationCodeRepository.findById(authorizationCode.getId()).map(this::toEntity).toSingle())
-                .doOnError((error) -> LOGGER.error("Unable to create authorizationCode with id {}", authorizationCode.getId(), error));
+        return monoToSingle(insertAction).flatMap(i -> authorizationCodeRepository.findById(authorizationCode.getId()).map(this::toEntity).toSingle())
+                .doOnError(error -> LOGGER.error("Unable to create authorizationCode with id {}", authorizationCode.getId(), error));
     }
 
     @Override

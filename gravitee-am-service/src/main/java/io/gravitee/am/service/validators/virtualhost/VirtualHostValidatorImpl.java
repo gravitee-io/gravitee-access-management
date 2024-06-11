@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 @Component
 public class VirtualHostValidatorImpl implements VirtualHostValidator {
 
+    public static final String IS_INVALID = "] is invalid";
     private final PathValidator pathValidator;
 
     public VirtualHostValidatorImpl(PathValidator pathValidator) {
@@ -55,7 +56,7 @@ public class VirtualHostValidatorImpl implements VirtualHostValidator {
         String hostWithoutPort = split[0];
 
         if (!InternetDomainName.isValid(hostWithoutPort)) {
-            return Completable.error(new InvalidVirtualHostException("Host [" + hostWithoutPort + "] is invalid"));
+            return Completable.error(new InvalidVirtualHostException("Host [" + hostWithoutPort + IS_INVALID));
         }
 
         if (!isValidDomainOrSubDomain(hostWithoutPort, domainRestrictions)) {
@@ -63,17 +64,17 @@ public class VirtualHostValidatorImpl implements VirtualHostValidator {
         }
 
         if (host.contains(":") && split.length < 2) {
-            return Completable.error(new InvalidVirtualHostException("Host port for [" + host + "] is invalid"));
+            return Completable.error(new InvalidVirtualHostException("Host port for [" + host + IS_INVALID));
         }
 
         if (split.length > 1) {
             try {
                 int port = Integer.parseInt(split[1]);
                 if (port < 0 || port > 65535) {
-                    return Completable.error(new InvalidVirtualHostException("Host port [" + port + "] is invalid"));
+                    return Completable.error(new InvalidVirtualHostException("Host port [" + port + IS_INVALID));
                 }
             } catch (NumberFormatException nfe) {
-                return Completable.error(new InvalidVirtualHostException("Host port for [" + host + "] is invalid"));
+                return Completable.error(new InvalidVirtualHostException("Host port for [" + host + IS_INVALID));
             }
         }
 

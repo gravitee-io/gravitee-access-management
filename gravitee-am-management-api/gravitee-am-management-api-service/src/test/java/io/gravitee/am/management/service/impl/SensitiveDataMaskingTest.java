@@ -103,9 +103,7 @@ public class SensitiveDataMaskingTest extends AbstractSensitiveProxy {
     @Test
     public void shouldNoFilter_URI_withoutUserInfo() throws Exception {
         final JsonNode config = objectMapper.readTree("{ \"uri\": \"" + URI_WITHOUT_USERINFO + "\"}");
-        filterSensitiveData(schema, config, (maskedConfig) -> {
-            assertUriEquals("URI should be the same", URI_WITHOUT_USERINFO, maskedConfig);
-        });
+        filterSensitiveData(schema, config, maskedConfig -> assertUriEquals("URI should be the same", URI_WITHOUT_USERINFO, maskedConfig));
     }
 
     @Test

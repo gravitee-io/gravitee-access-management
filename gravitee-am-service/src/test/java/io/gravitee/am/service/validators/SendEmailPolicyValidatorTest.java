@@ -49,7 +49,7 @@ class SendEmailPolicyValidatorTest {
     private SendEmailPolicyValidator sendEmailPolicyValidator;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         sendEmailPolicyValidator = new SendEmailPolicyValidator(
                 objectMapper,
                 emailDomainValidator
@@ -57,13 +57,13 @@ class SendEmailPolicyValidatorTest {
     }
 
     @Test
-    public void must_not_validate_invalid() {
+    void must_not_validate_invalid() {
         assertTrue(sendEmailPolicyValidator.validate(getStep("other-policy", "{}")).isEmpty());
     }
 
     @ParameterizedTest
     @MethodSource("params_that_must_validate_regarding_configuration")
-    public void must_validate_invalid_regarding_configuration(String pattern, String configuration, boolean expected) {
+    void must_validate_invalid_regarding_configuration(String pattern, String configuration, boolean expected) {
         Step step = getStep(SendEmailPolicyValidator.POLICY_AM_SEND_EMAIL, configuration);
         when(emailDomainValidator.validate(eq(pattern))).thenReturn(expected);
 
@@ -81,7 +81,7 @@ class SendEmailPolicyValidatorTest {
 
 
     @Test
-    public void must_not_validate_IO_exception() {
+    void must_not_validate_IO_exception() {
         Step step = getStep(SendEmailPolicyValidator.POLICY_AM_SEND_EMAIL, "{ \"from\":\"valid@example.com\" ");
         assertTrue(sendEmailPolicyValidator.validate(step).isPresent());
     }

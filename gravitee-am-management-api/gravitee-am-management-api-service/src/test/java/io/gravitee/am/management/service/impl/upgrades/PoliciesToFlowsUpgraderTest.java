@@ -73,7 +73,7 @@ public class PoliciesToFlowsUpgraderTest {
     private PolicyPluginService policyPluginService;
 
     @Test
-    public void testMigration_NoPolicies() throws Exception {
+    public void testMigration_NoPolicies() {
         when(policyRepository.collectionExists()).thenReturn(just(true));
         when(policyRepository.deleteCollection()).thenReturn(Completable.complete());
         when(policyRepository.findAll()).thenReturn(Flowable.empty());
@@ -87,7 +87,7 @@ public class PoliciesToFlowsUpgraderTest {
     }
 
     @Test
-    public void testMigration_SingleDomainWithPolicies() throws Exception {
+    public void testMigration_SingleDomainWithPolicies() {
         when(policyRepository.collectionExists()).thenReturn(just(true));
         when(policyRepository.deleteCollection()).thenReturn(Completable.complete());
 

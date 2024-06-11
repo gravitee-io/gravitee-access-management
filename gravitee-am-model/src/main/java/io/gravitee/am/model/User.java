@@ -240,13 +240,8 @@ public class User implements IUser {
 
 
     public String getEmail() {
-        if (email == null) {
-            // fall back to standard claims
-            if (getAdditionalInformation() != null) {
-                if (getAdditionalInformation().get(StandardClaims.EMAIL) != null) {
-                    return (String) getAdditionalInformation().get(StandardClaims.EMAIL);
-                }
-            }
+        if (email == null && getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.EMAIL) != null) {
+            return (String) getAdditionalInformation().get(StandardClaims.EMAIL);
         }
         return email;
     }
@@ -276,12 +271,11 @@ public class User implements IUser {
     }
 
     public String getFirstName() {
-        if (firstName == null) {
-            if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.GIVEN_NAME) != null) {
+        if (firstName == null && getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.GIVEN_NAME) != null) {
                 // fall back to OIDC standard claims
                 firstName = (String) getAdditionalInformation().get(StandardClaims.GIVEN_NAME);
             }
-        }
+
         return firstName;
     }
 
@@ -297,12 +291,11 @@ public class User implements IUser {
     }
 
     public String getLastName() {
-        if (lastName == null) {
-            if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.FAMILY_NAME) != null) {
+        if (lastName == null && getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.FAMILY_NAME) != null) {
                 // fall back to OIDC standard claims
                 lastName = (String) getAdditionalInformation().get(StandardClaims.FAMILY_NAME);
             }
-        }
+
         return lastName;
     }
 

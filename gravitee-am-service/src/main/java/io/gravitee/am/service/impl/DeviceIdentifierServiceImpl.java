@@ -39,8 +39,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -51,10 +50,9 @@ import java.util.Date;
  * @author Rémi SULTAN (remi.sultqn at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 @Component
 public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
-
-    private final Logger LOGGER = LoggerFactory.getLogger(DeviceIdentifierServiceImpl.class);
 
     @Lazy
     @Autowired
@@ -68,10 +66,10 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
 
     @Override
     public Maybe<DeviceIdentifier> findById(String id) {
-        LOGGER.debug("Find device identifier by ID: {}", id);
+        log.debug("Find device identifier by ID: {}", id);
         return deviceIdentifierRepository.findById(id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a device identifier using its ID: {}", id, ex);
+                    log.error("An error occurs while trying to find a device identifier using its ID: {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a device identifier using its ID: %s", id), ex));
                 });
@@ -79,17 +77,17 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
 
     @Override
     public Flowable<DeviceIdentifier> findByDomain(String domain) {
-        LOGGER.debug("Find device identifiers by domain: {}", domain);
+        log.debug("Find device identifiers by domain: {}", domain);
         return deviceIdentifierRepository.findByReference(ReferenceType.DOMAIN, domain)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find device identifiers by domain", ex);
+                    log.error("An error occurs while trying to find device identifiers by domain", ex);
                     return Flowable.error(new TechnicalManagementException("An error occurs while trying to find device identifiers by domain", ex));
                 });
     }
 
     @Override
     public Single<DeviceIdentifier> create(String domain, NewDeviceIdentifier newDeviceIdentifier, User principal) {
-        LOGGER.debug("Create a new device identifier {} for domain {}", newDeviceIdentifier, domain);
+        log.debug("Create a new device identifier {} for domain {}", newDeviceIdentifier, domain);
 
         DeviceIdentifier deviceIdentifier = new DeviceIdentifier();
         deviceIdentifier.setId(newDeviceIdentifier.getId() == null ? RandomString.generate() : newDeviceIdentifier.getId());
@@ -112,7 +110,7 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to create a device identifier", ex);
+                    log.error("An error occurs while trying to create a device identifier", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a device identifier", ex));
                 })
                 .doOnSuccess(detection -> auditService.report(AuditBuilder.builder(DeviceIdentifierAuditBuilder.class).principal(principal).type(EventType.DEVICE_IDENTIFIER_CREATED).deviceIdentifier(detection)))
@@ -121,7 +119,7 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
 
     @Override
     public Single<DeviceIdentifier> update(String domain, String id, UpdateDeviceIdentifier updateDeviceIdentifier, User principal) {
-        LOGGER.debug("Update device identifier {} for domain {}", id, domain);
+        log.debug("Update device identifier {} for domain {}", id, domain);
 
         return deviceIdentifierRepository.findById(id)
                 .switchIfEmpty(Single.error(new DeviceIdentifierNotFoundException(id)))
@@ -145,14 +143,14 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to update device identifier", ex);
+                    log.error("An error occurs while trying to update device identifier", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update device identifier", ex));
                 });
     }
 
     @Override
     public Completable delete(String domainId, String deviceIdentifier, User principal) {
-        LOGGER.debug("Delete device identifier {}", deviceIdentifier);
+        log.debug("Delete device identifier {}", deviceIdentifier);
 
         return deviceIdentifierRepository.findById(deviceIdentifier)
                 .switchIfEmpty(Maybe.error(new DeviceIdentifierNotFoundException(deviceIdentifier)))
@@ -170,7 +168,7 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
                         return Completable.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to delete device identifier: {}", deviceIdentifier, ex);
+                    log.error("An error occurs while trying to delete device identifier: {}", deviceIdentifier, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete device identifier: %s", deviceIdentifier), ex));
                 });

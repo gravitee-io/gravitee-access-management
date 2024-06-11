@@ -38,8 +38,8 @@ import static com.mongodb.client.model.Filters.*;
 @Component
 public class MongoAuthenticationFlowContextRepository extends AbstractManagementMongoRepository implements AuthenticationFlowContextRepository {
 
-    private final static String FIELD_TRANSACTION_ID = "transactionId";
-    private final static String FIELD_VERSION = "version";
+    private static final String FIELD_TRANSACTION_ID = "transactionId";
+    private static final String FIELD_VERSION = "version";
     private static final String FIELD_EXPIRES_AT = "expire_at";
 
     private MongoCollection<AuthenticationFlowContextMongo> authContextCollection;

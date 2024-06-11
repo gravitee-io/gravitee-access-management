@@ -63,7 +63,7 @@ public class VertxFileWriter<T extends ReportEntry> {
      */
     private static final char CR = '\r';
 
-    private final static byte[] END_OF_LINE = new byte[]{CR, LF};
+    private static final byte[] END_OF_LINE = new byte[]{CR, LF};
 
     private final Vertx vertx;
 
@@ -123,7 +123,7 @@ public class VertxFileWriter<T extends ReportEntry> {
                 file = new File(filename);
                 File dir = new File(file.getParent());
                 if (!dir.isDirectory() || !dir.canWrite()) {
-                    LOGGER.error("Cannot write reporter data to directory " + dir);
+                    LOGGER.error("Cannot write reporter data to directory {}", dir);
                     promise.fail(new IOException("Cannot write reporter data to directory " + dir));
                     return promise.future();
                 }

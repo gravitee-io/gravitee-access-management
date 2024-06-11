@@ -199,7 +199,7 @@ public class ThemeServiceImpl implements ThemeService {
     public Completable delete(Domain domain, String themeId, User principal) {
         return this.themeRepository.findById(themeId).flatMapCompletable(theme -> {
             if (!(ReferenceType.DOMAIN.equals(theme.getReferenceType()) && domain.getId().equals(theme.getReferenceId()))) {
-                logger.warn("Delete theme '{}' received on wrong domain, delete skipped");
+                logger.warn("Delete theme '{}' received on wrong domain, delete skipped", themeId);
                 return Completable.error(new InvalidThemeException("Theme isn't linked to the domain " + domain.getId()));
             }
 

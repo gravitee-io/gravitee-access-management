@@ -283,8 +283,8 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                 successResult.putIfAbsent(k, v);
                 failureResult.putIfAbsent(k, v);
             });
-            List<Long> successData = successResult.entrySet().stream().map(e -> e.getValue()).toList();
-            List<Long> failureData = failureResult.entrySet().stream().map(e -> e.getValue()).toList();
+            List<Long> successData = successResult.entrySet().stream().map(Map.Entry::getValue).toList();
+            List<Long> failureData = failureResult.entrySet().stream().map(Map.Entry::getValue).toList();
             Map<Object, Object> result = new HashMap<>();
             result.put(fieldSuccess, successData);
             result.put(fieldFailure, failureData);
@@ -652,12 +652,11 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                 }
             }
 
-            if (this.connectionFactory != null && this.connectionFactory instanceof ConnectionPool connectionFactory) {
-                if (!connectionFactory.isDisposed()) {
+            if (this.connectionFactory != null && this.connectionFactory instanceof ConnectionPool connectionFactory && !connectionFactory.isDisposed()) {
                     // dispose is a blocking call, use the non blocking one to avoid error
                     connectionFactory.disposeLater().subscribe();
                 }
-            }
+
         } catch (Exception ex) {
             LOGGER.error("Failed to close JDBC client", ex);
         }

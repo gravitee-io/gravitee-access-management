@@ -28,6 +28,9 @@ import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
+
+import java.util.Objects;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -108,14 +111,11 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
     @Override
     public void onEvent(Event<IdentityProviderEvent, Payload> event) {
         if (event.content().getReferenceType() == ReferenceType.ORGANIZATION && event.content().getReferenceId() != null) {
-            switch (event.type()) {
-                case DEPLOY:
-                case UPDATE:
-                    updateIdentityProvider(event.content().getId(), event.content().getReferenceId(), event.type());
-                    break;
-                case UNDEPLOY:
-                    removeIdentityProvider(event.content().getId());
-                    break;
+            IdentityProviderEvent type = event.type();
+            if (Objects.requireNonNull(type) == IdentityProviderEvent.DEPLOY || type == IdentityProviderEvent.UPDATE) {
+                updateIdentityProvider(event.content().getId(), event.content().getReferenceId(), event.type());
+            } else if (type == IdentityProviderEvent.UNDEPLOY) {
+                removeIdentityProvider(event.content().getId());
             }
         }
     }

@@ -25,6 +25,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -70,7 +71,7 @@ public class ManagementSecurityConfiguration extends CsrfAwareConfiguration {
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .cors(cors -> {
                 })
-                .httpBasic(httpBasic -> httpBasic.disable())
+                .httpBasic(AbstractHttpConfigurer::disable)
                 .exceptionHandling(exceptionHandling -> exceptionHandling.authenticationEntryPoint(http401UnauthorizedEntryPoint))
                 .addFilterAfter(bearerAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -79,7 +80,7 @@ public class ManagementSecurityConfiguration extends CsrfAwareConfiguration {
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring().requestMatchers(
+        return web -> web.ignoring().requestMatchers(
                 AntPathRequestMatcher.antMatcher("/openapi.json"),
                 AntPathRequestMatcher.antMatcher("/openapi.yaml"));
     }

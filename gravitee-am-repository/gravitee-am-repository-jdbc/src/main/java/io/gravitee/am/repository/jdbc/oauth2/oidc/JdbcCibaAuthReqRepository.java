@@ -89,7 +89,7 @@ public class JdbcCibaAuthReqRepository extends AbstractJdbcRepository implements
                 Query.query(where("id").is(authReqId)),
                 Update.update("status", status),
                 JdbcCibaAuthRequest.class);
-        return monoToSingle(action).flatMap((i) -> findById(authReqId).toSingle());
+        return monoToSingle(action).flatMap(i -> findById(authReqId).toSingle());
     }
 
     @Override

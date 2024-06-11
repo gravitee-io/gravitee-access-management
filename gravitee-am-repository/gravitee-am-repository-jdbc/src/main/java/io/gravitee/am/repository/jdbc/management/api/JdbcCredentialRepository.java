@@ -101,7 +101,7 @@ public class JdbcCredentialRepository extends AbstractJdbcRepository implements 
         LOGGER.debug("update credential with id {}", item.getId());
         return this.credentialRepository.save(toJdbcEntity(item))
                 .map(this::toEntity)
-                .doOnError((error) -> LOGGER.error("unable to create credential with id {}", item.getId(), error));
+                .doOnError(error -> LOGGER.error("unable to create credential with id {}", item.getId(), error));
     }
 
     @Override

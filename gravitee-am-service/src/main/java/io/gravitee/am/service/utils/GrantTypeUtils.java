@@ -44,10 +44,14 @@ import static io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN;
 import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN;
 import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class GrantTypeUtils {
 
     private static final String AM_V2_VERSION = "AM_V2_VERSION";
@@ -97,7 +101,7 @@ public class GrantTypeUtils {
         Set<String> grantTypeSet = Collections.unmodifiableSet(new HashSet<>(oAuthSettings.getGrantTypes()));
         if(grantTypeSet.contains(REFRESH_TOKEN)) {
             //Hybrid is not managed yet and AM does not support refresh token for client_credentials for now...
-            List<String> allowedRefreshTokenGrant = Arrays.asList(AUTHORIZATION_CODE, PASSWORD, JWT_BEARER);//, CLIENT_CREDENTIALS, HYBRID);
+            List<String> allowedRefreshTokenGrant = Arrays.asList(AUTHORIZATION_CODE, PASSWORD, JWT_BEARER);
             //return true if there is no element in common
             if(Collections.disjoint(formattedClientGrantTypes, allowedRefreshTokenGrant)) {
                 return Single.error(new InvalidClientMetadataException(
@@ -262,12 +266,11 @@ public class GrantTypeUtils {
         }
 
         // If grant_type contains client_credentials, remove refresh_token flow, only for old clients created by the upgrader
-        if (AM_V2_VERSION.equals(client.getSoftwareVersion())) {
-            if (grantType.contains(CLIENT_CREDENTIALS) && grantType.contains(REFRESH_TOKEN) && grantType.size() == 2) {
+        if (AM_V2_VERSION.equals(client.getSoftwareVersion()) && grantType.contains(CLIENT_CREDENTIALS) && grantType.contains(REFRESH_TOKEN) && grantType.size() == 2) {
                 grantType.remove(REFRESH_TOKEN);
                 updatedGrantType = true;
             }
-        }
+
 
         //Finally in case of bad client status (no response/grant type) reset to default values...
         if(responseType.isEmpty() && grantType.isEmpty()) {

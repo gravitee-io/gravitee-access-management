@@ -26,8 +26,6 @@ import io.gravitee.am.model.Tag;
  */
 public class TagAuditBuilder extends ManagementAuditBuilder<TagAuditBuilder> {
 
-    private static final String DOMAIN_ADMIN = "domain";
-
     public TagAuditBuilder() {
         // Tags are managed at organization level.
         referenceType(ReferenceType.ORGANIZATION);

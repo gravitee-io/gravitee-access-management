@@ -180,7 +180,7 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
             identityProviderMongo.setExternal(identityProvider.isExternal());
             identityProviderMongo.setCreatedAt(identityProvider.getCreatedAt());
             identityProviderMongo.setUpdatedAt(identityProvider.getUpdatedAt());
-            var mappers = new Document((Map) ofNullable(identityProvider.getMappers()).filter(Objects::nonNull).orElse(Map.of()));
+            var mappers = new Document(ofNullable(identityProvider.getMappers()).filter(Objects::nonNull).orElse(Map.of()));
             var roleMapper = new Document(convert(ofNullable(identityProvider.getRoleMapper()).filter(Objects::nonNull).orElse(Map.of())));
             identityProviderMongo.setMappers(mappers);
             identityProviderMongo.setRoleMapper(roleMapper);

@@ -85,7 +85,7 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
             public Boolean convert(BitSet bitSet) {
                 Boolean result = null;
                 if (bitSet != null) {
-                    result = bitSet.isEmpty() ? false : bitSet.get(0);
+                    result = !bitSet.isEmpty() && bitSet.get(0);
                 }
                 return result;
             }

@@ -60,6 +60,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.SingleSource;
 import io.reactivex.rxjava3.functions.Function;
+import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.BasicConstraints;
@@ -68,8 +69,6 @@ import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -103,6 +102,7 @@ import static io.gravitee.am.identityprovider.api.oidc.OpenIDConnectConfiguratio
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 @Component
 @Primary
 public class CertificateServiceImpl implements CertificateService {
@@ -115,10 +115,6 @@ public class CertificateServiceImpl implements CertificateService {
     public static final int DEFAULT_CERT_KEYSIZE = 2048;
     public static final int DEFAULT_CERT_VALIDITY_IN_DAYS = 365;
     public static final String DEFAULT_CERT_ALIAS = "default";
-    /**
-     * Logger.
-     */
-    private final Logger LOGGER = LoggerFactory.getLogger(CertificateServiceImpl.class);
     private static final String RSA = "RSA";
     private static final String EC = "EC";
     private static final String CONTENT = "content";
@@ -165,10 +161,10 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public Maybe<Certificate> findById(String id) {
-        LOGGER.debug("Find certificate by ID: {}", id);
+        log.debug("Find certificate by ID: {}", id);
         return certificateRepository.findById(id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a certificate using its ID: {}", id, ex);
+                    log.error("An error occurs while trying to find a certificate using its ID: {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a certificate using its ID: %s", id), ex));
                 });
@@ -180,27 +176,27 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     private Flowable<Certificate> innerFindByDomain(String domain) {
-        LOGGER.debug("Find certificates by domain: {}", domain);
+        log.debug("Find certificates by domain: {}", domain);
         return certificateRepository.findByDomain(domain)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find certificates by domain", ex);
+                    log.error("An error occurs while trying to find certificates by domain", ex);
                     return Flowable.error(new TechnicalManagementException("An error occurs while trying to find certificates by domain", ex));
                 });
     }
 
     @Override
     public Flowable<Certificate> findAll() {
-        LOGGER.debug("Find all certificates");
+        log.debug("Find all certificates");
         return certificateRepository.findAll()
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find all certificates", ex);
+                    log.error("An error occurs while trying to find all certificates", ex);
                     return Flowable.error(new TechnicalManagementException("An error occurs while trying to find all certificates by domain", ex));
                 });
     }
 
     @Override
     public Single<Certificate> create(String domain, NewCertificate newCertificate, User principal, boolean isSystem) {
-        LOGGER.debug("Create a new certificate {} for domain {}", newCertificate, domain);
+        log.debug("Create a new certificate {} for domain {}", newCertificate, domain);
         return certificatePluginService
                 .getSchema(newCertificate.getType())
                 .switchIfEmpty(Single.error(() -> new CertificatePluginSchemaNotFoundException(newCertificate.getType())))
@@ -234,7 +230,7 @@ public class CertificateServiceImpl implements CertificateService {
                         certificate.setUpdatedAt(certificate.getCreatedAt());
                         return Single.just(certificate);
                     } catch (Exception ex) {
-                        LOGGER.error("An error occurs while trying to create certificate configuration", ex);
+                        log.error("An error occurs while trying to create certificate configuration", ex);
                         return Single.error(() -> new TechnicalManagementException("An error occurs while trying to create a certificate", ex));
                     }
                 })
@@ -245,7 +241,7 @@ public class CertificateServiceImpl implements CertificateService {
                     Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), ReferenceType.DOMAIN, certificate.getDomain(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(certificate));
                 })
-                .doOnError(ex -> LOGGER.error("An error occurs while trying to create a certificate", ex));
+                .doOnError(ex -> log.error("An error occurs while trying to create a certificate", ex));
     }
 
     private static class CertificateWithSchema {
@@ -268,7 +264,7 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, User principal) {
-        LOGGER.debug("Update a certificate {} for domain {}", id, domain);
+        log.debug("Update a certificate {} for domain {}", id, domain);
         return certificateRepository.findById(id)
                 .switchIfEmpty(Single.error(() -> new CertificateNotFoundException(id)))
                 .flatMap((Function<Certificate, SingleSource<CertificateWithSchema>>) certificate -> certificatePluginService.getSchema(certificate.getType())
@@ -313,10 +309,10 @@ public class CertificateServiceImpl implements CertificateService {
                             }
                             certificateToUpdate.setConfiguration(updateCertificate.getConfiguration());
                         } catch (IOException ex) {
-                            LOGGER.error("An error occurs while trying to update certificate binaries", ex);
+                            log.error("An error occurs while trying to update certificate binaries", ex);
                             return Single.error(() -> ex);
                         } catch (Exception ex) {
-                            LOGGER.error("An error occurs while trying to update certificate configuration", ex);
+                            log.error("An error occurs while trying to update certificate configuration", ex);
                             return Single.error(() -> ex);
                         }
                     }
@@ -330,7 +326,7 @@ public class CertificateServiceImpl implements CertificateService {
                     return eventService.create(event).flatMap(__ -> Single.just(certificate1));
                 })
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to update a certificate", ex);
+                    log.error("An error occurs while trying to update a certificate", ex);
                     if(ex instanceof AbstractManagementException){
                         return Single.error(ex);
                     } else {
@@ -355,7 +351,7 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public Completable delete(String certificateId, User principal) {
-        LOGGER.debug("Delete certificate {}", certificateId);
+        log.debug("Delete certificate {}", certificateId);
         return certificateRepository.findById(certificateId)
                 .switchIfEmpty(Maybe.error(new CertificateNotFoundException(certificateId)))
                 .flatMapSingle(certificate -> applicationService.findByCertificate(certificateId).count()
@@ -376,7 +372,7 @@ public class CertificateServiceImpl implements CertificateService {
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_DELETED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to delete certificate: {}", certificateId, ex);
+                    log.error("An error occurs while trying to delete certificate: {}", certificateId, ex);
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     } else {
@@ -389,7 +385,7 @@ public class CertificateServiceImpl implements CertificateService {
     @Override
     public Completable updateExpirationDate(String certificateId, Date expirationDate) {
         if (expirationDate == null) {
-            LOGGER.warn("updateExpirationDate call with null for certificate '{}'", certificateId);
+            log.warn("updateExpirationDate call with null for certificate '{}'", certificateId);
             return Completable.complete();
         }
         return this.certificateRepository.updateExpirationDate(certificateId, expirationDate);

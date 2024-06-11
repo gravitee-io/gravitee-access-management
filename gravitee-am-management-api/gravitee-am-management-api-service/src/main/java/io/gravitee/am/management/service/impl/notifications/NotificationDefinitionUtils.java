@@ -27,10 +27,14 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class NotificationDefinitionUtils {
     public static final String TYPE_UI_NOTIFIER = "ui-notifier";
     public static final String TYPE_EMAIL_NOTIFIER = "email-notifier";

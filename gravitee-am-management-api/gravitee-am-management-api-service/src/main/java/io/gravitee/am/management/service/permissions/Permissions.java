@@ -22,10 +22,14 @@ import io.gravitee.am.model.permissions.Permission;
 import java.util.Arrays;
 import java.util.HashSet;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class Permissions {
 
     public static PermissionAcls of(ReferenceType referenceType, String referenceId, Permission permission, Acl... acls) {

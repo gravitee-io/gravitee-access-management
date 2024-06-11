@@ -85,7 +85,7 @@ public class UserActivityServiceTest {
 
     @Test
     public void must_get_retention_unit() {
-        assertSame(userActivityService.getRetentionUnit(), ChronoUnit.SECONDS);
+        assertSame(ChronoUnit.SECONDS, userActivityService.getRetentionUnit());
     }
 
     @Test

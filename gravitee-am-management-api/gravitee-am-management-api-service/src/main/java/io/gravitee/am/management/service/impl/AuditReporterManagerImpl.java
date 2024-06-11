@@ -106,10 +106,10 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
 
         // init internal reporter (organization reporter)
         NewReporter organizationReporter = reporterService.createInternal();
-        logger.info("Initializing internal " + organizationReporter.getType() + " audit reporter");
+        logger.info("Initializing internal {} audit reporter", organizationReporter.getType());
         var providerConfiguration = new ReporterProviderConfiguration(organizationReporter.getType(), organizationReporter.getConfiguration());
         internalReporter = reporterPluginManager.create(providerConfiguration);
-        logger.info("Internal audit " + organizationReporter.getType() + " reporter initialized");
+        logger.info("Internal audit {} reporter initialized", organizationReporter.getType());
 
         logger.info("Initializing audit reporters");
         reporterService.findAll().blockingForEach(reporter -> {

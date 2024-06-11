@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.service.utils;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,9 +28,10 @@ import java.util.function.Consumer;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class SetterUtils {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(SetterUtils.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SetterUtils.class);
 
     // These values are used to manage primitive types. There's 8 primitive in Java.
     private static boolean DEFAULT_BOOLEAN;

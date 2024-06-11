@@ -126,11 +126,11 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
                         if (ex instanceof AuthenticationException) {
                             return Maybe.error(ex);
                         }
-                        LOGGER.error("An error has occurred while calling the remote HTTP identity provider {}", ex);
+                        LOGGER.error("An error has occurred while calling the remote HTTP identity provider", ex);
                         return Maybe.error(new InternalAuthenticationServiceException("An error has occurred while calling the remote HTTP identity provider", ex));
                     });
         } catch (Exception ex) {
-            LOGGER.error("An error has occurred while authenticating the user {}", ex);
+            LOGGER.error("An error has occurred while authenticating the user", ex);
             return Maybe.error(new InternalAuthenticationServiceException("An error has occurred while authenticating the user", ex));
         }
     }
@@ -332,7 +332,7 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
     }
 
     private static Map<String, String> format(String query) {
-        Map<String, String> queryPairs = new LinkedHashMap<String, String>();
+        Map<String, String> queryPairs = new LinkedHashMap<>();
         String[] pairs = query.split("&");
         for (String pair : pairs) {
             int idx = pair.indexOf("=");

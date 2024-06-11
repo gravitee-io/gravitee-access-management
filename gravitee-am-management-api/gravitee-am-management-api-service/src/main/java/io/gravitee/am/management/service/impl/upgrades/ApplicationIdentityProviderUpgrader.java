@@ -77,11 +77,11 @@ public class ApplicationIdentityProviderUpgrader extends SystemTaskUpgrader {
                 .doOnError(err -> updateSystemTask(task, (SystemTaskStatus.FAILURE), task.getOperationId()).subscribe())
                 .andThen(updateSystemTask(task, SystemTaskStatus.SUCCESS, task.getOperationId())
                         .map(__ -> true)
-                        .onErrorResumeNext((err) -> {
+                        .onErrorResumeNext(err -> {
                             logger.error("Unable to update application identityProviders options task: {}", err.getMessage(), err);
                             return Single.just(false);
                         }))
-                .onErrorResumeNext((err) -> {
+                .onErrorResumeNext(err -> {
                     logger.error("Unable to migrate application identityProvider options for applications: {}", err.getMessage(), err);
                     return Single.just(false);
                 });

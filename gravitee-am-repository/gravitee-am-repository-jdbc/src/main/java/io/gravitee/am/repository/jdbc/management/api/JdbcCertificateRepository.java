@@ -140,8 +140,8 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
         insertSpec = addQuotedField(insertSpec,COL_SYSTEM, item.isSystem(), boolean.class);
         Mono<Long> action = insertSpec.fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to create certificate with id {}", item.getId(), error));
+        return monoToSingle(action).flatMap(i -> this.findById(item.getId()).toSingle())
+                .doOnError(error -> LOGGER.error("unable to create certificate with id {}", item.getId(), error));
     }
 
     @Override
@@ -163,8 +163,8 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
 
         Mono<Long> updateAction = update.fetch().rowsUpdated();
 
-        return monoToSingle(updateAction).flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to update certificate with id {}", item.getId(), error));
+        return monoToSingle(updateAction).flatMap(i -> this.findById(item.getId()).toSingle())
+                .doOnError(error -> LOGGER.error("unable to update certificate with id {}", item.getId(), error));
     }
 
     @Override

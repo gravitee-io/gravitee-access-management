@@ -24,8 +24,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.OrganizationUserService;
 import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
 import io.reactivex.rxjava3.core.Maybe;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
@@ -34,9 +33,9 @@ import java.util.HashMap;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class GraviteeAuthenticationProvider implements AuthenticationProvider {
     public static final String KEY_ORGANIZATION_ID = "org";
-    private static Logger LOGGER = LoggerFactory.getLogger(GraviteeAuthenticationProvider.class);
 
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -56,12 +55,12 @@ public class GraviteeAuthenticationProvider implements AuthenticationProvider {
                     String presentedPassword = authentication.getCredentials().toString();
 
                     if (user.getPassword() == null) {
-                        LOGGER.debug("Authentication failed: password is null");
+                        log.debug("Authentication failed: password is null");
                         return false;
                     }
 
                     if (!passwordEncoder.matches(presentedPassword, user.getPassword())) {
-                        LOGGER.debug("Authentication failed: password does not match stored value");
+                        log.debug("Authentication failed: password does not match stored value");
                         return false;
                     }
 

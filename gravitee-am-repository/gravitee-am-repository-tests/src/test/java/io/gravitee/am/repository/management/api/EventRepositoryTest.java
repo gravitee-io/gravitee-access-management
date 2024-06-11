@@ -41,7 +41,7 @@ public class EventRepositoryTest extends AbstractManagementTest {
     private EventRepository eventRepository;
 
     @Test
-    public void testFindByTimeFrame() throws TechnicalException {
+    public void testFindByTimeFrame() {
         final long from = 1571214259000l;
         final long to =  1571214281000l;
         // create event
@@ -76,7 +76,7 @@ public class EventRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindById() {
         // create event
         Event event = new Event();
         event.setType(Type.DOMAIN);
@@ -111,7 +111,7 @@ public class EventRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testCreate() throws TechnicalException {
+    public void testCreate() {
         // create event
         Event event = new Event();
         event.setType(Type.DOMAIN);

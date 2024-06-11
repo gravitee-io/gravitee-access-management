@@ -55,7 +55,7 @@ public class NonBCryptIterationsRoundsUpgrader extends SystemTaskUpgrader {
                     if (updatedTask.getOperationId().equals(instanceOperationId)) {
                         return migrate(updatedTask)
                                 .toSingleDefault(true)
-                                .onErrorResumeNext((err) -> {
+                                .onErrorResumeNext(err -> {
                                     log.error("Unable to upgrade non-BCrypt password encoders (task: {}): {}", TASK_ID, err.getMessage());
                                     return Single.just(false);
                                 });

@@ -93,7 +93,7 @@ public class AuthenticationFlowContextServiceImpl implements AuthenticationFlowC
                     clearContext(transactionId)
                             .subscribe(
                                     () -> LOGGER.debug("Deletion of Authentication Flow context '{}' succeeded after loading it", transactionId),
-                                    (error) -> LOGGER.warn("Deletion of Authentication Flow context '{}' failed after loading it", transactionId, error));
+                                    error -> LOGGER.warn("Deletion of Authentication Flow context '{}' failed after loading it", transactionId, error));
                 } );
     }
 

@@ -46,6 +46,8 @@ import static com.fasterxml.jackson.core.JsonToken.VALUE_EMBEDDED_OBJECT;
  */
 public abstract class AuditBuilder<T> {
 
+    private static final String UPDATED_AT = "updatedAt";
+    private static final String CREATED_AT = "createdAt";
     private String id;
     private String transactionalId;
     private Instant timestamp;
@@ -287,15 +289,15 @@ public abstract class AuditBuilder<T> {
                     oldNode = mapper.createArrayNode();
                     newNode = mapper.createArrayNode();
                     mapper.convertValue(newValue, ArrayNode.class).forEach(jsonNode -> {
-                        ((ArrayNode) newNode).add(((ObjectNode) jsonNode).remove(Arrays.asList("updatedAt", "createdAt", "expiresAt", "userId", "domain")));
+                        ((ArrayNode) newNode).add(((ObjectNode) jsonNode).remove(Arrays.asList(UPDATED_AT, CREATED_AT, "expiresAt", "userId", "domain")));
                     });
                 } else {
                     oldNode = oldValue == null
                             ? mapper.createObjectNode()
-                            : mapper.convertValue(oldValue, ObjectNode.class).remove(Arrays.asList("updatedAt", "createdAt", "lastEvent"));
+                            : mapper.convertValue(oldValue, ObjectNode.class).remove(Arrays.asList(UPDATED_AT, CREATED_AT, "lastEvent"));
                     newNode = newValue == null
                             ? mapper.createObjectNode()
-                            : mapper.convertValue(newValue, ObjectNode.class).remove(Arrays.asList("updatedAt", "createdAt", "lastEvent"));
+                            : mapper.convertValue(newValue, ObjectNode.class).remove(Arrays.asList(UPDATED_AT, CREATED_AT, "lastEvent"));
                 }
                 clean(oldNode, null, null);
                 clean(newNode, null, null);

@@ -41,7 +41,7 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @ExtendWith(MockitoExtension.class)
-public class WebClientBuilderTest {
+class WebClientBuilderTest {
 
     @Mock
     private Environment environment;

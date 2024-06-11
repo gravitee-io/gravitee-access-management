@@ -23,8 +23,7 @@ import io.gravitee.plugin.core.api.Plugin;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -34,10 +33,9 @@ import java.util.List;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 @Component
 public class AuthenticationDeviceNotifierPluginServiceImpl extends AbstractPluginService implements AuthenticationDeviceNotifierPluginService {
-
-    private final Logger LOGGER = LoggerFactory.getLogger(AuthenticationDeviceNotifierPluginServiceImpl.class);
 
     private AuthenticationDeviceNotifierPluginManager pluginManager;
 
@@ -49,7 +47,7 @@ public class AuthenticationDeviceNotifierPluginServiceImpl extends AbstractPlugi
 
     @Override
     public Single<List<AuthenticationDeviceNotifierPlugin>> findAll(List<String> expand) {
-        LOGGER.debug("List all authentication device notifier plugins");
+        log.debug("List all authentication device notifier plugins");
         return Observable.fromIterable(pluginManager.findAll(true))
                 .map(plugin -> convert(plugin, expand))
                 .toList();
@@ -57,7 +55,7 @@ public class AuthenticationDeviceNotifierPluginServiceImpl extends AbstractPlugi
 
     @Override
     public Maybe<AuthenticationDeviceNotifierPlugin> findById(String pluginId) {
-        LOGGER.debug("Find authentication device notifier plugin by ID: {}", pluginId);
+        log.debug("Find authentication device notifier plugin by ID: {}", pluginId);
         return Maybe.create(emitter -> {
             try {
                 Plugin resource = pluginManager.findById(pluginId);
@@ -67,7 +65,7 @@ public class AuthenticationDeviceNotifierPluginServiceImpl extends AbstractPlugi
                     emitter.onComplete();
                 }
             } catch (Exception ex) {
-                LOGGER.error("An error occurs while trying to get authentication device notifier plugin : {}", pluginId, ex);
+                log.error("An error occurs while trying to get authentication device notifier plugin : {}", pluginId, ex);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get authentication device notifier plugin : " + pluginId, ex));
             }
         });
@@ -75,7 +73,7 @@ public class AuthenticationDeviceNotifierPluginServiceImpl extends AbstractPlugi
 
     @Override
     public Maybe<String> getSchema(String pluginId) {
-        LOGGER.debug("Find authentication device notifier plugin schema by ID: {}", pluginId);
+        log.debug("Find authentication device notifier plugin schema by ID: {}", pluginId);
         return Maybe.create(emitter -> {
             try {
                 String schema = pluginManager.getSchema(pluginId);
@@ -85,7 +83,7 @@ public class AuthenticationDeviceNotifierPluginServiceImpl extends AbstractPlugi
                     emitter.onComplete();
                 }
             } catch (Exception e) {
-                LOGGER.error("An error occurs while trying to get schema for authentication device notifier plugin {}", pluginId, e);
+                log.error("An error occurs while trying to get schema for authentication device notifier plugin {}", pluginId, e);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get schema for authentication device notifier plugin " + pluginId, e));
             }
         });
@@ -93,7 +91,7 @@ public class AuthenticationDeviceNotifierPluginServiceImpl extends AbstractPlugi
 
     @Override
     public Maybe<String> getIcon(String resourceId) {
-        LOGGER.debug("Find resource plugin icon by ID: {}", resourceId);
+        log.debug("Find resource plugin icon by ID: {}", resourceId);
         return Maybe.create(emitter -> {
             try {
                 String icon = pluginManager.getIcon(resourceId);
@@ -103,7 +101,7 @@ public class AuthenticationDeviceNotifierPluginServiceImpl extends AbstractPlugi
                     emitter.onComplete();
                 }
             } catch (Exception e) {
-                LOGGER.error("An error has occurred when trying to get icon for resource plugin {}", resourceId, e);
+                log.error("An error has occurred when trying to get icon for resource plugin {}", resourceId, e);
                 emitter.onError(new TechnicalManagementException("An error has occurred when trying to get icon for resource plugin " + resourceId, e));
             }
         });

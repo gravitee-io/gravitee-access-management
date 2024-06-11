@@ -67,8 +67,6 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
 
     private final DomainService domainService;
 
-    private final Environment environment;
-
     private final IdentityProviderManager identityProviderManager;
 
     private final boolean useDefaultAdmin;
@@ -87,7 +85,6 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
         this.membershipHelper = membershipHelper;
         this.roleService = roleService;
         this.domainService = domainService;
-        this.environment = environment;
         this.identityProviderManager = identityProviderManager;
         this.useDefaultAdmin = environment.getProperty("security.defaultAdmin", boolean.class, true);
     }
@@ -157,10 +154,7 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
                         .firstElement().blockingGet();
 
                 // If inline idp doesn't exist or is not enabled, it is probably an administrator choice. So do not go further.
-                if (inlineIdp != null) {
-                    // If inline idp doesn't have "admin" user in its configuration, it is probably an administrator choice. So do not go further.
-                    if (inlineIdp.getConfiguration().contains(",\"username\":\"" + ADMIN + "\",") && inlineIdp.getRoleMapper().isEmpty()) {
-
+                if (inlineIdp != null && inlineIdp.getConfiguration().contains(",\"username\":\"" + ADMIN + "\",") && inlineIdp.getRoleMapper().isEmpty()) {
                         // Check the user admin exists.
                         User adminUser = userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, Organization.DEFAULT, ADMIN, inlineIdp.getId()).blockingGet();
 
@@ -170,7 +164,7 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
                             membershipHelper.setOrganizationPrimaryOwnerRole(adminUser);
                         }
                     }
-                }
+
             }
 
             // The primary owner of the default organization must be considered as platform admin.

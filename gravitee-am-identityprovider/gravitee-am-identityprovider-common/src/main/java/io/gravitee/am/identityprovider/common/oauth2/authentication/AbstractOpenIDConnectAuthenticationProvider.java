@@ -156,11 +156,10 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
             if (ResponseType.ID_TOKEN_TOKEN.equals(getConfiguration().getResponseType())) {
                 String accessToken = hashValues.get(ACCESS_TOKEN_PARAMETER);
                 // We store the token is option is enabled
-                if (getConfiguration().isStoreOriginalTokens()) {
-                    if (!Strings.isNullOrEmpty(accessToken)) {
-                        authentication.getContext().set(ACCESS_TOKEN_PARAMETER, accessToken);
-                    }
+                if (getConfiguration().isStoreOriginalTokens() && !Strings.isNullOrEmpty(accessToken)) {
+                    authentication.getContext().set(ACCESS_TOKEN_PARAMETER, accessToken);
                 }
+
                 // put the id_token in context for later use
                 authentication.getContext().set(ID_TOKEN_PARAMETER, hashValues.get(ID_TOKEN_PARAMETER));
                 return Maybe.just(new Token(accessToken, TokenTypeHint.ACCESS_TOKEN));
@@ -212,11 +211,10 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
                     JsonObject response = httpResponse.bodyAsJsonObject();
                     String accessToken = response.getString(ACCESS_TOKEN_PARAMETER);
                     // We store the token is option is enabled
-                    if (getConfiguration().isStoreOriginalTokens()) {
-                        if (!Strings.isNullOrEmpty(accessToken)) {
+                    if (getConfiguration().isStoreOriginalTokens() && !Strings.isNullOrEmpty(accessToken)) {
                             authentication.getContext().set(ACCESS_TOKEN_PARAMETER, accessToken);
                         }
-                    }
+
                     // ID Token is always stored for SSO
                     String idToken = response.getString(ID_TOKEN_PARAMETER);
                     if (!Strings.isNullOrEmpty(idToken)) {

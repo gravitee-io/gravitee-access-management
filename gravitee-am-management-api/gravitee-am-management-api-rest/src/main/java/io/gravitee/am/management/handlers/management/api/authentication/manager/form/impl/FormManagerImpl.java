@@ -25,6 +25,9 @@ import io.gravitee.am.service.FormService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
+
+import java.util.Objects;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -69,16 +72,12 @@ public class FormManagerImpl implements FormManager, InitializingBean, EventList
 
     @Override
     public void onEvent(Event<FormEvent, Payload> event) {
-
         if (event.content().getReferenceType() == ReferenceType.ORGANIZATION && event.content().getReferenceId() != null) {
-            switch (event.type()) {
-                case DEPLOY:
-                case UPDATE:
-                    updateForm(event.content().getId(), event.type());
-                    break;
-                case UNDEPLOY:
-                    removeForm(event.content().getId());
-                    break;
+            FormEvent type = event.type();
+            if (Objects.requireNonNull(type) == FormEvent.DEPLOY || type == FormEvent.UPDATE) {
+                updateForm(event.content().getId(), event.type());
+            } else if (type == FormEvent.UNDEPLOY) {
+                removeForm(event.content().getId());
             }
         }
     }

@@ -49,7 +49,7 @@ public class ThreadLocalDomainDictionaryProviderTest extends AbstractDynamicDict
         provider().loadDictionary(i18nDictionary);
         // check value
         assertFalse(provider().getDictionaryFor(new Locale(i18nDictionary.getLocale())).isEmpty());
-        assertTrue(provider().getDictionaryFor(new Locale(i18nDictionary.getLocale())).getProperty("key").equals("value"));
+        assertEquals("value", provider().getDictionaryFor(new Locale(i18nDictionary.getLocale())).getProperty("key"));
 
         final ExecutorService executorService = Executors.newSingleThreadExecutor();
         try {
@@ -68,6 +68,6 @@ public class ThreadLocalDomainDictionaryProviderTest extends AbstractDynamicDict
 
         // back to the main thread values are unchanged
         assertFalse(provider().getDictionaryFor(new Locale(i18nDictionary.getLocale())).isEmpty());
-        assertTrue(provider().getDictionaryFor(new Locale(i18nDictionary.getLocale())).getProperty("key").equals("value"));
+        assertEquals("value", provider().getDictionaryFor(new Locale(i18nDictionary.getLocale())).getProperty("key"));
     }
 }

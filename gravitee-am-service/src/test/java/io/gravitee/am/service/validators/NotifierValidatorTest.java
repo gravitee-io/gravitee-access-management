@@ -37,7 +37,7 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @ExtendWith(MockitoExtension.class)
-public class NotifierValidatorTest {
+class NotifierValidatorTest {
 
     @Mock
     private EmailNotifierFromValidator smtpResourceValidator;
@@ -49,7 +49,7 @@ public class NotifierValidatorTest {
     }
 
     @Test
-    public void must_not_validate() {
+    void must_not_validate() {
         when(smtpResourceValidator.validate(any())).thenReturn(Optional.empty());
         var observer = notifierValidator.validate(new NotifierHolder("any-name", "any-config")).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
@@ -57,7 +57,7 @@ public class NotifierValidatorTest {
     }
 
     @Test
-    public void must_validate() {
+    void must_validate() {
         when(smtpResourceValidator.validate(any())).thenReturn(Optional.of(new InvalidParameterException("Invalid parameter")));
         var observer = notifierValidator.validate(new NotifierHolder("any-policy", "any-config")).test();
         observer.awaitDone(10, TimeUnit.SECONDS);

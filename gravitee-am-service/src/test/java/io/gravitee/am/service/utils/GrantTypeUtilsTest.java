@@ -188,9 +188,7 @@ public class GrantTypeUtilsTest {
 
     @Test
     public void isRedirectUriRequired() {
-        //isRedirectUriRequired("authorization_code",true);//should be true for mobile app, false for web app...
         isRedirectUriRequired("implicit",true);
-        //isRedirectUriRequired("hybrid",true);
         isRedirectUriRequired("password",false);
         isRedirectUriRequired("client_credentials",false);
     }

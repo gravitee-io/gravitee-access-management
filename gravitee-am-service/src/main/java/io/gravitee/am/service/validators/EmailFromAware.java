@@ -38,7 +38,7 @@ public abstract class EmailFromAware {
     }
 
 
-    protected boolean isValid(String from) throws JsonProcessingException {
+    protected boolean isValid(String from) {
         return emailDomainValidator.validate(from);
     }
 

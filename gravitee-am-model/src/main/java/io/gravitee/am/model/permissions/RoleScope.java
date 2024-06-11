@@ -38,7 +38,7 @@ public enum RoleScope {
     }
 
     public static RoleScope valueOf(int id) {
-        Optional<RoleScope> scope = Stream.of(values()).filter((r) -> r.getId() == id).findFirst();
+        Optional<RoleScope> scope = Stream.of(values()).filter(r -> r.getId() == id).findFirst();
         if (scope.isPresent()) {
             return scope.get();
         } else {

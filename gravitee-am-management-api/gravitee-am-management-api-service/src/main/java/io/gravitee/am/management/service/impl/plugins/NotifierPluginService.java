@@ -40,7 +40,7 @@ import java.util.List;
 @Component
 public class NotifierPluginService {
 
-    public static String EXPAND_ICON = "icon";
+    private static final String EXPAND_ICON = "icon";
     public static final String DEFAULT_NOTIFIER_MESSAGE = "An alert '${alert.name}' has been fired.\\n"
             + "\\n"
             + "Date: ${notification.timestamp?number?number_to_datetime}\\n"
@@ -61,17 +61,13 @@ public class NotifierPluginService {
     public Flowable<NotifierPlugin> findAll(String... expand) {
         return Flowable.fromIterable(notifierPluginManager.findAll())
                 .flatMapSingle(plugin -> convert(plugin, expand))
-                .onErrorResumeNext(throwable -> {
-                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to get notifier plugins", throwable));
-                });
+                .onErrorResumeNext(throwable -> Flowable.error(new TechnicalManagementException("An error occurs while trying to get notifier plugins", throwable)));
     }
 
     public Single<NotifierPlugin> findById(String notifierId) {
         return Maybe.fromCallable(() -> notifierPluginManager.findById(notifierId))
                 .flatMap(plugin -> convert(plugin).toMaybe())
-                .onErrorResumeNext(throwable -> {
-                    return Maybe.error(new TechnicalManagementException("An error occurs while trying to get notifier plugin " + notifierId, throwable));
-                })
+                .onErrorResumeNext(throwable -> Maybe.error(new TechnicalManagementException("An error occurs while trying to get notifier plugin " + notifierId, throwable)))
                 .switchIfEmpty(Single.error(() -> new NotifierPluginNotFoundException(notifierId)));
     }
 
@@ -90,31 +86,25 @@ public class NotifierPluginService {
                         }
                     }
 
-                    if (messageNode instanceof ObjectNode) {
-                        ((ObjectNode) messageNode).put("default", DEFAULT_NOTIFIER_MESSAGE);
+                    if (messageNode instanceof ObjectNode objectNode) {
+                        objectNode.put("default", DEFAULT_NOTIFIER_MESSAGE);
                     }
                 })
                 .map(JsonNode::toString)
-                .onErrorResumeNext(throwable -> {
-                    return Maybe.error(new TechnicalManagementException("An error occurs while trying to get schema for notifier plugin " + notifierId, throwable));
-                })
+                .onErrorResumeNext(throwable -> Maybe.error(new TechnicalManagementException("An error occurs while trying to get schema for notifier plugin " + notifierId, throwable)))
                 .switchIfEmpty(Single.defer(() -> Single.error(new NotifierPluginSchemaNotFoundException(notifierId))));
     }
 
     public Maybe<String> getIcon(String notifierId) {
 
         return Maybe.fromCallable(() -> notifierPluginManager.getIcon(notifierId))
-                .onErrorResumeNext(throwable -> {
-                    return Maybe.error(new TechnicalManagementException("An error occurs while trying to get incon for notifier plugin " + notifierId, throwable));
-                });
+                .onErrorResumeNext(throwable -> Maybe.error(new TechnicalManagementException("An error occurs while trying to get incon for notifier plugin " + notifierId, throwable)));
     }
 
     public Maybe<String> getDocumentation(String notifierId) {
 
         return Maybe.fromCallable(() -> notifierPluginManager.getDocumentation(notifierId))
-                .onErrorResumeNext(throwable -> {
-                    return Maybe.error(new TechnicalManagementException("An error occurs while trying to get documentation for notifier plugin " + notifierId, throwable));
-                });
+                .onErrorResumeNext(throwable -> Maybe.error(new TechnicalManagementException("An error occurs while trying to get documentation for notifier plugin " + notifierId, throwable)));
     }
 
     private Single<NotifierPlugin> convert(Plugin plugin, String... expand) {
