@@ -474,6 +474,8 @@ jobs:
             
             # Reduce the sync frequency to avoid flaky test due to synchronization delay
             export gravitee_services_sync_cron="*/2 * * * * *"
+            export gravitee_services_sync_timeframeBeforeDelay=5000
+            export gravitee_services_sync_timeframeAfterDelay=5000
             export GIO_MAX_MEM=512m
             
             # Start AM Management
@@ -485,8 +487,8 @@ jobs:
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
             
             echo "Wait for AM to be up and running..."
-            timeout 120s bash -c 'until nc -z localhost 8093; do sleep 2; done'
-            timeout 120s bash -c 'until nc -z localhost 8092; do sleep 2; done'
+            timeout 180s bash -c 'until nc -z localhost 8093; do sleep 2; done'
+            timeout 180s bash -c 'until nc -z localhost 8092; do sleep 2; done'
             
             retVal=$?
             if [ $retVal -ne 0 ]; then
@@ -597,6 +599,8 @@ jobs:
             
             # Reduce the sync frequency to avoid flaky test due to synchronization delay  
             export gravitee_services_sync_cron="*/2 * * * * *"
+            export gravitee_services_sync_timeframeBeforeDelay=5000
+            export gravitee_services_sync_timeframeAfterDelay=5000
             export GIO_MAX_MEM=512m
             
             # Start AM Management
@@ -617,7 +621,7 @@ jobs:
             mvn -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
             echo "Wait for AM to be up and running..."
-            timeout 120s bash -c 'until nc -z localhost 8092; do sleep 2; done'
+            timeout 180s bash -c 'until nc -z localhost 8092; do sleep 2; done'
             retVal=$?
             if [ $retVal -ne 0 ]; then
               echo "Gateway not started"
@@ -673,6 +677,8 @@ jobs:
             
             # Reduce the sync frequency to avoid flaky test due to synchronization delay
             export gravitee_services_sync_cron="*/2 * * * * *"
+            export gravitee_services_sync_timeframeBeforeDelay=5000
+            export gravitee_services_sync_timeframeAfterDelay=5000
             export GIO_MAX_MEM=512m
             
             # Start AM Management
@@ -684,8 +690,9 @@ jobs:
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
             
             echo "Wait for AM to be up and running..."
-            timeout 120s bash -c 'until nc -z localhost 8093; do sleep 2; done'
-            timeout 120s bash -c 'until nc -z localhost 8092; do sleep 2; done'
+            timeout 180s bash -c 'until nc -z localhost 8093; do sleep 2; done'
+            timeout 180s bash -c 'until nc -z localhost 8092; do sleep 2; done'
+            
             retVal=$?
             if [ $retVal -ne 0 ]; then
               echo "AM not started"
@@ -772,6 +779,8 @@ jobs:
             
             # Reduce the sync frequency to avoid flaky test due to synchronization delay
             export gravitee_services_sync_cron="*/2 * * * * *"
+            export gravitee_services_sync_timeframeBeforeDelay=5000
+            export gravitee_services_sync_timeframeAfterDelay=5000
             export GIO_MAX_MEM=512m
 
             # Start AM Management
@@ -791,7 +800,8 @@ jobs:
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
            
             echo "Wait for AM to be up and running..."
-            timeout 120s bash -c 'until nc -z localhost 8092; do sleep 2; done'
+            timeout 180s bash -c 'until nc -z localhost 8092; do sleep 2; done'
+            
             retVal=$?
             if [ $retVal -ne 0 ]; then
               echo "Gateway not started"
