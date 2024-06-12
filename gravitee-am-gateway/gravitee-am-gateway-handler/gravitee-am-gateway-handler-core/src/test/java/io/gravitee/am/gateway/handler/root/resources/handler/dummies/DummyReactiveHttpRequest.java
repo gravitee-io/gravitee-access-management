@@ -16,27 +16,8 @@
 
 package io.gravitee.am.gateway.handler.root.resources.handler.dummies;
 
-import io.netty.handler.codec.DecoderResult;
 import io.reactivex.rxjava3.core.Completable;
-import io.vertx.codegen.annotations.Nullable;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.MultiMap;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.*;
-import io.vertx.core.net.NetSocket;
-import io.vertx.core.net.SocketAddress;
-import io.vertx.core.streams.Pipe;
-import io.vertx.core.streams.WriteStream;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
-import java.util.Map;
-import java.util.Set;
-import javax.net.ssl.SSLSession;
-import javax.security.cert.X509Certificate;
-import org.mockito.Mockito;
-
-import static org.mockito.Mockito.mock;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

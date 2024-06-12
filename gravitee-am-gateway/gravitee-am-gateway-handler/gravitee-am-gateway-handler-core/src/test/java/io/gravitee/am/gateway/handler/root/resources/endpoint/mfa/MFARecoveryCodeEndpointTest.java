@@ -38,7 +38,11 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationContext;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
 import static org.hamcrest.CoreMatchers.is;

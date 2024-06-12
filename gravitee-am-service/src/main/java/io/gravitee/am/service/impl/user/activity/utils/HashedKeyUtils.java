@@ -17,16 +17,14 @@
 package io.gravitee.am.service.impl.user.activity.utils;
 
 import io.gravitee.am.service.impl.user.activity.configuration.UserActivityConfiguration.Algorithm;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
-
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
-
 import static org.apache.commons.codec.digest.Sha2Crypt.sha256Crypt;
 import static org.apache.commons.codec.digest.Sha2Crypt.sha512Crypt;
 

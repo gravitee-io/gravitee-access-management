@@ -59,9 +59,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.PostConstruct;
-
-import java.util.stream.Collectors;
-
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -69,6 +66,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;

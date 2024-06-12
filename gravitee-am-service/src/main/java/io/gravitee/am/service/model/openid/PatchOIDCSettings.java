@@ -22,13 +22,12 @@ import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.oidc.SecurityProfileSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.utils.SetterUtils;
+import lombok.NoArgsConstructor;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-
-import lombok.NoArgsConstructor;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)

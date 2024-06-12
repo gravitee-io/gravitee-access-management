@@ -31,7 +31,14 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import static io.gravitee.am.gateway.handler.vertx.cors.CorsHandlerFactory.*;
+import static io.gravitee.am.gateway.handler.vertx.cors.CorsHandlerFactory.DEFAULT_ALLOWED_HEADERS_VALUE;
+import static io.gravitee.am.gateway.handler.vertx.cors.CorsHandlerFactory.DEFAULT_ALLOW_CREDENTIAL_KEY;
+import static io.gravitee.am.gateway.handler.vertx.cors.CorsHandlerFactory.DEFAULT_ALLOW_CREDENTIAL_VALUE;
+import static io.gravitee.am.gateway.handler.vertx.cors.CorsHandlerFactory.DEFAULT_HTTP_METHODS_VALUE;
+import static io.gravitee.am.gateway.handler.vertx.cors.CorsHandlerFactory.DEFAULT_MAX_AGE_KEY;
+import static io.gravitee.am.gateway.handler.vertx.cors.CorsHandlerFactory.DEFAULT_MAX_AGE_VALUE;
+import static io.gravitee.am.gateway.handler.vertx.cors.CorsHandlerFactory.DEFAULT_ORIGIN_KEY;
+import static io.gravitee.am.gateway.handler.vertx.cors.CorsHandlerFactory.DEFAULT_ORIGIN_VALUE;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toSet;
 import static org.junit.Assert.assertEquals;

@@ -19,16 +19,20 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException;
 import io.gravitee.am.extensiongrant.jwtbearer.JWTBearerExtensionGrantConfiguration;
 import io.gravitee.am.identityprovider.api.User;
-
 import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
-import java.security.InvalidKeyException;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.security.InvalidKeyException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.extensiongrant.jwtbearer.provider.JWTBearerExtensionGrantProvider.SSH_PUB_KEY;
 import static junit.framework.Assert.assertTrue;

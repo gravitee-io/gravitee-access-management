@@ -27,9 +27,17 @@ import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import static io.gravitee.am.common.utils.ConstantKeys.*;
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.anyMap;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

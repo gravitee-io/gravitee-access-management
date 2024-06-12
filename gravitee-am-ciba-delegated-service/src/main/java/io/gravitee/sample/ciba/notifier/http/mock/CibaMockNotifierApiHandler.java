@@ -16,8 +16,8 @@
 package io.gravitee.sample.ciba.notifier.http.mock;
 
 import com.nimbusds.jose.JOSEObject;
-import io.gravitee.sample.ciba.notifier.http.domain.CibaDomainManager;
 import io.gravitee.sample.ciba.notifier.CibaHttpNotifier;
+import io.gravitee.sample.ciba.notifier.http.domain.CibaDomainManager;
 import io.gravitee.sample.ciba.notifier.http.model.DomainReference;
 import io.gravitee.sample.ciba.notifier.http.model.NotifierResponse;
 import io.netty.util.internal.StringUtil;
@@ -38,7 +38,10 @@ import org.slf4j.LoggerFactory;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 
-import static io.gravitee.sample.ciba.notifier.http.Constants.*;
+import static io.gravitee.sample.ciba.notifier.http.Constants.BEARER;
+import static io.gravitee.sample.ciba.notifier.http.Constants.CALLBACK_VALIDATE;
+import static io.gravitee.sample.ciba.notifier.http.Constants.STATE;
+import static io.gravitee.sample.ciba.notifier.http.Constants.TRANSACTION_ID;
 
 public class CibaMockNotifierApiHandler implements Handler<RoutingContext> {
     private static final Logger LOGGER = LoggerFactory.getLogger(CibaMockNotifierApiHandler.class);

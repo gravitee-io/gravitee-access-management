@@ -48,7 +48,10 @@ import org.thymeleaf.util.StringUtils;
 import java.time.Instant;
 import java.util.Date;
 
-import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_AUTH_ACTION_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_AUTH_ACTION_VALUE_LOGIN;
+import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

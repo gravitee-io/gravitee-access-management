@@ -24,18 +24,25 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.rxjava3.core.Completable;
-import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static io.gravitee.am.common.utils.ConstantKeys.*;
+import java.util.Map;
+
+import static io.gravitee.am.common.utils.ConstantKeys.GEOIP_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_IP_LOCATION;
+import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_USER_AGENT;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

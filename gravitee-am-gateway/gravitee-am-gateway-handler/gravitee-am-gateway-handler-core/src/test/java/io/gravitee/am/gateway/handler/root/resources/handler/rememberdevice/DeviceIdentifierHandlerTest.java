@@ -38,7 +38,12 @@ import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_TYPE;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

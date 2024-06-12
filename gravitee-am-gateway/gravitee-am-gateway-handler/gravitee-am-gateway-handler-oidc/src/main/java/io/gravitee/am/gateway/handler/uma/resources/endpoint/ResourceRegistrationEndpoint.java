@@ -36,7 +36,9 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
-import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.*;
+import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.RESOURCE_ID;
+import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.RESOURCE_REGISTRATION_PATH;
+import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.UMA_PATH;
 
 /**
  * <pre>

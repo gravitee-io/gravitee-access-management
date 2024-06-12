@@ -15,14 +15,14 @@
  */
 package io.gravitee.am.identityprovider.facebook.model;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 
 /**
  * Facebook User claims

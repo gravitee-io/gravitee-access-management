@@ -27,7 +27,12 @@ import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequ
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.ApplicationFactorSettings;
+import io.gravitee.am.model.Credential;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Factor;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.login.WebAuthnSettings;
@@ -55,7 +60,10 @@ import java.util.Optional;
 
 import static io.gravitee.am.common.factor.FactorSecurityType.WEBAUTHN_CREDENTIAL;
 import static io.gravitee.am.common.factor.FactorType.FIDO2;
-import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
+import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.USER_LOGIN_COMPLETED_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnAuthenticatorIntegrity.authIntegrity;
 import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
 import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;

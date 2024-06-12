@@ -22,9 +22,14 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.*;
+import io.vertx.core.http.Cookie;
+import io.vertx.core.http.HttpFrame;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.http.StreamPriority;
 import io.vertx.core.net.HostAndPort;
 import io.vertx.core.streams.ReadStream;
+
 import java.util.Set;
 
 /**

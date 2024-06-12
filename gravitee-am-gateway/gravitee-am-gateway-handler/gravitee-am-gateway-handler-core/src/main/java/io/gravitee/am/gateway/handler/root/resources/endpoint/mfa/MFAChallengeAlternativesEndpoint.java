@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
-import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Domain;

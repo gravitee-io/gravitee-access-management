@@ -35,11 +35,18 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.UUID;
 
 import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

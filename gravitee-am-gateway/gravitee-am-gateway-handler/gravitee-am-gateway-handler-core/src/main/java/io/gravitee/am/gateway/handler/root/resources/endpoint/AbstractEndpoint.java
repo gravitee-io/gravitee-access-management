@@ -30,12 +30,16 @@ import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
+import org.slf4j.Logger;
+
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import org.slf4j.Logger;
 
-import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.USER_ACTIVITY_ENABLED;
+import static io.gravitee.am.common.utils.ConstantKeys.USER_ACTIVITY_RETENTION_TIME;
+import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_IP_LOCATION;
+import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_USER_AGENT;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static java.lang.Boolean.TRUE;
 

@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.user.register;
 
-import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserTokenRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.service.user.UserService;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

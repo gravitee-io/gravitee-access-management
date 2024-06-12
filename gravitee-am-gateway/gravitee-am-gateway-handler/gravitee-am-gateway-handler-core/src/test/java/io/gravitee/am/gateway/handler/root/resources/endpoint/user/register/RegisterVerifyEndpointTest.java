@@ -31,9 +31,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_ACTION_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.REGISTRATION_VERIFY_SUCCESS;
+import static io.gravitee.am.common.utils.ConstantKeys.SUCCESS_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.TOKEN_PARAM_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;

@@ -19,16 +19,18 @@ package io.gravitee.am.gateway.handler.root.resources.handler.consent;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.buffer.Buffer;
-import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.core.env.Environment;
 
+import java.util.Map;
+
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_IP_LOCATION;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_USER_AGENT;
 import static io.gravitee.common.http.MediaType.APPLICATION_JSON;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

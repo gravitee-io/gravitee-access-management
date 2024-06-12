@@ -17,11 +17,10 @@ package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.utils.SetterUtils;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 import java.util.Optional;
-
-import lombok.NoArgsConstructor;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)

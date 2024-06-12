@@ -15,11 +15,11 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import lombok.NoArgsConstructor;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-
-import lombok.NoArgsConstructor;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)

@@ -17,6 +17,7 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.dummies;
 
 import io.vertx.rxjava3.ext.web.Session;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;

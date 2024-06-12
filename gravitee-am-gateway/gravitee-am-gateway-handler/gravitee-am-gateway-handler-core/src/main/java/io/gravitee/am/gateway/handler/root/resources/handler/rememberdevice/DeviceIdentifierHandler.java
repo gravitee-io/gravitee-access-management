@@ -28,7 +28,11 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import java.util.Objects;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_TYPE;
+import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 

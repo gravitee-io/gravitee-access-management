@@ -32,7 +32,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static io.gravitee.am.common.utils.ConstantKeys.TOKEN_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

@@ -39,7 +39,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import static io.gravitee.sample.ciba.notifier.http.Constants.*;
+import static io.gravitee.sample.ciba.notifier.http.Constants.ACTION;
+import static io.gravitee.sample.ciba.notifier.http.Constants.ACTION_REJECT;
+import static io.gravitee.sample.ciba.notifier.http.Constants.ACTION_SIGN_IN;
+import static io.gravitee.sample.ciba.notifier.http.Constants.ACTION_VALIDATE;
+import static io.gravitee.sample.ciba.notifier.http.Constants.CALLBACK_VALIDATE;
+import static io.gravitee.sample.ciba.notifier.http.Constants.PARAM_SUBJECT;
+import static io.gravitee.sample.ciba.notifier.http.Constants.STATE;
+import static io.gravitee.sample.ciba.notifier.http.Constants.TOPIC_NOTIFICATION_REQUEST;
+import static io.gravitee.sample.ciba.notifier.http.Constants.TRANSACTION_ID;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

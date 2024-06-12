@@ -16,10 +16,7 @@
 package io.gravitee.am.deviceidentifier.fingerprintjs;
 
 import io.gravitee.am.deviceidentifier.api.DeviceIdentifier;
-import io.gravitee.am.deviceidentifier.api.DeviceIdentifierConfiguration;
-import io.gravitee.am.deviceidentifier.api.DeviceIdentifierProvider;
 import io.gravitee.am.deviceidentifier.fingerprintjs.impl.FingerprintJsV3ProProvider;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

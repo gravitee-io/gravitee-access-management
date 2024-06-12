@@ -16,10 +16,7 @@
 package io.gravitee.am.factor.email;
 
 import io.gravitee.am.factor.api.Factor;
-import io.gravitee.am.factor.api.FactorConfiguration;
-import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.factor.email.provider.EmailFactorProvider;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

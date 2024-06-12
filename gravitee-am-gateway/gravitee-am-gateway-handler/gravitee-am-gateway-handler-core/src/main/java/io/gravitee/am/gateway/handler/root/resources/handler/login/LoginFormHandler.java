@@ -30,7 +30,8 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.PASSWORD_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
 import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
 import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
 

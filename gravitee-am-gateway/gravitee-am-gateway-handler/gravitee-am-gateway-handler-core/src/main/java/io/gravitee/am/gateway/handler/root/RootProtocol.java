@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.root;
 
 import io.gravitee.am.gateway.handler.api.Protocol;
 import io.gravitee.am.gateway.handler.root.spring.RootConfiguration;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

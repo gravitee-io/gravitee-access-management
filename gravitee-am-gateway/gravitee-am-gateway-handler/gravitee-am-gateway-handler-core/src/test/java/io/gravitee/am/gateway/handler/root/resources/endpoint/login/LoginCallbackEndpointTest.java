@@ -23,8 +23,6 @@ import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.DummySession;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackFailureHandler;
-import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.api.social.CloseSessionMode;
 import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
@@ -33,15 +31,11 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.ext.web.Session;
 import io.vertx.rxjava3.core.MultiMap;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.util.Map;
-import java.util.function.Function;
 
 import static io.gravitee.am.common.utils.ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY;
 import static org.mockito.ArgumentMatchers.any;

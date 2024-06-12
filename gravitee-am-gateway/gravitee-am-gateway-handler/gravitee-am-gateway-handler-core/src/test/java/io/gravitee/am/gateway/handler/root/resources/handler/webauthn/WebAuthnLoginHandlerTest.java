@@ -29,7 +29,6 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.FactorService;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
@@ -53,7 +52,9 @@ import java.util.Date;
 import java.util.function.Consumer;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

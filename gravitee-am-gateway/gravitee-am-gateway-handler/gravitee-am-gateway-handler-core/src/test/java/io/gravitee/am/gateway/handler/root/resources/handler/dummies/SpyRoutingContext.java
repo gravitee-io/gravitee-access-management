@@ -25,7 +25,8 @@ import io.vertx.rxjava3.ext.auth.User;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

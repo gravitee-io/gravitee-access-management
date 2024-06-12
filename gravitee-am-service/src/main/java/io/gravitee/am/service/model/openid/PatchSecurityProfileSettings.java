@@ -17,10 +17,9 @@ package io.gravitee.am.service.model.openid;
 
 import io.gravitee.am.model.oidc.SecurityProfileSettings;
 import io.gravitee.am.service.utils.SetterUtils;
+import lombok.NoArgsConstructor;
 
 import java.util.Optional;
-
-import lombok.NoArgsConstructor;
 
 /**
  * @@author Eric LELEU (eric.leleu at graviteesource.com)

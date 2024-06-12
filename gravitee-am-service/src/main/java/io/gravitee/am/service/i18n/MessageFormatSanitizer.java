@@ -15,10 +15,10 @@
  */
 package io.gravitee.am.service.i18n;
 
-import java.util.regex.Pattern;
-
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+
+import java.util.regex.Pattern;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

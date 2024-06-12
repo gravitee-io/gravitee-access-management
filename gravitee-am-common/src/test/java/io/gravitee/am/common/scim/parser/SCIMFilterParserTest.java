@@ -19,7 +19,9 @@ import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.scim.filter.Operator;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

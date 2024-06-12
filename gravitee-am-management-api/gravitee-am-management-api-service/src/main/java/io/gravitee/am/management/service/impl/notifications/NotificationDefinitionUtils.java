@@ -22,13 +22,12 @@ import io.gravitee.am.model.safe.CertificateProperties;
 import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.node.api.notifier.NotificationDefinition;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

@@ -24,6 +24,10 @@ import io.gravitee.am.jwt.NoJWTParser;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.plugins.certificate.core.CertificateProviderConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.security.Key;
 import java.security.KeyPair;
 import java.security.PrivateKey;
@@ -31,9 +35,6 @@ import java.security.PublicKey;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

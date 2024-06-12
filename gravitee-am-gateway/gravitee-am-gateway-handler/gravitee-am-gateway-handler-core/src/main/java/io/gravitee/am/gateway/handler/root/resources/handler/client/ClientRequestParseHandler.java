@@ -20,13 +20,10 @@ import io.gravitee.am.common.exception.oauth2.ServerErrorException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.model.safe.ClientProperties;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-
-import java.util.List;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 

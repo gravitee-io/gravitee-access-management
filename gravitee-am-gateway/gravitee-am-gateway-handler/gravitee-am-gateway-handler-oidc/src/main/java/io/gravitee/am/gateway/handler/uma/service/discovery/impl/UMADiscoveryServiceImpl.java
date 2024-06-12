@@ -26,8 +26,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.*;
-import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.*;
+import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.CLIENT_SECRET_BASIC;
+import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.CLIENT_SECRET_JWT;
+import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.CLIENT_SECRET_POST;
+import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.PRIVATE_KEY_JWT;
+import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH;
+import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.TLS_CLIENT_AUTH;
+import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.CLAIMS_INTERACTION_PATH;
+import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.PERMISSION_PATH;
+import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.RESOURCE_REGISTRATION_PATH;
+import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.UMA_PATH;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)

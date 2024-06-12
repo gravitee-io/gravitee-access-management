@@ -20,6 +20,8 @@ import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.reactivex.rxjava3.core.Single;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,9 +45,6 @@ import static io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN;
 import static io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN;
 import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN;
 import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN;
-
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
