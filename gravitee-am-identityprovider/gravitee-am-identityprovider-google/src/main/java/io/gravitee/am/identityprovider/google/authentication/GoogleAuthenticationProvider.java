@@ -88,7 +88,7 @@ public class GoogleAuthenticationProvider extends AbstractOpenIDConnectAuthentic
     }
 
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
         GoogleIdentityProviderConfiguration configuration = this.configuration;
 
         // check configuration

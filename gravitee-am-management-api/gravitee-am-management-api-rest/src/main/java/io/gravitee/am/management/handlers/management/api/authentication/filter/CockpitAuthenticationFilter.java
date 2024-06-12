@@ -30,8 +30,7 @@ import io.gravitee.node.api.configuration.Configuration;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -46,10 +45,9 @@ import java.security.Key;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.util.HashMap;
-
+@Slf4j
 public class CockpitAuthenticationFilter extends GenericFilterBean {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CockpitAuthenticationFilter.class);
     private static final String COCKPIT_SOURCE = "cockpit";
 
     @Autowired
@@ -144,7 +142,7 @@ public class CockpitAuthenticationFilter extends GenericFilterBean {
                     httpResponse.addCookie(jwtAuthenticationCookie);
                     httpResponse.sendRedirect((String) jwt.get("redirect_uri") + redirectPath);
                 } catch (Exception e) {
-                    LOGGER.error("Error occurred when trying to login using cockpit.", e);
+                    log.error("Error occurred when trying to login using cockpit.", e);
                     httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN);
                 }
             }

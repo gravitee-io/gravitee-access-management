@@ -18,12 +18,10 @@ package io.gravitee.am.management.handlers.management.api.authentication.handler
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.JWTGenerator;
 import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -36,8 +34,8 @@ import static io.gravitee.am.management.handlers.management.api.authentication.p
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class CustomAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
-    protected final Logger logger = LoggerFactory.getLogger(CustomAuthenticationSuccessHandler.class);
 
     @Autowired
     private JWTGenerator jwtGenerator;
@@ -47,7 +45,7 @@ public class CustomAuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-                                        Authentication authentication) throws ServletException, IOException {
+                                        Authentication authentication) throws IOException {
 
         String redirectUri = (String) request.getAttribute(DEFAULT_REDIRECT_COOKIE_NAME);
 
@@ -59,7 +57,7 @@ public class CustomAuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         response.addCookie(jwtAuthenticationCookie);
 
         // Replay the original request.
-        logger.debug("Redirecting to Url: {}", redirectUri);
+        log.debug("Redirecting to Url: {}", redirectUri);
         getRedirectStrategy().sendRedirect(request, response, redirectUri);
     }
 }

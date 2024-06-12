@@ -255,8 +255,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
         if (heartbeatFrequency != null) {
             serverBuilder.heartbeatFrequency(heartbeatFrequency, TimeUnit.MILLISECONDS);
         }
-        ServerSettings serverSettings = serverBuilder.build();
-        return serverSettings;
+        return serverBuilder.build();
     }
 
     private int getServersCount() {

@@ -18,7 +18,6 @@ package io.gravitee.am.gateway.handler.manager.authdevice.notifier.impl;
 import io.gravitee.am.authdevice.notifier.api.AuthenticationDeviceNotifierProvider;
 import io.gravitee.am.common.event.AuthenticationDeviceNotifierEvent;
 import io.gravitee.am.common.event.EventManager;
-import io.gravitee.am.gateway.handler.common.factor.impl.FactorManagerImpl;
 import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
 import io.gravitee.am.model.AuthenticationDeviceNotifier;
 import io.gravitee.am.model.Domain;
@@ -33,15 +32,16 @@ import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

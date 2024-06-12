@@ -53,8 +53,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -73,13 +72,9 @@ import java.util.stream.Collectors;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@Slf4j
 @Component
 public class ScopeServiceImpl implements ScopeService {
-
-    /**
-     * Logger.
-     */
-    private final Logger LOGGER = LoggerFactory.getLogger(ScopeServiceImpl.class);
 
     @Lazy
     @Autowired
@@ -103,10 +98,10 @@ public class ScopeServiceImpl implements ScopeService {
 
     @Override
     public Maybe<Scope> findById(String id) {
-        LOGGER.debug("Find scope by ID: {}", id);
+        log.debug("Find scope by ID: {}", id);
         return scopeRepository.findById(id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a scope using its ID: {}", id, ex);
+                    log.error("An error occurs while trying to find a scope using its ID: {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a scope using its ID: %s", id), ex));
                 });
@@ -114,10 +109,10 @@ public class ScopeServiceImpl implements ScopeService {
 
     @Override
     public Single<Page<Scope>> search(String domain, String query, int page, int size) {
-        LOGGER.debug("Search scopes by domain and query: {} {}", domain, query);
+        log.debug("Search scopes by domain and query: {} {}", domain, query);
         return scopeRepository.search(domain, query, page, size)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find scopes by domain and query : {} {}", domain, query, ex);
+                    log.error("An error occurs while trying to find scopes by domain and query : {} {}", domain, query, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find scopes by domain and query: %s %s", domain, query), ex));
                 });
@@ -125,7 +120,7 @@ public class ScopeServiceImpl implements ScopeService {
 
     @Override
     public Single<Scope> create(String domain, NewScope newScope, User principal) {
-        LOGGER.debug("Create a new scope {} for domain {}", newScope, domain);
+        log.debug("Create a new scope {} for domain {}", newScope, domain);
         // replace all whitespace by an underscore (whitespace is a reserved keyword to separate tokens)
         String scopeKey = newScope.getKey().replaceAll("\\s+", "_");
         return scopeRepository.findByDomainAndKey(domain, scopeKey)
@@ -161,7 +156,7 @@ public class ScopeServiceImpl implements ScopeService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to create a scope", ex);
+                    log.error("An error occurs while trying to create a scope", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a scope", ex));
                 })
                 .doOnSuccess(scope -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_CREATED).scope(scope)))
@@ -170,7 +165,7 @@ public class ScopeServiceImpl implements ScopeService {
 
     @Override
     public Single<Scope> create(String domain, NewSystemScope newScope) {
-        LOGGER.debug("Create a new system scope {} for domain {}", newScope, domain);
+        log.debug("Create a new system scope {} for domain {}", newScope, domain);
         String scopeKey = newScope.getKey().toLowerCase();
         return scopeRepository.findByDomainAndKey(domain, scopeKey)
                 .isEmpty()
@@ -202,14 +197,14 @@ public class ScopeServiceImpl implements ScopeService {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to create a system scope", ex);
+                    log.error("An error occurs while trying to create a system scope", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a system scope", ex));
                 });
     }
 
     @Override
     public Single<Scope> patch(String domain, String id, PatchScope patchScope, User principal) {
-        LOGGER.debug("Patching a scope {} for domain {}", id, domain);
+        log.debug("Patching a scope {} for domain {}", id, domain);
         return scopeRepository.findById(id)
                 .switchIfEmpty(Single.error(new ScopeNotFoundException(id)))
                 .flatMap(oldScope -> {
@@ -220,14 +215,14 @@ public class ScopeServiceImpl implements ScopeService {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to patch a scope", ex);
+                    log.error("An error occurs while trying to patch a scope", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to patch a scope", ex));
                 });
     }
 
     @Override
     public Single<Scope> update(String domain, String id, UpdateScope updateScope, User principal) {
-        LOGGER.debug("Update a scope {} for domain {}", id, domain);
+        log.debug("Update a scope {} for domain {}", id, domain);
         return scopeRepository.findById(id)
                 .switchIfEmpty(Single.error(new ScopeNotFoundException(id)))
                 .flatMap(oldScope -> {
@@ -249,7 +244,7 @@ public class ScopeServiceImpl implements ScopeService {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to update a scope", ex);
+                    log.error("An error occurs while trying to update a scope", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a scope", ex));
                 });
     }
@@ -270,7 +265,7 @@ public class ScopeServiceImpl implements ScopeService {
 
     @Override
     public Single<Scope> update(String domain, String id, UpdateSystemScope updateScope) {
-        LOGGER.debug("Update a system scope {} for domain {}", id, domain);
+        log.debug("Update a system scope {} for domain {}", id, domain);
         return scopeRepository.findById(id)
                 .switchIfEmpty(Single.error(new ScopeNotFoundException(id)))
                 .flatMap(scope -> {
@@ -292,14 +287,14 @@ public class ScopeServiceImpl implements ScopeService {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to update a system scope", ex);
+                    log.error("An error occurs while trying to update a system scope", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a system scope", ex));
                 });
     }
 
     @Override
     public Completable delete(String scopeId, boolean force, User principal) {
-        LOGGER.debug("Delete scope {}", scopeId);
+        log.debug("Delete scope {}", scopeId);
         return scopeRepository.findById(scopeId)
                 .switchIfEmpty(Maybe.error(new ScopeNotFoundException(scopeId)))
                 .flatMapSingle(scope -> {
@@ -364,7 +359,7 @@ public class ScopeServiceImpl implements ScopeService {
                         return Completable.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to delete scope: {}", scopeId, ex);
+                    log.error("An error occurs while trying to delete scope: {}", scopeId, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete scope: %s", scopeId), ex));
                 });
@@ -372,10 +367,10 @@ public class ScopeServiceImpl implements ScopeService {
 
     @Override
     public Single<Page<Scope>> findByDomain(String domain, int page, int size) {
-        LOGGER.debug("Find scopes by domain: {}", domain);
+        log.debug("Find scopes by domain: {}", domain);
         return scopeRepository.findByDomain(domain, page, size)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find scopes by domain: {}", domain, ex);
+                    log.error("An error occurs while trying to find scopes by domain: {}", domain, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find scopes by domain: %s", domain), ex));
                 });
@@ -383,10 +378,10 @@ public class ScopeServiceImpl implements ScopeService {
 
     @Override
     public Maybe<Scope> findByDomainAndKey(String domain, String scopeKey) {
-        LOGGER.debug("Find scopes by domain: {} and scope key: {}", domain, scopeKey);
+        log.debug("Find scopes by domain: {} and scope key: {}", domain, scopeKey);
         return scopeRepository.findByDomainAndKey(domain, scopeKey)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find scopes by domain: {} and scope key: {}", domain, scopeKey, ex);
+                    log.error("An error occurs while trying to find scopes by domain: {} and scope key: {}", domain, scopeKey, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find scopes by domain: %s and scope key: %s", domain, scopeKey), ex));
                 });
@@ -394,14 +389,14 @@ public class ScopeServiceImpl implements ScopeService {
 
     @Override
     public Single<List<Scope>> findByDomainAndKeys(String domain, List<String> scopeKeys) {
-        LOGGER.debug("Find scopes by domain: {} and scope keys: {}", domain, scopeKeys);
+        log.debug("Find scopes by domain: {} and scope keys: {}", domain, scopeKeys);
         if(scopeKeys==null || scopeKeys.isEmpty()) {
             return Single.just(Collections.emptyList());
         }
         return scopeRepository.findByDomainAndKeys(domain, scopeKeys).toList()
                 .onErrorResumeNext(ex -> {
                     String keys = scopeKeys!=null?String.join(",",scopeKeys):null;
-                    LOGGER.error("An error occurs while trying to find scopes by domain: {} and scope keys: {}", domain, keys, ex);
+                    log.error("An error occurs while trying to find scopes by domain: {} and scope keys: {}", domain, keys, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find scopes by domain: %s and scope keys: %s", domain, keys), ex));
                 });

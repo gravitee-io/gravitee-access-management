@@ -53,8 +53,8 @@ public class ResolvePropertyCommandHandler implements TriggerProvider.OnCommandR
     @Override
     public <T> void doOnCommand(Command command, Handler<T> resultHandler) {
         LOGGER.debug("Received a command from alert engine {}.", command);
-        if (command instanceof ResolvePropertyCommand) {
-            resolveProperties((ResolvePropertyCommand) command)
+        if (command instanceof ResolvePropertyCommand resolvePropertyCommand) {
+            resolveProperties(resolvePropertyCommand)
                     .subscribe(result -> resultHandler.handle((T) result), error -> resultHandler.handle(null));
         } else {
             LOGGER.warn("Unknown alert command: {}", command);

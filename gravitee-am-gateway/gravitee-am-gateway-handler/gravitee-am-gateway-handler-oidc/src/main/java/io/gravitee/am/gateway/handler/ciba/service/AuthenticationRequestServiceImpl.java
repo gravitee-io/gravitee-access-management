@@ -40,6 +40,9 @@ import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
+
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -165,9 +168,9 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
     public Completable validateUserResponse(ADCallbackContext context) {
         return Flowable.fromIterable(this.notifierManager.getAuthDeviceNotifierProviders())
                 .flatMapSingle(provider -> provider.extractUserResponse(context))
-                .filter(opt -> opt.isPresent())
+                .filter(Optional::isPresent)
                 .firstOrError()
-                .map(opt -> opt.get())
+                .map(Optional::get)
                 .flatMap(userResponse -> {
                     final String status = userResponse.isValidated() ? AuthenticationRequestStatus.SUCCESS.name() : AuthenticationRequestStatus.REJECTED.name();
                     return this.jwtService.decode(userResponse.getState(), STATE)
@@ -179,7 +182,7 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
     private Single<JWT> verifyState(ADUserResponse userResponse, String clientId) {
         LOGGER.debug("Prepare verification of state '{}' with client id '{}'", userResponse.getState(), clientId);
         return this.clientService.findByClientId(clientId)
-                .switchIfEmpty(Single.error(() -> new InvalidClientException()))
+                .switchIfEmpty(Single.error(InvalidClientException::new))
                 .flatMap(client -> Single.defer(() -> this.jwtService.decodeAndVerify(userResponse.getState(), client, STATE)))
                 .filter(verifiedJwt -> userResponse.getTid().equals(verifiedJwt.getJti()))
                 .switchIfEmpty(Single.error(() -> new InvalidRequestException("state parameter mismatch with the transaction id")))

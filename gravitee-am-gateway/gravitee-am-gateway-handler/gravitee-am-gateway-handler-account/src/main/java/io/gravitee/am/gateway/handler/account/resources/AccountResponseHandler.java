@@ -22,11 +22,14 @@ import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 /**
  * @author Donald Courtney (donald.courtney at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class AccountResponseHandler {
 
     public static void handleDefaultResponse(RoutingContext routingContext, Object obj){

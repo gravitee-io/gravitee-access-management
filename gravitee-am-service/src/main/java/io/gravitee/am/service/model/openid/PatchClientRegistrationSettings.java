@@ -21,13 +21,14 @@ import io.gravitee.am.service.utils.SetterUtils;
 import java.util.List;
 import java.util.Optional;
 
+import lombok.NoArgsConstructor;
+
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor
 public class PatchClientRegistrationSettings {
-
-    public PatchClientRegistrationSettings() {}
 
     /**
      * Allow localhost host as redirect_uri

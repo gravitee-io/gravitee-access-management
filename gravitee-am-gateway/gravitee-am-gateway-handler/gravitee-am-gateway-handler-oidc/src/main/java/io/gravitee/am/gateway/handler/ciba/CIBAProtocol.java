@@ -16,10 +16,7 @@
 package io.gravitee.am.gateway.handler.ciba;
 
 import io.gravitee.am.gateway.handler.api.Protocol;
-import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
-import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.ciba.spring.CIBAConfiguration;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

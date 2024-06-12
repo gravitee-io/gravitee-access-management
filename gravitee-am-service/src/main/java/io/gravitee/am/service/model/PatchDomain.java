@@ -34,10 +34,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import lombok.NoArgsConstructor;
+
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor
 public class PatchDomain {
 
     private Optional<String> name;
@@ -59,8 +62,6 @@ public class PatchDomain {
     private Optional<Boolean> master;
     private Optional<PatchSAMLSettings> saml;
     private Optional<CorsSettings> corsSettings;
-
-    public PatchDomain() {}
 
     public Optional<String> getName() {
         return name;

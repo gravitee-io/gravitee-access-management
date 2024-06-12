@@ -25,6 +25,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -46,7 +47,7 @@ public class TokenController {
     @Autowired
     private AuthenticationService authenticationService;
 
-    @RequestMapping(value = "/token", method = RequestMethod.POST)
+    @PostMapping(value = "/token")
     public void token(HttpServletResponse response, Authentication authentication) throws IOException {
         // prepare response
         response.setContentType(MediaType.APPLICATION_JSON);

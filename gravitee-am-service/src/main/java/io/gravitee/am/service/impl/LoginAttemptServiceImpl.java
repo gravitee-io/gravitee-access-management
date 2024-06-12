@@ -99,7 +99,7 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to delete login attempt for", criteria, ex);
+                    LOGGER.error("An error occurs while trying to delete login attempt for {}", criteria, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete login attempt: %s", criteria), ex));
                 });

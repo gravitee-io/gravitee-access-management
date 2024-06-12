@@ -103,18 +103,19 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
         return new R2dbcTransactionManager(connectionFactory);
     }
 
-    protected final void initializeDatabaseSchema(R2DBCPoolWrapper poolWrapper, Environment environment, String prefix) throws SQLException {
+    protected final void initializeDatabaseSchema(R2DBCPoolWrapper poolWrapper, Environment environment, String prefix) throws Exception {
         Boolean enabled = environment.getProperty("liquibase.enabled", Boolean.class, true);
         if (enabled) {
-            StringBuilder builder = new StringBuilder("jdbc:");
-            builder = builder.append(poolWrapper.getJdbcDriver()).append("://");
-            builder = builder.append(poolWrapper.getJdbcHostname());
-            String jdbcPort = poolWrapper.getJdbcPort();
-            if (jdbcPort != null) {
-                builder = builder.append(":").append(jdbcPort);
-            }
-
-            final String jdbcUrl = builder.append(SQLSERVER_DRIVER.equals(getDriver()) ? ";databaseName=" : "/").append(poolWrapper.getJdbcDatabase()).toString();
+            final String jdbcPort = poolWrapper.getJdbcPort();
+            final String jdbcUrl = new StringBuilder("jdbc:")
+                    .append(poolWrapper.getJdbcDriver())
+                    .append("://")
+                    .append(poolWrapper.getJdbcHostname())
+                    .append(jdbcPort != null ? ":": "")
+                    .append(jdbcPort != null ? jdbcPort : "")
+                    .append(SQLSERVER_DRIVER.equals(getDriver()) ? ";databaseName=" : "/")
+                    .append(poolWrapper.getJdbcDatabase())
+                    .toString();
 
             try (Connection connection = DriverManager.getConnection(TlsOptionsHelper.setSSLOptions(jdbcUrl, environment, prefix, poolWrapper.getJdbcDriver()),
                     poolWrapper.getJdbcUsername(),
@@ -129,9 +130,8 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
         System.setProperty("liquibase.databaseChangeLogTableName", "databasechangelog");
         System.setProperty("liquibase.databaseChangeLogLockTableName", "databasechangeloglock");
 
-        try {
-            final Liquibase liquibase = new Liquibase("liquibase/master.yml"
-                    , new ClassLoaderResourceAccessor(this.getClass().getClassLoader()), new JdbcConnection(connection));
+        try (ClassLoaderResourceAccessor resourceAccessor = new ClassLoaderResourceAccessor(this.getClass().getClassLoader())) {
+            final Liquibase liquibase = new Liquibase("liquibase/master.yml", resourceAccessor, new JdbcConnection(connection));
             liquibase.update((Contexts) null);
         } catch (Exception ex) {
             LOGGER.error("Failed to set up database: ", ex);

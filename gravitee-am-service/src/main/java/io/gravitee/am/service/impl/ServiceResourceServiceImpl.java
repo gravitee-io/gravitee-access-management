@@ -43,8 +43,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -55,13 +54,9 @@ import java.util.Date;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 @Component
 public class ServiceResourceServiceImpl implements ServiceResourceService {
-
-    /**
-     * Logger.
-     */
-    private final Logger LOGGER = LoggerFactory.getLogger(ServiceResourceServiceImpl.class);
 
     @Lazy
     @Autowired
@@ -81,10 +76,10 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
 
     @Override
     public Maybe<ServiceResource> findById(String id) {
-        LOGGER.debug("Find resource by ID: {}", id);
+        log.debug("Find resource by ID: {}", id);
         return serviceResourceRepository.findById(id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a resource using its ID: {}", id, ex);
+                    log.error("An error occurs while trying to find a resource using its ID: {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a resource using its ID: %s", id), ex));
                 });
@@ -92,17 +87,17 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
 
     @Override
     public Flowable<ServiceResource> findByDomain(String domain) {
-        LOGGER.debug("Find resources by domain: {}", domain);
+        log.debug("Find resources by domain: {}", domain);
         return serviceResourceRepository.findByReference(ReferenceType.DOMAIN, domain)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find resources by domain", ex);
+                    log.error("An error occurs while trying to find resources by domain", ex);
                     return Flowable.error(new TechnicalManagementException("An error occurs while trying to find resources by domain", ex));
                 });
     }
 
     @Override
     public Single<ServiceResource> create(String domain, NewServiceResource newServiceResource, User principal) {
-        LOGGER.debug("Create a new resource {} for domain {}", newServiceResource, domain);
+        log.debug("Create a new resource {} for domain {}", newServiceResource, domain);
         ServiceResource resource = new ServiceResource();
         resource.setId(newServiceResource.getId() == null ? RandomString.generate() : newServiceResource.getId());
         resource.setReferenceId(domain);
@@ -124,14 +119,14 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to create a resource", ex);
+                    log.error("An error occurs while trying to create a resource", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a resource", ex));
                 });
     }
 
     @Override
     public Single<ServiceResource> update(String domain, String id, UpdateServiceResource updateResource, User principal) {
-        LOGGER.debug("Update a resource {} for domain {}", id, domain);
+        log.debug("Update a resource {} for domain {}", id, domain);
 
         return serviceResourceRepository.findById(id)
                 .switchIfEmpty(Single.error(new ServiceResourceNotFoundException(id)))
@@ -154,14 +149,14 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to update a resource", ex);
+                    log.error("An error occurs while trying to update a resource", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a resource", ex));
                 });
     }
 
     @Override
     public Completable delete(String domain, String resourceId, User principal) {
-        LOGGER.debug("Delete resource {}", resourceId);
+        log.debug("Delete resource {}", resourceId);
         return serviceResourceRepository.findById(resourceId)
                 .switchIfEmpty(Maybe.error(new ServiceResourceNotFoundException(resourceId)))
                 .flatMapSingle(resource ->
@@ -191,7 +186,7 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
                         return Completable.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to delete resource: {}", resourceId, ex);
+                    log.error("An error occurs while trying to delete resource: {}", resourceId, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete resource: %s", resourceId), ex));
                 });

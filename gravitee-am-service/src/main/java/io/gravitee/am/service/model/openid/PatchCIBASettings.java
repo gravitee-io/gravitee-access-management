@@ -22,13 +22,14 @@ import io.gravitee.am.service.utils.SetterUtils;
 import java.util.List;
 import java.util.Optional;
 
+import lombok.NoArgsConstructor;
+
 /**
  * @@author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor
 public class PatchCIBASettings {
-
-    public PatchCIBASettings() {}
 
     /**
      * true if CIBA flow is enabled for the domain

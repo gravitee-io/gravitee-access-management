@@ -90,11 +90,11 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
                 // generate public certificate keys
                 certificateKeys = new ArrayList<>();
                 // get Signing Algorithm name
-                if (cert instanceof X509Certificate) {
-                    signature = getSignature(((X509Certificate) cert).getSigAlgName());
-                    String pem = X509CertUtils.toPEMString((X509Certificate) cert);
+                if (cert instanceof X509Certificate x509Certificate) {
+                    signature = getSignature(x509Certificate.getSigAlgName());
+                    String pem = X509CertUtils.toPEMString(x509Certificate);
                     certificateKeys.add(new CertificateKey(CertificateFormat.PEM, pem));
-                    expirationDate = ((X509Certificate) cert).getNotAfter();
+                    expirationDate = x509Certificate.getNotAfter();
                 }
                 PublicKey publicKey = keyPair.getPublic();
                 if (publicKey.getAlgorithm().equals(RSA)){

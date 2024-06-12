@@ -58,8 +58,8 @@ import static io.gravitee.am.model.ReferenceType.DOMAIN;
 public class MongoUserRepository extends AbstractUserRepository<UserMongo> implements UserRepository {
 
     private static final String FIELD_PRE_REGISTRATION = "preRegistration";
-    public static final String TOTAL = "total";
-    public static final String $_COND = "$cond";
+    private static final String TOTAL = "total";
+    private static final String DOLLAR_COND = "$cond";
 
     @PostConstruct
     public void init() {
@@ -139,9 +139,9 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
                         Aggregates.group(
                                 new BasicDBObject("_id", query.getField()),
                                 Accumulators.sum(TOTAL, 1),
-                                Accumulators.sum("disabled", new BasicDBObject($_COND, Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$enabled", false)), 1, 0))),
-                                Accumulators.sum("locked", new BasicDBObject($_COND, Arrays.asList(new BasicDBObject("$and", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$accountNonLocked", false)), new BasicDBObject("$gte", Arrays.asList("$accountLockedUntil", new Date())))), 1, 0))),
-                                Accumulators.sum("inactive", new BasicDBObject($_COND, Arrays.asList(new BasicDBObject("$lte", Arrays.asList("$loggedAt", new Date(Instant.now().minus(90, ChronoUnit.DAYS).toEpochMilli()))), 1, 0)))
+                                Accumulators.sum("disabled", new BasicDBObject(DOLLAR_COND, Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$enabled", false)), 1, 0))),
+                                Accumulators.sum("locked", new BasicDBObject(DOLLAR_COND, Arrays.asList(new BasicDBObject("$and", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$accountNonLocked", false)), new BasicDBObject("$gte", Arrays.asList("$accountLockedUntil", new Date())))), 1, 0))),
+                                Accumulators.sum("inactive", new BasicDBObject(DOLLAR_COND, Arrays.asList(new BasicDBObject("$lte", Arrays.asList("$loggedAt", new Date(Instant.now().minus(90, ChronoUnit.DAYS).toEpochMilli()))), 1, 0)))
                         )
                 ), Document.class)))
                 .map(doc -> {
@@ -164,7 +164,7 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
                         Aggregates.match(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, query.getDomain()), eq(FIELD_PRE_REGISTRATION, true))),
                         Aggregates.group(new BasicDBObject("_id", query.getField()),
                                 Accumulators.sum(TOTAL, 1),
-                                Accumulators.sum("completed", new BasicDBObject($_COND, Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$registrationCompleted", true)), 1, 0))))
+                                Accumulators.sum("completed", new BasicDBObject(DOLLAR_COND, Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$registrationCompleted", true)), 1, 0))))
                 ), Document.class)))
                 .map(doc -> {
                     Map<Object, Object> registrations = new HashMap<>();

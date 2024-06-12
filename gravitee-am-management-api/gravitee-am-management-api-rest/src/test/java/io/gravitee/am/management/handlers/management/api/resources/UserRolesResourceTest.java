@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 
 /**
@@ -75,7 +76,7 @@ public class UserRolesResourceTest extends JerseySpringTest {
         final Response response = getResponse(domainId, mockUser.getId());
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
-        assertEquals(response.readEntity(roles.getClass()).size(), 1);
+        assertEquals(1, response.readEntity(roles.getClass()).size());
     }
 
     @Test
@@ -87,7 +88,7 @@ public class UserRolesResourceTest extends JerseySpringTest {
         final Response response = getResponse(domainId, mockUser.getId(), true);
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
-        assertEquals(response.readEntity(roles.getClass()).size(), 1);
+        assertEquals(1, response.readEntity(roles.getClass()).size());
     }
 
     @Test
@@ -99,7 +100,7 @@ public class UserRolesResourceTest extends JerseySpringTest {
         final Response response = getResponse(domainId, mockUser.getId(), true);
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
-        assertEquals(response.readEntity(roles.getClass()).size(), 0);
+        assertTrue(response.readEntity(roles.getClass()).isEmpty());
     }
 
     @Test
@@ -111,7 +112,7 @@ public class UserRolesResourceTest extends JerseySpringTest {
         final Response response = getResponse(domainId, mockUser.getId(), false);
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
-        assertEquals(response.readEntity(roles.getClass()).size(), 0);
+        assertTrue(response.readEntity(roles.getClass()).isEmpty());
     }
 
     @Test
@@ -121,7 +122,7 @@ public class UserRolesResourceTest extends JerseySpringTest {
         final Response response = getResponse(domainId, mockUser.getId(), false);
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
-        assertEquals(response.readEntity(roles.getClass()).size(), 0);
+        assertTrue(response.readEntity(roles.getClass()).isEmpty());
     }
 
     @Test
@@ -131,7 +132,7 @@ public class UserRolesResourceTest extends JerseySpringTest {
         final Response response = getResponse(domainId, mockUser.getId(), true);
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
-        assertEquals(response.readEntity(roles.getClass()).size(), 0);
+        assertTrue(response.readEntity(roles.getClass()).isEmpty());
     }
 
     @Test
@@ -139,7 +140,7 @@ public class UserRolesResourceTest extends JerseySpringTest {
         final Response response = getResponse(domainId, mockUser.getId(), false);
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
-        assertEquals(response.readEntity(roles.getClass()).size(), 0);
+        assertTrue(response.readEntity(roles.getClass()).isEmpty());
     }
 
     @Test
@@ -147,7 +148,7 @@ public class UserRolesResourceTest extends JerseySpringTest {
         final Response response = getResponse(domainId, mockUser.getId(), true);
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
-        assertEquals(response.readEntity(roles.getClass()).size(), 0);
+        assertTrue(response.readEntity(roles.getClass()).isEmpty());
     }
 
     @Test

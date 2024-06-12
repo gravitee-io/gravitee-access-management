@@ -25,6 +25,9 @@ import io.gravitee.am.service.reporter.builder.AuthenticationAuditBuilder;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
+
+import java.util.Objects;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,12 +52,11 @@ public class AuthenticationEventListener extends AbstractService<AuthenticationE
     @Override
     public void onEvent(Event<AuthenticationEvent, AuthenticationDetails> event) {
         if (domain.getId().equals(event.content().getDomain().getId())) {
-            switch (event.type()) {
-                case SUCCESS:
-                    onAuthenticationSuccess(event.content());
-                    break;
-                case FAILURE:
-                    onAuthenticationFailure(event.content());
+            AuthenticationEvent type = event.type();
+            if (Objects.requireNonNull(type) == AuthenticationEvent.SUCCESS) {
+                onAuthenticationSuccess(event.content());
+            } else if (type == AuthenticationEvent.FAILURE) {
+                onAuthenticationFailure(event.content());
             }
         }
     }

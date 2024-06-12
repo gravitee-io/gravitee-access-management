@@ -86,9 +86,9 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
         Certificate cert = mapper.map(entity, Certificate.class);
         if (cert != null && cert.getMetadata() != null && cert.getMetadata().containsKey("file")) {
             Object file = cert.getMetadata().get("file");
-            if (file instanceof String) {
+            if (file instanceof String stringFile) {
                 // file value should be Byte[] but Jackson serialize it in B64
-                byte[] data = Base64.getDecoder().decode((String) file);
+                byte[] data = Base64.getDecoder().decode(stringFile);
                 cert.getMetadata().put("file", data);
             }
         }

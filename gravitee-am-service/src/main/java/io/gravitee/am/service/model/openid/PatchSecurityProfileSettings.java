@@ -20,13 +20,14 @@ import io.gravitee.am.service.utils.SetterUtils;
 
 import java.util.Optional;
 
+import lombok.NoArgsConstructor;
+
 /**
  * @@author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor
 public class PatchSecurityProfileSettings {
-
-    public PatchSecurityProfileSettings() {}
 
     /**
      * Apply the standard Financial-grade API security profile (version 1.0).

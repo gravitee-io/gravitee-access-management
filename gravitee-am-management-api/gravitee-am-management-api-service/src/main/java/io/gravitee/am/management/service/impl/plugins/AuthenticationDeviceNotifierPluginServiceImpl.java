@@ -37,7 +37,7 @@ import java.util.List;
 @Component
 public class AuthenticationDeviceNotifierPluginServiceImpl extends AbstractPluginService implements AuthenticationDeviceNotifierPluginService {
 
-    private AuthenticationDeviceNotifierPluginManager pluginManager;
+    private final AuthenticationDeviceNotifierPluginManager pluginManager;
 
     @Autowired
     public AuthenticationDeviceNotifierPluginServiceImpl(AuthenticationDeviceNotifierPluginManager pluginManager) {

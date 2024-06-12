@@ -27,15 +27,7 @@ import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
  */
 public class InvalidPermissionRequestException extends OAuth2Exception {
 
-    private String errorCode;
-
-    private InvalidPermissionRequestException() {
-        super();
-    }
-
-    private InvalidPermissionRequestException(String message) {
-        super(message);
-    }
+    private final String errorCode;
 
     private InvalidPermissionRequestException(String errorCode, String message) {
         super(message);

@@ -259,7 +259,7 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
     public io.gravitee.am.reporter.api.provider.Reporter getReporter() {
        return reporterPlugins.values()
                 .stream()
-                .filter(reporter -> reporter.canSearch())
+                .filter(io.gravitee.am.reporter.api.provider.Reporter::canSearch)
                 .findFirst()
                 .orElse(null);
     }

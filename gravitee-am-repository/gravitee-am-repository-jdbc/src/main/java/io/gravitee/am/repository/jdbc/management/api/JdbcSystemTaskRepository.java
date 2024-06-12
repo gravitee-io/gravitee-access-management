@@ -71,8 +71,6 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
     private String insertStatement;
     private String updateStatement;
 
-    protected final LocalDateConverter dateConverter = new LocalDateConverter();
-
     protected SystemTask toEntity(JdbcSystemTask entity) {
         return mapper.map(entity, SystemTask.class);
     }

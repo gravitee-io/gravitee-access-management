@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.management.api;
 
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.node.api.notifier.NotificationAcknowledge;
 import io.gravitee.node.api.notifier.NotificationAcknowledgeRepository;

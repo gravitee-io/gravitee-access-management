@@ -24,10 +24,10 @@ import java.util.Map;
  */
 public class User {
 
-    private static final String FIRSTNAME = "firstname";
-    private static final String LASTNAME = "lastname";
-    private static final String USERNAME = "username";
-    private static final String EMAIL = "email";
+    private static final String FIRSTNAME_ATTRIBUTE = "firstname";
+    private static final String LASTNAME_ATTRIBUTE = "lastname";
+    private static final String USERNAME_ATTRIBUTE = "username";
+    private static final String EMAIL_ATTRIBUTE = "email";
 
     private String firstname;
     private String lastname;
@@ -85,26 +85,21 @@ public class User {
     }
 
     public Object getAttributeValue(String attributeKey) {
-        switch (attributeKey) {
-            case FIRSTNAME:
-                return getFirstname();
-            case LASTNAME:
-                return getLastname();
-            case USERNAME:
-                return getUsername();
-            case EMAIL:
-                return getEmail();
-            default:
-                return null;
-        }
+        return switch (attributeKey) {
+            case FIRSTNAME_ATTRIBUTE -> getFirstname();
+            case LASTNAME_ATTRIBUTE -> getLastname();
+            case USERNAME_ATTRIBUTE -> getUsername();
+            case EMAIL_ATTRIBUTE -> getEmail();
+            default -> null;
+        };
     }
 
     public Map<String, Object> toMap() {
         Map<String, Object> attributes = new HashMap<>();
-        attributes.put(FIRSTNAME, getFirstname());
-        attributes.put(LASTNAME, getLastname());
-        attributes.put(USERNAME, getUsername());
-        attributes.put(EMAIL, getEmail());
+        attributes.put(FIRSTNAME_ATTRIBUTE, getFirstname());
+        attributes.put(LASTNAME_ATTRIBUTE, getLastname());
+        attributes.put(USERNAME_ATTRIBUTE, getUsername());
+        attributes.put(EMAIL_ATTRIBUTE, getEmail());
         return attributes;
     }
 }

@@ -28,13 +28,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import lombok.NoArgsConstructor;
+
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor
 public class PatchOIDCSettings {
-
-    public PatchOIDCSettings() {}
 
     @JsonProperty("clientRegistrationSettings")
     private Optional<PatchClientRegistrationSettings> clientRegistrationSettings;

@@ -108,13 +108,13 @@ import static io.gravitee.am.identityprovider.api.oidc.OpenIDConnectConfiguratio
 public class CertificateServiceImpl implements CertificateService {
     public static final String DEFAULT_CERTIFICATE_PLUGIN = "pkcs12-am-certificate";
 
-    public static final String ECDSA = "ECDSA";
-    public static final String DEFAULT_CERT_CN_NAME = "cn=Gravitee.io";
-    public static final String DEFAULT_CERT_ALGO = "SHA256withRSA";
-    public static final String DEFAULT_CERT_PWD = "gravitee";
-    public static final int DEFAULT_CERT_KEYSIZE = 2048;
-    public static final int DEFAULT_CERT_VALIDITY_IN_DAYS = 365;
-    public static final String DEFAULT_CERT_ALIAS = "default";
+    private static final String ECDSA = "ECDSA";
+    private static final String DEFAULT_CERT_CN_NAME = "cn=Gravitee.io";
+    private static final String DEFAULT_CERT_ALGO = "SHA256withRSA";
+    private static final String DEFAULT_CERT_PASS = "gravitee";
+    private static final int DEFAULT_CERT_KEYSIZE = 2048;
+    private static final int DEFAULT_CERT_VALIDITY_IN_DAYS = 365;
+    private static final String DEFAULT_CERT_ALIAS = "default";
     private static final String RSA = "RSA";
     private static final String EC = "EC";
     private static final String CONTENT = "content";
@@ -412,8 +412,8 @@ public class CertificateServiceImpl implements CertificateService {
                     final String name = environment.getProperty("domains.certificates.default.name", String.class, DEFAULT_CERT_CN_NAME);
                     final String sigAlgName = environment.getProperty("domains.certificates.default.algorithm", String.class, DEFAULT_CERT_ALGO);
                     final String alias = environment.getProperty("domains.certificates.default.alias", String.class, DEFAULT_CERT_ALIAS);
-                    final String keyPass = environment.getProperty("domains.certificates.default.keypass", String.class, DEFAULT_CERT_PWD);
-                    final String storePass = environment.getProperty("domains.certificates.default.storepass", String.class, DEFAULT_CERT_PWD);
+                    final String keyPass = environment.getProperty("domains.certificates.default.keypass", String.class, DEFAULT_CERT_PASS);
+                    final String storePass = environment.getProperty("domains.certificates.default.storepass", String.class, DEFAULT_CERT_PASS);
 
                     ByteArrayOutputStream generateCertificate = generateCertificate(sigAlgName, keySize, name, validity, alias, keyPass, storePass);
 
@@ -488,8 +488,8 @@ public class CertificateServiceImpl implements CertificateService {
         final String name = environment.getProperty("domains.certificates.default.name", String.class, DEFAULT_CERT_CN_NAME);
         final String alias = environment.getProperty("domains.certificates.default.alias", String.class, DEFAULT_CERT_ALIAS) + suffix;
         final String sigAlgName = environment.getProperty("domains.certificates.default.algorithm", String.class, DEFAULT_CERT_ALGO);
-        final String keyPass = environment.getProperty("domains.certificates.default.keypass", String.class, DEFAULT_CERT_PWD);
-        final String storePass = environment.getProperty("domains.certificates.default.storepass", String.class, DEFAULT_CERT_PWD);
+        final String keyPass = environment.getProperty("domains.certificates.default.keypass", String.class, DEFAULT_CERT_PASS);
+        final String storePass = environment.getProperty("domains.certificates.default.storepass", String.class, DEFAULT_CERT_PASS);
 
         ByteArrayOutputStream generateCertificate = generateCertificate(sigAlgName, keySize, name, validity, alias, keyPass, storePass);
         // create configuration based on the previous one

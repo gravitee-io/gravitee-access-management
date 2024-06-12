@@ -312,7 +312,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         jwt.setAud(client.getClientId());
         jwt.setDomain(client.getDomain());
         jwt.setIat(new Date().getTime() / 1000L);
-        jwt.setExp(Date.from(new Date().toInstant().plusSeconds(3600 * 24 * 365 * 2)).getTime() / 1000L);
+        jwt.setExp(Date.from(new Date().toInstant().plusSeconds(3600L * 24L * 365L * 2L)).getTime() / 1000L);
         jwt.setScope(Scope.DCR.getKey());
         jwt.setJti(SecureRandomString.generate());
 

@@ -15,12 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.account;
 
-import io.gravitee.am.common.plugin.AmPlugin;
 import io.gravitee.am.gateway.handler.account.spring.AccountConfiguration;
 import io.gravitee.am.gateway.handler.api.Protocol;
-import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
-import io.gravitee.am.gateway.handler.api.ProtocolProvider;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Donald Courtney (donald.courtney at graviteesource.com)
