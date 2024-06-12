@@ -103,7 +103,7 @@ public interface ConstantKeys {
 
     String MFA_ENROLLMENT_EXTENSION_PHONE_NUMBER = "extensionPhoneNumber";
     String MFA_ENROLLMENT_EMAIL = "email";
-    long DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS = 10 * 60 * 60; // ten hours
+    long DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS = 10L * 60L * 60L; // ten hours
 
     // Passwordless keys.
     String WEBAUTHN_SKIPPED_KEY = "webAuthnRegistrationSkipped";

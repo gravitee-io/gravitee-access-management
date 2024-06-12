@@ -19,7 +19,6 @@ import io.gravitee.am.common.web.UriBuilder;
 import io.vertx.rxjava3.core.MultiMap;
 
 import java.io.Serializable;
-import java.net.URISyntaxException;
 
 /**
  * Response after authorization code flow or implicit flow or hybrid flow

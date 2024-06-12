@@ -39,8 +39,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -60,10 +59,9 @@ import java.util.stream.Collectors;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 @Component
 public class ResourceServiceImpl implements ResourceService {
-
-    private final Logger LOGGER = LoggerFactory.getLogger(ResourceServiceImpl.class);
 
     @Lazy
     @Autowired
@@ -84,10 +82,10 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public Single<Page<Resource>> findByDomain(String domain, int page, int size) {
-        LOGGER.debug("Listing resource for domain {}", domain);
+        log.debug("Listing resource for domain {}", domain);
         return repository.findByDomain(domain, page, size)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find resources by domain {}", domain, ex);
+                    log.error("An error occurs while trying to find resources by domain {}", domain, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find resources by domain %s", domain), ex));
                 });
@@ -95,10 +93,10 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public Single<Page<Resource>> findByDomainAndClient(String domain, String client, int page, int size) {
-        LOGGER.debug("Listing resource set for domain {} and client {}", domain, client);
+        log.debug("Listing resource set for domain {} and client {}", domain, client);
         return repository.findByDomainAndClient(domain, client, page, size)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find resources by domain {} and client {}", domain, client, ex);
+                    log.error("An error occurs while trying to find resources by domain {} and client {}", domain, client, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find resources by domain %s and client %s", domain, client), ex));
                 });
@@ -106,31 +104,31 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public Flowable<Resource> findByResources(List<String> resourceIds) {
-        LOGGER.debug("Listing resources by ids {}", resourceIds);
+        log.debug("Listing resources by ids {}", resourceIds);
         return repository.findByResources(resourceIds);
     }
 
     @Override
     public Flowable<Resource> listByDomainAndClientAndUser(String domain, String client, String userId) {
-        LOGGER.debug("Listing resource for resource owner {} and client {}", userId, client);
+        log.debug("Listing resource for resource owner {} and client {}", userId, client);
         return repository.findByDomainAndClientAndUser(domain, client, userId);
     }
 
     @Override
     public Flowable<Resource> findByDomainAndClientAndResources(String domain, String client, List<String> resourceIds) {
-        LOGGER.debug("Getting resource {} for  client {} and resources {}", resourceIds, client, resourceIds);
+        log.debug("Getting resource {} for  client {} and resources {}", resourceIds, client, resourceIds);
         return repository.findByDomainAndClientAndResources(domain, client, resourceIds);
     }
 
     @Override
     public Maybe<Resource> findByDomainAndClientAndUserAndResource(String domain, String client, String userId, String resourceId) {
-        LOGGER.debug("Getting resource by resource owner {} and client {} and resource {}", userId, client, resourceId);
+        log.debug("Getting resource by resource owner {} and client {} and resource {}", userId, client, resourceId);
         return repository.findByDomainAndClientAndUserAndResource(domain, client, userId, resourceId);
     }
 
     @Override
     public Maybe<Resource> findByDomainAndClientResource(String domain, String client, String resourceId) {
-        LOGGER.debug("Getting resource by domain {} client {} and resource {}", domain, client, resourceId);
+        log.debug("Getting resource by domain {} client {} and resource {}", domain, client, resourceId);
         return this.findByDomainAndClientAndResources(domain, client, Arrays.asList(resourceId))
                 .firstElement();
     }
@@ -154,7 +152,7 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public Single<Resource> create(NewResource newResource, String domain, String client, String userId) {
-        LOGGER.debug("Creating resource for resource owner {} and client {}", userId, client);
+        log.debug("Creating resource for resource owner {} and client {}", userId, client);
         Resource toCreate = new Resource();
         toCreate.setResourceScopes(newResource.getResourceScopes())
                 .setDescription(newResource.getDescription())
@@ -186,7 +184,7 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public Single<Resource> update(NewResource newResource, String domain, String client, String userId, String resourceId) {
-        LOGGER.debug("Updating resource id {} for resource owner {} and client {}", resourceId, userId, client);
+        log.debug("Updating resource id {} for resource owner {} and client {}", resourceId, userId, client);
         return findByDomainAndClientAndUserAndResource(domain, client, userId, resourceId)
                 .switchIfEmpty(Single.error(new ResourceNotFoundException(resourceId)))
                 .flatMap(Single::just)
@@ -199,14 +197,14 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public Single<Resource> update(Resource resource) {
-        LOGGER.debug("Updating resource id {}", resource.getId());
+        log.debug("Updating resource id {}", resource.getId());
         resource.setUpdatedAt(new Date());
         return repository.update(resource);
     }
 
     @Override
     public Completable delete(String domain, String client, String userId, String resourceId) {
-        LOGGER.debug("Deleting resource id {} for resource owner {} and client {}", resourceId, userId, client);
+        log.debug("Deleting resource id {} for resource owner {} and client {}", resourceId, userId, client);
         return findByDomainAndClientAndUserAndResource(domain, client, userId, resourceId)
                 .switchIfEmpty(Maybe.error(new ResourceNotFoundException(resourceId)))
                 .flatMapCompletable(found -> repository.delete(resourceId));
@@ -214,7 +212,7 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public Completable delete(Resource resource) {
-        LOGGER.debug("Deleting resource id {} on domain {}", resource.getId(), resource.getDomain());
+        log.debug("Deleting resource id {} on domain {}", resource.getId(), resource.getDomain());
         // delete policies and then the resource
         return accessPolicyRepository.findByDomainAndResource(resource.getDomain(), resource.getId())
                 .flatMapCompletable(accessPolicy -> accessPolicyRepository.delete(accessPolicy.getId()))
@@ -223,7 +221,7 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public Flowable<AccessPolicy> findAccessPolicies(String domain, String client, String user, String resource) {
-        LOGGER.debug("Find access policies by domain {}, client {}, resource owner {} and resource id {}", domain, client, user, resource);
+        log.debug("Find access policies by domain {}, client {}, resource owner {} and resource id {}", domain, client, user, resource);
         return findByDomainAndClientAndUserAndResource(domain, client, user, resource)
                 .switchIfEmpty(Single.error(new ResourceNotFoundException(resource)))
                 .flatMapPublisher(r -> accessPolicyRepository.findByDomainAndResource(domain, r.getId()))
@@ -231,34 +229,34 @@ public class ResourceServiceImpl implements ResourceService {
                     if (ex instanceof AbstractManagementException) {
                         return Flowable.error(ex);
                     }
-                    LOGGER.error("An error has occurred while trying to find access policies by domain {}, client {}, resource owner {} and resource id {}", domain, client, user, resource, ex);
+                    log.error("An error has occurred while trying to find access policies by domain {}, client {}, resource owner {} and resource id {}", domain, client, user, resource, ex);
                     return Flowable.error(new TechnicalManagementException(String.format("An error has occurred while trying to find access policies by domain %s, client %s, resource owner %s and resource id %s", domain, client, user, resource), ex));
                 });
     }
 
     @Override
     public Flowable<AccessPolicy> findAccessPoliciesByResources(List<String> resourceIds) {
-        LOGGER.debug("Find access policies by resources {}", resourceIds);
+        log.debug("Find access policies by resources {}", resourceIds);
         return accessPolicyRepository.findByResources(resourceIds)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error has occurred while trying to find access policies by resource ids {}", resourceIds, ex);
+                    log.error("An error has occurred while trying to find access policies by resource ids {}", resourceIds, ex);
                     return Flowable.error(new TechnicalManagementException(String.format("An error has occurred while trying to find access policies by resource ids %s", resourceIds), ex));
                 });
     }
 
     @Override
     public Single<Long> countAccessPolicyByResource(String resourceId) {
-        LOGGER.debug("Count access policies by resource {}", resourceId);
+        log.debug("Count access policies by resource {}", resourceId);
         return accessPolicyRepository.countByResource(resourceId)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error has occurred while trying to count access policies by resource id {}", resourceId, ex);
+                    log.error("An error has occurred while trying to count access policies by resource id {}", resourceId, ex);
                     return Single.error(new TechnicalManagementException(String.format("An error has occurred while trying to count access policies by resource id %s", resourceId), ex));
                 });
     }
 
     @Override
     public Maybe<AccessPolicy> findAccessPolicy(String domain, String client, String user, String resource, String accessPolicy) {
-        LOGGER.debug("Find access policy by domain {}, client {}, resource owner {}, resource id {} and policy id {}", domain, client, user, resource, accessPolicy);
+        log.debug("Find access policy by domain {}, client {}, resource owner {}, resource id {} and policy id {}", domain, client, user, resource, accessPolicy);
         return findByDomainAndClientAndUserAndResource(domain, client, user, resource)
                 .switchIfEmpty(Maybe.error(new ResourceNotFoundException(resource)))
                 .flatMap(r -> accessPolicyRepository.findById(accessPolicy))
@@ -266,24 +264,24 @@ public class ResourceServiceImpl implements ResourceService {
                     if (ex instanceof AbstractManagementException) {
                         return Maybe.error(ex);
                     }
-                    LOGGER.error("An error has occurred while trying to find access policies by domain {}, client {}, resource owner {} and resource id {} and policy id {}", domain, client, user, resource, accessPolicy, ex);
+                    log.error("An error has occurred while trying to find access policies by domain {}, client {}, resource owner {} and resource id {} and policy id {}", domain, client, user, resource, accessPolicy, ex);
                     return Maybe.error(new TechnicalManagementException(String.format("An error has occurred while trying to find access policies by domain %s, client %s, resource owner %s resource id %s and policy id %s", domain, client, user, resource, accessPolicy), ex));
                 });
     }
 
     @Override
     public Maybe<AccessPolicy> findAccessPolicy(String accessPolicy) {
-        LOGGER.debug("Find access policy by id {}", accessPolicy);
+        log.debug("Find access policy by id {}", accessPolicy);
         return accessPolicyRepository.findById(accessPolicy)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error has occurred while trying to find access policy by id {}", accessPolicy, ex);
+                    log.error("An error has occurred while trying to find access policy by id {}", accessPolicy, ex);
                     return Maybe.error(new TechnicalManagementException(String.format("An error has occurred while trying to find access policy by id %s", accessPolicy), ex));
                 });
     }
 
     @Override
     public Single<AccessPolicy> createAccessPolicy(AccessPolicy accessPolicy, String domain, String client, String user, String resource) {
-        LOGGER.debug("Creating access policy for domain {}, client {}, resource owner {} and resource id {}", domain, client, user, resource);
+        log.debug("Creating access policy for domain {}, client {}, resource owner {} and resource id {}", domain, client, user, resource);
         return findByDomainAndClientAndUserAndResource(domain, client, user, resource)
                 .switchIfEmpty(Single.error(new ResourceNotFoundException(resource)))
                 .flatMap(r -> {
@@ -297,14 +295,14 @@ public class ResourceServiceImpl implements ResourceService {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error has occurred while trying to create an access policy for domain {}, client {}, resource owner {} and resource id {}", domain, client, user, resource, ex);
+                    log.error("An error has occurred while trying to create an access policy for domain {}, client {}, resource owner {} and resource id {}", domain, client, user, resource, ex);
                     return Single.error(new TechnicalManagementException(String.format("An error has occurred while trying to create an access policy for domain %s, client %s, resource owner %s and resource id %s", domain, client, user, resource), ex));
                 });
     }
 
     @Override
     public Single<AccessPolicy> updateAccessPolicy(AccessPolicy accessPolicy, String domain, String client, String user, String resource, String accessPolicyId) {
-        LOGGER.debug("Updating access policy for domain {}, client {}, resource owner {}, resource id {} and policy id {}", domain, client, user, resource, accessPolicyId);
+        log.debug("Updating access policy for domain {}, client {}, resource owner {}, resource id {} and policy id {}", domain, client, user, resource, accessPolicyId);
         return findByDomainAndClientAndUserAndResource(domain, client, user, resource)
                 .switchIfEmpty(Maybe.error(new ResourceNotFoundException(resource)))
                 .flatMap(r -> accessPolicyRepository.findById(accessPolicyId))
@@ -328,14 +326,14 @@ public class ResourceServiceImpl implements ResourceService {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error has occurred while trying to update access policy for domain {}, client {}, resource owner {}, resource id {} and policy id {}", domain, client, user, resource, accessPolicyId, ex);
+                    log.error("An error has occurred while trying to update access policy for domain {}, client {}, resource owner {}, resource id {} and policy id {}", domain, client, user, resource, accessPolicyId, ex);
                     return Single.error(new TechnicalManagementException(String.format("An error has occurred while trying to update access policy for domain %s, client %s, resource owner %s, resource id %s and policy id %s", domain, client, user, resource, accessPolicyId), ex));
                 });
     }
 
     @Override
     public Completable deleteAccessPolicy(String domain, String client, String user, String resource, String accessPolicy) {
-        LOGGER.debug("Deleting access policy for domain {}, client {}, resource owner {}, resource id and policy id {}", domain, client, user, resource, accessPolicy);
+        log.debug("Deleting access policy for domain {}, client {}, user {}, resource owner {}, resource id and policy id {}", domain, client, user, resource, accessPolicy);
         return findByDomainAndClientAndUserAndResource(domain, client, user, resource)
                 .switchIfEmpty(Maybe.error(new ResourceNotFoundException(resource)))
                 .flatMapCompletable(__ -> accessPolicyRepository.delete(accessPolicy))
@@ -343,7 +341,7 @@ public class ResourceServiceImpl implements ResourceService {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     }
-                    LOGGER.error("An error has occurred while trying to delete access policy for domain {}, client {}, resource owner {}, resource id {} and policy id {}", domain, client, user, resource, accessPolicy, ex);
+                    log.error("An error has occurred while trying to delete access policy for domain {}, client {}, resource owner {}, resource id {} and policy id {}", domain, client, user, resource, accessPolicy, ex);
                     return Completable.error(new TechnicalManagementException(String.format("An error has occurred while trying to delete access policy for domain %s, client %s, resource owner %s, resource id %s and policy id %s", domain, client, user, resource, accessPolicy), ex));
                 });
     }

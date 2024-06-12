@@ -79,9 +79,8 @@ public abstract class AbstractTestRepositoryConfiguration extends AbstractReposi
         System.setProperty("liquibase.databaseChangeLogTableName", "databasechangelog");
         System.setProperty("liquibase.databaseChangeLogLockTableName", "databasechangeloglock");
 
-        try {
-            final Liquibase liquibase = new Liquibase("liquibase-test/master.yml"
-                    , new ClassLoaderResourceAccessor(this.getClass().getClassLoader()), new JdbcConnection(connection));
+        try (ClassLoaderResourceAccessor resourceAccessor = new ClassLoaderResourceAccessor(this.getClass().getClassLoader())) {
+            final Liquibase liquibase = new Liquibase("liquibase-test/master.yml", resourceAccessor, new JdbcConnection(connection));
             liquibase.update((Contexts) null);
         } catch (Exception ex) {
             LOGGER.error("Failed to set up database: ", ex);

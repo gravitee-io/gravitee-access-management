@@ -127,11 +127,10 @@ public class ResourcePluginServiceImpl extends AbstractPluginService implements 
         } else {
             resourcePlugin.setCategories(new String[0]);
         }
-        if (expand != null) {
-            if (expand.contains(ResourcePluginService.EXPAND_ICON)) {
+        if (expand != null && expand.contains(ResourcePluginService.EXPAND_ICON)) {
                 this.getIcon(resourcePlugin.getId()).subscribe(resourcePlugin::setIcon);
             }
-        }
+
         resourcePlugin.setFeature(plugin.manifest().feature());
         return resourcePlugin;
     }

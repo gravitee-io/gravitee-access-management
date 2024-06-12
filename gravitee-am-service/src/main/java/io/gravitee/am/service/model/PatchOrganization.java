@@ -21,14 +21,14 @@ import io.gravitee.am.service.utils.SetterUtils;
 import java.util.List;
 import java.util.Optional;
 
+import lombok.NoArgsConstructor;
+
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor
 public class PatchOrganization {
-
-    public PatchOrganization() {
-    }
 
     private Optional<List<String>> identities = Optional.empty();
 

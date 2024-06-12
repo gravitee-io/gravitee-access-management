@@ -220,7 +220,7 @@ public class UsernameUniquenessMigration implements CustomSqlChange {
     }
 
     @Override
-    public void setUp() throws SetupException {
+    public void setUp() {
 
     }
 

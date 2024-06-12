@@ -19,10 +19,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.NoArgsConstructor;
+
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
+@NoArgsConstructor
 public class InstallationMongo {
 
     private String id;
@@ -32,9 +35,6 @@ public class InstallationMongo {
     private Date createdAt;
 
     private Date updatedAt;
-
-    public InstallationMongo() {
-    }
 
     public String getId() {
         return id;

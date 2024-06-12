@@ -297,9 +297,7 @@ public class HttpUserProvider implements UserProvider {
         // remove sensitive value if any
         mappedUserAttributes.remove(identifierAttribute);
         mappedUserAttributes.remove(usernameAttribute);
-        Map<String, Object> claims = new HashMap<>();
-        mappedUserAttributes.forEach((k, v) -> claims.put(k, v));
-        user.setAdditionalInformation(claims);
+        user.setAdditionalInformation(new HashMap<>(mappedUserAttributes));
 
         return user;
     }

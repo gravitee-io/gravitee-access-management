@@ -29,8 +29,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -57,9 +56,8 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class SocialAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
-
-    private final Logger logger = LoggerFactory.getLogger(SocialAuthenticationFilter.class);
 
     /**
      * Constant to use while setting identity provider used to authenticate a user
@@ -107,7 +105,7 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
         try {
             User user = authenticationProvider.loadUserByUsername(provAuthentication).blockingGet();
             if (user == null) {
-                logger.error("User is null, fail to authenticate user");
+                log.error("User is null, fail to authenticate user");
                 throw new BadCredentialsException("User is null after authentication process");
             }
 
@@ -119,7 +117,7 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
             usernamePasswordAuthenticationToken.setDetails(details);
             return usernamePasswordAuthenticationToken;
         } catch (Exception ex) {
-            logger.error("Unable to authenticate with oauth2 provider {}", providerId, ex);
+            log.error("Unable to authenticate with oauth2 provider {}", providerId, ex);
             throw new BadCredentialsException(ex.getMessage(), ex);
         }
     }
@@ -129,8 +127,8 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
                                                   HttpServletResponse response, FilterChain chain, Authentication authResult)
             throws IOException, ServletException {
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("Authentication success. Updating SecurityContextHolder to contain: "
+        if (log.isDebugEnabled()) {
+            log.debug("Authentication success. Updating SecurityContextHolder to contain: "
                     + authResult);
         }
 

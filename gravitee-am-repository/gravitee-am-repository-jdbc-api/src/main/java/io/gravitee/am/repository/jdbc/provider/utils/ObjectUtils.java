@@ -46,7 +46,7 @@ public final class ObjectUtils {
                     } else {
                         Long myLong = Long.valueOf(string);
                         if (string.equals(myLong.toString())) {
-                            if (myLong == (long)myLong.intValue()) {
+                            if (myLong == myLong.intValue()) {
                                 return myLong.intValue();
                             }
 

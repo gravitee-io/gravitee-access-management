@@ -46,7 +46,7 @@ public class EnrichAuthFlowPolicy {
     private static Logger LOGGER = LoggerFactory.getLogger(EnrichAuthFlowPolicy.class);
     private static final String GATEWAY_POLICY_ENRICH_AUTH_FLOW_ERROR_KEY = "GATEWAY_POLICY_ENRICH_AUTH_FLOW_ERROR";
 
-    private EnrichAuthFlowPolicyConfiguration configuration;
+    private final EnrichAuthFlowPolicyConfiguration configuration;
 
     public EnrichAuthFlowPolicy(EnrichAuthFlowPolicyConfiguration configuration) {
         this.configuration = configuration;

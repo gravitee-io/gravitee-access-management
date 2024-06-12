@@ -23,8 +23,7 @@ import io.gravitee.plugin.core.api.Plugin;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -34,10 +33,9 @@ import java.util.List;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 @Component
 public class BotDetectionPluginServiceImpl extends AbstractPluginService implements BotDetectionPluginService {
-
-    private final Logger LOGGER = LoggerFactory.getLogger(BotDetectionPluginServiceImpl.class);
 
     private final BotDetectionPluginManager pluginManager;
 
@@ -49,7 +47,7 @@ public class BotDetectionPluginServiceImpl extends AbstractPluginService impleme
 
     @Override
     public Single<List<BotDetectionPlugin>> findAll() {
-        LOGGER.debug("List all bot detection plugins");
+        log.debug("List all bot detection plugins");
         return Observable.fromIterable(pluginManager.findAll(true))
                 .map(this::convert)
                 .toList();
@@ -57,7 +55,7 @@ public class BotDetectionPluginServiceImpl extends AbstractPluginService impleme
 
     @Override
     public Maybe<BotDetectionPlugin> findById(String pluginId) {
-        LOGGER.debug("Find bot detection plugin by ID: {}", pluginId);
+        log.debug("Find bot detection plugin by ID: {}", pluginId);
         return Maybe.create(emitter -> {
             try {
                 Plugin resource = pluginManager.findById(pluginId);
@@ -67,7 +65,7 @@ public class BotDetectionPluginServiceImpl extends AbstractPluginService impleme
                     emitter.onComplete();
                 }
             } catch (Exception ex) {
-                LOGGER.error("An error occurs while trying to get bot detection plugin : {}", pluginId, ex);
+                log.error("An error occurs while trying to get bot detection plugin : {}", pluginId, ex);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get bot detection plugin : " + pluginId, ex));
             }
         });
@@ -75,7 +73,7 @@ public class BotDetectionPluginServiceImpl extends AbstractPluginService impleme
 
     @Override
     public Maybe<String> getSchema(String pluginId) {
-        LOGGER.debug("Find bot detection plugin schema by ID: {}", pluginId);
+        log.debug("Find bot detection plugin schema by ID: {}", pluginId);
         return Maybe.create(emitter -> {
             try {
                 String schema = pluginManager.getSchema(pluginId);
@@ -85,7 +83,7 @@ public class BotDetectionPluginServiceImpl extends AbstractPluginService impleme
                     emitter.onComplete();
                 }
             } catch (Exception e) {
-                LOGGER.error("An error occurs while trying to get schema for bot detection plugin {}", pluginId, e);
+                log.error("An error occurs while trying to get schema for bot detection plugin {}", pluginId, e);
                 emitter.onError(new TechnicalManagementException("An error occurs while trying to get schema for bot detection plugin " + pluginId, e));
             }
         });

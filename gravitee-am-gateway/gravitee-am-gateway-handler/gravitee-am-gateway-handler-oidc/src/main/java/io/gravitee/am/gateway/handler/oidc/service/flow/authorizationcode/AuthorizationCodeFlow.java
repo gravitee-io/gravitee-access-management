@@ -57,7 +57,7 @@ import java.util.List;
  */
 public class AuthorizationCodeFlow extends AbstractFlow {
 
-    private final static List<String> RESPONSE_TYPES = Collections.singletonList(ResponseType.CODE);
+    private static final List<String> RESPONSE_TYPES = Collections.singletonList(ResponseType.CODE);
     private AuthorizationCodeService authorizationCodeService;
 
     public AuthorizationCodeFlow(AuthorizationCodeService authorizationCodeService) {

@@ -27,8 +27,7 @@ import io.gravitee.reporter.api.Reportable;
 import io.gravitee.reporter.api.Reporter;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,31 +38,31 @@ import java.util.Map;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class NoOpReporter implements AuditReporter {
-    private static final Logger LOGGER = LoggerFactory.getLogger(NoOpReporter.class);
 
     @Override
     public Single<Page<Audit>> search(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria, int page, int size) {
-        LOGGER.debug("NoOp Reporter call, real reporter not yet bootstrapped");
+        notBootstrappedLog();
         return Single.just(new Page<>(Collections.emptyList(), page, size));
     }
 
     @Override
     public Single<Map<Object, Object>> aggregate(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria, Type analyticsType) {
-        LOGGER.debug("NoOp Reporter call, real reporter not yet bootstrapped");
+        notBootstrappedLog();
         switch (analyticsType) {
             case DATE_HISTO:
                 // just fill with default values mainly for UI purpose
                 String fieldSuccess = (criteria.types().get(0) + "_" + Status.SUCCESS).toLowerCase();
                 String fieldFailure = (criteria.types().get(0) + "_" + Status.FAILURE).toLowerCase();
                 Map<Object, Object> result = new HashMap<>();
-                result.put(fieldSuccess, new ArrayList<>(Collections.nCopies(25, 0l)));
-                result.put(fieldFailure, new ArrayList<>(Collections.nCopies(25, 0l)));
+                result.put(fieldSuccess, new ArrayList<>(Collections.nCopies(25, 0L)));
+                result.put(fieldFailure, new ArrayList<>(Collections.nCopies(25, 0L)));
                 return Single.just(result);
             case GROUP_BY:
                 return Single.just(Collections.emptyMap());
             case COUNT:
-                return Single.just(Collections.singletonMap("data", 0l));
+                return Single.just(Collections.singletonMap("data", 0L));
             default:
                 return Single.error(new IllegalArgumentException("Analytics [" + analyticsType + "] cannot be calculated"));
         }
@@ -71,7 +70,7 @@ public class NoOpReporter implements AuditReporter {
 
     @Override
     public Maybe<Audit> findById(ReferenceType referenceType, String referenceId, String id) {
-        LOGGER.debug("NoOp Reporter call, real reporter not yet bootstrapped");
+        notBootstrappedLog();
         return Maybe.empty();
     }
 
@@ -82,7 +81,7 @@ public class NoOpReporter implements AuditReporter {
 
     @Override
     public void report(Reportable reportable) {
-        LOGGER.debug("NoOp Reporter call, real reporter not yet bootstrapped");
+        notBootstrappedLog();
     }
 
     @Override
@@ -98,5 +97,9 @@ public class NoOpReporter implements AuditReporter {
     @Override
     public Reporter stop() throws Exception {
         return this;
+    }
+
+    private static void notBootstrappedLog() {
+        log.debug("NoOp Reporter call, real reporter not yet bootstrapped");
     }
 }

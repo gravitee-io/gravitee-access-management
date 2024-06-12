@@ -25,11 +25,11 @@ import java.util.Set;
  */
 public class GithubIdentityProviderConfiguration implements SocialIdentityProviderConfiguration {
 
-    private String USER_AUTHORIZATION_URI = "https://github.com/login/oauth/authorize";
-    private String ACCESS_TOKEN_URI = "https://github.com/login/oauth/access_token";
-    private String USER_PROFILE_URI = "https://api.github.com/user";
-    private String CODE_PARAMETER = "code";
-    private String RESPONSE_TYPE = "code";
+    private String userAuthorizationUri = "https://github.com/login/oauth/authorize";
+    private String accessTokenUri = "https://github.com/login/oauth/access_token";
+    private String userProfileUri = "https://api.github.com/user";
+    private String codeParameter = "code";
+    private String responseType = "code";
     private String clientId;
     private String clientSecret;
     private Set<String> scopes;
@@ -63,35 +63,35 @@ public class GithubIdentityProviderConfiguration implements SocialIdentityProvid
     }
 
     public String getUserAuthorizationUri() {
-        return USER_AUTHORIZATION_URI;
+        return userAuthorizationUri;
     }
 
     public String getAccessTokenUri() {
-        return ACCESS_TOKEN_URI;
+        return accessTokenUri;
     }
 
     public String getUserProfileUri() {
-        return USER_PROFILE_URI;
+        return userProfileUri;
     }
 
     public String getCodeParameter() {
-        return CODE_PARAMETER;
+        return codeParameter;
     }
 
     public String getResponseType() {
-        return RESPONSE_TYPE;
+        return responseType;
     }
 
     public void setUserAuthorizationUri(String userAuthorizationUri) {
-        USER_AUTHORIZATION_URI = userAuthorizationUri;
+        this.userAuthorizationUri = userAuthorizationUri;
     }
 
     public void setAccessTokenUri(String accessTokenUri) {
-        ACCESS_TOKEN_URI = accessTokenUri;
+        this.accessTokenUri = accessTokenUri;
     }
 
     public void setUserProfileUri(String userProfileUri) {
-        USER_PROFILE_URI = userProfileUri;
+        this.userProfileUri = userProfileUri;
     }
 
     public Integer getConnectTimeout() {

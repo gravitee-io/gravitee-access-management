@@ -45,7 +45,7 @@ public class AccountConsentEndpointHandler {
         accountService.getConsentList(user, client)
                         .subscribe(
                                 consentList -> AccountResponseHandler.handleDefaultResponse(routingContext, consentList),
-                                error -> routingContext.fail(error)
+                                routingContext::fail
                         );
     }
 
@@ -60,7 +60,7 @@ public class AccountConsentEndpointHandler {
         accountService.getConsent(consentId)
                 .subscribe(
                         consent -> AccountResponseHandler.handleDefaultResponse(routingContext, consent),
-                        error -> routingContext.fail(error)
+                        routingContext::fail
                 );
     }
 
@@ -76,7 +76,7 @@ public class AccountConsentEndpointHandler {
         accountService.removeConsent(user.getId(), consentId, new DefaultUser(user))
                 .subscribe(
                         () -> AccountResponseHandler.handleNoBodyResponse(routingContext),
-                        error -> routingContext.fail(error)
+                        routingContext::fail
                 );
     }
 
