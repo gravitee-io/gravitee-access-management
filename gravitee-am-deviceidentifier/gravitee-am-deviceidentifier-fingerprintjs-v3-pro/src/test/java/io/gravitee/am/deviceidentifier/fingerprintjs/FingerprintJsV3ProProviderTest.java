@@ -27,7 +27,9 @@ import java.util.Map;
 
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_IDENTIFIER_PROVIDER_KEY;
 import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

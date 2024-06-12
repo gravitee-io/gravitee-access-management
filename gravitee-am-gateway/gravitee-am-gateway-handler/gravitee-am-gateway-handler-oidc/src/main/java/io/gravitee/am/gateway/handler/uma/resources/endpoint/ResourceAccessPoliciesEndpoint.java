@@ -37,8 +37,11 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import java.util.Arrays;
 
-import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.*;
+import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.POLICY_ID;
+import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.RESOURCE_ACCESS_POLICIES_PATH;
+import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.RESOURCE_ID;
 import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.RESOURCE_REGISTRATION_PATH;
+import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.UMA_PATH;
 
 /**
  * <pre>

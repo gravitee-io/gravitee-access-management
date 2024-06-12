@@ -18,12 +18,11 @@ package io.gravitee.am.management.service.permissions;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.util.Arrays;
 import java.util.HashSet;
-
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)

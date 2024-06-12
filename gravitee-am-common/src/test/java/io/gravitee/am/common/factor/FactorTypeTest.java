@@ -24,7 +24,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.NoSuchElementException;
 
-import static io.gravitee.am.common.factor.FactorType.*;
+import static io.gravitee.am.common.factor.FactorType.CALL;
+import static io.gravitee.am.common.factor.FactorType.EMAIL;
+import static io.gravitee.am.common.factor.FactorType.HTTP;
+import static io.gravitee.am.common.factor.FactorType.OTP;
+import static io.gravitee.am.common.factor.FactorType.SMS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 

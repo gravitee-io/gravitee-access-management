@@ -26,14 +26,15 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.eventbus.EventBus;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Optional;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.common.utils.ConstantKeys.GEOIP_KEY;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

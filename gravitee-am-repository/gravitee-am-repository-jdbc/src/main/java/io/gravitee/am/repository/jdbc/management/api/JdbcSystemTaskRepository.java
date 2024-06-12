@@ -19,7 +19,6 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcSystemTask;
-import io.gravitee.am.repository.jdbc.management.api.model.mapper.LocalDateConverter;
 import io.gravitee.am.repository.management.api.SystemTaskRepository;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;

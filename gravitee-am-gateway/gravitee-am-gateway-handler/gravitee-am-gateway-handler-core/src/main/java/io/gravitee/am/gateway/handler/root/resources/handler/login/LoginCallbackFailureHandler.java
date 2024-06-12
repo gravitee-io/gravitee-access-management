@@ -60,13 +60,13 @@ import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_TARGET;
 import static io.gravitee.am.common.utils.ConstantKeys.ISSUING_REASON_CLOSE_IDP_SESSION;
 import static io.gravitee.am.common.utils.ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PROTOCOL_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.RETURN_URL_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.STATUS_FAILURE;
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.LOGGER;
 import static io.gravitee.am.gateway.handler.root.RootProvider.PATH_LOGIN_CALLBACK;
-import static io.gravitee.am.common.utils.ConstantKeys.PROTOCOL_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.RETURN_URL_KEY;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
 

@@ -16,7 +16,6 @@
 package io.gravitee.am.deviceidentifier.api;
 
 import io.gravitee.am.common.plugin.AmPlugin;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Rémi Sultan (remi.sultan at graviteesource.com)

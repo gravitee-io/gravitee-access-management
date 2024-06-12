@@ -19,8 +19,6 @@ import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.service.exception.PluginNotDeployedException;
 import io.reactivex.rxjava3.core.Completable;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

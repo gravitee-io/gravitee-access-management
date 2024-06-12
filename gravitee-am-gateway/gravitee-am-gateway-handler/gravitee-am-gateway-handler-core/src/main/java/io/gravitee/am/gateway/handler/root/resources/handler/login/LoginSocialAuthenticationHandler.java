@@ -38,10 +38,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
 import java.util.stream.Collectors;
 
-import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_PROVIDER_ID;
+import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_QUERY_PARAM;
+import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_REMEMBER_ME;
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PROTOCOL_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PROTOCOL_VALUE_SAML_POST;
+import static io.gravitee.am.common.utils.ConstantKeys.REMEMBER_ME_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.RETURN_URL_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.SOCIAL_PROVIDER_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.TRANSACTION_ID_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**

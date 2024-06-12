@@ -17,8 +17,6 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.dummies.DummySession;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
@@ -31,9 +29,7 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Completable;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.buffer.Buffer;
-import io.vertx.rxjava3.ext.web.Session;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
-import io.vertx.rxjava3.ext.web.handler.SessionHandler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -41,7 +37,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 

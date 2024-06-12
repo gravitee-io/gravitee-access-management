@@ -16,10 +16,7 @@
 package io.gravitee.am.factor.otp;
 
 import io.gravitee.am.factor.api.Factor;
-import io.gravitee.am.factor.api.FactorConfiguration;
-import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.factor.otp.provider.OTPFactorProvider;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

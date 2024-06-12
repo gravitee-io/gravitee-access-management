@@ -17,7 +17,11 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.loginattempt;
 
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.ChallengeSettings;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.LoginAttempt;
+import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
@@ -34,7 +38,9 @@ import java.util.Optional;
 import java.util.TreeSet;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
 import static java.util.Optional.ofNullable;
 import static java.util.function.Predicate.not;
 

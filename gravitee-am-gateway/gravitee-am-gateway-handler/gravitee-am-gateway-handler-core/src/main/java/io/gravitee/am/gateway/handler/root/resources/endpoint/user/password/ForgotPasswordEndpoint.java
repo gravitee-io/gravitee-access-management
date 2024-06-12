@@ -16,9 +16,9 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;

@@ -22,11 +22,14 @@ import io.gravitee.am.model.notification.UserNotification;
 import io.gravitee.am.model.notification.UserNotificationStatus;
 import io.gravitee.am.repository.management.api.UserNotificationRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.UserNotificationMongo;
-import io.reactivex.rxjava3.core.*;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
+import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
-
-import jakarta.annotation.PostConstruct;
 
 import java.util.Date;
 

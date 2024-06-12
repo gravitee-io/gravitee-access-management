@@ -25,8 +25,6 @@ import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.springframework.util.CollectionUtils;
 
-import java.util.Set;
-
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 
 /**

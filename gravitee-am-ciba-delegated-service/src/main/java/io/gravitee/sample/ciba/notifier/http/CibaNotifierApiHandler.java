@@ -30,7 +30,14 @@ import org.apache.commons.cli.CommandLine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static io.gravitee.sample.ciba.notifier.http.Constants.*;
+import static io.gravitee.sample.ciba.notifier.http.Constants.BEARER;
+import static io.gravitee.sample.ciba.notifier.http.Constants.PARAM_EXPIRE;
+import static io.gravitee.sample.ciba.notifier.http.Constants.PARAM_MESSAGE;
+import static io.gravitee.sample.ciba.notifier.http.Constants.PARAM_SCOPE;
+import static io.gravitee.sample.ciba.notifier.http.Constants.PARAM_SUBJECT;
+import static io.gravitee.sample.ciba.notifier.http.Constants.STATE;
+import static io.gravitee.sample.ciba.notifier.http.Constants.TOPIC_NOTIFICATION_REQUEST;
+import static io.gravitee.sample.ciba.notifier.http.Constants.TRANSACTION_ID;
 
 public class CibaNotifierApiHandler implements Handler<RoutingContext> {
     private static final Logger LOGGER = LoggerFactory.getLogger(CibaNotifierApiHandler.class);

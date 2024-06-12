@@ -16,12 +16,13 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.error;
 
 import io.reactivex.rxjava3.plugins.RxJavaPlugins;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class AsyncErrorCollector implements TestRule {
     @Override

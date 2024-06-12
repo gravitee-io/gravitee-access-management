@@ -19,7 +19,6 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
-import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.gateway.handler.root.service.user.UserRegistrationIdpResolver;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;

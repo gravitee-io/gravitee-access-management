@@ -16,10 +16,7 @@
 package io.gravitee.am.gateway.handler.uma;
 
 import io.gravitee.am.gateway.handler.api.Protocol;
-import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
-import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.uma.spring.UMAConfiguration;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)

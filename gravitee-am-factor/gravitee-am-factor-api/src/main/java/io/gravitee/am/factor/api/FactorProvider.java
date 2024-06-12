@@ -17,7 +17,6 @@ package io.gravitee.am.factor.api;
 
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
-import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;

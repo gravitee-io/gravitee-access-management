@@ -16,25 +16,25 @@
 
 package io.gravitee.am.gateway.handler.root.resources.endpoint;
 
-import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.redirectMatches;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import io.vertx.rxjava3.core.http.HttpServerRequest;
-import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import java.util.stream.Stream;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.PlainJWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.AuthenticationFlowContext;
+import io.vertx.rxjava3.core.http.HttpServerRequest;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 
 import java.util.Map;
+import java.util.stream.Stream;
 
-import static org.junit.Assert.*;
+import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.redirectMatches;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

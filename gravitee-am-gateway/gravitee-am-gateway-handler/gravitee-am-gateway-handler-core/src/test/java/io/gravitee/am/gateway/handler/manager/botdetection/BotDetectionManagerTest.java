@@ -30,8 +30,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Map;
 
-import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_PLUGIN;
 import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_CONFIGURATION;
+import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_PLUGIN;
 import static io.gravitee.am.gateway.handler.manager.botdetection.impl.BotDetectionManagerImpl.TEMPLATE_KEY_BOT_DETECTION_ENABLED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

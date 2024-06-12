@@ -40,9 +40,6 @@ import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-
-import java.util.Optional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +48,7 @@ import org.springframework.core.env.Environment;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.Optional;
 
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.STATE;
 

@@ -41,7 +41,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.HashMap;
 
 import static io.gravitee.am.common.utils.ConstantKeys.GEOIP_KEY;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

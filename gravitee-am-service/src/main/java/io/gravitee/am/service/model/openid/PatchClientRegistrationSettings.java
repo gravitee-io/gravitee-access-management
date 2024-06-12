@@ -17,11 +17,10 @@ package io.gravitee.am.service.model.openid;
 
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.service.utils.SetterUtils;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 import java.util.Optional;
-
-import lombok.NoArgsConstructor;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)

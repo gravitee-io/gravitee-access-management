@@ -28,13 +28,12 @@ import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
 import io.gravitee.am.service.model.openid.PatchOIDCSettings;
 import io.gravitee.am.service.utils.SetterUtils;
+import lombok.NoArgsConstructor;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-
-import lombok.NoArgsConstructor;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)

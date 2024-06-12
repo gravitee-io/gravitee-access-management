@@ -18,13 +18,12 @@ package io.gravitee.am.identityprovider.jdbc.utils;
 import io.r2dbc.spi.ReadableMetadata;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

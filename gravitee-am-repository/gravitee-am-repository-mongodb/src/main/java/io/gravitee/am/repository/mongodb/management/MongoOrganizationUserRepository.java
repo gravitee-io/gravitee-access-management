@@ -19,10 +19,10 @@ import com.mongodb.client.model.Updates;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.management.api.OrganizationUserRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.OrganizationUserMongo;
+import jakarta.annotation.PostConstruct;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 
 /**

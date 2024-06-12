@@ -23,14 +23,15 @@ import io.gravitee.am.factor.utils.SharedSecret;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
 import static io.gravitee.am.factor.api.FactorContext.KEY_ENROLLED_FACTOR;

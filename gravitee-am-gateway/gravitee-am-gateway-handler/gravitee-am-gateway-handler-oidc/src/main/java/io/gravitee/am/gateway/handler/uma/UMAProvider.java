@@ -39,7 +39,14 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.handler.CorsHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.*;
+import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.CLAIMS_INTERACTION_PATH;
+import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.PERMISSION_PATH;
+import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.POLICY_ID;
+import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.RESOURCE_ACCESS_POLICIES_PATH;
+import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.RESOURCE_ID;
+import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.RESOURCE_REGISTRATION_PATH;
+import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.UMA_PATH;
+import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.WELL_KNOWN_PATH;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)

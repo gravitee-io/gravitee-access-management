@@ -16,10 +16,7 @@
 package io.gravitee.am.extensiongrant.jwtbearer;
 
 import io.gravitee.am.extensiongrant.api.ExtensionGrant;
-import io.gravitee.am.extensiongrant.api.ExtensionGrantConfiguration;
-import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.extensiongrant.jwtbearer.provider.JWTBearerExtensionGrantProvider;
-import io.gravitee.plugin.core.api.Plugin;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

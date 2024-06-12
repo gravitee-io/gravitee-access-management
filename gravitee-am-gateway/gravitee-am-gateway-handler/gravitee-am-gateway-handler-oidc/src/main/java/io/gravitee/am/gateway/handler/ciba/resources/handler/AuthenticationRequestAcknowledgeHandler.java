@@ -40,7 +40,8 @@ import org.springframework.util.CollectionUtils;
 import java.time.Instant;
 import java.util.List;
 
-import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.CIBA_AUTH_REQUEST_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

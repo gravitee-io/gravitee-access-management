@@ -16,6 +16,7 @@
 package io.gravitee.am.common.utils;
 
 import io.gravitee.am.common.jwt.Claims;
+
 import java.util.Set;
 
 /**

@@ -30,7 +30,9 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import java.util.List;
 
-import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.*;
+import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.getOAuthParameter;
+import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.splitAcrValues;
+import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.splitScopes;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
