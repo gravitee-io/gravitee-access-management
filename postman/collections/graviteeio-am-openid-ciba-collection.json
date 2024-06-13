@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "d95c3eb2-fd64-48a7-8a13-16d30bc12af1",
+		"_postman_id": "933c927d-bdd2-4ef4-9489-80554bea8040",
 		"name": "Gravitee.io - AM - CIBA",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -15,10 +15,16 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code should be 200\", function () {",
-									"    pm.response.to.have.status(200)",
-									"    pm.globals.set(\"pmlib_code\", responseBody)",
-									"});"
+									"var maxNumberOfTries = 5;",
+									"var sleepBetweenTries = 5000;",
+									"",
+									"Utils.withRetry(this, 200, maxNumberOfTries, sleepBetweenTries, function(){",
+									"    pm.test(\"Status code should be 200\", function () {",
+									"        pm.response.to.have.status(200)",
+									"        pm.globals.set(\"pmlib_code\", responseBody)",
+									"    });",
+									"});",
+									""
 								],
 								"type": "text/javascript"
 							}
@@ -68,13 +74,14 @@
 							"listen": "test",
 							"script": {
 								"exec": [
+									"var maxNumberOfTries = 5;",
+									"var sleepBetweenTries = 5000;",
 									"",
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
+									"Utils.withRetry(this, 200, maxNumberOfTries, sleepBetweenTries, function(){",
+									"    var token = JSON.parse(responseBody);",
+									"    pm.environment.set('token', token.access_token);",
 									"});",
-									"",
-									"var token = JSON.parse(responseBody);",
-									"pm.environment.set('token', token.access_token);"
+									""
 								],
 								"type": "text/javascript"
 							}
@@ -129,13 +136,15 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 201\", function () {",
-									"    pm.response.to.have.status(201);",
-									"});",
+									"var maxNumberOfTries = 5;",
+									"var sleepBetweenTries = 5000;",
 									"",
-									"var jsonData = pm.response.json();",
-									"pm.environment.set('domain', jsonData.id);",
-									"pm.environment.set('domainHrid', jsonData.hrid);"
+									"Utils.withRetry(this, 201, maxNumberOfTries, sleepBetweenTries, function(){",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('domain', jsonData.id);",
+									"    pm.environment.set('domainHrid', jsonData.hrid);",
+									"});",
+									""
 								],
 								"type": "text/javascript"
 							}
@@ -182,16 +191,15 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 201\", function () {",
-									"    pm.response.to.have.status(201);",
+									"var maxNumberOfTries = 5;",
+									"var sleepBetweenTries = 5000;",
+									"",
+									"Utils.withRetry(this, 201, maxNumberOfTries, sleepBetweenTries, function(){",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('standardDomain', jsonData.id);",
+									"    pm.environment.set('standardDomainHrid', jsonData.hrid);",
 									"});",
-									"",
-									"var jsonData = pm.response.json();",
-									"pm.environment.set('standardDomain', jsonData.id);",
-									"pm.environment.set('standardDomainHrid', jsonData.hrid);",
-									"",
-									"// wait for sync process",
-									"setTimeout(function(){}, 10000);"
+									""
 								],
 								"type": "text/javascript"
 							}
@@ -238,9 +246,10 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
+									"var maxNumberOfTries = 5;",
+									"var sleepBetweenTries = 5000;",
+									"",
+									"Utils.withRetry(this, 200, maxNumberOfTries, sleepBetweenTries, function(){});",
 									""
 								],
 								"type": "text/javascript"
@@ -288,9 +297,10 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
+									"var maxNumberOfTries = 5;",
+									"var sleepBetweenTries = 5000;",
+									"",
+									"Utils.withRetry(this, 200, maxNumberOfTries, sleepBetweenTries, function(){});",
 									""
 								],
 								"type": "text/javascript"
@@ -338,18 +348,16 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									" ",
-									"if (responseCode.code === 201)",
-									"{",
+									"var maxNumberOfTries = 5;",
+									"var sleepBetweenTries = 5000;",
+									"",
+									"Utils.withRetry(this, 201, maxNumberOfTries, sleepBetweenTries, function(){",
 									"    var data = JSON.parse(responseBody);",
-									"    if (data!==null)",
-									"        {        ",
+									"    if (data!==null){        ",
 									"        console.log(\"creation ok\");",
-									"        }",
-									"}else{",
-									"    pm.expect(responseCode.code).to.be.below(201,\"creation failed\");",
-									"        throw new Error(\"creation failed\");",
-									"}"
+									"    }",
+									"});",
+									""
 								],
 								"type": "text/javascript"
 							}
@@ -402,8 +410,7 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"// wait for sync process",
-									"setTimeout(function(){}, 5000);"
+									""
 								],
 								"type": "text/javascript"
 							}
@@ -450,8 +457,7 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"// wait for sync process",
-									"setTimeout(function(){}, 10000);"
+									""
 								],
 								"type": "text/javascript"
 							}
@@ -506,16 +512,18 @@
 									"listen": "test",
 									"script": {
 										"exec": [
-											"pm.test(\"Status code is 400\", function () {",
-											"    pm.response.to.have.status(400);",
-											"});",
+											"var maxNumberOfTries = 5;",
+											"var sleepBetweenTries = 5000;",
 											"",
-											"pm.test(\"Redirect uris are missing\", function () {",
-											"    pm.response.to.be.header('Content-Type', 'application/json');",
-											"    var body = pm.response.json();",
-											"    pm.expect(body.error).to.eql('invalid_client_metadata');",
-											"    pm.expect(body.error_description).to.eql('CIBA flow not supported');",
-											"});"
+											"Utils.withRetry(this, 400, maxNumberOfTries, sleepBetweenTries, function(){",
+											"    pm.test(\"Redirect uris are missing\", function () {",
+											"        pm.response.to.be.header('Content-Type', 'application/json');",
+											"        var body = pm.response.json();",
+											"        pm.expect(body.error).to.eql('invalid_client_metadata');",
+											"        pm.expect(body.error_description).to.eql('CIBA flow not supported');",
+											"    });",
+											"});",
+											""
 										],
 										"type": "text/javascript"
 									}
@@ -554,16 +562,22 @@
 									"listen": "test",
 									"script": {
 										"exec": [
-											"pm.test(\"Status code is 400\", function () {",
-											"    pm.response.to.have.status(400);",
-											"});",
+											"var maxNumberOfTries = 5;",
+											"var sleepBetweenTries = 5000;",
 											"",
-											"pm.test(\"Redirect uris are missing\", function () {",
-											"    pm.response.to.be.header('Content-Type', 'application/json');",
-											"    var body = pm.response.json();",
-											"    pm.expect(body.error).to.eql('invalid_client_metadata');",
-											"    pm.expect(body.error_description).to.eql('The backchannel_token_delivery_mode is required for CIBA Flow.');",
-											"});"
+											"Utils.withRetry(this, 400, maxNumberOfTries, sleepBetweenTries, function(){",
+											"    pm.test(\"Status code is 400\", function () {",
+											"        pm.response.to.have.status(400);",
+											"    });",
+											"",
+											"    pm.test(\"Redirect uris are missing\", function () {",
+											"        pm.response.to.be.header('Content-Type', 'application/json');",
+											"        var body = pm.response.json();",
+											"        pm.expect(body.error).to.eql('invalid_client_metadata');",
+											"        pm.expect(body.error_description).to.eql('The backchannel_token_delivery_mode is required for CIBA Flow.');",
+											"    });",
+											"});",
+											""
 										],
 										"type": "text/javascript"
 									}
@@ -602,16 +616,19 @@
 									"listen": "test",
 									"script": {
 										"exec": [
-											"pm.test(\"Status code is 400\", function () {",
-											"    pm.response.to.have.status(400);",
-											"});",
+											"var maxNumberOfTries = 5;",
+											"var sleepBetweenTries = 5000;",
 											"",
-											"pm.test(\"Redirect uris are missing\", function () {",
-											"    pm.response.to.be.header('Content-Type', 'application/json');",
-											"    var body = pm.response.json();",
-											"    pm.expect(body.error).to.eql('invalid_client_metadata');",
-											"    pm.expect(body.error_description).to.eql('Unsupported backchannel_token_delivery_mode');",
-											"});"
+											"Utils.withRetry(this, 400, maxNumberOfTries, sleepBetweenTries, function(){",
+											"",
+											"    pm.test(\"Redirect uris are missing\", function () {",
+											"        pm.response.to.be.header('Content-Type', 'application/json');",
+											"        var body = pm.response.json();",
+											"        pm.expect(body.error).to.eql('invalid_client_metadata');",
+											"        pm.expect(body.error_description).to.eql('Unsupported backchannel_token_delivery_mode');",
+											"    });",
+											"});",
+											""
 										],
 										"type": "text/javascript"
 									}
@@ -655,21 +672,23 @@
 									"listen": "test",
 									"script": {
 										"exec": [
-											"pm.test(\"Status code is 201\", function () {",
-											"    pm.response.to.have.status(201);",
-											"});",
+											"var maxNumberOfTries = 5;",
+											"var sleepBetweenTries = 5000;",
 											"",
-											"pm.test(\"Has default attributes\", function () {",
-											"    var body = pm.response.json();",
-											"    pm.expect(body.client_name).to.eql('CIBA App');",
-											"    pm.expect(body.application_type).to.eql('web');",
-											"    pm.expect(body.grant_types[0]).to.eql('authorization_code');",
-											"    pm.expect(body.response_types[0]).to.eql('code');",
-											"    ",
-											"    pm.environment.set('cibaAppId', body.id);",
-											"    pm.environment.set('cibaClientId', body.client_id);",
-											"    pm.environment.set('cibaClientSecret', body.client_secret);",
-											"});"
+											"Utils.withRetry(this, 201, maxNumberOfTries, sleepBetweenTries, function(){",
+											"    pm.test(\"Has default attributes\", function () {",
+											"        var body = pm.response.json();",
+											"        pm.expect(body.client_name).to.eql('CIBA App');",
+											"        pm.expect(body.application_type).to.eql('web');",
+											"        pm.expect(body.grant_types[0]).to.eql('authorization_code');",
+											"        pm.expect(body.response_types[0]).to.eql('code');",
+											"        ",
+											"        pm.environment.set('cibaAppId', body.id);",
+											"        pm.environment.set('cibaClientId', body.client_id);",
+											"        pm.environment.set('cibaClientSecret', body.client_secret);",
+											"    });",
+											"});",
+											""
 										],
 										"type": "text/javascript"
 									}
@@ -727,15 +746,17 @@
 									"listen": "test",
 									"script": {
 										"exec": [
-											"pm.test(\"Status code is 200\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
+											"var maxNumberOfTries = 5;",
+											"var sleepBetweenTries = 5000;",
 											"",
-											"pm.test(\"Extract default Idp Identifier\", function () {",
-											"    pm.response.to.be.header('Content-Type', 'application/json');",
-											"    var body = pm.response.json();",
-											"    pm.environment.set('defaultIdp', body[0].id);",
-											"});"
+											"Utils.withRetry(this, 200, maxNumberOfTries, sleepBetweenTries, function(){",
+											"    pm.test(\"Extract default Idp Identifier\", function () {",
+											"        pm.response.to.be.header('Content-Type', 'application/json');",
+											"        var body = pm.response.json();",
+											"        pm.environment.set('defaultIdp', body[0].id);",
+											"    });",
+											"});",
+											""
 										],
 										"type": "text/javascript"
 									}
@@ -776,9 +797,10 @@
 									"listen": "test",
 									"script": {
 										"exec": [
-											"pm.test(\"Status code is 200\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
+											"var maxNumberOfTries = 5;",
+											"var sleepBetweenTries = 5000;",
+											"",
+											"Utils.withRetry(this, 200, maxNumberOfTries, sleepBetweenTries, function(){});",
 											""
 										],
 										"type": "text/javascript"
@@ -840,14 +862,17 @@
 									"listen": "test",
 									"script": {
 										"exec": [
-											"pm.test(\"Status code is 400\", function () {",
-											"    pm.response.to.have.status(400);",
-											"});",
+											"var maxNumberOfTries = 5;",
+											"var sleepBetweenTries = 5000;",
 											"",
-											"pm.test(\"Has default attributes\", function () {",
-											"    var body = pm.response.json();",
-											"    pm.expect(body.error).to.eql('invalid_request');",
-											"});"
+											"Utils.withRetry(this, 400, maxNumberOfTries, sleepBetweenTries, function(){",
+											"",
+											"    pm.test(\"Has default attributes\", function () {",
+											"        var body = pm.response.json();",
+											"        pm.expect(body.error).to.eql('invalid_request');",
+											"    });",
+											"});",
+											""
 										],
 										"type": "text/javascript"
 									}
@@ -903,14 +928,18 @@
 									"listen": "test",
 									"script": {
 										"exec": [
-											"pm.test(\"Status code is 400\", function () {",
-											"    pm.response.to.have.status(400);",
-											"});",
+											"var maxNumberOfTries = 5;",
+											"var sleepBetweenTries = 5000;",
 											"",
-											"pm.test(\"Has default attributes\", function () {",
-											"    var body = pm.response.json();",
-											"    pm.expect(body.error).to.eql('invalid_scope');",
-											"});"
+											"Utils.withRetry(this, 400, maxNumberOfTries, sleepBetweenTries, function(){",
+											"",
+											"",
+											"    pm.test(\"Has default attributes\", function () {",
+											"        var body = pm.response.json();",
+											"        pm.expect(body.error).to.eql('invalid_scope');",
+											"    });",
+											"});",
+											""
 										],
 										"type": "text/javascript"
 									}
@@ -971,14 +1000,18 @@
 									"listen": "test",
 									"script": {
 										"exec": [
-											"pm.test(\"Status code is 400\", function () {",
-											"    pm.response.to.have.status(400);",
-											"});",
+											"var maxNumberOfTries = 5;",
+											"var sleepBetweenTries = 5000;",
 											"",
-											"pm.test(\"Has default attributes\", function () {",
-											"    var body = pm.response.json();",
-											"    pm.expect(body.error).to.eql('invalid_request');",
-											"});"
+											"Utils.withRetry(this, 400, maxNumberOfTries, sleepBetweenTries, function(){",
+											"",
+											"",
+											"    pm.test(\"Has default attributes\", function () {",
+											"        var body = pm.response.json();",
+											"        pm.expect(body.error).to.eql('invalid_request');",
+											"    });",
+											"});",
+											""
 										],
 										"type": "text/javascript"
 									}
@@ -1044,15 +1077,17 @@
 									"listen": "test",
 									"script": {
 										"exec": [
-											"pm.test(\"Status code is 400\", function () {",
-											"    pm.response.to.have.status(400);",
-											"});",
+											"var maxNumberOfTries = 5;",
+											"var sleepBetweenTries = 5000;",
 											"",
-											"pm.test(\"Has default attributes\", function () {",
-											"    var body = pm.response.json();",
-											"    pm.expect(body.error).to.eql('invalid_request');",
-											"    pm.expect(body.error_description).to.eql('Unsupported acr values');",
-											"});"
+											"Utils.withRetry(this, 400, maxNumberOfTries, sleepBetweenTries, function(){",
+											"    pm.test(\"Has default attributes\", function () {",
+											"        var body = pm.response.json();",
+											"        pm.expect(body.error).to.eql('invalid_request');",
+											"        pm.expect(body.error_description).to.eql('Unsupported acr values');",
+											"    });",
+											"});",
+											""
 										],
 										"type": "text/javascript"
 									}
@@ -1118,14 +1153,17 @@
 									"listen": "test",
 									"script": {
 										"exec": [
-											"pm.test(\"Status code is 400\", function () {",
-											"    pm.response.to.have.status(400);",
-											"});",
+											"var maxNumberOfTries = 5;",
+											"var sleepBetweenTries = 5000;",
 											"",
-											"pm.test(\"Has default attributes\", function () {",
-											"    var body = pm.response.json();",
-											"    pm.expect(body.error).to.eql('invalid_binding_message');",
-											"});"
+											"Utils.withRetry(this, 400, maxNumberOfTries, sleepBetweenTries, function(){",
+											"",
+											"    pm.test(\"Has default attributes\", function () {",
+											"        var body = pm.response.json();",
+											"        pm.expect(body.error).to.eql('invalid_binding_message');",
+											"    });",
+											"});",
+											""
 										],
 										"type": "text/javascript"
 									}
@@ -1199,12 +1237,14 @@
 											"listen": "test",
 											"script": {
 												"exec": [
-													"pm.test(\"Status code is 201\", function () {",
-													"    pm.response.to.have.status(201);",
-													"});",
+													"var maxNumberOfTries = 5;",
+													"var sleepBetweenTries = 5000;",
 													"",
-													"var jsonData = pm.response.json();",
-													"pm.environment.set('cibaNotifierPluginOK', jsonData.id);"
+													"Utils.withRetry(this, 201, maxNumberOfTries, sleepBetweenTries, function(){",
+													"    var jsonData = pm.response.json();",
+													"    pm.environment.set('cibaNotifierPluginOK', jsonData.id);",
+													"});",
+													""
 												],
 												"type": "text/javascript"
 											}
@@ -1256,12 +1296,11 @@
 											"listen": "test",
 											"script": {
 												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
+													"var maxNumberOfTries = 5;",
+													"var sleepBetweenTries = 5000;",
 													"",
-													"// wait for sync process",
-													"setTimeout(function(){}, 10000);",
+													"Utils.withRetry(this, 200, maxNumberOfTries, sleepBetweenTries, function(){ });",
+													"",
 													""
 												],
 												"type": "text/javascript"
@@ -1340,22 +1379,23 @@
 											"listen": "test",
 											"script": {
 												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
+													"var maxNumberOfTries = 5;",
+													"var sleepBetweenTries = 5000;",
+													"",
+													"Utils.withRetry(this, 200, maxNumberOfTries, sleepBetweenTries, function(){",
+													"",
+													"    pm.test(\"Has default attributes\", function () {",
+													"        var body = pm.response.json();",
+													"        pm.expect(body.auth_req_id).to.not.null;",
+													"        pm.expect(body.expires_in).to.not.null;",
+													"        pm.expect(body.interval).to.eq(5);",
+													"",
+													"        pm.environment.set('auth_req_id', body.auth_req_id);",
+													"    });",
+													"    ",
 													"});",
 													"",
-													"pm.test(\"Has default attributes\", function () {",
-													"    var body = pm.response.json();",
-													"    pm.expect(body.auth_req_id).to.not.null;",
-													"    pm.expect(body.expires_in).to.not.null;",
-													"    pm.expect(body.interval).to.eq(5);",
-													"",
-													"    pm.environment.set('auth_req_id', body.auth_req_id);",
-													"});",
-													"",
-													"// wait 10 sec before new request",
-													"// to be sure that the callback has been done",
-													"setTimeout(function(){}, 10000);"
+													""
 												],
 												"type": "text/javascript"
 											}
@@ -1416,16 +1456,19 @@
 											"listen": "test",
 											"script": {
 												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
+													"var maxNumberOfTries = 5;",
+													"var sleepBetweenTries = 5000;",
+													"",
+													"Utils.withRetry(this, 200, maxNumberOfTries, sleepBetweenTries, function(){",
+													"    pm.test(\"AccessToken should be delivered\", function () {",
+													"        var body = pm.response.json();",
+													"        pm.expect(body.access_token).to.not.null;",
+													"        pm.expect(body.id_token).to.not.null;",
+													"        pm.environment.set('ciba_access_token', body.access_token);",
+													"    });",
 													"});",
 													"",
-													"pm.test(\"AccessToken should be delivered\", function () {",
-													"    var body = pm.response.json();",
-													"    pm.expect(body.access_token).to.not.null;",
-													"    pm.expect(body.id_token).to.not.null;",
-													"    pm.environment.set('ciba_access_token', body.access_token);",
-													"});"
+													""
 												],
 												"type": "text/javascript"
 											}
@@ -1480,9 +1523,11 @@
 											"listen": "test",
 											"script": {
 												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
+													"var maxNumberOfTries = 5;",
+													"var sleepBetweenTries = 5000;",
+													"",
+													"Utils.withRetry(this, 200, maxNumberOfTries, sleepBetweenTries, function(){});",
+													"",
 													""
 												],
 												"type": "text/javascript"
@@ -1534,23 +1579,26 @@
 											"listen": "test",
 											"script": {
 												"exec": [
-													"pm.test(\"Status code is 302\", function () {",
-													"    pm.response.to.have.status(302);",
+													"var maxNumberOfTries = 5;",
+													"var sleepBetweenTries = 5000;",
+													"",
+													"Utils.withRetry(this, 302, maxNumberOfTries, sleepBetweenTries, function(){",
+													"    pm.test(\"Should be redirected\", function () {",
+													"        pm.response.to.be.redirection;",
+													"        pm.response.to.have.header('Location');",
+													"    });",
+													"",
+													"    pm.test(\"Should be a redirection to login page\", function() {",
+													"        var location = postman.getResponseHeader('Location');",
+													"        let domain = pm.environment.get(\"domainHrid\");",
+													"        ",
+													"        tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('cibaClientId'));",
+													"        ",
+													"        pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"    });",
 													"});",
 													"",
-													"pm.test(\"Should be redirected\", function () {",
-													"    pm.response.to.be.redirection;",
-													"    pm.response.to.have.header('Location');",
-													"});",
-													"",
-													"pm.test(\"Should be a redirection to login page\", function() {",
-													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domainHrid\");",
-													"    ",
-													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('cibaClientId'));",
-													"    ",
-													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
-													"});"
+													""
 												],
 												"type": "text/javascript"
 											}
@@ -1610,32 +1658,35 @@
 										{
 											"listen": "test",
 											"script": {
-												"type": "text/javascript",
 												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
+													"var maxNumberOfTries = 5;",
+													"var sleepBetweenTries = 5000;",
+													"",
+													"Utils.withRetry(this, 200, maxNumberOfTries, sleepBetweenTries, function(){",
+													"    pm.test(\"Should be ok\", function () {",
+													"        pm.response.to.be.ok;",
+													"        ",
+													"        // Extract the XSRF token to send it with the next request.",
+													"        var responseHTML = cheerio.load(pm.response.text());",
+													"        var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"        const action = responseHTML('form').attr('action');",
+													"        pm.environment.set('xsrf', xsrfToken);",
+													"        pm.environment.set('action', action);",
+													"    });",
 													"});",
 													"",
-													"pm.test(\"Should be ok\", function () {",
-													"    pm.response.to.be.ok;",
-													"    ",
-													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio.load(pm.response.text());",
-													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
-													"    const action = responseHTML('form').attr('action');",
-													"    pm.environment.set('xsrf', xsrfToken);",
-													"    pm.environment.set('action', action);",
-													"});"
-												]
+													""
+												],
+												"type": "text/javascript"
 											}
 										},
 										{
 											"listen": "prerequest",
 											"script": {
-												"type": "text/javascript",
 												"exec": [
 													""
-												]
+												],
+												"type": "text/javascript"
 											}
 										}
 									],
@@ -1659,15 +1710,16 @@
 											"listen": "test",
 											"script": {
 												"exec": [
-													"pm.test(\"Status code is 302\", function () {",
-													"    pm.response.to.have.status(302);",
-													"});",
+													"var maxNumberOfTries = 5;",
+													"var sleepBetweenTries = 5000;",
 													"",
-													"pm.test(\"Should be redirected\", function () {",
-													"    pm.response.to.be.redirection;",
-													"    pm.response.to.have.header('Location');",
+													"Utils.withRetry(this, 302, maxNumberOfTries, sleepBetweenTries, function(){",
+													"    pm.test(\"Should be redirected\", function () {",
+													"        pm.response.to.be.redirection;",
+													"        pm.response.to.have.header('Location');",
 													"",
-													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"        pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"    });",
 													"});"
 												],
 												"type": "text/javascript"
@@ -1733,25 +1785,26 @@
 											"listen": "test",
 											"script": {
 												"exec": [
-													"pm.test(\"Status code is 302\", function () {",
-													"    pm.response.to.have.status(302);",
-													"});",
+													"var maxNumberOfTries = 5;",
+													"var sleepBetweenTries = 5000;",
 													"",
-													"pm.test(\"Should be redirected\", function () {",
-													"    pm.response.to.be.redirection;",
-													"    ",
-													"    pm.response.to.be.header('Content-Length', '0');",
-													"    pm.response.to.have.header('Location');",
-													"    pm.response.to.have.header('Set-Cookie');",
-													"});",
+													"Utils.withRetry(this, 302, maxNumberOfTries, sleepBetweenTries, function(){",
+													"    pm.test(\"Should be redirected\", function () {",
+													"        pm.response.to.be.redirection;",
+													"        ",
+													"        pm.response.to.be.header('Content-Length', '0');",
+													"        pm.response.to.have.header('Location');",
+													"        pm.response.to.have.header('Set-Cookie');",
+													"    });",
 													"",
-													"pm.test(\"Should be redirected to consent page\", function() {",
-													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domainHrid\");",
-													"    ",
-													"    tests['Redirect to consent page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/consent');",
-													"    ",
-													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"    pm.test(\"Should be redirected to consent page\", function() {",
+													"        var location = postman.getResponseHeader('Location');",
+													"        let domain = pm.environment.get(\"domainHrid\");",
+													"        ",
+													"        tests['Redirect to consent page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/consent');",
+													"        ",
+													"        pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"    });",
 													"});"
 												],
 												"type": "text/javascript"
@@ -1787,19 +1840,20 @@
 											"listen": "test",
 											"script": {
 												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
+													"var maxNumberOfTries = 5;",
+													"var sleepBetweenTries = 5000;",
 													"",
-													"pm.test(\"Should be ok\", function () {",
-													"    pm.response.to.be.ok;",
-													"    ",
-													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio.load(pm.response.text());",
-													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
-													"    const action = responseHTML('form').attr('action');",
-													"    pm.environment.set('xsrf', xsrfToken);",
-													"    pm.environment.set('action', action);",
+													"Utils.withRetry(this, 200, maxNumberOfTries, sleepBetweenTries, function(){",
+													"    pm.test(\"Should be ok\", function () {",
+													"        pm.response.to.be.ok;",
+													"        ",
+													"        // Extract the XSRF token to send it with the next request.",
+													"        var responseHTML = cheerio.load(pm.response.text());",
+													"        var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"        const action = responseHTML('form').attr('action');",
+													"        pm.environment.set('xsrf', xsrfToken);",
+													"        pm.environment.set('action', action);",
+													"    });",
 													"});"
 												],
 												"type": "text/javascript"
@@ -1835,15 +1889,16 @@
 											"listen": "test",
 											"script": {
 												"exec": [
-													"pm.test(\"Status code is 302\", function () {",
-													"    pm.response.to.have.status(302);",
-													"});",
+													"var maxNumberOfTries = 5;",
+													"var sleepBetweenTries = 5000;",
 													"",
-													"pm.test(\"Should be redirected\", function () {",
-													"    pm.response.to.be.redirection;",
-													"    pm.response.to.have.header('Location');",
-													"    ",
-													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"Utils.withRetry(this, 302, maxNumberOfTries, sleepBetweenTries, function(){",
+													"    pm.test(\"Should be redirected\", function () {",
+													"        pm.response.to.be.redirection;",
+													"        pm.response.to.have.header('Location');",
+													"        ",
+													"        pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"    });",
 													"});"
 												],
 												"type": "text/javascript"
@@ -1904,25 +1959,26 @@
 											"listen": "test",
 											"script": {
 												"exec": [
-													"pm.test(\"Status code is 302\", function () {",
-													"    pm.response.to.have.status(302);",
-													"});",
+													"var maxNumberOfTries = 5;",
+													"var sleepBetweenTries = 5000;",
 													"",
-													"pm.test(\"Should be redirected\", function () {",
-													"    pm.response.to.be.redirection;",
-													"    pm.response.to.have.header('Location');",
-													"});",
+													"Utils.withRetry(this, 302, maxNumberOfTries, sleepBetweenTries, function(){",
+													"    pm.test(\"Should be redirected\", function () {",
+													"        pm.response.to.be.redirection;",
+													"        pm.response.to.have.header('Location');",
+													"    });",
 													"",
-													"pm.test(\"Should be a redirection to redirect_uri with authorization_code\", function() {",
-													"    var location = postman.getResponseHeader('Location');",
-													"    tests['Redirect to redirect_uri'] = location.includes('https://callback#');",
+													"    pm.test(\"Should be a redirection to redirect_uri with authorization_code\", function() {",
+													"        var location = postman.getResponseHeader('Location');",
+													"        tests['Redirect to redirect_uri'] = location.includes('https://callback#');",
+													"        ",
+													"        tests['Contains an id_token param'] = location.includes('id_token=');",
+													"",
+													"        var fragment = location.substr(location.indexOf('#') + 1);",
+													"        var idToken = fragment.split('&').filter(kv => kv.startsWith(\"id_token\")).map(kv => kv.split('=')[1])[0]",
 													"    ",
-													"    tests['Contains an id_token param'] = location.includes('id_token=');",
-													"",
-													"    var fragment = location.substr(location.indexOf('#') + 1);",
-													"    var idToken = fragment.split('&').filter(kv => kv.startsWith(\"id_token\")).map(kv => kv.split('=')[1])[0]",
-													" ",
-													"    pm.environment.set('ciba_id_token_hint', idToken);",
+													"        pm.environment.set('ciba_id_token_hint', idToken);",
+													"    });",
 													"});"
 												],
 												"type": "text/javascript"
@@ -1958,22 +2014,19 @@
 											"listen": "test",
 											"script": {
 												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
+													"var maxNumberOfTries = 5;",
+													"var sleepBetweenTries = 5000;",
 													"",
-													"pm.test(\"Has default attributes\", function () {",
-													"    var body = pm.response.json();",
-													"    pm.expect(body.auth_req_id).to.not.null;",
-													"    pm.expect(body.expires_in).to.not.null;",
-													"    pm.expect(body.interval).to.eq(5);",
+													"Utils.withRetry(this, 200, maxNumberOfTries, sleepBetweenTries, function(){",
+													"    pm.test(\"Has default attributes\", function () {",
+													"        var body = pm.response.json();",
+													"        pm.expect(body.auth_req_id).to.not.null;",
+													"        pm.expect(body.expires_in).to.not.null;",
+													"        pm.expect(body.interval).to.eq(5);",
 													"",
-													"    pm.environment.set('auth_req_id', body.auth_req_id);",
-													"});",
-													"",
-													"// wait 10 sec before new request",
-													"// to be sure that the callback has been done",
-													"setTimeout(function(){}, 10000);"
+													"        pm.environment.set('auth_req_id', body.auth_req_id);",
+													"    });",
+													"});"
 												],
 												"type": "text/javascript"
 											}
@@ -2034,15 +2087,16 @@
 											"listen": "test",
 											"script": {
 												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
+													"var maxNumberOfTries = 5;",
+													"var sleepBetweenTries = 5000;",
 													"",
-													"pm.test(\"AccessToken should be delivered\", function () {",
-													"    var body = pm.response.json();",
-													"    pm.expect(body.access_token).to.not.null;",
-													"    pm.expect(body.id_token).to.not.null;",
-													"    pm.environment.set('ciba_access_token', body.access_token);",
+													"Utils.withRetry(this, 200, maxNumberOfTries, sleepBetweenTries, function(){",
+													"    pm.test(\"AccessToken should be delivered\", function () {",
+													"        var body = pm.response.json();",
+													"        pm.expect(body.access_token).to.not.null;",
+													"        pm.expect(body.id_token).to.not.null;",
+													"        pm.environment.set('ciba_access_token', body.access_token);",
+													"    });",
 													"});"
 												],
 												"type": "text/javascript"
@@ -2098,10 +2152,11 @@
 											"listen": "test",
 											"script": {
 												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
-													""
+													"",
+													"var maxNumberOfTries = 5;",
+													"var sleepBetweenTries = 5000;",
+													"",
+													"Utils.withRetry(this, 200, maxNumberOfTries, sleepBetweenTries, function(){});"
 												],
 												"type": "text/javascript"
 											}
@@ -2147,15 +2202,17 @@
 											"listen": "test",
 											"script": {
 												"exec": [
-													"pm.test(\"Status code is 302\", function () {",
-													"    pm.response.to.have.status(302);",
-													"});",
+													"var maxNumberOfTries = 5;",
+													"var sleepBetweenTries = 5000;",
 													"",
-													"pm.test(\"Should be redirected\", function () {",
-													"    pm.response.to.be.redirection;",
-													"    pm.response.to.have.header('Location');",
-													"    ",
-													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"Utils.withRetry(this, 302, maxNumberOfTries, sleepBetweenTries, function(){",
+													"",
+													"    pm.test(\"Should be redirected\", function () {",
+													"        pm.response.to.be.redirection;",
+													"        pm.response.to.have.header('Location');",
+													"        ",
+													"        pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"    });",
 													"});"
 												],
 												"type": "text/javascript"
@@ -2200,22 +2257,21 @@
 											"listen": "test",
 											"script": {
 												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
+													"var maxNumberOfTries = 5;",
+													"var sleepBetweenTries = 5000;",
 													"",
-													"pm.test(\"Has default attributes\", function () {",
-													"    var body = pm.response.json();",
-													"    pm.expect(body.auth_req_id).to.not.null;",
-													"    pm.expect(body.expires_in).to.not.null;",
-													"    pm.expect(body.interval).to.eq(5);",
+													"Utils.withRetry(this, 200, maxNumberOfTries, sleepBetweenTries, function(){",
 													"",
-													"    pm.environment.set('auth_req_id', body.auth_req_id);",
-													"});",
+													"    pm.test(\"Has default attributes\", function () {",
+													"        var body = pm.response.json();",
+													"        pm.expect(body.auth_req_id).to.not.null;",
+													"        pm.expect(body.expires_in).to.not.null;",
+													"        pm.expect(body.interval).to.eq(5);",
 													"",
-													"// wait 10 sec before new request",
-													"// to be sure that the callback has been done",
-													"setTimeout(function(){}, 10000);"
+													"        pm.environment.set('auth_req_id', body.auth_req_id);",
+													"    });",
+													"",
+													"});"
 												],
 												"type": "text/javascript"
 											}
@@ -2294,15 +2350,18 @@
 											"listen": "test",
 											"script": {
 												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
+													"var maxNumberOfTries = 5;",
+													"var sleepBetweenTries = 5000;",
 													"",
-													"pm.test(\"AccessToken should be delivered\", function () {",
-													"    var body = pm.response.json();",
-													"    pm.expect(body.access_token).to.not.null;",
-													"    pm.expect(body.id_token).to.not.null;",
-													"    pm.environment.set('ciba_access_token', body.access_token);",
+													"Utils.withRetry(this, 200, maxNumberOfTries, sleepBetweenTries, function(){",
+													"",
+													"    pm.test(\"AccessToken should be delivered\", function () {",
+													"        var body = pm.response.json();",
+													"        pm.expect(body.access_token).to.not.null;",
+													"        pm.expect(body.id_token).to.not.null;",
+													"        pm.environment.set('ciba_access_token', body.access_token);",
+													"    });",
+													"",
 													"});"
 												],
 												"type": "text/javascript"
@@ -2358,10 +2417,10 @@
 											"listen": "test",
 											"script": {
 												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
-													""
+													"var maxNumberOfTries = 5;",
+													"var sleepBetweenTries = 5000;",
+													"",
+													"Utils.withRetry(this, 200, maxNumberOfTries, sleepBetweenTries, function(){});"
 												],
 												"type": "text/javascript"
 											}
@@ -2412,12 +2471,15 @@
 											"listen": "test",
 											"script": {
 												"exec": [
-													"pm.test(\"Status code is 201\", function () {",
-													"    pm.response.to.have.status(201);",
-													"});",
+													"var maxNumberOfTries = 5;",
+													"var sleepBetweenTries = 5000;",
 													"",
-													"var jsonData = pm.response.json();",
-													"pm.environment.set('cibaNotifierPluginKO', jsonData.id);"
+													"Utils.withRetry(this, 201, maxNumberOfTries, sleepBetweenTries, function(){",
+													"",
+													"    var jsonData = pm.response.json();",
+													"    pm.environment.set('cibaNotifierPluginKO', jsonData.id);",
+													"",
+													"});"
 												],
 												"type": "text/javascript"
 											}
@@ -2469,10 +2531,12 @@
 											"listen": "test",
 											"script": {
 												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
+													"var maxNumberOfTries = 5;",
+													"var sleepBetweenTries = 5000;",
 													"",
+													"Utils.withRetry(this, 200, maxNumberOfTries, sleepBetweenTries, function(){",
+													"",
+													"});",
 													"// wait for sync process",
 													"setTimeout(function(){}, 10000);"
 												],
@@ -2602,13 +2666,15 @@
 											"listen": "test",
 											"script": {
 												"exec": [
-													"pm.test(\"Status code is 403\", function () {",
-													"    pm.response.to.have.status(403);",
-													"});",
+													"var maxNumberOfTries = 5;",
+													"var sleepBetweenTries = 5000;",
 													"",
-													"pm.test(\"AccessToken should not be delivered because user has rejected the request \", function () {",
-													"    var body = pm.response.json();",
-													"    pm.expect(body.error).to.eq(\"access_denied\");",
+													"Utils.withRetry(this, 403, maxNumberOfTries, sleepBetweenTries, function(){",
+													"",
+													"    pm.test(\"AccessToken should not be delivered because user has rejected the request \", function () {",
+													"        var body = pm.response.json();",
+													"        pm.expect(body.error).to.eq(\"access_denied\");",
+													"    });",
 													"});"
 												],
 												"type": "text/javascript"
@@ -2673,8 +2739,11 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 204\", function () {",
-									"    pm.response.to.have.status(204);",
+									"var maxNumberOfTries = 5;",
+									"var sleepBetweenTries = 5000;",
+									"",
+									"Utils.withRetry(this, 204, maxNumberOfTries, sleepBetweenTries, function(){",
+									"",
 									"});"
 								],
 								"type": "text/javascript"
@@ -2722,8 +2791,11 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 204\", function () {",
-									"    pm.response.to.have.status(204);",
+									"var maxNumberOfTries = 5;",
+									"var sleepBetweenTries = 5000;",
+									"",
+									"Utils.withRetry(this, 204, maxNumberOfTries, sleepBetweenTries, function(){",
+									"",
 									"});"
 								],
 								"type": "text/javascript"
@@ -2765,6 +2837,55 @@
 					"response": []
 				}
 			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"Utils = {",
+					"    wait: function (that, sleepDuration){",
+					"        that.setTimeout(() => {}, sleepDuration);",
+					"    },",
+					"    withRetry: function(that, expectedHttpStatus, maxNumberOfTries, sleepBetweenTries, testCallback){",
+					"",
+					"        if (!that.pm.environment.get(\"collection_tries\")) {",
+					"            that.pm.environment.set(\"collection_tries\", 1);",
+					"        }",
+					"",
+					"        var expectedHttpStatus = that.pm.response.code == expectedHttpStatus;",
+					"        console.log(expectedHttpStatus)",
+					"        if (!expectedHttpStatus) {",
+					"            var retriesThresholdReached = that.pm.environment.get(\"collection_tries\") >= maxNumberOfTries;",
+					"            console.log(retriesThresholdReached)",
+					"            if(!retriesThresholdReached){",
+					"                var tries = parseInt(that.pm.environment.get(\"collection_tries\"), 10);",
+					"                that.pm.environment.set(\"collection_tries\", tries + 1);",
+					"                Utils.wait(that, sleepBetweenTries, maxNumberOfTries);",
+					"                that.postman.setNextRequest(that.request.name);",
+					"            } else {",
+					"                that.pm.expect.fail(\"Retries depleted\");",
+					"            }",
+					"",
+					"        } else {",
+					"            that.pm.environment.unset(\"collection_tries\");",
+					"            testCallback();",
+					"        } ",
+					"    }",
+					"};"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
 		}
 	]
 }
