@@ -197,7 +197,7 @@
         <r2dbc-spi.version>1.0.0.RELEASE</r2dbc-spi.version>
 
         <r2dbc-pool.version>1.0.1.RELEASE</r2dbc-pool.version>
-        <r2dbc-proxy.version>1.1.4.RELEASE</r2dbc-proxy.version>
+        <r2dbc-proxy.version>1.1.5.RELEASE</r2dbc-proxy.version>
         <r2dbc-spi.version>1.0.0.RELEASE</r2dbc-spi.version>
         <reactor.version>3.5.8</reactor.version>
 
