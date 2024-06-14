@@ -25,7 +25,11 @@ import io.reactivex.rxjava3.core.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
+<<<<<<< HEAD
 import jakarta.annotation.PostConstruct;
+=======
+import java.util.Map;
+>>>>>>> 5b1bc9bc07 (fix: avoid infinite blocking call durint Indexes creation)
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -43,7 +47,7 @@ public class MongoEnvironmentRepository extends AbstractManagementMongoRepositor
     public void init() {
         collection = mongoOperations.getCollection("environments", EnvironmentMongo.class);
         super.init(collection);
-        super.createIndex(collection, new Document(FIELD_ORGANIZATION_ID, 1),new IndexOptions().name("o1"));
+        super.createIndex(collection, Map.of(new Document(FIELD_ORGANIZATION_ID, 1),new IndexOptions().name("o1")));
     }
 
     @Override

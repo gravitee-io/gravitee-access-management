@@ -35,6 +35,7 @@ import org.springframework.stereotype.Component;
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -54,9 +55,8 @@ public class MongoVerifyAttemptRepository extends AbstractManagementMongoReposit
     public void init(){
         verifyAttemptCollection = mongoOperations.getCollection(VERIFY_ATTEMPT, VerifyAttemptMongo.class);
         super.init(verifyAttemptCollection);
-        super.createIndex(verifyAttemptCollection, new Document(FIELD_USER_ID, 1)
-                .append(FIELD_CLIENT, 1)
-                .append(FIELD_FACTOR_ID,1), new IndexOptions().name("u1c1f1"));
+        super.createIndex(verifyAttemptCollection, Map.of(new Document(FIELD_USER_ID, 1).append(FIELD_CLIENT, 1).append(FIELD_FACTOR_ID,1),
+                new IndexOptions().name("u1c1f1")));
     }
 
     @Override

@@ -28,6 +28,7 @@ import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -54,8 +55,11 @@ public class MongoDeviceRepository extends AbstractManagementMongoRepository imp
         rememberDeviceMongoCollection = mongoOperations.getCollection(COLLECTION_NAME, DeviceMongo.class);
         super.init(rememberDeviceMongoCollection);
 
-        super.createIndex(rememberDeviceMongoCollection, new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1), new IndexOptions().name("ri1rt1"));
-        super.createIndex(rememberDeviceMongoCollection, new Document(FIELD_EXPIRES_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS).name("e1"));
+        final var indexes = new HashMap<Document, IndexOptions>();
+        indexes.put(new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1), new IndexOptions().name("ri1rt1"));
+        indexes.put(new Document(FIELD_EXPIRES_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS).name("e1"));
+
+        super.createIndex(rememberDeviceMongoCollection, indexes);
     }
 
     @Override
