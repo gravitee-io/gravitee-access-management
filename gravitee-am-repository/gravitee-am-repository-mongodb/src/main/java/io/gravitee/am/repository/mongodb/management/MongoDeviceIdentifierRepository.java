@@ -31,6 +31,7 @@ import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
 import java.util.Objects;
 
 import static com.mongodb.client.model.Filters.and;
@@ -52,7 +53,7 @@ public class MongoDeviceIdentifierRepository extends AbstractManagementMongoRepo
     public void init() {
         deviceIdentifierMongoMongoCollection = mongoOperations.getCollection(COLLECTION_NAME, DeviceIdentifierMongo.class);
         super.init(deviceIdentifierMongoMongoCollection);
-        super.createIndex(deviceIdentifierMongoMongoCollection, new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1), new IndexOptions().name("ri1rt1"));
+        super.createIndex(deviceIdentifierMongoMongoCollection, Map.of(new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1), new IndexOptions().name("ri1rt1")));
     }
 
     @Override

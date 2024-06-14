@@ -31,6 +31,8 @@ import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Sorts.ascending;
@@ -51,7 +53,7 @@ public class MongoPasswordPolicyRepository extends AbstractManagementMongoReposi
         mongoCollection = mongoOperations.getCollection(COLLECTION_NAME, PasswordPolicyMongo.class);
         super.init(mongoCollection);
 
-        super.createIndex(mongoCollection, new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1), new IndexOptions().name("ri1rt1"));
+        super.createIndex(mongoCollection, Map.of(new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1), new IndexOptions().name("ri1rt1")));
     }
 
     @Override

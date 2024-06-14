@@ -35,6 +35,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -54,9 +55,9 @@ public class MongoRateLimitRepository extends AbstractManagementMongoRepository 
     public void init() {
         rateLimitCollection = mongoOperations.getCollection(RATE_LIMIT, RateLimitMongo.class);
         super.init(rateLimitCollection);
-        super.createIndex(rateLimitCollection, new Document(FIELD_USER_ID, 1)
+        super.createIndex(rateLimitCollection, Map.of(new Document(FIELD_USER_ID, 1)
                 .append(FIELD_CLIENT, 1)
-                .append(FIELD_FACTOR_ID,1), new IndexOptions().name("u1c1f1"));
+                .append(FIELD_FACTOR_ID,1), new IndexOptions().name("u1c1f1")));
     }
 
     @Override

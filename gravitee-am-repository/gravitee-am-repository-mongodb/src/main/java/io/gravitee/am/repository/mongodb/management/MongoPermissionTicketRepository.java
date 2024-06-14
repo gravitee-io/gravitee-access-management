@@ -33,6 +33,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -58,7 +59,7 @@ public class MongoPermissionTicketRepository extends AbstractManagementMongoRepo
         super.init(permissionTicketCollection);
 
         // expire after index
-        super.createIndex(permissionTicketCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0l, TimeUnit.SECONDS).name("e1"));
+        super.createIndex(permissionTicketCollection, Map.of(new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0l, TimeUnit.SECONDS).name("e1")));
     }
 
     @Override

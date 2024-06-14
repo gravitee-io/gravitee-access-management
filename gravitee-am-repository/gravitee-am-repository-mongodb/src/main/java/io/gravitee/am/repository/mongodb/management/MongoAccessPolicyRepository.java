@@ -33,6 +33,7 @@ import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.List;
 
 import static com.mongodb.client.model.Filters.and;
@@ -54,10 +55,14 @@ public class MongoAccessPolicyRepository extends AbstractManagementMongoReposito
     public void init() {
         accessPoliciesCollection = mongoOperations.getCollection(COLLECTION_NAME, AccessPolicyMongo.class);
         super.init(accessPoliciesCollection);
-        super.createIndex(accessPoliciesCollection, new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1"));
-        super.createIndex(accessPoliciesCollection, new Document(FIELD_RESOURCE, 1), new IndexOptions().name("r1"));
-        super.createIndex(accessPoliciesCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_RESOURCE, 1), new IndexOptions().name("d1r1"));
-        super.createIndex(accessPoliciesCollection, new Document(FIELD_UPDATED_AT, -1), new IndexOptions().name("u_1"));
+
+        final var indexes = new HashMap<Document, IndexOptions>();
+        indexes.put(new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1"));
+        indexes.put(new Document(FIELD_RESOURCE, 1), new IndexOptions().name("r1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_RESOURCE, 1), new IndexOptions().name("d1r1"));
+        indexes.put(new Document(FIELD_UPDATED_AT, -1), new IndexOptions().name("u_1"));
+
+        super.createIndex(accessPoliciesCollection, indexes);
     }
 
     @Override

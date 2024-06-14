@@ -52,7 +52,7 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
     public void init() {
         certificatesCollection = mongoOperations.getCollection("certificates", CertificateMongo.class);
         super.init(certificatesCollection);
-        super.createIndex(certificatesCollection, new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1"));
+        super.createIndex(certificatesCollection, Map.of(new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1")));
     }
 
     @Override

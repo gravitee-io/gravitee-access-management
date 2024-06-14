@@ -34,6 +34,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.Map;
 import java.util.Objects;
 
 import static com.mongodb.client.model.Filters.and;
@@ -49,7 +50,7 @@ public class MongoAccountAccessTokenRepository extends AbstractManagementMongoRe
     public void init() {
         accountTokensCollection = mongoOperations.getCollection(COLLECTION_NAME, AccountAccessTokenMongo.class);
         super.init(accountTokensCollection);
-        createIndex(accountTokensCollection, new Document(FIELD_USER_ID, 1), new IndexOptions().name("u1"));
+        createIndex(accountTokensCollection, Map.of(new Document(FIELD_USER_ID, 1), new IndexOptions().name("u1")));
     }
 
 

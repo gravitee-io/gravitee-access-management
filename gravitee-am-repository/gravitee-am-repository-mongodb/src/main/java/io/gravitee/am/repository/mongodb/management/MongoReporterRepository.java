@@ -30,6 +30,8 @@ import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 import static com.mongodb.client.model.Filters.eq;
 
 /**
@@ -45,7 +47,7 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
     public void init() {
         reportersCollection = mongoOperations.getCollection("reporters", ReporterMongo.class);
         super.init(reportersCollection);
-        super.createIndex(reportersCollection, new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1"));
+        super.createIndex(reportersCollection, Map.of(new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1")));
     }
 
     @Override

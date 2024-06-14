@@ -63,8 +63,12 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
     public void init() {
         rolesCollection = mongoOperations.getCollection("roles", RoleMongo.class);
         super.init(rolesCollection);
-        super.createIndex(rolesCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
-        super.createIndex(rolesCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_NAME, 1).append(FIELD_SCOPE, 1), new IndexOptions().name("rt1ri1n1s1"));
+
+        final var indexes = new HashMap<Document, IndexOptions>();
+        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
+        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_NAME, 1).append(FIELD_SCOPE, 1), new IndexOptions().name("rt1ri1n1s1"));
+
+        super.createIndex(rolesCollection, indexes);
     }
 
     @Override

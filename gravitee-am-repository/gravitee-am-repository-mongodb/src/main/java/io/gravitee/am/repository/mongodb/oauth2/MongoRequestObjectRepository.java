@@ -29,6 +29,7 @@ import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.and;
@@ -52,7 +53,7 @@ public class MongoRequestObjectRepository extends AbstractOAuth2MongoRepository 
         super.init(requestObjectCollection);
 
         // expire after index
-        super.createIndex(requestObjectCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS).name("e1"));
+        super.createIndex(requestObjectCollection, Map.of(new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS).name("e1")));
     }
 
     @Override

@@ -31,6 +31,8 @@ import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 
@@ -48,7 +50,7 @@ public class MongoBotDetectionRepository extends AbstractManagementMongoReposito
     public void init() {
         botDetectionMongoCollection = mongoOperations.getCollection(COLLECTION_NAME, BotDetectionMongo.class);
         super.init(botDetectionMongoCollection);
-        super.createIndex(botDetectionMongoCollection, new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1), new IndexOptions().name("ri1rt1"));
+        super.createIndex(botDetectionMongoCollection, Map.of(new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1), new IndexOptions().name("ri1rt1")));
     }
 
     @Override
