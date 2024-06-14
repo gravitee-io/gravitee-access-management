@@ -25,7 +25,11 @@ import io.reactivex.rxjava3.core.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
+<<<<<<< HEAD
 import javax.annotation.PostConstruct;
+=======
+import java.util.Map;
+>>>>>>> 5b1bc9bc07 (fix: avoid infinite blocking call durint Indexes creation)
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -43,7 +47,7 @@ public class MongoTagRepository extends AbstractManagementMongoRepository implem
     public void init() {
         tagsCollection = mongoOperations.getCollection("tags", TagMongo.class);
         super.init(tagsCollection);
-        super.createIndex(tagsCollection, new Document(FIELD_ORGANIZATION_ID, 1), new IndexOptions().name("o1"));
+        super.createIndex(tagsCollection, Map.of(new Document(FIELD_ORGANIZATION_ID, 1), new IndexOptions().name("o1")));
     }
 
 

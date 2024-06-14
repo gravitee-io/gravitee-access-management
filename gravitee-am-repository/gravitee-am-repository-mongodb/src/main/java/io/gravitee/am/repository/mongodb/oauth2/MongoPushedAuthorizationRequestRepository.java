@@ -32,6 +32,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.eq;
@@ -53,7 +54,7 @@ public class MongoPushedAuthorizationRequestRepository extends AbstractOAuth2Mon
         super.init(parCollection);
 
         // expire after index
-        super.createIndex(parCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().name("e1").expireAfter(0L, TimeUnit.SECONDS));
+        super.createIndex(parCollection, Map.of(new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().name("e1").expireAfter(0L, TimeUnit.SECONDS)));
     }
 
     @Override

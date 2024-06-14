@@ -30,7 +30,12 @@ import io.reactivex.rxjava3.core.Single;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
+<<<<<<< HEAD
 import javax.annotation.PostConstruct;
+=======
+import java.util.Date;
+import java.util.HashMap;
+>>>>>>> 5b1bc9bc07 (fix: avoid infinite blocking call durint Indexes creation)
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -52,11 +57,14 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
     public void init() {
         authorizationCodeCollection = mongoOperations.getCollection("authorization_codes", AuthorizationCodeMongo.class);
         super.init(authorizationCodeCollection);
-        super.createIndex(authorizationCodeCollection, new Document(FIELD_CODE, 1), new IndexOptions().name("c1"));
-        super.createIndex(authorizationCodeCollection, new Document(FIELD_TRANSACTION_ID, 1), new IndexOptions().name("t1"));
 
+        final var indexes = new HashMap<Document, IndexOptions>();
+        indexes.put(new Document(FIELD_CODE, 1), new IndexOptions().name("c1"));
+        indexes.put(new Document(FIELD_TRANSACTION_ID, 1), new IndexOptions().name("t1"));
         // expire after index
-        super.createIndex(authorizationCodeCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0l, TimeUnit.SECONDS).name("e1"));
+        indexes.put(new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0l, TimeUnit.SECONDS).name("e1"));
+
+        super.createIndex(authorizationCodeCollection, indexes);
     }
 
     private Maybe<AuthorizationCode> findById(String id) {

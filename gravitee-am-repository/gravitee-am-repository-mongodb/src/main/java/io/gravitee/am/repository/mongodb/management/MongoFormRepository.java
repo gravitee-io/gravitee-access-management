@@ -26,9 +26,17 @@ import io.reactivex.rxjava3.core.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
+<<<<<<< HEAD
 import javax.annotation.PostConstruct;
 
 import static com.mongodb.client.model.Filters.*;
+=======
+import java.util.HashMap;
+
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.exists;
+>>>>>>> 5b1bc9bc07 (fix: avoid infinite blocking call durint Indexes creation)
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -44,9 +52,13 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
     public void init() {
         formsCollection = mongoOperations.getCollection("forms", FormMongo.class);
         super.init(formsCollection);
-        super.createIndex(formsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
-        super.createIndex(formsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TEMPLATE, 1), new IndexOptions().name("rt1ri1t1"));
-        super.createIndex(formsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CLIENT, 1).append(FIELD_TEMPLATE, 1), new IndexOptions().name("rt1ri1c1t1"));
+
+        final var indexes = new HashMap<Document, IndexOptions>();
+        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
+        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TEMPLATE, 1), new IndexOptions().name("rt1ri1t1"));
+        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CLIENT, 1).append(FIELD_TEMPLATE, 1), new IndexOptions().name("rt1ri1c1t1"));
+
+        super.createIndex(formsCollection, indexes);
     }
 
     @Override

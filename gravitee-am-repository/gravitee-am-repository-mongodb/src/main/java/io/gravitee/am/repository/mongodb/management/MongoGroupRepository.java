@@ -34,7 +34,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+<<<<<<< HEAD
 import javax.annotation.PostConstruct;
+=======
+import java.util.HashMap;
+>>>>>>> 5b1bc9bc07 (fix: avoid infinite blocking call durint Indexes creation)
 import java.util.LinkedList;
 import java.util.List;
 
@@ -56,8 +60,12 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
     public void init() {
         groupsCollection = mongoOperations.getCollection("groups", GroupMongo.class);
         super.init(groupsCollection);
-        super.createIndex(groupsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
-        super.createIndex(groupsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_NAME, 1), new IndexOptions().name("rt1ri1n1"));
+
+        final var indexes = new HashMap<Document, IndexOptions>();
+        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
+        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_NAME, 1), new IndexOptions().name("rt1ri1n1"));
+
+        super.createIndex(groupsCollection, indexes);
     }
 
     @Override

@@ -20,6 +20,7 @@ import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.Accumulators;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.CountOptions;
+import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.WriteModel;
@@ -239,6 +240,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
                     });
 
             // create new indexes
+<<<<<<< HEAD
             Map<Document, IndexOptions> indexes = new HashMap<>();
             indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TIMESTAMP_NAME));
             indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TYPE, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TYPE_TIMESTAMP_NAME));
@@ -251,6 +253,19 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
                     .flatMapCompletable(index -> Completable.fromPublisher(reportableCollection.createIndex(index.getKey(), index.getValue()))
                             .doOnComplete(() -> logger.debug("Created an index named: {}", index.getValue().getName()))
                             .doOnError(throwable -> logger.error("An error has occurred during creation of index {}", index.getValue().getName(), throwable)));
+=======
+            List<IndexModel> indexes = new ArrayList<>();
+            indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TIMESTAMP_NAME).background(true)));
+            indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TYPE, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TYPE_TIMESTAMP_NAME).background(true)));
+            indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TYPE, 1).append(FIELD_STATUS, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TYPE_STATUS_SUCCESS_TIMESTAMP_NAME).partialFilterExpression(new Document(FIELD_STATUS, new Document("$eq", "SUCCESS"))).background(true)));
+            indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME).background(true)));
+            indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TARGET, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TARGET_TIMESTAMP_NAME).background(true)));
+            indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR, 1).append(FIELD_TARGET, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME).background(true)));
+            indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR_ID, 1).append(FIELD_TARGET_ID, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_ID_TARGET_ID_TIMESTAMP_NAME).background(true)));
+            Completable createNewIndexes = Completable.fromPublisher(reportableCollection.createIndexes(indexes))
+                            .doOnComplete(() -> logger.debug("{} Reporter indexes created", indexes.size()))
+                            .doOnError(throwable -> logger.error("An error has occurred during creation of indexes", throwable));
+>>>>>>> 5b1bc9bc07 (fix: avoid infinite blocking call durint Indexes creation)
 
             // process indexes
             deleteOldIndexes

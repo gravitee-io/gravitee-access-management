@@ -33,6 +33,11 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
+<<<<<<< HEAD
+=======
+import java.util.Date;
+import java.util.HashMap;
+>>>>>>> 5b1bc9bc07 (fix: avoid infinite blocking call durint Indexes creation)
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -55,10 +60,13 @@ public class MongoLoginAttemptRepository extends AbstractManagementMongoReposito
     public void init() {
         loginAttemptsCollection = mongoOperations.getCollection("login_attempts", LoginAttemptMongo.class);
         super.init(loginAttemptsCollection);
-        super.createIndex(loginAttemptsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_USERNAME, 1), new IndexOptions().name("d1c1u1"));
 
+        final var indexes = new HashMap<Document, IndexOptions>();
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_USERNAME, 1), new IndexOptions().name("d1c1u1"));
         // expire after index
-        super.createIndex(loginAttemptsCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().name("e1").expireAfter(0L, TimeUnit.SECONDS));
+        indexes.put(new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().name("e1").expireAfter(0L, TimeUnit.SECONDS));
+
+        super.createIndex(loginAttemptsCollection, indexes);
     }
 
     @Override

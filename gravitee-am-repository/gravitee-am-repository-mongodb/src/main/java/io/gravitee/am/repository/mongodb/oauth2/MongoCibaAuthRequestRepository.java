@@ -32,6 +32,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.and;
@@ -55,7 +56,7 @@ public class MongoCibaAuthRequestRepository extends AbstractOAuth2MongoRepositor
         super.init(cibaAuthRequestCollection);
 
         // expire after index
-        super.createIndex(cibaAuthRequestCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS).name("e1"));
+        super.createIndex(cibaAuthRequestCollection, Map.of(new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS).name("e1")));
     }
 
     @Override

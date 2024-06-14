@@ -27,7 +27,12 @@ import io.reactivex.rxjava3.core.Single;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
+<<<<<<< HEAD
 import javax.annotation.PostConstruct;
+=======
+import java.util.Date;
+import java.util.Map;
+>>>>>>> 5b1bc9bc07 (fix: avoid infinite blocking call durint Indexes creation)
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.eq;
@@ -49,7 +54,7 @@ public class MongoRequestObjectRepository extends AbstractOAuth2MongoRepository 
         super.init(requestObjectCollection);
 
         // expire after index
-        super.createIndex(requestObjectCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS).name("e1"));
+        super.createIndex(requestObjectCollection, Map.of(new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS).name("e1")));
     }
 
     @Override

@@ -32,6 +32,7 @@ import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import static com.mongodb.client.model.Filters.*;
 
@@ -51,7 +52,7 @@ public class MongoNodeMonitoringRepository extends AbstractManagementMongoReposi
     public void init() {
         collection = mongoOperations.getCollection("node_monitoring", MonitoringMongo.class);
         super.init(collection);
-        super.createIndex(collection, new Document(FIELD_UPDATED_AT, 1), new IndexOptions().name("u1"));
+        super.createIndex(collection, Map.of(new Document(FIELD_UPDATED_AT, 1), new IndexOptions().name("u1")));
     }
 
     @Override

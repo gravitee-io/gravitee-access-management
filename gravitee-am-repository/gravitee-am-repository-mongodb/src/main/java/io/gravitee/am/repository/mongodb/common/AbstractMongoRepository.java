@@ -15,12 +15,17 @@
  */
 package io.gravitee.am.repository.mongodb.common;
 
+import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -41,15 +46,27 @@ public abstract class AbstractMongoRepository {
 
 
     protected void init(MongoCollection<?> collection) {
-        this.createIndex(collection, new Document(FIELD_ID, 1), new IndexOptions(), true);
+        Single.fromPublisher(collection.createIndex(new Document(FIELD_ID, 1), new IndexOptions()))
+                .subscribe(
+                        ignore -> logger.debug("Index {} created", FIELD_ID),
+                        throwable -> logger.error("Error occurs during creation of index {}", FIELD_ID, throwable)
+                );
     }
 
-    protected void createIndex(MongoCollection<?> collection, Document document, IndexOptions indexOptions, boolean ensure) {
+    protected void createIndex(MongoCollection<?> collection, Map<Document, IndexOptions> indexes, boolean ensure) {
         if (ensure) {
+<<<<<<< HEAD
             Single.fromPublisher(collection.createIndex(document, indexOptions))
                     .subscribe(
                             s -> logger.debug("Created an index named: {}", s),
                             throwable -> logger.error("Error occurs during creation of index", throwable));
+=======
+            var indexesModel = indexes.entrySet().stream().map(entry -> new IndexModel(entry.getKey(), entry.getValue().background(true))).toList();
+            Completable.fromPublisher(collection.createIndexes(indexesModel))
+                    .doOnComplete(() -> logger.debug("{} indexes created", indexes.size()))
+                    .doOnError(throwable -> logger.error("An error has occurred during creation of indexes", throwable))
+                    .blockingAwait(1, TimeUnit.MINUTES);
+>>>>>>> 5b1bc9bc07 (fix: avoid infinite blocking call durint Indexes creation)
         }
     }
 }
