@@ -15,32 +15,19 @@
  */
 package io.gravitee.am.common.utils;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@AllArgsConstructor
+@Getter
 public class GraviteeContext {
     private final String organizationId;
     private final String environmentId;
     private final String domainId;
-
-    public GraviteeContext(String organizationId, String environmentId, String domainId) {
-        this.organizationId = organizationId;
-        this.environmentId = environmentId;
-        this.domainId = domainId;
-    }
-
-    public String getOrganizationId() {
-        return organizationId;
-    }
-
-    public String getEnvironmentId() {
-        return environmentId;
-    }
-
-    public String getDomainId() {
-        return domainId;
-    }
 
     public static GraviteeContext defaultContext(String domain) {
      return new GraviteeContext("DEFAULT", "DEFAULT", domain);

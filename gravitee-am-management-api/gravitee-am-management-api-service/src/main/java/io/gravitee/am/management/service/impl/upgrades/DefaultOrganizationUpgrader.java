@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.impl.upgrades.helpers.MembershipHelper;
 import io.gravitee.am.model.Domain;
@@ -154,7 +155,7 @@ public class DefaultOrganizationUpgrader implements Upgrader {
             } while (userPage.getData().size() == PAGE_SIZE);
 
             // then delete the domain
-            domainService.delete(ADMIN_DOMAIN).blockingAwait();
+            domainService.delete(GraviteeContext.defaultContext(ADMIN_DOMAIN), ADMIN_DOMAIN, null).blockingAwait();
         } else if (useDefaultAdmin) {
             // Need to create an inline provider and an admin user for this newly created default organization.
             IdentityProvider inlineProvider = createInlineProvider();

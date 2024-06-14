@@ -26,6 +26,7 @@ import { OrganizationService } from '../../../services/organization.service';
 import { UserService } from '../../../services/user.service';
 import { AuthService } from '../../../services/auth.service';
 import { availableTimeRanges, defaultTimeRangeId } from '../../../utils/time-range-utils';
+import { EnvironmentService } from '../../../services/environment.service';
 
 @Component({
   selector: 'app-audits',
@@ -61,6 +62,7 @@ export class AuditsComponent implements OnInit {
     private router: Router,
     private auditService: AuditService,
     private organizationService: OrganizationService,
+    private environmentService: EnvironmentService,
     private userService: UserService,
     private authService: AuthService,
   ) {
@@ -138,6 +140,12 @@ export class AuditsComponent implements OnInit {
 
   private buildNotOrganizationLink(row) {
     const routerLink = [];
+    if (this.isDomainAuditOnOrganizationLevel(row)) {
+      // For now, we do not provide a link to the domain when it comes from the organization audits
+      // as for doing so we need the env and the domain HRID. To get these information we have to manage
+      // backend requests based on the env & domain internal ids.
+      return routerLink;
+    }
     routerLink.push('/environments');
     routerLink.push(this.route.snapshot.paramMap.get('envHrid'));
     routerLink.push('domains');
@@ -147,6 +155,10 @@ export class AuditsComponent implements OnInit {
       routerLink.push('settings');
     }
     return routerLink;
+  }
+
+  isDomainAuditOnOrganizationLevel(row): boolean {
+    return row.referenceType === 'organization' && row.target.referenceType === 'environment' && row.target.type === 'DOMAIN';
   }
 
   private buildNotDomainLink(row) {

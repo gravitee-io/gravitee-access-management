@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.AuthenticationDeviceNotifier;
@@ -85,11 +87,14 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
+import static io.gravitee.am.model.ReferenceType.ORGANIZATION;
 import static io.reactivex.rxjava3.core.Completable.complete;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyString;
@@ -126,6 +131,7 @@ public class DomainServiceTest {
     private static final String ALERT_TRIGGER_ID = "alertTrigger#1";
     private static final String ALERT_NOTIFIER_ID = "alertNotifier#1";
     private static final String AUTH_DEVICE_ID = "authdevice-Notifier#1";
+    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @InjectMocks
     private DomainService domainService = new DomainServiceImpl("http://localhost:8092");
@@ -377,6 +383,10 @@ public class DomainServiceTest {
         verify(certificateService).create(eq(domain.getId()));
         verify(eventService).create(any());
         verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
+        verify(auditService).report(argThat(builder -> {
+            var audit = builder.build(OBJECT_MAPPER);
+            return audit.getReferenceType().equals(ORGANIZATION) && audit.getReferenceId().equals(ORGANIZATION_ID);
+        }));
     }
 
     @Test
@@ -431,7 +441,7 @@ public class DomainServiceTest {
         PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.empty());
 
-        TestObserver testObserver = domainService.patch("my-domain", patchDomain).test();
+        TestObserver testObserver = domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null).test();
         testObserver.assertError(DomainNotFoundException.class);
         testObserver.assertNotComplete();
 
@@ -443,14 +453,15 @@ public class DomainServiceTest {
     public void shouldPatch() {
         PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
         Domain domain = new Domain();
-        domain.setId("my-domain");
-        domain.setHrid("my-domain");
+        final var DOMAIN_ID = "my-domain";
+        domain.setId(DOMAIN_ID);
+        domain.setHrid(DOMAIN_ID);
         domain.setReferenceType(ReferenceType.ENVIRONMENT);
         domain.setReferenceId(ENVIRONMENT_ID);
-        domain.setName("my-domain");
+        domain.setName(DOMAIN_ID);
         domain.setPath("/test");
         when(patchDomain.patch(any())).thenReturn(domain);
-        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, domain.getHrid())).thenReturn(Maybe.just(domain));
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainRepository.findAll()).thenReturn(Flowable.empty());
@@ -460,7 +471,7 @@ public class DomainServiceTest {
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = domainService.patch("my-domain", patchDomain).test();
+        TestObserver testObserver = domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID), DOMAIN_ID, patchDomain, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -469,6 +480,107 @@ public class DomainServiceTest {
         verify(domainRepository, times(1)).findById(anyString());
         verify(domainRepository, times(1)).update(any(Domain.class));
         verify(eventService, times(1)).create(any());
+        verify(auditService).report(argThat(builder -> {
+            var audit = builder.build(OBJECT_MAPPER);
+            return audit.getReferenceType().equals(DOMAIN) && audit.getReferenceId().equals(DOMAIN_ID);
+        }));
+        verify(auditService, never()).report(argThat(builder -> {
+            var audit = builder.build(OBJECT_MAPPER);
+            return audit.getReferenceType().equals(ORGANIZATION);
+        }));
+    }
+
+    @Test
+    public void shouldPatch_NameUpdated() {
+        PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+
+        Domain domain = new Domain();
+        final var DOMAIN_ID = "my-domain";
+        domain.setId(DOMAIN_ID);
+        domain.setHrid(DOMAIN_ID);
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName(DOMAIN_ID);
+        domain.setPath("/test");
+
+        Domain updatedDomain = new Domain(domain);
+        updatedDomain.setName(UUID.randomUUID().toString());
+
+        when(patchDomain.patch(any())).thenReturn(updatedDomain);
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
+        when(domainRepository.findByHrid(any(), anyString(), anyString())).thenReturn(Maybe.just(domain));
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainRepository.findAll()).thenReturn(Flowable.empty());
+        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(updatedDomain));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
+        doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+        doReturn(true).when(accountSettingsValidator).validate(any());
+
+        TestObserver testObserver = domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID), DOMAIN_ID, patchDomain, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(domainRepository, times(1)).findById(anyString());
+        verify(domainRepository, times(1)).update(any(Domain.class));
+        verify(eventService, times(1)).create(any());
+        verify(auditService).report(argThat(builder -> {
+            var audit = builder.build(OBJECT_MAPPER);
+            return audit.getReferenceType().equals(DOMAIN) && audit.getReferenceId().equals(DOMAIN_ID);
+        }));
+        verify(auditService).report(argThat(builder -> {
+            var audit = builder.build(OBJECT_MAPPER);
+            return audit.getReferenceType().equals(ORGANIZATION) && audit.getReferenceId().equals(ORGANIZATION_ID);
+        }));
+    }
+
+    @Test
+    public void shouldPatch_EnabledChange() {
+        PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+
+        Domain domain = new Domain();
+        final var DOMAIN_ID = "my-domain";
+        domain.setId(DOMAIN_ID);
+        domain.setHrid(DOMAIN_ID);
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName(DOMAIN_ID);
+        domain.setPath("/test");
+        domain.setEnabled(true);
+
+        Domain updatedDomain = new Domain(domain);
+        updatedDomain.setEnabled(false);
+
+        when(patchDomain.patch(any())).thenReturn(updatedDomain);
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
+        when(domainRepository.findByHrid(any(), anyString(), anyString())).thenReturn(Maybe.just(domain));
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainRepository.findAll()).thenReturn(Flowable.empty());
+        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(updatedDomain));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
+        doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+        doReturn(true).when(accountSettingsValidator).validate(any());
+
+        TestObserver testObserver = domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID), DOMAIN_ID, patchDomain, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(domainRepository, times(1)).findById(anyString());
+        verify(domainRepository, times(1)).update(any(Domain.class));
+        verify(eventService, times(1)).create(any());
+        verify(auditService).report(argThat(builder -> {
+            var audit = builder.build(OBJECT_MAPPER);
+            return audit.getReferenceType().equals(DOMAIN) && audit.getReferenceId().equals(DOMAIN_ID);
+        }));
+        verify(auditService).report(argThat(builder -> {
+            var audit = builder.build(OBJECT_MAPPER);
+            return audit.getReferenceType().equals(ORGANIZATION) && audit.getReferenceId().equals(ORGANIZATION_ID);
+        }));
     }
 
     @Test
@@ -495,7 +607,7 @@ public class DomainServiceTest {
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = domainService.patch("my-domain", patchDomain).test();
+        TestObserver testObserver = domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -533,7 +645,7 @@ public class DomainServiceTest {
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = domainService.patch("my-domain", patchDomain).test();
+        TestObserver testObserver = domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -564,7 +676,7 @@ public class DomainServiceTest {
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
         doReturn(false).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = domainService.patch("my-domain", patchDomain).test();
+        TestObserver testObserver = domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
@@ -600,7 +712,7 @@ public class DomainServiceTest {
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, domain.getHrid())).thenReturn(Maybe.just(otherDomain));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = domainService.patch("my-domain", patchDomain).test();
+        TestObserver testObserver = domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null).test();
         testObserver.assertError(DomainAlreadyExistsException.class);
         testObserver.assertNotComplete();
 
@@ -614,7 +726,7 @@ public class DomainServiceTest {
         PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.error(TechnicalException::new));
 
-        TestObserver testObserver = domainService.patch("my-domain", patchDomain).test();
+        TestObserver testObserver = domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null).test();
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
 
@@ -706,7 +818,8 @@ public class DomainServiceTest {
         when(verifyAttemptService.deleteByDomain(any(), any())).thenReturn(complete());
         when(passwordPolicyService.deleteByReference(any(), any())).thenReturn(complete());
 
-        var testObserver = domainService.delete(DOMAIN_ID).test();
+        final var graviteeContext = GraviteeContext.defaultContext(DOMAIN_ID);
+        final var testObserver = domainService.delete(graviteeContext, DOMAIN_ID, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoErrors();
@@ -728,6 +841,10 @@ public class DomainServiceTest {
         verify(membershipService, times(1)).delete(MEMBERSHIP_ID);
         verify(factorService, times(1)).delete(DOMAIN_ID, FACTOR_ID);
         verify(eventService, times(1)).create(any());
+        verify(auditService).report(argThat(builder -> {
+            var audit = builder.build(OBJECT_MAPPER);
+            return audit.getReferenceType().equals(ORGANIZATION) && audit.getReferenceId().equals(graviteeContext.getOrganizationId());
+        }));
     }
 
     @Test
@@ -761,7 +878,7 @@ public class DomainServiceTest {
         when(verifyAttemptService.deleteByDomain(any(), any())).thenReturn(complete());
         when(passwordPolicyService.deleteByReference(any(), any())).thenReturn(complete());
 
-        var testObserver = domainService.delete(DOMAIN_ID).test();
+        var testObserver = domainService.delete(GraviteeContext.defaultContext(DOMAIN_ID), DOMAIN_ID, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -788,14 +905,14 @@ public class DomainServiceTest {
     public void shouldNotDeleteBecauseDoesntExist() {
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.empty());
 
-        domainService.delete(DOMAIN_ID).test().assertError(DomainNotFoundException.class).assertNotComplete();
+        domainService.delete(GraviteeContext.defaultContext(DOMAIN_ID), DOMAIN_ID, null).test().assertError(DomainNotFoundException.class).assertNotComplete();
     }
 
     @Test
     public void shouldDelete_technicalException() {
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.error(TechnicalException::new));
 
-        domainService.delete(DOMAIN_ID).test().assertError(TechnicalManagementException.class).assertNotComplete();
+        domainService.delete(GraviteeContext.defaultContext(DOMAIN_ID), DOMAIN_ID, null).test().assertError(TechnicalManagementException.class).assertNotComplete();
     }
 
     @Test
@@ -803,7 +920,7 @@ public class DomainServiceTest {
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
         when(applicationService.findByDomain(DOMAIN_ID)).thenReturn(Single.error(TechnicalException::new));
 
-        domainService.delete(DOMAIN_ID).test().assertError(TechnicalManagementException.class).assertNotComplete();
+        domainService.delete(GraviteeContext.defaultContext(DOMAIN_ID), DOMAIN_ID, null).test().assertError(TechnicalManagementException.class).assertNotComplete();
     }
 
     @Test
@@ -901,7 +1018,7 @@ public class DomainServiceTest {
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        domainService.patch("my-domain", patchDomain).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
+        domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
 
         verify(domainRepository, times(1)).findById(anyString());
         verify(domainRepository, times(1)).update(any(Domain.class));
@@ -932,7 +1049,7 @@ public class DomainServiceTest {
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        domainService.patch("my-domain", patchDomain).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
+        domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
 
         verify(domainRepository, times(1)).findById(anyString());
         verify(domainRepository, times(1)).update(any(Domain.class));
@@ -961,7 +1078,7 @@ public class DomainServiceTest {
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        domainService.patch("my-domain", patchDomain).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
+        domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
 
         verify(domainRepository, times(1)).findById(anyString());
         verify(domainRepository, times(1)).update(any(Domain.class));
@@ -985,7 +1102,7 @@ public class DomainServiceTest {
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        domainService.patch("my-domain", patchDomain).test().awaitDone(10, TimeUnit.SECONDS)
+        domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null).test().awaitDone(10, TimeUnit.SECONDS)
                 .assertFailure(InvalidDomainException.class);
 
         verify(domainRepository, times(1)).findById(anyString());
@@ -1009,7 +1126,7 @@ public class DomainServiceTest {
         when(patchDomain.patch(any())).thenReturn(domain);
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
 
-        domainService.patch("my-domain", patchDomain).test().awaitDone(10, TimeUnit.SECONDS)
+        domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null).test().awaitDone(10, TimeUnit.SECONDS)
                 .assertFailure(InvalidDomainException.class);
 
         verify(domainRepository, times(1)).findById(anyString());

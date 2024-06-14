@@ -169,12 +169,20 @@
       </ngx-datatable-column>
       <ngx-datatable-column [sortable]="true" name="Target" [flexGrow]="2" prop="target.sortDisplayName">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <a *ngIf="row.target" [routerLink]="getTargetUrl(row)" [queryParams]="getTargetParams(row)"
-            >{{ row.target?.displayName
-            }}<span *ngIf="row.target.alternativeId">
-              | <small>{{ row.target?.alternativeId }}</small></span
-            ></a
-          >
+          <div *ngIf="row.target">
+            <a *ngIf="!isDomainAuditOnOrganizationLevel(row)" [routerLink]="getTargetUrl(row)" [queryParams]="getTargetParams(row)"
+              >{{ row.target?.displayName
+              }}<span *ngIf="row.target.alternativeId">
+                | <small>{{ row.target?.alternativeId }}</small></span
+              ></a
+            >
+            <span *ngIf="isDomainAuditOnOrganizationLevel(row)">
+              {{ row.target?.displayName
+              }}<span *ngIf="row.target.alternativeId">
+                | <small>{{ row.target?.alternativeId }}</small></span
+              >
+            </span>
+          </div>
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column [sortable]="true" name="Status" [flexGrow]="1" prop="outcome.status">

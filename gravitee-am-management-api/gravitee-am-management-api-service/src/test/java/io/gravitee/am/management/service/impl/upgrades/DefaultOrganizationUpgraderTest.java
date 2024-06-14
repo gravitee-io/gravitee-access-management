@@ -276,7 +276,7 @@ public class DefaultOrganizationUpgraderTest {
         when(organizationService.createDefault()).thenReturn(Maybe.just(organization));
         when(organizationService.update(any(), any(), any())).thenReturn(Single.just(organization));
         when(domainService.findById("admin")).thenReturn(Maybe.just(new Domain()));
-        when(domainService.delete("admin")).thenReturn(Completable.complete());
+        when(domainService.delete(any(), eq("admin"), any())).thenReturn(Completable.complete());
 
         when(roleService.findDefaultRole(Organization.DEFAULT, DefaultRole.ORGANIZATION_OWNER, ReferenceType.ORGANIZATION))
                 .thenReturn(Maybe.just(adminRole)); // Role has been created.

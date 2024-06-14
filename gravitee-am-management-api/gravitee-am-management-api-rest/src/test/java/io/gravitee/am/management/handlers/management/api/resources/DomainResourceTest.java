@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
@@ -166,7 +167,7 @@ public class DomainResourceTest extends JerseySpringTest {
 
         doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
         doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.DOMAIN))).when(permissionService).findAllPermissions(any(User.class), any(ReferenceType.class), anyString());
-        doReturn(Single.just(mockDomain)).when(domainService).patch(eq(mockDomain.getId()), any(PatchDomain.class), any(User.class));
+        doReturn(Single.just(mockDomain)).when(domainService).patch(any(GraviteeContext.class), eq(mockDomain.getId()), any(PatchDomain.class), any(User.class));
 
         final Response response = put(target("domains").path(mockDomain.getId()), patchDomain);
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -207,7 +208,7 @@ public class DomainResourceTest extends JerseySpringTest {
 
         doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
         doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.DOMAIN))).when(permissionService).findAllPermissions(any(User.class), any(ReferenceType.class), anyString());
-        doReturn(Single.just(mockDomain)).when(domainService).patch(eq(mockDomain.getId()), any(PatchDomain.class), any(User.class));
+        doReturn(Single.just(mockDomain)).when(domainService).patch(any(GraviteeContext.class), eq(mockDomain.getId()), any(PatchDomain.class), any(User.class));
 
         final Response response = put(target("domains").path(mockDomain.getId()), patchDomain);
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -241,7 +242,7 @@ public class DomainResourceTest extends JerseySpringTest {
 
         doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
         doReturn(Single.just(Permission.of(Permission.DOMAIN, Acl.READ))).when(permissionService).findAllPermissions(any(User.class), any(ReferenceType.class), anyString()); // only domain read permission
-        doReturn(Single.just(mockDomain)).when(domainService).patch(eq(mockDomain.getId()), any(PatchDomain.class), any(User.class));
+        doReturn(Single.just(mockDomain)).when(domainService).patch(any(GraviteeContext.class), eq(mockDomain.getId()), any(PatchDomain.class), any(User.class));
 
         final Response response = put(target("domains").path(mockDomain.getId()), patchDomain);
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -271,7 +272,7 @@ public class DomainResourceTest extends JerseySpringTest {
         patchDomain.setDescription(Optional.of("New description"));
 
         doReturn(Single.just(false)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
-        doReturn(Single.just(new Domain())).when(domainService).patch(anyString(), any(PatchDomain.class), any(User.class));
+        doReturn(Single.just(new Domain())).when(domainService).patch(any(GraviteeContext.class), anyString(), any(PatchDomain.class), any(User.class));
 
         final Response response = put(target("domains").path(domainId), patchDomain);
         assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());

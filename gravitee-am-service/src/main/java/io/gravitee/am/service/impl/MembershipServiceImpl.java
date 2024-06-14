@@ -305,7 +305,7 @@ public class MembershipServiceImpl implements MembershipService {
                     return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to create membership %s", membership), ex));
                 })
                 .doOnSuccess(membership1 -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_CREATED).membership(membership1)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_CREATED).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_CREATED).throwable(throwable)));
     }
 
     private Member convert(io.gravitee.am.model.User user) {
