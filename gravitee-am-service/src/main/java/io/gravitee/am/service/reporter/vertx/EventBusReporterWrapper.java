@@ -34,6 +34,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
+import static io.gravitee.am.service.reporter.impl.AuditReporterVerticle.EVENT_BUS_ADDRESS;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -41,7 +43,6 @@ import java.util.Map;
 public class EventBusReporterWrapper implements Reporter, Handler<Message<Reportable>> {
 
     public static final Logger logger = LoggerFactory.getLogger(EventBusReporterWrapper.class);
-    public static final String EVENT_BUS_ADDRESS = "node:audits";
     private Vertx vertx;
     private ReferenceType referenceType;
     private String referenceId;
@@ -114,7 +115,7 @@ public class EventBusReporterWrapper implements Reporter, Handler<Message<Report
     }
 
     @Override
-    public Object start() throws Exception {
+    public Reporter start() throws Exception {
         // start the delegate reporter
         vertx.rxExecuteBlocking(event -> {
                     try {
@@ -132,11 +133,11 @@ public class EventBusReporterWrapper implements Reporter, Handler<Message<Report
     }
 
     @Override
-    public Object stop() throws Exception {
+    public Reporter stop() throws Exception {
         if (messageConsumer != null) {
             messageConsumer.unregister();
         }
-        return reporter.stop();
+        return (Reporter) reporter.stop();
     }
 
     public void unregister() {

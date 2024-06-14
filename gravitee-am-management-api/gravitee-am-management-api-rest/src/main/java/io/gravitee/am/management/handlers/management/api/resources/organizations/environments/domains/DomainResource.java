@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
+import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
@@ -158,7 +159,7 @@ public class DomainResource extends AbstractDomainResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN, Acl.DELETE)
-                .andThen(domainService.delete(domain, authenticatedUser))
+                .andThen(domainService.delete(new GraviteeContext(organizationId, environmentId, domain), domain, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
@@ -322,7 +323,7 @@ public class DomainResource extends AbstractDomainResource {
         } else {
             Completable.merge(requiredPermissions.stream()
                     .map(permission -> checkAnyPermission(organizationId, environmentId, domainId, permission, Acl.UPDATE)).collect(Collectors.toList()))
-                    .andThen(domainService.patch(domainId, patchDomain, authenticatedUser)
+                    .andThen(domainService.patch(new GraviteeContext(organizationId, environmentId, domainId), domainId, patchDomain, authenticatedUser)
                             .flatMap(domain -> findAllPermissions(authenticatedUser, organizationId, environmentId, domainId)
                                     .map(userPermissions -> filterDomainInfos(domain, userPermissions))))
                     .subscribe(response::resume, response::resume);

@@ -146,9 +146,9 @@ public class TagServiceImpl implements TagService {
     }
 
     @Override
-    public Completable delete(String tagId, String orgaizationId, User principal) {
+    public Completable delete(String tagId, String organizationId, User principal) {
         LOGGER.debug("Delete tag {}", tagId);
-        return tagRepository.findById(tagId, orgaizationId)
+        return tagRepository.findById(tagId, organizationId)
                 .switchIfEmpty(Maybe.error(new TagNotFoundException(tagId)))
                 .flatMapCompletable(tag -> tagRepository.delete(tagId)
                         .andThen(domainService.listAll()

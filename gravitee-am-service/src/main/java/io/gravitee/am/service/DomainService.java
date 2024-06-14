@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.repository.management.api.search.DomainCriteria;
@@ -61,20 +62,12 @@ public interface DomainService {
 
     Single<Domain> update(String domainId, Domain domain);
 
-    Single<Domain> patch(String domainId, PatchDomain domain, User principal);
+    Single<Domain> patch(GraviteeContext graviteeContext, String domainId, PatchDomain domain, User principal);
 
-    Completable delete(String domain, User principal);
+    Completable delete(GraviteeContext graviteeContext, String domain, User principal);
 
     default Single<Domain> create(String organizationId, String environmentId, NewDomain domain) {
         return create(organizationId, environmentId, domain, null);
-    }
-
-    default Single<Domain> patch(String domainId, PatchDomain domain) {
-        return patch(domainId, domain, null);
-    }
-
-    default Completable delete(String domain) {
-        return delete(domain, null);
     }
 
     String buildUrl(Domain domain, String path, MultiMap queryParams);

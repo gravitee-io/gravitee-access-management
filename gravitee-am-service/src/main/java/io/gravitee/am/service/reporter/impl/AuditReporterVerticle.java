@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AuditReporterVerticle extends AbstractVerticle implements AuditReporterService {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(AuditReporterVerticle.class);
-    private static final String EVENT_BUS_ADDRESS = "node:audits";
+    public static final String EVENT_BUS_ADDRESS = "node:audits";
     private MessageProducer<Reportable> producer;
 
     private static AtomicInteger activeReporter = new AtomicInteger(0);

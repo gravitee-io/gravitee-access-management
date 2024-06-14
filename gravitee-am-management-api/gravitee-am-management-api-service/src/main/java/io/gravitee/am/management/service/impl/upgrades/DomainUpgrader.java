@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.model.PatchDomain;
@@ -72,7 +73,7 @@ public class DomainUpgrader extends AsyncUpgrader {
         PatchDomain patchDomain = new PatchDomain();
         patchDomain.setOidc(Optional.of(oidcPatch));
 
-        return domainService.patch(domain.getId(),patchDomain);
+        return domainService.patch(GraviteeContext.defaultContext(domain.getId()), domain.getId(), patchDomain, null);
     }
 
     @Override

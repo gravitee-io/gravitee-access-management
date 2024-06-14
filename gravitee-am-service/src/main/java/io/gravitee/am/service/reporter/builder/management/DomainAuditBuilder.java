@@ -36,7 +36,7 @@ public class DomainAuditBuilder extends ManagementAuditBuilder<DomainAuditBuilde
             if (EventType.DOMAIN_CREATED.equals(getType()) || EventType.DOMAIN_UPDATED.equals(getType())) {
                 setNewValue(domain);
             }
-            setTarget(domain.getId(), EntityType.DOMAIN, null, domain.getName(), ReferenceType.DOMAIN, domain.getId());
+            setTarget(domain.getId(), EntityType.DOMAIN, null, domain.getName(), domain.getReferenceType(), domain.getReferenceId());
         }
         return this;
     }

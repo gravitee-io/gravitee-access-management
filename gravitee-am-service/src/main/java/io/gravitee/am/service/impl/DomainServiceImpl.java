@@ -20,6 +20,7 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestUriException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.common.utils.PathUtils;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.web.UriBuilder;
@@ -106,6 +107,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -113,6 +115,7 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.web.UriBuilder.isHttp;
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
+import static io.gravitee.am.model.ReferenceType.ORGANIZATION;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 
@@ -388,8 +391,18 @@ public class DomainServiceImpl implements DomainService {
                     LOGGER.error("An error occurred while trying to create a domain", ex);
                     return Single.error(new TechnicalManagementException("An error occurred while trying to create a domain", ex));
                 })
-                .doOnSuccess(domain -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_CREATED).domain(domain).referenceType(ReferenceType.ENVIRONMENT).referenceId(environmentId)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_CREATED).referenceType(ReferenceType.ENVIRONMENT).referenceId(environmentId).throwable(throwable)));
+                .doOnSuccess(domain -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.DOMAIN_CREATED)
+                        .domain(domain)
+                        .referenceType(ReferenceType.ORGANIZATION)
+                        .referenceId(organizationId)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.DOMAIN_CREATED)
+                        .referenceType(ReferenceType.ORGANIZATION)
+                        .referenceId(organizationId)
+                        .throwable(throwable)));
     }
 
     @Override
@@ -418,7 +431,7 @@ public class DomainServiceImpl implements DomainService {
     }
 
     @Override
-    public Single<Domain> patch(String domainId, PatchDomain patchDomain, User principal) {
+    public Single<Domain> patch(GraviteeContext graviteeContext, String domainId, PatchDomain patchDomain, User principal) {
         LOGGER.debug("Patching an existing domain ({}) with : {}", domainId, patchDomain);
         return domainRepository.findById(domainId)
                 .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)))
@@ -437,8 +450,30 @@ public class DomainServiceImpl implements DomainService {
                                 Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), DOMAIN, domain1.getId(), Action.UPDATE));
                                 return eventService.create(event).flatMap(__ -> Single.just(domain1));
                             })
-                            .doOnSuccess(domain1 -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).oldValue(oldDomain).domain(domain1)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).throwable(throwable)));
+                            .doOnSuccess(domain1 -> {
+                                auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).oldValue(oldDomain).domain(domain1));
+                                if (needOrganizationAudit(oldDomain, toPatch)) {
+                                    auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
+                                            .principal(principal)
+                                            .type(EventType.DOMAIN_UPDATED)
+                                            .oldValue(oldDomain)
+                                            .domain(domain1)
+                                            .referenceType(ORGANIZATION)
+                                            .referenceId(graviteeContext.getOrganizationId()));
+                                }
+                            })
+                            .doOnError(throwable -> {
+                                auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).domain(oldDomain).type(EventType.DOMAIN_UPDATED).throwable(throwable));
+                                if (needOrganizationAudit(oldDomain, toPatch)) {
+                                    auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
+                                            .principal(principal)
+                                            .domain(oldDomain)
+                                            .type(EventType.DOMAIN_UPDATED)
+                                            .throwable(throwable)
+                                            .referenceType(ORGANIZATION)
+                                            .referenceId(graviteeContext.getOrganizationId()));
+                                }
+                            });
 
                 })
                 .onErrorResumeNext(ex -> {
@@ -451,8 +486,12 @@ public class DomainServiceImpl implements DomainService {
                 });
     }
 
+    private boolean needOrganizationAudit(Domain oldDomain, Domain toPatch) {
+        return !Objects.equals(oldDomain.getName(), toPatch.getName()) || oldDomain.isEnabled() != toPatch.isEnabled();
+    }
+
     @Override
-    public Completable delete(String domainId, User principal) {
+    public Completable delete(GraviteeContext graviteeContext, String domainId, User principal) {
         LOGGER.debug("Delete security domain {}", domainId);
         return domainRepository.findById(domainId)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
@@ -568,8 +607,18 @@ public class DomainServiceImpl implements DomainService {
                             .andThen(verifyAttemptService.deleteByDomain(domain, DOMAIN))
                             .andThen(domainRepository.delete(domainId))
                             .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, DOMAIN, domainId, Action.DELETE)))))
-                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_DELETED).domain(domain)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_DELETED).throwable(throwable)));
+                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
+                                    .principal(principal)
+                                    .type(EventType.DOMAIN_DELETED)
+                                    .domain(domain)
+                                    .referenceType(ReferenceType.ORGANIZATION)
+                                    .referenceId(graviteeContext.getOrganizationId())))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
+                                    .principal(principal)
+                                    .type(EventType.DOMAIN_DELETED)
+                                    .throwable(throwable)
+                                    .referenceType(ReferenceType.ORGANIZATION)
+                                    .referenceId(graviteeContext.getOrganizationId())));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
