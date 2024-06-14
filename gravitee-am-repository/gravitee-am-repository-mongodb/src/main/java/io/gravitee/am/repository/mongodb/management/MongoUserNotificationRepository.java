@@ -32,6 +32,7 @@ import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.Map;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -57,7 +58,7 @@ public class MongoUserNotificationRepository extends AbstractManagementMongoRepo
     protected void init() {
         this.mongoCollection = mongoOperations.getCollection(COLLECTION_NAME, UserNotificationMongo.class);
         super.init(mongoCollection);
-        createIndex(this.mongoCollection, new Document(FIELD_AUDIENCE, 1).append(FIELD_TYPE, 1).append(FIELD_STATUS, 1), new IndexOptions().name("a1t1s1"));
+        createIndex(this.mongoCollection, Map.of(new Document(FIELD_AUDIENCE, 1).append(FIELD_TYPE, 1).append(FIELD_STATUS, 1), new IndexOptions().name("a1t1s1")));
     }
 
     @Override

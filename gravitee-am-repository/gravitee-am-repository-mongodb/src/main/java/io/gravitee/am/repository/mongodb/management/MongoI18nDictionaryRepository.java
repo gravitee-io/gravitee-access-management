@@ -30,6 +30,7 @@ import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.Objects;
 
 import static com.mongodb.client.model.Filters.and;
@@ -47,9 +48,13 @@ public class MongoI18nDictionaryRepository extends AbstractManagementMongoReposi
     public void init() {
         mongoCollection = mongoOperations.getCollection("i18n_dictionaries", I18nDictionaryMongo.class);
         super.init(mongoCollection);
-        super.createIndex(mongoCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
-        super.createIndex(mongoCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1)
+
+        final var indexes = new HashMap<Document, IndexOptions>();
+        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
+        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1)
                                                                                 .append(FIELD_NAME, 1), new IndexOptions().name("rt1ri1n1"));
+
+        super.createIndex(mongoCollection, indexes);
     }
 
     @Override

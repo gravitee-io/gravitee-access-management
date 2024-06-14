@@ -61,7 +61,7 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
     public void init() {
         eventsCollection = mongoOperations.getCollection("events", EventMongo.class);
         super.init(eventsCollection);
-        super.createIndex(eventsCollection, new Document(FIELD_UPDATED_AT, 1), new IndexOptions().name("u1"));
+        super.createIndex(eventsCollection, Map.of(new Document(FIELD_UPDATED_AT, 1), new IndexOptions().name("u1")));
     }
 
     @Override

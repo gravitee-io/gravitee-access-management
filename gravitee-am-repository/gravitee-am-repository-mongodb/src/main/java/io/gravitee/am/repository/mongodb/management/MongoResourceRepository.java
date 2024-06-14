@@ -32,6 +32,7 @@ import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -56,9 +57,13 @@ public class MongoResourceRepository extends AbstractManagementMongoRepository i
     public void init() {
         resourceCollection = mongoOperations.getCollection(COLLECTION_NAME, ResourceMongo.class);
         super.init(resourceCollection);
-        super.createIndex(resourceCollection, new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1"));
-        super.createIndex(resourceCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1), new IndexOptions().name("d1c1"));
-        super.createIndex(resourceCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1), new IndexOptions().name("d1c1u1"));
+
+        final var indexes = new HashMap<Document, IndexOptions>();
+        indexes.put(new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1), new IndexOptions().name("d1c1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1), new IndexOptions().name("d1c1u1"));
+
+        super.createIndex(resourceCollection, indexes);
     }
 
     @Override

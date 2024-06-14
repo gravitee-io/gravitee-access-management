@@ -30,6 +30,8 @@ import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
+
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 
@@ -46,8 +48,12 @@ public class MongoExtensionGrantRepository extends AbstractManagementMongoReposi
     public void init() {
         extensionGrantsCollection = mongoOperations.getCollection("extension_grants", ExtensionGrantMongo.class);
         super.init(extensionGrantsCollection);
-        super.createIndex(extensionGrantsCollection, new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1"));
-        super.createIndex(extensionGrantsCollection,new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1), new IndexOptions().name("d1n1"));
+
+        final var indexes = new HashMap<Document, IndexOptions>();
+        indexes.put(new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1), new IndexOptions().name("d1n1"));
+
+        super.createIndex(extensionGrantsCollection,indexes);
     }
 
     @Override

@@ -30,6 +30,8 @@ import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 
@@ -46,7 +48,7 @@ public class MongoTagRepository extends AbstractManagementMongoRepository implem
     public void init() {
         tagsCollection = mongoOperations.getCollection("tags", TagMongo.class);
         super.init(tagsCollection);
-        super.createIndex(tagsCollection, new Document(FIELD_ORGANIZATION_ID, 1), new IndexOptions().name("o1"));
+        super.createIndex(tagsCollection, Map.of(new Document(FIELD_ORGANIZATION_ID, 1), new IndexOptions().name("o1")));
     }
 
 

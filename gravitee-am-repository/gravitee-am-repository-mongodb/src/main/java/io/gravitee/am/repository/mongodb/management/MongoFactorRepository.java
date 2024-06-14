@@ -30,6 +30,8 @@ import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
+
 import static com.mongodb.client.model.Filters.eq;
 
 /**
@@ -46,8 +48,12 @@ public class MongoFactorRepository extends AbstractManagementMongoRepository imp
     public void init() {
         factorsCollection = mongoOperations.getCollection("factors", FactorMongo.class);
         super.init(factorsCollection);
-        super.createIndex(factorsCollection,new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1"));
-        super.createIndex(factorsCollection,new Document(FIELD_DOMAIN, 1).append(FIELD_FACTOR_TYPE, 1), new IndexOptions().name("d1f1"));
+
+        final var indexes = new HashMap<Document, IndexOptions>();
+        indexes.put(new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_FACTOR_TYPE, 1), new IndexOptions().name("d1f1"));
+
+        super.createIndex(factorsCollection, indexes);
     }
 
     @Override
