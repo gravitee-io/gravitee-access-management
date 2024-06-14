@@ -315,51 +315,6 @@ data:
       url: https://{{index .Values.gateway.ingress.hosts 0 }}{{ .Values.gateway.ingress.path }}
     {{- end }}
 
-   {{- if .Values.userManagement }}
-    # User management configuration
-    user:
-    {{- if .Values.userManagement.email }}
-      email:
-{{ toYaml .Values.userManagement.email | indent 8 }}
-    {{- end }}
-
-    {{- if .Values.userManagement.password }}
-      password:
-{{ toYaml .Values.userManagement.password | indent 8 }}
-    {{- end }}
-
-    {{- if .Values.userManagement.name }}
-      name:
-{{ toYaml .Values.userManagement.name | indent 8 }}
-    {{- end }}
-
-    {{- if .Values.userManagement.username }}
-      username:
-{{ toYaml .Values.userManagement.username | indent 8 }}
-    {{- end }}
-
-    {{- if .Values.userManagement.registration }}
-      registration:
-{{ toYaml .Values.userManagement.registration | indent 8 }}
-    {{- end }}
-      
-    {{- if .Values.userManagement.resetPassword }}
-      resetPassword:
-{{ toYaml .Values.userManagement.resetPassword | indent 8 }}
-    {{- end }}
-
-    {{- if .Values.userManagement.blockedAccount }}      
-      blockedAccount:
-{{ toYaml .Values.userManagement.blockedAccount | indent 8 }}
-    {{- end }}
-
-    {{- if .Values.userManagement.mfaChallenge }}
-      mfaChallenge:
-{{ toYaml .Values.userManagement.mfaChallenge | indent 8 }}
-    {{- end }}
-
-    {{- end }}
-
     {{- if or .Values.gateway.handlers }}
     handlers:
 {{ toYaml .Values.gateway.handlers | indent 6 }}
