@@ -29,7 +29,11 @@ import io.reactivex.rxjava3.core.Single;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
+<<<<<<< HEAD
 import jakarta.annotation.PostConstruct;
+=======
+import java.util.Map;
+>>>>>>> 5b1bc9bc07 (fix: avoid infinite blocking call durint Indexes creation)
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -47,7 +51,7 @@ public class MongoThemeRepository extends AbstractManagementMongoRepository impl
     public void init() {
         themesCollection = mongoOperations.getCollection("themes", ThemeMongo.class);
         super.init(themesCollection);
-        super.createIndex(themesCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
+        super.createIndex(themesCollection, Map.of(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1")));
     }
 
     @Override

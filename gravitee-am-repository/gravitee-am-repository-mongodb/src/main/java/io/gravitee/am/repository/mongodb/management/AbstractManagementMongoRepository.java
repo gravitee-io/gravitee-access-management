@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -57,8 +58,8 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
     @Value("${management.mongodb.cursorMaxTime:60000}")
     private int cursorMaxTimeInMs;
 
-    protected void createIndex(MongoCollection<?> collection, Document document, IndexOptions indexOptions) {
-        super.createIndex(collection, document, indexOptions.background(true), ensureIndexOnStart);
+    protected void createIndex(MongoCollection<?> collection, Map<Document, IndexOptions> indexes) {
+        super.createIndex(collection, indexes, ensureIndexOnStart);
     }
 
     protected final <TResult> AggregatePublisher<TResult> withMaxTime(AggregatePublisher<TResult> query) {

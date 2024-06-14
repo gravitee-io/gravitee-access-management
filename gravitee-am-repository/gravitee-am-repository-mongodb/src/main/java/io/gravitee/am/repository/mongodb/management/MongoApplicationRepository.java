@@ -40,8 +40,20 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
+<<<<<<< HEAD
 import jakarta.annotation.PostConstruct;
 import java.util.*;
+=======
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.UUID;
+>>>>>>> 5b1bc9bc07 (fix: avoid infinite blocking call durint Indexes creation)
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -72,14 +84,18 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     public void init() {
         applicationsCollection = mongoOperations.getCollection("applications", ApplicationMongo.class);
         super.init(applicationsCollection);
-        super.createIndex(applicationsCollection, new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1"));
-        super.createIndex(applicationsCollection, new Document(FIELD_UPDATED_AT, -1), new IndexOptions().name("u_1"));
-        super.createIndex(applicationsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1), new IndexOptions().name("d1soc1"));
-        super.createIndex(applicationsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1), new IndexOptions().name("d1n1"));
-        super.createIndex(applicationsCollection, new Document(FIELD_IDENTITIES, 1), new IndexOptions().name("i1"));
-        super.createIndex(applicationsCollection, new Document(FIELD_APPLICATION_IDENTITY_PROVIDERS + "." + FIELD_IDENTITY, 1), new IndexOptions().name("aidp1"));
-        super.createIndex(applicationsCollection, new Document(FIELD_CERTIFICATE, 1), new IndexOptions().name("c1"));
-        super.createIndex(applicationsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_GRANT_TYPES, 1), new IndexOptions().name("d1sog1"));
+
+        final var indexes = new HashMap<Document, IndexOptions>();
+        indexes.put( new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1"));
+        indexes.put( new Document(FIELD_UPDATED_AT, -1), new IndexOptions().name("u_1"));
+        indexes.put( new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1), new IndexOptions().name("d1soc1"));
+        indexes.put( new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1), new IndexOptions().name("d1n1"));
+        indexes.put( new Document(FIELD_IDENTITIES, 1), new IndexOptions().name("i1"));
+        indexes.put( new Document(FIELD_APPLICATION_IDENTITY_PROVIDERS + "." + FIELD_IDENTITY, 1), new IndexOptions().name("aidp1"));
+        indexes.put( new Document(FIELD_CERTIFICATE, 1), new IndexOptions().name("c1"));
+        indexes.put( new Document(FIELD_DOMAIN, 1).append(FIELD_GRANT_TYPES, 1), new IndexOptions().name("d1sog1"));
+
+        super.createIndex(applicationsCollection, indexes);
     }
 
     @Override
