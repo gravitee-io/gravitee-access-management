@@ -24,6 +24,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 
+import java.util.Map;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -37,7 +39,7 @@ public abstract class AbstractOAuth2MongoRepository extends AbstractMongoReposit
     @Value("${oauth2.mongodb.ensureIndexOnStart:true}")
     private boolean ensureIndexOnStart;
 
-    protected void createIndex(MongoCollection<?> collection, Document document, IndexOptions indexOptions) {
-        super.createIndex(collection, document, indexOptions.background(true), ensureIndexOnStart);
+    protected void createIndex(MongoCollection<?> collection, Map<Document, IndexOptions> indexes) {
+        super.createIndex(collection, indexes, ensureIndexOnStart);
     }
 }

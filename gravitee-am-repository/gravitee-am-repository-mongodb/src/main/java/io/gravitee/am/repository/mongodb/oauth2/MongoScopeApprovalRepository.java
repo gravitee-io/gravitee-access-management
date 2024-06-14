@@ -27,6 +27,7 @@ import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -51,13 +52,16 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
     public void init() {
         scopeApprovalsCollection = mongoOperations.getCollection("scope_approvals", ScopeApprovalMongo.class);
         super.init(scopeApprovalsCollection);
-        super.createIndex(scopeApprovalsCollection, new Document(FIELD_TRANSACTION_ID, 1), new IndexOptions().name("t1"));
-        super.createIndex(scopeApprovalsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_USER_ID, 1), new IndexOptions().name("d1u1"));
-        super.createIndex(scopeApprovalsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1), new IndexOptions().name("d1c1u1"));
-        super.createIndex(scopeApprovalsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1).append(FIELD_SCOPE, 1), new IndexOptions().name("d1c1u1s1"));
 
+        final var indexes = new HashMap<Document, IndexOptions>();
+        indexes.put(new Document(FIELD_TRANSACTION_ID, 1), new IndexOptions().name("t1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_USER_ID, 1), new IndexOptions().name("d1u1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1), new IndexOptions().name("d1c1u1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1).append(FIELD_SCOPE, 1), new IndexOptions().name("d1c1u1s1"));
         // expire after index
-        super.createIndex(scopeApprovalsCollection, new Document(FIELD_EXPIRES_AT, 1),  new IndexOptions().name("e1").expireAfter(0l, TimeUnit.SECONDS));
+        indexes.put(new Document(FIELD_EXPIRES_AT, 1),  new IndexOptions().name("e1").expireAfter(0l, TimeUnit.SECONDS));
+
+        super.createIndex(scopeApprovalsCollection, indexes);
     }
 
     @Override

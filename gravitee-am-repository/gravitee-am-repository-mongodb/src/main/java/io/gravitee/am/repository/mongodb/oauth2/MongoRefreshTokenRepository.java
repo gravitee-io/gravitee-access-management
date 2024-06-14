@@ -30,7 +30,13 @@ import io.reactivex.rxjava3.core.Single;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
+<<<<<<< HEAD
 import jakarta.annotation.PostConstruct;
+=======
+import java.util.Date;
+import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
+>>>>>>> 5b1bc9bc07 (fix: avoid infinite blocking call durint Indexes creation)
 
 import java.util.Date;
 import java.util.List;
@@ -55,12 +61,13 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
     public void init() {
         refreshTokenCollection = mongoOperations.getCollection("refresh_tokens", RefreshTokenMongo.class);
         super.init(refreshTokenCollection);
-        super.createIndex(refreshTokenCollection, new Document(FIELD_TOKEN, 1), new IndexOptions().name("t1"));
-        super.createIndex(refreshTokenCollection, new Document(FIELD_SUBJECT, 1), new IndexOptions().name("s1"));
-        super.createIndex(refreshTokenCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_SUBJECT, 1), new IndexOptions().name("d1c1s1"));
-
+        final var indexes = new HashMap<Document, IndexOptions>();
+        indexes.put(new Document(FIELD_TOKEN, 1), new IndexOptions().name("t1"));
+        indexes.put(new Document(FIELD_SUBJECT, 1), new IndexOptions().name("s1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_SUBJECT, 1), new IndexOptions().name("d1c1s1"));
         // expire after index
-        super.createIndex(refreshTokenCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().name("e1").expireAfter(0L, TimeUnit.SECONDS));
+        indexes.put(new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().name("e1").expireAfter(0L, TimeUnit.SECONDS));
+        super.createIndex(refreshTokenCollection, indexes);
     }
 
     private Maybe<RefreshToken> findById(String id) {

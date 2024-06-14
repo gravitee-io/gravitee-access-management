@@ -25,7 +25,11 @@ import io.reactivex.rxjava3.core.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
+<<<<<<< HEAD
 import jakarta.annotation.PostConstruct;
+=======
+import java.util.Map;
+>>>>>>> 5b1bc9bc07 (fix: avoid infinite blocking call durint Indexes creation)
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -42,7 +46,7 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
     public void init() {
         reportersCollection = mongoOperations.getCollection("reporters", ReporterMongo.class);
         super.init(reportersCollection);
-        super.createIndex(reportersCollection, new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1"));
+        super.createIndex(reportersCollection, Map.of(new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1")));
     }
 
     @Override
