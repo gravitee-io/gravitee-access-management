@@ -29,9 +29,17 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
+<<<<<<< HEAD
 import jakarta.annotation.PostConstruct;
 
 import static com.mongodb.client.model.Filters.*;
+=======
+import java.util.HashMap;
+
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.in;
+>>>>>>> 5b1bc9bc07 (fix: avoid infinite blocking call durint Indexes creation)
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -49,9 +57,13 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
     public void init() {
         membershipsCollection = mongoOperations.getCollection("memberships", MembershipMongo.class);
         super.init(membershipsCollection);
-        super.createIndex(membershipsCollection, new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1), new IndexOptions().name("ri1rt1"));
-        super.createIndex(membershipsCollection, new Document(FIELD_REFERENCE_ID, 1).append(FIELD_MEMBER_ID, 1), new IndexOptions().name("ri1mi1"));
-        super.createIndex(membershipsCollection, new Document(FIELD_MEMBER_ID, 1).append(FIELD_MEMBER_TYPE, 1), new IndexOptions().name("mi1mt1"));
+
+        final var indexes = new HashMap<Document, IndexOptions>();
+        indexes.put(new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1), new IndexOptions().name("ri1rt1"));
+        indexes.put(new Document(FIELD_REFERENCE_ID, 1).append(FIELD_MEMBER_ID, 1), new IndexOptions().name("ri1mi1"));
+        indexes.put(new Document(FIELD_MEMBER_ID, 1).append(FIELD_MEMBER_TYPE, 1), new IndexOptions().name("mi1mt1"));
+
+        super.createIndex(membershipsCollection, indexes);
     }
 
     @Override

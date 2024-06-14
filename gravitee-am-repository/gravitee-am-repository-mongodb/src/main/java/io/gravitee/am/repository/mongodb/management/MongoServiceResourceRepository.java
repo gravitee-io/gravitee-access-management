@@ -26,7 +26,11 @@ import io.reactivex.rxjava3.core.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
+<<<<<<< HEAD
 import jakarta.annotation.PostConstruct;
+=======
+import java.util.Map;
+>>>>>>> 5b1bc9bc07 (fix: avoid infinite blocking call durint Indexes creation)
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -44,7 +48,7 @@ public class MongoServiceResourceRepository extends AbstractManagementMongoRepos
     public void init() {
         resourceCollection = mongoOperations.getCollection("service_resources", ServiceResourceMongo.class);
         super.init(resourceCollection);
-        super.createIndex(resourceCollection,new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1), new IndexOptions().name("ri1rt1"));
+        super.createIndex(resourceCollection, Map.of(new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1), new IndexOptions().name("ri1rt1")));
     }
 
     @Override

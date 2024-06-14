@@ -28,7 +28,11 @@ import io.reactivex.rxjava3.core.Single;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
+<<<<<<< HEAD
 import jakarta.annotation.PostConstruct;
+=======
+import java.util.Map;
+>>>>>>> 5b1bc9bc07 (fix: avoid infinite blocking call durint Indexes creation)
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -50,8 +54,8 @@ public class MongoNotificationAcknowledgeRepository extends AbstractManagementMo
     @PostConstruct
     public void init() {
         collection = mongoOperations.getCollection("notification_acknowledgements", NotificationAcknowledgeMongo.class);
-        super.createIndex(collection, new Document(FIELD_RESOURCE_ID, 1).append(FIELD_TYPE, 1).append(FIELD_AUDIENCE_ID, 1), new IndexOptions().name("ri1rt1a1"));
         super.init(collection);
+        super.createIndex(collection, Map.of(new Document(FIELD_RESOURCE_ID, 1).append(FIELD_TYPE, 1).append(FIELD_AUDIENCE_ID, 1), new IndexOptions().name("ri1rt1a1")));
     }
 
     @Override

@@ -35,6 +35,7 @@ import org.springframework.stereotype.Repository;
 import jakarta.annotation.PostConstruct;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.*;
@@ -59,13 +60,17 @@ public class MongoUserActivityRepository extends AbstractManagementMongoReposito
     public void init() {
         userActivityCollection = mongoOperations.getCollection("user_activities", UserActivityMongo.class);
         super.init(userActivityCollection);
-        super.createIndex(userActivityCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
-        super.createIndex(userActivityCollection, new Document(FIELD_REFERENCE_TYPE, 1)
+
+        final var indexes = new HashMap<Document, IndexOptions>();
+        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
+        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1)
                 .append(FIELD_REFERENCE_ID, 1)
                 .append(FIELD_USER_ACTIVITY_TYPE, 1)
                 .append(FIELD_USER_ACTIVITY_KEY, 1), new IndexOptions().name("rt1ri1uat1uak1"));
-        super.createIndex(userActivityCollection, new Document(FIELD_CREATED_AT, 1), new IndexOptions().name("c1"));
-        super.createIndex(userActivityCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS).name("e1"));
+        indexes.put(new Document(FIELD_CREATED_AT, 1), new IndexOptions().name("c1"));
+        indexes.put(new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS).name("e1"));
+
+        super.createIndex(userActivityCollection, indexes);
     }
 
     @Override

@@ -27,6 +27,7 @@ import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.*;
@@ -48,8 +49,12 @@ public class MongoAuthenticationFlowContextRepository extends AbstractManagement
     public void init() {
         authContextCollection = mongoOperations.getCollection("auth_flow_ctx", AuthenticationFlowContextMongo.class);
         super.init(authContextCollection);
-        super.createIndex(authContextCollection, new Document(FIELD_TRANSACTION_ID, 1).append(FIELD_VERSION, -1), new IndexOptions().name("t1v_1"));
-        super.createIndex(authContextCollection, new Document(FIELD_EXPIRES_AT, 1), new IndexOptions().name("e1").expireAfter(0l, TimeUnit.SECONDS));
+
+        final var indexes = new HashMap<Document, IndexOptions>();
+        indexes.put(new Document(FIELD_TRANSACTION_ID, 1).append(FIELD_VERSION, -1), new IndexOptions().name("t1v_1"));
+        indexes.put(new Document(FIELD_EXPIRES_AT, 1), new IndexOptions().name("e1").expireAfter(0l, TimeUnit.SECONDS));
+
+        super.createIndex(authContextCollection, indexes);
     }
 
     @Override
