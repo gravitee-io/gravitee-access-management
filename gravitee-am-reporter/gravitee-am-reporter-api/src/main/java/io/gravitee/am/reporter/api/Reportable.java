@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.reporter.api;
 
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 
 /**
@@ -26,4 +27,8 @@ public interface Reportable extends io.gravitee.reporter.api.Reportable {
     String getReferenceId();
 
     ReferenceType getReferenceType();
+
+    default Reference getReference() {
+        return new Reference(getReferenceType(), getReferenceId());
+    }
 }

@@ -43,6 +43,11 @@ public class Reporter {
     private Date createdAt;
     @Schema(type = "java.lang.Long")
     private Date updatedAt;
+    /**
+     * If an organization level is inherited, it will automatically report events from all domains in this organization.
+     * This has no effect on domain reporters.
+     */
+    private boolean inherited;
 
     public Reporter() {
     }
@@ -58,6 +63,7 @@ public class Reporter {
         this.configuration = other.configuration;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
+        this.inherited = other.inherited;
     }
 
     /**

@@ -36,7 +36,6 @@ public class ReporterMongo extends Auditable {
     /**
      * @deprecated use referenceType & referenceId instead
      */
-
     // Lombok copies @deprecated to the generated accessors; mongo codec loses its mind when it sees @Deprecated both
     // on a field and an accessor. So we define them manually.
     @Getter(AccessLevel.NONE)
@@ -68,6 +67,6 @@ public class ReporterMongo extends Auditable {
 
     private String configuration;
 
-
+    private boolean inherited;
 
 }

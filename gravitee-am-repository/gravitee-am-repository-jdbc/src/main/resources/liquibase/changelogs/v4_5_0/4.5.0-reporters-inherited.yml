@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.5.0-reporters-reference-type
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+      changes:
+        - addColumn:
+            tableName: reporters
+            columns:
+              - column:
+                  name: inherited
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false

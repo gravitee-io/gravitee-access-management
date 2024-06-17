@@ -29,7 +29,9 @@
             matTooltip="{{ reporter.enabled ? 'Disable reporter ?' : 'Enable reporter ?' }}"
             (change)="enableReporter($event)"
             [checked]="reporter.enabled"
-          ></mat-slide-toggle>
+            labelPosition="before"
+            >Enabled
+          </mat-slide-toggle>
         </div>
         <div *ngIf="createMode">
           <mat-form-field appearance="outline" floatLabel="always">
@@ -48,6 +50,13 @@
             <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="reporter.name" (input)="validateName()" required />
             <mat-hint>A name for your reporter.</mat-hint>
           </mat-form-field>
+          <mat-slide-toggle
+            *ngIf="isOrganizationContext() && !reporter.system"
+            matTooltip=""
+            [checked]="reporter.inherited"
+            (change)="setInherited($event)"
+            >Log events from all domains in this organization
+          </mat-slide-toggle>
         </div>
       </div>
 

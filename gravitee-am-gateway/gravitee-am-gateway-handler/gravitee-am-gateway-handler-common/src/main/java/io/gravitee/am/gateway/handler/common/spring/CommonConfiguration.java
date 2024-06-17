@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.common.spring;
 
 import io.gravitee.am.gateway.handler.common.alert.AlertEventProcessor;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
-import io.gravitee.am.gateway.handler.common.audit.impl.AuditReporterManagerImpl;
+import io.gravitee.am.gateway.handler.common.audit.impl.GatewayAuditReporterManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.impl.IdentityProviderManagerImpl;
 import io.gravitee.am.gateway.handler.common.auth.listener.AuthenticationEventListener;
@@ -132,7 +132,7 @@ public class CommonConfiguration {
 
     @Bean
     public AuditReporterManager auditReporterManager() {
-        return new AuditReporterManagerImpl();
+        return new GatewayAuditReporterManager();
     }
 
     @Bean

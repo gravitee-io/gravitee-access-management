@@ -229,7 +229,7 @@ public class GroupEndpoint extends AbstractGroupEndpoint {
      * In response to a successful DELETE, the server SHALL return a
      *    successful HTTP status code 204 (No Content).
      *
-     * See <a href="https://tools.ietf.org/html/rfc7644#section-3.6>3.6. Deleting Resources</a>
+     * See <a href="https://tools.ietf.org/html/rfc7644#section-3.6">3.6. Deleting Resources</a>
      */
     public void delete(RoutingContext context) {
         final String groupId = context.request().getParam("id");

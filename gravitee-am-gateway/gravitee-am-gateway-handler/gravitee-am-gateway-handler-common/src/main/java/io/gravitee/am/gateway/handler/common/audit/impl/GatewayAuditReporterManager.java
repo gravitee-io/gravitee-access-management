@@ -21,6 +21,7 @@ import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.utils.Tuple;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
@@ -43,6 +44,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -50,11 +52,12 @@ import java.util.concurrent.ConcurrentMap;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuditReporterManagerImpl extends AbstractService<AuditReporterManager> implements AuditReporterManager, EventListener<ReporterEvent, Payload>, InitializingBean {
+public class GatewayAuditReporterManager extends AbstractService<AuditReporterManager> implements AuditReporterManager, EventListener<ReporterEvent, Payload>, InitializingBean {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuditReporterManagerImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(GatewayAuditReporterManager.class);
     private String deploymentId;
 
+    private String organizationId;
     @Autowired
     private Domain domain;
 
@@ -87,15 +90,13 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
             deploymentId = id;
 
             // Start reporters
-            reporterRepository.findByReference(Reference.domain(domain.getId())).toList()
-                    .flatMap(reporters ->
-                            environmentService
-                                    .findById(domain.getReferenceId())
-                                    .map(env -> new GraviteeContext(env.getOrganizationId(), env.getId(), domain.getId()))
-                                    .map(ctx -> Tuple.of(reporters, ctx)))
+            getEnvironment()
+                    .flatMap(env -> findRelevantReporters(env)
+                            .map(foundReporters -> Tuple.of(foundReporters, new GraviteeContext(env.getOrganizationId(), env.getId(), domain.getId()))))
                     .subscribeOn(Schedulers.io())
                     .subscribe(tupleReportersContext -> {
                                 if (!tupleReportersContext.getT1().isEmpty()) {
+                                    this.organizationId = tupleReportersContext.getT2().getOrganizationId();
                                     tupleReportersContext.getT1().forEach(reporter -> {
                                         startReporterProvider(reporter, tupleReportersContext.getT2());
                                     });
@@ -113,9 +114,22 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
         });
     }
 
+    private Single<Environment> getEnvironment() {
+        return environmentService.findById(domain.getReferenceId());
+    }
+
+    private Single<List<Reporter>> findRelevantReporters(Environment env) {
+        return reporterRepository.findInheritedFrom(Reference.organization(env.getOrganizationId()))
+                .mergeWith(reporterRepository.findByReference(Reference.domain(domain.getId())))
+                .toList();
+    }
+
     @Override
     public void onEvent(Event<ReporterEvent, Payload> event) {
-        if (event.content().getReferenceType() == ReferenceType.DOMAIN && domain.getId().equals(event.content().getReferenceId())) {
+        var content = event.content();
+        var affectedReporterIsFromThisDomain = content.getReferenceType() == ReferenceType.DOMAIN && content.getReferenceId().equals(domain.getId());
+        var affectedReporterIsFromThisOrganization = content.getReferenceType() == ReferenceType.ORGANIZATION && content.getReferenceId().equals(organizationId);
+        if (affectedReporterIsFromThisDomain || affectedReporterIsFromThisOrganization) {
             switch (event.type()) {
                 case DEPLOY:
                     deployReporter(event.content().getId(), event.type());
@@ -148,7 +162,7 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
         if (deploymentId != null) {
             vertx.rxUndeploy(deploymentId)
                     .doFinally(() -> {
-                        for(io.gravitee.am.reporter.api.provider.Reporter reporter : reporterPlugins.values()) {
+                        for (io.gravitee.am.reporter.api.provider.Reporter reporter : reporterPlugins.values()) {
                             try {
                                 logger.info("Stopping reporter: {}", reporter);
                                 reporter.stop();
@@ -209,30 +223,34 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
     }
 
     private void startReporterProvider(Reporter reporter, GraviteeContext context) {
-        if (reporter.isEnabled()) {
-            if (needDeployment(reporter)) {
-                logger.info("\tInitializing reporter: {} [{}]", reporter.getName(), reporter.getType());
-                var providerConfiguration = new ReporterProviderConfiguration(reporter, context);
-                io.gravitee.am.reporter.api.provider.Reporter reporterProvider = reporterPluginManager.create(providerConfiguration);
-
-                if (reporterProvider != null) {
-                    try {
-                        logger.info("Starting reporter: {}", reporter.getName());
-                        io.gravitee.am.reporter.api.provider.Reporter eventBusReporter = new EventBusReporterWrapper(vertx, Reference.domain(domain.getId()), reporterProvider);
-                        eventBusReporter.start();
-                        reporters.put(reporter.getId(), reporter);
-                        reporterPlugins.put(reporter.getId(), eventBusReporter);
-                        AuditReporterVerticle.incrementActiveReporter();
-                    } catch (Exception ex) {
-                        logger.error("Unexpected error while starting reporter", ex);
-                    }
-
-                }
-            } else {
-                logger.info("Reporter {} already up to date for Domain {}", reporter.getId(), domain.getName());
-            }
-        } else {
+        if (!reporter.isEnabled()) {
             logger.info("\tReporter disabled: {} [{}]", reporter.getName(), reporter.getType());
+            return;
+        }
+        if (!needDeployment(reporter)) {
+            logger.info("Reporter {} already up to date for Domain {}", reporter.getId(), domain.getName());
+            return;
+        }
+        if (reporter.getReference().type() == ReferenceType.ORGANIZATION && !reporter.isInherited()) {
+            logger.info("Reporter {} [{}] is linked to the organization {} but is not inherited, won't be started", reporter.getId(), reporter.getType(), organizationId);
+            return;
+        }
+        logger.info("\tInitializing reporter: {} [{}]", reporter.getName(), reporter.getType());
+        var providerConfiguration = new ReporterProviderConfiguration(reporter, context);
+        io.gravitee.am.reporter.api.provider.Reporter reporterProvider = reporterPluginManager.create(providerConfiguration);
+
+        if (reporterProvider != null) {
+            try {
+                logger.info("Starting reporter: {}", reporter.getName());
+                io.gravitee.am.reporter.api.provider.Reporter eventBusReporter = new EventBusReporterWrapper(vertx, reporterProvider, Reference.domain(domain.getId()));
+                eventBusReporter.start();
+                reporters.put(reporter.getId(), reporter);
+                reporterPlugins.put(reporter.getId(), eventBusReporter);
+                AuditReporterVerticle.incrementActiveReporter();
+            } catch (Exception ex) {
+                logger.error("Unexpected error while starting reporter", ex);
+            }
+
         }
     }
 
@@ -258,7 +276,7 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
 
     @Override
     public io.gravitee.am.reporter.api.provider.Reporter getReporter() {
-       return reporterPlugins.values()
+        return reporterPlugins.values()
                 .stream()
                 .filter(io.gravitee.am.reporter.api.provider.Reporter::canSearch)
                 .findFirst()

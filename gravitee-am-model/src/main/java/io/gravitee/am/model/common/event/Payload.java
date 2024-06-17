@@ -36,7 +36,7 @@ public class Payload extends HashMap<String, Object> {
     public Payload(String id, Reference reference, Action action) {
         this(id, reference.type(), reference.id(), action);
     }
-    @Deprecated(since = "4.5")
+
     public Payload(String id, ReferenceType referenceType, String referenceId, Action action) {
         put(ID, id);
         if(referenceType != null) {

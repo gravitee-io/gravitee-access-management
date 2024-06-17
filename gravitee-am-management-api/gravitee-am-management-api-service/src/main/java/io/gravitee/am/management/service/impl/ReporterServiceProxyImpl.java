@@ -17,6 +17,7 @@ package io.gravitee.am.management.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.event.Action;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.AbstractSensitiveProxy;
 import io.gravitee.am.management.service.ReporterPluginService;
@@ -112,6 +113,11 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
     @Override
     public String createReporterConfig(Reference reference){
         return reporterService.createReporterConfig(reference);
+    }
+
+    @Override
+    public Completable notifyInheritedReporters(Reference parentReference, Reference affectedReference, Action action) {
+        return reporterService.notifyInheritedReporters(parentReference, affectedReference, action);
     }
 
     private Single<Reporter> filterSensitiveData(Reporter reporter) {

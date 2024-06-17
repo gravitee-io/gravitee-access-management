@@ -26,11 +26,11 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.reactive.TransactionalOperator;
 
 import java.time.LocalDateTime;
@@ -43,22 +43,13 @@ import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
  * @author GraviteeSource Team
  */
 @Repository
+@RequiredArgsConstructor
 public class JdbcReporterRepository extends AbstractJdbcRepository implements ReporterRepository, InitializingBean {
 
     public static final String COL_ID = "id";
-    public static final String COL_REFERENCE_TYPE = "reference_type";
-    public static final String COL_REFERENCE_ID = "reference_id";
-    public static final String COL_ENABLED = "enabled";
-    public static final String COL_TYPE = "type";
-    public static final String COL_NAME = "name";
-    public static final String COL_DATA_TYPE = "data_type";
-    public static final String COL_CONFIG = "configuration";
-    public static final String COL_IS_SYSTEM = "system";
-    public static final String COL_CREATED_AT = "created_at";
-    public static final String COL_UPDATED_AT = "updated_at";
 
-    @Autowired
-    protected SpringReporterRepository reporterRepository;
+    protected final SpringReporterRepository reporterRepository;
+
 
     protected Reporter toEntity(JdbcReporter entity) {
         return Reporter.builder()
@@ -72,6 +63,7 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
                 .createdAt(toDate(entity.getCreatedAt()))
                 .updatedAt(toDate(entity.getUpdatedAt()))
                 .type(entity.getType())
+                .inherited(entity.isInherited())
                 .build();
     }
 
@@ -88,22 +80,24 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
                 .createdAt(toLocalDateTime(entity.getCreatedAt()))
                 .updatedAt(toLocalDateTime(entity.getUpdatedAt()))
                 .type(entity.getType())
+                .inherited(entity.isInherited())
                 .build();
 
     }
 
     private static final List<FieldSpec<JdbcReporter, ?>> fields = List.of(
             new FieldSpec<>(COL_ID, JdbcReporter::getId, String.class),
-            new FieldSpec<>(COL_REFERENCE_TYPE, r-> r.getReferenceType().name(), String.class),
-            new FieldSpec<>(COL_REFERENCE_ID, JdbcReporter::getReferenceId, String.class),
-            new FieldSpec<>(COL_ENABLED, JdbcReporter::isEnabled, boolean.class),
-            new FieldSpec<>(COL_TYPE, JdbcReporter::getType, String.class),
-            new FieldSpec<>(COL_NAME, JdbcReporter::getName, String.class),
-            new FieldSpec<>(COL_DATA_TYPE, JdbcReporter::getDataType, String.class),
-            new FieldSpec<>(COL_CONFIG, JdbcReporter::getConfiguration, String.class),
-            new FieldSpec<>(COL_IS_SYSTEM, JdbcReporter::isSystem, boolean.class),
-            new FieldSpec<>(COL_CREATED_AT, JdbcReporter::getCreatedAt, LocalDateTime.class),
-            new FieldSpec<>(COL_UPDATED_AT, JdbcReporter::getUpdatedAt, LocalDateTime.class)
+            new FieldSpec<>("reference_type", r-> r.getReferenceType().name(), String.class),
+            new FieldSpec<>("reference_id", JdbcReporter::getReferenceId, String.class),
+            new FieldSpec<>("enabled", JdbcReporter::isEnabled, boolean.class),
+            new FieldSpec<>("type", JdbcReporter::getType, String.class),
+            new FieldSpec<>("name", JdbcReporter::getName, String.class),
+            new FieldSpec<>("data_type", JdbcReporter::getDataType, String.class),
+            new FieldSpec<>("configuration", JdbcReporter::getConfiguration, String.class),
+            new FieldSpec<>("system", JdbcReporter::isSystem, boolean.class),
+            new FieldSpec<>("inherited", JdbcReporter::isInherited, boolean.class),
+            new FieldSpec<>("created_at", JdbcReporter::getCreatedAt, LocalDateTime.class),
+            new FieldSpec<>("updated_at", JdbcReporter::getUpdatedAt, LocalDateTime.class)
 
     );
     private String insertStatement;
@@ -125,7 +119,7 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
 
     @Override
     public Flowable<Reporter> findByReference(Reference reference) {
-        LOGGER.debug("findByDomain({})", reference);
+        LOGGER.debug("findByReference({})", reference);
         return reporterRepository.findByReferenceTypeAndReferenceId(reference.type(), reference.id())
                 .map(this::toEntity);
     }
@@ -138,7 +132,12 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
     }
 
     @Override
-    @Transactional
+    public Flowable<Reporter> findInheritedFrom(Reference parentReference) {
+        return reporterRepository.findByReferenceTypeAndReferenceIdAndInheritedTrue(parentReference.type(), parentReference.id())
+                .map(this::toEntity);
+    }
+
+    @Override
     public Single<Reporter> create(Reporter item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("Create Reporter with id {}", item.getId());

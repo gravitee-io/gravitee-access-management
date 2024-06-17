@@ -53,5 +53,6 @@ public class JdbcReporter  {
     private LocalDateTime updatedAt;
     @Column("system")
     private boolean system;
+    private boolean inherited;
 
 }

@@ -48,7 +48,6 @@ import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
@@ -60,6 +59,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -96,9 +96,9 @@ public class ReporterServiceImpl implements ReporterService {
 
     public ReporterServiceImpl(Environment environment, @Lazy ReporterRepository reporterRepository, EventService eventService, AuditService auditService) {
         this.environment = environment;
-        this.reporterRepository =reporterRepository;
+        this.reporterRepository = reporterRepository;
         this.eventService = eventService;
-        this.auditService =auditService;
+        this.auditService = auditService;
     }
 
 
@@ -157,18 +157,21 @@ public class ReporterServiceImpl implements ReporterService {
     public Single<Reporter> create(Reference reference, NewReporter newReporter, User principal, boolean system) {
         LOGGER.debug("Create a new reporter {} for {}", newReporter, reference);
 
-        Reporter reporter = new Reporter();
-        reporter.setId(newReporter.getId() == null ? RandomString.generate() : newReporter.getId());
-        reporter.setEnabled(newReporter.isEnabled());
-        reporter.setReference(reference);
-        reporter.setName(newReporter.getName());
-        reporter.setSystem(system);
-        reporter.setType(newReporter.getType());
-        // currently only audit logs
-        reporter.setDataType("AUDIT");
-        reporter.setConfiguration(newReporter.getConfiguration());
-        reporter.setCreatedAt(new Date());
-        reporter.setUpdatedAt(reporter.getCreatedAt());
+        var now = new Date();
+        Reporter reporter = Reporter.builder()
+                .id(Objects.requireNonNullElseGet(newReporter.getId(), RandomString::generate))
+                .enabled(newReporter.isEnabled())
+                .reference(reference)
+                .name(newReporter.getName())
+                .system(system)
+                .type(newReporter.getType())
+                .inherited(reference.type() == ReferenceType.ORGANIZATION && newReporter.isInherited())
+                .dataType("AUDIT")
+                .configuration(newReporter.getConfiguration())
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+
 
         return checkReporterConfiguration(reporter)
                 .flatMap(ignore -> reporterRepository.create(reporter))
@@ -201,19 +204,18 @@ public class ReporterServiceImpl implements ReporterService {
                     if (!oldReporter.isSystem() || isUpgrader) {
                         reporterToUpdate.setConfiguration(updateReporter.getConfiguration());
                     }
+                    if (oldReporter.getReference().type() == ReferenceType.ORGANIZATION && !oldReporter.isSystem()) {
+                        // only non-system org reporters can be inherited
+                        reporterToUpdate.setInherited(updateReporter.isInherited());
+                    }
                     reporterToUpdate.setUpdatedAt(new Date());
 
                     return checkReporterConfiguration(reporterToUpdate)
                             .flatMap(ignore -> reporterRepository.update(reporterToUpdate)
                                     .flatMap(reporter -> {
-                                        // create event for sync process
-                                        // except for admin domain
-                                        if (!ADMIN_DOMAIN.equals(reference)) {
-                                            Event event = new Event(Type.REPORTER, new Payload(reporter.getId(), reporter.getReference(), Action.UPDATE));
-                                            return eventService.create(event).flatMap(e -> Single.just(reporter));
-                                        } else {
-                                            return Single.just(reporter);
-                                        }
+                                        Event event = new Event(Type.REPORTER, new Payload(reporter.getId(), reporter.getReference(), Action.UPDATE));
+                                        return eventService.create(event).flatMap(e -> Single.just(reporter));
+
                                     }));
                 })
                 .onErrorResumeNext(ex -> {
@@ -367,6 +369,19 @@ public class ReporterServiceImpl implements ReporterService {
                     "\"flushInterval\":5}";
         }
         return reporterConfig;
+    }
+
+    @Override
+    public Completable notifyInheritedReporters(Reference parentReference, Reference childReporterReference, Action childReporterAction) {
+        return reporterRepository.findByReference(parentReference)
+                .filter(Reporter::isInherited)
+                .flatMapSingle(reporter -> {
+                    Event event = new Event(Type.REPORTER, new Payload(reporter.getId(), reporter.getReference(), Action.UPDATE));
+                    event.getPayload().put("childReporterAction", childReporterAction);
+                    event.getPayload().put("childReporterReference", childReporterReference);
+                    return eventService.create(event);
+                })
+                .ignoreElements();
     }
 
     private static String getReporterTableSuffix(Reference reference) {

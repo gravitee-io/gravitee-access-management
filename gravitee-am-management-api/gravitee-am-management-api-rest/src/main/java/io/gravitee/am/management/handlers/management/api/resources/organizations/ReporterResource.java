@@ -114,7 +114,6 @@ public class ReporterResource extends AbstractResource {
             @Parameter(name = "reporter", required = true) @Valid @NotNull UpdateReporter updateReporter,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
-
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_REPORTER, Acl.UPDATE)
                 .andThen(organizationService.findById(organizationId)
                         .onErrorResumeWith(Single.error(new OrganizationNotFoundException(organizationId)))
