@@ -39,6 +39,7 @@ public abstract class AbstractMongoRepository {
     protected static final String FIELD_NAME = "name";
     protected static final String FIELD_USER_ID = "userId";
 
+
     protected void init(MongoCollection<?> collection) {
         this.createIndex(collection, new Document(FIELD_ID, 1), new IndexOptions(), true);
     }
@@ -46,10 +47,9 @@ public abstract class AbstractMongoRepository {
     protected void createIndex(MongoCollection<?> collection, Document document, IndexOptions indexOptions, boolean ensure) {
         if (ensure) {
             Single.fromPublisher(collection.createIndex(document, indexOptions))
-                    .blockingSubscribe(
+                    .subscribe(
                             s -> logger.debug("Created an index named: {}", s),
-                            throwable -> logger.error("Error occurs during creation of index", throwable)
-                    );
+                            throwable -> logger.error("Error occurs during creation of index", throwable));
         }
     }
 }
