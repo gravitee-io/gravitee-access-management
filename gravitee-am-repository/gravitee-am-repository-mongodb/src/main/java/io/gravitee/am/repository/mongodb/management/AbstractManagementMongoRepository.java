@@ -57,8 +57,12 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
     @Value("${management.mongodb.cursorMaxTime:60000}")
     private int cursorMaxTimeInMs;
 
+    protected void createIndex(MongoCollection<?> collection, Document document) {
+        super.createIndex(collection, document, new IndexOptions(), ensureIndexOnStart);
+    }
+
     protected void createIndex(MongoCollection<?> collection, Document document, IndexOptions indexOptions) {
-        super.createIndex(collection, document, indexOptions.background(true), ensureIndexOnStart);
+        super.createIndex(collection, document, indexOptions, ensureIndexOnStart);
     }
 
     protected final <TResult> AggregatePublisher<TResult> withMaxTime(AggregatePublisher<TResult> query) {
