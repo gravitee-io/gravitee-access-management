@@ -863,7 +863,7 @@ public class DomainServiceTest {
         when(groupService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(formService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(emailTemplateService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());
-        when(reporterService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
+        when(reporterService.findByReference(Reference.domain(DOMAIN_ID))).thenReturn(Flowable.empty());
         when(flowService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());
         when(membershipService.findByReference(DOMAIN_ID, DOMAIN)).thenReturn(Flowable.empty());
         when(factorService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
