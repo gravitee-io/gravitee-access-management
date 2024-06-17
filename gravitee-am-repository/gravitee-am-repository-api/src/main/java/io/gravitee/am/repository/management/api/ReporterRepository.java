@@ -29,4 +29,5 @@ public interface ReporterRepository extends CrudRepository<Reporter, String> {
     Flowable<Reporter> findAll();
 
     Flowable<Reporter> findByReference(Reference reference);
+    Flowable<Reporter> findInheritedFrom(Reference parentReference);
 }

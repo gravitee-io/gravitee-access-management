@@ -28,4 +28,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface SpringReporterRepository extends RxJava3CrudRepository<JdbcReporter, String> {
     Flowable<JdbcReporter> findByReferenceTypeAndReferenceId(ReferenceType referenceType, String referenceId);
+    Flowable<JdbcReporter> findByReferenceTypeAndReferenceIdAndInheritedTrue(ReferenceType referenceType, String referenceId);
 }

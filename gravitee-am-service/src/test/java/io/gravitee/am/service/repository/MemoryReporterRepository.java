@@ -34,6 +34,12 @@ public class MemoryReporterRepository extends MemoryRepository<Reporter,String> 
     }
 
     @Override
+    public Flowable<Reporter> findInheritedFrom(Reference parentReference) {
+        return findByReference(parentReference)
+                .filter(Reporter::isInherited);
+    }
+
+    @Override
     protected String getId(Reporter item) {
         return item.getId();
     }

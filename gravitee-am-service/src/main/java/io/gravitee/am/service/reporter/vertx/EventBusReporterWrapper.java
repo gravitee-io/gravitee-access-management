@@ -15,25 +15,36 @@
  */
 package io.gravitee.am.service.reporter.vertx;
 
+import ch.qos.logback.core.testUtil.MockInitialContext;
 import io.gravitee.am.common.analytics.Type;
-import io.gravitee.am.model.Platform;
+import io.gravitee.am.common.event.Action;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.reporter.api.Reportable;
 import io.gravitee.am.reporter.api.provider.ReportableCriteria;
 import io.gravitee.am.reporter.api.provider.Reporter;
 import io.gravitee.common.component.Lifecycle;
+import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.core.eventbus.Message;
 import io.vertx.rxjava3.core.eventbus.MessageConsumer;
+import org.checkerframework.checker.units.qual.C;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
 
 import static io.gravitee.am.service.reporter.impl.AuditReporterVerticle.EVENT_BUS_ADDRESS;
 
@@ -41,25 +52,33 @@ import static io.gravitee.am.service.reporter.impl.AuditReporterVerticle.EVENT_B
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class EventBusReporterWrapper implements Reporter, Handler<Message<Reportable>> {
+public class EventBusReporterWrapper<R extends Reportable,C extends ReportableCriteria> implements Reporter<R, C>, Handler<Message<Reportable>> {
 
     public static final Logger logger = LoggerFactory.getLogger(EventBusReporterWrapper.class);
-    private Vertx vertx;
-    private ReferenceType referenceType;
-    private String referenceId;
-    private Reporter reporter;
-    private MessageConsumer messageConsumer;
+    private final Vertx vertx;
+    private final Reporter<R,C> reporter;
+    private MessageConsumer<Reportable> messageConsumer;
+    private Set<Reference> referenceFilter;
 
-    public EventBusReporterWrapper(Vertx vertx, Reporter reporter) {
-        this(vertx, new Reference(ReferenceType.PLATFORM, Platform.DEFAULT), reporter);
+
+    public EventBusReporterWrapper(Vertx vertx, Reporter<R,C> reporter) {
+        this.vertx = vertx;
+        this.reporter = reporter;
+        this.referenceFilter = null;
     }
 
-    public EventBusReporterWrapper(Vertx vertx, Reference reference, Reporter reporter) {
+
+    public EventBusReporterWrapper(Vertx vertx,  Reporter<R,C> reporter, Reference reference) {
+        this(vertx, reporter, Set.of(reference));
+    }
+
+    public EventBusReporterWrapper(Vertx vertx,  Reporter<R,C> reporter, Collection<Reference> references) {
+        Objects.requireNonNull(references, "references");
         this.vertx = vertx;
-        this.referenceType = reference.type();
-        this.referenceId = reference.id();
+        this.referenceFilter = new HashSet<>(Set.copyOf(references)); // we want to be able to use this
         this.reporter = reporter;
     }
+
 
     @Override
     public boolean canSearch() {
@@ -75,27 +94,24 @@ public class EventBusReporterWrapper implements Reporter, Handler<Message<Report
         }
     }
 
-    private boolean canHandle(Reportable reportable) {
-        if (referenceType == ReferenceType.PLATFORM) {
-            return true;
-        }
-        return reportable.getReferenceType() == referenceType
-                && referenceId.equals(reportable.getReferenceId())
+    boolean canHandle(Reportable reportable) {
+        return (referenceFilter == null || referenceFilter.contains(reportable.getReference()))
                 && reporter.canHandle(reportable);
     }
 
+
     @Override
-    public Single<Page> search(ReferenceType referenceType, String referenceId, ReportableCriteria criteria, int page, int size) {
+    public Single<Page<R>> search(ReferenceType referenceType, String referenceId, C criteria, int page, int size) {
         return reporter.search(referenceType, referenceId, criteria, page, size);
     }
 
     @Override
-    public Single<Map<Object, Object>> aggregate(ReferenceType referenceType, String referenceId, ReportableCriteria criteria, Type analyticsType) {
+    public Single<Map<Object, Object>> aggregate(ReferenceType referenceType, String referenceId, C criteria, Type analyticsType) {
         return reporter.aggregate(referenceType, referenceId, criteria, analyticsType);
     }
 
     @Override
-    public Maybe findById(ReferenceType referenceType, String referenceId, String id) {
+    public Maybe<R> findById(ReferenceType referenceType, String referenceId, String id) {
         return reporter.findById(referenceType, referenceId, id);
     }
 
@@ -111,7 +127,7 @@ public class EventBusReporterWrapper implements Reporter, Handler<Message<Report
     }
 
     @Override
-    public Reporter start() throws Exception {
+    public Reporter<R,C> start() throws Exception {
         // start the delegate reporter
         vertx.rxExecuteBlocking(event -> {
                     try {
@@ -123,29 +139,54 @@ public class EventBusReporterWrapper implements Reporter, Handler<Message<Report
                     }
                 })
                 .doOnSuccess(o -> messageConsumer = vertx.eventBus().consumer(EVENT_BUS_ADDRESS, EventBusReporterWrapper.this))
+                .doOnError(ex->logger.error("Error while starting reporter", ex))
                 .subscribe();
 
         return reporter;
     }
 
     @Override
-    public Reporter stop() throws Exception {
+    public Reporter<R,C> stop() throws Exception {
         if (messageConsumer != null) {
             messageConsumer.unregister();
         }
-        return (Reporter) reporter.stop();
+        return (Reporter<R, C>) reporter.stop();
     }
 
     public void unregister() {
         messageConsumer.unregister();
     }
 
-
-    public ReferenceType getReferenceType() {
-        return referenceType;
+    public void updateReferences(ChildReporterAction referenceChange) {
+        switch (referenceChange.op()) {
+            case CREATE -> referenceFilter.add(referenceChange.reference());
+            case DELETE -> referenceFilter.remove(referenceChange.reference);
+            default -> logger.debug("Ignoring {}", referenceChange);
+        }
+        logger.info("Reporter {}: updated reference list to {}", reporter ,referenceFilter);
     }
 
-    public String getReferenceId() {
-        return referenceId;
+    public record ChildReporterAction(Action op, Reference reference) {
+        public static ChildReporterAction of(Payload content) {
+            return getAction(content)
+                    .flatMap(action -> getChildReference(content)
+                            .map(ref -> new ChildReporterAction(action, ref)))
+                    .orElse(null);
+        }
+
+
+        private static Optional<Action> getAction(Payload payload) {
+            return Optional.ofNullable(payload.get("childReporterAction"))
+                    .filter(String.class::isInstance)
+                    .map(a -> Action.valueOf((String) a));
+        }
+
+
+        private static Optional<Reference> getChildReference(Payload payload) {
+            return Optional.ofNullable(payload.get("childReporterReference"))
+                    .filter(Map.class::isInstance)
+                    .map(ref -> (Map<String, String> ) ref)
+                    .map(refMap -> new Reference(ReferenceType.valueOf(refMap.get("type")), refMap.get("id")));
+        }
     }
 }

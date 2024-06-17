@@ -175,11 +175,19 @@ export class ReporterComponent implements OnInit {
     this.formChanged = true;
   }
 
+  setInherited(event): void {
+    this.reporter.inherited = event.checked;
+    this.formChanged = true;
+  }
+
   validateName() {
     this.hasName = this.reporter.name !== '' && this.reporter.name.trim() !== '';
   }
 
   isDefaultReporter() {
     return this.reporter.type === 'mongodb' || this.reporter.type === 'reporter-am-jdbc';
+  }
+  isOrganizationContext() {
+    return this.organizationContext;
   }
 }

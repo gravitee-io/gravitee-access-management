@@ -349,6 +349,7 @@ export class OrganizationService {
     return this.http.put<any>(this.organizationURL + '/reporters/' + reporterId, {
       name: reporter.name,
       enabled: reporter.enabled,
+      inherited: reporter.inherited,
       configuration: reporter.configuration,
     });
   }
@@ -363,6 +364,7 @@ export class OrganizationService {
       type: reporter.type,
       enabled: reporter.enabled,
       configuration: reporter.configuration,
+      inherited: reporter.inherited,
     });
   }
 

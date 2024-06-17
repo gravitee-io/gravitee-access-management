@@ -31,6 +31,7 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -47,6 +48,7 @@ import static com.mongodb.client.model.Filters.or;
 @Component
 public class MongoReporterRepository extends AbstractManagementMongoRepository implements ReporterRepository {
 
+    private static final String FIELD_INHERITED = "inherited";
     private MongoCollection<ReporterMongo> reportersCollection;
 
     @PostConstruct
@@ -63,11 +65,22 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
 
     @Override
     public Flowable<Reporter> findByReference(Reference reference) {
+        var query = referenceMatches(reference);
+        return Flowable.fromPublisher(reportersCollection.find(query)).map(this::convert);
+    }
+
+    private static Bson referenceMatches(Reference reference) {
         var query = and(eq(FIELD_REFERENCE_TYPE, reference.type()), eq(FIELD_REFERENCE_ID, reference.id()));
         // for backwards compatibility
         if (reference.type() == ReferenceType.DOMAIN) {
             query = or(query, eq(FIELD_DOMAIN, reference.id()));
         }
+        return query;
+    }
+
+    @Override
+    public Flowable<Reporter> findInheritedFrom(Reference parentReference) {
+        var query = and(referenceMatches(parentReference), eq(FIELD_INHERITED, true));
         return Flowable.fromPublisher(reportersCollection.find(query)).map(this::convert);
     }
 
@@ -114,6 +127,7 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
         reporterMongo.setConfiguration(reporter.getConfiguration());
         reporterMongo.setCreatedAt(reporter.getCreatedAt());
         reporterMongo.setUpdatedAt(reporter.getUpdatedAt());
+        reporterMongo.setInherited(reporter.isInherited());
         return reporterMongo;
     }
 
@@ -139,6 +153,7 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
         reporter.setConfiguration(reporterMongo.getConfiguration());
         reporter.setCreatedAt(reporterMongo.getCreatedAt());
         reporter.setUpdatedAt(reporterMongo.getUpdatedAt());
+        reporter.setInherited(reporterMongo.isInherited());
         return reporter;
     }
 }

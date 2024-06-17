@@ -69,6 +69,7 @@ import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
 import io.gravitee.am.service.validators.domain.DomainValidator;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -369,6 +370,7 @@ public class DomainServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(membershipService.addOrUpdate(eq(ORGANIZATION_ID), any())).thenReturn(Single.just(new Membership()));
         when(roleService.findSystemRole(SystemRole.DOMAIN_PRIMARY_OWNER, DOMAIN)).thenReturn(Maybe.just(new Role()));
+        when(reporterService.notifyInheritedReporters(any(),any(),any())).thenReturn(Completable.complete());
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
 
@@ -818,6 +820,7 @@ public class DomainServiceTest {
         when(rateLimiterService.deleteByDomain(any(), any())).thenReturn(complete());
         when(verifyAttemptService.deleteByDomain(any(), any())).thenReturn(complete());
         when(passwordPolicyService.deleteByReference(any(), any())).thenReturn(complete());
+        when(reporterService.notifyInheritedReporters(any(),any(),any())).thenReturn(Completable.complete());
 
         final var graviteeContext = GraviteeContext.defaultContext(DOMAIN_ID);
         final var testObserver = domainService.delete(graviteeContext, DOMAIN_ID, null).test();
@@ -878,6 +881,7 @@ public class DomainServiceTest {
         when(passwordHistoryService.deleteByReference(DOMAIN, DOMAIN_ID)).thenReturn(complete());
         when(verifyAttemptService.deleteByDomain(any(), any())).thenReturn(complete());
         when(passwordPolicyService.deleteByReference(any(), any())).thenReturn(complete());
+        when(reporterService.notifyInheritedReporters(any(),any(),any())).thenReturn(Completable.complete());
 
         var testObserver = domainService.delete(GraviteeContext.defaultContext(DOMAIN_ID), DOMAIN_ID, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);

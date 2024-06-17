@@ -113,7 +113,6 @@ public class ReportersResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         User authenticatedUser = getAuthenticatedUser();
-
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_REPORTER, Acl.CREATE)
                 .andThen(reporterPluginService.checkPluginDeployment(newReporter.getType()))
                 .andThen(organizationService.findById(organizationId)

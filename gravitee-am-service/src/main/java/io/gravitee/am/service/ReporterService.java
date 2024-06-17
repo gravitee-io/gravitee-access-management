@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.common.event.Action;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Platform;
 import io.gravitee.am.model.Reference;
@@ -69,4 +70,5 @@ public interface ReporterService {
         return delete(reporterId, null);
     }
 
+    Completable notifyInheritedReporters(Reference parentReference, Reference affectedReference, Action action);
 }

@@ -16,11 +16,13 @@
 package io.gravitee.am.service.model;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Data
 public class NewReporter {
 
     private String id;
@@ -36,45 +38,7 @@ public class NewReporter {
     @NotNull
     private String configuration;
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getConfiguration() {
-        return configuration;
-    }
-
-    public void setConfiguration(String configuration) {
-        this.configuration = configuration;
-    }
+    private boolean inherited;
 
     @Override
     public String toString() {

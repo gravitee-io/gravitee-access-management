@@ -26,6 +26,9 @@ import io.gravitee.am.reporter.api.audit.AuditReporter;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 
 import java.util.List;
 

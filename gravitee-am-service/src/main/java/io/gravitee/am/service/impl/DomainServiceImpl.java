@@ -382,8 +382,9 @@ public class DomainServiceImpl implements DomainService {
                 // create event for sync process
                 .flatMap(domain -> {
                     Event event = new Event(Type.DOMAIN, new Payload(domain.getId(), DOMAIN, domain.getId(), Action.CREATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(domain));
-                })
+                    return eventService.create(event).flatMap(e -> Single.just(domain));
+                }).flatMap(domain -> reporterService.notifyInheritedReporters(Reference.organization(organizationId), Reference.domain(domain.getId()), Action.CREATE)
+                        .andThen(Single.just(domain)))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
@@ -440,7 +441,7 @@ public class DomainServiceImpl implements DomainService {
                     Domain toPatch = patchDomain.patch(oldDomain);
                     final AccountSettings accountSettings = toPatch.getAccountSettings();
                     if (Boolean.FALSE.equals(accountSettingsValidator.validate(accountSettings))) {
-                       return Single.error(new InvalidParameterException("Unexpected forgot password field"));
+                        return Single.error(new InvalidParameterException("Unexpected forgot password field"));
                     }
                     toPatch.setHrid(IdGenerator.generate(toPatch.getName()));
                     toPatch.setUpdatedAt(new Date());
@@ -500,7 +501,7 @@ public class DomainServiceImpl implements DomainService {
                     // delete applications
                     return applicationService.findByDomain(domainId)
                             .flatMapCompletable(applications -> {
-                                List<Completable> deleteApplicationsCompletable = applications.stream().map(a -> applicationService.delete(a.getId())).collect(Collectors.toList());
+                                List<Completable> deleteApplicationsCompletable = applications.stream().map(a -> applicationService.delete(a.getId())).toList();
                                 return Completable.concat(deleteApplicationsCompletable);
                             })
                             // delete certificates
@@ -510,7 +511,7 @@ public class DomainServiceImpl implements DomainService {
                             // delete identity providers
                             .andThen(identityProviderService.findByDomain(domainId)
                                     .flatMapCompletable(identityProvider ->
-                                        identityProviderService.delete(domainId, identityProvider.getId())
+                                            identityProviderService.delete(domainId, identityProvider.getId())
                                     )
                             )
                             // delete extension grants
@@ -520,7 +521,7 @@ public class DomainServiceImpl implements DomainService {
                             // delete roles
                             .andThen(roleService.findByDomain(domainId)
                                     .flatMapCompletable(roles -> {
-                                        List<Completable> deleteRolesCompletable = roles.stream().map(r -> roleService.delete(DOMAIN, domainId, r.getId())).collect(Collectors.toList());
+                                        List<Completable> deleteRolesCompletable = roles.stream().map(r -> roleService.delete(DOMAIN, domainId, r.getId())).toList();
                                         return Completable.concat(deleteRolesCompletable);
                                     })
                             )
@@ -533,12 +534,12 @@ public class DomainServiceImpl implements DomainService {
                             // delete groups
                             .andThen(groupService.findByDomain(domainId)
                                     .flatMapCompletable(group ->
-                                        groupService.delete(DOMAIN, domainId, group.getId()))
+                                            groupService.delete(DOMAIN, domainId, group.getId()))
                             )
                             // delete scopes
                             .andThen(scopeService.findByDomain(domainId, 0, Integer.MAX_VALUE)
                                     .flatMapCompletable(scopes -> {
-                                        List<Completable> deleteScopesCompletable = scopes.getData().stream().map(s -> scopeService.delete(s.getId(), true)).collect(Collectors.toList());
+                                        List<Completable> deleteScopesCompletable = scopes.getData().stream().map(s -> scopeService.delete(s.getId(), true)).toList();
                                         return Completable.concat(deleteScopesCompletable);
                                     })
                             )
@@ -553,8 +554,10 @@ public class DomainServiceImpl implements DomainService {
                             // delete reporters
                             .andThen(reporterService.findByReference(Reference.domain(domainId))
                                     .flatMapCompletable(reporter ->
-                                        reporterService.delete(reporter.getId()))
-                            )
+                                            reporterService.delete(reporter.getId()))
+                            ).andThen(reporterService.notifyInheritedReporters(Reference.organization(graviteeContext.getOrganizationId()),
+                                    Reference.domain(domainId),
+                                    Action.DELETE))
                             // delete flows
                             .andThen(flowService.findAll(DOMAIN, domainId)
                                     .filter(f -> f.getId() != null)
@@ -562,7 +565,7 @@ public class DomainServiceImpl implements DomainService {
                             )
                             // delete memberships
                             .andThen(membershipService.findByReference(domainId, DOMAIN)
-                                    .flatMapCompletable(membership ->  membershipService.delete(membership.getId()))
+                                    .flatMapCompletable(membership -> membershipService.delete(membership.getId()))
                             )
                             // delete factors
                             .andThen(factorService.findByDomain(domainId)
@@ -571,7 +574,7 @@ public class DomainServiceImpl implements DomainService {
                             // delete uma resources
                             .andThen(resourceService.findByDomain(domainId)
                                     .flatMapCompletable(resources -> {
-                                        List<Completable> deletedResourceCompletable = resources.stream().map(resourceService::delete).collect(Collectors.toList());
+                                        List<Completable> deletedResourceCompletable = resources.stream().map(resourceService::delete).toList();
                                         return Completable.concat(deletedResourceCompletable);
                                     })
                             )
@@ -765,8 +768,8 @@ public class DomainServiceImpl implements DomainService {
 
     private boolean hasIncorrectOrigins(Domain domain) {
         var corsSettings = ofNullable(domain.getCorsSettings());
-        if (corsSettings.isPresent()){
-          return corsSettings.get().isEnabled() && hasIncorrectOrigins(corsSettings);
+        if (corsSettings.isPresent()) {
+            return corsSettings.get().isEnabled() && hasIncorrectOrigins(corsSettings);
         }
         return false;
     }
@@ -877,7 +880,7 @@ public class DomainServiceImpl implements DomainService {
                 virtualHost.setPath(domain.getPath());
 
                 return virtualHost;
-            }).collect(Collectors.toList());
+            }).toList();
 
             // The first one will be used as primary displayed entrypoint.
             vhosts.get(0).setOverrideEntrypoint(true);
