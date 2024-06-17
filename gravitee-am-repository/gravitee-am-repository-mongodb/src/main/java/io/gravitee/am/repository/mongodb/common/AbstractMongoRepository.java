@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -56,9 +55,8 @@ public abstract class AbstractMongoRepository {
         if (ensure) {
             var indexesModel = indexes.entrySet().stream().map(entry -> new IndexModel(entry.getKey(), entry.getValue().background(true))).toList();
             Completable.fromPublisher(collection.createIndexes(indexesModel))
-                    .doOnComplete(() -> logger.debug("{} indexes created", indexes.size()))
-                    .doOnError(throwable -> logger.error("An error has occurred during creation of indexes", throwable))
-                    .blockingAwait(1, TimeUnit.MINUTES);
+                    .subscribe(() -> logger.debug("{} indexes created", indexes.size()),
+                            throwable -> logger.error("An error has occurred during creation of indexes", throwable));
         }
     }
 }
