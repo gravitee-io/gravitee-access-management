@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcReporter;
@@ -29,6 +30,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Mono;
 
@@ -93,9 +95,9 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
     }
 
     @Override
-    public Flowable<Reporter> findByDomain(String domain) {
-        LOGGER.debug("findByDomain({})", domain);
-        return reporterRepository.findByDomain(domain)
+    public Flowable<Reporter> findByReference(Reference reference) {
+        LOGGER.debug("findByDomain({})", reference);
+        return reporterRepository.findByReferenceTypeAndReferenceId(reference.type(), reference.id())
                 .map(this::toEntity);
     }
 
@@ -107,39 +109,47 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
     }
 
     @Override
+    @Transactional
     public Single<Reporter> create(Reporter item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("Create Reporter with id {}", item.getId());
+        return reporterRepository.save(toJdbcEntity(item))
+                .flatMapMaybe(r -> this.findById(r.getId()))
+                .toSingle();
+//        TransactionalOperator trx = TransactionalOperator.create(tm);
+//        return Single.fromPublisher(getTemplate().insert(toJdbcEntity(item))
+//                        .flatMap(res -> maybeToMono(this.findById(res.getId())))
+//                        .as(trx::transactional));
 
-        TransactionalOperator trx = TransactionalOperator.create(tm);
-
-        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(insertStatement);
-
-        insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
-        insertSpec = addQuotedField(insertSpec, COL_DOMAIN, item.getDomain(), String.class);
-        insertSpec = addQuotedField(insertSpec, COL_ENABLED, item.isEnabled(), String.class);
-        insertSpec = addQuotedField(insertSpec, COL_TYPE, item.getType(), String.class);
-        insertSpec = addQuotedField(insertSpec, COL_NAME, item.getName(), String.class);
-        insertSpec = addQuotedField(insertSpec, COL_DATA_TYPE, item.getDataType(), String.class);
-        insertSpec = addQuotedField(insertSpec, COL_CONFIG, item.getConfiguration(), String.class);
-        insertSpec = addQuotedField(insertSpec, COL_IS_SYSTEM, item.isSystem(), String.class);
-        insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        insertSpec = addQuotedField(insertSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
-
-        Mono<Long> action = insertSpec.fetch().rowsUpdated();
-        return monoToSingle(action.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle());
+//        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(insertStatement);
+//
+//        insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
+//        insertSpec = addQuotedField(insertSpec, COL_R, item.getDomain(), String.class);
+//        insertSpec = addQuotedField(insertSpec, COL_ENABLED, item.isEnabled(), String.class);
+//        insertSpec = addQuotedField(insertSpec, COL_TYPE, item.getType(), String.class);
+//        insertSpec = addQuotedField(insertSpec, COL_NAME, item.getName(), String.class);
+//        insertSpec = addQuotedField(insertSpec, COL_DATA_TYPE, item.getDataType(), String.class);
+//        insertSpec = addQuotedField(insertSpec, COL_CONFIG, item.getConfiguration(), String.class);
+//        insertSpec = addQuotedField(insertSpec, COL_IS_SYSTEM, item.isSystem(), String.class);
+//        insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+//        insertSpec = addQuotedField(insertSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+//
+//        Mono<Long> action = insertSpec.fetch().rowsUpdated();
+//        return monoToSingle(action.as(trx::transactional))
+//                .flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
     public Single<Reporter> update(Reporter item) {
         LOGGER.debug("Update reporter with id '{}'", item.getId());
         TransactionalOperator trx = TransactionalOperator.create(tm);
-
+        if (true) {
+            throw new IllegalStateException("not implemented");///todo
+        }
         DatabaseClient.GenericExecuteSpec updateSpec = getTemplate().getDatabaseClient().sql(updateStatement);
 
         updateSpec = addQuotedField(updateSpec, COL_ID, item.getId(), String.class);
-        updateSpec = addQuotedField(updateSpec, COL_DOMAIN, item.getDomain(), String.class);
+//        updateSpec = addQuotedField(updateSpec, COL_DOMAIN, item.getDomain(), String.class);
         updateSpec = addQuotedField(updateSpec, COL_ENABLED, item.isEnabled(), String.class);
         updateSpec = addQuotedField(updateSpec, COL_TYPE, item.getType(), String.class);
         updateSpec = addQuotedField(updateSpec, COL_NAME, item.getName(), String.class);

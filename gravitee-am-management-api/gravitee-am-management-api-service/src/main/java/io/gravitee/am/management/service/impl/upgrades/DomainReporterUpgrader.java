@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ReporterService;
 import io.reactivex.rxjava3.core.Completable;
@@ -49,12 +50,12 @@ public class DomainReporterUpgrader extends AsyncUpgrader {
     }
 
     private Completable updateDefaultReporter(Domain domain) {
-        return reporterService.findByDomain(domain.getId())
+        return reporterService.findByReference(Reference.domain(domain.getId()))
                 .toList()
                 .flatMapCompletable(reporters -> {
                     if (reporters == null || reporters.isEmpty()) {
                         logger.info("No default reporter found for domain {}, update domain", domain.getName());
-                        return reporterService.createDefault(domain.getId())
+                        return reporterService.createDefault(Reference.domain(domain.getId()))
                                 .ignoreElement();
                     }
                     return Completable.complete();

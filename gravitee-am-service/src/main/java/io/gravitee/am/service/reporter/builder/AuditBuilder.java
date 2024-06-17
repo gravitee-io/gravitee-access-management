@@ -28,6 +28,7 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.model.Audit;
@@ -44,7 +45,7 @@ import static com.fasterxml.jackson.core.JsonToken.VALUE_EMBEDDED_OBJECT;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class AuditBuilder<T> {
+public abstract class AuditBuilder<T extends AuditBuilder<T>> {
 
     private static final String UPDATED_AT = "updatedAt";
     private static final String CREATED_AT = "createdAt";
@@ -102,6 +103,11 @@ public abstract class AuditBuilder<T> {
     public T referenceId(String referenceId) {
         this.referenceId = referenceId;
         return (T) this;
+    }
+
+    public T reference(Reference reference) {
+        return referenceType(reference.type())
+                .referenceId(reference.id());
     }
 
     // TODO: to remove when all resources will handle referenceType and referenceId.

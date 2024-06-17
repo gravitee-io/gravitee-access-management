@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.rxjava3.core.Flowable;
@@ -27,5 +28,5 @@ public interface ReporterRepository extends CrudRepository<Reporter, String> {
 
     Flowable<Reporter> findAll();
 
-    Flowable<Reporter> findByDomain(String domain);
+    Flowable<Reporter> findByReference(Reference reference);
 }

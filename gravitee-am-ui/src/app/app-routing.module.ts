@@ -13,236 +13,236 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import {NgModule} from '@angular/core';
+import {RouterModule, Routes} from '@angular/router';
 
-import { LoginComponent } from './login/login.component';
-import { LoginCallbackComponent } from './login/callback/callback.component';
-import { DomainsComponent } from './settings/domains/domains.component';
-import { DomainComponent } from './domain/domain.component';
-import { DomainDashboardComponent } from './domain/dashboard/dashboard.component';
-import { DomainSettingsComponent } from './domain/settings/settings.component';
-import { DomainSettingsGeneralComponent } from './domain/settings/general/general.component';
-import { DomainSettingsOpenidClientRegistrationComponent } from './domain/settings/openid/client-registration/client-registration.component';
-import { ClientRegistrationSettingsComponent } from './domain/settings/openid/client-registration/settings/settings.component';
-import { ClientRegistrationDefaultScopeComponent } from './domain/settings/openid/client-registration/default-scope/default-scope.component';
-import { ClientRegistrationAllowedScopeComponent } from './domain/settings/openid/client-registration/allowed-scope/allowed-scope.component';
-import { ClientRegistrationTemplatesComponent } from './domain/settings/openid/client-registration/templates/templates.component';
-import { DomainSettingsCertificatesComponent } from './domain/settings/certificates/certificates.component';
-import { DomainSettingsProvidersComponent } from './domain/settings/providers/providers.component';
-import { DomainSettingsRolesComponent } from './domain/settings/roles/roles.component';
-import { DomainSettingsScopesComponent } from './domain/settings/scopes/scopes.component';
-import { DomainSettingsFormsComponent } from './domain/settings/forms/forms.component';
-import { DomainSettingsFormComponent } from './domain/settings/forms/form/form.component';
-import { DomainSettingsLoginComponent } from './domain/settings/login/login.component';
-import { DomainSettingsEmailsComponent } from './domain/settings/emails/emails.component';
-import { DomainSettingsEmailComponent } from './domain/settings/emails/email/email.component';
-import { DomainSettingsExtensionGrantsComponent } from './domain/settings/extension-grants/extension-grants.component';
-import { DomainSettingsAccountComponent } from './domain/settings/account/account.component';
-import { DomainSettingsSelfServiceAccountComponent } from './domain/settings/self-service-account/self-service-account.component';
-import { DomainSettingsMembershipsComponent } from './domain/settings/memberships/memberships.component';
-import { DomainSettingsFlowsComponent } from './domain/settings/flows/flows.component';
-import { DomainCreationComponent } from './domain/creation/domain-creation.component';
-import { ProviderCreationComponent } from './domain/settings/providers/creation/provider-creation.component';
-import { ProviderComponent } from './domain/settings/providers/provider/provider.component';
-import { LogoutCallbackComponent } from './logout/callback/callback.component';
-import { LogoutComponent } from './logout/logout.component';
-import { DomainsResolver } from './resolvers/domains.resolver';
-import { DomainResolver } from './resolvers/domain.resolver';
-import { DomainEntrypointResolver } from './resolvers/domain-entrypoint.resolver';
-import { DomainFlowsResolver } from './resolvers/domain-flows.resolver';
-import { ProvidersResolver } from './resolvers/providers.resolver';
-import { ProviderResolver } from './resolvers/provider.resolver';
-import { ProviderRolesComponent } from './domain/settings/providers/provider/roles/roles.component';
-import { ProviderSettingsComponent } from './domain/settings/providers/provider/settings/settings.component';
-import { ProviderMappersComponent } from './domain/settings/providers/provider/mappers/mappers.component';
-import { CertificatesResolver } from './resolvers/certificates.resolver';
-import { SignCertificatesResolver } from './resolvers/sign-certificates.resolver';
-import { CertificateCreationComponent } from './domain/settings/certificates/creation/certificate-creation.component';
-import { CertificateComponent } from './domain/settings/certificates/certificate/certificate.component';
-import { CertificateResolver } from './resolvers/certificate.resolver';
-import { RolesResolver } from './resolvers/roles.resolver';
-import { PageRolesResolver } from './resolvers/page-roles.resolver';
-import { RoleCreationComponent } from './domain/settings/roles/creation/role-creation.component';
-import { RoleComponent } from './domain/settings/roles/role/role.component';
-import { RoleResolver } from './resolvers/role.resolver';
-import { ScopeResolver } from './resolvers/scope.resolver';
-import { ScopesResolver } from './resolvers/scopes.resolver';
-import { ScopeCreationComponent } from './domain/settings/scopes/creation/scope-creation.component';
-import { ScopeComponent } from './domain/settings/scopes/scope/scope.component';
-import { SettingsComponent } from './settings/settings.component';
-import { SettingsMembershipsComponent } from './settings/memberships/memberships.component';
-import { UsersComponent } from './domain/settings/users/users.component';
-import { UserComponent } from './domain/settings/users/user/user.component';
-import { UserResolver } from './resolvers/user.resolver';
-import { UserCreationComponent } from './domain/settings/users/creation/user-creation.component';
-import { UserProfileComponent } from './domain/settings/users/user/profile/profile.component';
-import { UserApplicationsComponent } from './domain/settings/users/user/applications/applications.component';
-import { UserApplicationComponent } from './domain/settings/users/user/applications/application/application.component';
-import { UserRolesComponent } from './domain/settings/users/user/roles/roles.component';
-import { UserRolesResolver } from './resolvers/user-roles.resolver';
-import { DynamicUserRolesResolver } from './resolvers/dynamic-user-roles.resolver';
-import { UserFactorsComponent } from './domain/settings/users/user/factors/factors.component';
-import { UserCredentialsResolver } from './resolvers/user-credentials.resolver';
-import { UserCredentialResolver } from './resolvers/user-credential.resolver';
-import { UserCredentialsComponent } from './domain/settings/users/user/credentials/credentials.component';
-import { UserCredentialComponent } from './domain/settings/users/user/credentials/credential/credential.component';
-import { ExtensionGrantCreationComponent } from './domain/settings/extension-grants/creation/extension-grant-creation.component';
-import { ExtensionGrantComponent } from './domain/settings/extension-grants/extension-grant/extension-grant.component';
-import { ExtensionGrantsResolver } from './resolvers/extension-grants.resolver';
-import { ExtensionGrantResolver } from './resolvers/extension-grant.resolver';
-import { ManagementComponent } from './settings/management/management.component';
-import { ManagementGeneralComponent } from './settings/management/general/general.component';
-import { FormResolver } from './resolvers/form.resolver';
-import { GroupsResolver } from './resolvers/groups.resolver';
-import { GroupsComponent } from './domain/settings/groups/groups.component';
-import { GroupCreationComponent } from './domain/settings/groups/creation/group-creation.component';
-import { GroupResolver } from './resolvers/group.resolver';
-import { GroupComponent } from './domain/settings/groups/group/group.component';
-import { GroupSettingsComponent } from './domain/settings/groups/group/settings/settings.component';
-import { GroupMembersComponent } from './domain/settings/groups/group/members/members.component';
-import { GroupRolesComponent } from './domain/settings/groups/group/roles/roles.component';
-import { GroupRolesResolver } from './resolvers/group-roles.resolver';
-import { ScimComponent } from './domain/settings/scim/scim.component';
-import { EmailResolver } from './resolvers/email.resolver';
-import { ConsentsResolver } from './resolvers/consents.resolver';
-import { AuditResolver } from './resolvers/audit.resolver';
-import { AuditsComponent } from './domain/settings/audits/audits.component';
-import { AuditComponent } from './domain/settings/audits/audit/audit.component';
-import { AuditsSettingsComponent } from './domain/settings/audits/settings/settings.component';
-import { ReportersResolver } from './resolvers/reporters.resolver';
-import { ReporterResolver } from './resolvers/reporter.resolver';
-import { ReporterComponent } from './domain/settings/audits/settings/reporter/reporter.component';
-import { TagsResolver } from './resolvers/tags.resolver';
-import { TagsComponent } from './settings/management/tags/tags.component';
-import { TagCreationComponent } from './settings/management/tags/creation/tag-creation.component';
-import { TagComponent } from './settings/management/tags/tag/tag.component';
-import { TagResolver } from './resolvers/tag.resolver';
-import { GroupMembersResolver } from './resolvers/group-members.resolver';
-import { ApplicationsComponent } from './domain/applications/applications.component';
-import { ApplicationsResolver } from './resolvers/applications.resolver';
-import { ApplicationCreationComponent } from './domain/applications/creation/application-creation.component';
-import { ApplicationComponent } from './domain/applications/application/application.component';
-import { ApplicationOverviewComponent } from './domain/applications/application/overview/overview.component';
-import { ApplicationEndpointsComponent } from './domain/applications/application/endpoints/endpoints.component';
-import { ApplicationResolver } from './resolvers/application.resolver';
-import { ApplicationPermissionsResolver } from './resolvers/application-permissions.resolver';
-import { ApplicationIdPComponent } from './domain/applications/application/idp/idp.component';
-import { ApplicationDesignComponent } from './domain/applications/application/design/design.component';
-import { ApplicationFormsComponent } from './domain/applications/application/design/forms/forms.component';
-import { ApplicationFormComponent } from './domain/applications/application/design/forms/form/form.component';
-import { ApplicationEmailsComponent } from './domain/applications/application/design/emails/emails.component';
-import { ApplicationEmailComponent } from './domain/applications/application/design/emails/email/email.component';
-import { ApplicationAdvancedComponent } from './domain/applications/application/advanced/advanced.component';
-import { ApplicationGeneralComponent } from './domain/applications/application/advanced/general/general.component';
-import { PasswordPolicyComponent } from './domain/applications/application/advanced/password-policy/password-policy.component';
-import { ApplicationAccountSettingsComponent } from './domain/applications/application/advanced/account/account.component';
-import { ApplicationOAuth2Component } from './domain/applications/application/advanced/oauth2/oauth2.component';
-import { ApplicationSaml2Component } from './domain/applications/application/advanced/saml2/saml2.component';
-import { ApplicationScopesComponent } from './domain/applications/application/advanced/oauth2/scopes/application-scopes.component';
-import { ApplicationTokensComponent } from './domain/applications/application/advanced/oauth2/tokens/application-tokens.component';
-import { ApplicationGrantFlowsComponent } from './domain/applications/application/advanced/oauth2/grantFlows/application-grant-flows.component';
-import { ApplicationCertificatesComponent } from './domain/applications/application/advanced/certificates/certificates.component';
-import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
-import { ApplicationMembershipsComponent } from './domain/applications/application/advanced/memberships/memberships.component';
-import { ApplicationFactorsComponent } from './domain/applications/application/advanced/factors/factors.component';
-import { ApplicationFlowsComponent } from './domain/applications/application/design/flows/flows.component';
-import { ManagementRolesComponent } from './settings/management/roles/roles.component';
-import { ManagementRoleComponent } from './settings/management/roles/role/role.component';
-import { MembershipsResolver } from './resolvers/memberships.resolver';
-import { SettingsResolver } from './resolvers/settings.resolver';
-import { AuthGuard } from './guards/auth-guard.service';
-import { HomeComponent } from './home/home.component';
-import { DomainSettingsFactorsComponent } from './domain/settings/factors/factors.component';
-import { FactorsResolver } from './resolvers/factors.resolver';
-import { FactorCreationComponent } from './domain/settings/factors/creation/factor-creation.component';
-import { FactorComponent } from './domain/settings/factors/factor/factor.component';
-import { FactorResolver } from './resolvers/factor.resolver';
-import { EnrolledFactorsResolver } from './resolvers/enrolled-factors.resolver';
-import { DomainSettingsResourcesComponent } from './domain/settings/resources/resources.component';
-import { ResourceCreationComponent } from './domain/settings/resources/creation/resource-creation.component';
-import { ResourceComponent } from './domain/settings/resources/resource/resource.component';
-import { ResourceResolver } from './resolvers/resource.resolver';
-import { ResourcesResolver } from './resolvers/resources.resolver';
-import { NotFoundComponent } from './not-found/not-found.component';
-import { EntrypointsComponent } from './settings/management/entrypoints/entrypoints.component';
-import { EntrypointCreationComponent } from './settings/management/entrypoints/creation/entrypoint-creation.component';
-import { EntrypointComponent } from './settings/management/entrypoints/entrypoint/entrypoint.component';
-import { EntrypointResolver } from './resolvers/entrypoint.resolver';
-import { EntrypointsResolver } from './resolvers/entrypoints.resolver';
-import { UmaComponent } from './domain/settings/uma/uma.component';
-import { ApplicationResourcesComponent } from './domain/applications/application/advanced/resources/resources.component';
-import { ApplicationResourcesResolver } from './resolvers/application-resources.resolver';
-import { ApplicationResourceComponent } from './domain/applications/application/advanced/resources/resource/resource.component';
-import { ApplicationResourceResolver } from './resolvers/application-resource.resolver';
-import { ApplicationResourcePolicyComponent } from './domain/applications/application/advanced/resources/resource/policies/policy/policy.component';
-import { ApplicationResourcePolicyResolver } from './resolvers/application-resource-policy.resolver';
-import { ApplicationFlowsResolver } from './resolvers/application-flows.resolver';
-import { DomainSettingsEntrypointsComponent } from './domain/settings/entrypoints/entrypoints.component';
-import { DomainSettingsWebAuthnComponent } from './domain/settings/webauthn/webauthn.component';
-import { ApplicationLoginSettingsComponent } from './domain/applications/application/advanced/login/login.component';
-import { IdentitiesResolver } from './resolvers/identities.resolver';
-import { PluginPoliciesResolver } from './resolvers/plugin-policies.resolver';
-import { PlatformFlowSchemaResolver } from './resolvers/platform-flow-schema.resolver';
-import { NewsletterComponent } from './newsletter/newsletter.component';
-import { NewsletterResolver } from './resolvers/newsletter.resolver';
-import { ApplicationAnalyticsComponent } from './domain/applications/application/analytics/analytics.component';
-import { UserHistoryComponent } from './domain/settings/users/user/history/history.component';
-import { EnvironmentResolver } from './resolvers/environment-resolver.service';
-import { DummyComponent } from './components/dummy/dummy.component';
-import { CockpitComponent } from './settings/cockpit/cockpit.component';
-import { InstallationResolver } from './resolvers/installation.resolver';
-import { EnvironmentComponent } from './environment/environment.component';
-import { PluginReportersResolver } from './resolvers/plugin-reporters.resolver';
-import { DomainAlertGeneralComponent } from './domain/alerts/general/general.component';
-import { DomainAlertsComponent } from './domain/alerts/alerts.component';
-import { NotifiersResolver } from './resolvers/notifiers.resolver';
-import { AlertNotifiersResolver } from './resolvers/alert-notifiers.resolver';
-import { DomainAlertNotifiersComponent } from './domain/alerts/notifiers/notifiers.component';
-import { AlertNotifierResolver } from './resolvers/alert-notifier.resolver';
-import { DomainAlertNotifierCreationComponent } from './domain/alerts/notifiers/creation/notifier-creation.component';
-import { DomainAlertNotifierComponent } from './domain/alerts/notifiers/notifier/notifier.component';
-import { PlatformAlertStatusResolver } from './resolvers/platform-alert-status.resolver';
-import { FactorPluginsResolver } from './resolvers/factor-plugins.resolver';
-import { ResourcePluginsResolver } from './resolvers/resource-plugins.resolver';
-import { DomainSettingsBotDetectionsComponent } from './domain/settings/botdetections/bot-detections.component';
-import { BotDetectionsResolver } from './resolvers/bot-detections.resolver';
-import { BotDetectionCreationComponent } from './domain/settings/botdetections/creation/bot-detection-creation.component';
-import { BotDetectionPluginsResolver } from './resolvers/bot-detection-plugins.resolver';
-import { BotDetectionComponent } from './domain/settings/botdetections/bot-detection/bot-detection.component';
-import { BotDetectionResolver } from './resolvers/bot-detection.resolver';
-import { ScopesAllResolver } from './resolvers/scopes-all.resolver';
-import { OIDCProfileComponent } from './domain/settings/openid/oidc-profile/oidc-profile.component';
-import { DomainSettingsDeviceIdentifiersComponent } from './domain/settings/deviceidentifiers/device-identifiers.component';
-import { DeviceIdentifierPluginsResolver } from './resolvers/device-identifier-plugins.resolver';
-import { DeviceIdentifierCreationComponent } from './domain/settings/deviceidentifiers/creation/device-identifier-creation.component';
-import { DeviceIdentifiersResolver } from './resolvers/device-identifiers.resolver';
-import { DeviceIdentifierResolver } from './resolvers/device-identifier.resolver';
-import { DeviceIdentifierComponent } from './domain/settings/deviceidentifiers/device-identifier/device-identifier.component';
-import { UserDevicesComponent } from './domain/settings/users/user/devices/devices.component';
-import { UserDevicesResolver } from './resolvers/user-devices.resolver';
-import { CibaComponent } from './domain/settings/openid/ciba/ciba.component';
-import { CibaSettingsComponent } from './domain/settings/openid/ciba/settings/ciba-settings.component';
-import { Saml2Component } from './domain/settings/saml2/saml2.component';
-import { DeviceNotifiersComponent } from './domain/settings/openid/ciba/device-notifiers/device-notifiers.component';
-import { DeviceNotifiersCreationComponent } from './domain/settings/openid/ciba/device-notifiers/create/device-notifiers-creation.component';
-import { DeviceNotifiersResolver } from './resolvers/device-notifiers.resolver';
-import { DeviceNotifierPluginsResolver } from './resolvers/device-notifier-plugins.resolver';
-import { DeviceNotifierResolver } from './resolvers/device-notifier.resolver';
-import { DeviceNotifierComponent } from './domain/settings/openid/ciba/device-notifiers/device-notifier/device-notifier.component';
-import { ApplicationCookieSettingsComponent } from './domain/applications/application/advanced/cookie/cookie.component';
-import { DomainSettingsDictionariesComponent } from './domain/settings/texts/dictionaries.component';
-import { DictionariesResolver } from './resolvers/dictionaries.resolver';
-import { DomainSettingsThemeComponent } from './domain/settings/theme/theme.component';
-import { ThemesResolver } from './resolvers/themes.resolver';
-import { LicenseGuard } from './guards/license-guard.service';
-import { AmFeature } from './components/gio-license/gio-license-data';
-import { UserIdentitiesComponent } from './domain/settings/users/user/identities/identities.component';
-import { UserIdentitiesResolver } from './resolvers/user-identities.resolver';
-import { PasswordPoliciesComponent } from './domain/settings/password-policies/domain-password-policies.component';
-import { DomainPasswordPolicyComponent } from './domain/settings/password-policy/domain-password-policy.component';
-import { PasswordPolicyResolver } from './resolvers/password-policy-resolver';
-import { PasswordPoliciesResolver } from './resolvers/password-policies-resolver.service';
+import {LoginComponent} from './login/login.component';
+import {LoginCallbackComponent} from './login/callback/callback.component';
+import {DomainsComponent} from './settings/domains/domains.component';
+import {DomainComponent} from './domain/domain.component';
+import {DomainDashboardComponent} from './domain/dashboard/dashboard.component';
+import {DomainSettingsComponent} from './domain/settings/settings.component';
+import {DomainSettingsGeneralComponent} from './domain/settings/general/general.component';
+import {DomainSettingsOpenidClientRegistrationComponent} from './domain/settings/openid/client-registration/client-registration.component';
+import {ClientRegistrationSettingsComponent} from './domain/settings/openid/client-registration/settings/settings.component';
+import {ClientRegistrationDefaultScopeComponent} from './domain/settings/openid/client-registration/default-scope/default-scope.component';
+import {ClientRegistrationAllowedScopeComponent} from './domain/settings/openid/client-registration/allowed-scope/allowed-scope.component';
+import {ClientRegistrationTemplatesComponent} from './domain/settings/openid/client-registration/templates/templates.component';
+import {DomainSettingsCertificatesComponent} from './domain/settings/certificates/certificates.component';
+import {DomainSettingsProvidersComponent} from './domain/settings/providers/providers.component';
+import {DomainSettingsRolesComponent} from './domain/settings/roles/roles.component';
+import {DomainSettingsScopesComponent} from './domain/settings/scopes/scopes.component';
+import {DomainSettingsFormsComponent} from './domain/settings/forms/forms.component';
+import {DomainSettingsFormComponent} from './domain/settings/forms/form/form.component';
+import {DomainSettingsLoginComponent} from './domain/settings/login/login.component';
+import {DomainSettingsEmailsComponent} from './domain/settings/emails/emails.component';
+import {DomainSettingsEmailComponent} from './domain/settings/emails/email/email.component';
+import {DomainSettingsExtensionGrantsComponent} from './domain/settings/extension-grants/extension-grants.component';
+import {DomainSettingsAccountComponent} from './domain/settings/account/account.component';
+import {DomainSettingsSelfServiceAccountComponent} from './domain/settings/self-service-account/self-service-account.component';
+import {DomainSettingsMembershipsComponent} from './domain/settings/memberships/memberships.component';
+import {DomainSettingsFlowsComponent} from './domain/settings/flows/flows.component';
+import {DomainCreationComponent} from './domain/creation/domain-creation.component';
+import {ProviderCreationComponent} from './domain/settings/providers/creation/provider-creation.component';
+import {ProviderComponent} from './domain/settings/providers/provider/provider.component';
+import {LogoutCallbackComponent} from './logout/callback/callback.component';
+import {LogoutComponent} from './logout/logout.component';
+import {DomainsResolver} from './resolvers/domains.resolver';
+import {DomainResolver} from './resolvers/domain.resolver';
+import {DomainEntrypointResolver} from './resolvers/domain-entrypoint.resolver';
+import {DomainFlowsResolver} from './resolvers/domain-flows.resolver';
+import {ProvidersResolver} from './resolvers/providers.resolver';
+import {ProviderResolver} from './resolvers/provider.resolver';
+import {ProviderRolesComponent} from './domain/settings/providers/provider/roles/roles.component';
+import {ProviderSettingsComponent} from './domain/settings/providers/provider/settings/settings.component';
+import {ProviderMappersComponent} from './domain/settings/providers/provider/mappers/mappers.component';
+import {CertificatesResolver} from './resolvers/certificates.resolver';
+import {SignCertificatesResolver} from './resolvers/sign-certificates.resolver';
+import {CertificateCreationComponent} from './domain/settings/certificates/creation/certificate-creation.component';
+import {CertificateComponent} from './domain/settings/certificates/certificate/certificate.component';
+import {CertificateResolver} from './resolvers/certificate.resolver';
+import {RolesResolver} from './resolvers/roles.resolver';
+import {PageRolesResolver} from './resolvers/page-roles.resolver';
+import {RoleCreationComponent} from './domain/settings/roles/creation/role-creation.component';
+import {RoleComponent} from './domain/settings/roles/role/role.component';
+import {RoleResolver} from './resolvers/role.resolver';
+import {ScopeResolver} from './resolvers/scope.resolver';
+import {ScopesResolver} from './resolvers/scopes.resolver';
+import {ScopeCreationComponent} from './domain/settings/scopes/creation/scope-creation.component';
+import {ScopeComponent} from './domain/settings/scopes/scope/scope.component';
+import {SettingsComponent} from './settings/settings.component';
+import {SettingsMembershipsComponent} from './settings/memberships/memberships.component';
+import {UsersComponent} from './domain/settings/users/users.component';
+import {UserComponent} from './domain/settings/users/user/user.component';
+import {UserResolver} from './resolvers/user.resolver';
+import {UserCreationComponent} from './domain/settings/users/creation/user-creation.component';
+import {UserProfileComponent} from './domain/settings/users/user/profile/profile.component';
+import {UserApplicationsComponent} from './domain/settings/users/user/applications/applications.component';
+import {UserApplicationComponent} from './domain/settings/users/user/applications/application/application.component';
+import {UserRolesComponent} from './domain/settings/users/user/roles/roles.component';
+import {UserRolesResolver} from './resolvers/user-roles.resolver';
+import {DynamicUserRolesResolver} from './resolvers/dynamic-user-roles.resolver';
+import {UserFactorsComponent} from './domain/settings/users/user/factors/factors.component';
+import {UserCredentialsResolver} from './resolvers/user-credentials.resolver';
+import {UserCredentialResolver} from './resolvers/user-credential.resolver';
+import {UserCredentialsComponent} from './domain/settings/users/user/credentials/credentials.component';
+import {UserCredentialComponent} from './domain/settings/users/user/credentials/credential/credential.component';
+import {ExtensionGrantCreationComponent} from './domain/settings/extension-grants/creation/extension-grant-creation.component';
+import {ExtensionGrantComponent} from './domain/settings/extension-grants/extension-grant/extension-grant.component';
+import {ExtensionGrantsResolver} from './resolvers/extension-grants.resolver';
+import {ExtensionGrantResolver} from './resolvers/extension-grant.resolver';
+import {ManagementComponent} from './settings/management/management.component';
+import {ManagementGeneralComponent} from './settings/management/general/general.component';
+import {FormResolver} from './resolvers/form.resolver';
+import {GroupsResolver} from './resolvers/groups.resolver';
+import {GroupsComponent} from './domain/settings/groups/groups.component';
+import {GroupCreationComponent} from './domain/settings/groups/creation/group-creation.component';
+import {GroupResolver} from './resolvers/group.resolver';
+import {GroupComponent} from './domain/settings/groups/group/group.component';
+import {GroupSettingsComponent} from './domain/settings/groups/group/settings/settings.component';
+import {GroupMembersComponent} from './domain/settings/groups/group/members/members.component';
+import {GroupRolesComponent} from './domain/settings/groups/group/roles/roles.component';
+import {GroupRolesResolver} from './resolvers/group-roles.resolver';
+import {ScimComponent} from './domain/settings/scim/scim.component';
+import {EmailResolver} from './resolvers/email.resolver';
+import {ConsentsResolver} from './resolvers/consents.resolver';
+import {AuditResolver} from './resolvers/audit.resolver';
+import {AuditsComponent} from './domain/settings/audits/audits.component';
+import {AuditComponent} from './domain/settings/audits/audit/audit.component';
+import {AuditsSettingsComponent} from './domain/settings/audits/settings/settings.component';
+import {ReportersResolver} from './resolvers/reporters.resolver';
+import {ReporterResolver} from './resolvers/reporter.resolver';
+import {ReporterComponent} from './domain/settings/audits/settings/reporter/reporter.component';
+import {TagsResolver} from './resolvers/tags.resolver';
+import {TagsComponent} from './settings/management/tags/tags.component';
+import {TagCreationComponent} from './settings/management/tags/creation/tag-creation.component';
+import {TagComponent} from './settings/management/tags/tag/tag.component';
+import {TagResolver} from './resolvers/tag.resolver';
+import {GroupMembersResolver} from './resolvers/group-members.resolver';
+import {ApplicationsComponent} from './domain/applications/applications.component';
+import {ApplicationsResolver} from './resolvers/applications.resolver';
+import {ApplicationCreationComponent} from './domain/applications/creation/application-creation.component';
+import {ApplicationComponent} from './domain/applications/application/application.component';
+import {ApplicationOverviewComponent} from './domain/applications/application/overview/overview.component';
+import {ApplicationEndpointsComponent} from './domain/applications/application/endpoints/endpoints.component';
+import {ApplicationResolver} from './resolvers/application.resolver';
+import {ApplicationPermissionsResolver} from './resolvers/application-permissions.resolver';
+import {ApplicationIdPComponent} from './domain/applications/application/idp/idp.component';
+import {ApplicationDesignComponent} from './domain/applications/application/design/design.component';
+import {ApplicationFormsComponent} from './domain/applications/application/design/forms/forms.component';
+import {ApplicationFormComponent} from './domain/applications/application/design/forms/form/form.component';
+import {ApplicationEmailsComponent} from './domain/applications/application/design/emails/emails.component';
+import {ApplicationEmailComponent} from './domain/applications/application/design/emails/email/email.component';
+import {ApplicationAdvancedComponent} from './domain/applications/application/advanced/advanced.component';
+import {ApplicationGeneralComponent} from './domain/applications/application/advanced/general/general.component';
+import {PasswordPolicyComponent} from './domain/applications/application/advanced/password-policy/password-policy.component';
+import {ApplicationAccountSettingsComponent} from './domain/applications/application/advanced/account/account.component';
+import {ApplicationOAuth2Component} from './domain/applications/application/advanced/oauth2/oauth2.component';
+import {ApplicationSaml2Component} from './domain/applications/application/advanced/saml2/saml2.component';
+import {ApplicationScopesComponent} from './domain/applications/application/advanced/oauth2/scopes/application-scopes.component';
+import {ApplicationTokensComponent} from './domain/applications/application/advanced/oauth2/tokens/application-tokens.component';
+import {ApplicationGrantFlowsComponent} from './domain/applications/application/advanced/oauth2/grantFlows/application-grant-flows.component';
+import {ApplicationCertificatesComponent} from './domain/applications/application/advanced/certificates/certificates.component';
+import {ApplicationMetadataComponent} from './domain/applications/application/advanced/metadata/metadata.component';
+import {ApplicationMembershipsComponent} from './domain/applications/application/advanced/memberships/memberships.component';
+import {ApplicationFactorsComponent} from './domain/applications/application/advanced/factors/factors.component';
+import {ApplicationFlowsComponent} from './domain/applications/application/design/flows/flows.component';
+import {ManagementRolesComponent} from './settings/management/roles/roles.component';
+import {ManagementRoleComponent} from './settings/management/roles/role/role.component';
+import {MembershipsResolver} from './resolvers/memberships.resolver';
+import {SettingsResolver} from './resolvers/settings.resolver';
+import {AuthGuard} from './guards/auth-guard.service';
+import {HomeComponent} from './home/home.component';
+import {DomainSettingsFactorsComponent} from './domain/settings/factors/factors.component';
+import {FactorsResolver} from './resolvers/factors.resolver';
+import {FactorCreationComponent} from './domain/settings/factors/creation/factor-creation.component';
+import {FactorComponent} from './domain/settings/factors/factor/factor.component';
+import {FactorResolver} from './resolvers/factor.resolver';
+import {EnrolledFactorsResolver} from './resolvers/enrolled-factors.resolver';
+import {DomainSettingsResourcesComponent} from './domain/settings/resources/resources.component';
+import {ResourceCreationComponent} from './domain/settings/resources/creation/resource-creation.component';
+import {ResourceComponent} from './domain/settings/resources/resource/resource.component';
+import {ResourceResolver} from './resolvers/resource.resolver';
+import {ResourcesResolver} from './resolvers/resources.resolver';
+import {NotFoundComponent} from './not-found/not-found.component';
+import {EntrypointsComponent} from './settings/management/entrypoints/entrypoints.component';
+import {EntrypointCreationComponent} from './settings/management/entrypoints/creation/entrypoint-creation.component';
+import {EntrypointComponent} from './settings/management/entrypoints/entrypoint/entrypoint.component';
+import {EntrypointResolver} from './resolvers/entrypoint.resolver';
+import {EntrypointsResolver} from './resolvers/entrypoints.resolver';
+import {UmaComponent} from './domain/settings/uma/uma.component';
+import {ApplicationResourcesComponent} from './domain/applications/application/advanced/resources/resources.component';
+import {ApplicationResourcesResolver} from './resolvers/application-resources.resolver';
+import {ApplicationResourceComponent} from './domain/applications/application/advanced/resources/resource/resource.component';
+import {ApplicationResourceResolver} from './resolvers/application-resource.resolver';
+import {ApplicationResourcePolicyComponent} from './domain/applications/application/advanced/resources/resource/policies/policy/policy.component';
+import {ApplicationResourcePolicyResolver} from './resolvers/application-resource-policy.resolver';
+import {ApplicationFlowsResolver} from './resolvers/application-flows.resolver';
+import {DomainSettingsEntrypointsComponent} from './domain/settings/entrypoints/entrypoints.component';
+import {DomainSettingsWebAuthnComponent} from './domain/settings/webauthn/webauthn.component';
+import {ApplicationLoginSettingsComponent} from './domain/applications/application/advanced/login/login.component';
+import {IdentitiesResolver} from './resolvers/identities.resolver';
+import {PluginPoliciesResolver} from './resolvers/plugin-policies.resolver';
+import {PlatformFlowSchemaResolver} from './resolvers/platform-flow-schema.resolver';
+import {NewsletterComponent} from './newsletter/newsletter.component';
+import {NewsletterResolver} from './resolvers/newsletter.resolver';
+import {ApplicationAnalyticsComponent} from './domain/applications/application/analytics/analytics.component';
+import {UserHistoryComponent} from './domain/settings/users/user/history/history.component';
+import {EnvironmentResolver} from './resolvers/environment-resolver.service';
+import {DummyComponent} from './components/dummy/dummy.component';
+import {CockpitComponent} from './settings/cockpit/cockpit.component';
+import {InstallationResolver} from './resolvers/installation.resolver';
+import {EnvironmentComponent} from './environment/environment.component';
+import {PluginReportersResolver} from './resolvers/plugin-reporters.resolver';
+import {DomainAlertGeneralComponent} from './domain/alerts/general/general.component';
+import {DomainAlertsComponent} from './domain/alerts/alerts.component';
+import {NotifiersResolver} from './resolvers/notifiers.resolver';
+import {AlertNotifiersResolver} from './resolvers/alert-notifiers.resolver';
+import {DomainAlertNotifiersComponent} from './domain/alerts/notifiers/notifiers.component';
+import {AlertNotifierResolver} from './resolvers/alert-notifier.resolver';
+import {DomainAlertNotifierCreationComponent} from './domain/alerts/notifiers/creation/notifier-creation.component';
+import {DomainAlertNotifierComponent} from './domain/alerts/notifiers/notifier/notifier.component';
+import {PlatformAlertStatusResolver} from './resolvers/platform-alert-status.resolver';
+import {FactorPluginsResolver} from './resolvers/factor-plugins.resolver';
+import {ResourcePluginsResolver} from './resolvers/resource-plugins.resolver';
+import {DomainSettingsBotDetectionsComponent} from './domain/settings/botdetections/bot-detections.component';
+import {BotDetectionsResolver} from './resolvers/bot-detections.resolver';
+import {BotDetectionCreationComponent} from './domain/settings/botdetections/creation/bot-detection-creation.component';
+import {BotDetectionPluginsResolver} from './resolvers/bot-detection-plugins.resolver';
+import {BotDetectionComponent} from './domain/settings/botdetections/bot-detection/bot-detection.component';
+import {BotDetectionResolver} from './resolvers/bot-detection.resolver';
+import {ScopesAllResolver} from './resolvers/scopes-all.resolver';
+import {OIDCProfileComponent} from './domain/settings/openid/oidc-profile/oidc-profile.component';
+import {DomainSettingsDeviceIdentifiersComponent} from './domain/settings/deviceidentifiers/device-identifiers.component';
+import {DeviceIdentifierPluginsResolver} from './resolvers/device-identifier-plugins.resolver';
+import {DeviceIdentifierCreationComponent} from './domain/settings/deviceidentifiers/creation/device-identifier-creation.component';
+import {DeviceIdentifiersResolver} from './resolvers/device-identifiers.resolver';
+import {DeviceIdentifierResolver} from './resolvers/device-identifier.resolver';
+import {DeviceIdentifierComponent} from './domain/settings/deviceidentifiers/device-identifier/device-identifier.component';
+import {UserDevicesComponent} from './domain/settings/users/user/devices/devices.component';
+import {UserDevicesResolver} from './resolvers/user-devices.resolver';
+import {CibaComponent} from './domain/settings/openid/ciba/ciba.component';
+import {CibaSettingsComponent} from './domain/settings/openid/ciba/settings/ciba-settings.component';
+import {Saml2Component} from './domain/settings/saml2/saml2.component';
+import {DeviceNotifiersComponent} from './domain/settings/openid/ciba/device-notifiers/device-notifiers.component';
+import {DeviceNotifiersCreationComponent} from './domain/settings/openid/ciba/device-notifiers/create/device-notifiers-creation.component';
+import {DeviceNotifiersResolver} from './resolvers/device-notifiers.resolver';
+import {DeviceNotifierPluginsResolver} from './resolvers/device-notifier-plugins.resolver';
+import {DeviceNotifierResolver} from './resolvers/device-notifier.resolver';
+import {DeviceNotifierComponent} from './domain/settings/openid/ciba/device-notifiers/device-notifier/device-notifier.component';
+import {ApplicationCookieSettingsComponent} from './domain/applications/application/advanced/cookie/cookie.component';
+import {DomainSettingsDictionariesComponent} from './domain/settings/texts/dictionaries.component';
+import {DictionariesResolver} from './resolvers/dictionaries.resolver';
+import {DomainSettingsThemeComponent} from './domain/settings/theme/theme.component';
+import {ThemesResolver} from './resolvers/themes.resolver';
+import {LicenseGuard} from './guards/license-guard.service';
+import {AmFeature} from './components/gio-license/gio-license-data';
+import {UserIdentitiesComponent} from './domain/settings/users/user/identities/identities.component';
+import {UserIdentitiesResolver} from './resolvers/user-identities.resolver';
+import {PasswordPoliciesComponent} from './domain/settings/password-policies/domain-password-policies.component';
+import {DomainPasswordPolicyComponent} from './domain/settings/password-policy/domain-password-policy.component';
+import {PasswordPolicyResolver} from './resolvers/password-policy-resolver';
+import {PasswordPoliciesResolver} from './resolvers/password-policies-resolver.service';
 
 const applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -686,6 +686,54 @@ export const routes: Routes = [
                 path: '',
                 pathMatch: 'full',
                 component: AuditsComponent,
+              },
+              {
+                path: 'settings',
+                children: [
+                  {
+                    path: '',
+                    pathMatch: 'full',
+                    component: AuditsSettingsComponent,
+                    canActivate: [AuthGuard],
+                    resolve: {
+                      reporters: ReportersResolver,
+                    },
+                    data: {
+                      perms: {
+                        only: ['domain_reporter_list'],
+                      },
+                    },
+                  },
+                  {
+                    path: 'new',
+                    component: ReporterComponent,
+                    canActivate: [AuthGuard],
+                    resolve: {
+                      reporterPlugins: PluginReportersResolver,
+                    },
+                    data: {
+                      perms: {
+                        only: ['domain_reporter_create'],
+                      },
+                    },
+                  },
+                  {
+                    path: ':reporterId',
+                    component: ReporterComponent,
+                    resolve: {
+                      reporter: ReporterResolver,
+                      reporterPlugins: PluginReportersResolver,
+                    },
+                    data: {
+                      breadcrumb: {
+                        label: 'reporter.name',
+                      },
+                      perms: {
+                        only: ['domain_reporter_read'],
+                      },
+                    },
+                  },
+                ],
               },
               {
                 path: ':auditId',

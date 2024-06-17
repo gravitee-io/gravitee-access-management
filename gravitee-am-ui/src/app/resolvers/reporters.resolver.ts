@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
-import { Observable } from 'rxjs';
+import {Injectable} from '@angular/core';
+import {ActivatedRouteSnapshot, RouterStateSnapshot} from '@angular/router';
+import {Observable} from 'rxjs';
 
-import { ReporterService } from '../services/reporter.service';
-import { OrganizationService } from '../services/organization.service';
+import {ReporterService} from '../services/reporter.service';
+import {OrganizationService} from '../services/organization.service';
 
 @Injectable()
 export class ReportersResolver {
@@ -28,6 +28,8 @@ export class ReportersResolver {
   ) {}
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> {
+    console.log('ReportersResolver: route: ', route)
+    console.log('ReportersResolver: state: ', state)
     if (state.url.startsWith('/settings')) {
       return this.organizationService.reporters();
     }

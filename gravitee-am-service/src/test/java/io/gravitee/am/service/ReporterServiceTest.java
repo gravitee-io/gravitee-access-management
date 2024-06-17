@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.management.api.ReporterRepository;
@@ -62,13 +63,14 @@ public class ReporterServiceTest {
         reporter.setType("reporter-am-file");
         reporter.setConfiguration("{\"filename\":\"9f4bdf97-5481-4420-8bdf-9754818420f3\"}");
 
-        when(reporterRepository.findByDomain(any())).thenReturn(Flowable.empty());
-        when(reporterRepository.create(any())).thenReturn(Single.just(new Reporter()));
+        when(reporterRepository.findByReference(any())).thenReturn(Flowable.empty());
+        when(reporterRepository.create(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
-        final TestObserver<Reporter> observer = reporterService.create("domain", reporter).test();
-        observer.awaitDone(10, TimeUnit.SECONDS);
-        observer.assertNoErrors();
+        reporterService.create(Reference.domain("domain"), reporter)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertNoErrors();
 
         verify(reporterRepository).create(any());
     }
@@ -81,7 +83,7 @@ public class ReporterServiceTest {
         reporter.setType("reporter-am-file");
         reporter.setConfiguration("{\"filename\":\"../9f4bdf97-5481-4420-8bdf-9754818420f3\"}");
 
-        final TestObserver<Reporter> observer = reporterService.create("domain", reporter).test();
+        final TestObserver<Reporter> observer = reporterService.create(Reference.domain("domain"), reporter).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(ex -> ex instanceof TechnicalManagementException && ex.getCause() instanceof ReporterConfigurationException);
 

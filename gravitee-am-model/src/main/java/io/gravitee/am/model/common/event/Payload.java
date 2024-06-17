@@ -16,6 +16,7 @@
 package io.gravitee.am.model.common.event;
 
 import io.gravitee.am.common.event.Action;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 
 import java.util.HashMap;
@@ -32,6 +33,10 @@ public class Payload extends HashMap<String, Object> {
     private static final String REFERENCE_ID = "referenceId";
     private static final String ACTION = "action";
 
+    public Payload(String id, Reference reference, Action action) {
+        this(id, reference.type(), reference.id(), action);
+    }
+    @Deprecated(since = "4.5")
     public Payload(String id, ReferenceType referenceType, String referenceId, Action action) {
         put(ID, id);
         if(referenceType != null) {

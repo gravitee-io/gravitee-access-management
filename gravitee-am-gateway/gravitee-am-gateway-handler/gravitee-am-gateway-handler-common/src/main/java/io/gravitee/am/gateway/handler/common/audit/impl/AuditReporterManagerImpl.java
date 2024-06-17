@@ -21,6 +21,7 @@ import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.utils.Tuple;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.common.event.Payload;
@@ -86,7 +87,7 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
             deploymentId = id;
 
             // Start reporters
-            reporterRepository.findByDomain(domain.getId()).toList()
+            reporterRepository.findByReference(Reference.domain(domain.getId())).toList()
                     .flatMap(reporters ->
                             environmentService
                                     .findById(domain.getReferenceId())
@@ -217,7 +218,7 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
                 if (reporterProvider != null) {
                     try {
                         logger.info("Starting reporter: {}", reporter.getName());
-                        io.gravitee.am.reporter.api.provider.Reporter eventBusReporter = new EventBusReporterWrapper(vertx, domain.getId(), reporterProvider);
+                        io.gravitee.am.reporter.api.provider.Reporter eventBusReporter = new EventBusReporterWrapper(vertx, Reference.domain(domain.getId()), reporterProvider);
                         eventBusReporter.start();
                         reporters.put(reporter.getId(), reporter);
                         reporterPlugins.put(reporter.getId(), eventBusReporter);

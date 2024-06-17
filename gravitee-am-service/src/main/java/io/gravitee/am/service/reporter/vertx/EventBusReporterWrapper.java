@@ -17,6 +17,7 @@ package io.gravitee.am.service.reporter.vertx;
 
 import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.model.Platform;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.reporter.api.Reportable;
@@ -49,18 +50,14 @@ public class EventBusReporterWrapper implements Reporter, Handler<Message<Report
     private Reporter reporter;
     private MessageConsumer messageConsumer;
 
-    public EventBusReporterWrapper(Vertx vertx, String domain, Reporter reporter) {
-        this(vertx, ReferenceType.DOMAIN, domain, reporter);
-    }
-
     public EventBusReporterWrapper(Vertx vertx, Reporter reporter) {
-        this(vertx, ReferenceType.PLATFORM, Platform.DEFAULT, reporter);
+        this(vertx, new Reference(ReferenceType.PLATFORM, Platform.DEFAULT), reporter);
     }
 
-    private EventBusReporterWrapper(Vertx vertx, ReferenceType referenceType, String referenceId, Reporter reporter) {
+    public EventBusReporterWrapper(Vertx vertx, Reference reference, Reporter reporter) {
         this.vertx = vertx;
-        this.referenceType = referenceType;
-        this.referenceId = referenceId;
+        this.referenceType = reference.type();
+        this.referenceId = reference.id();
         this.reporter = reporter;
     }
 
@@ -79,13 +76,12 @@ public class EventBusReporterWrapper implements Reporter, Handler<Message<Report
     }
 
     private boolean canHandle(Reportable reportable) {
-
-        if (reportable.getReferenceType() == ReferenceType.DOMAIN) {
-            return referenceType == ReferenceType.DOMAIN
-                    && referenceId.equals(reportable.getReferenceId()) && reporter.canHandle(reportable);
+        if (referenceType == ReferenceType.PLATFORM) {
+            return true;
         }
-
-        return referenceType == ReferenceType.PLATFORM;
+        return reportable.getReferenceType() == referenceType
+                && referenceId.equals(reportable.getReferenceId())
+                && reporter.canHandle(reportable);
     }
 
     @Override

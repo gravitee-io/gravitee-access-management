@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.model.UpdateReporter;
@@ -56,14 +57,14 @@ public class DefaultReporterUpgraderTest {
     public void shouldUpdateDefaultIdp(){
 
         when(reporterService.findAll()).thenReturn(Flowable.just(systemReporter));
-        when(reporterService.createReporterConfig(anyString())).thenReturn("new-config-created");
-        when(reporterService.update(anyString(), anyString(), any(UpdateReporter.class), eq(true))).thenReturn(changeReporterConfig(true));
+        when(reporterService.createReporterConfig(any())).thenReturn("new-config-created");
+        when(reporterService.update(any(), anyString(), any(UpdateReporter.class), eq(true))).thenReturn(changeReporterConfig(true));
 
         defaultReporterUpgrader.upgrade();
 
         verify(reporterService, times(1)).findAll();
         verify(reporterService, times(1))
-                .update(anyString(), anyString(), argThat(upReporter -> upReporter.getConfiguration().equals("new-config-created")), anyBoolean());
+                .update(any(), anyString(), argThat(upReporter -> upReporter.getConfiguration().equals("new-config-created")), anyBoolean());
 
     }
 
@@ -76,7 +77,7 @@ public class DefaultReporterUpgraderTest {
 
         verify(reporterService, times(1)).findAll();
         verify(reporterService, never())
-                .update(anyString(), anyString(), any(UpdateReporter.class), anyBoolean());
+                .update(any(), anyString(), any(UpdateReporter.class), anyBoolean());
     }
 
     private Single<Reporter> changeReporterConfig(boolean system){
@@ -95,7 +96,7 @@ public class DefaultReporterUpgraderTest {
         reporter.setSystem(system);
         reporter.setId("test-reporter-id");
         reporter.setConfiguration("configuration-test-reporter");
-        reporter.setDomain("domain-id");
+        reporter.setReference(Reference.domain("domain-id"));
 
         return reporter;
     }

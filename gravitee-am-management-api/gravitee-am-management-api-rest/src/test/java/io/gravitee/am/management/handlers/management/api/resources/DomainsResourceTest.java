@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
@@ -82,7 +83,7 @@ public class DomainsResourceTest extends JerseySpringTest {
 
         doReturn(Single.just(domain)).when(domainService).create(eq("DEFAULT"), eq("DEFAULT"), any(), any());
         doReturn(Single.just(new IdentityProvider())).when(identityProviderManager).create(domain.getId());
-        doReturn(Single.just(new Reporter())).when(reporterService).createDefault(domain.getId());
+        doReturn(Single.just(new Reporter())).when(reporterService).createDefault(argThat(ref -> ref.id().equals(domain.getId())));
 
         final Response response = target("domains").request().post(Entity.json(newDomain));
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());

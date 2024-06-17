@@ -15,20 +15,22 @@
  */
 package io.gravitee.am.service.exception;
 
+import io.gravitee.am.model.Reference;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ReporterNotFoundForDomainException extends AbstractNotFoundException {
+public class ReporterNotFoundForReferenceException extends AbstractNotFoundException {
 
-    private final String domain;
+    private final Reference reference;
 
-    public ReporterNotFoundForDomainException(String domain) {
-        this.domain = domain;
+    public ReporterNotFoundForReferenceException(Reference reference) {
+        this.reference = reference;
     }
 
     @Override
     public String getMessage() {
-        return "No Reporter found for domain  [" + domain + "].";
+        return "No Reporter found for [" + reference + "].";
     }
 }

@@ -20,6 +20,7 @@ import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
@@ -139,7 +140,7 @@ public class DomainsResource extends AbstractDomainResource {
                         // create default idp (ignore if mongodb isn't the repositories backend)
                         .flatMap(domain -> identityProviderManager.create(domain.getId()).map(__ -> domain))
                         // create default reporter
-                        .flatMap(domain -> reporterService.createDefault(domain.getId()).map(__ -> domain)))
+                        .flatMap(domain -> reporterService.createDefault(Reference.domain(domain.getId())).map(__ -> domain)))
                 .subscribe(domain -> response.resume(Response.created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain.getId()))
                         .entity(domain).build()), response::resume);
     }

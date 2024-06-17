@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
+package io.gravitee.am.management.handlers.management.api.resources.organizations;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
@@ -23,19 +23,21 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.OrganizationService;
+import io.gravitee.am.service.exception.OrganizationNotFoundException;
 import io.gravitee.am.service.exception.ReporterNotFoundException;
 import io.gravitee.am.service.model.UpdateReporter;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
@@ -48,7 +50,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Optional;
 
@@ -58,11 +59,15 @@ import java.util.Optional;
  */
 public class ReporterResource extends AbstractResource {
 
-    @Autowired
-    private ReporterServiceProxy reporterService;
+    private final ReporterServiceProxy reporterService;
 
-    @Autowired
-    private DomainService domainService;
+    private final OrganizationService organizationService;
+
+    @Inject
+    public ReporterResource(ReporterServiceProxy reporterService, OrganizationService domainService) {
+        this.reporterService = reporterService;
+        this.organizationService = domainService;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -77,19 +82,17 @@ public class ReporterResource extends AbstractResource {
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("reporter") String reporterId,
+            @PathParam("reporterId") String reporterId,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.READ)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> reporterService.findById(reporterId))
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_REPORTER, Acl.READ)
+                .andThen(organizationService.findById(organizationId)
+                        .onErrorResumeWith(Single.error(new OrganizationNotFoundException(organizationId)))
+                        .flatMapMaybe(irrelevant -> reporterService.findById(reporterId))
                         .switchIfEmpty(Maybe.error(new ReporterNotFoundException(reporterId)))
                         .map(reporter -> {
-                            if (!reporter.getReference().matches(ReferenceType.DOMAIN, domain)) {
-                                throw new BadRequestException("Reporter does not belong to domain");
+                            if (!reporter.getReference().matches(ReferenceType.ORGANIZATION, organizationId)) {
+                                throw new BadRequestException("Reporter does not belong to organization");
                             }
                             return Response.ok(reporter.apiRepresentation(false)).build();
                         }))
@@ -110,17 +113,15 @@ public class ReporterResource extends AbstractResource {
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("reporter") String reporter,
+            @PathParam("reporterId") String reporterId,
             @Parameter(name = "reporter", required = true) @Valid @NotNull UpdateReporter updateReporter,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.UPDATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> reporterService.update(Reference.domain(domain), reporter, updateReporter, authenticatedUser, false)))
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_REPORTER, Acl.UPDATE)
+                .andThen(organizationService.findById(organizationId)
+                        .onErrorResumeWith(Single.error(new OrganizationNotFoundException(organizationId)))
+                        .flatMap(__ -> reporterService.update(Reference.organization(organizationId), reporterId, updateReporter, authenticatedUser, false)))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -137,26 +138,24 @@ public class ReporterResource extends AbstractResource {
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void delete(
             @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("reporter") String reporter,
+            @PathParam("reporterId") String reporterId,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.READ)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> reporterService.findById(reporter))
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_REPORTER, Acl.READ)
+                .andThen(organizationService.findById(organizationId)
+                        .onErrorResumeWith(Single.error(new OrganizationNotFoundException(organizationId)))
+                        .flatMapMaybe(irrelevant -> reporterService.findById(reporterId))
                         .map(Optional::ofNullable)
                         .switchIfEmpty(Maybe.just(Optional.empty()))
-                        .flatMapCompletable(reporter1 -> {
-                            if (reporter1.isPresent()) {
-                                if (!reporter1.get().getReference().matches(ReferenceType.DOMAIN, domain)) {
-                                    return Completable.error(new BadRequestException("Reporter does not belong to domain"));
-                                }
-
-                                return reporterService.delete(reporter, authenticatedUser);
+                        .flatMapCompletable(r -> {
+                            if (r.isEmpty()) {
+                                return Completable.complete();
                             }
-                            return Completable.complete();
+                            if (!r.get().getReference().matches(ReferenceType.ORGANIZATION, organizationId)) {
+                                return Completable.error(new BadRequestException("Reporter does not belong to organization"));
+                            }
+
+                            return reporterService.delete(reporterId, authenticatedUser);
                         }))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }

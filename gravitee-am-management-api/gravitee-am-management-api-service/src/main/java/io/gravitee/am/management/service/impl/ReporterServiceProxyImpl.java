@@ -22,6 +22,7 @@ import io.gravitee.am.management.service.AbstractSensitiveProxy;
 import io.gravitee.am.management.service.ReporterPluginService;
 import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.management.service.exception.ReporterPluginSchemaNotFoundException;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.ReporterNotFoundException;
@@ -63,8 +64,8 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
     }
 
     @Override
-    public Flowable<Reporter> findByDomain(String domain) {
-        return reporterService.findByDomain(domain).flatMapSingle(this::filterSensitiveData);
+    public Flowable<Reporter> findByReference(Reference reference) {
+        return reporterService.findByReference(reference).flatMapSingle(this::filterSensitiveData);
     }
 
     @Override
@@ -73,25 +74,25 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
     }
 
     @Override
-    public Single<Reporter> createDefault(String domain) {
-        return reporterService.createDefault(domain);
+    public Single<Reporter> createDefault(Reference reference) {
+        return reporterService.createDefault(reference);
     }
 
     @Override
-    public NewReporter createInternal(String domain) {
-        return reporterService.createInternal(domain);
+    public NewReporter createInternal(Reference reference) {
+        return reporterService.createInternal(reference);
     }
 
     @Override
-    public Single<Reporter> create(String domain, NewReporter newReporter, User principal, boolean system) {
-        return reporterService.create(domain, newReporter, principal, system)
+    public Single<Reporter> create(Reference reference, NewReporter newReporter, User principal, boolean system) {
+        return reporterService.create(reference, newReporter, principal, system)
                 .flatMap(this::filterSensitiveData)
                 .doOnSuccess(reporter1 -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_CREATED).reporter(reporter1)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_CREATED).throwable(throwable)));
     }
 
     @Override
-    public Single<Reporter> update(String domain, String id, UpdateReporter updateReporter, User principal, boolean isUpgrader) {
+    public Single<Reporter> update(Reference domain, String id, UpdateReporter updateReporter, User principal, boolean isUpgrader) {
         return reporterService.findById(id)
                 .switchIfEmpty(Single.error(new ReporterNotFoundException(id)))
                 .flatMap(oldReporter -> filterSensitiveData(oldReporter)
@@ -109,8 +110,8 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
     }
 
     @Override
-    public String createReporterConfig(String domain){
-        return reporterService.createReporterConfig(domain);
+    public String createReporterConfig(Reference reference){
+        return reporterService.createReporterConfig(reference);
     }
 
     private Single<Reporter> filterSensitiveData(Reporter reporter) {

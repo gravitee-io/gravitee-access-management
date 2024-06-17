@@ -18,6 +18,7 @@ package io.gravitee.am.management.service.impl;
 import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.management.service.AuditService;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
@@ -88,7 +89,7 @@ public class AuditServiceImpl implements AuditService {
     }
 
     private Reporter getReporter(String domain) {
-        return auditReporterManager.getReporter(domain);
+        return auditReporterManager.getReporter(Reference.domain(domain));
     }
 
 

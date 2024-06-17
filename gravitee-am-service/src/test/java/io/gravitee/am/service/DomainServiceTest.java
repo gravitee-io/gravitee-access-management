@@ -32,6 +32,7 @@ import io.gravitee.am.model.Group;
 import io.gravitee.am.model.I18nDictionary;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.Role;
@@ -790,7 +791,7 @@ public class DomainServiceTest {
         when(emailTemplateService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.just(email));
         when(emailTemplateService.delete(anyString())).thenReturn(complete());
         when(reporter.getId()).thenReturn(REPORTER_ID);
-        when(reporterService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(reporter));
+        when(reporterService.findByReference(Reference.domain(DOMAIN_ID))).thenReturn(Flowable.just(reporter));
         when(reporterService.delete(anyString())).thenReturn(complete());
         when(flow.getId()).thenReturn(FLOW_ID);
         when(flowService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.just(flow));
