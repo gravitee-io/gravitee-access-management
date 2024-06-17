@@ -37,7 +37,11 @@ public abstract class AbstractOAuth2MongoRepository extends AbstractMongoReposit
     @Value("${oauth2.mongodb.ensureIndexOnStart:true}")
     private boolean ensureIndexOnStart;
 
+    protected void createIndex(MongoCollection<?> collection, Document document) {
+        super.createIndex(collection, document, new IndexOptions(), ensureIndexOnStart);
+    }
+
     protected void createIndex(MongoCollection<?> collection, Document document, IndexOptions indexOptions) {
-        super.createIndex(collection, document, indexOptions.background(true), ensureIndexOnStart);
+        super.createIndex(collection, document, indexOptions, ensureIndexOnStart);
     }
 }
