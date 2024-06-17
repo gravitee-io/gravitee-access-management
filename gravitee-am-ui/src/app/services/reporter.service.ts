@@ -35,7 +35,6 @@ export class ReporterService {
   }
 
   get(domainId, id): Observable<any> {
-
     return this.http.get<any>(this.reportersURL + domainId + '/reporters/' + id);
   }
 

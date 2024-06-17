@@ -28,8 +28,6 @@ export class ReportersResolver {
   ) {}
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> {
-    console.log('ReportersResolver: route: ', route)
-    console.log('ReportersResolver: state: ', state)
     if (state.url.startsWith('/settings')) {
       return this.organizationService.reporters();
     }
