@@ -17,7 +17,6 @@ package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Reference;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcReporter;
@@ -95,7 +94,7 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
 
     private static final List<FieldSpec<JdbcReporter, ?>> fields = List.of(
             new FieldSpec<>(COL_ID, JdbcReporter::getId, String.class),
-            new FieldSpec<>(COL_REFERENCE_TYPE, JdbcReporter::getReferenceType, ReferenceType.class),
+            new FieldSpec<>(COL_REFERENCE_TYPE, r-> r.getReferenceType().name(), String.class),
             new FieldSpec<>(COL_REFERENCE_ID, JdbcReporter::getReferenceId, String.class),
             new FieldSpec<>(COL_ENABLED, JdbcReporter::isEnabled, boolean.class),
             new FieldSpec<>(COL_TYPE, JdbcReporter::getType, String.class),
