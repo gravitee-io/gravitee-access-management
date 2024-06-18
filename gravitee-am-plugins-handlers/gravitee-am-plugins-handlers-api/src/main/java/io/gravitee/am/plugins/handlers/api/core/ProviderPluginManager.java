@@ -24,7 +24,6 @@ import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 
@@ -64,18 +63,13 @@ public abstract class ProviderPluginManager<INSTANCE extends AmPlugin<?, PROVIDE
 
     private <T extends PROVIDER> T createProvider(AmPluginContextConfigurer<T> amPluginContextConfigurer) {
         try {
-            T provider = createInstance(amPluginContextConfigurer.getProviderClass());
             var pluginApplicationContext = pluginContextFactory.create(amPluginContextConfigurer);
 
             final AutowireCapableBeanFactory autowireCapableBeanFactory = pluginApplicationContext.getAutowireCapableBeanFactory();
-            autowireCapableBeanFactory.autowireBean(provider);
+            T provider = autowireCapableBeanFactory.createBean(amPluginContextConfigurer.getProviderClass());
 
             if (provider instanceof AbstractService) {
                 ((AbstractService<?>) provider).setApplicationContext(pluginApplicationContext);
-            }
-
-            if (provider instanceof InitializingBean) {
-                ((InitializingBean) provider).afterPropertiesSet();
             }
 
             if (provider instanceof Service) {

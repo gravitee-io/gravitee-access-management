@@ -17,6 +17,8 @@ package io.gravitee.am.reporter.kafka;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.gravitee.am.reporter.api.ReporterConfiguration;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 import java.util.Map;
@@ -25,43 +27,15 @@ import java.util.Map;
  * @author Florent Amaridon
  * @author Visiativ
  */
+@Setter
+@Getter
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 public class KafkaReporterConfiguration implements ReporterConfiguration {
 
   private String bootstrapServers;
   private String topic;
   private String acks;
+  private String schemaRegistryUrl;
   private List<Map<String, String>> additionalProperties;
 
-  public String getBootstrapServers() {
-    return bootstrapServers;
-  }
-
-  public void setBootstrapServers(String bootstrapServers) {
-    this.bootstrapServers = bootstrapServers;
-  }
-
-  public String getTopic() {
-    return topic;
-  }
-
-  public void setTopic(String topic) {
-    this.topic = topic;
-  }
-
-  public String getAcks() {
-    return acks;
-  }
-
-  public void setAcks(String acks) {
-    this.acks = acks;
-  }
-
-  public List<Map<String, String>> getAdditionalProperties() {
-    return additionalProperties;
-  }
-
-  public void setAdditionalProperties(List<Map<String, String>> additionalProperties) {
-    this.additionalProperties = additionalProperties;
-  }
 }

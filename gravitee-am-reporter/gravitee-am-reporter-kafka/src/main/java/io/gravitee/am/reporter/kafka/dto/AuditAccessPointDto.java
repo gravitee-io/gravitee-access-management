@@ -15,50 +15,17 @@
  */
 package io.gravitee.am.reporter.kafka.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter
+@Getter
 public class AuditAccessPointDto {
-  private String id;
-  private String alternativeId;
-  private String displayName;
-  private String ipAddress;
-  private String userAgent;
 
-  public String getId() {
-    return this.id;
-  }
+    private String id;
+    private String alternativeId;
+    private String displayName;
+    private String ipAddress;
+    private String userAgent;
 
-  public void setId(String id) {
-    this.id = id;
-  }
-
-  public String getAlternativeId() {
-    return this.alternativeId;
-  }
-
-  public void setAlternativeId(String alternativeId) {
-    this.alternativeId = alternativeId;
-  }
-
-  public String getDisplayName() {
-    return this.displayName;
-  }
-
-  public void setDisplayName(String displayName) {
-    this.displayName = displayName;
-  }
-
-  public String getIpAddress() {
-    return this.ipAddress;
-  }
-
-  public void setIpAddress(String ipAddress) {
-    this.ipAddress = ipAddress;
-  }
-
-  public String getUserAgent() {
-    return this.userAgent;
-  }
-
-  public void setUserAgent(String userAgent) {
-    this.userAgent = userAgent;
-  }
 }

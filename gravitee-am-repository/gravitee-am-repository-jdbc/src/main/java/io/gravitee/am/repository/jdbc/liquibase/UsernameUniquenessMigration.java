@@ -48,7 +48,7 @@ public class UsernameUniquenessMigration implements CustomSqlChange {
     public static final String TABLE_ORGANIZATION_USERS = "organization_users";
     public static final String USERNAME = "username";
     private final Logger logger = LoggerFactory.getLogger(UsernameUniquenessMigration.class);
-    private ObjectMapper mapper = new ObjectMapper();
+    private final  ObjectMapper mapper = new ObjectMapper();
 
     @Override
     public SqlStatement[] generateStatements(Database database) throws CustomChangeException {
@@ -106,7 +106,7 @@ public class UsernameUniquenessMigration implements CustomSqlChange {
                 User referenceUser = duplicates.get(0);
 
                 if (!referenceUser.getSource().equalsIgnoreCase("gravitee") && !referenceUser.getSource().equalsIgnoreCase("cockpit")) {
-                    logger.error("Organization Username '{}' migration only manages gravitee & cockpit identity providers",
+                    logger.error("Organization Username '{}' migration only manages gravitee & cockpit identity providers but source {}",
                             referenceUser.getUsername(),
                             referenceUser.getSource());
                     needToFail = true;

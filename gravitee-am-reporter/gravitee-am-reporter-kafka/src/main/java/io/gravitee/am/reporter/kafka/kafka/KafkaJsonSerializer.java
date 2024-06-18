@@ -16,36 +16,22 @@
 package io.gravitee.am.reporter.kafka.kafka;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.common.serialization.Serializer;
+import io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializer;
 
-/**
- * @author Florent Amaridon
- * @author Visiativ
- */
-@Slf4j
-public class JacksonSerializer<T> implements Serializer<T> {
-
-  private final ObjectMapper mapper = new ObjectMapper();
-
-  public JacksonSerializer() {
-    mapper.registerModule(new JavaTimeModule());
-    mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-    mapper.disable(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS);
-    mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-  }
-
-  @Override
-  public byte[] serialize(String topic, T value) {
-    try {
-      return mapper.writeValueAsBytes(value);
-    } catch (JsonProcessingException e) {
-      log.error("An error occurred while serializing a JSON object", e);
-      return null;
+public class KafkaJsonSerializer<T> extends KafkaJsonSchemaSerializer<T> {
+    public KafkaJsonSerializer() {
+        super();
+        configureObjectMapper();
     }
-  }
+
+    private void configureObjectMapper() {
+        ObjectMapper mapper = this.objectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        mapper.disable(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS);
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    }
 }

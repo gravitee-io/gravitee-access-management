@@ -31,6 +31,7 @@
 
     <properties>
         <commons-validator.version>1.7</commons-validator.version>
+        <confluent-kafka.version>7.6.0</confluent-kafka.version>
     </properties>
 
     <dependencies>
@@ -145,9 +146,23 @@
             </exclusions>
         </dependency>
 
+        <!-- Kafka -->
+
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-kafka-client</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-schema-registry-client</artifactId>
+            <version>${confluent-kafka.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-json-schema-serializer</artifactId>
+            <version>${confluent-kafka.version}</version>
         </dependency>
 
         <dependency>
@@ -176,7 +191,22 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>${test-container.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>confluent</id>
+            <url>https://packages.confluent.io/maven/</url>
+        </repository>
+    </repositories>
 
     <build>
         <resources>
@@ -208,5 +238,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
