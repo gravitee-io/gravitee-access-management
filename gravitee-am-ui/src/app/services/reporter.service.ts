@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
-import {Observable} from 'rxjs';
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
-import {AppConfig} from '../../config/app.config';
+import { AppConfig } from '../../config/app.config';
 
-import {OrganizationService} from './organization.service';
+import { OrganizationService } from './organization.service';
 
 @Injectable()
 export class ReporterService {

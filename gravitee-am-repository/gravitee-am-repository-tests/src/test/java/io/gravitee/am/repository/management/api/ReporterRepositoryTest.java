@@ -117,7 +117,7 @@ public class ReporterRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void shouldFindByDomain() {
+    public void shouldFindByDomainReference() {
         final int loop = 10;
         final Reference domain = Reference.domain("fixedDomainId");
         for (int i =0; i < loop; ++i) {

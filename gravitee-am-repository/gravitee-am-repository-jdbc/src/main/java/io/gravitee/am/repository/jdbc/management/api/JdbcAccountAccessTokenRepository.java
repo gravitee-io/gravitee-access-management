@@ -30,8 +30,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.Date;
 import java.util.Optional;
 
 @Repository
@@ -87,7 +85,7 @@ public class JdbcAccountAccessTokenRepository extends AbstractJdbcRepository imp
                 .issuerId(entity.getIssuerId())
                 .name(entity.getName())
                 .token(entity.getToken())
-                .createdAt(Date.from(entity.getCreatedAt().toInstant(ZoneOffset.UTC)))
+                .createdAt(toDate(entity.getCreatedAt()))
                 .build();
     }
 
@@ -103,9 +101,7 @@ public class JdbcAccountAccessTokenRepository extends AbstractJdbcRepository imp
                 .build();
         var now = LocalDateTime.now();
         dbToken.setCreatedAt(Optional.ofNullable(token.createdAt())
-                .map(created -> created.toInstant()
-                        .atZone(ZoneOffset.UTC)
-                        .toLocalDateTime())
+                .map(this::toLocalDateTime)
                 .orElse(now));
         dbToken.setUpdatedAt(now);
         return dbToken;

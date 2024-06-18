@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
-import {Observable} from 'rxjs';
-import {map} from 'rxjs/operators';
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
-import {AppConfig} from '../../config/app.config';
-import {Plugin} from '../entities/plugins/Plugin';
+import { AppConfig } from '../../config/app.config';
+import { Plugin } from '../entities/plugins/Plugin';
 
-import {SearchParams} from './search';
+import { SearchParams } from './search';
 
 @Injectable()
 export class OrganizationService {

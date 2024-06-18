@@ -25,11 +25,6 @@ databaseChangeLog:
                   name: reference_id
                   valueComputed: domain
             where: domain is not null
-        - dropColumn:
-            tableName: reporters
-            columns:
-              - column:
-                  name: domain
         - createIndex:
             indexName: idx_reporters_ref
             columns:
@@ -38,5 +33,4 @@ databaseChangeLog:
               - column:
                   name: reference_id
             tableName: reporters
-        - dropIndex:
-            indexName: idx_reporter_domain
+

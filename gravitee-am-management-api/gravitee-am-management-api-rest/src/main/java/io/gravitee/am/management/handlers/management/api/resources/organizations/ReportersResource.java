@@ -71,13 +71,12 @@ public class ReportersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List registered reporters for a security domain",
-            description = "User must have the DOMAIN_REPORTER[LIST] permission on the specified domain " +
-                    "or DOMAIN_REPORTER[LIST] permission on the specified environment " +
-                    "or DOMAIN_REPORTER[LIST] permission on the specified organization. " +
-                    "Except if user has DOMAIN_REPORTER[READ] permission on the domain, environment or organization, each returned reporter is filtered and contains only basic information such as id and name and type.")
+    @Operation(operationId = "getOrgReporters",
+            summary = "List registered reporters for a security domain",
+            description = "User must have the ORGANIZATION_REPORTER[LIST] permission on the specified organization. " +
+                    "Except if user has ORGANIZATION_REPORTER[READ] permission on the organization, each returned reporter is filtered and contains only basic information such as id and name and type.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List registered reporters for a security domain",
+            @ApiResponse(responseCode = "200", description = "List registered reporters for an organization",
                     content = @Content(mediaType = "application/json",
                             array = @ArraySchema(schema = @Schema(implementation = Reporter.class)))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
@@ -103,10 +102,9 @@ public class ReportersResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Create a reporter for a security domain",
-            description = "User must have the DOMAIN_REPORTER[CREATE] permission on the specified domain " +
-                    "or DOMAIN_REPORTER[CREATE] permission on the specified environment " +
-                    "or DOMAIN_REPORTER[CREATE] permission on the specified organization.")
+    @Operation(operationId = "createOrgReporter",
+            summary = "Create a reporter for an organization",
+            description = "User must have the ORGANIZATION_REPORTER[CREATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Reporter created for a security domain",
                     content = @Content(mediaType = "application/json",

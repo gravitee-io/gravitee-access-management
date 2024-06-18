@@ -27,9 +27,13 @@ import java.util.Optional;
 @Configuration
 @Slf4j
 public class MongoUpgraderConfiguration {
-    public MongoUpgraderConfiguration(io.gravitee.node.api.configuration.Configuration config,
+    public MongoUpgraderConfiguration(Optional<io.gravitee.node.api.configuration.Configuration> config,
                                       ApplicationContext pluginApplicationContext) {
-        var isUpgradeMode = config.getProperty("upgrade.mode", Boolean.class);
+        if (config.isEmpty()) {
+            // test mode
+            return;
+        }
+        var isUpgradeMode = config.get().getProperty("upgrade.mode", Boolean.class);
         if (isUpgradeMode == null || isUpgradeMode) {
             //expose Upgrader beans from the plugin to the parent context, so they're visible to the UpgraderService
             Optional.ofNullable(pluginApplicationContext.getParent())

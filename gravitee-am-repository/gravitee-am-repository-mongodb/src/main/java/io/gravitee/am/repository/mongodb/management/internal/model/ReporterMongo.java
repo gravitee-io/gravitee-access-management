@@ -17,7 +17,10 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.bson.codecs.pojo.annotations.BsonId;
 
 /**
@@ -33,8 +36,22 @@ public class ReporterMongo extends Auditable {
     /**
      * @deprecated use referenceType & referenceId instead
      */
-    @Deprecated
+
+    // Lombok copies @deprecated to the generated accessors; mongo codec loses its mind when it sees @Deprecated both
+    // on a field and an accessor. So we define them manually.
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
     private String domain;
+
+    @Deprecated(since="4.5.0", forRemoval = true)
+    public String getDomain() {
+        return domain;
+    }
+
+    @Deprecated(since="4.5.0", forRemoval = true)
+    public void setDomain(String domain) {
+        this.domain = domain;
+    }
 
     private ReferenceType referenceType;
     private String referenceId;

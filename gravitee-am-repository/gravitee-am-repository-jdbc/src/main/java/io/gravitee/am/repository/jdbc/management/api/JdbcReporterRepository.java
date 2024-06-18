@@ -17,6 +17,7 @@ package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcReporter;
@@ -32,7 +33,6 @@ import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.reactive.TransactionalOperator;
-import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -47,7 +47,8 @@ import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 public class JdbcReporterRepository extends AbstractJdbcRepository implements ReporterRepository, InitializingBean {
 
     public static final String COL_ID = "id";
-    public static final String COL_DOMAIN = "domain";
+    public static final String COL_REFERENCE_TYPE = "reference_type";
+    public static final String COL_REFERENCE_ID = "reference_id";
     public static final String COL_ENABLED = "enabled";
     public static final String COL_TYPE = "type";
     public static final String COL_NAME = "name";
@@ -61,28 +62,57 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
     protected SpringReporterRepository reporterRepository;
 
     protected Reporter toEntity(JdbcReporter entity) {
-        return mapper.map(entity, Reporter.class);
+        return Reporter.builder()
+                .id(entity.getId())
+                .reference(new Reference(entity.getReferenceType(), entity.getReferenceId()))
+                .name(entity.getName())
+                .configuration(entity.getConfiguration())
+                .enabled(entity.isEnabled())
+                .system(entity.isSystem())
+                .dataType(entity.getDataType())
+                .createdAt(toDate(entity.getCreatedAt()))
+                .updatedAt(toDate(entity.getUpdatedAt()))
+                .type(entity.getType())
+                .build();
     }
 
     protected JdbcReporter toJdbcEntity(Reporter entity) {
-        return mapper.map(entity, JdbcReporter.class);
+        return JdbcReporter.builder()
+                .id(entity.getId())
+                .referenceType(entity.getReference().type())
+                .referenceId(entity.getReference().id())
+                .name(entity.getName())
+                .configuration(entity.getConfiguration())
+                .enabled(entity.isEnabled())
+                .system(entity.isSystem())
+                .dataType(entity.getDataType())
+                .createdAt(toLocalDateTime(entity.getCreatedAt()))
+                .updatedAt(toLocalDateTime(entity.getUpdatedAt()))
+                .type(entity.getType())
+                .build();
+
     }
-    private static final List<String> columns = List.of(COL_ID,
-            COL_DOMAIN,
-            COL_ENABLED,
-            COL_TYPE,
-            COL_NAME,
-            COL_DATA_TYPE,
-            COL_CONFIG,
-            COL_IS_SYSTEM,
-            COL_CREATED_AT,
-            COL_UPDATED_AT
+
+    private static final List<FieldSpec<JdbcReporter, ?>> fields = List.of(
+            new FieldSpec<>(COL_ID, JdbcReporter::getId, String.class),
+            new FieldSpec<>(COL_REFERENCE_TYPE, JdbcReporter::getReferenceType, ReferenceType.class),
+            new FieldSpec<>(COL_REFERENCE_ID, JdbcReporter::getReferenceId, String.class),
+            new FieldSpec<>(COL_ENABLED, JdbcReporter::isEnabled, boolean.class),
+            new FieldSpec<>(COL_TYPE, JdbcReporter::getType, String.class),
+            new FieldSpec<>(COL_NAME, JdbcReporter::getName, String.class),
+            new FieldSpec<>(COL_DATA_TYPE, JdbcReporter::getDataType, String.class),
+            new FieldSpec<>(COL_CONFIG, JdbcReporter::getConfiguration, String.class),
+            new FieldSpec<>(COL_IS_SYSTEM, JdbcReporter::isSystem, boolean.class),
+            new FieldSpec<>(COL_CREATED_AT, JdbcReporter::getCreatedAt, LocalDateTime.class),
+            new FieldSpec<>(COL_UPDATED_AT, JdbcReporter::getUpdatedAt, LocalDateTime.class)
+
     );
     private String insertStatement;
     private String updateStatement;
 
     @Override
     public void afterPropertiesSet() throws Exception {
+        var columns = fields.stream().map(FieldSpec::columnName).toList();
         this.insertStatement = createInsertStatement("reporters", columns);
         this.updateStatement = createUpdateStatement("reporters", columns, List.of(COL_ID));
     }
@@ -113,55 +143,23 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
     public Single<Reporter> create(Reporter item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("Create Reporter with id {}", item.getId());
-        return reporterRepository.save(toJdbcEntity(item))
-                .flatMapMaybe(r -> this.findById(r.getId()))
-                .toSingle();
-//        TransactionalOperator trx = TransactionalOperator.create(tm);
-//        return Single.fromPublisher(getTemplate().insert(toJdbcEntity(item))
-//                        .flatMap(res -> maybeToMono(this.findById(res.getId())))
-//                        .as(trx::transactional));
-
-//        DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(insertStatement);
-//
-//        insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
-//        insertSpec = addQuotedField(insertSpec, COL_R, item.getDomain(), String.class);
-//        insertSpec = addQuotedField(insertSpec, COL_ENABLED, item.isEnabled(), String.class);
-//        insertSpec = addQuotedField(insertSpec, COL_TYPE, item.getType(), String.class);
-//        insertSpec = addQuotedField(insertSpec, COL_NAME, item.getName(), String.class);
-//        insertSpec = addQuotedField(insertSpec, COL_DATA_TYPE, item.getDataType(), String.class);
-//        insertSpec = addQuotedField(insertSpec, COL_CONFIG, item.getConfiguration(), String.class);
-//        insertSpec = addQuotedField(insertSpec, COL_IS_SYSTEM, item.isSystem(), String.class);
-//        insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-//        insertSpec = addQuotedField(insertSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
-//
-//        Mono<Long> action = insertSpec.fetch().rowsUpdated();
-//        return monoToSingle(action.as(trx::transactional))
-//                .flatMap((i) -> this.findById(item.getId()).toSingle());
+        return createOrUpdate(item, getTemplate().getDatabaseClient().sql(insertStatement));
     }
 
     @Override
     public Single<Reporter> update(Reporter item) {
         LOGGER.debug("Update reporter with id '{}'", item.getId());
+        return createOrUpdate(item, getTemplate().getDatabaseClient().sql(updateStatement));
+    }
+
+    Single<Reporter> createOrUpdate(Reporter item, DatabaseClient.GenericExecuteSpec spec) {
+        var effectiveSpec = addQuotedFields(spec, fields, toJdbcEntity(item));
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        if (true) {
-            throw new IllegalStateException("not implemented");///todo
-        }
-        DatabaseClient.GenericExecuteSpec updateSpec = getTemplate().getDatabaseClient().sql(updateStatement);
-
-        updateSpec = addQuotedField(updateSpec, COL_ID, item.getId(), String.class);
-//        updateSpec = addQuotedField(updateSpec, COL_DOMAIN, item.getDomain(), String.class);
-        updateSpec = addQuotedField(updateSpec, COL_ENABLED, item.isEnabled(), String.class);
-        updateSpec = addQuotedField(updateSpec, COL_TYPE, item.getType(), String.class);
-        updateSpec = addQuotedField(updateSpec, COL_NAME, item.getName(), String.class);
-        updateSpec = addQuotedField(updateSpec, COL_DATA_TYPE, item.getDataType(), String.class);
-        updateSpec = addQuotedField(updateSpec, COL_CONFIG, item.getConfiguration(), String.class);
-        updateSpec = addQuotedField(updateSpec, COL_IS_SYSTEM, item.isSystem(), String.class);
-        updateSpec = addQuotedField(updateSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        updateSpec = addQuotedField(updateSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
-
-        Mono<Long> action = updateSpec.fetch().rowsUpdated();
-        return monoToSingle(action.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle());
+        return monoToSingle(effectiveSpec.fetch()
+                .rowsUpdated()
+                .as(trx::transactional))
+                .flatMapMaybe(x -> this.findById(item.getId()))
+                .toSingle();
     }
 
     @Override

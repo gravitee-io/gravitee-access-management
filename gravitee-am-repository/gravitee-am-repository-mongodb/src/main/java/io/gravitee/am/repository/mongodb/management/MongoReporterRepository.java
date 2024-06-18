@@ -20,6 +20,7 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.ReporterMongo;
@@ -37,6 +38,7 @@ import java.util.Map;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.or;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -62,6 +64,10 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
     @Override
     public Flowable<Reporter> findByReference(Reference reference) {
         var query = and(eq(FIELD_REFERENCE_TYPE, reference.type()), eq(FIELD_REFERENCE_ID, reference.id()));
+        // for backwards compatibility
+        if (reference.type() == ReferenceType.DOMAIN) {
+            query = or(query, eq(FIELD_DOMAIN, reference.id()));
+        }
         return Flowable.fromPublisher(reportersCollection.find(query)).map(this::convert);
     }
 

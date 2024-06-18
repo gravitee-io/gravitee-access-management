@@ -71,10 +71,9 @@ public class ReporterResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a reporter",
-            description = "User must have the DOMAIN_REPORTER[READ] permission on the specified domain " +
-                    "or DOMAIN_REPORTER[READ] permission on the specified environment " +
-                    "or DOMAIN_REPORTER[READ] permission on the specified organization")
+    @Operation(operationId = "getOrgReporter",
+            summary = "Get a reporter",
+            description = "User must have the ORGANIZATION_REPORTER[READ] permission on the organization")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Reporter successfully fetched",
                     content = @Content(mediaType = "application/json",
@@ -102,10 +101,9 @@ public class ReporterResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Update a reporter",
-            description = "User must have the DOMAIN_REPORTER[UPDATE] permission on the specified domain " +
-                    "or DOMAIN_REPORTER[UPDATE] permission on the specified environment " +
-                    "or DOMAIN_REPORTER[UPDATE] permission on the specified organization")
+    @Operation(operationId = "updateOrgReporter",
+            summary = "Update a reporter",
+            description = "User must have the ORGANIZATION_REPORTER[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Reporter successfully updated",
                     content = @Content(mediaType = "application/json",
@@ -127,10 +125,9 @@ public class ReporterResource extends AbstractResource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Delete a reporter",
-            description = "User must have the DOMAIN_REPORTER[DELETE] permission on the specified domain " +
-                    "or DOMAIN_REPORTER[DELETE] permission on the specified environment " +
-                    "or DOMAIN_REPORTER[DELETE] permission on the specified organization")
+    @Operation(operationId = "deleteOrgReporter",
+            summary = "Delete a reporter",
+            description = "User must have the ORGANIZATION_REPORTER[DELETE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Reporter successfully removed",
                     content = @Content(mediaType = "application/json",
@@ -141,7 +138,7 @@ public class ReporterResource extends AbstractResource {
             @PathParam("reporterId") String reporterId,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
-        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_REPORTER, Acl.READ)
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_REPORTER, Acl.READ)
                 .andThen(organizationService.findById(organizationId)
                         .onErrorResumeWith(Single.error(new OrganizationNotFoundException(organizationId)))
                         .flatMapMaybe(irrelevant -> reporterService.findById(reporterId))

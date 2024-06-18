@@ -16,7 +16,10 @@
 package io.gravitee.am.repository.jdbc.management.api.model;
 
 import io.gravitee.am.model.ReferenceType;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -29,7 +32,10 @@ import java.time.LocalDateTime;
  */
 @Table("reporters")
 @Data
-public class JdbcReporter {
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class JdbcReporter  {
     @Id
     private String id;
 
@@ -45,6 +51,7 @@ public class JdbcReporter {
     private LocalDateTime createdAt;
     @Column("updated_at")
     private LocalDateTime updatedAt;
+    @Column("system")
     private boolean system;
 
 }

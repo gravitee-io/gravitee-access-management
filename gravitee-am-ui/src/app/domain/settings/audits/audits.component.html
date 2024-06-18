@@ -96,7 +96,7 @@
         </mat-select>
       </mat-form-field>
       <button mat-icon-button (click)="refresh()"><mat-icon matTooltip="Refresh">refresh</mat-icon></button>
-      <a mat-icon-button [routerLink]="['settings']" *ngIf="hasPermissions(['domain_reporter_read'])">
+      <a mat-icon-button [routerLink]="['settings']" *ngIf="hasPermissions(['read'])">
         <mat-icon matTooltip="Settings">settings</mat-icon>
       </a>
     </div>

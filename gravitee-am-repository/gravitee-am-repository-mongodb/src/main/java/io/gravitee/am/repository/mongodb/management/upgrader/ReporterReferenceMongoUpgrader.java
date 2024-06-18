@@ -24,9 +24,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 import static com.mongodb.client.model.Filters.exists;
-import static com.mongodb.client.model.Updates.combine;
-import static com.mongodb.client.model.Updates.rename;
 import static com.mongodb.client.model.Updates.set;
 
 @RequiredArgsConstructor
@@ -38,10 +38,10 @@ public class ReporterReferenceMongoUpgrader implements Upgrader {
     @Override
     public boolean upgrade() {
         var reportersCollection = mongo.getCollection("reporters", ReporterMongo.class);
-        return Single.fromPublisher(reportersCollection.updateMany(exists("domainId"),
-                        combine(
+        return Single.fromPublisher(reportersCollection.updateMany(exists("domain"),
+                        List.of(
                                 set("referenceType", ReferenceType.DOMAIN),
-                                rename("domainId", "referenceId"))
+                                set("referenceId", "$domain"))
                 ))
                 .map(res -> true)
                 .onErrorReturn(ex -> {

@@ -326,7 +326,8 @@ export class AuditsComponent implements OnInit {
     this.userCtrl.reset();
   }
 
-  hasPermissions(permissions) {
-    return this.authService.hasPermissions(permissions);
+  hasPermissions(permissions: string[]) {
+    const effectivePermissions = permissions.map((acl) => (this.organizationContext ? 'organization_reporter_' : 'domain_reporter_') + acl);
+    return this.authService.hasPermissions(effectivePermissions);
   }
 }

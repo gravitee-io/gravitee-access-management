@@ -35,9 +35,6 @@ public interface ReporterService {
 
     Flowable<Reporter> findAll();
 
-    default Flowable<Reporter> findByDomain(String domain) {
-        return findByReference(Reference.domain(domain));
-    }
 
     Flowable<Reporter> findByReference(Reference reference);
 

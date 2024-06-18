@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {ActivatedRouteSnapshot, RouterStateSnapshot} from '@angular/router';
-import {Observable} from 'rxjs';
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { Observable } from 'rxjs';
 
-import {ReporterService} from '../services/reporter.service';
-import {OrganizationService} from '../services/organization.service';
+import { ReporterService } from '../services/reporter.service';
+import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
 export class ReporterResolver {
