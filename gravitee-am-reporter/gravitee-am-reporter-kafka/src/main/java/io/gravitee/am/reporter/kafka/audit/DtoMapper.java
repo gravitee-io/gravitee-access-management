@@ -24,82 +24,92 @@ import io.gravitee.am.reporter.kafka.dto.AuditAccessPointDto;
 import io.gravitee.am.reporter.kafka.dto.AuditEntityDto;
 import io.gravitee.am.reporter.kafka.dto.AuditMessageValueDto;
 import io.gravitee.node.api.Node;
+import lombok.experimental.UtilityClass;
 import org.apache.commons.validator.routines.InetAddressValidator;
 
+@UtilityClass
 public class DtoMapper {
 
-  public AuditMessageValueDto map(Audit audit, GraviteeContext context, Node node) {
-    AuditMessageValueDto entry = new AuditMessageValueDto();
-    entry.setId(audit.getId());
-    entry.setReferenceId(audit.getReferenceId());
-    entry.setReferenceType(this.map(audit.getReferenceType()));
-    entry.setTimestamp(audit.timestamp());
-    entry.setTransactionId(audit.getTransactionId());
-    entry.setType(audit.getType());
+    public static AuditMessageValueDto map(Audit audit, GraviteeContext context, Node node) {
+        AuditMessageValueDto entry = new AuditMessageValueDto();
+        entry.setId(audit.getId());
+        entry.setReferenceId(audit.getReferenceId());
+        entry.setReferenceType(mapReferenceType(audit.getReferenceType()));
+        entry.setTimestamp(audit.timestamp());
+        entry.setTransactionId(audit.getTransactionId());
+        entry.setType(audit.getType());
 
-    if (audit.getOutcome() != null) {
-      // do not copy message part of the status
-      entry.setStatus(audit.getOutcome().getStatus());
+        if (audit.getOutcome() != null) {
+            // do not copy message part of the status
+            entry.setStatus(audit.getOutcome().getStatus());
+        }
+
+        // copy access point and replace invalid IP
+        AuditAccessPoint accessPoint = audit.getAccessPoint();
+        if (accessPoint != null) {
+            entry.setAccessPoint(mapAuditAccessPoint(accessPoint));
+        }
+
+        AuditEntity actor = audit.getActor();
+        if (actor != null) {
+            entry.setActor(mapAuditEntityDto(audit.getActor()));
+        }
+
+        AuditEntity target = audit.getTarget();
+        if (target != null) {
+            entry.setTarget(mapAuditEntityDto(target));
+        }
+
+        // link event to the organization and to the environment
+        if (context != null) {
+            if (context.getOrganizationId() != null) {
+                entry.setOrganizationId(context.getOrganizationId());
+            }
+            if (context.getEnvironmentId() != null) {
+                entry.setEnvironmentId(context.getEnvironmentId());
+            }
+            if (context.getDomainId() != null) {
+                entry.setDomainId(context.getDomainId());
+            }
+        }
+
+
+        // add node information
+        if (node != null) {
+            entry.setNodeId(node.id());
+            entry.setNodeHostname(node.hostname());
+        }
+
+        return entry;
     }
 
-    // copy access point and replace invalid IP
-    AuditAccessPoint accessPoint = audit.getAccessPoint();
-    if (accessPoint != null) {
-     entry.setAccessPoint(this.map(accessPoint));
+    public static String mapReferenceType(ReferenceType referenceType) {
+        return referenceType != null ? referenceType.toString().toUpperCase() : null;
     }
 
-    AuditEntity actor = audit.getActor();
-    if (actor != null) {
-      entry.setActor(this.map(audit.getActor()));
+    public static AuditEntityDto mapAuditEntityDto(AuditEntity auditEntity) {
+        AuditEntityDto dto = new AuditEntityDto();
+        dto.setId(auditEntity.getId());
+        dto.setType(auditEntity.getType());
+        dto.setReferenceId(auditEntity.getReferenceId());
+        dto.setReferenceType(mapReferenceType(auditEntity.getReferenceType()));
+        dto.setAlternativeId(auditEntity.getAlternativeId());
+        dto.setDisplayName(auditEntity.getDisplayName());
+        return dto;
     }
 
-    AuditEntity target = audit.getTarget();
-    if (target != null) {
-      entry.setTarget(this.map(target));
+    public static AuditAccessPointDto mapAuditAccessPoint(AuditAccessPoint accessPoint) {
+        AuditAccessPointDto dto = new AuditAccessPointDto();
+        dto.setId(accessPoint.getId());
+        dto.setAlternativeId(accessPoint.getAlternativeId());
+        dto.setDisplayName(accessPoint.getDisplayName());
+        dto.setIpAddress(accessPoint.getIpAddress());
+        dto.setUserAgent(accessPoint.getUserAgent());
+
+        if (accessPoint.getIpAddress() != null && !InetAddressValidator.getInstance()
+                .isValid(accessPoint.getIpAddress())) {
+            dto.setIpAddress("0.0.0.0");
+        }
+        return dto;
     }
-
-    // link event to the organization and to the environment
-    if (context != null) {
-      entry.setOrganizationId(context.getOrganizationId());
-      entry.setEnvironmentId(context.getEnvironmentId());
-    }
-
-    // add node information
-    if (node != null) {
-      entry.setNodeId(node.id());
-      entry.setNodeHostname(node.hostname());
-    }
-
-    return entry;
-  }
-
-  public String map(ReferenceType referenceType) {
-    return referenceType != null ? referenceType.toString().toUpperCase() : null;
-  }
-
-  public AuditEntityDto map(AuditEntity auditEntity) {
-    AuditEntityDto dto = new AuditEntityDto();
-    dto.setId(auditEntity.getId());
-    dto.setType(auditEntity.getType());
-    dto.setReferenceId(auditEntity.getReferenceId());
-    dto.setReferenceType(this.map(auditEntity.getReferenceType()));
-    dto.setAlternativeId(auditEntity.getAlternativeId());
-    dto.setDisplayName(auditEntity.getDisplayName());
-    return dto;
-  }
-
-  public AuditAccessPointDto map(AuditAccessPoint accessPoint) {
-    AuditAccessPointDto dto = new AuditAccessPointDto();
-    dto.setId(accessPoint.getId());
-    dto.setAlternativeId(accessPoint.getAlternativeId());
-    dto.setDisplayName(accessPoint.getDisplayName());
-    dto.setIpAddress(accessPoint.getIpAddress());
-    dto.setUserAgent(accessPoint.getUserAgent());
-
-    if (accessPoint.getIpAddress() != null && !InetAddressValidator.getInstance()
-        .isValid(accessPoint.getIpAddress())) {
-      dto.setIpAddress("0.0.0.0");
-    }
-    return dto;
-  }
 }

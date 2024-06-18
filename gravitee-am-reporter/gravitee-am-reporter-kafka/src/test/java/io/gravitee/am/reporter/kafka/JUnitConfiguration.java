@@ -18,13 +18,18 @@ package io.gravitee.am.reporter.kafka;
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.node.api.Node;
 import io.vertx.core.Vertx;
+import org.jetbrains.annotations.NotNull;
+import org.mockito.Mockito;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ContextClosedEvent;
 import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.containers.Network;
 import org.testcontainers.utility.DockerImageName;
+
+import static org.mockito.Mockito.when;
 
 /**
  * @author Florent Amaridon
@@ -35,29 +40,54 @@ import org.testcontainers.utility.DockerImageName;
 public class JUnitConfiguration implements ApplicationListener<ContextClosedEvent> {
 
     private KafkaContainer kafkaContainer;
+    private SchemaRegistryContainer schemaRegistryContainer;
+    private static final Network NETWORK = Network.newNetwork();
+    private static final String CONFLUENT_PLATFORM_VERSION = "7.6.1";
 
     @Bean
-    public KafkaContainer kafkaContainer(){
-        this.kafkaContainer = new KafkaContainer(
-            DockerImageName.parse("confluentinc/cp-kafka:6.1.1"));
+    public KafkaContainer kafkaContainer() {
+        kafkaContainer = new KafkaContainer(
+                DockerImageName.parse("confluentinc/cp-kafka:" + CONFLUENT_PLATFORM_VERSION))
+                .withNetwork(NETWORK);
         kafkaContainer.start();
         return kafkaContainer;
     }
 
-    @Override
-    public void onApplicationEvent(ContextClosedEvent contextClosedEvent) {
-        if(this.kafkaContainer != null){
-            this.kafkaContainer.stop();
-        }
+    @Bean
+    public SchemaRegistryContainer schemaRegistryContainer(KafkaContainer kafkaContainer) {
+        schemaRegistryContainer = new SchemaRegistryContainer(CONFLUENT_PLATFORM_VERSION);
+        schemaRegistryContainer.withNetwork(NETWORK).withKafka(kafkaContainer).start();
+        return schemaRegistryContainer;
     }
 
-    @Bean
-    public KafkaReporterConfiguration getTestConfiguration(KafkaContainer kafkaContainer) {
+    @Bean("config")
+    public KafkaReporterConfiguration configuration1(KafkaContainer kafkaContainer) {
         KafkaReporterConfiguration kafkaReporterConfiguration = new KafkaReporterConfiguration();
         kafkaReporterConfiguration.setTopic("gravitee-audit");
         kafkaReporterConfiguration.setBootstrapServers(kafkaContainer.getBootstrapServers());
         kafkaReporterConfiguration.setAcks("1");
         return kafkaReporterConfiguration;
+    }
+
+    @Bean("configWithSchemaRegistry")
+    public KafkaReporterConfiguration configuration2(KafkaContainer kafkaContainer) {
+        KafkaReporterConfiguration kafkaReporterConfiguration = new KafkaReporterConfiguration();
+        kafkaReporterConfiguration.setTopic("gravitee-audit-sr");
+        kafkaReporterConfiguration.setBootstrapServers(kafkaContainer.getBootstrapServers());
+        kafkaReporterConfiguration.setAcks("1");
+        kafkaReporterConfiguration.setSchemaRegistryUrl("http://" + schemaRegistryContainer.getHost() + ":" + schemaRegistryContainer.getFirstMappedPort());
+        return kafkaReporterConfiguration;
+    }
+
+
+    @Override
+    public void onApplicationEvent(@NotNull ContextClosedEvent contextClosedEvent) {
+        if (this.kafkaContainer != null) {
+            this.kafkaContainer.stop();
+        }
+        if (this.schemaRegistryContainer != null) {
+            this.schemaRegistryContainer.stop();
+        }
     }
 
     @Bean
@@ -72,6 +102,9 @@ public class JUnitConfiguration implements ApplicationListener<ContextClosedEven
 
     @Bean
     public Node getNode() {
-        return new DummyNode("node-id", "main.srv.local");
+        Node node = Mockito.mock(Node.class);
+        when(node.hostname()).thenReturn("main.srv.local");
+        when(node.id()).thenReturn("node-id");
+        return node;
     }
 }

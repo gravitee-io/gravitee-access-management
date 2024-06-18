@@ -5,7 +5,7 @@
     "bootstrapServers": {
       "type": "string",
       "title": "Bootstrap servers",
-      "description": "Comma-separated list of host and port pairs for the the initial connection to the Kafka cluster (localhost:9092,another.host:9092)."
+      "description": "Comma-separated list of host and port pairs for the the initial connection to the Kafka cluster (e.g. localhost:9092,another.host:9092)."
     },
     "topic": {
       "type": "string",
@@ -25,6 +25,12 @@
         "0",
         "all"
       ]
+    },
+    "schemaRegistryUrl": {
+      "type": "string",
+      "title": "Schema Registry",
+      "description": "Host and port of schema registry (e.g. http://localhost:8081). Supported serializers: JSON.",
+      "pattern": "^(http|https)://"
     },
     "additionalProperties": {
       "title": "Producer properties",

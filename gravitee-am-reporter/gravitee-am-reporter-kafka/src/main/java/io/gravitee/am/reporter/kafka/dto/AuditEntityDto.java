@@ -15,60 +15,18 @@
  */
 package io.gravitee.am.reporter.kafka.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter
+@Getter
 public class AuditEntityDto {
-  private String id;
-  private String alternativeId;
-  private String type;
-  private String displayName;
-  private String referenceType;
-  private String referenceId;
 
-  public String getId() {
-    return id;
-  }
-
-  public void setId(String id) {
-    this.id = id;
-  }
-
-  public String getAlternativeId() {
-    return alternativeId;
-  }
-
-  public void setAlternativeId(String alternativeId) {
-    this.alternativeId = alternativeId;
-  }
-
-  public String getType() {
-    return type;
-  }
-
-  public void setType(String type) {
-    this.type = type;
-  }
-
-  public String getDisplayName() {
-    return displayName;
-  }
-
-  public void setDisplayName(String displayName) {
-    this.displayName = displayName;
-  }
-
-  public String getReferenceType() {
-    return referenceType;
-  }
-
-  public void setReferenceType(String referenceType) {
-    this.referenceType = referenceType;
-  }
-
-  public String getReferenceId() {
-    return referenceId;
-  }
-
-  public void setReferenceId(String referenceId) {
-    this.referenceId = referenceId;
-  }
+    private String id;
+    private String alternativeId;
+    private String type;
+    private String displayName;
+    private String referenceType;
+    private String referenceId;
 
 }

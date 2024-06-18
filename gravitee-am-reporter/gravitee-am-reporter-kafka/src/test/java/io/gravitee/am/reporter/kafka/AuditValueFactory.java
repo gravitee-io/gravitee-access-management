@@ -20,51 +20,50 @@ import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.reporter.api.audit.model.AuditAccessPoint;
 import io.gravitee.am.reporter.api.audit.model.AuditEntity;
 import io.gravitee.am.reporter.api.audit.model.AuditOutcome;
+import lombok.experimental.UtilityClass;
 
 import java.time.Instant;
 
+@UtilityClass
 public class AuditValueFactory {
 
-  private AuditValueFactory() {
-  }
+    public static Audit createAudit() {
+        Audit audit = new Audit();
+        audit.setId("id");
+        audit.setReferenceId("reference id");
+        audit.setReferenceType(ReferenceType.APPLICATION);
+        audit.setTimestamp(Instant.EPOCH);
+        audit.setTransactionId("transaction id");
+        audit.setType("type");
 
-  public static final Audit createAudit(){
-    Audit audit = new Audit();
-    audit.setId("id");
-    audit.setReferenceId("reference id");
-    audit.setReferenceType(ReferenceType.APPLICATION);
-    audit.setTimestamp(Instant.EPOCH);
-    audit.setTransactionId("transaction id");
-    audit.setType("type");
+        AuditOutcome outcome = new AuditOutcome();
+        outcome.setStatus("status");
+        audit.setOutcome(outcome);
 
-    AuditOutcome outcome = new AuditOutcome();
-    outcome.setStatus("status");
-    audit.setOutcome(outcome);
+        AuditEntity actor = createAuditEntity("actor");
+        audit.setActor(actor);
+        AuditEntity target = createAuditEntity("target");
+        audit.setTarget(target);
 
-    AuditEntity actor = createAuditEntity("actor");
-    audit.setActor(actor);
-    AuditEntity target = createAuditEntity("target");
-    audit.setTarget(target);
+        AuditAccessPoint accessPoint = new AuditAccessPoint();
+        accessPoint.setId("access point id");
+        accessPoint.setAlternativeId("access point alternative id");
+        accessPoint.setDisplayName("access Display Name");
+        accessPoint.setUserAgent("Chrome");
+        accessPoint.setIpAddress("192.168.1.1");
+        audit.setAccessPoint(accessPoint);
 
-    AuditAccessPoint accessPoint = new AuditAccessPoint();
-    accessPoint.setId("access point id");
-    accessPoint.setAlternativeId("access point alternative id");
-    accessPoint.setDisplayName("access Display Name");
-    accessPoint.setUserAgent("Chrome");
-    accessPoint.setIpAddress("192.168.1.1");
-    audit.setAccessPoint(accessPoint);
+        return audit;
+    }
 
-    return audit;
-  }
-
-  public static final  AuditEntity createAuditEntity(final String prefix) {
-    AuditEntity actor = new AuditEntity();
-    actor.setId(prefix + " id");
-    actor.setType(prefix + " type");
-    actor.setDisplayName(prefix + " display name");
-    actor.setAlternativeId(prefix + " alternative id");
-    actor.setReferenceId(prefix + " reference id");
-    actor.setReferenceType(ReferenceType.APPLICATION);
-    return actor;
-  }
+    public static AuditEntity createAuditEntity(final String prefix) {
+        AuditEntity actor = new AuditEntity();
+        actor.setId(prefix + " id");
+        actor.setType(prefix + " type");
+        actor.setDisplayName(prefix + " display name");
+        actor.setAlternativeId(prefix + " alternative id");
+        actor.setReferenceId(prefix + " reference id");
+        actor.setReferenceType(ReferenceType.APPLICATION);
+        return actor;
+    }
 }

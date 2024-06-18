@@ -21,202 +21,202 @@ import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.reporter.api.audit.model.AuditAccessPoint;
 import io.gravitee.am.reporter.api.audit.model.AuditEntity;
 import io.gravitee.am.reporter.kafka.AuditValueFactory;
-import io.gravitee.am.reporter.kafka.DummyNode;
 import io.gravitee.am.reporter.kafka.dto.AuditAccessPointDto;
 import io.gravitee.am.reporter.kafka.dto.AuditEntityDto;
 import io.gravitee.am.reporter.kafka.dto.AuditMessageValueDto;
 import io.gravitee.node.api.Node;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.when;
+
 class DtoMapperUTests {
 
-  @Test
-  void Should_MapAuditToAuditDto() {
-    // arrange
-    DtoMapper mapper = new DtoMapper();
-    GraviteeContext context = GraviteeContext.defaultContext("domain");
-    Node nodeMock = new DummyNode("first", "first.srv.local");
-    Audit audit = AuditValueFactory.createAudit();
+    @Test
+    void Should_MapAuditToAuditDto() {
+        // arrange
+        Node node = Mockito.mock(Node.class);
+        when(node.hostname()).thenReturn("first.srv.local");
+        when(node.id()).thenReturn("first");
+        GraviteeContext context = GraviteeContext.defaultContext("domain");
+        Audit audit = AuditValueFactory.createAudit();
 
-    // act
-    AuditMessageValueDto dto = mapper.map(audit, context, nodeMock);
+        // act
+        AuditMessageValueDto dto = DtoMapper.map(audit, context, node);
 
-    // assert
-    Assert.assertEquals("id", dto.getId());
-    Assert.assertEquals("reference id", dto.getReferenceId());
-    this.assertEquals(ReferenceType.APPLICATION, dto.getReferenceType());
-    Assert.assertEquals(Instant.EPOCH, dto.getTimestamp());
-    Assert.assertEquals("transaction id", dto.getTransactionId());
-    Assert.assertEquals("type", dto.getType());
-    Assert.assertEquals("status", dto.getStatus());
-    this.assertEquals(audit.getActor(), dto.getActor());
-    this.assertEquals(audit.getTarget(), dto.getTarget());
-    Assert.assertEquals(context.getOrganizationId(), dto.getOrganizationId());
-    Assert.assertEquals(context.getEnvironmentId(), dto.getEnvironmentId());
+        // assert
+        Assertions.assertEquals("id", dto.getId());
+        Assertions.assertEquals("reference id", dto.getReferenceId());
+        this.assertEquals(ReferenceType.APPLICATION, dto.getReferenceType());
+        Assertions.assertEquals(Instant.EPOCH, dto.getTimestamp());
+        Assertions.assertEquals("transaction id", dto.getTransactionId());
+        Assertions.assertEquals("type", dto.getType());
+        Assertions.assertEquals("status", dto.getStatus());
+        this.assertEquals(audit.getActor(), dto.getActor());
+        this.assertEquals(audit.getTarget(), dto.getTarget());
+        Assertions.assertEquals(context.getOrganizationId(), dto.getOrganizationId());
+        Assertions.assertEquals(context.getEnvironmentId(), dto.getEnvironmentId());
 
-    Assert.assertEquals("first", dto.getNodeId());
-    Assert.assertEquals("first.srv.local", dto.getNodeHostname());
+        Assertions.assertEquals("first", dto.getNodeId());
+        Assertions.assertEquals("first.srv.local", dto.getNodeHostname());
 
-    this.assertEquals(audit.getAccessPoint(), dto.getAccessPoint());
+        this.assertEquals(audit.getAccessPoint(), dto.getAccessPoint());
 
-  }
+    }
 
-  @Test
-  void Should_MapReferenceTypeIntoString() {
-    DtoMapper mapper = new DtoMapper();
-    Assert.assertEquals("APPLICATION", mapper.map(ReferenceType.APPLICATION));
-    Assert.assertEquals("DOMAIN", mapper.map(ReferenceType.DOMAIN));
-    Assert.assertEquals("ENVIRONMENT", mapper.map(ReferenceType.ENVIRONMENT));
-    Assert.assertEquals("ORGANIZATION", mapper.map(ReferenceType.ORGANIZATION));
-    Assert.assertEquals("PLATFORM", mapper.map(ReferenceType.PLATFORM));
-  }
+    @Test
+    void Should_MapReferenceTypeIntoString() {
+        Assertions.assertEquals("APPLICATION", DtoMapper.mapReferenceType(ReferenceType.APPLICATION));
+        Assertions.assertEquals("DOMAIN", DtoMapper.mapReferenceType(ReferenceType.DOMAIN));
+        Assertions.assertEquals("ENVIRONMENT", DtoMapper.mapReferenceType(ReferenceType.ENVIRONMENT));
+        Assertions.assertEquals("ORGANIZATION", DtoMapper.mapReferenceType(ReferenceType.ORGANIZATION));
+        Assertions.assertEquals("PLATFORM", DtoMapper.mapReferenceType(ReferenceType.PLATFORM));
+    }
 
-  /**
-   * helper method for assertion.
-   *
-   * @param expected expected
-   * @param actual   actual
-   */
-  private void assertEquals(ReferenceType expected, String actual) {
-    DtoMapper mapper = new DtoMapper();
-    Assert.assertNotNull(expected);
-    Assert.assertEquals(mapper.map(expected), actual);
-  }
+    /**
+     * helper method for assertion.
+     *
+     * @param expected expected
+     * @param actual   actual
+     */
+    private void assertEquals(ReferenceType expected, String actual) {
 
-  @Test
-  void Should_MapAuditEntryIntoAuditEntryDto() {
-    DtoMapper mapper = new DtoMapper();
-    AuditEntity auditEntity = new AuditEntity();
-    auditEntity.setId("id");
-    auditEntity.setType("type");
-    auditEntity.setReferenceId("reference id");
-    auditEntity.setReferenceType(ReferenceType.DOMAIN);
-    auditEntity.setAlternativeId("alternative id");
-    auditEntity.setDisplayName("Display Name");
-    Map<String, Object> attr = new HashMap<>();
-    attr.put("a", "string");
-    attr.put("b", 18);
-    auditEntity.setAttributes(attr);
+        assertNotNull(expected);
+        Assertions.assertEquals(DtoMapper.mapReferenceType(expected), actual);
+    }
 
-    AuditEntityDto dto = mapper.map(auditEntity);
+    @Test
+    void Should_MapAuditEntryIntoAuditEntryDto() {
+        AuditEntity auditEntity = new AuditEntity();
+        auditEntity.setId("id");
+        auditEntity.setType("type");
+        auditEntity.setReferenceId("reference id");
+        auditEntity.setReferenceType(ReferenceType.DOMAIN);
+        auditEntity.setAlternativeId("alternative id");
+        auditEntity.setDisplayName("Display Name");
+        Map<String, Object> attr = new HashMap<>();
+        attr.put("a", "string");
+        attr.put("b", 18);
+        auditEntity.setAttributes(attr);
 
-    Assert.assertEquals("type", dto.getType());
-    Assert.assertEquals("id", dto.getId());
-    Assert.assertEquals("reference id", dto.getReferenceId());
-    Assert.assertEquals("DOMAIN", dto.getReferenceType());
-    Assert.assertEquals("alternative id", dto.getAlternativeId());
-    Assert.assertEquals("Display Name", dto.getDisplayName());
+        AuditEntityDto dto = DtoMapper.mapAuditEntityDto(auditEntity);
 
-  }
+        Assertions.assertEquals("type", dto.getType());
+        Assertions.assertEquals("id", dto.getId());
+        Assertions.assertEquals("reference id", dto.getReferenceId());
+        Assertions.assertEquals("DOMAIN", dto.getReferenceType());
+        Assertions.assertEquals("alternative id", dto.getAlternativeId());
+        Assertions.assertEquals("Display Name", dto.getDisplayName());
 
-  @Test
-  void Should_MapAuditEntryIntoAuditEntryDto_Null_ReferenceType() {
-    DtoMapper mapper = new DtoMapper();
-    AuditEntity auditEntity = new AuditEntity();
-    auditEntity.setId(null);
-    auditEntity.setType("type");
-    auditEntity.setAlternativeId("alternative id");
-    auditEntity.setReferenceId(null);
-    auditEntity.setReferenceType(null);
-    auditEntity.setDisplayName(null);
-    auditEntity.setAttributes(null);
+    }
 
-    AuditEntityDto dto = mapper.map(auditEntity);
+    @Test
+    void Should_MapAuditEntryIntoAuditEntryDto_Null_ReferenceType() {
+        AuditEntity auditEntity = new AuditEntity();
+        auditEntity.setId(null);
+        auditEntity.setType("type");
+        auditEntity.setAlternativeId("alternative id");
+        auditEntity.setReferenceId(null);
+        auditEntity.setReferenceType(null);
+        auditEntity.setDisplayName(null);
+        auditEntity.setAttributes(null);
 
-    Assert.assertEquals("type", dto.getType());
-    Assert.assertEquals("alternative id", dto.getAlternativeId());
-    Assert.assertNull("id is null", dto.getId());
-    Assert.assertNull("reference id is null", dto.getReferenceId());
-    Assert.assertNull("reference type is null", dto.getReferenceType());
-    Assert.assertNull("display name is null", dto.getDisplayName());
-  }
+        AuditEntityDto dto = DtoMapper.mapAuditEntityDto(auditEntity);
 
-  /**
-   * helper method for assertion.
-   *
-   * @param expected expected
-   * @param actual   actual
-   */
-  private void assertEquals(AuditEntity expected, AuditEntityDto actual) {
-    // expected must be full filled else test is not relevant
-    Assert.assertNotNull(expected);
-    Assert.assertNotNull(expected.getType());
-    Assert.assertNotNull(expected.getId());
-    Assert.assertNotNull(expected.getReferenceId());
-    Assert.assertNotNull(expected.getAlternativeId());
-    Assert.assertNotNull(expected.getDisplayName());
+        Assertions.assertEquals("type", dto.getType());
+        Assertions.assertEquals("alternative id", dto.getAlternativeId());
+        assertNull(dto.getId());
+        assertNull(dto.getReferenceId());
+        assertNull(dto.getReferenceType());
+        assertNull(dto.getDisplayName());
+    }
 
-    // real assertions
-    Assert.assertEquals(expected.getType(), actual.getType());
-    Assert.assertEquals(expected.getId(), actual.getId());
-    Assert.assertEquals(expected.getReferenceId(), actual.getReferenceId());
-    this.assertEquals(expected.getReferenceType(), actual.getReferenceType());
-    Assert.assertEquals(expected.getAlternativeId(), actual.getAlternativeId());
-    Assert.assertEquals(expected.getDisplayName(), actual.getDisplayName());
-  }
+    /**
+     * helper method for assertion.
+     *
+     * @param expected expected
+     * @param actual   actual
+     */
+    private void assertEquals(AuditEntity expected, AuditEntityDto actual) {
+        // expected must be full filled else test is not relevant
+        assertNotNull(expected);
+        assertNotNull(expected.getType());
+        assertNotNull(expected.getId());
+        assertNotNull(expected.getReferenceId());
+        assertNotNull(expected.getAlternativeId());
+        assertNotNull(expected.getDisplayName());
 
-  @Test
-  void Should_MapAuditAccessPointIntoAuditAccessPointDto() {
-    DtoMapper mapper = new DtoMapper();
-    AuditAccessPoint auditAccessPoint = new AuditAccessPoint();
-    auditAccessPoint.setId("id");
-    auditAccessPoint.setAlternativeId("alternative id");
-    auditAccessPoint.setDisplayName("Display Name");
-    auditAccessPoint.setIpAddress("10.0.0.1");
-    auditAccessPoint.setUserAgent("Chrome");
+        // real assertions
+        Assertions.assertEquals(expected.getType(), actual.getType());
+        Assertions.assertEquals(expected.getId(), actual.getId());
+        Assertions.assertEquals(expected.getReferenceId(), actual.getReferenceId());
+        this.assertEquals(expected.getReferenceType(), actual.getReferenceType());
+        Assertions.assertEquals(expected.getAlternativeId(), actual.getAlternativeId());
+        Assertions.assertEquals(expected.getDisplayName(), actual.getDisplayName());
+    }
 
-    AuditAccessPointDto dto = mapper.map(auditAccessPoint);
-    Assert.assertEquals("id", dto.getId());
-    Assert.assertEquals("alternative id", dto.getAlternativeId());
-    Assert.assertEquals("Display Name", dto.getDisplayName());
-    Assert.assertEquals("10.0.0.1", dto.getIpAddress());
-    Assert.assertEquals("Chrome", dto.getUserAgent());
-  }
+    @Test
+    void Should_MapAuditAccessPointIntoAuditAccessPointDto() {
+        AuditAccessPoint auditAccessPoint = new AuditAccessPoint();
+        auditAccessPoint.setId("id");
+        auditAccessPoint.setAlternativeId("alternative id");
+        auditAccessPoint.setDisplayName("Display Name");
+        auditAccessPoint.setIpAddress("10.0.0.1");
+        auditAccessPoint.setUserAgent("Chrome");
 
-  @Test
-  void Should_MapAuditAccessPointIntoAuditAccessPointDto_When_IpIsInvalid() {
-    DtoMapper mapper = new DtoMapper();
-    AuditAccessPoint auditAccessPoint = new AuditAccessPoint();
-    auditAccessPoint.setId("id");
-    auditAccessPoint.setAlternativeId("alternative id");
-    auditAccessPoint.setDisplayName("Display Name");
-    auditAccessPoint.setIpAddress("azertyuiop");
-    auditAccessPoint.setUserAgent("Chrome");
+        AuditAccessPointDto dto = DtoMapper.mapAuditAccessPoint(auditAccessPoint);
+        Assertions.assertEquals("id", dto.getId());
+        Assertions.assertEquals("alternative id", dto.getAlternativeId());
+        Assertions.assertEquals("Display Name", dto.getDisplayName());
+        Assertions.assertEquals("10.0.0.1", dto.getIpAddress());
+        Assertions.assertEquals("Chrome", dto.getUserAgent());
+    }
 
-    AuditAccessPointDto dto = mapper.map(auditAccessPoint);
-    Assert.assertEquals("id", dto.getId());
-    Assert.assertEquals("alternative id", dto.getAlternativeId());
-    Assert.assertEquals("Display Name", dto.getDisplayName());
-    Assert.assertEquals("0.0.0.0", dto.getIpAddress());
-    Assert.assertEquals("Chrome", dto.getUserAgent());
-  }
+    @Test
+    void Should_MapAuditAccessPointIntoAuditAccessPointDto_When_IpIsInvalid() {
+        AuditAccessPoint auditAccessPoint = new AuditAccessPoint();
+        auditAccessPoint.setId("id");
+        auditAccessPoint.setAlternativeId("alternative id");
+        auditAccessPoint.setDisplayName("Display Name");
+        auditAccessPoint.setIpAddress("azertyuiop");
+        auditAccessPoint.setUserAgent("Chrome");
 
-  /**
-   * helper method for assertion.
-   *
-   * @param expected expected
-   * @param actual   actual
-   */
-  private void assertEquals(AuditAccessPoint expected, AuditAccessPointDto actual) {
-    // expected must be full filled else test is not relevant
-    Assert.assertNotNull(expected);
-    Assert.assertNotNull(expected.getId());
-    Assert.assertNotNull(expected.getIpAddress());
-    Assert.assertNotNull(expected.getUserAgent());
-    Assert.assertNotNull(expected.getAlternativeId());
-    Assert.assertNotNull(expected.getDisplayName());
+        AuditAccessPointDto dto = DtoMapper.mapAuditAccessPoint(auditAccessPoint);
+        Assertions.assertEquals("id", dto.getId());
+        Assertions.assertEquals("alternative id", dto.getAlternativeId());
+        Assertions.assertEquals("Display Name", dto.getDisplayName());
+        Assertions.assertEquals("0.0.0.0", dto.getIpAddress());
+        Assertions.assertEquals("Chrome", dto.getUserAgent());
+    }
 
-    // real assertions
-    Assert.assertEquals(expected.getId(), actual.getId());
-    Assert.assertEquals(expected.getIpAddress(), actual.getIpAddress());
-    Assert.assertEquals(expected.getDisplayName(), actual.getDisplayName());
-    Assert.assertEquals(expected.getAlternativeId(), actual.getAlternativeId());
-    Assert.assertEquals(expected.getDisplayName(), actual.getDisplayName());
-  }
+    /**
+     * helper method for assertion.
+     *
+     * @param expected expected
+     * @param actual   actual
+     */
+    private void assertEquals(AuditAccessPoint expected, AuditAccessPointDto actual) {
+        // expected must be full filled else test is not relevant
+        assertNotNull(expected);
+        assertNotNull(expected.getId());
+        assertNotNull(expected.getIpAddress());
+        assertNotNull(expected.getUserAgent());
+        assertNotNull(expected.getAlternativeId());
+        assertNotNull(expected.getDisplayName());
+
+        // real assertions
+        Assertions.assertEquals(expected.getId(), actual.getId());
+        Assertions.assertEquals(expected.getIpAddress(), actual.getIpAddress());
+        Assertions.assertEquals(expected.getDisplayName(), actual.getDisplayName());
+        Assertions.assertEquals(expected.getAlternativeId(), actual.getAlternativeId());
+        Assertions.assertEquals(expected.getDisplayName(), actual.getDisplayName());
+    }
 
 }

@@ -25,6 +25,7 @@ import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.reporter.kafka.KafkaReporterConfiguration;
 import io.gravitee.am.reporter.kafka.dto.AuditMessageValueDto;
 import io.gravitee.am.reporter.kafka.kafka.JacksonSerializer;
+import io.gravitee.am.reporter.kafka.kafka.KafkaJsonSerializer;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.node.api.Node;
 import io.gravitee.reporter.api.Reportable;
@@ -34,123 +35,131 @@ import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
-import org.apache.kafka.common.serialization.Serializer;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * @author Florent Amaridon
  * @author Visiativ
  */
-public class KafkaAuditReporter extends AbstractService<Reporter> implements AuditReporter, InitializingBean {
+@Slf4j
+public class KafkaAuditReporter extends AbstractService<Reporter> implements AuditReporter {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(KafkaAuditReporter.class);
+    private static final String SCHEMA_REGISTRY_URL_KEY = "schema.registry.url";
 
-  @Autowired
-  private Vertx vertx;
 
-  @Autowired
-  private KafkaReporterConfiguration config;
+    private final Vertx vertx;
 
-  @Autowired
-  private GraviteeContext context;
+    private final KafkaReporterConfiguration config;
 
-  @Autowired
-  private Node node;
 
-  private final DtoMapper dtoMapper;
+    private final GraviteeContext context;
 
-  private KafkaProducer<String, AuditMessageValueDto> producer;
 
-  public KafkaAuditReporter() {
-    this.dtoMapper = new DtoMapper();
-  }
+    private final Node node;
 
-  @Override
-  public boolean canHandle(Reportable reportable) {
-    return reportable instanceof Audit;
-  }
+    private KafkaProducer<String, AuditMessageValueDto> producer;
 
-  @Override
-  public void report(Reportable reportable) {
-    LOGGER.debug("Report({})", reportable);
-    if (producer != null) {
-      AuditMessageValueDto value = dtoMapper.map((Audit) reportable, this.context, this.node);
-      this.producer.write(
-          KafkaProducerRecord.create(this.config.getTopic(), this.context.getDomainId(), value));
-    } else {
-      LOGGER.debug("Producer is null, ignore reportable");
+    private final String key;
+
+    public KafkaAuditReporter(KafkaReporterConfiguration config, Vertx vertx, GraviteeContext context, Node node) {
+        this.config = config;
+        this.vertx = vertx;
+        this.context = context;
+        this.node = node;
+        //if domainId is null then this is a ORGANIZATION reporter. If not null then
+        this.key = this.context.getDomainId() != null ? context.getDomainId() : context.getOrganizationId();
     }
-  }
 
-  @Override
-  public void afterPropertiesSet() {
-    if (context == null) {
-      context = GraviteeContext.defaultContext(null);
+    @Override
+    public boolean canHandle(Reportable reportable) {
+        return reportable instanceof Audit;
     }
-  }
 
-  @Override
-  protected void doStart() {
-    ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
-    try {
-      Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
-      Map<String, String> config = new HashMap<>();
-      config.put("bootstrap.servers", this.config.getBootstrapServers());
-      config.put("acks", this.config.getAcks());
-
-      List<Map<String, String>> additionalProperties = this.config.getAdditionalProperties();
-      if (additionalProperties != null && !additionalProperties.isEmpty()) {
-        additionalProperties.forEach(claimMapper -> {
-          String option = claimMapper.get("option");
-          String value = claimMapper.get("value");
-          config.put(option, value);
-        });
-      }
-
-      Serializer<String> keySerializer = new StringSerializer();
-      Serializer<AuditMessageValueDto> valueSerializer = new JacksonSerializer<>();
-
-      this.producer = KafkaProducer.create(vertx, config, keySerializer, valueSerializer);
-    } finally {
-      Thread.currentThread().setContextClassLoader(originalClassLoader);
+    @Override
+    public void report(Reportable reportable) {
+        log.debug("Report({})", reportable);
+        if (producer != null) {
+            AuditMessageValueDto value = DtoMapper.map((Audit) reportable, this.context, this.node);
+            this.producer.write(
+                    KafkaProducerRecord.create(this.config.getTopic(), key, value));
+        } else {
+            log.debug("Producer is null, ignore reportable");
+        }
     }
-  }
 
-  @Override
-  protected void doStop() throws Exception {
-    super.doStop();
-    if (this.producer != null) {
-      this.producer.close();
+    @Override
+    protected void doStart() {
+        ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
+            this.producer = KafkaProducer.create(vertx, getProperties());
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalClassLoader);
+        }
     }
-  }
 
-  @Override
-  public boolean canSearch() {
-    return false;
-  }
+    @Override
+    protected void doStop() throws Exception {
+        super.doStop();
+        if (this.producer != null) {
+            this.producer.close();
+        }
+    }
 
-  @Override
-  public Single<Page<Audit>> search(ReferenceType referenceType, String referenceId,
-      AuditReportableCriteria criteria, int page, int size) {
-    throw new IllegalStateException("Search method not implemented for File reporter");
-  }
+    @Override
+    public boolean canSearch() {
+        return false;
+    }
 
-  @Override
-  public Single<Map<Object, Object>> aggregate(ReferenceType referenceType, String referenceId,
-      AuditReportableCriteria criteria, Type analyticsType) {
-    throw new IllegalStateException("Aggregate method not implemented for File reporter");
-  }
+    @Override
+    public Single<Page<Audit>> search(ReferenceType referenceType, String referenceId,
+                                      AuditReportableCriteria criteria, int page, int size) {
+        throw new IllegalStateException("Search method not implemented for File reporter");
+    }
 
-  @Override
-  public Maybe<Audit> findById(ReferenceType referenceType, String referenceId, String id) {
-    throw new IllegalStateException("FindById method not implemented for File reporter");
-  }
+    @Override
+    public Single<Map<Object, Object>> aggregate(ReferenceType referenceType, String referenceId,
+                                                 AuditReportableCriteria criteria, Type analyticsType) {
+        throw new IllegalStateException("Aggregate method not implemented for File reporter");
+    }
+
+    @Override
+    public Maybe<Audit> findById(ReferenceType referenceType, String referenceId, String id) {
+        throw new IllegalStateException("FindById method not implemented for File reporter");
+    }
+
+    private Properties getProperties() {
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, this.config.getBootstrapServers());
+        properties.put(ProducerConfig.ACKS_CONFIG, this.config.getAcks());
+        if (StringUtils.hasText(this.config.getSchemaRegistryUrl())) {
+            properties.put(SCHEMA_REGISTRY_URL_KEY, this.config.getSchemaRegistryUrl());
+            properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaJsonSerializer.class);
+        } else {
+            properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JacksonSerializer.class);
+        }
+        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+
+        List<Map<String, String>> additionalProperties = this.config.getAdditionalProperties();
+        if (additionalProperties != null && !additionalProperties.isEmpty()) {
+            additionalProperties.forEach(property -> {
+                String option = property.get("option");
+                String value = property.get("value");
+                properties.put(option, value);
+            });
+        }
+
+        Properties props = new Properties();
+        props.putAll(properties);
+
+        return props;
+    }
 }
