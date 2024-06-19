@@ -108,11 +108,6 @@ public class DefaultOrganizationUpgrader implements Upgrader {
                 initializeDefaultOrganization(organization);
             }
 
-            if (identityProviderManager != null) {
-                // call the idpManager here to ensure that roles have been created
-                identityProviderManager.loadIdentityProviders().blockingAwait();
-            }
-
             // Get organization with fresh data.
             organization = organizationService.findById(Organization.DEFAULT).blockingGet();
 
