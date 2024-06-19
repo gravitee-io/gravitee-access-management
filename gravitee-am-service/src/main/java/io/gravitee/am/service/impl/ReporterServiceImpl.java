@@ -173,7 +173,7 @@ public class ReporterServiceImpl implements ReporterService {
                 .flatMap(createdReporter -> {
                     // create event for sync process
                     Event event = new Event(Type.REPORTER, new Payload(createdReporter.getId(), createdReporter.getReference(), Action.CREATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(createdReporter));
+                    return eventService.create(event).flatMap(e -> Single.just(createdReporter));
                 })
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to create a reporter", ex);
@@ -208,7 +208,7 @@ public class ReporterServiceImpl implements ReporterService {
                                         // except for admin domain
                                         if (!ADMIN_DOMAIN.equals(reference)) {
                                             Event event = new Event(Type.REPORTER, new Payload(reporter.getId(), reporter.getReference(), Action.UPDATE));
-                                            return eventService.create(event).flatMap(__ -> Single.just(reporter));
+                                            return eventService.create(event).flatMap(e -> Single.just(reporter));
                                         } else {
                                             return Single.just(reporter);
                                         }

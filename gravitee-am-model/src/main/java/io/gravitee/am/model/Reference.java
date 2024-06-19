@@ -15,9 +15,10 @@
  */
 package io.gravitee.am.model;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public record Reference(ReferenceType type, String id) {
+public record Reference(ReferenceType type, String id) implements Serializable {
 
     public Reference {
         Objects.requireNonNull(type, "reference type cannot be null");

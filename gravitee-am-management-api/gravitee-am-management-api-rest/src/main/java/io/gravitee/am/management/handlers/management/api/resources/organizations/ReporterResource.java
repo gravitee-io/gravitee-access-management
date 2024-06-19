@@ -118,7 +118,7 @@ public class ReporterResource extends AbstractResource {
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_REPORTER, Acl.UPDATE)
                 .andThen(organizationService.findById(organizationId)
                         .onErrorResumeWith(Single.error(new OrganizationNotFoundException(organizationId)))
-                        .flatMap(__ -> reporterService.update(Reference.organization(organizationId), reporterId, updateReporter, authenticatedUser, false)))
+                        .flatMap(org -> reporterService.update(Reference.organization(organizationId), reporterId, updateReporter, authenticatedUser, false)))
                 .subscribe(response::resume, response::resume);
     }
 

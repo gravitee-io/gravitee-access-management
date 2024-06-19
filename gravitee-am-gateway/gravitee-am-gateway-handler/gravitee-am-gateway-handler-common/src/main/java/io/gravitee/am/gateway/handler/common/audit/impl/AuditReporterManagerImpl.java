@@ -50,7 +50,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuditReporterManagerImpl extends AbstractService implements AuditReporterManager, EventListener<ReporterEvent, Payload>, InitializingBean {
+public class AuditReporterManagerImpl extends AbstractService<AuditReporterManager> implements AuditReporterManager, EventListener<ReporterEvent, Payload>, InitializingBean {
 
     private static final Logger logger = LoggerFactory.getLogger(AuditReporterManagerImpl.class);
     private String deploymentId;
