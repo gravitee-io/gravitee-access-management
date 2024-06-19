@@ -120,7 +120,9 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
                 .flatMapMaybe(identityProvider -> {
                     logger.info("\tInitializing user provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
                     return loadUserProvider(identityProvider);
-                }).ignoreElements().blockingAwait();
+                }).ignoreElements()
+                .andThen(Completable.defer(() -> loadIdentityProviders()))
+                .blockingAwait();
 
     }
 
