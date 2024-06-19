@@ -36,7 +36,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -74,11 +73,11 @@ public class ReporterResource extends AbstractResource {
     @Operation(operationId = "getOrgReporter",
             summary = "Get a reporter",
             description = "User must have the ORGANIZATION_REPORTER[READ] permission on the organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Reporter successfully fetched",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Reporter.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+
+    @ApiResponse(responseCode = "200", description = "Reporter successfully fetched",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = Reporter.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("reporterId") String reporterId,
@@ -104,11 +103,11 @@ public class ReporterResource extends AbstractResource {
     @Operation(operationId = "updateOrgReporter",
             summary = "Update a reporter",
             description = "User must have the ORGANIZATION_REPORTER[UPDATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Reporter successfully updated",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Reporter.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+
+    @ApiResponse(responseCode = "201", description = "Reporter successfully updated",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = Reporter.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("reporterId") String reporterId,
@@ -128,11 +127,9 @@ public class ReporterResource extends AbstractResource {
     @Operation(operationId = "deleteOrgReporter",
             summary = "Delete a reporter",
             description = "User must have the ORGANIZATION_REPORTER[DELETE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Reporter successfully removed",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Void.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "204", description = "Reporter successfully removed",
+            content = @Content(mediaType = "application/json"))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("reporterId") String reporterId,

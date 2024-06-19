@@ -34,7 +34,6 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
@@ -75,11 +74,10 @@ public class ReportersResource extends AbstractResource {
             summary = "List registered reporters for a security domain",
             description = "User must have the ORGANIZATION_REPORTER[LIST] permission on the specified organization. " +
                     "Except if user has ORGANIZATION_REPORTER[READ] permission on the organization, each returned reporter is filtered and contains only basic information such as id and name and type.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List registered reporters for an organization",
-                    content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = Reporter.class)))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "200", description = "List registered reporters for an organization",
+            content = @Content(mediaType = "application/json",
+                    array = @ArraySchema(schema = @Schema(implementation = Reporter.class))))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void list(
             @PathParam("organizationId") String organizationId,
             @Suspended final AsyncResponse response) {
@@ -105,11 +103,10 @@ public class ReportersResource extends AbstractResource {
     @Operation(operationId = "createOrgReporter",
             summary = "Create a reporter for an organization",
             description = "User must have the ORGANIZATION_REPORTER[CREATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Reporter created for a security domain",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Reporter.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "201", description = "Reporter created for a security domain",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = Reporter.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void create(
             @PathParam("organizationId") String organizationId,
             NewReporter newReporter,
@@ -123,8 +120,8 @@ public class ReportersResource extends AbstractResource {
                         .onErrorResumeWith(Single.error(new OrganizationNotFoundException(organizationId))))
                 .flatMap(org -> reporterService.create(Reference.organization(organizationId), newReporter, authenticatedUser, false))
                 .map(reporter -> Response.created(URI.create("/organizations/%s/reporters/%s".formatted(organizationId, reporter.getId())))
-                                .entity(reporter)
-                                .build())
+                        .entity(reporter)
+                        .build())
                 .subscribe(response::resume, response::resume);
     }
 
