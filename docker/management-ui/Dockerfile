@@ -19,9 +19,6 @@ LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
 
-# Update to get support for Zip/Unzip, Bash
-RUN apk --update add zip unzip bash wget
-
 ENV WWW_TARGET /usr/share/nginx/html
 ENV MGMT_BASE_HREF "/"
 ENV MGMT_API_URL "http://localhost:8093"
@@ -38,7 +35,7 @@ RUN apk update \
 ADD config/constants.json /usr/share/nginx/html/constants.json
 ADD config/default.conf /etc/nginx/conf.d/default.conf
 
-RUN chown -R 101:0 /usr/share/nginx/ /etc/nginx/conf.d/
+RUN chown -R 101:0 /usr/share/nginx/ /etc/nginx/
 
 CMD ["sh", "/run.sh"]
 
