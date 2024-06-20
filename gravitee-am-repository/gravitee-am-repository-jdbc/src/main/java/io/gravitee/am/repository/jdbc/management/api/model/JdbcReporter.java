@@ -15,6 +15,11 @@
  */
 package io.gravitee.am.repository.jdbc.management.api.model;
 
+import io.gravitee.am.model.ReferenceType;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -26,10 +31,16 @@ import java.time.LocalDateTime;
  * @author GraviteeSource Team
  */
 @Table("reporters")
-public class JdbcReporter {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class JdbcReporter  {
     @Id
     private String id;
-    private String domain;
+
+    private ReferenceType referenceType;
+    private String referenceId;
     private boolean enabled;
     private String type;
     private String name;
@@ -40,85 +51,7 @@ public class JdbcReporter {
     private LocalDateTime createdAt;
     @Column("updated_at")
     private LocalDateTime updatedAt;
+    @Column("system")
     private boolean system;
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getDomain() {
-        return domain;
-    }
-
-    public void setDomain(String domain) {
-        this.domain = domain;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDataType() {
-        return dataType;
-    }
-
-    public void setDataType(String dataType) {
-        this.dataType = dataType;
-    }
-
-    public String getConfiguration() {
-        return configuration;
-    }
-
-    public void setConfiguration(String configuration) {
-        this.configuration = configuration;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public boolean isSystem() {
-        return system;
-    }
-
-    public void setSystem(boolean system) {
-        this.system = system;
-    }
 }

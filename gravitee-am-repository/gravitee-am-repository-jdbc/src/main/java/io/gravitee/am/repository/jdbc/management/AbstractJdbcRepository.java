@@ -29,8 +29,12 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.transaction.ReactiveTransactionManager;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -95,5 +99,35 @@ public abstract class AbstractJdbcRepository {
             }
         }
         return builder.toString();
+    }
+
+    protected LocalDateTime toLocalDateTime(Date date) {
+        if (date == null) {
+            return null;
+        }
+        return date.toInstant().atOffset(ZoneOffset.UTC).toLocalDateTime();
+    }
+
+    protected Date toDate(LocalDateTime localDateTime) {
+        return Date.from(localDateTime.toInstant(ZoneOffset.UTC));
+    }
+
+    /**
+     * Holds information about what column to populate & how.
+     *
+     * @param <S> source entity type
+     * @param <T> column type
+     * @see #addQuotedFields
+     */
+    public record FieldSpec<S, T>(String columnName, Function<S, T> valueGetter, Class<T> valueType) {
+    }
+
+    protected <S> DatabaseClient.GenericExecuteSpec addQuotedFields(DatabaseClient.GenericExecuteSpec sql, List<FieldSpec<S, ?>> fields, S source) {
+        return fields.stream()
+                .reduce(sql,
+                        (spec, field) -> addQuotedField(spec, field.columnName(), field.valueGetter().apply(source), field.valueType()),
+                        (a, b) -> {
+                            throw new UnsupportedOperationException("don't make this stream parallel");
+                        });
     }
 }

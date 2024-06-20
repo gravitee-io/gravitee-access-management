@@ -29,6 +29,7 @@ import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.account.AccountSettings;
@@ -550,7 +551,7 @@ public class DomainServiceImpl implements DomainService {
                                     .flatMapCompletable(formTemplate -> formService.delete(domainId, formTemplate.getId()))
                             )
                             // delete reporters
-                            .andThen(reporterService.findByDomain(domainId)
+                            .andThen(reporterService.findByReference(Reference.domain(domainId))
                                     .flatMapCompletable(reporter ->
                                         reporterService.delete(reporter.getId()))
                             )

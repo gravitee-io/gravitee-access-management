@@ -19,6 +19,8 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
@@ -77,22 +79,19 @@ public class ReporterResource extends AbstractResource {
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
-            @PathParam("reporter") String reporter,
+            @PathParam("reporter") String reporterId,
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> reporterService.findById(reporter))
-                        .switchIfEmpty(Maybe.error(new ReporterNotFoundException(reporter)))
-                        .map(reporter1 -> {
-                            if (reporter1.isSystem()) {
-                                reporter1.setConfiguration(null);
-                            }
-                            if (!reporter1.getDomain().equalsIgnoreCase(domain)) {
+                        .flatMap(irrelevant -> reporterService.findById(reporterId))
+                        .switchIfEmpty(Maybe.error(new ReporterNotFoundException(reporterId)))
+                        .map(reporter -> {
+                            if (!reporter.getReference().matches(ReferenceType.DOMAIN, domain)) {
                                 throw new BadRequestException("Reporter does not belong to domain");
                             }
-                            return Response.ok(reporter1).build();
+                            return Response.ok(reporter.apiRepresentation(false)).build();
                         }))
                 .subscribe(response::resume, response::resume);
     }
@@ -121,7 +120,7 @@ public class ReporterResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> reporterService.update(domain, reporter, updateReporter, authenticatedUser, false)))
+                        .flatMapSingle(__ -> reporterService.update(Reference.domain(domain), reporter, updateReporter, authenticatedUser, false)))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -151,8 +150,8 @@ public class ReporterResource extends AbstractResource {
                         .switchIfEmpty(Maybe.just(Optional.empty()))
                         .flatMapCompletable(reporter1 -> {
                             if (reporter1.isPresent()) {
-                                if (!reporter1.get().getDomain().equalsIgnoreCase(domain)) {
-                                    throw new BadRequestException("Reporter does not belong to domain");
+                                if (!reporter1.get().getReference().matches(ReferenceType.DOMAIN, domain)) {
+                                    return Completable.error(new BadRequestException("Reporter does not belong to domain"));
                                 }
 
                                 return reporterService.delete(reporter, authenticatedUser);

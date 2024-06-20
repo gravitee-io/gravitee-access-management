@@ -24,7 +24,7 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class GatewayAuditBuilder<T> extends AuditBuilder<T> {
+public abstract class GatewayAuditBuilder<T extends GatewayAuditBuilder<T>> extends AuditBuilder<T> {
 
     public T ipAddress(RoutingContext context) {
         if (ConsentUtils.canSaveIp(context)) {

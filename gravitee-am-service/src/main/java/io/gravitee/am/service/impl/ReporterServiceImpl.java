@@ -22,6 +22,8 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Organization;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.common.event.Event;
@@ -75,7 +77,7 @@ public class ReporterServiceImpl implements ReporterService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReporterServiceImpl.class);
     private static final int TABLE_SUFFIX_MAX_LENGTH = 30;
     private static final String REPORTER_AM_JDBC = "reporter-am-jdbc";
-    private static final String REPORTER_AM_FILE= "reporter-am-file";
+    private static final String REPORTER_AM_FILE = "reporter-am-file";
     private static final String REPORTER_CONFIG_FILENAME = "filename";
     private static final String ADMIN_DOMAIN = "admin";
     public static final String MANAGEMENT_TYPE = "management.type";
@@ -84,18 +86,20 @@ public class ReporterServiceImpl implements ReporterService {
     // when a REST call is performed and not only check on the UI
     private final Pattern filenamePattern = Pattern.compile("^([A-Za-z0-9][A-Za-z0-9\\-_.]*)$");
 
-    @Autowired
     private Environment environment;
 
-    @Lazy
-    @Autowired
     private ReporterRepository reporterRepository;
 
-    @Autowired
     private EventService eventService;
 
-    @Autowired
     private AuditService auditService;
+
+    public ReporterServiceImpl(Environment environment, @Lazy ReporterRepository reporterRepository, EventService eventService, AuditService auditService) {
+        this.environment = environment;
+        this.reporterRepository =reporterRepository;
+        this.eventService = eventService;
+        this.auditService =auditService;
+    }
 
 
     @Override
@@ -109,12 +113,12 @@ public class ReporterServiceImpl implements ReporterService {
     }
 
     @Override
-    public Flowable<Reporter> findByDomain(String domain) {
-        LOGGER.debug("Find reporters by domain: {}", domain);
-        return reporterRepository.findByDomain(domain)
+    public Flowable<Reporter> findByReference(Reference reference) {
+        LOGGER.debug("Find reporters for: {}", reference);
+        return reporterRepository.findByReference(reference)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find reporters by domain: {}", domain, ex);
-                    return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find reporters by domain: %s", domain), ex));
+                    LOGGER.error("An error occurs while trying to find reporters by domain: {}", reference, ex);
+                    return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find reporters by domain: %s", reference), ex));
                 });
     }
 
@@ -129,34 +133,34 @@ public class ReporterServiceImpl implements ReporterService {
     }
 
     @Override
-    public Single<Reporter> createDefault(String domain) {
-        LOGGER.debug("Create default reporter for domain {}", domain);
-        NewReporter newReporter = createInternal(domain);
+    public Single<Reporter> createDefault(Reference reference) {
+        LOGGER.debug("Create default reporter for  {}", reference);
+        NewReporter newReporter = createInternal(reference);
         if (newReporter == null) {
             return Single.error(new ReporterNotFoundException("Reporter type " + this.environment.getProperty(MANAGEMENT_TYPE) + " not found"));
         }
-        return create(domain, newReporter);
+        return create(reference, newReporter);
     }
 
     @Override
-    public NewReporter createInternal(String domain) {
+    public NewReporter createInternal(Reference reference) {
         NewReporter newReporter = null;
         if (useMongoReporter()) {
-            newReporter = createMongoReporter(domain);
+            newReporter = createMongoReporter(reference);
         } else if (useJdbcReporter()) {
-            newReporter = createJdbcReporter(domain);
+            newReporter = createJdbcReporter(reference);
         }
         return newReporter;
     }
 
     @Override
-    public Single<Reporter> create(String domain, NewReporter newReporter, User principal, boolean system) {
-        LOGGER.debug("Create a new reporter {} for domain {}", newReporter, domain);
+    public Single<Reporter> create(Reference reference, NewReporter newReporter, User principal, boolean system) {
+        LOGGER.debug("Create a new reporter {} for {}", newReporter, reference);
 
         Reporter reporter = new Reporter();
         reporter.setId(newReporter.getId() == null ? RandomString.generate() : newReporter.getId());
         reporter.setEnabled(newReporter.isEnabled());
-        reporter.setDomain(domain);
+        reporter.setReference(reference);
         reporter.setName(newReporter.getName());
         reporter.setSystem(system);
         reporter.setType(newReporter.getType());
@@ -168,10 +172,10 @@ public class ReporterServiceImpl implements ReporterService {
 
         return checkReporterConfiguration(reporter)
                 .flatMap(ignore -> reporterRepository.create(reporter))
-                .flatMap(reporter1 -> {
+                .flatMap(createdReporter -> {
                     // create event for sync process
-                    Event event = new Event(Type.REPORTER, new Payload(reporter1.getId(), ReferenceType.DOMAIN, reporter1.getDomain(), Action.CREATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(reporter1));
+                    Event event = new Event(Type.REPORTER, new Payload(createdReporter.getId(), createdReporter.getReference(), Action.CREATE));
+                    return eventService.create(event).flatMap(e -> Single.just(createdReporter));
                 })
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to create a reporter", ex);
@@ -185,11 +189,11 @@ public class ReporterServiceImpl implements ReporterService {
 
 
     @Override
-    public Single<Reporter> update(String domain, String id, UpdateReporter updateReporter, User principal, boolean isUpgrader) {
-        LOGGER.debug("Update a reporter {} for domain {}", id, domain);
+    public Single<Reporter> update(Reference reference, String reporterId, UpdateReporter updateReporter, User principal, boolean isUpgrader) {
+        LOGGER.debug("Update a reporter {} for {}", reporterId, reference);
 
-        return reporterRepository.findById(id)
-                .switchIfEmpty(Single.error(new ReporterNotFoundException(id)))
+        return reporterRepository.findById(reporterId)
+                .switchIfEmpty(Single.error(new ReporterNotFoundException(reporterId)))
                 .flatMap(oldReporter -> {
                     Reporter reporterToUpdate = new Reporter(oldReporter);
                     reporterToUpdate.setEnabled(updateReporter.isEnabled());
@@ -201,14 +205,14 @@ public class ReporterServiceImpl implements ReporterService {
 
                     return checkReporterConfiguration(reporterToUpdate)
                             .flatMap(ignore -> reporterRepository.update(reporterToUpdate)
-                                    .flatMap(reporter1 -> {
+                                    .flatMap(reporter -> {
                                         // create event for sync process
                                         // except for admin domain
-                                        if (!ADMIN_DOMAIN.equals(domain)) {
-                                            Event event = new Event(Type.REPORTER, new Payload(reporter1.getId(), ReferenceType.DOMAIN, reporter1.getDomain(), Action.UPDATE));
-                                            return eventService.create(event).flatMap(__ -> Single.just(reporter1));
+                                        if (!ADMIN_DOMAIN.equals(reference)) {
+                                            Event event = new Event(Type.REPORTER, new Payload(reporter.getId(), reporter.getReference(), Action.UPDATE));
+                                            return eventService.create(event).flatMap(e -> Single.just(reporter));
                                         } else {
-                                            return Single.just(reporter1);
+                                            return Single.just(reporter);
                                         }
                                     }));
                 })
@@ -232,9 +236,9 @@ public class ReporterServiceImpl implements ReporterService {
                 .switchIfEmpty(Maybe.error(new ReporterNotFoundException(reporterId)))
                 .flatMapCompletable(reporter -> {
                     // create event for sync process
-                    Event event = new Event(Type.REPORTER, new Payload(reporterId, ReferenceType.DOMAIN, reporter.getDomain(), Action.DELETE));
+                    Event event = new Event(Type.REPORTER, new Payload(reporterId, reporter.getReference(), Action.DELETE));
                     return Completable.fromSingle(reporterRepository.delete(reporterId)
-                            .andThen(eventService.create(event)))
+                                    .andThen(eventService.create(event)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_DELETED).reporter(reporter)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_DELETED).throwable(throwable)));
                 })
@@ -265,7 +269,7 @@ public class ReporterServiceImpl implements ReporterService {
             if (Strings.isNullOrEmpty(reportFilename) || !filenamePattern.matcher(reportFilename).matches()) {
                 return Single.error(new ReporterConfigurationException("Filename is invalid"));
             }
-            result = reporterRepository.findByDomain(reporter.getDomain())
+            result = reporterRepository.findByReference(reporter.getReference())
                     .filter(r -> r.getType().equalsIgnoreCase(REPORTER_AM_FILE))
                     .filter(r -> reporterId == null || !r.getId().equals(reporterId)) // exclude 'self' in case of update
                     .map(r -> (JsonObject) Json.decodeValue(r.getConfiguration()))
@@ -286,30 +290,30 @@ public class ReporterServiceImpl implements ReporterService {
         return result;
     }
 
-    private NewReporter createMongoReporter(String domain) {
+    private NewReporter createMongoReporter(Reference reference) {
         NewReporter newReporter = new NewReporter();
         newReporter.setId(RandomString.generate());
         newReporter.setEnabled(true);
         newReporter.setName("MongoDB Reporter");
         newReporter.setType(MONGODB);
-        newReporter.setConfiguration(createReporterConfig(domain));
+        newReporter.setConfiguration(createReporterConfig(reference));
 
         return newReporter;
     }
 
-    private NewReporter createJdbcReporter(String domain) {
+    private NewReporter createJdbcReporter(Reference reference) {
         NewReporter newReporter = new NewReporter();
         newReporter.setId(RandomString.generate());
         newReporter.setEnabled(true);
         newReporter.setName("JDBC Reporter");
         newReporter.setType(REPORTER_AM_JDBC);
-        newReporter.setConfiguration(createReporterConfig(domain));
+        newReporter.setConfiguration(createReporterConfig(reference));
 
         return newReporter;
     }
 
     @Override
-    public String createReporterConfig(String domain) {
+    public String createReporterConfig(Reference reference) {
         String reporterConfig = null;
         if (useMongoReporter()) {
             Optional<String> mongoServers = getMongoServers(environment);
@@ -326,16 +330,19 @@ public class ReporterServiceImpl implements ReporterService {
 
             String defaultMongoUri = "mongodb://";
             if (StringUtils.hasLength(username) && StringUtils.hasLength(password)) {
-                defaultMongoUri += username +":"+ password +"@";
+                defaultMongoUri += username + ":" + password + "@";
             }
-            defaultMongoUri += mongoServers.orElse(mongoHost+":"+mongoPort) + "/" + mongoDBName;
+            defaultMongoUri += mongoServers.orElse(mongoHost + ":" + mongoPort) + "/" + mongoDBName;
             String mongoUri = environment.getProperty("management.mongodb.uri", addOptionsToURI(environment, defaultMongoUri));
 
+            var collectionSuffix = (reference == null || reference.matches(ReferenceType.ORGANIZATION, Organization.DEFAULT))
+                    ? ""
+                    : ("_" + reference.id());
             reporterConfig = "{\"uri\":\"" + mongoUri
                     + ((mongoHost != null) ? "\",\"host\":\"" + mongoHost : "")
                     + "\",\"port\":" + mongoPort
                     + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName
-                    + "\",\"reportableCollection\":\"reporter_audits" + (domain != null ? "_" + domain : "")
+                    + "\",\"reportableCollection\":\"reporter_audits" + collectionSuffix
                     + "\",\"bulkActions\":1000,\"flushInterval\":5}";
         } else if (useJdbcReporter()) {
             String jdbcHost = environment.getProperty("management.jdbc.host");
@@ -345,28 +352,13 @@ public class ReporterServiceImpl implements ReporterService {
             String jdbcUser = environment.getProperty("management.jdbc.username");
             String jdbcPwd = environment.getProperty("management.jdbc.password");
 
-            // dash are forbidden in table name, replace them in domainName by underscore
-            String tableSuffix = null;
-            if (domain != null) {
-                tableSuffix = domain.replace("-", "_");
-                if (tableSuffix.length() > TABLE_SUFFIX_MAX_LENGTH) {
-                    try {
-                        LOGGER.info("Table name 'reporter_audits_access_points_{}' will be too long, compute shortest unique name", tableSuffix);
-                        byte[] hash = MessageDigest.getInstance("sha-256").digest(tableSuffix.getBytes());
-                        tableSuffix = BaseEncoding.base16().encode(hash).substring(0, 30).toLowerCase();
-                    } catch (NoSuchAlgorithmException e) {
-                        throw new IllegalStateException("Unable to compute digest of '" + domain + "' due to unknown sha-256 algorithm", e);
-                    }
-                }
-            }
-
             reporterConfig = "{\"host\":\"" + jdbcHost + "\"," +
                     "\"port\":" + jdbcPort + "," +
                     "\"database\":\"" + jdbcDatabase + "\"," +
                     "\"driver\":\"" + jdbcDriver + "\"," +
-                    "\"username\":\"" + jdbcUser+ "\"," +
-                    "\"password\":"+ (jdbcPwd == null ? null : "\"" + jdbcPwd + "\"") + "," +
-                    "\"tableSuffix\":\"" + (tableSuffix != null ? tableSuffix : "") + "\"," +
+                    "\"username\":\"" + jdbcUser + "\"," +
+                    "\"password\":" + (jdbcPwd == null ? null : "\"" + jdbcPwd + "\"") + "," +
+                    "\"tableSuffix\":\"" + getReporterTableSuffix(reference) + "\"," +
                     "\"initialSize\":0," +
                     "\"maxSize\":10," +
                     "\"maxIdleTime\":30000," +
@@ -377,6 +369,24 @@ public class ReporterServiceImpl implements ReporterService {
         return reporterConfig;
     }
 
+    private static String getReporterTableSuffix(Reference reference) {
+        if (reference == null || reference.matches(ReferenceType.ORGANIZATION, Organization.DEFAULT)) {
+            return "";
+        }
+        // dashes are forbidden in table names, replace them in domainName by underscore
+        var tableSuffix = reference.id().replace("-", "_");
+        if (tableSuffix.length() <= TABLE_SUFFIX_MAX_LENGTH) {
+            return tableSuffix;
+        }
+        try {
+            LOGGER.info("Table name 'reporter_audits_access_points_{}' will be too long, compute shortest unique name", tableSuffix);
+            byte[] hash = MessageDigest.getInstance("sha-256").digest(tableSuffix.getBytes());
+            return BaseEncoding.base16().encode(hash).substring(0, 30).toLowerCase();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("Unable to compute digest of '" + reference.id() + "' due to unknown sha-256 algorithm", e);
+        }
+    }
+
     private String addOptionsToURI(Environment environment, String mongoUri) {
         Integer connectTimeout = environment.getProperty("management.mongodb.connectTimeout", Integer.class, 1000);
         Integer socketTimeout = environment.getProperty("management.mongodb.socketTimeout", Integer.class, 1000);
@@ -385,18 +395,18 @@ public class ReporterServiceImpl implements ReporterService {
         Boolean sslEnabled = environment.getProperty("management.mongodb.sslEnabled", Boolean.class);
         String authSource = environment.getProperty("management.mongodb.authSource", String.class);
 
-        mongoUri += "?connectTimeoutMS="+connectTimeout+"&socketTimeoutMS="+socketTimeout;
+        mongoUri += "?connectTimeoutMS=" + connectTimeout + "&socketTimeoutMS=" + socketTimeout;
         if (authSource != null) {
-            mongoUri += "&authSource="+authSource;
+            mongoUri += "&authSource=" + authSource;
         }
         if (maxConnectionIdleTime != null) {
-            mongoUri += "&maxIdleTimeMS="+maxConnectionIdleTime;
+            mongoUri += "&maxIdleTimeMS=" + maxConnectionIdleTime;
         }
         if (heartbeatFrequency != null) {
-            mongoUri += "&heartbeatFrequencyMS="+heartbeatFrequency;
+            mongoUri += "&heartbeatFrequencyMS=" + heartbeatFrequency;
         }
         if (sslEnabled != null) {
-            mongoUri += "&ssl="+sslEnabled;
+            mongoUri += "&ssl=" + sslEnabled;
         }
 
         return mongoUri;
@@ -413,7 +423,7 @@ public class ReporterServiceImpl implements ReporterService {
             int serverPort = env.getProperty("management.mongodb.servers[" + (idx++) + "].port", int.class, 27017);
             found = (serverHost != null);
             if (found) {
-                endpoints.add(serverHost+":"+serverPort);
+                endpoints.add(serverHost + ":" + serverPort);
             }
         }
         return endpoints.isEmpty() ? Optional.empty() : Optional.of(endpoints.stream().collect(Collectors.joining(",")));

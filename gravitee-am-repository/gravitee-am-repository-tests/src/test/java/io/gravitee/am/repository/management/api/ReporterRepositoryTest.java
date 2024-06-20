@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -116,16 +117,16 @@ public class ReporterRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void shouldFindByDomain() {
+    public void shouldFindByDomainReference() {
         final int loop = 10;
-        final String domain = "fixedDomainId";
+        final Reference domain = Reference.domain("fixedDomainId");
         for (int i =0; i < loop; ++i) {
             Reporter reporter = buildReporter();
-            if (i % 2 == 0) reporter.setDomain(domain);
+            if (i % 2 == 0) reporter.setReference(domain);
             repository.create(reporter).blockingGet();
         }
 
-        TestObserver<List<Reporter>> testObserver = repository.findByDomain(domain).toList().test();
+        TestObserver<List<Reporter>> testObserver = repository.findByReference(domain).toList().test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue( p -> p.size() == loop/2);
@@ -135,7 +136,7 @@ public class ReporterRepositoryTest extends AbstractManagementTest {
     private void assertEqualsTo(Reporter reporter, TestObserver<Reporter> testObserver) {
         testObserver.assertValue(p -> p.getName().equals(reporter.getName()));
         testObserver.assertValue(p -> p.getType().equals(reporter.getType()));
-        testObserver.assertValue(p -> p.getDomain().equals(reporter.getDomain()));
+        testObserver.assertValue(p -> p.getReference().equals(reporter.getReference()));
         testObserver.assertValue(p -> p.getDataType().equals(reporter.getDataType()));
         testObserver.assertValue(p -> p.getConfiguration().equals(reporter.getConfiguration()));
         testObserver.assertValue(p -> p.isEnabled() == reporter.isEnabled());
@@ -145,7 +146,7 @@ public class ReporterRepositoryTest extends AbstractManagementTest {
         Reporter reporter = new Reporter();
         String random = UUID.randomUUID().toString();
         reporter.setConfiguration("config"+random);
-        reporter.setDomain("domain"+random);
+        reporter.setReference(Reference.domain("domain"+random));
         reporter.setEnabled(true);
         reporter.setName("name"+random);
         reporter.setType("type"+random);

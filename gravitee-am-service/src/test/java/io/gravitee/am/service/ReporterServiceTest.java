@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.management.api.ReporterRepository;
@@ -22,20 +23,26 @@ import io.gravitee.am.service.exception.ReporterConfigurationException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.ReporterServiceImpl;
 import io.gravitee.am.service.model.NewReporter;
-import io.reactivex.rxjava3.core.Flowable;
+import io.gravitee.am.service.repository.MemoryReporterRepository;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
+import org.apache.commons.text.RandomStringGenerator;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.core.env.Environment;
+import org.springframework.mock.env.MockEnvironment;
 
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 /**
@@ -44,15 +51,24 @@ import static org.mockito.Mockito.when;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class ReporterServiceTest {
+    private final Random rng = new Random(1234);
+    private final RandomStringGenerator randomStringGenerator = new RandomStringGenerator.Builder()
+            .withinRange(new char[]{'a', 'z'},
+                    new char[]{'A', 'Z'},
+                    new char[]{'0', '9'},
+                    new char[]{'-', '.'},
+                    new char[]{'_', '_'})
+            .usingRandom(rng::nextInt).build();
 
-    @Mock
-    private ReporterRepository reporterRepository;
+    private ReporterRepository reporterRepository = new MemoryReporterRepository();
 
     @Mock
     private EventService eventService;
+    private MockEnvironment environment = new MockEnvironment();
 
     @InjectMocks
-    private ReporterService reporterService = new ReporterServiceImpl();
+    private ReporterService reporterService = new ReporterServiceImpl(environment, reporterRepository, null, null);
+
 
     @Test
     public void shouldAccept_ReportFileName() {
@@ -62,15 +78,13 @@ public class ReporterServiceTest {
         reporter.setType("reporter-am-file");
         reporter.setConfiguration("{\"filename\":\"9f4bdf97-5481-4420-8bdf-9754818420f3\"}");
 
-        when(reporterRepository.findByDomain(any())).thenReturn(Flowable.empty());
-        when(reporterRepository.create(any())).thenReturn(Single.just(new Reporter()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
-        final TestObserver<Reporter> observer = reporterService.create("domain", reporter).test();
-        observer.awaitDone(10, TimeUnit.SECONDS);
-        observer.assertNoErrors();
+        reporterService.create(Reference.domain("domain"), reporter)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertNoErrors();
 
-        verify(reporterRepository).create(any());
     }
 
     @Test
@@ -81,10 +95,71 @@ public class ReporterServiceTest {
         reporter.setType("reporter-am-file");
         reporter.setConfiguration("{\"filename\":\"../9f4bdf97-5481-4420-8bdf-9754818420f3\"}");
 
-        final TestObserver<Reporter> observer = reporterService.create("domain", reporter).test();
-        observer.awaitDone(10, TimeUnit.SECONDS);
-        observer.assertError(ex -> ex instanceof TechnicalManagementException && ex.getCause() instanceof ReporterConfigurationException);
+        reporterService.create(Reference.domain("domain"), reporter)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(ex -> ex instanceof TechnicalManagementException && ex.getCause() instanceof ReporterConfigurationException);
 
-        verify(reporterRepository, never()).create(any());
+    }
+
+    @Test
+    public void shouldFindAllByReference() {
+        final var reporterA = randomTestFileReporter("wanted");
+        final var reporterB = randomTestFileReporter("wanted");
+        final var reporterC = randomTestFileReporter("unwanted");
+
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        Reference firstDomain = Reference.domain("first");
+        reporterService.create(firstDomain, reporterA)
+                .test()
+                .awaitDone(1, TimeUnit.SECONDS)
+                .assertComplete();
+        reporterService.create(firstDomain, reporterB)
+                .test()
+                .awaitDone(1, TimeUnit.SECONDS)
+                .assertComplete();
+        reporterService.create(Reference.domain("other"), reporterC)
+                .test()
+                .awaitDone(1, TimeUnit.SECONDS)
+                .assertComplete();
+
+        var foundReporters = reporterService.findByReference(firstDomain)
+                .test()
+                .awaitDone(1, TimeUnit.SECONDS)
+                .assertComplete()
+                .values();
+        assertThat(foundReporters)
+                .hasSize(2)
+                .noneMatch(r->r.getName().equals("unwanted"));
+    }
+
+    @Test
+    public void shouldCreateDefaultForOrganization() {
+        environment.setProperty("management.type", "mongodb");
+        environment.setProperty("management.mongodb.host", "doesnt-exist.local");
+        environment.setProperty("management.mongodb.port", "12345");
+        environment.setProperty("management.mongodb.username","invalid");
+        environment.setProperty("management.mongodb.password","credentials");
+
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        reporterService.createDefault(Reference.organization("some-org"))
+                .test()
+                .awaitDone(1, TimeUnit.SECONDS)
+                .assertNoErrors()
+                .assertComplete()
+                .assertValue(r -> r.getType().contains("mongo"))
+                .assertValue(r -> r.getReference().equals(Reference.organization("some-org")));
+    }
+
+    private NewReporter randomTestFileReporter(String name) {
+        var reporter = new NewReporter();
+        reporter.setEnabled(true);
+        reporter.setName(name);
+        reporter.setType("reporter-am-file");
+        reporter.setConfiguration("{\"filename\":\"" + randomStringGenerator.generate(12) + "\"}");
+
+        return reporter;
     }
 }

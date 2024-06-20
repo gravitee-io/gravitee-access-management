@@ -688,6 +688,54 @@ export const routes: Routes = [
                 component: AuditsComponent,
               },
               {
+                path: 'settings',
+                children: [
+                  {
+                    path: '',
+                    pathMatch: 'full',
+                    component: AuditsSettingsComponent,
+                    canActivate: [AuthGuard],
+                    resolve: {
+                      reporters: ReportersResolver,
+                    },
+                    data: {
+                      perms: {
+                        only: ['organization_reporter_list'],
+                      },
+                    },
+                  },
+                  {
+                    path: 'new',
+                    component: ReporterComponent,
+                    canActivate: [AuthGuard],
+                    resolve: {
+                      reporterPlugins: PluginReportersResolver,
+                    },
+                    data: {
+                      perms: {
+                        only: ['organization_reporter_create'],
+                      },
+                    },
+                  },
+                  {
+                    path: ':reporterId',
+                    component: ReporterComponent,
+                    resolve: {
+                      reporter: ReporterResolver,
+                      reporterPlugins: PluginReportersResolver,
+                    },
+                    data: {
+                      breadcrumb: {
+                        label: 'reporter.name',
+                      },
+                      perms: {
+                        only: ['organization_reporter_read'],
+                      },
+                    },
+                  },
+                ],
+              },
+              {
                 path: ':auditId',
                 component: AuditComponent,
                 canActivate: [AuthGuard],

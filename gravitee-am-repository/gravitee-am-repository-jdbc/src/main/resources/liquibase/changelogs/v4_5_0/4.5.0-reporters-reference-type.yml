@@ -1,0 +1,36 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.5.0-reporters-reference-type
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+      changes:
+        - addColumn:
+            tableName: reporters
+            columns:
+              - column:
+                  name: reference_type
+                  type: nvarchar(64)
+              - column:
+                  name: reference_id
+                  type: nvarchar(255)
+        - update:
+            tableName: reporters
+            columns:
+              - column:
+                  name: reference_type
+                  value: DOMAIN
+              - column:
+                  name: reference_id
+                  valueComputed: domain
+            where: domain is not null
+        - createIndex:
+            indexName: idx_reporters_ref
+            columns:
+              - column:
+                  name: reference_type
+              - column:
+                  name: reference_id
+            tableName: reporters
+

@@ -15,19 +15,46 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
+import lombok.AccessLevel;
+import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.bson.codecs.pojo.annotations.BsonId;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Data
 public class ReporterMongo extends Auditable {
 
     @BsonId
     private String id;
 
+    /**
+     * @deprecated use referenceType & referenceId instead
+     */
+
+    // Lombok copies @deprecated to the generated accessors; mongo codec loses its mind when it sees @Deprecated both
+    // on a field and an accessor. So we define them manually.
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
     private String domain;
+
+    @Deprecated(since="4.5.0", forRemoval = true)
+    public String getDomain() {
+        return domain;
+    }
+
+    @Deprecated(since="4.5.0", forRemoval = true)
+    public void setDomain(String domain) {
+        this.domain = domain;
+    }
+
+    private ReferenceType referenceType;
+    private String referenceId;
 
     private boolean enabled;
 
@@ -41,67 +68,6 @@ public class ReporterMongo extends Auditable {
 
     private String configuration;
 
-    public String getId() {
-        return id;
-    }
 
-    public void setId(String id) {
-        this.id = id;
-    }
 
-    public String getDomain() {
-        return domain;
-    }
-
-    public void setDomain(String domain) {
-        this.domain = domain;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public boolean isSystem() {
-        return system;
-    }
-
-    public void setSystem(boolean system) {
-        this.system = system;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getDataType() {
-        return dataType;
-    }
-
-    public void setDataType(String dataType) {
-        this.dataType = dataType;
-    }
-
-    public String getConfiguration() {
-        return configuration;
-    }
-
-    public void setConfiguration(String configuration) {
-        this.configuration = configuration;
-    }
 }

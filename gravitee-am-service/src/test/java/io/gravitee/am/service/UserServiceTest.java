@@ -24,7 +24,6 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
-import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
@@ -36,7 +35,6 @@ import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.impl.UserServiceImpl;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
-import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.utils.UserProfileUtils;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
 import io.gravitee.am.service.validators.user.UserValidatorImpl;
@@ -48,7 +46,6 @@ import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatcher;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -228,7 +225,7 @@ public class UserServiceTest {
 
         verify(userRepository, times(1)).create(any(User.class));
         verify(auditService, times(1)).report(argThat(
-            (ArgumentMatcher<AuditBuilder<Audit>>) audit -> USER_CREATED.equals(audit.build(new ObjectMapper()).getType())
+                audit -> USER_CREATED.equals(audit.build(new ObjectMapper()).getType())
         ));
     }
 

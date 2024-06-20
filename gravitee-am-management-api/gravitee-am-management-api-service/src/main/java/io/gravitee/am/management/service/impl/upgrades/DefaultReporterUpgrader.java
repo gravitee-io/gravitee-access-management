@@ -23,7 +23,6 @@ import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -50,9 +49,9 @@ public class DefaultReporterUpgrader extends AsyncUpgrader {
         UpdateReporter updateReporter = new UpdateReporter();
         updateReporter.setEnabled(reporter.isEnabled());
         updateReporter.setName(reporter.getName());
-        updateReporter.setConfiguration(reporterService.createReporterConfig(reporter.getDomain()));
+        updateReporter.setConfiguration(reporterService.createReporterConfig(reporter.getReference()));
 
-        return reporterService.update(reporter.getDomain(), reporter.getId(), updateReporter, true);
+        return reporterService.update(reporter.getReference(), reporter.getId(), updateReporter, true);
     }
 
     @Override

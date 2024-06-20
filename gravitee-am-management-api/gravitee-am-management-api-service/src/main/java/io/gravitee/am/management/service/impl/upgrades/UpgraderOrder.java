@@ -37,6 +37,7 @@ public final class UpgraderOrder {
     public static final int SYSTEM_CERTIFICATE_UPGRADER = 14;
     public static final int APPLICATION_FACTOR_UPGRADER = 15;
     public static final int DOMAIN_PASSWORD_POLICIES_UPGRADER = 16;
+    public static final int ORG_DEFAULT_REPORTER_UPGRADER = 17;
 
     private UpgraderOrder() {
         throw new UnsupportedOperationException("utility class, don't instantiate");

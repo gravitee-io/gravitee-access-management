@@ -13,20 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.management.api;
+package io.gravitee.am.service.repository;
 
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
-import io.gravitee.am.repository.common.CrudRepository;
+import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.reactivex.rxjava3.core.Flowable;
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface ReporterRepository extends CrudRepository<Reporter, String> {
+import java.util.UUID;
 
-    Flowable<Reporter> findAll();
+public class MemoryReporterRepository extends MemoryRepository<Reporter,String> implements ReporterRepository {
+    @Override
+    public Flowable<Reporter> findAll() {
+        return allValues();
+    }
 
-    Flowable<Reporter> findByReference(Reference reference);
+    @Override
+    public Flowable<Reporter> findByReference(Reference reference) {
+        return findMany(x->x.getReference().equals(reference));
+    }
+
+    @Override
+    protected String getId(Reporter item) {
+        return item.getId();
+    }
+
+    @Override
+    protected String generateAndSetId(Reporter item) {
+        var id = UUID.randomUUID().toString();
+        item.setId(id);
+        return id;
+    }
 }

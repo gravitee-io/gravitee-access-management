@@ -23,7 +23,7 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class ManagementAuditBuilder<T> extends AuditBuilder<T> {
+public abstract class ManagementAuditBuilder<T extends ManagementAuditBuilder<T>> extends AuditBuilder<T> {
 
     /**
      * Management events are triggered by the admin client (the portal/API)

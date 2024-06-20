@@ -20,6 +20,7 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.management.service.ReporterPluginService;
 import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
@@ -95,7 +96,7 @@ public class ReportersResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Single.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> reporterService.findByDomain(domain).toList()))
+                        .flatMap(irrelevant -> reporterService.findByReference(Reference.domain(domain)).toList()))
                 .flatMap(reporters ->
                     hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.READ)
                         .map(hasPermission -> {
@@ -134,7 +135,7 @@ public class ReportersResource extends AbstractResource {
                 .andThen(reporterPluginService.checkPluginDeployment(newReporter.getType()))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> reporterService.create(domain, newReporter, authenticatedUser, false))
+                        .flatMapSingle(irrelevant -> reporterService.create(Reference.domain(domain), newReporter, authenticatedUser, false))
                         .map(reporter -> response.resume(Response.created(URI.create("/organizations/" + organizationId
                                             + "/environments/" + environmentId + "/domains/" + domain + "/reporters/" + reporter.getId()))
                                     .entity(reporter).build())

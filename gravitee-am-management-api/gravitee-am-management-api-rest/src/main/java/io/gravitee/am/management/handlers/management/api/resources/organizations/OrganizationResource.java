@@ -50,6 +50,11 @@ public class OrganizationResource extends AbstractResource {
         return resourceContext.getResource(AuditsResource.class);
     }
 
+    @Path("reporters")
+    public ReportersResource getReporters() {
+        return resourceContext.getResource(ReportersResource.class);
+    }
+
     @Path("members")
     public MembersResource getMembersResource() {
         return resourceContext.getResource(MembersResource.class);

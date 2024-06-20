@@ -18,6 +18,9 @@ package io.gravitee.am.repository.mongodb.management;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.Organization;
+import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.ReporterMongo;
@@ -29,10 +32,13 @@ import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.Map;
 
+import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.or;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -56,8 +62,13 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
     }
 
     @Override
-    public Flowable<Reporter> findByDomain(String domain) {
-        return Flowable.fromPublisher(reportersCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert);
+    public Flowable<Reporter> findByReference(Reference reference) {
+        var query = and(eq(FIELD_REFERENCE_TYPE, reference.type()), eq(FIELD_REFERENCE_ID, reference.id()));
+        // for backwards compatibility
+        if (reference.type() == ReferenceType.DOMAIN) {
+            query = or(query, eq(FIELD_DOMAIN, reference.id()));
+        }
+        return Flowable.fromPublisher(reportersCollection.find(query)).map(this::convert);
     }
 
     @Override
@@ -69,7 +80,10 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
     public Single<Reporter> create(Reporter item) {
         ReporterMongo reporter = convert(item);
         reporter.setId(reporter.getId() == null ? RandomString.generate() : reporter.getId());
-        return Single.fromPublisher(reportersCollection.insertOne(reporter)).flatMap(success -> { item.setId(reporter.getId()); return Single.just(item); });
+        return Single.fromPublisher(reportersCollection.insertOne(reporter)).flatMap(success -> {
+            item.setId(reporter.getId());
+            return Single.just(item);
+        });
     }
 
     @Override
@@ -91,7 +105,8 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
         ReporterMongo reporterMongo = new ReporterMongo();
         reporterMongo.setId(reporter.getId());
         reporterMongo.setEnabled(reporter.isEnabled());
-        reporterMongo.setDomain(reporter.getDomain());
+        reporterMongo.setReferenceType(reporter.getReference().type());
+        reporterMongo.setReferenceId(reporter.getReference().id());
         reporterMongo.setName(reporter.getName());
         reporterMongo.setSystem(reporter.isSystem());
         reporterMongo.setType(reporter.getType());
@@ -110,7 +125,13 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
         Reporter reporter = new Reporter();
         reporter.setId(reporterMongo.getId());
         reporter.setEnabled(reporterMongo.isEnabled());
-        reporter.setDomain(reporterMongo.getDomain());
+        if (reporterMongo.getReferenceType() != null) {
+            reporter.setReference(new Reference(reporterMongo.getReferenceType(), reporterMongo.getReferenceId()));
+        } else if (StringUtils.hasText(reporterMongo.getDomain())) {
+            reporter.setReference(Reference.domain(reporterMongo.getDomain()));
+        } else {
+            reporter.setReference(Reference.organization(Organization.DEFAULT));
+        }
         reporter.setName(reporterMongo.getName());
         reporter.setSystem(reporterMongo.isSystem());
         reporter.setType(reporterMongo.getType());

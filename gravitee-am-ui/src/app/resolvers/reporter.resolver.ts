@@ -29,7 +29,8 @@ export class ReporterResolver {
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> {
     const reporterId = route.paramMap.get('reporterId');
-    if (state.url.startsWith('/settings')) {
+    const organizationContext = state.url.startsWith('/settings');
+    if (organizationContext) {
       return this.organizationService.reporter(reporterId);
     }
     const domainId = route.parent.data['domain'].id;

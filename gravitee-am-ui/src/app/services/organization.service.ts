@@ -358,7 +358,7 @@ export class OrganizationService {
   }
 
   createReporter(reporter): Observable<any> {
-    return this.http.post<any>(this.organizationURL + '/reporters/', {
+    return this.http.post<any>(this.organizationURL + '/reporters', {
       name: reporter.name,
       type: reporter.type,
       enabled: reporter.enabled,
