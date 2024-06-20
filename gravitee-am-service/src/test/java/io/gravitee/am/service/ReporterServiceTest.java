@@ -108,7 +108,7 @@ public class ReporterServiceTest {
         final var reporterB = randomTestFileReporter("wanted");
         final var reporterC = randomTestFileReporter("unwanted");
 
-
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         Reference firstDomain = Reference.domain("first");
         reporterService.create(firstDomain, reporterA)
@@ -143,6 +143,7 @@ public class ReporterServiceTest {
         environment.setProperty("management.mongodb.password","credentials");
 
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
         reporterService.createDefault(Reference.organization("some-org"))
                 .test()
                 .awaitDone(1, TimeUnit.SECONDS)
