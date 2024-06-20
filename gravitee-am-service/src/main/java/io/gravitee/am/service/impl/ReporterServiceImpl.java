@@ -86,18 +86,20 @@ public class ReporterServiceImpl implements ReporterService {
     // when a REST call is performed and not only check on the UI
     private final Pattern filenamePattern = Pattern.compile("^([A-Za-z0-9][A-Za-z0-9\\-_.]*)$");
 
-    @Autowired
     private Environment environment;
 
-    @Lazy
-    @Autowired
     private ReporterRepository reporterRepository;
 
-    @Autowired
     private EventService eventService;
 
-    @Autowired
     private AuditService auditService;
+
+    public ReporterServiceImpl(Environment environment, @Lazy ReporterRepository reporterRepository, EventService eventService, AuditService auditService) {
+        this.environment = environment;
+        this.reporterRepository =reporterRepository;
+        this.eventService = eventService;
+        this.auditService =auditService;
+    }
 
 
     @Override
