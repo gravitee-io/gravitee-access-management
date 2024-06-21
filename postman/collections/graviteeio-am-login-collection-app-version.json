@@ -1161,7 +1161,7 @@
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
 													"});",
-													"setTimeout(function(){}, 5000);"
+													"setTimeout(function(){}, 10000);"
 												],
 												"type": "text/javascript"
 											}
@@ -1869,7 +1869,7 @@
 													"    pm.response.to.have.status(200);",
 													"});",
 													"",
-													"setTimeout(function(){}, 5000);"
+													"setTimeout(function(){}, 10000);"
 												],
 												"type": "text/javascript"
 											}
@@ -2224,7 +2224,7 @@
 													"    pm.response.to.have.status(200);",
 													"});",
 													"",
-													"setTimeout(function(){}, 5000);"
+													"setTimeout(function(){}, 10000);"
 												],
 												"type": "text/javascript"
 											}
@@ -4315,7 +4315,7 @@
 											"",
 											"});",
 											"",
-											"setTimeout(function(){}, 6000);"
+											"setTimeout(function(){}, 10000);"
 										],
 										"type": "text/javascript"
 									}
@@ -4390,7 +4390,7 @@
 											"    ",
 											"});",
 											"",
-											"setTimeout(function(){}, 6000);"
+											"setTimeout(function(){}, 10000);"
 										],
 										"type": "text/javascript"
 									}
@@ -14415,7 +14415,7 @@
 									"});",
 									"",
 									"// wait for sync process",
-									"setTimeout(function(){}, 6000);"
+									"setTimeout(function(){}, 10000);"
 								],
 								"type": "text/javascript"
 							}
@@ -14683,7 +14683,7 @@
 									"});",
 									"",
 									"// wait for sync process",
-									"setTimeout(function(){}, 6000);"
+									"setTimeout(function(){}, 10000);"
 								],
 								"type": "text/javascript"
 							}
@@ -14905,7 +14905,7 @@
 							"script": {
 								"exec": [
 									"// wait for sync process",
-									"setTimeout(function(){}, 6000);"
+									"setTimeout(function(){}, 10000);"
 								],
 								"type": "text/javascript"
 							}
@@ -15315,7 +15315,7 @@
 							"script": {
 								"exec": [
 									"// wait for sync process",
-									"setTimeout(function(){}, 6000);"
+									"setTimeout(function(){}, 10000);"
 								],
 								"type": "text/javascript"
 							}
@@ -15949,7 +15949,7 @@
 							"script": {
 								"exec": [
 									"// wait for sync process",
-									"setTimeout(function(){}, 6000);"
+									"setTimeout(function(){}, 10000);"
 								],
 								"type": "text/javascript"
 							}
