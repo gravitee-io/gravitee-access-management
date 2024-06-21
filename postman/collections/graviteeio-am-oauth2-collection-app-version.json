@@ -1546,7 +1546,7 @@
 													"});",
 													"",
 													"// wait for sync process",
-													"setTimeout(function(){}, 6000);"
+													"setTimeout(function(){}, 10000);"
 												],
 												"type": "text/javascript"
 											}
@@ -1673,7 +1673,7 @@
 													"pm.environment.set('clientSecretNew3', body.settings.oauth.clientSecret);",
 													"",
 													"// wait for sync process",
-													"setTimeout(function(){}, 6000);"
+													"setTimeout(function(){}, 10000);"
 												],
 												"type": "text/javascript"
 											}
@@ -3419,7 +3419,7 @@
 													"});",
 													"",
 													"// wait for sync process",
-													"setTimeout(function(){}, 6000);"
+													"setTimeout(function(){}, 10000);"
 												],
 												"type": "text/javascript"
 											}
@@ -3858,7 +3858,7 @@
 													"    // Here we can extract the authorization_code to got further in the process",
 													"    ",
 													"    // wait for until scope approvals expire",
-													"    setTimeout(function(){}, 6000);",
+													"    setTimeout(function(){}, 10000);",
 													"});"
 												],
 												"type": "text/javascript"
@@ -4061,7 +4061,7 @@
 													"});",
 													"",
 													"// wait for sync process",
-													"setTimeout(function(){}, 6000);"
+													"setTimeout(function(){}, 10000);"
 												],
 												"type": "text/javascript"
 											}
@@ -9074,7 +9074,7 @@
 													"});",
 													"",
 													"// wait for sync process",
-													"setTimeout(function(){}, 6000);"
+													"setTimeout(function(){}, 10000);"
 												],
 												"type": "text/javascript"
 											}
@@ -10718,7 +10718,7 @@
 													"});",
 													"",
 													"// wait for sync process",
-													"setTimeout(function(){}, 6000);"
+													"setTimeout(function(){}, 10000);"
 												],
 												"type": "text/javascript"
 											}
@@ -10832,7 +10832,7 @@
 													"});",
 													"",
 													"// wait for sync process",
-													"setTimeout(function(){}, 6000);"
+													"setTimeout(function(){}, 10000);"
 												],
 												"type": "text/javascript"
 											}
@@ -11162,7 +11162,7 @@
 													"});",
 													"",
 													"// wait for sync process",
-													"setTimeout(function(){}, 6000);"
+													"setTimeout(function(){}, 10000);"
 												],
 												"type": "text/javascript"
 											}
@@ -11359,7 +11359,7 @@
 													"});",
 													"",
 													"// wait for sync process",
-													"setTimeout(function(){}, 6000);"
+													"setTimeout(function(){}, 10000);"
 												],
 												"type": "text/javascript"
 											}
@@ -11560,7 +11560,7 @@
 											"});",
 											"",
 											"// wait for sync process",
-											"setTimeout(function(){}, 6000);"
+											"setTimeout(function(){}, 10000);"
 										],
 										"type": "text/javascript"
 									}
@@ -11712,7 +11712,7 @@
 											"});",
 											"",
 											"// wait for sync process",
-											"setTimeout(function(){}, 6000);"
+											"setTimeout(function(){}, 10000);"
 										],
 										"type": "text/javascript"
 									}
@@ -11864,7 +11864,7 @@
 											"});",
 											"",
 											"// wait for sync process",
-											"setTimeout(function(){}, 6000);"
+											"setTimeout(function(){}, 10000);"
 										],
 										"type": "text/javascript"
 									}
@@ -12134,7 +12134,7 @@
 											"});",
 											"",
 											"// wait for sync process",
-											"setTimeout(function(){}, 5000);"
+											"setTimeout(function(){}, 10000);"
 										],
 										"type": "text/javascript"
 									}
@@ -12352,7 +12352,7 @@
 											"});",
 											"",
 											"// wait for sync process",
-											"setTimeout(function(){}, 6000);"
+											"setTimeout(function(){}, 10000);"
 										],
 										"type": "text/javascript"
 									}
@@ -12587,7 +12587,7 @@
 											"});",
 											"",
 											"// wait for sync process",
-											"setTimeout(function(){}, 5000);"
+											"setTimeout(function(){}, 10000);"
 										],
 										"type": "text/javascript"
 									}
@@ -13657,7 +13657,7 @@
 											"});",
 											"",
 											"// wait for sync process",
-											"setTimeout(function(){}, 6000);"
+											"setTimeout(function(){}, 10000);"
 										],
 										"type": "text/javascript"
 									}
@@ -13969,7 +13969,7 @@
 											"});",
 											"",
 											"// wait for sync process",
-											"setTimeout(function(){}, 6000);"
+											"setTimeout(function(){}, 10000);"
 										],
 										"type": "text/javascript",
 										"packages": {}
@@ -14252,7 +14252,7 @@
 											"});",
 											"",
 											"// wait for sync process",
-											"setTimeout(function(){}, 6000);"
+											"setTimeout(function(){}, 10000);"
 										],
 										"type": "text/javascript"
 									}
@@ -15305,7 +15305,7 @@
 											"});",
 											"",
 											"// wait for sync process",
-											"setTimeout(function(){}, 6000);"
+											"setTimeout(function(){}, 10000);"
 										],
 										"type": "text/javascript"
 									}
