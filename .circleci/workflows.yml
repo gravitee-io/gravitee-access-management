@@ -479,23 +479,15 @@ jobs:
             export GIO_MAX_MEM=512m
             
             # Start AM Management
-            gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
+            bash .circleci/scripts/am-service-launcher.sh gravitee-am-management-api-standalone-${AM_VERSION}
+            
             # Start AM Gateway
-            gravitee-am-gateway-standalone-${AM_VERSION}/bin/gravitee &
+            bash .circleci/scripts/am-service-launcher.sh gravitee-am-gateway-standalone-${AM_VERSION}
+            
             # build & start CIBA Delegated Service
             mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            
-            echo "Wait for AM to be up and running..."
-            timeout 180s bash -c 'until nc -z localhost 8093; do sleep 2; done'
-            timeout 180s bash -c 'until nc -z localhost 8092; do sleep 2; done'
-            
-            retVal=$?
-            if [ $retVal -ne 0 ]; then
-              echo "AM not started"
-              exit $retVal
-            fi
-            
+    
             # Run Jest tests
             npm --prefix gravitee-am-test run ci
       - keeper/env-export:
@@ -604,29 +596,14 @@ jobs:
             export GIO_MAX_MEM=512m
             
             # Start AM Management
-            gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
-            
-            echo "Wait for Management API to be up and running (to avoid schema error in the GW)"
-            timeout 240s bash -c 'until nc -z localhost 8093; do sleep 2; done'
-            retVal=$?
-            if [ $retVal -ne 0 ]; then
-              echo "Management API not started"
-              exit $retVal
-            fi
+            bash .circleci/scripts/am-service-launcher.sh gravitee-am-management-api-standalone-${AM_VERSION}
             
             # Start AM Gateway
-            gravitee-am-gateway-standalone-${AM_VERSION}/bin/gravitee &
+            bash .circleci/scripts/am-service-launcher.sh gravitee-am-gateway-standalone-${AM_VERSION}
             
             # build & start CIBA Delegated Service
             mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            echo "Wait for AM to be up and running..."
-            timeout 180s bash -c 'until nc -z localhost 8092; do sleep 2; done'
-            retVal=$?
-            if [ $retVal -ne 0 ]; then
-              echo "Gateway not started"
-              exit $retVal
-            fi
             
             # Run Jest tests
             npm --prefix gravitee-am-test run ci
@@ -674,7 +651,6 @@ jobs:
             cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
             
-            
             # Reduce the sync frequency to avoid flaky test due to synchronization delay
             export gravitee_services_sync_cron="*/2 * * * * *"
             export gravitee_services_sync_timeframeBeforeDelay=5000
@@ -682,22 +658,14 @@ jobs:
             export GIO_MAX_MEM=512m
             
             # Start AM Management
-            gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
+            bash .circleci/scripts/am-service-launcher.sh gravitee-am-management-api-standalone-${AM_VERSION}
+            
             # Start AM Gateway
-            gravitee-am-gateway-standalone-${AM_VERSION}/bin/gravitee &
+            bash .circleci/scripts/am-service-launcher.sh gravitee-am-gateway-standalone-${AM_VERSION}
+            
             # build & start CIBA Delegated Service
             mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            
-            echo "Wait for AM to be up and running..."
-            timeout 180s bash -c 'until nc -z localhost 8093; do sleep 2; done'
-            timeout 180s bash -c 'until nc -z localhost 8092; do sleep 2; done'
-            
-            retVal=$?
-            if [ $retVal -ne 0 ]; then
-              echo "AM not started"
-              exit $retVal
-            fi
             
             # Run Postman tests
             make postman
@@ -782,32 +750,17 @@ jobs:
             export gravitee_services_sync_timeframeBeforeDelay=5000
             export gravitee_services_sync_timeframeAfterDelay=5000
             export GIO_MAX_MEM=512m
-
+            
             # Start AM Management
-            gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
-            echo "Wait for AM mAPI to be up and running (to avoid schema error in the GW)"
-            timeout 240s bash -c 'until nc -z localhost 8093; do sleep 2; done'
-            retVal=$?
-            if [ $retVal -ne 0 ]; then
-              echo "Management API not started"
-              exit $retVal
-            fi
+            bash .circleci/scripts/am-service-launcher.sh gravitee-am-management-api-standalone-${AM_VERSION}
             
             # Start AM Gateway
-            gravitee-am-gateway-standalone-${AM_VERSION}/bin/gravitee &
+            bash .circleci/scripts/am-service-launcher.sh gravitee-am-gateway-standalone-${AM_VERSION}
+            
             # build & start CIBA Delegated Service
             mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-           
-            echo "Wait for AM to be up and running..."
-            timeout 180s bash -c 'until nc -z localhost 8092; do sleep 2; done'
-            
-            retVal=$?
-            if [ $retVal -ne 0 ]; then
-              echo "Gateway not started"
-              exit $retVal
-            fi
-            
+                       
             # Run Postman tests
             make postman
       - keeper/env-export:
