@@ -398,7 +398,7 @@ jobs:
   deploy-snapshot-on-nexus:
     docker:
       - image: cimg/openjdk:17.0.11
-    resource_class: medium
+    resource_class: medium+
     steps:
       - attach_workspace:
           at: /tmp
