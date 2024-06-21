@@ -79,7 +79,7 @@ beforeAll(async () => {
   application3 = await createApp3(masterDomain, accessToken, scope.key);
 
   masterDomain = await getStartedDomain(masterDomain);
-  await waitForDomainSync(10000);
+  await waitForDomainSync();
   openIdConfiguration = await getOpenIDConfiguration(masterDomain);
 });
 
@@ -200,7 +200,7 @@ describe('OAuth2 - App version', () => {
 
       it('renew client - must renew secrets and test token', async () => {
         application3 = await renewApplicationSecrets(masterDomain.id, accessToken, application3.id).then(async (app) => {
-          await waitFor(5000);
+          await waitForDomainSync();
           await performPost(openIdConfiguration.token_endpoint, '', 'grant_type=client_credentials', {
             'Content-type': 'application/x-www-form-urlencoded',
             Authorization: 'Basic ' + applicationBase64Token(application3),
@@ -461,7 +461,7 @@ describe('OAuth2 - App version', () => {
         expect(postConsentRedirect.headers['location']).toMatch(/code=[-_a-zA-Z0-9]+&?/);
 
         // Initiate the Login Flow again
-        const authResponse2 = await waitFor(6000).then((_) =>
+        const authResponse2 = await waitForDomainSync().then((_) =>
           performGet(openIdConfiguration.authorization_endpoint, params, {
             Cookie: postConsentRedirect.headers['set-cookie'],
           }).expect(302),
@@ -472,7 +472,7 @@ describe('OAuth2 - App version', () => {
 
         await logoutUser(openIdConfiguration.end_session_endpoint, postConsentRedirect)
           .then((_) => patchApplication(masterDomain.id, accessToken, { settings: application2.settings }, application2.id))
-          .then((_) => waitFor(6000));
+          .then((_) => waitForDomainSync());
       });
 
       it('must handle invalid client', async () => {
@@ -855,7 +855,7 @@ describe('OAuth2 - App version', () => {
                   redirectUriStrictMatching: true,
                 },
               })
-                .then((_) => waitFor(10000))
+                .then((_) => waitForDomainSync())
                 .then((_) => performGet(openIdConfiguration.authorization_endpoint, actual.params).expect(302));
             } else {
               authResponse = await performGet(openIdConfiguration.authorization_endpoint, actual.params).expect(302);
