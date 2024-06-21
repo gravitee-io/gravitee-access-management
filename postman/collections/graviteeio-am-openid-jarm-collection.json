@@ -685,7 +685,7 @@
 									"});",
 									"",
 									"// wait for sync process",
-									"setTimeout(function(){}, 6000);"
+									"setTimeout(function(){}, 10000);"
 								],
 								"type": "text/javascript"
 							}
@@ -833,7 +833,7 @@
 											"});",
 											"",
 											"// wait for sync process",
-											"setTimeout(function(){}, 6000);"
+											"setTimeout(function(){}, 10000);"
 										],
 										"type": "text/javascript"
 									}
