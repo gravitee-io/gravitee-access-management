@@ -131,7 +131,7 @@ else
 	done
 
 	if [ -z "$pid_file" ] ; then
-		pid_file=/var/run/graviteeio-am-gw.pid
+		pid_file=/var/run/graviteeio-am-mgmt.pid
 	fi
 
 	exec "$JAVA" $JAVA_OPTS \
