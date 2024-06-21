@@ -85,5 +85,5 @@ export const updateDomainFlows = (domainId, accessToken, flows) =>
     flows,
   });
 
-export const waitForDomainSync = (duration = 6000) => waitFor(duration);
+export const waitForDomainSync = () => waitFor(10000);
 export const waitFor = (duration) => new Promise((r) => setTimeout(r, duration));
