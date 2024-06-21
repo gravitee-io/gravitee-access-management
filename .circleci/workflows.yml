@@ -397,8 +397,8 @@ jobs:
             - ./gravitee-am-webui-*.zip
   deploy-snapshot-on-nexus:
     docker:
-      - image: cimg/openjdk:17.0.8
-    resource_class: medium
+      - image: cimg/openjdk:17.0.11
+    resource_class: medium+
     steps:
       - attach_workspace:
           at: /tmp
