@@ -16,10 +16,11 @@
 package io.gravitee.am.gateway.handler.oauth2.service.response;
 
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.oauth2.ResponseMode;
 import io.gravitee.am.common.web.UriBuilder;
 import io.vertx.rxjava3.core.MultiMap;
 
-import java.net.URISyntaxException;
+import java.util.function.BiConsumer;
 
 /**
  * See <a href="https://tools.ietf.org/html/rfc6749#section-4.1.2">4.1.2. Authorization Response</a>
@@ -52,7 +53,8 @@ public class AuthorizationCodeResponse extends AuthorizationResponse {
     @Override
     public String buildRedirectUri() {
         UriBuilder uriBuilder = UriBuilder.fromURIString(getRedirectUri());
-        params().forEach(uriBuilder::addParameter);
+        BiConsumer<String, String> paramFormatterFunction = ResponseMode.FRAGMENT.equals(getResponseMode()) ? uriBuilder::addFragmentParameter : uriBuilder::addParameter;
+        params().forEach(paramFormatterFunction);
         return uriBuilder.buildString();
     }
 

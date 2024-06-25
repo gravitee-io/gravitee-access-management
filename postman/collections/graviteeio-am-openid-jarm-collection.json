@@ -1,8 +1,9 @@
 {
 	"info": {
-		"_postman_id": "c44f03a8-bd4d-4cc8-86c3-f67937c2a722",
+		"_postman_id": "ef15b860-7f3b-4cf2-bbcf-65857a89e2d4",
 		"name": "Gravitee.io - AM - Openid JARM",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31343100"
 	},
 	"item": [
 		{
@@ -1402,7 +1403,7 @@
 													"    pm.response.to.have.header('Location');",
 													"});",
 													"",
-													"pm.test(\"Should be a redirection to login page\", function() {",
+													"pm.test(\"Should be a redirection to error page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
 													"    let origin = pm.environment.get(\"gateway_url\");",
 													"    let domain = pm.environment.get(\"domainHrid\");",
@@ -1424,7 +1425,8 @@
 													"    tests['Contains an error'] = jwt.error === 'redirect_uri_mismatch';",
 													"});"
 												],
-												"type": "text/javascript"
+												"type": "text/javascript",
+												"packages": {}
 											}
 										},
 										{
@@ -1433,7 +1435,8 @@
 												"exec": [
 													""
 												],
-												"type": "text/javascript"
+												"type": "text/javascript",
+												"packages": {}
 											}
 										}
 									],
@@ -1493,7 +1496,7 @@
 													"    pm.response.to.have.header('Location');",
 													"});",
 													"",
-													"pm.test(\"Should be a redirection to login page\", function() {",
+													"pm.test(\"Should be a redirection to error page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
 													"    let origin = pm.environment.get(\"gateway_url\");",
 													"    let domain = pm.environment.get(\"domainHrid\");",
@@ -1515,7 +1518,8 @@
 													"    tests['Contains an error'] = jwt.error === 'redirect_uri_mismatch';",
 													"});"
 												],
-												"type": "text/javascript"
+												"type": "text/javascript",
+												"packages": {}
 											}
 										},
 										{
@@ -1524,7 +1528,8 @@
 												"exec": [
 													""
 												],
-												"type": "text/javascript"
+												"type": "text/javascript",
+												"packages": {}
 											}
 										}
 									],
@@ -1950,7 +1955,7 @@
 													"    pm.response.to.have.header('Location');",
 													"});",
 													"",
-													"pm.test(\"Should be a redirection to login page\", function() {",
+													"pm.test(\"Should be a redirection to error page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
 													"    let origin = pm.environment.get(\"gateway_url\");",
 													"    let domain = pm.environment.get(\"domainHrid\");",
@@ -1972,7 +1977,8 @@
 													"    tests['Contains an error'] = jwt.error === 'redirect_uri_mismatch';",
 													"});"
 												],
-												"type": "text/javascript"
+												"type": "text/javascript",
+												"packages": {}
 											}
 										},
 										{
@@ -1981,7 +1987,8 @@
 												"exec": [
 													""
 												],
-												"type": "text/javascript"
+												"type": "text/javascript",
+												"packages": {}
 											}
 										}
 									],
@@ -2022,7 +2029,32 @@
 										}
 									},
 									"response": []
+								}
+							],
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
 								},
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							]
+						},
+						{
+							"name": "Incompatible response mode",
+							"item": [
 								{
 									"name": "With response.mode = query.jwt",
 									"event": [
@@ -2045,7 +2077,7 @@
 													"    pm.response.to.have.header('Location');",
 													"});",
 													"",
-													"pm.test(\"Should be a redirection to login page\", function() {",
+													"pm.test(\"Should be a redirection to error page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
 													"    let origin = pm.environment.get(\"gateway_url\");",
 													"    let domain = pm.environment.get(\"domainHrid\");",
@@ -2064,10 +2096,11 @@
 													"    tests['Contains an aud claim'] = jwt.aud === pm.environment.get(\"clientIdJarm\");",
 													"    tests['Contains an exp claim'] = jwt.exp !== undefined;",
 													"    tests['Contains an state claim'] = jwt.state === '1234-5678-9876';",
-													"    tests['Contains an error'] = jwt.error === 'redirect_uri_mismatch';",
+													"    tests['Contains an error'] = jwt.error === 'unsupported_response_mode';",
 													"});"
 												],
-												"type": "text/javascript"
+												"type": "text/javascript",
+												"packages": {}
 											}
 										},
 										{
@@ -2076,7 +2109,8 @@
 												"exec": [
 													""
 												],
-												"type": "text/javascript"
+												"type": "text/javascript",
+												"packages": {}
 											}
 										}
 									],
@@ -2117,26 +2151,6 @@
 										}
 									},
 									"response": []
-								}
-							],
-							"event": [
-								{
-									"listen": "prerequest",
-									"script": {
-										"type": "text/javascript",
-										"exec": [
-											""
-										]
-									}
-								},
-								{
-									"listen": "test",
-									"script": {
-										"type": "text/javascript",
-										"exec": [
-											""
-										]
-									}
 								}
 							]
 						}

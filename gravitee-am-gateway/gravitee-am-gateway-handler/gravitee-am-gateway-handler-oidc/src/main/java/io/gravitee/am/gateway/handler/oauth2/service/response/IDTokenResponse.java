@@ -20,8 +20,6 @@ import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.common.web.UriBuilder;
 import io.vertx.rxjava3.core.MultiMap;
 
-import java.net.URISyntaxException;
-
 /**
  * When using the Implicit Flow, all response parameters are added to the fragment component of the Redirection URI,
  * as specified in OAuth 2.0 Multiple Response Type Encoding Practices [OAuth.Responses], unless a different Response Mode was specified.
@@ -47,6 +45,8 @@ public class IDTokenResponse extends AuthorizationResponse {
     @Override
     public String buildRedirectUri() {
         UriBuilder uriBuilder = UriBuilder.fromURIString(getRedirectUri());
+        // idToken required fragment
+        // https://openid.net/specs/oauth-v2-multiple-response-types-1_0.html#Security
         params().forEach(uriBuilder::addFragmentParameter);
         return uriBuilder.buildString();
     }

@@ -19,9 +19,10 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestObjectException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.exception.oauth2.RedirectMismatchException;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.oauth2.ResponseMode;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oauth2.exception.JWTOAuth2Exception;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.AuthorizationRequestFactory;
@@ -55,6 +56,7 @@ import static io.gravitee.am.common.oauth2.GrantType.JWT_BEARER;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
+import static org.springframework.util.StringUtils.hasLength;
 
 /**
  * If the request fails due to a missing, invalid, or mismatching redirection URI, or if the client identifier is missing or invalid,
@@ -226,9 +228,13 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
         query.computeIfAbsent("error_description", val -> errorDescription);
         query.computeIfAbsent(Parameters.STATE, val -> authorizationRequest.getState());
 
-        boolean fragment = !isDefaultErrorPage(authorizationRequest.getRedirectUri(), errorPath) &&
-                (isImplicitFlow(authorizationRequest.getResponseType()) || isHybridFlow(authorizationRequest.getResponseType()));
+        boolean fragment = !isDefaultErrorPage(authorizationRequest.getRedirectUri(), errorPath) && requiresFragment(authorizationRequest);
         return append(authorizationRequest.getRedirectUri(), query, fragment);
+    }
+
+    private boolean requiresFragment(AuthorizationRequest authorizationRequest) {
+        return (!hasLength(authorizationRequest.getResponseMode()) && (isImplicitFlow(authorizationRequest.getResponseType())) || isHybridFlow(authorizationRequest.getResponseType()))
+                || ResponseMode.FRAGMENT.equals(authorizationRequest.getResponseMode());
     }
 
     private String append(String base, Map<String, String> query, boolean fragment) throws URISyntaxException {

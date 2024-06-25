@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.CodeChallengeMethod;
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oauth2.ResponseMode;
 import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.oidc.idtoken.Claims;
@@ -251,6 +252,16 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
         List<String> responseModesSupported = openIDProviderMetadata.getResponseModesSupported();
         if (!responseModesSupported.contains(responseMode)) {
             throw new UnsupportedResponseModeException("Unsupported response mode: " + responseMode);
+        }
+
+        String responseType = getOAuthParameter(context, io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE);
+        if (responseType != null
+                && (ResponseMode.QUERY.equals(responseMode) || io.gravitee.am.common.oidc.ResponseMode.QUERY_JWT.equals(responseMode))
+                && (responseType.contains(ResponseType.TOKEN) || responseType.contains(io.gravitee.am.common.oidc.ResponseType.ID_TOKEN))) {
+            // According to the spec "sensitive information such as Access Tokens and ID Tokens MUST NOT be encoded in the query string"
+            // so a response_type with token or id_token is not compatible with a query response_mode (query or query.jwt)
+            // https://openid.net/specs/oauth-v2-multiple-response-types-1_0.html#Security
+            throw new UnsupportedResponseModeException("response_mode '" +responseMode+ "' is incompatible with response_type '" + responseType + "'");
         }
     }
 

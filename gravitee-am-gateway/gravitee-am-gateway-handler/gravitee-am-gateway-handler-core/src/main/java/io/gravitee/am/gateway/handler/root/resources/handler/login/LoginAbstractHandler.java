@@ -16,13 +16,20 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import com.google.common.base.Strings;
+import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.oauth2.ResponseMode;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.vertx.core.Handler;
+import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
+import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
+import static org.springframework.util.StringUtils.hasLength;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -62,5 +69,12 @@ public abstract class LoginAbstractHandler implements Handler<RoutingContext> {
                 .putHeader(io.vertx.core.http.HttpHeaders.LOCATION, url)
                 .setStatusCode(302)
                 .end();
+    }
+
+    protected boolean requiresFragment(MultiMap originalParams) {
+        return originalParams != null &&
+                originalParams.get(Parameters.RESPONSE_TYPE) != null &&
+                ((!hasLength(originalParams.get(Parameters.RESPONSE_MODE)) && (isImplicitFlow(originalParams.get(Parameters.RESPONSE_TYPE)) || isHybridFlow(originalParams.get(Parameters.RESPONSE_TYPE)))) ||
+                ResponseMode.FRAGMENT.equals(originalParams.get(Parameters.RESPONSE_MODE)));
     }
 }
