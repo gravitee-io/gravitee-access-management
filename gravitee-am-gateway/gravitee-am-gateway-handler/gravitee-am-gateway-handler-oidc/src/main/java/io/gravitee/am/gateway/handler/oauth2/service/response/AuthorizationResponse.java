@@ -39,6 +39,8 @@ public abstract class AuthorizationResponse implements Serializable {
      */
     private String redirectUri;
 
+    private String responseMode;
+
     public String getState() {
         return state;
     }
@@ -53,6 +55,14 @@ public abstract class AuthorizationResponse implements Serializable {
 
     public void setRedirectUri(String redirectUri) {
         this.redirectUri = redirectUri;
+    }
+
+    public String getResponseMode() {
+        return responseMode;
+    }
+
+    public void setResponseMode(String responseMode) {
+        this.responseMode = responseMode;
     }
 
     public abstract String buildRedirectUri();

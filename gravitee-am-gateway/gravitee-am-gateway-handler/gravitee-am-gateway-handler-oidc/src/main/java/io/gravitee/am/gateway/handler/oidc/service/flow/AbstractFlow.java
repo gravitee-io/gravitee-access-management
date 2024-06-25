@@ -65,6 +65,7 @@ public abstract class AbstractFlow implements Flow {
     private Single<AuthorizationResponse> processResponse(AuthorizationResponse authorizationResponse, AuthorizationRequest authorizationRequest, Client client) {
         // Response Mode is not supplied by the client, process the response as usual
         if (authorizationRequest.getResponseMode() == null || !authorizationRequest.getResponseMode().endsWith("jwt")) {
+            authorizationResponse.setResponseMode(authorizationRequest.getResponseMode());
             return Single.just(authorizationResponse);
         }
 

@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.common.oidc.AcrValues;
+import io.gravitee.am.common.oauth2.ResponseMode;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseParametersHandler;
@@ -26,6 +27,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.common.RedirectUriV
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.auth.impl.UserImpl;
 import io.vertx.ext.web.Session;
@@ -430,6 +432,76 @@ public class AuthorizationRequestParseParametersHandlerTest extends RxWebTestBas
 
         Mockito.verify(session, times(1)).remove(STRONG_AUTH_COMPLETED_KEY);
         Mockito.verify(session, times(1)).remove(USER_ID_KEY);
+    }
+
+
+    @Test
+    public void shouldAcceptRequest_responseMode() throws Exception {
+        OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
+        openIDProviderMetadata.setAcrValuesSupported(Collections.singletonList(AcrValues.IN_COMMON_SILVER));
+        List<String> responseType = Arrays.asList(ResponseType.CODE, ResponseType.TOKEN, io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN, io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN, io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN, io.gravitee.am.common.oidc.ResponseType.ID_TOKEN, io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN);
+        openIDProviderMetadata.setResponseTypesSupported(responseType);
+        openIDProviderMetadata.setResponseModesSupported(io.gravitee.am.common.oidc.ResponseMode.supportedValues());
+
+        Client client = new Client();
+        client.setAuthorizedGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        client.setResponseTypes(responseType);
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
+            routingContext.next();
+        });
+
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN, ResponseMode.QUERY, HttpResponseStatus.BAD_REQUEST);
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN, io.gravitee.am.common.oidc.ResponseMode.QUERY_JWT, HttpResponseStatus.BAD_REQUEST);
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN, ResponseMode.FRAGMENT, HttpResponseStatus.OK);
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN, io.gravitee.am.common.oidc.ResponseMode.FRAGMENT_JWT, HttpResponseStatus.OK);
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN, io.gravitee.am.common.oidc.ResponseMode.JWT, HttpResponseStatus.OK);
+
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN, ResponseMode.QUERY, HttpResponseStatus.BAD_REQUEST);
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN, io.gravitee.am.common.oidc.ResponseMode.QUERY_JWT, HttpResponseStatus.BAD_REQUEST);
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN, ResponseMode.FRAGMENT, HttpResponseStatus.OK);
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN, io.gravitee.am.common.oidc.ResponseMode.FRAGMENT_JWT, HttpResponseStatus.OK);
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.CODE_TOKEN, io.gravitee.am.common.oidc.ResponseMode.JWT, HttpResponseStatus.OK);
+
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN, ResponseMode.QUERY, HttpResponseStatus.BAD_REQUEST);
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN, io.gravitee.am.common.oidc.ResponseMode.QUERY_JWT, HttpResponseStatus.BAD_REQUEST);
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN, ResponseMode.FRAGMENT, HttpResponseStatus.OK);
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN, io.gravitee.am.common.oidc.ResponseMode.FRAGMENT_JWT, HttpResponseStatus.OK);
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN_TOKEN, io.gravitee.am.common.oidc.ResponseMode.JWT, HttpResponseStatus.OK);
+
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.ID_TOKEN, ResponseMode.QUERY, HttpResponseStatus.BAD_REQUEST);
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.ID_TOKEN, io.gravitee.am.common.oidc.ResponseMode.QUERY_JWT, HttpResponseStatus.BAD_REQUEST);
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.ID_TOKEN, ResponseMode.FRAGMENT, HttpResponseStatus.OK);
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.ID_TOKEN, io.gravitee.am.common.oidc.ResponseMode.FRAGMENT_JWT, HttpResponseStatus.OK);
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.ID_TOKEN, io.gravitee.am.common.oidc.ResponseMode.JWT, HttpResponseStatus.OK);
+
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN, ResponseMode.QUERY, HttpResponseStatus.BAD_REQUEST);
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN, io.gravitee.am.common.oidc.ResponseMode.QUERY_JWT, HttpResponseStatus.BAD_REQUEST);
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN, ResponseMode.FRAGMENT, HttpResponseStatus.OK);
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN, io.gravitee.am.common.oidc.ResponseMode.FRAGMENT_JWT, HttpResponseStatus.OK);
+        callGatewayWith(io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN, io.gravitee.am.common.oidc.ResponseMode.JWT, HttpResponseStatus.OK);
+
+        callGatewayWith(ResponseType.CODE, ResponseMode.QUERY, HttpResponseStatus.OK);
+        callGatewayWith(ResponseType.CODE, ResponseMode.FRAGMENT, HttpResponseStatus.OK);
+        callGatewayWith(ResponseType.CODE, io.gravitee.am.common.oidc.ResponseMode.FRAGMENT_JWT, HttpResponseStatus.OK);
+        callGatewayWith(ResponseType.CODE, io.gravitee.am.common.oidc.ResponseMode.QUERY_JWT, HttpResponseStatus.OK);
+        callGatewayWith(ResponseType.CODE, io.gravitee.am.common.oidc.ResponseMode.JWT, HttpResponseStatus.OK);
+
+        callGatewayWith(ResponseType.TOKEN, ResponseMode.QUERY, HttpResponseStatus.BAD_REQUEST);
+        callGatewayWith(ResponseType.TOKEN, io.gravitee.am.common.oidc.ResponseMode.QUERY_JWT, HttpResponseStatus.BAD_REQUEST);
+        callGatewayWith(ResponseType.TOKEN, ResponseMode.FRAGMENT, HttpResponseStatus.OK);
+        callGatewayWith(ResponseType.TOKEN, io.gravitee.am.common.oidc.ResponseMode.FRAGMENT_JWT, HttpResponseStatus.OK);
+        callGatewayWith(ResponseType.TOKEN, io.gravitee.am.common.oidc.ResponseMode.JWT, HttpResponseStatus.OK);
+    }
+
+    private void callGatewayWith(String responseType, String responseMode, HttpResponseStatus status) throws Exception {
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type="+responseType.replace(' ', '+')+"&response_mode="+responseMode+"&nonce=test&redirect_uri=https://callback&claims={\"id_token\":{\"acr\":{\"value\":\"urn:mace:incommon:iap:silver\",\"essential\":true}}}",
+                null,
+                status.code(), status.reasonPhrase(), null);
     }
 
 }

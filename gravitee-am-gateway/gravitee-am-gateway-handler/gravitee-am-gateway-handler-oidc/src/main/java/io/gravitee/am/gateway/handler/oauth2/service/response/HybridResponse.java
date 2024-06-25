@@ -21,8 +21,6 @@ import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.vertx.rxjava3.core.MultiMap;
 
-import java.net.URISyntaxException;
-
 /**
  * When using the Hybrid Flow, Authentication Responses are made in the same manner as for the Implicit Flow, as defined in Section 3.2.2.5, with the exception of the differences specified in this section.
  * These Authorization Endpoint results are used in the following manner:
@@ -70,6 +68,8 @@ public class HybridResponse extends ImplicitResponse {
     @Override
     public String buildRedirectUri() {
         UriBuilder uriBuilder = UriBuilder.fromURIString(getRedirectUri());
+        // Hybrid response requires Fragment
+        // https://openid.net/specs/oauth-v2-multiple-response-types-1_0.html#Security
         params().forEach(uriBuilder::addFragmentParameter);
         return uriBuilder.buildString();
     }

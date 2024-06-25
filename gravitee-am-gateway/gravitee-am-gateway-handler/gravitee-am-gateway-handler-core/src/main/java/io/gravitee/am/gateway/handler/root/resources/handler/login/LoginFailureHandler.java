@@ -49,8 +49,6 @@ import java.util.Optional;
 import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PROTOCOL_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.RETURN_URL_KEY;
-import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
-import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
 import static java.util.Objects.nonNull;
 
 /**
@@ -127,10 +125,6 @@ public class LoginFailureHandler extends LoginAbstractHandler {
             query.put(io.gravitee.am.common.oauth2.Parameters.STATE, originalParams.get(io.gravitee.am.common.oauth2.Parameters.STATE));
         }
 
-        final boolean fragment = originalParams != null &&
-                originalParams.get(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE) != null &&
-                (isImplicitFlow(originalParams.get(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE)) || isHybridFlow(originalParams.get(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE)));
-
         // prepare final redirect uri
         final UriBuilder template = UriBuilder.newInstance();
 
@@ -147,7 +141,7 @@ public class LoginFailureHandler extends LoginAbstractHandler {
                     .path(redirectUri.getPath());
 
             // append error parameters in "application/x-www-form-urlencoded" format
-            if (fragment) {
+            if (requiresFragment(originalParams)) {
                 query.forEach((k, v) -> template.addFragmentParameter(k, UriBuilder.encodeURIComponent(v)));
             } else {
                 query.forEach((k, v) -> template.addParameter(k, UriBuilder.encodeURIComponent(v)));

@@ -67,8 +67,6 @@ import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.LOGGER;
 import static io.gravitee.am.gateway.handler.root.RootProvider.PATH_LOGIN_CALLBACK;
-import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
-import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -228,9 +226,6 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
         if (originalParams != null && originalParams.get(Parameters.STATE) != null) {
             query.put(Parameters.STATE, originalParams.get(Parameters.STATE));
         }
-        boolean fragment = originalParams != null &&
-                originalParams.get(Parameters.RESPONSE_TYPE) != null &&
-                (isImplicitFlow(originalParams.get(Parameters.RESPONSE_TYPE)) || isHybridFlow(originalParams.get(Parameters.RESPONSE_TYPE)));
 
         // prepare final redirect uri
         UriBuilder template = UriBuilder.newInstance();
@@ -247,7 +242,7 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
                 .path(redirectUri.getPath());
 
         // append error parameters in "application/x-www-form-urlencoded" format
-        if (fragment) {
+        if (requiresFragment(originalParams)) {
             query.forEach((k, v) -> template.addFragmentParameter(k, encodeURIComponent(v)));
         } else {
             query.forEach((k, v) -> template.addParameter(k, encodeURIComponent(v)));

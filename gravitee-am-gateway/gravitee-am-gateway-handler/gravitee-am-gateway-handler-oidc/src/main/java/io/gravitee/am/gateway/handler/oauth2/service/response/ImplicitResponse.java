@@ -51,6 +51,8 @@ public class ImplicitResponse extends AuthorizationResponse {
     @Override
     public String buildRedirectUri() {
         UriBuilder uriBuilder = UriBuilder.fromURIString(getRedirectUri());
+        // Implicit type (token) requires fragment
+        // https://openid.net/specs/oauth-v2-multiple-response-types-1_0.html#Security
         params().forEach(uriBuilder::addFragmentParameter);
         return uriBuilder.buildString();
     }
