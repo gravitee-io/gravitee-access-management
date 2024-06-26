@@ -66,7 +66,7 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
     private List<CertificateKey> certificateKeys;
 
     public void createCertificateKeys(CertificateMetadata certificateMetadata) throws Exception {
-        Object file = certificateMetadata.getMetadata().get(CertificateMetadata.FILE);
+        Object file = getCertificateContent(certificateMetadata);
         Objects.requireNonNull(file, invalidCertificateFileMessage());
 
         try (InputStream is = new ByteArrayInputStream((byte[]) file)) {
@@ -106,6 +106,10 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
                 throw new IllegalArgumentException("An ECSDA or RSA Signer must be supplied");
             }
         }
+    }
+
+    protected Object getCertificateContent(CertificateMetadata certificateMetadata) {
+        return certificateMetadata.getMetadata().get(CertificateMetadata.FILE);
     }
 
     protected abstract String getStorepass();
