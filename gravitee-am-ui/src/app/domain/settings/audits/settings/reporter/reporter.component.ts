@@ -103,7 +103,8 @@ export class ReporterComponent implements OnInit {
 
       // for File reporter fill the filename entry with the domain
       if (this.reporter.type === 'reporter-am-file') {
-        this.reporterSchema['properties']['filename'].default = this.domainId;
+        const defaultFilename = this.organizationContext ? '' : this.domainId;
+        this.reporterSchema['properties']['filename'].default = defaultFilename;
       }
     });
   }
