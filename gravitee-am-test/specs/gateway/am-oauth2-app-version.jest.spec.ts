@@ -188,6 +188,7 @@ describe('OAuth2 - App version', () => {
         assertGeneratedToken(response.body, 'scope1');
       });
     });
+
     describe('OAuth2 - RFC 6746 - Client credentials grant', () => {
       it('renew client - must generate a new token from application 3', async () => {
         const response = await performPost(openIdConfiguration.token_endpoint, '', 'grant_type=client_credentials', {
@@ -359,6 +360,50 @@ describe('OAuth2 - App version', () => {
 
         expect(postConsentRedirect.headers['location']).toBeDefined();
         expect(postConsentRedirect.headers['location']).toContain('http://localhost:4000/?');
+        expect(postConsentRedirect.headers['location']).toMatch(/code=[-_a-zA-Z0-9]+&?/);
+
+        await logoutUser(openIdConfiguration.end_session_endpoint, postConsentRedirect);
+      });
+
+      it('must handle code flow with fragment response_mode', async () => {
+        // Prepare Login Flow Parameters
+        const clientId = application2.settings.oauth.clientId;
+        const params = `?response_type=code&response_mode=fragment&client_id=${clientId}&redirect_uri=http://localhost:4000/`;
+
+        // Initiate the Login Flow
+        const authResponse = await performGet(openIdConfiguration.authorization_endpoint, params).expect(302);
+        const loginLocation = authResponse.headers['location'];
+
+        expect(loginLocation).toBeDefined();
+        expect(loginLocation).toContain(`${process.env.AM_GATEWAY_URL}/${masterDomain.hrid}/login`);
+        expect(loginLocation).toContain(`client_id=${clientId}`);
+
+        // Redirect to /login
+        const loginResult = await extractXsrfTokenAndActionResponse(authResponse);
+        // Authentication
+        const postLogin = await performFormPost(
+          loginResult.action,
+          '',
+          {
+            'X-XSRF-TOKEN': loginResult.token,
+            username: 'user',
+            password: '#CoMpL3X-P@SsW0Rd',
+            client_id: clientId,
+          },
+          {
+            Cookie: loginResult.headers['set-cookie'],
+            'Content-type': 'application/x-www-form-urlencoded',
+          },
+        ).expect(302);
+
+        // Redirect to URI
+        const postConsentRedirect = await performGet(postLogin.headers['location'], '', {
+          Cookie: postLogin.headers['set-cookie'],
+        }).expect(302);
+
+        expect(postConsentRedirect.headers['location']).toBeDefined();
+        // as response_mode = fragment, the code is provided as fragment (#) instead of query param (?)
+        expect(postConsentRedirect.headers['location']).toContain('http://localhost:4000/#');
         expect(postConsentRedirect.headers['location']).toMatch(/code=[-_a-zA-Z0-9]+&?/);
 
         await logoutUser(openIdConfiguration.end_session_endpoint, postConsentRedirect);
@@ -879,6 +924,37 @@ describe('OAuth2 - App version', () => {
           });
         }
       });
+    });
+  });
+  describe('ResponseType token', () => {
+    it('must NOT handle token flow with query response_mode', async () => {
+      // Prepare Login Flow Parameters
+      const clientId = application2.settings.oauth.clientId;
+      const params = `?response_type=token&response_mode=query&client_id=${clientId}&redirect_uri=http://localhost:4000/`;
+
+      // Initiate the Login Flow
+      const authResponse = await performGet(openIdConfiguration.authorization_endpoint, params).expect(302);
+      const loginLocation = authResponse.headers['location'];
+
+      expect(loginLocation).toBeDefined();
+      // error params should be provided based on the response_mode (here as query param)
+      expect(loginLocation).toContain(`http://localhost:4000/?`);
+      expect(loginLocation).toContain(`error=unsupported_response_mode`);
+    });
+
+    it('must reject token flow with prompt none as user not authenticated', async () => {
+      // Prepare Login Flow Parameters
+      const clientId = application2.settings.oauth.clientId;
+      const params = `?response_type=token&prompt=none&client_id=${clientId}&redirect_uri=http://localhost:4000/`;
+
+      // Initiate the Login Flow
+      const authResponse = await performGet(openIdConfiguration.authorization_endpoint, params).expect(302);
+      const loginLocation = authResponse.headers['location'];
+
+      expect(loginLocation).toBeDefined();
+      // error params should be provided based on the default response_mode (here as fragment param)
+      expect(loginLocation).toContain(`http://localhost:4000/#`);
+      expect(loginLocation).toContain(`error=login_required`);
     });
   });
 });
