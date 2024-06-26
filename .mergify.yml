@@ -18,44 +18,6 @@ pull_request_rules:
           ----
           {{ cherry_pick_error }}
         title: "[master] {{ title }}"
-  - name: Apply commits on `3.20.x`
-    conditions:
-      - label=apply-on-3-20-x
-    actions:
-      backport:
-        branches:
-          - 3.20.x
-        assignees:
-          - "{{ author }}"
-        body: |
-          This is an automatic copy of pull request #{{number}} done by [Mergify](https://mergify.com).
-
-          ----
-
-          {{ body }}
-
-          ----
-          {{ cherry_pick_error }}
-        title: "[3.20.x] {{ title }}"
-  - name: Apply commits on `3.21.x`
-    conditions:
-      - label=apply-on-3-21-x
-    actions:
-      backport:
-        branches:
-          - 3.21.x
-        assignees:
-          - "{{ author }}"
-        body: |
-          This is an automatic copy of pull request #{{number}} done by [Mergify](https://mergify.com).
-
-          ----
-
-          {{ body }}
-
-          ----
-          {{ cherry_pick_error }}
-        title: "[3.21.x] {{ title }}"
   - name: Apply commits on `4.0.x`
     conditions:
       - label=apply-on-4-0-x
@@ -151,3 +113,22 @@ pull_request_rules:
           ----
           {{ cherry_pick_error }}
         title: "[4.4.x] {{ title }}"
+  - name: Apply commits on `4.5.x`
+    conditions:
+      - label=apply-on-4-5-x
+    actions:
+      backport:
+        branches:
+          - 4.5.x
+        assignees:
+          - "{{ author }}"
+        body: |
+          This is an automatic copy of pull request #{{number}} done by [Mergify](https://mergify.com).
+
+          ----
+
+          {{ body }}
+
+          ----
+          {{ cherry_pick_error }}
+        title: "[4.5.x] {{ title }}"
