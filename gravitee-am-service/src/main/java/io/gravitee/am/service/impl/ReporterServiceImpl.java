@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -79,7 +79,6 @@ public class ReporterServiceImpl implements ReporterService {
     private static final String REPORTER_AM_JDBC = "reporter-am-jdbc";
     private static final String REPORTER_AM_FILE = "reporter-am-file";
     private static final String REPORTER_CONFIG_FILENAME = "filename";
-    private static final String ADMIN_DOMAIN = "admin";
     public static final String MANAGEMENT_TYPE = "management.type";
     public static final String MONGODB = "mongodb";
     // Regex as defined into the Reporter plugin schema in order to apply the same validation rule
@@ -158,6 +157,9 @@ public class ReporterServiceImpl implements ReporterService {
         LOGGER.debug("Create a new reporter {} for {}", newReporter, reference);
 
         var now = new Date();
+        if (reference.type() != ReferenceType.ORGANIZATION && newReporter.isInherited()) {
+            return Single.error(new ReporterConfigurationException("Only organization reporters can be inherited"));
+        }
         Reporter reporter = Reporter.builder()
                 .id(Objects.requireNonNullElseGet(newReporter.getId(), RandomString::generate))
                 .enabled(newReporter.isEnabled())
@@ -204,10 +206,11 @@ public class ReporterServiceImpl implements ReporterService {
                     if (!oldReporter.isSystem() || isUpgrader) {
                         reporterToUpdate.setConfiguration(updateReporter.getConfiguration());
                     }
-                    if (oldReporter.getReference().type() == ReferenceType.ORGANIZATION && !oldReporter.isSystem()) {
-                        // only non-system org reporters can be inherited
-                        reporterToUpdate.setInherited(updateReporter.isInherited());
+                    if (updateReporter.isInherited() && (oldReporter.getReference().type() != ReferenceType.ORGANIZATION || oldReporter.isSystem())) {
+                        return Single.error(new ReporterConfigurationException("Only organization reporters can be inherited"));
                     }
+
+                    reporterToUpdate.setInherited(updateReporter.isInherited());
                     reporterToUpdate.setUpdatedAt(new Date());
 
                     return checkReporterConfiguration(reporterToUpdate)

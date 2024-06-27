@@ -16,24 +16,21 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Reference;
-import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.service.exception.ReporterConfigurationException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.ReporterServiceImpl;
 import io.gravitee.am.service.model.NewReporter;
+import io.gravitee.am.service.model.UpdateReporter;
 import io.gravitee.am.service.repository.MemoryReporterRepository;
 import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.observers.TestObserver;
 import org.apache.commons.text.RandomStringGenerator;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.core.env.Environment;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.env.MockEnvironment;
 
 import java.util.Random;
@@ -41,16 +38,14 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
-public class ReporterServiceTest {
+@ExtendWith(MockitoExtension.class)
+class ReporterServiceTest {
     private final Random rng = new Random(1234);
     private final RandomStringGenerator randomStringGenerator = new RandomStringGenerator.Builder()
             .withinRange(new char[]{'a', 'z'},
@@ -71,7 +66,7 @@ public class ReporterServiceTest {
 
 
     @Test
-    public void shouldAccept_ReportFileName() {
+    void shouldAccept_ReportFileName() {
         final var reporter = new NewReporter();
         reporter.setEnabled(true);
         reporter.setName("Test");
@@ -88,7 +83,7 @@ public class ReporterServiceTest {
     }
 
     @Test
-    public void shouldReject_ReportFileName() {
+    void shouldReject_ReportFileName() {
         final var reporter = new NewReporter();
         reporter.setEnabled(true);
         reporter.setName("Test");
@@ -103,7 +98,7 @@ public class ReporterServiceTest {
     }
 
     @Test
-    public void shouldFindAllByReference() {
+    void shouldFindAllByReference() {
         final var reporterA = randomTestFileReporter("wanted");
         final var reporterB = randomTestFileReporter("wanted");
         final var reporterC = randomTestFileReporter("unwanted");
@@ -135,7 +130,7 @@ public class ReporterServiceTest {
     }
 
     @Test
-    public void shouldCreateDefaultForOrganization() {
+    void shouldCreateDefaultForOrganization() {
         environment.setProperty("management.type", "mongodb");
         environment.setProperty("management.mongodb.host", "doesnt-exist.local");
         environment.setProperty("management.mongodb.port", "12345");
@@ -152,6 +147,75 @@ public class ReporterServiceTest {
                 .assertValue(r -> r.getType().contains("mongo"))
                 .assertValue(r -> r.getReference().equals(Reference.organization("some-org")));
     }
+
+    @Test
+    void canCreateInheritedOrganizationReporter() {
+        var newReporter = randomTestFileReporter("test");
+        newReporter.setInherited(true);
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        reporterService.create(Reference.organization("organization"), newReporter)
+                .test()
+                .awaitDone(1, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+    }
+
+    @Test
+    void cantCreateInheritedDomainReporter() {
+        var newReporter = randomTestFileReporter("test");
+        newReporter.setInherited(true);
+        reporterService.create(Reference.domain("domain"), newReporter)
+                .test()
+                .awaitDone(1, TimeUnit.SECONDS)
+                .assertError(ReporterConfigurationException.class);
+    }
+
+    @Test
+    void cantMakeDomainReporterInherited() {
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        var newReporter = randomTestFileReporter("test");
+        var reference = Reference.domain("test-domain");
+        var createdReporter = reporterService.create(reference, newReporter)
+                .test()
+                .awaitDone(1, TimeUnit.SECONDS)
+                .assertComplete()
+                .values()
+                .get(0);
+        var updateReporter = new UpdateReporter();
+        updateReporter.setName(newReporter.getName());
+        updateReporter.setConfiguration(newReporter.getConfiguration());
+        updateReporter.setEnabled(newReporter.isEnabled());
+        updateReporter.setInherited(true);
+        reporterService.update(reference, createdReporter.getId() ,updateReporter, false)
+                .test()
+                .awaitDone(1, TimeUnit.SECONDS)
+                .assertError(ReporterConfigurationException.class);
+    }
+
+    @Test
+    void canMakeOrganizationReporterInherited() {
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        var reference = Reference.organization("test-org");
+        var newReporter = randomTestFileReporter("test");
+        var createdReporter = reporterService.create(reference, newReporter)
+                .test()
+                .awaitDone(1, TimeUnit.SECONDS)
+                .assertComplete()
+                .values()
+                .get(0);
+        var updateReporter = new UpdateReporter();
+        updateReporter.setName(newReporter.getName());
+        updateReporter.setConfiguration(newReporter.getConfiguration());
+        updateReporter.setEnabled(newReporter.isEnabled());
+        updateReporter.setInherited(true);
+        reporterService.update(reference, createdReporter.getId() ,updateReporter, false)
+                .test()
+                .awaitDone(1, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+    }
+
+
 
     private NewReporter randomTestFileReporter(String name) {
         var reporter = new NewReporter();
