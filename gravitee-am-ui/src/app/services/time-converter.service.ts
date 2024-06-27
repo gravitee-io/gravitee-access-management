@@ -26,7 +26,7 @@ export class TimeConverterService {
     return null;
   }
 
-  getUnitTime(value: DurationInputArg1, unit: DurationInputArg2 = 'seconds') {
+  getUnitTime(value: DurationInputArg1, unit: DurationInputArg2 = 'seconds'): string {
     if (value) {
       const humanizeDate = moment.duration(value, unit).humanize().split(' ');
       return this.extractUnitTime(humanizeDate);
@@ -34,13 +34,13 @@ export class TimeConverterService {
     return 'seconds';
   }
 
-  extractUnitTime(humanizeDate: string[]): string {
-    const index = humanizeDate.length === 2 ? 1 : 2;
-    return humanizeDate[index].endsWith('s') ? humanizeDate[index] : humanizeDate[index] + 's';
+  getHumanTime(value: DurationInputArg1, unit: DurationInputArg2 = 'seconds'): string {
+    return moment.duration(value, unit).humanize();
   }
 
-  getHumanTime(value: DurationInputArg1, unit: DurationInputArg2 = 'seconds') {
-    return moment.duration(value, unit).humanize();
+  private extractUnitTime(humanizeDate: string[]): string {
+    const index = humanizeDate.length === 2 ? 1 : 2;
+    return humanizeDate[index].endsWith('s') ? humanizeDate[index] : humanizeDate[index] + 's';
   }
 
   private getExpiresIn(value, unit: DurationInputArg2 = 'seconds') {
