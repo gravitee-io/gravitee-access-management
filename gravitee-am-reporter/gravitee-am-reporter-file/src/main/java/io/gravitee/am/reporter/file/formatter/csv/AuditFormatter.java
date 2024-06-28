@@ -22,11 +22,13 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.gravitee.am.reporter.file.audit.AuditEntry;
 import io.vertx.core.buffer.Buffer;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class AuditFormatter extends SingleValueFormatter<AuditEntry> {
 
     private final ObjectMapper mapper = new ObjectMapper();
@@ -57,17 +59,22 @@ public class AuditFormatter extends SingleValueFormatter<AuditEntry> {
         try {
             appendString(buffer, mapper.writeValueAsString(entry.getAccessPoint()));
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            log.warn("Unable to serialize accessPoint for audit entry: {}", entry.getId(), e);
         }
         try {
             appendString(buffer, mapper.writeValueAsString(entry.getActor()));
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            log.warn("Unable to serialize actor for audit entry: {}", entry.getId(), e);
         }
         try {
             appendString(buffer, mapper.writeValueAsString(entry.getTarget()));
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            log.warn("Unable to serialize target for audit entry: {}", entry.getId(), e);
+        }
+        try {
+            appendString(buffer, mapper.writeValueAsString(entry.getOutcome()));
+        } catch (JsonProcessingException e) {
+            log.warn("Unable to serialize outcome for audit entry: {}", entry.getId(), e);
         }
 
         return buffer;

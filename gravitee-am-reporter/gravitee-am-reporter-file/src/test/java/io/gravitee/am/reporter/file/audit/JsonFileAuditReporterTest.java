@@ -51,6 +51,7 @@ public class JsonFileAuditReporterTest extends FileAuditReporterTest {
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
         objectMapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         for (int i = 0; i < loop; ++i) {
             AuditEntry readAudit = objectMapper.readValue(lines.get(i), AuditEntry.class);
             assertReportEqualsTo(reportables.get(i), readAudit);

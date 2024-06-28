@@ -84,7 +84,6 @@ public class FreeMarkerComponent implements InitializingBean {
      * Generate a string from a FreeMarker template.
      * @param templateName name of the FreeMarker template
      * @param data data of the template
-     * @return the string generated from the template
      */
     public void generateFromTemplate(final String templateName, final Map<String, Object> data, Writer writer) {
         try {
