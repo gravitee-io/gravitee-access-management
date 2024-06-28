@@ -21,11 +21,14 @@ import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.observers.TestObserver;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -39,7 +42,7 @@ public class OTPFactorProviderTest {
     @Test
     public void shouldUseVariableFactorSecurity() {
         OTPFactorProvider otpFactorProvider = new DummyOTPFactorProvider();
-        Assert.assertTrue(otpFactorProvider.useVariableFactorSecurity());
+        assertTrue(otpFactorProvider.useVariableFactorSecurity());
     }
     @Test
     public void shouldChangeVariableFactorSecurity() {
@@ -54,7 +57,7 @@ public class OTPFactorProviderTest {
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         testObserver.assertValue(eL -> eL.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Number.class) == null);
-        testObserver.assertValue(eL -> eL.getSecurity().getData(FactorDataKeys.KEY_MOVING_FACTOR, Number.class).longValue() == 2l);
+        testObserver.assertValue(eL -> eL.getSecurity().getData(FactorDataKeys.KEY_MOVING_FACTOR, Number.class).longValue() == 2L);
     }
 
     @Test
@@ -67,14 +70,15 @@ public class OTPFactorProviderTest {
         enrolledFactor.setSecurity(enrolledFactorSecurity);
 
         OTPFactorProvider otpFactorProvider = new DummyOTPFactorProvider();
-        TestObserver testObserver = otpFactorProvider.verifyOTP(enrolledFactor, 6, CODE).test();
+        TestObserver<Void> testObserver = otpFactorProvider.verifyOTP(enrolledFactor, 6, CODE).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertComplete();
     }
 
-    @Test
-    public void shouldNotVerifyOTPCode_wrongCode() {
+    @ParameterizedTest
+    @ValueSource(strings = {"123456", "abcdef", "", " ", "1234567"})
+    public void shouldNotVerifyOTPCode_wrongCode(String code) {
         EnrolledFactor enrolledFactor = new EnrolledFactor();
         EnrolledFactorSecurity enrolledFactorSecurity = new EnrolledFactorSecurity();
         enrolledFactorSecurity.setValue(SHARED_SECRET);
@@ -83,7 +87,7 @@ public class OTPFactorProviderTest {
         enrolledFactor.setSecurity(enrolledFactorSecurity);
 
         OTPFactorProvider otpFactorProvider = new DummyOTPFactorProvider();
-        TestObserver testObserver = otpFactorProvider.verifyOTP(enrolledFactor, 6, "123456").test();
+        TestObserver<Void> testObserver = otpFactorProvider.verifyOTP(enrolledFactor, 6, code).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidCodeException.class);
         testObserver.assertNotComplete();
@@ -99,7 +103,7 @@ public class OTPFactorProviderTest {
         enrolledFactor.setSecurity(enrolledFactorSecurity);
 
         OTPFactorProvider otpFactorProvider = new DummyOTPFactorProvider();
-        TestObserver testObserver = otpFactorProvider.verifyOTP(enrolledFactor, 6, CODE).test();
+        TestObserver<Void> testObserver = otpFactorProvider.verifyOTP(enrolledFactor, 6, CODE).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidCodeException.class);
         testObserver.assertNotComplete();
@@ -115,13 +119,13 @@ public class OTPFactorProviderTest {
         enrolledFactor.setSecurity(enrolledFactorSecurity);
 
         OTPFactorProvider otpFactorProvider = new DummyOTPFactorProvider();
-        TestObserver testObserver = otpFactorProvider.verifyOTP(enrolledFactor, 6, CODE).test();
+        TestObserver<Void> testObserver = otpFactorProvider.verifyOTP(enrolledFactor, 6, CODE).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidCodeException.class);
         testObserver.assertNotComplete();
     }
 
-    private class DummyOTPFactorProvider extends OTPFactorProvider {
+    private static class DummyOTPFactorProvider extends OTPFactorProvider {
 
         @Override
         public Completable verify(FactorContext context) {
