@@ -45,7 +45,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
@@ -67,18 +66,6 @@ public class FileAuditReporter extends AbstractService<Reporter> implements Audi
 
     private static Logger LOGGER = LoggerFactory.getLogger(FileAuditReporter.class);
 
-    @Autowired
-    private Vertx vertx;
-
-    @Autowired
-    private Environment env;
-
-    @Autowired
-    private FileReporterConfiguration config;
-
-    @Autowired
-    private GraviteeContext context;
-
     @Value("${" + REPORTERS_FILE_DIRECTORY + ":#{systemProperties['gravitee.home']}/audit-logs/}")
     private String directory;
 
@@ -86,9 +73,18 @@ public class FileAuditReporter extends AbstractService<Reporter> implements Audi
     private String outputType;
 
     @Autowired
+    private Vertx vertx;
+
+    @Autowired
+    private FileReporterConfiguration config;
+
+    @Autowired
+    private GraviteeContext context;
+
+    @Autowired
     private Node node;
 
-    private VertxFileWriter writer;
+    private VertxFileWriter<ReportEntry> writer;
 
     @Override
     public Single<Page<Audit>> search(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria, int page, int size) {
@@ -114,9 +110,8 @@ public class FileAuditReporter extends AbstractService<Reporter> implements Audi
     public void report(Reportable reportable) {
         LOGGER.debug("Report({})", reportable);
         if (writer != null) {
-            if (reportable instanceof Audit) {
-                AuditEntry entry = convert(reportable);
-
+            if (reportable instanceof Audit audit) {
+                AuditEntry entry = convert(audit);
                 writer.write(entry);
             } else {
                 LOGGER.debug("Ignore reportable of type {}", reportable.getClass().getName());
@@ -126,20 +121,24 @@ public class FileAuditReporter extends AbstractService<Reporter> implements Audi
         }
     }
 
-    private AuditEntry convert(Reportable reportable) {
+    private AuditEntry convert(Audit audit) {
         AuditEntry entry = new AuditEntry();
-        entry.setId(((Audit) reportable).getId());
-        entry.setReferenceId(((Audit) reportable).getReferenceId());
-        entry.setReferenceType(((Audit) reportable).getReferenceType());
-        entry.setTimestamp(reportable.timestamp());
-        entry.setTransactionId(((Audit) reportable).getTransactionId());
-        entry.setType(((Audit) reportable).getType());
+        entry.setId(audit.getId());
+        entry.setReferenceId(audit.getReferenceId());
+        entry.setReferenceType(audit.getReferenceType());
+        entry.setTimestamp(audit.timestamp());
+        entry.setTransactionId(audit.getTransactionId());
+        entry.setType(audit.getType());
 
         // do not copy message part of the status
-        entry.setStatus(((Audit) reportable).getOutcome() != null ? ((Audit) reportable).getOutcome().getStatus() : null);
+
+        var outcome = audit.getOutcome();
+        if (outcome != null) {
+            entry.setOutcome(outcome);
+        }
 
         // copy access point and replace invalid IP
-        AuditAccessPoint accessPoint = ((Audit) reportable).getAccessPoint();
+        AuditAccessPoint accessPoint = audit.getAccessPoint();
         if (accessPoint != null) {
             entry.setAccessPoint(new AuditAccessPoint(accessPoint));
             if (accessPoint.getIpAddress() != null && !InetAddressValidator.getInstance().isValid(accessPoint.getIpAddress())) {
@@ -147,14 +146,14 @@ public class FileAuditReporter extends AbstractService<Reporter> implements Audi
             }
         }
 
-        AuditEntity actor = ((Audit) reportable).getActor();
+        AuditEntity actor = audit.getActor();
         if (actor != null) {
             AuditEntity cloneOfActor = new AuditEntity(actor);
             cloneOfActor.setAttributes(null);
             entry.setActor(cloneOfActor);
         }
 
-        AuditEntity target = ((Audit) reportable).getTarget();
+        AuditEntity target = audit.getTarget();
         if (target != null) {
             AuditEntity cloneOfTarget = new AuditEntity(target);
             cloneOfTarget.setAttributes(null);
@@ -179,7 +178,7 @@ public class FileAuditReporter extends AbstractService<Reporter> implements Audi
     }
 
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
         if (context == null) {
             context = GraviteeContext.defaultContext(null);
         }
@@ -190,18 +189,18 @@ public class FileAuditReporter extends AbstractService<Reporter> implements Audi
 
         // Initialize writers
         final io.gravitee.am.reporter.file.formatter.Type type = io.gravitee.am.reporter.file.formatter.Type.valueOf(outputType.toUpperCase(Locale.ENGLISH));
-        Formatter formatter = FormatterFactory.getFormatter(type);
+        Formatter<ReportEntry> formatter = FormatterFactory.getFormatter(type);
         applicationContext.getAutowireCapableBeanFactory().autowireBean(formatter);
 
         String reporterDirectory = directory;
         if (context != null) {
-            if (!StringUtils.isEmpty(context.getOrganizationId())) {
+            if (StringUtils.hasText(context.getOrganizationId())) {
                 reporterDirectory = getOrCreateDirectory(reporterDirectory, context.getOrganizationId());
             }
-            if (!StringUtils.isEmpty(context.getEnvironmentId())) {
+            if (StringUtils.hasText(context.getEnvironmentId())) {
                 reporterDirectory = getOrCreateDirectory(reporterDirectory, context.getEnvironmentId());
             }
-            if (!StringUtils.isEmpty(context.getDomainId())) {
+            if (StringUtils.hasText(context.getDomainId())) {
                 reporterDirectory = getOrCreateDirectory(reporterDirectory, context.getDomainId());
             }
         }
@@ -212,8 +211,8 @@ public class FileAuditReporter extends AbstractService<Reporter> implements Audi
                 formatter,
                 filename);
 
-        Future writerInitialization = writer.initialize();
-        writerInitialization.onComplete(__ -> LOGGER.info("File reporter successfully started"));
+        Future<Void> writerInitialization = writer.initialize();
+        writerInitialization.onComplete(success -> LOGGER.info("File reporter successfully started"));
         writerInitialization.onFailure(error -> {
             LOGGER.warn("An error occurs while starting file reporter", error);
             throw new FileReporterInitializationException("An error occurs while starting file reporter [" + filename + "]");

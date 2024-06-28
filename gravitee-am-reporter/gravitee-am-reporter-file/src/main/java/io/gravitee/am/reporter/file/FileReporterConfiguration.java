@@ -17,38 +17,16 @@ package io.gravitee.am.reporter.file;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.gravitee.am.reporter.api.ReporterConfiguration;
+import lombok.Data;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
-public class FileReporterConfiguration  implements ReporterConfiguration {
+@Data
+public class FileReporterConfiguration implements ReporterConfiguration {
     private String filename;
     private String organizationId;
     private String environmentId;
-
-    public String getFilename() {
-        return filename;
-    }
-
-    public void setFilename(String filename) {
-        this.filename = filename;
-    }
-
-    public String getOrganizationId() {
-        return organizationId;
-    }
-
-    public void setOrganizationId(String organizationId) {
-        this.organizationId = organizationId;
-    }
-
-    public String getEnvironmentId() {
-        return environmentId;
-    }
-
-    public void setEnvironmentId(String environmentId) {
-        this.environmentId = environmentId;
-    }
 }

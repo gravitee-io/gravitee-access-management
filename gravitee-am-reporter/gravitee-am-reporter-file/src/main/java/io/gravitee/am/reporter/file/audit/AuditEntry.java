@@ -18,6 +18,9 @@ package io.gravitee.am.reporter.file.audit;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.audit.model.AuditAccessPoint;
 import io.gravitee.am.reporter.api.audit.model.AuditEntity;
+import io.gravitee.am.reporter.api.audit.model.AuditOutcome;
+import lombok.Data;
+import lombok.Getter;
 
 import java.time.Instant;
 
@@ -25,6 +28,7 @@ import java.time.Instant;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Data
 public class AuditEntry implements ReportEntry {
 
     /**
@@ -68,9 +72,9 @@ public class AuditEntry implements ReportEntry {
     private AuditEntity target;
 
     /**
-     * Indicates whether the event succeeded or failed
+     * The result of the action
      */
-    private String status;
+    private AuditOutcome outcome;
 
     /**
      * The date when the event was logged
@@ -91,118 +95,13 @@ public class AuditEntry implements ReportEntry {
 
     private String nodeHostname;
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    @Override
-    public ReferenceType getReferenceType() {
-        return referenceType;
-    }
-
-    public void setReferenceType(ReferenceType referenceType) {
-        this.referenceType = referenceType;
-    }
-
-    @Override
-    public String getReferenceId() {
-        return referenceId;
-    }
-
-    public void setReferenceId(String referenceId) {
-        this.referenceId = referenceId;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    @Override
-    public Instant getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(Instant timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public String getTransactionId() {
-        return transactionId;
-    }
-
-    public void setTransactionId(String transactionId) {
-        this.transactionId = transactionId;
-    }
-
-    public AuditAccessPoint getAccessPoint() {
-        return accessPoint;
-    }
-
-    public void setAccessPoint(AuditAccessPoint accessPoint) {
-        this.accessPoint = accessPoint;
-    }
-
-    public AuditEntity getActor() {
-        return actor;
-    }
-
-    public void setActor(AuditEntity actor) {
-        this.actor = actor;
-    }
-
-    public AuditEntity getTarget() {
-        return target;
-    }
-
-    public void setTarget(AuditEntity target) {
-        this.target = target;
-    }
-
+    /**
+     * Indicates whether the event succeeded or failed
+     * @deprecated since 4.5, status is a part of {@link #outcome}
+     */
+    @Deprecated(since = "4.5", forRemoval = true)
     public String getStatus() {
-        return status;
+        return outcome == null ? null : outcome.getStatus();
     }
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getEnvironmentId() {
-        return environmentId;
-    }
-
-    public void setEnvironmentId(String environmentId) {
-        this.environmentId = environmentId;
-    }
-
-    public String getOrganizationId() {
-        return organizationId;
-    }
-
-    public void setOrganizationId(String organizationId) {
-        this.organizationId = organizationId;
-    }
-
-    public String getNodeId() {
-        return nodeId;
-    }
-
-    public void setNodeId(String nodeId) {
-        this.nodeId = nodeId;
-    }
-
-    public String getNodeHostname() {
-        return nodeHostname;
-    }
-
-    public void setNodeHostname(String nodeHostname) {
-        this.nodeHostname = nodeHostname;
-    }
 }

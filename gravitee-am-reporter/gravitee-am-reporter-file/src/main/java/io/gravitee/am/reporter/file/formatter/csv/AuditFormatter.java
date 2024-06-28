@@ -69,6 +69,11 @@ public class AuditFormatter extends SingleValueFormatter<AuditEntry> {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
+        try {
+            appendString(buffer, mapper.writeValueAsString(entry.getOutcome()));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
 
         return buffer;
     }
