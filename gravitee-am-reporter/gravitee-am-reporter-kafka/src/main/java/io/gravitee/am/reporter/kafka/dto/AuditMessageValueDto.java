@@ -53,6 +53,14 @@ public class AuditMessageValueDto {
     private String nodeId;
     private String nodeHostname;
 
+    /**
+     * @deprecated moved into the {@link #outcome} field
+     */
+    @Deprecated(since = "4.5", forRemoval = true)
+    public String getStatus() {
+        return outcome == null ? null : outcome.status();
+    }
+
     public static AuditMessageValueDto from(Audit audit, GraviteeContext context, Node node) {
         return builder()
                 .id(audit.getId())
