@@ -87,7 +87,7 @@ public class KafkaAuditReporter extends AbstractService<Reporter> implements Aud
     public void report(Reportable reportable) {
         log.debug("Report({})", reportable);
         if (producer != null) {
-            AuditMessageValueDto value = DtoMapper.map((Audit) reportable, this.context, this.node);
+            AuditMessageValueDto value = AuditMessageValueDto.from((Audit) reportable, this.context, this.node);
             this.producer.write(
                     KafkaProducerRecord.create(this.config.getTopic(), key, value));
         } else {
@@ -122,18 +122,18 @@ public class KafkaAuditReporter extends AbstractService<Reporter> implements Aud
     @Override
     public Single<Page<Audit>> search(ReferenceType referenceType, String referenceId,
                                       AuditReportableCriteria criteria, int page, int size) {
-        throw new IllegalStateException("Search method not implemented for File reporter");
+        throw new IllegalStateException("Search method not implemented for Kafka reporter");
     }
 
     @Override
     public Single<Map<Object, Object>> aggregate(ReferenceType referenceType, String referenceId,
                                                  AuditReportableCriteria criteria, Type analyticsType) {
-        throw new IllegalStateException("Aggregate method not implemented for File reporter");
+        throw new IllegalStateException("Aggregate method not implemented for Kafka reporter");
     }
 
     @Override
     public Maybe<Audit> findById(ReferenceType referenceType, String referenceId, String id) {
-        throw new IllegalStateException("FindById method not implemented for File reporter");
+        throw new IllegalStateException("FindById method not implemented for Kafka reporter");
     }
 
     private Properties getProperties() {
