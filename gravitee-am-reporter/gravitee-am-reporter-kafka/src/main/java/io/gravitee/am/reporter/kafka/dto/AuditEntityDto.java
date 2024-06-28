@@ -15,18 +15,30 @@
  */
 package io.gravitee.am.reporter.kafka.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import io.gravitee.am.reporter.api.audit.model.AuditEntity;
+import lombok.Builder;
 
-@Setter
-@Getter
-public class AuditEntityDto {
+import java.util.Objects;
 
-    private String id;
-    private String alternativeId;
-    private String type;
-    private String displayName;
-    private String referenceType;
-    private String referenceId;
+@Builder
+public record AuditEntityDto(String id,
+                             String alternativeId,
+                             String type,
+                             String displayName,
+                             String referenceType,
+                             String referenceId) {
 
+    public static AuditEntityDto from(AuditEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+        return builder()
+                .id(entity.getId())
+                .alternativeId(entity.getAlternativeId())
+                .type(entity.getType())
+                .displayName(entity.getDisplayName())
+                .referenceType(Objects.toString(entity.getReferenceType()))
+                .referenceId(entity.getReferenceId())
+                .build();
+    }
 }

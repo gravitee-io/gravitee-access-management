@@ -18,7 +18,6 @@ package io.gravitee.am.reporter.kafka.kafka;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.reporter.kafka.AuditValueFactory;
-import io.gravitee.am.reporter.kafka.audit.DtoMapper;
 import io.gravitee.am.reporter.kafka.dto.AuditMessageValueDto;
 import io.gravitee.node.api.Node;
 import org.junit.jupiter.api.Assertions;
@@ -31,7 +30,7 @@ import java.nio.charset.StandardCharsets;
 
 import static org.mockito.Mockito.when;
 
-public class JacksonSerializerUTests {
+class JacksonSerializerUTests {
 
     @Test
     void Should_SerializeAnAuditAsJson() throws IOException {
@@ -40,7 +39,7 @@ public class JacksonSerializerUTests {
         Node node = Mockito.mock(Node.class);
         when(node.hostname()).thenReturn("main.srv.local");
         when(node.id()).thenReturn("node-id");
-        AuditMessageValueDto auditMessageValueDto = DtoMapper.map(AuditValueFactory.createAudit(), context, node);
+        AuditMessageValueDto auditMessageValueDto = AuditMessageValueDto.from(AuditValueFactory.createAudit(), context, node);
 
         byte[] bytes;
         try (JacksonSerializer<AuditMessageValueDto> serializer = new JacksonSerializer<>()) {

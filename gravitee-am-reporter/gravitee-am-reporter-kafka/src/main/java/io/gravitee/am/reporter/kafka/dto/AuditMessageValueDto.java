@@ -15,18 +15,26 @@
  */
 package io.gravitee.am.reporter.kafka.dto;
 
+import io.gravitee.am.common.utils.GraviteeContext;
+import io.gravitee.am.reporter.api.audit.model.Audit;
+import io.gravitee.node.api.Node;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.Objects;
+
 
 /**
  * Copied from File reporter and renamed to match Kafka Semantics
+ *
  * @author Florent Amaridon
  * @author Visiativ
  */
 @Setter
 @Getter
+@Builder
 public class AuditMessageValueDto {
 
     private String id;
@@ -37,11 +45,50 @@ public class AuditMessageValueDto {
     private AuditAccessPointDto accessPoint;
     private AuditEntityDto actor;
     private AuditEntityDto target;
-    private String status;
+    private AuditOutcomeDto outcome;
     private Instant timestamp;
     private String environmentId;
     private String organizationId;
     private String domainId;
     private String nodeId;
     private String nodeHostname;
+
+    public static AuditMessageValueDto from(Audit audit, GraviteeContext context, Node node) {
+        return builder()
+                .id(audit.getId())
+                .referenceId(audit.getReferenceId())
+                .referenceType(Objects.toString(audit.getReferenceType()))
+                .timestamp(audit.timestamp())
+                .transactionId(audit.getTransactionId())
+                .type(audit.getType())
+                .accessPoint(AuditAccessPointDto.from(audit.getAccessPoint()))
+                .actor(AuditEntityDto.from(audit.getActor()))
+                .target(AuditEntityDto.from(audit.getTarget()))
+                .outcome(AuditOutcomeDto.from(audit.getOutcome()))
+                .context(context)
+                .node(node)
+                .build();
+    }
+
+    @SuppressWarnings("unused") // additional methods for @lombok.Builder
+    static class AuditMessageValueDtoBuilder {
+        AuditMessageValueDtoBuilder context(GraviteeContext context) {
+            if (context == null) {
+                return this;
+            }
+            return organizationId(context.getOrganizationId())
+                    .environmentId(context.getEnvironmentId())
+                    .domainId(context.getDomainId());
+        }
+
+        AuditMessageValueDtoBuilder node(Node node) {
+            if (node == null) {
+                return this;
+            }
+            return nodeId(node.id())
+                    .nodeHostname(node.hostname());
+        }
+    }
+
+
 }

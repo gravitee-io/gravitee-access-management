@@ -15,11 +15,19 @@
  */
 package io.gravitee.am.reporter.kafka.dto;
 
+import io.gravitee.am.reporter.api.audit.model.AuditAccessPoint;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.apache.commons.validator.routines.InetAddressValidator;
 
 @Setter
 @Getter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class AuditAccessPointDto {
 
     private String id;
@@ -28,4 +36,23 @@ public class AuditAccessPointDto {
     private String ipAddress;
     private String userAgent;
 
+    public static AuditAccessPointDto from(AuditAccessPoint accessPoint) {
+        if (accessPoint == null) {
+            return null;
+        }
+        return builder()
+                .id(accessPoint.getId())
+                .alternativeId(accessPoint.getAlternativeId())
+                .displayName(accessPoint.getDisplayName())
+                .userAgent(accessPoint.getUserAgent())
+                .ipAddress(ensureValid(accessPoint.getIpAddress()))
+                .build();
+    }
+
+    private static String ensureValid(String ipAddress) {
+        if (ipAddress == null || !InetAddressValidator.getInstance().isValid(ipAddress)) {
+            return "0.0.0.0";
+        }
+        return ipAddress;
+    }
 }
