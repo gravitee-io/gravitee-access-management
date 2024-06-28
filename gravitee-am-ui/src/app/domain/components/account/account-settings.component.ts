@@ -364,7 +364,7 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
 
   private getHumanizeDuration(value): Duration {
     const time = this.timeConverterService.getTime(value);
-    const unit = this.timeConverterService.getUnitTime(time);
+    const unit = this.timeConverterService.getUnitTime(value);
     return { time, unit };
   }
 
