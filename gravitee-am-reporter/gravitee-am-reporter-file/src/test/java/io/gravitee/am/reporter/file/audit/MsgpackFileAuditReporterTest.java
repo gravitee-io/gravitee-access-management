@@ -73,6 +73,7 @@ public class MsgpackFileAuditReporterTest extends FileAuditReporterTest {
         mapper.registerModule(new JavaTimeModule());
         mapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
         mapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         for (int i = 0; i < loop; ++i) {
             AuditEntry readAudit = mapper.readValue(lines.get(i), AuditEntry.class);
             assertReportEqualsTo(reportables.get(i), readAudit);
