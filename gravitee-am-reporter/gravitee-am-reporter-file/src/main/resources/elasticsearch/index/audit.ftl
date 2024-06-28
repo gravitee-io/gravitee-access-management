@@ -19,6 +19,12 @@
   </#if>
   "referenceId":"${audit.getReferenceId()}",
   "status":"${audit.getStatus()}"
+  <#if audit.getOutcome()??>
+    ,"outcome": {
+      <#if audit.getOutcome().getStatus()??>, "status":"${audit.getOutcome().getStatus()}"</#if>
+      <#if audit.getOutcome().getMessage()??>, "message":"${audit.getOutcome().getMessage()}"</#if> 
+    }
+  </#if>
   <#if audit.getAccessPoint()??>
     ,"accessPoint": {
       "id":  <#if audit.getAccessPoint().getId()??> "${audit.getAccessPoint().getId()}" <#else> null </#if>
