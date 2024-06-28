@@ -65,7 +65,8 @@ public abstract class OTPFactorProvider implements FactorProvider {
                     emitter.onError(invalid2faCodeException());
                 }
                 // get last connection date of the user to test code
-                if (Instant.now().isAfter(Instant.ofEpochMilli(enrolledFactor.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Long.class)))) {
+                Long expireAt = enrolledFactor.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Long.class);
+                if (expireAt == null || Instant.now().isAfter(Instant.ofEpochMilli(expireAt))) {
                     emitter.onError(invalid2faCodeException());
                 }
                 emitter.onComplete();
