@@ -55,11 +55,11 @@ class ReporterServiceTest {
                     new char[]{'_', '_'})
             .usingRandom(rng::nextInt).build();
 
-    private ReporterRepository reporterRepository = new MemoryReporterRepository();
+    private final ReporterRepository reporterRepository = new MemoryReporterRepository();
 
     @Mock
     private EventService eventService;
-    private MockEnvironment environment = new MockEnvironment();
+    private final MockEnvironment environment = new MockEnvironment();
 
     @InjectMocks
     private ReporterService reporterService = new ReporterServiceImpl(environment, reporterRepository, null, null);
@@ -197,7 +197,7 @@ class ReporterServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         var reference = Reference.organization("test-org");
         var newReporter = randomTestFileReporter("test");
-        var createdReporter = reporterService.create(reference, newReporter)
+        var createdReporter = reporterService.create(reference, newReporter, null, false)
                 .test()
                 .awaitDone(1, TimeUnit.SECONDS)
                 .assertComplete()
