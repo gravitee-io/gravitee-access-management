@@ -66,6 +66,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnR
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterPostEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterSuccessEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnResponseEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.handler.transactionid.TransactionIdHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.ConditionalBodyHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.LocaleHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.botdetection.BotDetectionHandler;
@@ -134,7 +135,10 @@ import io.vertx.rxjava3.ext.web.handler.StaticHandler;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
+
+import static io.vertx.core.http.HttpMethod.GET;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -166,6 +170,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     public static final String PATH_IDENTIFIER_FIRST_LOGIN = "/login/identifier";
     public static final String PATH_ERROR = "/error";
     private static final String PASSWORD_HISTORY = "/passwordHistory";
+
+    @Value("${handlers.request.transaction.header:X-Gravitee-Transaction-Id}")
+    private String transactionHeader;
 
     @Autowired
     private Vertx vertx;
@@ -521,7 +528,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // Registration route
         Handler<RoutingContext> registerAccessHandler = new RegisterAccessHandler(domain);
-        rootRouter.route(HttpMethod.GET, PATH_REGISTER)
+        rootRouter.route(GET, PATH_REGISTER)
                 .handler(clientRequestParseHandler)
                 .handler(registerAccessHandler)
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
@@ -540,7 +547,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(PATH_REGISTER)
                 .failureHandler(new RegisterFailureHandler());
 
-        rootRouter.route(HttpMethod.GET, PATH_CONFIRM_REGISTRATION)
+        rootRouter.route(GET, PATH_CONFIRM_REGISTRATION)
                 .handler(new RegisterConfirmationRequestParseHandler(userService))
                 .handler(clientRequestParseHandlerOptional)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_REGISTRATION_CONFIRMATION))
@@ -554,7 +561,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new RegisterConfirmationSubmissionEndpoint(userService, environment));
 
         // Registration Verify
-        rootRouter.route(HttpMethod.GET, PATH_VERIFY_REGISTRATION)
+        rootRouter.route(GET, PATH_VERIFY_REGISTRATION)
                 .handler(new RegisterVerifyRequestParseHandler(domain, userService))
                 .handler(clientRequestParseHandlerOptional)
                 .handler(localeHandler)
@@ -565,7 +572,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         // Forgot password route
         final var forgotPasswordAccessHandler = new ForgotPasswordAccessHandler(domain);
         final var resetPasswordFailureHandler = new ErrorHandler(PATH_RESET_PASSWORD);
-        rootRouter.route(HttpMethod.GET, PATH_FORGOT_PASSWORD)
+        rootRouter.route(GET, PATH_FORGOT_PASSWORD)
                 .handler(clientRequestParseHandler)
                 .handler(forgotPasswordAccessHandler)
                 .handler(localeHandler)
@@ -579,7 +586,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         router.route(PATH_FORGOT_PASSWORD).failureHandler(new ErrorHandler(PATH_ERROR, true));
 
-        rootRouter.route(HttpMethod.GET, PATH_RESET_PASSWORD)
+        rootRouter.route(GET, PATH_RESET_PASSWORD)
                 .handler(new ResetPasswordRequestParseHandler(userService))
                 .handler(clientRequestParseHandlerOptional)
                 .handler(userTokenRequestParseHandler)
@@ -606,7 +613,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                   .handler(new PasswordValidationHandler(passwordService, userService, domain));
 
         // error route
-        rootRouter.route(HttpMethod.GET, PATH_ERROR)
+        rootRouter.route(GET, PATH_ERROR)
                 .handler(new ErrorEndpoint(domain, thymeleafTemplateEngine, clientSyncService, jwtService));
 
         // error handler
@@ -711,6 +718,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     private void authFlowContextHandler(Router router) {
         // Login endpoint
         AuthenticationFlowContextHandler authenticationFlowContextHandler = new AuthenticationFlowContextHandler(authenticationFlowContextService, environment);
+        TransactionIdHandler transactionIdHandler = new TransactionIdHandler(transactionHeader);
+        router.route(GET, PATH_LOGIN).handler(transactionIdHandler);
         router.route(PATH_LOGIN).handler(authenticationFlowContextHandler);
         router.route(PATH_LOGIN_CALLBACK).handler(authenticationFlowContextHandler);
         router.route(PATH_LOGIN_SSO_POST).handler(authenticationFlowContextHandler);
@@ -729,12 +738,15 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_RESET_PASSWORD).handler(authenticationFlowContextHandler);
 
         // WebAuthn endpoint
+        router.route(GET, PATH_WEBAUTHN_REGISTER).handler(transactionIdHandler);
         router.route(PATH_WEBAUTHN_REGISTER).handler(authenticationFlowContextHandler);
         router.route(PATH_WEBAUTHN_REGISTER_SUCCESS).handler(authenticationFlowContextHandler);
         router.route(PATH_WEBAUTHN_RESPONSE).handler(authenticationFlowContextHandler);
+        router.route(GET, PATH_WEBAUTHN_LOGIN).handler(transactionIdHandler);
         router.route(PATH_WEBAUTHN_LOGIN).handler(authenticationFlowContextHandler);
 
         // Identifier First Login endpoint
+        router.route(GET, PATH_IDENTIFIER_FIRST_LOGIN).handler(transactionIdHandler);
         router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(authenticationFlowContextHandler);
     }
 
