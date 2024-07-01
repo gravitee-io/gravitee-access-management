@@ -31,10 +31,12 @@ export class DomainSettingsCertificatesComponent implements OnInit {
   private certificateTypes: any = {
     'javakeystore-am-certificate': 'Java Keystore (.jks)',
     'pkcs12-am-certificate': 'PKCS#12 (.p12)',
+    'aws-am-certificate': 'AWS Secret Manager',
   };
   private certificateIcons: any = {
     'javakeystore-am-certificate': 'security',
     'pkcs12-am-certificate': 'security',
+    'aws-am-certificate': 'security',
   };
   private certificateUsage = new Map([
     ['enc', 'Encryption'],
