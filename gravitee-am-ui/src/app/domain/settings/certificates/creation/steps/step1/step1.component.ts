@@ -26,6 +26,7 @@ export class CertificateCreationStep1Component implements OnInit {
   private certificateTypes: any = {
     'javakeystore-am-certificate': 'Java Keystore (.jks)',
     'pkcs12-am-certificate': 'PKCS#12 (.p12)',
+    'aws-am-certificate': 'AWS Secret Manager',
   };
   @Input() certificate: any;
   certificates: any[];
@@ -33,15 +34,15 @@ export class CertificateCreationStep1Component implements OnInit {
 
   constructor(private organizationService: OrganizationService) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.organizationService.certificates().subscribe((data) => (this.certificates = data));
   }
 
-  selectCertificateType() {
+  selectCertificateType(): void {
     this.certificate.type = this.selectedCertificateTypeId;
   }
 
-  displayName(certificate) {
+  displayName(certificate: any): string {
     if (this.certificateTypes[certificate.id]) {
       return this.certificateTypes[certificate.id];
     }

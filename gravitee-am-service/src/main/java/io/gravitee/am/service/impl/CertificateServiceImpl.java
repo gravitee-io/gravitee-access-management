@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -60,6 +61,10 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.SingleSource;
 import io.reactivex.rxjava3.functions.Function;
+
+import java.util.Arrays;
+import java.util.Objects;
+
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -118,9 +123,12 @@ public class CertificateServiceImpl implements CertificateService {
     private static final String RSA = "RSA";
     private static final String EC = "EC";
     private static final String CONTENT = "content";
-    private static final String STORE_PASS = "storepass";
     private static final String ALIAS = "alias";
     private static final String NAME = "name";
+    private static final String AWS_AM_CERTIFICATE = "aws-am-certificate";
+    private static final String SECRET_NAME = "secretname";
+    private static final String KEY_PASS = "keypass";
+    private static final String STORE_PASS = "storepass";
 
     @Lazy
     @Autowired
@@ -200,38 +208,19 @@ public class CertificateServiceImpl implements CertificateService {
         return certificatePluginService
                 .getSchema(newCertificate.getType())
                 .switchIfEmpty(Single.error(() -> new CertificatePluginSchemaNotFoundException(newCertificate.getType())))
-                .map(schema -> objectMapper.readValue(schema, CertificateSchema.class))
-                .flatMap(certificateSchema -> {
-                    var certificate = new Certificate();
-                    certificate.setId(RandomString.generate());
-                    certificate.setDomain(domain);
-                    certificate.setName(newCertificate.getName());
-                    certificate.setType(newCertificate.getType());
-                    certificate.setSystem(isSystem);
-                    var certificateConfiguration = objectMapper.readTree(newCertificate.getConfiguration());
-                    var fileKey = certificateSchema.getProperties()
-                            .entrySet()
-                            .stream()
-                            .filter(map -> map.getValue().getWidget() != null && "file".equals(map.getValue().getWidget()))
-                            .map(Map.Entry::getKey)
-                            .findFirst().orElse(null);
-                    if (fileKey == null || !certificateConfiguration.has(fileKey)) {
-                        return Single.error(() -> new CertificateException("A valid certificate file was not uploaded. Please make sure to attach one."));
-                    }
+                .flatMap(schema -> {
                     try {
-                        var file = objectMapper.readTree(certificateConfiguration.get(fileKey).asText());
-                        var fileContent = Base64.getDecoder().decode(file.get(CONTENT).asText());
-                        certificate.setMetadata(Maps.newHashMap(Map.of(CertificateMetadata.FILE, fileContent)));
-                        // update configuration to set the file name
-                        ((ObjectNode) certificateConfiguration).put(fileKey, file.get(NAME).asText());
-                        newCertificate.setConfiguration(objectMapper.writeValueAsString(certificateConfiguration));
-                        certificate.setConfiguration(newCertificate.getConfiguration());
-                        certificate.setCreatedAt(new Date());
-                        certificate.setUpdatedAt(certificate.getCreatedAt());
-                        return Single.just(certificate);
-                    } catch (Exception ex) {
+                        var certificateSchema = objectMapper.readValue(schema, CertificateSchema.class);
+                        var certificateConfiguration = objectMapper.readTree(newCertificate.getConfiguration());
+                        var certificateFile = newCertificate.getType().equals(AWS_AM_CERTIFICATE) ? getAwsCertificate(certificateConfiguration) : getFileCertificate(certificateSchema, certificateConfiguration);
+                        return Single.just(createCertificate(domain, newCertificate, isSystem, certificateFile));
+                    }
+                    catch (CertificateException ex) {
+                        return Single.error(ex);
+                    }
+                    catch (Exception ex) {
                         log.error("An error occurs while trying to create certificate configuration", ex);
-                        return Single.error(() -> new TechnicalManagementException("An error occurs while trying to create a certificate", ex));
+                        return Single.error(new TechnicalManagementException("An error occurs while trying to create a certificate", ex));
                     }
                 })
                 .map(this::getValid)
@@ -244,23 +233,63 @@ public class CertificateServiceImpl implements CertificateService {
                 .doOnError(ex -> log.error("An error occurs while trying to create a certificate", ex));
     }
 
-    private static class CertificateWithSchema {
-        private final Certificate certificate;
-        private final CertificateSchema schema;
+    private Certificate createCertificate(String domain, NewCertificate newCertificate, boolean isSystem, CertificateFile certificateFile) throws JsonProcessingException {
+        var certificate = new Certificate();
+        certificate.setId(RandomString.generate());
+        certificate.setDomain(domain);
+        certificate.setName(newCertificate.getName());
+        certificate.setType(newCertificate.getType());
+        certificate.setSystem(isSystem);
+        certificate.setMetadata(certificateFile.content() == null ? Maps.newHashMap() : Maps.newHashMap(Map.of(CertificateMetadata.FILE, certificateFile.content())));
+        // update configuration to set the file name
+        ((ObjectNode) certificateFile.certificateConfiguration()).put(certificateFile.key(), certificateFile.name());
+        newCertificate.setConfiguration(objectMapper.writeValueAsString(certificateFile.certificateConfiguration()));
+        certificate.setConfiguration(newCertificate.getConfiguration());
+        certificate.setCreatedAt(new Date());
+        certificate.setUpdatedAt(certificate.getCreatedAt());
+        return certificate;
+    }
 
-        public CertificateWithSchema(Certificate certificate, CertificateSchema schema) {
-            this.certificate = certificate;
-            this.schema = schema;
+    private CertificateFile getFileCertificate(CertificateSchema certificateSchema, JsonNode certificateConfiguration) throws JsonProcessingException, CertificateException {
+        var key = certificateSchema.getProperties().entrySet().stream().filter(map -> map.getValue().getWidget() != null && "file".equals(map.getValue().getWidget())).map(Map.Entry::getKey).findFirst().orElse(null);
+        if (key == null || !certificateConfiguration.has(key)) {
+            throw new CertificateException("A valid certificate file was not uploaded. Please make sure to attach one.");
+        }
+        var file = objectMapper.readTree(certificateConfiguration.get(key).asText());
+        return new CertificateFile(key, file.get(NAME).asText(), Base64.getDecoder().decode(file.get(CONTENT).asText()), certificateConfiguration);
+    }
+
+    private CertificateFile getAwsCertificate(JsonNode certificateConfiguration) {
+        var secretname = certificateConfiguration.get(SECRET_NAME).asText();
+        return new CertificateFile(secretname, secretname, null, certificateConfiguration);
+    }
+
+    private record CertificateFile(String name, String key, byte[] content, JsonNode certificateConfiguration) {
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            CertificateFile that = (CertificateFile) o;
+            return Objects.equals(key, that.key) && Objects.equals(name, that.name) && Objects.deepEquals(content, that.content) && Objects.equals(certificateConfiguration, that.certificateConfiguration);
         }
 
-        public Certificate getCertificate() {
-            return certificate;
+        @Override
+        public int hashCode() {
+            return Objects.hash(name, key, Arrays.hashCode(content), certificateConfiguration);
         }
 
-        public CertificateSchema getSchema() {
-            return schema;
+        @Override
+        public String toString() {
+            return "CertificateFile{" +
+                    "name='" + name + '\'' +
+                    ", key='" + key + '\'' +
+                    ", content='***'" +
+                    ", certificateConfiguration=" + certificateConfiguration +
+                    '}';
         }
     }
+
+    private record CertificateWithSchema(Certificate certificate, CertificateSchema schema) { }
 
     @Override
     public Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, User principal) {
@@ -271,49 +300,32 @@ public class CertificateServiceImpl implements CertificateService {
                         .switchIfEmpty(Single.error(() -> new CertificatePluginSchemaNotFoundException(certificate.getType())))
                         .flatMap(schema -> Single.just(new CertificateWithSchema(certificate, objectMapper.readValue(schema, CertificateSchema.class)))))
                 .flatMap(oldCertificate -> {
-                    boolean oldWithMTls = usageContains(oldCertificate.getCertificate().getConfiguration(), "mtls");
+                    boolean oldWithMTls = usageContains(oldCertificate.certificate().getConfiguration(), "mtls");
                     boolean newWithMTls = usageContains(updateCertificate.getConfiguration(), "mtls");
                     if (oldWithMTls && !newWithMTls){
-                        return checkIdentityProviderUsage(oldCertificate.getCertificate())
+                        return checkIdentityProviderUsage(oldCertificate.certificate())
                                 .map(cert -> oldCertificate);
                     } else {
                         return Single.just(oldCertificate);
                     }
                 })
                 .flatMap(oldCertificate -> {
-                    Certificate certificateToUpdate = new Certificate(oldCertificate.getCertificate());
+                    Certificate certificateToUpdate = new Certificate(oldCertificate.certificate());
                     certificateToUpdate.setName(updateCertificate.getName());
                     certificateToUpdate.setUpdatedAt(new Date());
                     if (!certificateToUpdate.isSystem()) { // system certificate can't be updated
                         try {
-                            CertificateSchema certificateSchema = oldCertificate.getSchema();
-                            JsonNode oldCertificateConfiguration = objectMapper.readTree(oldCertificate.getCertificate().getConfiguration());
-                            JsonNode certificateConfiguration = objectMapper.readTree(updateCertificate.getConfiguration());
-                            var key = certificateSchema.getProperties()
-                                    .entrySet()
-                                    .stream()
-                                    .filter(map -> map.getValue().getWidget() != null && "file".equals(map.getValue().getWidget()))
-                                    .map(Map.Entry::getKey)
-                                    .findFirst().orElse(null);
-                            String oldFileInformation = oldCertificateConfiguration.get(key).asText();
-                            String fileInformation = certificateConfiguration.get(key).asText();
-                            // file has changed, let's update it
-                            if (!oldFileInformation.equals(fileInformation)) {
-                                JsonNode file = objectMapper.readTree(certificateConfiguration.get(key).asText());
-                                byte[] data = Base64.getDecoder().decode(file.get(CONTENT).asText());
-                                certificateToUpdate.setMetadata(Collections.singletonMap(CertificateMetadata.FILE, data));
-
-                                // update configuration to set the file path
-                                ((ObjectNode) certificateConfiguration).put(key, file.get(NAME).asText());
-                                updateCertificate.setConfiguration(objectMapper.writeValueAsString(certificateConfiguration));
+                            if (oldCertificate.certificate().getType().equals(AWS_AM_CERTIFICATE)) {
+                                updateAwsCertificate(updateCertificate, certificateToUpdate);
+                            } else {
+                                updateFileCertificate(updateCertificate, oldCertificate, certificateToUpdate);
                             }
-                            certificateToUpdate.setConfiguration(updateCertificate.getConfiguration());
                         } catch (IOException ex) {
                             log.error("An error occurs while trying to update certificate binaries", ex);
-                            return Single.error(() -> ex);
+                            return Single.error(ex);
                         } catch (Exception ex) {
                             log.error("An error occurs while trying to update certificate configuration", ex);
-                            return Single.error(() -> ex);
+                            return Single.error(ex);
                         }
                     }
                     return Single.just(certificateToUpdate);
@@ -327,12 +339,49 @@ public class CertificateServiceImpl implements CertificateService {
                 })
                 .onErrorResumeNext(ex -> {
                     log.error("An error occurs while trying to update a certificate", ex);
-                    if(ex instanceof AbstractManagementException){
+                    if (ex instanceof AbstractManagementException){
                         return Single.error(ex);
                     } else {
                         return Single.error(new TechnicalManagementException("An error occurs while trying to update a certificate", ex));
                     }
                 });
+    }
+
+    private void updateAwsCertificate(UpdateCertificate updateCertificate, Certificate certificateToUpdate) throws JsonProcessingException, CertificateException {
+        var oldConf = objectMapper.readTree(updateCertificate.getConfiguration());
+        var newConf = objectMapper.readTree(certificateToUpdate.getConfiguration());
+        var oldConfName = oldConf.get(SECRET_NAME).asText();
+        var newConfName = newConf.get(SECRET_NAME).asText();
+        if (oldConfName.equals(newConfName)) {
+            certificateToUpdate.setConfiguration(updateCertificate.getConfiguration());
+        } else {
+            throw new CertificateException("Cannot change certificate secret name for AWS certificate");
+        }
+    }
+
+    private void updateFileCertificate(UpdateCertificate updateCertificate, CertificateWithSchema oldCertificate, Certificate certificateToUpdate) throws JsonProcessingException {
+        CertificateSchema certificateSchema = oldCertificate.schema();
+        JsonNode oldCertificateConfiguration = objectMapper.readTree(oldCertificate.certificate().getConfiguration());
+        JsonNode certificateConfiguration = objectMapper.readTree(updateCertificate.getConfiguration());
+        var key = certificateSchema.getProperties()
+                .entrySet()
+                .stream()
+                .filter(map -> map.getValue().getWidget() != null && "file".equals(map.getValue().getWidget()))
+                .map(Map.Entry::getKey)
+                .findFirst().orElse(null);
+        String oldFileInformation = oldCertificateConfiguration.get(key).asText();
+        String fileInformation = certificateConfiguration.get(key).asText();
+        // file has changed, let's update it
+        if (!oldFileInformation.equals(fileInformation)) {
+            JsonNode file = objectMapper.readTree(certificateConfiguration.get(key).asText());
+            byte[] data = Base64.getDecoder().decode(file.get(CONTENT).asText());
+            certificateToUpdate.setMetadata(Collections.singletonMap(CertificateMetadata.FILE, data));
+
+            // update configuration to set the file path
+            ((ObjectNode) certificateConfiguration).put(key, file.get(NAME).asText());
+            updateCertificate.setConfiguration(objectMapper.writeValueAsString(certificateConfiguration));
+        }
+        certificateToUpdate.setConfiguration(updateCertificate.getConfiguration());
     }
 
     private Single<Certificate> checkIdentityProviderUsage(Certificate certificate){
@@ -425,7 +474,7 @@ public class CertificateServiceImpl implements CertificateService {
                     certificateNode.put(CONTENT, objectMapper.writeValueAsString(contentNode));
                     certificateNode.put(ALIAS, alias);
                     certificateNode.put(STORE_PASS, storePass);
-                    certificateNode.put("keypass", keyPass);
+                    certificateNode.put(KEY_PASS, keyPass);
 
                     return objectMapper.writeValueAsString(certificateNode);
                 }).flatMap(configuration -> {
@@ -501,7 +550,7 @@ public class CertificateServiceImpl implements CertificateService {
         certificateNode.put(CONTENT, objectMapper.writeValueAsString(contentNode));
         certificateNode.put(ALIAS, alias);
         certificateNode.put(STORE_PASS, storePass);
-        certificateNode.put("keypass", keyPass);
+        certificateNode.put(KEY_PASS, keyPass);
 
         return objectMapper.writeValueAsString(certificateNode);
     }
