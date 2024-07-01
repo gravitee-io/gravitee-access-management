@@ -49,7 +49,6 @@ import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.Aut
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseRequestObjectHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseRequiredParametersHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestResolveHandler;
-import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestTransactionHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent.UserConsentFailureHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent.UserConsentPrepareContextHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent.UserConsentProcessHandler;
@@ -71,6 +70,7 @@ import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.gateway.handler.root.resources.handler.LocaleHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.common.RedirectUriValidationHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.transactionid.TransactionIdHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.DeviceService;
@@ -103,7 +103,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     private static final Logger logger = LoggerFactory.getLogger(OAuth2Provider.class);
 
     @Value("${handlers.request.transaction.header:X-Gravitee-Transaction-Id}")
-    private String transactionHeader;
+    protected String transactionHeader;
 
     @Autowired
     private Domain domain;
@@ -263,7 +263,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(corsHandler);
         oauth2Router.route(HttpMethod.GET, "/authorize")
                 .handler(corsHandler)
-                .handler(new AuthorizationRequestTransactionHandler(transactionHeader))
+                .handler(new TransactionIdHandler(transactionHeader))
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(new AuthorizationRequestParseRequiredParametersHandler())
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
