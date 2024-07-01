@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
+package io.gravitee.am.gateway.handler.root.resources.handler.transactionid;
 
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.vertx.core.Handler;
@@ -28,11 +28,11 @@ import io.vertx.rxjava3.ext.web.Session;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthorizationRequestTransactionHandler implements Handler<RoutingContext> {
+public class TransactionIdHandler implements Handler<RoutingContext> {
 
     private final String transactionIdHeaderName;
 
-    public AuthorizationRequestTransactionHandler(String transactionIdHeaderName) {
+    public TransactionIdHandler(String transactionIdHeaderName) {
         this.transactionIdHeaderName = transactionIdHeaderName;
     }
 
