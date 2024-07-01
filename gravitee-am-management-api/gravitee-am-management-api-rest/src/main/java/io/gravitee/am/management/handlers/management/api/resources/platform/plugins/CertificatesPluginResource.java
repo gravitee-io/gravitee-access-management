@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.resources.platform.plugins;
 
 import io.gravitee.am.service.CertificatePluginService;
+import io.gravitee.am.service.model.plugin.AbstractPlugin;
 import io.gravitee.am.service.model.plugin.CertificatePlugin;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,7 +32,6 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 
 import java.util.Comparator;
-import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -51,11 +51,11 @@ public class CertificatesPluginResource {
     @Operation(summary = "List certificate plugins",
             description = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
-
         certificatePluginService.findAll()
                 .map(certificatePlugins -> certificatePlugins.stream()
+                        .filter(AbstractPlugin::isDeployed)
                         .sorted(Comparator.comparing(CertificatePlugin::getName))
-                        .collect(Collectors.toList()))
+                        .toList())
                 .subscribe(response::resume, response::resume);
     }
 
