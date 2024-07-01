@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.api;
 import io.gravitee.common.service.AbstractService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.Closeable;
 
@@ -28,6 +29,9 @@ import java.io.Closeable;
 public abstract class AbstractProtocolProvider extends AbstractService<ProtocolProvider> implements ProtocolProvider {
 
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    @Value("${handlers.request.transaction.header:X-Gravitee-Transaction-Id}")
+    protected String transactionHeader;
 
     @Override
     protected void doStop() throws Exception {
