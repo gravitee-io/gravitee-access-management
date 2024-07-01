@@ -31,6 +31,7 @@ import io.gravitee.am.service.exception.CertificateWithApplicationsException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.CertificateServiceImpl;
 import io.gravitee.am.service.model.NewCertificate;
+import io.gravitee.am.service.model.UpdateCertificate;
 import io.gravitee.am.service.tasks.AssignSystemCertificate;
 import io.gravitee.am.service.tasks.AssignSystemCertificateDefinition;
 import io.gravitee.am.service.tasks.TaskType;
@@ -40,6 +41,9 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
+
+import static java.time.temporal.ChronoUnit.DAYS;
+
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -271,6 +275,87 @@ public class CertificateServiceTest {
     public void shouldCreate_defaultCertificate_Ec() throws Exception {
         TestObserver<Certificate> testObserver = defaultCertificate(256, "SHA256withECDSA", true);
         testObserver.assertComplete();
+    }
+
+    @Test
+    public void shouldCreateAwsCertificate() {
+        var type = "aws-am-certificate";
+        when(certificatePluginService.getSchema(type)).thenReturn(Maybe.just(certificateSchemaDefinition));
+        var certificateNode = objectMapper.createObjectNode();
+        certificateNode.put("secretname", "aws-secret-name");
+        certificateNode.put("alias", "am-server");
+        certificateNode.put("storepass", "server-secret");
+        certificateNode.put("keypass", "server-secret");
+        var newCertificate = new NewCertificate();
+        newCertificate.setType(type);
+        newCertificate.setConfiguration(certificateNode.toString());
+        var certificateProvider = mock(CertificateProvider.class);
+        when(certificateProvider.getExpirationDate()).thenReturn(Optional.of(new Date(Instant.now().plus(30, DAYS).toEpochMilli())));
+        when(certificatePluginManager.create(any())).thenReturn(certificateProvider);
+        when(certificateRepository.create(any())).thenReturn(Single.just(new Certificate()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        certificateService.create(DOMAIN_NAME, newCertificate, Mockito.mock(User.class))
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(certificatePluginManager, times(1)).create(any());
+        verify(certificateRepository, times(1)).create(any());
+        verify(eventService, times(1)).create(any());
+    }
+
+    @Test
+    public void shouldNotCreateAwsCertificateWhenSecretNameIsNotDefined() {
+        var type = "aws-am-certificate";
+        when(certificatePluginService.getSchema(type)).thenReturn(Maybe.just(certificateSchemaDefinition));
+        var certificateNode = objectMapper.createObjectNode();
+        certificateNode.put("alias", "am-server");
+        certificateNode.put("storepass", "server-secret");
+        certificateNode.put("keypass", "server-secret");
+        var newCertificate = new NewCertificate();
+        newCertificate.setType(type);
+        newCertificate.setConfiguration(certificateNode.toString());
+
+        certificateService.create(DOMAIN_NAME, newCertificate, Mockito.mock(User.class))
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(TechnicalManagementException.class);
+
+        verify(certificatePluginManager, never()).create(any());
+        verify(certificateRepository, never()).create(any());
+        verify(eventService, never()).create(any());
+    }
+
+    @Test
+    public void shouldUpdateAwsCertificate() {
+        var id = "123";
+        var type = "aws-am-certificate";
+        when(certificatePluginService.getSchema(type)).thenReturn(Maybe.just(certificateSchemaDefinition));
+        var certificateNode = objectMapper.createObjectNode();
+        certificateNode.put("secretname", "aws-secret-name");
+        certificateNode.put("alias", "am-server");
+        certificateNode.put("storepass", "server-secret");
+        certificateNode.put("keypass", "server-secret");
+        var newCertificate = new UpdateCertificate();
+        newCertificate.setConfiguration(certificateNode.toString());
+        var certificateProvider = mock(CertificateProvider.class);
+        when(certificateProvider.getExpirationDate()).thenReturn(Optional.of(new Date(Instant.now().plus(30, DAYS).toEpochMilli())));
+        when(certificatePluginManager.create(any())).thenReturn(certificateProvider);
+        var certificate = new Certificate();
+        certificate.setType(type);
+        when(certificateRepository.findById(any())).thenReturn(Maybe.just(certificate));
+        when(certificateRepository.update(any())).thenReturn(Single.just(new Certificate()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        certificateService.update(DOMAIN_NAME,  id, newCertificate, Mockito.mock(User.class))
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(certificatePluginManager, times(1)).create(any());
+        verify(certificateRepository, times(1)).update(any());
+        verify(eventService, times(1)).create(any());
     }
 
     @Test

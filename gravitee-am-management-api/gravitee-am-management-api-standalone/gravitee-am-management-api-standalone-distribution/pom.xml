@@ -149,6 +149,14 @@
         </dependency>
 
         <dependency>
+            <groupId>com.graviteesource.am.certificate</groupId>
+            <artifactId>gravitee-am-certificate-aws</artifactId>
+            <version>1.0.0-alpha.2</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
             <groupId>io.gravitee.am.repository</groupId>
             <artifactId>gravitee-am-repository-mongodb</artifactId>
             <version>${project.version}</version>
@@ -408,6 +416,14 @@
             <type>zip</type>
             <scope>runtime</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.graviteesource.secretprovider</groupId>
+            <artifactId>gravitee-secret-provider-aws</artifactId>
+            <version>1.0.0-alpha.2</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -506,6 +522,12 @@
                                     <groupId>io.gravitee.am.certificate</groupId>
                                     <artifactId>gravitee-am-certificate-pkcs12</artifactId>
                                     <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.graviteesource.am.certificate</groupId>
+                                    <artifactId>gravitee-am-certificate-aws</artifactId>
+                                    <version>1.0.0-alpha.2</version>
                                     <type>zip</type>
                                 </artifactItem>
 
@@ -727,6 +749,12 @@
                                     <groupId>io.gravitee.secretprovider</groupId>
                                     <artifactId>gravitee-secret-provider-kubernetes</artifactId>
                                     <version>${gravitee-secretprovider-kubernetes.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.graviteesource.secretprovider</groupId>
+                                    <artifactId>gravitee-secret-provider-aws</artifactId>
+                                    <version>1.0.0-alpha.2</version>
                                     <type>zip</type>
                                 </artifactItem>
 
