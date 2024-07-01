@@ -22,7 +22,13 @@ import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.*;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowContextHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.CSPHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.SSOSessionHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.XFrameHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.XSSHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.AuthorizationEndpoint;
@@ -33,7 +39,16 @@ import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.par.PushedAuthor
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.revocation.RevocationTokenEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.token.TokenEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
-import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.*;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestEndUserConsentHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestFailureHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestMFAPromptHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseClientHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseIdTokenHintHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseParametersHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseProviderConfigurationHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseRequestObjectHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseRequiredParametersHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestResolveHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent.UserConsentFailureHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent.UserConsentPrepareContextHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent.UserConsentProcessHandler;
@@ -55,6 +70,7 @@ import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.gateway.handler.root.resources.handler.LocaleHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.common.RedirectUriValidationHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.transactionid.TransactionIdHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
@@ -74,7 +90,6 @@ import io.vertx.rxjava3.ext.web.handler.StaticHandler;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 
 /**
@@ -82,9 +97,6 @@ import org.springframework.core.env.Environment;
  * @author GraviteeSource Team
  */
 public class OAuth2Provider extends AbstractProtocolProvider {
-
-    @Value("${handlers.request.transaction.header:X-Gravitee-Transaction-Id}")
-    private String transactionHeader;
 
     @Autowired
     private Domain domain;
@@ -250,7 +262,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(corsHandler);
         oauth2Router.route(HttpMethod.GET, "/authorize")
                 .handler(corsHandler)
-                .handler(new AuthorizationRequestTransactionHandler(transactionHeader))
+                .handler(new TransactionIdHandler(transactionHeader))
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(new AuthorizationRequestParseRequiredParametersHandler())
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
