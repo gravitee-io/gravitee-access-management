@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.service.reporter.vertx;
 
-import ch.qos.logback.core.testUtil.MockInitialContext;
 import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.model.Reference;
@@ -26,25 +25,21 @@ import io.gravitee.am.reporter.api.Reportable;
 import io.gravitee.am.reporter.api.provider.ReportableCriteria;
 import io.gravitee.am.reporter.api.provider.Reporter;
 import io.gravitee.common.component.Lifecycle;
-import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.core.eventbus.Message;
 import io.vertx.rxjava3.core.eventbus.MessageConsumer;
-import org.checkerframework.checker.units.qual.C;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Predicate;
 
 import static io.gravitee.am.service.reporter.impl.AuditReporterVerticle.EVENT_BUS_ADDRESS;
 
@@ -131,7 +126,6 @@ public class EventBusReporterWrapper<R extends Reportable,C extends ReportableCr
         // start the delegate reporter
         vertx.rxExecuteBlocking(event -> {
                     try {
-                        reporter.start();
                         event.complete(reporter);
                     } catch (Exception ex) {
                         logger.error("Error while starting reporter", ex);
