@@ -445,7 +445,6 @@ import { AccountTokenDialogModule } from './domain/settings/users/user/profile/t
 import { PasswordPoliciesResolver } from './resolvers/password-policies-resolver.service';
 import { PasswordPolicyResolver } from './resolvers/password-policy-resolver';
 import { PasswordPolicyService } from './services/password-policy.service';
-import { GvExpressionLanguageStyleReapplyDirective } from './directives/gv-expression-language-style-reapply.directive';
 
 @NgModule({
   declarations: [
@@ -697,7 +696,6 @@ import { GvExpressionLanguageStyleReapplyDirective } from './directives/gv-expre
     MfaChallengeComponent,
     FactorsSelectDialogComponent,
     PasswordPoliciesComponent,
-    GvExpressionLanguageStyleReapplyDirective,
   ],
   imports: [
     BrowserModule,
