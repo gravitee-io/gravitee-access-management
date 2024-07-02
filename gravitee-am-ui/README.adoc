@@ -7,17 +7,17 @@ This project was generated with https://github.com/angular/angular-cli[Angular C
 - Install https://github.com/nvm-sh/nvm[nvm]
 - Install the Angular CLI
 ```
-npm install -g @angular/cli
+yarn install -g @angular/cli
 ```
 - Use with `nvm use` or install with `nvm install` the node version declared in `.nvmrc`
 - Then install node modules with:
 ```
-npm install
+yarn install
 ```
 
 == Development server
 
-Run `npm run serve` for a dev server. Navigate to `http://localhost:4200/`.
+Run `yarn run serve` for a dev server. Navigate to `http://localhost:4200/`.
 The app will automatically reload if you change any of the source files.
 
 == Code scaffolding
@@ -27,16 +27,16 @@ You can also use `ng generate directive|pipe|service|class|guard|interface|enum|
 
 == Build
 
-Run `npm run build` to build the project.
+Run `yarn run build` to build the project.
 The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
 
 == Running unit tests
 
-Run `npm run test` to execute the unit tests via https://karma-runner.github.io[Karma].
+Run `yarn run test` to execute the unit tests via https://karma-runner.github.io[Karma].
 
 == Running end-to-end tests
 
-Run `npm run e2e` to execute the end-to-end tests via http://www.protractortest.org/[Protractor].
+Run `yarn run e2e` to execute the end-to-end tests via http://www.protractortest.org/[Protractor].
 
 == Further help
 

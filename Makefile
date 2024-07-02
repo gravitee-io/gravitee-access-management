@@ -166,8 +166,8 @@ else
 	@echo "Please use \"make run\" for the first time."
 endif
 
-startUi: ## Run UI (npm run start).
-	@cd gravitee-am-ui; npm run start
+startUi: ## Run UI (yarn serve).
+	@cd gravitee-am-ui; yarn serve
 
 startMongo: ## Start gravitee Access Management mongo container only
 ifneq ($(wildcard .working/compose),)

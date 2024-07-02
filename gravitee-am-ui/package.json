@@ -1,20 +1,20 @@
 {
   "name": "gravitee-am-webui",
-  "version": "4.4.0",
+  "version": "4.4.1-SNAPSHOT",
   "license": "Apache-2.0",
   "scripts": {
     "ng": "ng",
     "serve": "ng serve",
     "build": "ng build",
     "test": "ng test",
-    "lint": "npm run lint:eslint && npm run lint:styles && npm run lint:license && npm run prettier",
+    "lint": "yarn run lint:eslint && yarn run lint:styles && yarn run lint:license && yarn run prettier",
     "lint:eslint": "ng lint",
     "lint:eslint:fix": "ng lint --fix",
-    "lint:fix": "npm run lint:eslint:fix && npm run lint:styles:fix && npm run lint:license:fix && npm run prettier:fix",
+    "lint:fix": "yarn run lint:eslint:fix && yarn run lint:styles:fix && yarn run lint:license:fix && yarn run prettier:fix",
     "lint:license": "license-check-and-add check -f license-check-config.json",
     "lint:license:fix": "license-check-and-add add -f license-check-config.json -r",
     "lint:styles": "stylelint \"src/**/*.scss\"",
-    "lint:styles:fix": "npm run lint:styles -- --fix",
+    "lint:styles:fix": "yarn run lint:styles -- --fix",
     "prettier": "prettier --check \"**/*.{js,ts,html,css,scss,json}\"",
     "prettier:fix": "prettier --write \"**/*.{js,ts,html,css,scss,json}\"",
     "prettier:list": "prettier --list-different \"**/*.{js,ts,html,css,scss,json}\"",
@@ -36,6 +36,7 @@
     "@angular/platform-browser-dynamic": "17.2.3",
     "@angular/platform-server": "17.2.3",
     "@angular/router": "17.2.3",
+    "@asciidoctor/core": "3.0.4",
     "@ctrl/ngx-codemirror": "7.0.0",
     "@gravitee/ui-components": "4.2.3",
     "@gravitee/ui-particles-angular": "12.9.0",
@@ -104,5 +105,6 @@
   "engines": {
     "node": ">=20.11.1",
     "npm": ">=10.2.4"
-  }
+  },
+  "packageManager": "yarn@4.1.1"
 }

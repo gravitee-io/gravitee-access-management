@@ -21,9 +21,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <properties>
-    <frontend-maven-plugin.version>1.6</frontend-maven-plugin.version>
+    <frontend-maven-plugin.version>1.15.0</frontend-maven-plugin.version>
     <node.version>v20.11.1</node.version>
-    <npm.version>10.2.4</npm.version>
+    <yarn.version>v1.22.22</yarn.version>
   </properties>
 
   <parent>
@@ -66,42 +66,42 @@
         <version>${frontend-maven-plugin.version}</version>
         <executions>
           <execution>
-            <id>install node and npm</id>
+            <id>install node and yarn</id>
             <goals>
-              <goal>install-node-and-npm</goal>
+              <goal>install-node-and-yarn</goal>
             </goals>
             <configuration>
               <nodeVersion>${node.version}</nodeVersion>
-              <npmVersion>${npm.version}</npmVersion>
+              <yarnVersion>${yarn.version}</yarnVersion>
             </configuration>
           </execution>
           <execution>
-            <id>npm install</id>
+            <id>yarn install</id>
             <goals>
-              <goal>npm</goal>
+              <goal>yarn</goal>
             </goals>
             <configuration>
-              <arguments>install</arguments>
+              <arguments>install --no-immutable</arguments>
             </configuration>
           </execution>
           <execution>
-            <id>npm lint</id>
+            <id>yarn lint</id>
             <phase>test</phase>
             <goals>
-              <goal>npm</goal>
+              <goal>yarn</goal>
             </goals>
             <configuration>
               <arguments>run lint</arguments>
             </configuration>
           </execution>
           <execution>
-            <id>npm run-script prod</id>
+            <id>yarn run-script prod</id>
             <phase>package</phase>
             <goals>
-              <goal>npm</goal>
+              <goal>yarn</goal>
             </goals>
             <configuration>
-              <arguments>run-script prod</arguments>
+              <arguments>prod</arguments>
             </configuration>
           </execution>
         </executions>
