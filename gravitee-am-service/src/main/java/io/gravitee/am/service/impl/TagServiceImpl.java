@@ -153,9 +153,10 @@ public class TagServiceImpl implements TagService {
                 .flatMapCompletable(tag -> tagRepository.delete(tagId)
                         .andThen(domainService.listAll()
                                 .flatMapCompletable(domain -> {
-                                    if (domain.getTags() != null) {
-                                        domain.getTags().remove(tagId);
-                                        return Completable.fromSingle(domainService.update(domain.getId(), domain));
+                                    if (domain.getTags() != null && domain.getTags().remove(tagId)) {
+                                        return Completable.fromSingle(domainService.update(domain.getId(), domain)
+                                                .doOnError(ex -> LOGGER.error("An error occurs while trying to delete tag {} from domain {}", tagId, domain.getName(), ex)))
+                                                .onErrorComplete();
                                     }
                                     return Completable.complete();
                                 })
