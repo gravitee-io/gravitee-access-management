@@ -150,16 +150,8 @@ public class TagServiceImpl implements TagService {
         LOGGER.debug("Delete tag {}", tagId);
         return tagRepository.findById(tagId, organizationId)
                 .switchIfEmpty(Maybe.error(new TagNotFoundException(tagId)))
-                .flatMapCompletable(tag -> tagRepository.delete(tagId)
-                        .andThen(domainService.listAll()
-                                .flatMapCompletable(domain -> {
-                                    if (domain.getTags() != null) {
-                                        domain.getTags().remove(tagId);
-                                        return Completable.fromSingle(domainService.update(domain.getId(), domain));
-                                    }
-                                    return Completable.complete();
-                                })
-                        )
+                .flatMapCompletable(tag -> removeTagsFromDomains(tagId)
+                        .andThen(tagRepository.delete(tagId))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).principal(principal).type(EventType.TAG_DELETED).tag(tag)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).principal(principal).type(EventType.TAG_DELETED).throwable(throwable))))
                 .onErrorResumeNext(ex -> {
@@ -169,6 +161,17 @@ public class TagServiceImpl implements TagService {
 
                     LOGGER.error("An error occurs while trying to delete tag {}", tagId, ex);
                     return Completable.error(new TechnicalManagementException("An error occurs while trying to delete tag " + tagId, ex));
+                });
+    }
+
+    private Completable removeTagsFromDomains(String tagId){
+        return domainService.listAll()
+                .filter(domain -> domain.getTags() != null && domain.getTags().contains(tagId))
+                .flatMapCompletable(domain -> {
+                    domain.getTags().remove(tagId);
+                    return Completable.fromSingle(domainService.update(domain.getId(), domain)
+                            .doOnSuccess(d -> LOGGER.info("Removed tag {} from domain {}", tagId, domain.getName()))
+                            .doOnError(ex -> LOGGER.error("An error occurs while trying to delete tag {} from domain {}", tagId, domain.getName())));
                 });
     }
 
