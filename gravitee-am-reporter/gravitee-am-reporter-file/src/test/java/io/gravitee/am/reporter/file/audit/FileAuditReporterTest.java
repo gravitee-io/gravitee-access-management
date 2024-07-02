@@ -108,6 +108,10 @@ public abstract class FileAuditReporterTest {
         assertNotNull(test.getStatus());
         assertEquals(test.getStatus(), audit.getOutcome().getStatus());
 
+        assertNotNull(test.getOutcome());
+        assertEquals(test.getOutcome().getStatus(), audit.getOutcome().getStatus());
+        assertEquals(test.getOutcome().getMessage(), audit.getOutcome().getMessage());
+
         assertNotNull(test.getAccessPoint());
         assertEquals(test.getAccessPoint().getId(), audit.getAccessPoint().getId());
     }
