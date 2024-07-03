@@ -76,7 +76,7 @@ public class NoOpReporter implements AuditReporter {
 
     @Override
     public boolean canSearch() {
-        return true;
+        return false;
     }
 
     @Override
