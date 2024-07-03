@@ -1335,7 +1335,7 @@ public class UserServiceTest {
 
     @ParameterizedTest
     @MethodSource
-    void must_send_the_good_template_based_on_configuration(Domain domain, Application application, Template template) {
+    void must_send_the_good_template_based_on_configuration(Domain domain, Application application, Template template, String registrationUri) {
 
         var user = new User();
         user.setId("user-id");
@@ -1346,6 +1346,7 @@ public class UserServiceTest {
         user.setUsername(USERNAME);
         user.setPreRegistration(true);
         user.setRegistrationCompleted(false);
+        user.setRegistrationUserUri(registrationUri);
 
         when(domainService.findById(domain.getId())).thenReturn(Maybe.just(domain));
         when(userService.findById(ReferenceType.DOMAIN, domain.getId(), user.getId())).thenReturn(Single.just(user));
@@ -1365,12 +1366,14 @@ public class UserServiceTest {
         var applicationId = "application-id";
 
         return Stream.of(
-                Arguments.of(createDomain(domainId, null), createApplication(domainId, applicationId, null), Template.REGISTRATION_CONFIRMATION),
-                Arguments.of(createDomain(domainId, new AccountSettings()), createApplication(domainId, applicationId, null), Template.REGISTRATION_CONFIRMATION),
-                Arguments.of(createDomain(domainId, createAccountSetting(false, true)), createApplication(domainId, applicationId, null), Template.REGISTRATION_VERIFY),
-                Arguments.of(createDomain(domainId, createAccountSetting(false, true)), createApplication(domainId, applicationId, createAccountSetting(false, true)), Template.REGISTRATION_VERIFY),
-                Arguments.of(createDomain(domainId, new AccountSettings()), createApplication(domainId, applicationId, createAccountSetting(false, true)), Template.REGISTRATION_VERIFY),
-                Arguments.of(createDomain(domainId, createAccountSetting(false, true)), createApplication(domainId, applicationId, createAccountSetting(false, false)), Template.REGISTRATION_CONFIRMATION)
+                Arguments.of(createDomain(domainId, null), createApplication(domainId, applicationId, null), Template.REGISTRATION_CONFIRMATION, null),
+                Arguments.of(createDomain(domainId, new AccountSettings()), createApplication(domainId, applicationId, null), Template.REGISTRATION_CONFIRMATION, null),
+                Arguments.of(createDomain(domainId, createAccountSetting(false, true)), createApplication(domainId, applicationId, null), Template.REGISTRATION_VERIFY, "/verifyRegistration"),
+                Arguments.of(createDomain(domainId, createAccountSetting(false, true)), createApplication(domainId, applicationId, createAccountSetting(false, true)), Template.REGISTRATION_VERIFY, "/verifyRegistration"),
+                Arguments.of(createDomain(domainId, new AccountSettings()), createApplication(domainId, applicationId, createAccountSetting(false, true)), Template.REGISTRATION_VERIFY, "/verifyRegistration"),
+                Arguments.of(createDomain(domainId, createAccountSetting(false, true)), createApplication(domainId, applicationId, createAccountSetting(false, false)), Template.REGISTRATION_CONFIRMATION, null),
+                Arguments.of(createDomain(domainId, createAccountSetting(false, true)), createApplication(domainId, applicationId, createAccountSetting(false, false)), Template.REGISTRATION_CONFIRMATION, null)
+
         );
     }
 
