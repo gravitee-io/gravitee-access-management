@@ -338,11 +338,15 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                     .map(Optional::of)
                                     .defaultIfEmpty(Optional.empty())
                                     .doOnSuccess(optClient -> {
-                                        var template = getTemplate(domain1, optClient);
-                                        emailService.send(domain1, optClient.orElse(null), template, user)
-                                                .doOnSuccess(__ -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(resoleEventType(template)).user(user)))
-                                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(resoleEventType(template)).throwable(throwable)))
-                                                .subscribe();
+                                        var template = getTemplate(domain1, optClient, user);
+                                        if (template == Template.ERROR) {
+                                            logger.warn("Cannot find template for provided case. Email will not be send.");
+                                        } else {
+                                            emailService.send(domain1, optClient.orElse(null), template, user)
+                                                    .doOnSuccess(__ -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(resoleEventType(template)).user(user)))
+                                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(resoleEventType(template)).throwable(throwable)))
+                                                    .subscribe();
+                                        }
                                     })
                                     .onErrorComplete()
                                     .ignoreElement();
@@ -511,12 +515,15 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                            throwable -> logger.debug("Failed to create password history", throwable));
     }
 
-    private static Template getTemplate(Domain domain, Optional<Application> optClient) {
+    private static Template getTemplate(Domain domain, Optional<Application> optClient, User user) {
+        //Users with registration Uri comes from self-registration and should skip registration confirmation
+        if (user.getRegistrationUserUri() == null || !user.getRegistrationUserUri().contains(Template.REGISTRATION_VERIFY.redirectUri())) {
+            return Template.REGISTRATION_CONFIRMATION;
+        }
         if (isSendVerifyRegistrationEmailEnabled(domain, optClient)) {
             return Template.REGISTRATION_VERIFY;
         }
-
-        return Template.REGISTRATION_CONFIRMATION;
+        return Template.ERROR;
     }
 
     private static boolean isSendVerifyRegistrationEmailEnabled(Domain domain, Optional<Application> optClient) {
