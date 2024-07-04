@@ -31,7 +31,7 @@
 
     <properties>
         <commons-validator.version>1.7</commons-validator.version>
-        <confluent-kafka.version>7.6.0</confluent-kafka.version>
+        <confluent-kafka.version>7.6.1</confluent-kafka.version>
     </properties>
 
     <dependencies>
