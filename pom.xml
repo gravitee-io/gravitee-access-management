@@ -81,7 +81,7 @@
         <gravitee-gateway-api.version>3.5.0</gravitee-gateway-api.version>
         <gravitee-expression-language.version>3.1.0</gravitee-expression-language.version>
         <gravitee-platform-repository-api.version>1.3.0</gravitee-platform-repository-api.version>
-        <gravitee-cockpit-api.version>3.0.32</gravitee-cockpit-api.version>
+        <gravitee-cockpit-api.version>3.0.37</gravitee-cockpit-api.version>
         <gravitee-kubernetes-client-version>3.1.0</gravitee-kubernetes-client-version>
         <nimbus.version>9.37.3</nimbus.version>
         <json-smart.version>2.5.1</json-smart.version>
