@@ -32,7 +32,7 @@ import java.util.Optional;
 public class SmtpResourceValidatorImpl extends EmailFromAware implements SmtpResourceValidator {
 
     public static final String UNEXPECTED_MESSAGE = "An unexpected error has occurred while trying to validate resource [%s]";
-    public static final String INVALID_FROM = "Emaail from [%s] is invalid";
+    public static final String INVALID_FROM = "Email from [%s] is invalid";
     public static final String SMTP_AM_RESOURCE = "smtp-am-resource";
 
     public SmtpResourceValidatorImpl(ObjectMapper objectMapper, EmailDomainValidator emailDomainValidator) {
