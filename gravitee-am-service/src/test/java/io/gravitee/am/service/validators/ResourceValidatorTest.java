@@ -19,6 +19,7 @@ import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.validators.resource.ResourceValidator;
 import io.gravitee.am.service.validators.resource.ResourceValidator.ResourceHolder;
 import io.gravitee.am.service.validators.resource.ResourceValidatorImpl;
+import io.gravitee.am.service.validators.resource.http.HttpResourceValidator;
 import io.gravitee.am.service.validators.resource.smtp.SmtpResourceValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,16 +42,19 @@ class ResourceValidatorTest {
 
     @Mock
     private SmtpResourceValidator smtpResourceValidator;
+    @Mock
+    private HttpResourceValidator httpResourceValidator;
     private ResourceValidator resourceValidator;
 
     @BeforeEach
     void setup() {
-        resourceValidator = new ResourceValidatorImpl(smtpResourceValidator);
+        resourceValidator = new ResourceValidatorImpl(smtpResourceValidator, httpResourceValidator);
     }
 
     @Test
     void must_not_validate() {
         when(smtpResourceValidator.validate(any())).thenReturn(Optional.empty());
+        when(httpResourceValidator.validate(any())).thenReturn(Optional.empty());
         var observer = resourceValidator.validate(new ResourceHolder("any-name", "any-config")).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete().assertNoErrors();
@@ -59,6 +63,15 @@ class ResourceValidatorTest {
     @Test
     void must_validate() {
         when(smtpResourceValidator.validate(any())).thenReturn(Optional.of(new InvalidParameterException("Invalid parameter")));
+        var observer = resourceValidator.validate(new ResourceHolder("any-policy", "any-config")).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertError(InvalidParameterException.class);
+    }
+
+    @Test
+    void must_validate_mix() {
+        when(smtpResourceValidator.validate(any())).thenReturn(Optional.empty());
+        when(httpResourceValidator.validate(any())).thenReturn(Optional.of(new InvalidParameterException("Invalid parameter")));
         var observer = resourceValidator.validate(new ResourceHolder("any-policy", "any-config")).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidParameterException.class);

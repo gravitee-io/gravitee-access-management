@@ -17,6 +17,7 @@ package io.gravitee.am.service.validators.resource;
 
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.validators.Validator;
+import io.gravitee.am.service.validators.resource.http.HttpResourceValidator;
 import io.gravitee.am.service.validators.resource.smtp.SmtpResourceValidator;
 import io.reactivex.rxjava3.core.Completable;
 import org.springframework.stereotype.Component;
@@ -33,8 +34,8 @@ public class ResourceValidatorImpl implements ResourceValidator {
 
     private final List<Validator<ResourceHolder, Optional<InvalidParameterException>>> resourceValidators;
 
-    public ResourceValidatorImpl(SmtpResourceValidator smtpResourceValidator) {
-        this.resourceValidators = List.of(smtpResourceValidator);
+    public ResourceValidatorImpl(SmtpResourceValidator smtpResourceValidator, HttpResourceValidator httpResourceValidator) {
+        this.resourceValidators = List.of(smtpResourceValidator, httpResourceValidator);
     }
 
     @Override
