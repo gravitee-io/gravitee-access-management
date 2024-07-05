@@ -19,6 +19,7 @@ import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.validators.resource.ResourceValidator;
 import io.gravitee.am.service.validators.resource.ResourceValidator.ResourceHolder;
 import io.gravitee.am.service.validators.resource.ResourceValidatorImpl;
+import io.gravitee.am.service.validators.resource.http.HttpResourceValidator;
 import io.gravitee.am.service.validators.resource.smtp.SmtpResourceValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,11 +42,13 @@ class ResourceValidatorTest {
 
     @Mock
     private SmtpResourceValidator smtpResourceValidator;
+    @Mock
+    private HttpResourceValidator httpResourceValidator;
     private ResourceValidator resourceValidator;
 
     @BeforeEach
     void setup() {
-        resourceValidator = new ResourceValidatorImpl(smtpResourceValidator);
+        resourceValidator = new ResourceValidatorImpl(smtpResourceValidator, httpResourceValidator);
     }
 
     @Test
