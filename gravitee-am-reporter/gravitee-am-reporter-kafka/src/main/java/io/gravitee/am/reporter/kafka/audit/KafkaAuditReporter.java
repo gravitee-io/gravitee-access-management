@@ -32,10 +32,12 @@ import io.gravitee.reporter.api.Reportable;
 import io.gravitee.reporter.api.Reporter;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.util.StringUtils;
@@ -110,9 +112,17 @@ public class KafkaAuditReporter extends AbstractService<Reporter> implements Aud
     protected void doStop() throws Exception {
         super.doStop();
         if (this.producer != null) {
-            this.producer.close();
+            // Need to do unwrap producer because of bug in kafka vertx library: https://github.com/vert-x3/vertx-kafka-client/issues/271
+            Producer<String, AuditMessageValueDto> producer = this.producer.unwrap();
+            Context ctx = vertx.getOrCreateContext();
+            ctx.executeBlocking(() -> {
+                producer.close();
+                return null;
+            });
         }
+        log.info("Kafka producer closed");
     }
+
 
     @Override
     public boolean canSearch() {
