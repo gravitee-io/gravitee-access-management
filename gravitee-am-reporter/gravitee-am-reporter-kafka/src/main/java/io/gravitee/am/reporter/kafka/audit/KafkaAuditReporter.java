@@ -69,15 +69,11 @@ public class KafkaAuditReporter extends AbstractService<Reporter> implements Aud
 
     private KafkaProducer<String, AuditMessageValueDto> producer;
 
-    private final String key;
-
     public KafkaAuditReporter(KafkaReporterConfiguration config, Vertx vertx, GraviteeContext context, Node node) {
         this.config = config;
         this.vertx = vertx;
         this.context = context;
         this.node = node;
-        //if domainId is null then this is a ORGANIZATION reporter. If not null then
-        this.key = this.context.getDomainId() != null ? context.getDomainId() : context.getOrganizationId();
     }
 
     @Override
@@ -88,12 +84,21 @@ public class KafkaAuditReporter extends AbstractService<Reporter> implements Aud
     @Override
     public void report(Reportable reportable) {
         log.debug("Report({})", reportable);
-        if (producer != null) {
-            AuditMessageValueDto value = AuditMessageValueDto.from((Audit) reportable, this.context, this.node);
+        if (producer != null && reportable instanceof Audit audit) {
+            // partition key computed on the audit referenceId which is either domainId or organizationId
+            var key = audit.getReferenceId();
+            if (audit.getReferenceType().equals(ReferenceType.ORGANIZATION) && audit.getType().startsWith(ReferenceType.DOMAIN.name())) {
+                // for DOMAIN event linked to an organization as referenceId
+                // route the event based on the domain id found into the target
+                // in that way all even related to a single domain are in the same partition
+                key = audit.getTarget().getId();
+            }
+
+            AuditMessageValueDto value = AuditMessageValueDto.from(audit, this.context, this.node);
             this.producer.write(
                     KafkaProducerRecord.create(this.config.getTopic(), key, value));
         } else {
-            log.debug("Producer is null, ignore reportable");
+            log.debug("Producer is null or reportable not an instance of Audit, ignore reportable");
         }
     }
 
