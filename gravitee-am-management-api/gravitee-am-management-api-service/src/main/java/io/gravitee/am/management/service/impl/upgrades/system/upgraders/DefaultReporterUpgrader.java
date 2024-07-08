@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service.impl.upgrades;
+package io.gravitee.am.management.service.impl.upgrades.system.upgraders;
 
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.service.ReporterService;
@@ -31,18 +31,19 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
-public class DefaultReporterUpgrader extends AsyncUpgrader {
+public class DefaultReporterUpgrader implements SystemUpgrader {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultReporterUpgrader.class);
 
     private final ReporterService reporterService;
 
     @Override
-    public Completable doUpgrade() {
+    public Completable upgrade() {
         logger.info("Applying domain reporter upgrade");
         return Completable.fromPublisher(reporterService.findAll()
                 .filter(Reporter::isSystem)
-                .flatMapSingle(this::updateDefaultReporter));
+                .flatMapSingle(this::updateDefaultReporter)
+                .doOnNext(reporter -> logger.info("updated reporter: id={}", reporter.getId())));
     }
 
     private Single<Reporter> updateDefaultReporter(Reporter reporter) {
@@ -56,6 +57,6 @@ public class DefaultReporterUpgrader extends AsyncUpgrader {
 
     @Override
     public int getOrder() {
-        return UpgraderOrder.DEFAULT_REPORTER_UPGRADER;
+        return SystemUpgraderOrder.DEFAULT_REPORTER_UPGRADER;
     }
 }

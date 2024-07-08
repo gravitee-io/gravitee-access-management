@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service.impl.upgrades;
+package io.gravitee.am.management.service.impl.upgrades.system.upgraders;
 
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
@@ -21,11 +21,14 @@ import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.model.UpdateReporter;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
@@ -54,13 +57,15 @@ public class DefaultReporterUpgraderTest {
     private Reporter nonSystemReporter = createDefaultTestReporter(false);
 
     @Test
-    public void shouldUpdateDefaultIdp(){
+    public void shouldUpdateDefaultIdp() throws Exception {
 
         when(reporterService.findAll()).thenReturn(Flowable.just(systemReporter));
         when(reporterService.createReporterConfig(any())).thenReturn("new-config-created");
         when(reporterService.update(any(), anyString(), any(UpdateReporter.class), eq(true))).thenReturn(changeReporterConfig(true));
 
-        defaultReporterUpgrader.upgrade();
+        TestObserver<Void> observer = defaultReporterUpgrader.upgrade().test();
+        observer.await(10, TimeUnit.SECONDS);
+        observer.assertNoErrors();
 
         verify(reporterService, times(1)).findAll();
         verify(reporterService, times(1))
@@ -69,11 +74,13 @@ public class DefaultReporterUpgraderTest {
     }
 
     @Test
-    public void shouldNotUpdateDefaultIdp(){
+    public void shouldNotUpdateDefaultIdp() throws Exception {
 
         when(reporterService.findAll()).thenReturn(Flowable.just(nonSystemReporter));
 
-        defaultReporterUpgrader.upgrade();
+        TestObserver<Void> observer = defaultReporterUpgrader.upgrade().test();
+        observer.await(10, TimeUnit.SECONDS);
+        observer.assertNoErrors();
 
         verify(reporterService, times(1)).findAll();
         verify(reporterService, never())

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service.impl.upgrades;
+package io.gravitee.am.management.service.impl.upgrades.system.upgraders;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,7 +25,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -35,7 +34,7 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 @Component
-public class DefaultIdentityProviderUpgrader extends AsyncUpgrader {
+public class DefaultIdentityProviderUpgrader implements SystemUpgrader {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultIdentityProviderUpgrader.class);
 
@@ -52,7 +51,7 @@ public class DefaultIdentityProviderUpgrader extends AsyncUpgrader {
 
 
     @Override
-    public Completable doUpgrade() {
+    public Completable upgrade() {
          return Completable.fromPublisher(identityProviderService.findAll()
                 .filter(IdentityProvider::isSystem)
                 .flatMapSingle(this::updateDefaultIdp)
@@ -82,6 +81,6 @@ public class DefaultIdentityProviderUpgrader extends AsyncUpgrader {
 
     @Override
     public int getOrder() {
-        return UpgraderOrder.DEFAULT_IDP_UPGRADER;
+        return SystemUpgraderOrder.DEFAULT_IDP_UPGRADER;
     }
 }
