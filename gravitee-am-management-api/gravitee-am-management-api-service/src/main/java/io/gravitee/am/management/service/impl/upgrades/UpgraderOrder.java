@@ -31,8 +31,6 @@ public final class UpgraderOrder {
     public static final int DOMAIN_REPORTER_UPGRADER = 8;
     public static final int POLICY_FLOW_UPGRADER = 9;
     public static final int APPLICATION_SCOPE_SETTINGS_UPGRADER = 10;
-    public static final int DEFAULT_IDP_UPGRADER = 11;
-    public static final int DEFAULT_REPORTER_UPGRADER = 12;
     public static final int APPLICATION_IDENTITY_PROVIDER_UPGRADER = 13;
     public static final int SYSTEM_CERTIFICATE_UPGRADER = 14;
     public static final int APPLICATION_FACTOR_UPGRADER = 15;
