@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service.spring;
 
 import io.gravitee.am.management.service.impl.notifications.EmailNotifierConfiguration;
+import io.gravitee.am.management.service.impl.upgrades.system.spring.SystemUpgraderConfiguration;
 import io.gravitee.node.services.upgrader.spring.UpgraderConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -31,6 +32,7 @@ import org.springframework.context.annotation.Import;
 @Import({FreemarkerConfiguration.class,
         PlatformNotifierConfiguration.class,
         EmailNotifierConfiguration.class,
+        SystemUpgraderConfiguration.class,
         UpgraderConfiguration.class})
 public class ServiceConfiguration {
 
