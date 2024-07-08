@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service.impl.upgrades;
+package io.gravitee.am.management.service.impl.upgrades.system.upgraders;
 
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.IdentityProvider;
@@ -21,6 +21,7 @@ import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,6 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
@@ -62,13 +64,15 @@ public class DefaultIdentityProviderUpgraderTest {
     private IdentityProvider nonSystemIdentityProvider = createDefaultTestIdp(false);
 
     @Test
-    public void shouldUpdateDefaultIdp(){
+    public void shouldUpdateDefaultIdp() throws Exception {
         Map<String, Object> cfg = new HashMap<>(Map.of("new-config", "created"));
         when(identityProviderService.findAll()).thenReturn(Flowable.just(systemIdentityProvider));
         when(identityProviderManager.createProviderConfiguration(anyString(), isNull())).thenReturn(cfg);
         when(identityProviderService.update(anyString(), anyString(), any(UpdateIdentityProvider.class), eq(true))).thenReturn(changeIdpConfig(true));
 
-        defaultIdentityProviderUpgrader.upgrade();
+        TestObserver<Void> observer = defaultIdentityProviderUpgrader.upgrade().test();
+        observer.await(10, TimeUnit.SECONDS);
+        observer.assertNoErrors();
 
         verify(identityProviderService, times(1)).findAll();
         verify(identityProviderService, times(1))
@@ -81,11 +85,13 @@ public class DefaultIdentityProviderUpgraderTest {
     }
 
     @Test
-    public void shouldNotUpdateDefaultIdp(){
+    public void shouldNotUpdateDefaultIdp() throws Exception {
 
         when(identityProviderService.findAll()).thenReturn(Flowable.just(nonSystemIdentityProvider));
 
-        defaultIdentityProviderUpgrader.upgrade();
+        TestObserver<Void> observer = defaultIdentityProviderUpgrader.upgrade().test();
+        observer.await(10, TimeUnit.SECONDS);
+        observer.assertNoErrors();
 
         verify(identityProviderService, times(1)).findAll();
         verify(identityProviderService, never())
