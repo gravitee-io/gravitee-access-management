@@ -48,7 +48,7 @@ export class ApplicationTokensComponent implements OnInit {
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
-    this.application = this.route.snapshot.data['application'];
+    this.application = structuredClone(this.route.snapshot.data['application']);
     this.applicationOauthSettings = this.application.settings == null ? {} : this.application.settings.oauth || {};
     this.applicationOauthSettings.tokenCustomClaims = this.applicationOauthSettings.tokenCustomClaims || [];
     this.readonly = !this.authService.hasPermissions(['application_openid_update']);

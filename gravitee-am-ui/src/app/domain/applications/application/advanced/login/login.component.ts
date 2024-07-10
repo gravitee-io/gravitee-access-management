@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { ApplicationService } from '../../../../../services/application.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
@@ -33,6 +33,7 @@ export class ApplicationLoginSettingsComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private applicationService: ApplicationService,
     private authService: AuthService,
     private snackbarService: SnackbarService,
@@ -40,17 +41,16 @@ export class ApplicationLoginSettingsComponent implements OnInit {
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
-    this.application = this.route.snapshot.data['application'];
+    this.application = structuredClone(this.route.snapshot.data['application']);
     this.loginSettings = this.application.settings.login || { inherited: true };
     this.readonly = !this.authService.hasPermissions(['application_settings_update']);
   }
 
   updateLoginSettings(loginSettings) {
     this.loginSettings = loginSettings;
-    this.applicationService.patch(this.domainId, this.application.id, { settings: { login: loginSettings } }).subscribe((data) => {
-      this.application = data;
-      this.route.snapshot.data['application'] = this.application;
+    this.applicationService.patch(this.domainId, this.application.id, { settings: { login: loginSettings } }).subscribe(() => {
       this.snackbarService.open('Application updated');
+      this.router.navigate(['.'], { relativeTo: this.route, queryParams: { reload: true } });
     });
   }
 }
