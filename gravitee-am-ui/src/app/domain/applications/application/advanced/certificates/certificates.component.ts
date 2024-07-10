@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { ApplicationService } from '../../../../../services/application.service';
@@ -35,6 +35,7 @@ export class ApplicationCertificatesComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private snackbarService: SnackbarService,
     private applicationService: ApplicationService,
     private certificateService: CertificateService,
@@ -42,7 +43,7 @@ export class ApplicationCertificatesComponent implements OnInit {
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.parent.data['domain'].id;
-    this.application = this.route.snapshot.data['application'];
+    this.application = JSON.parse(JSON.stringify(this.route.snapshot.data['application']));
     this.certificates = this.route.snapshot.data['certificates'];
     if (this.application.certificate) {
       this.selectedCertificate = this.application.certificate;
@@ -61,6 +62,7 @@ export class ApplicationCertificatesComponent implements OnInit {
       if (this.application.certificate) {
         this.publicKeys(this.application.certificate);
       }
+      this.router.navigate(['.'], { relativeTo: this.route, queryParams: { reload: true } });
     });
   }
 
