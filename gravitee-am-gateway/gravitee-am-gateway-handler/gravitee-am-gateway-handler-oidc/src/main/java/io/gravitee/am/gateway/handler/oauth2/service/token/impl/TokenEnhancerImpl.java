@@ -26,6 +26,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,10 +40,19 @@ public class TokenEnhancerImpl implements TokenEnhancer {
     @Autowired
     private IDTokenService idTokenService;
 
+    /**
+     * Option introduce to mitigate the breaking change introduced in 4.3.0
+     * This option will be available at least to 4.8.0
+     * Probably will be removed in 4.9.0
+     */
+    @Deprecated(forRemoval = true)
+    @Value("${legacy.openid.accept_openid_for_service_app:false}")
+    private Boolean acceptOpenidForServiceApp = Boolean.FALSE;
+
     @Override
     public Single<Token> enhance(Token accessToken, OAuth2Request oAuth2Request, Client client, User endUser, ExecutionContext executionContext) {
         // enhance token with ID token
-        return Single.fromCallable(oAuth2Request::shouldGenerateIDToken).flatMap(generate -> {
+        return Single.fromCallable(() -> oAuth2Request.shouldGenerateIDToken(this.acceptOpenidForServiceApp)).flatMap(generate -> {
             if (Boolean.TRUE.equals(generate)) {
                 return enhanceIDToken(accessToken, client, endUser, oAuth2Request, executionContext);
             } else {
