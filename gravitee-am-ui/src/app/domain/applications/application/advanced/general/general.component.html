@@ -258,11 +258,7 @@
             <mat-divider></mat-divider>
           </div>
           <div fxLayout="column">
-            <mat-slide-toggle
-              (change)="enableSingleSignOut($event)"
-              [checked]="this.applicationOAuthSettings.singleSignOut"
-              [disabled]="!editMode"
-            >
+            <mat-slide-toggle (change)="enableSingleSignOut($event)" [checked]="singleSignOut" [disabled]="!editMode">
               Logout from the external identity provider
             </mat-slide-toggle>
             <mat-hint style="font-size: 75%"
@@ -277,11 +273,7 @@
             <mat-divider></mat-divider>
           </div>
           <div fxLayout="column">
-            <mat-slide-toggle
-              (change)="enableSilentReAuthentication($event)"
-              [checked]="this.applicationOAuthSettings.silentReAuthentication"
-              [disabled]="!editMode"
-            >
+            <mat-slide-toggle (change)="enableSilentReAuthentication($event)" [checked]="silentReAuthentication" [disabled]="!editMode">
               Silent re-authentication of your users
             </mat-slide-toggle>
             <mat-hint style="font-size: 75%"
@@ -296,11 +288,7 @@
             <mat-divider></mat-divider>
           </div>
           <div fxLayout="column">
-            <mat-slide-toggle
-              (change)="enableAutoApprove($event)"
-              [checked]="this.applicationAdvancedSettings.skipConsent"
-              [disabled]="!editMode"
-            >
+            <mat-slide-toggle (change)="enableAutoApprove($event)" [checked]="skipConsent" [disabled]="!editMode">
               Skip user approval
             </mat-slide-toggle>
             <mat-hint style="font-size: 75%">Generally used for internal trusted service applications.</mat-hint>
