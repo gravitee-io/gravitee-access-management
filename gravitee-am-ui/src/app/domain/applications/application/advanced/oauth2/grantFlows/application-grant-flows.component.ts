@@ -64,7 +64,7 @@ export class ApplicationGrantFlowsComponent implements OnInit {
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
-    this.application = this.route.snapshot.data['application'];
+    this.application = JSON.parse(JSON.stringify(this.route.snapshot.data['application']));
     this.customGrantTypes = this.route.snapshot.data['domainGrantTypes'] || [];
     this.applicationOauthSettings = this.application.settings == null ? {} : this.application.settings.oauth || {};
     this.applicationOauthSettings.jwks = this.applicationOauthSettings.jwks
