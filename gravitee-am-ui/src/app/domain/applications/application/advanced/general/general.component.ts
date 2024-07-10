@@ -33,8 +33,9 @@ export class ApplicationGeneralComponent implements OnInit {
   private domainId: string;
   domain: any;
   application: any;
-  applicationOAuthSettings: any = {};
-  applicationAdvancedSettings: any = {};
+  singleSignOut: boolean;
+  silentReAuthentication: boolean;
+  skipConsent: boolean;
   requestUri: string;
   redirectUri: string;
   logoutRedirectUri: string;
@@ -81,22 +82,21 @@ export class ApplicationGeneralComponent implements OnInit {
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
     this.domainId = this.domain.id;
-    this.application = this.route.snapshot.data['application'];
+    this.application = JSON.parse(JSON.stringify(this.route.snapshot.data['application']));
     this.applicationType = this.application.type.toUpperCase();
-    this.applicationOAuthSettings = this.application.settings == null ? {} : this.application.settings.oauth || {};
-    this.applicationAdvancedSettings = this.application.settings == null ? {} : this.application.settings.advanced || {};
-    this.applicationOAuthSettings.redirectUris = this.applicationOAuthSettings.redirectUris || [];
-    this.applicationOAuthSettings.requestUris = this.applicationOAuthSettings.requestUris || [];
-    this.applicationOAuthSettings.singleSignOut = this.applicationOAuthSettings.singleSignOut || false;
-    this.applicationOAuthSettings.silentReAuthentication = this.applicationOAuthSettings.silentReAuthentication || false;
+    this.redirectUris = this.application.settings.oauth.redirectUris || [];
+    this.requestUris = this.application.settings.oauth.requestUris || [];
+    this.singleSignOut = this.application.settings.oauth.singleSignOut;
+    this.silentReAuthentication = this.application.settings.oauth.silentReAuthentication;
+    this.skipConsent = this.application.settings.advanced.skipConsent;
     this.application.factors = this.application.factors || [];
-    this.redirectUris = _.map(this.applicationOAuthSettings.redirectUris, function (item) {
+    this.redirectUris = _.map(this.redirectUris, function (item) {
       return { value: item };
     });
-    this.requestUris = _.map(this.applicationOAuthSettings.requestUris, function (item) {
+    this.requestUris = _.map(this.requestUris, function (item) {
       return { value: item };
     });
-    this.logoutRedirectUris = _.map(this.applicationOAuthSettings.postLogoutRedirectUris, function (item) {
+    this.logoutRedirectUris = _.map(this.application.settings.oauth.postLogoutRedirectUris, function (item) {
       return { value: item };
     });
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
@@ -116,16 +116,14 @@ export class ApplicationGeneralComponent implements OnInit {
       redirectUris: _.map(this.redirectUris, 'value'),
       requestUris: _.map(this.requestUris, 'value'),
       postLogoutRedirectUris: _.map(this.logoutRedirectUris, 'value'),
-      singleSignOut: this.applicationOAuthSettings.singleSignOut,
-      silentReAuthentication: this.applicationOAuthSettings.silentReAuthentication,
+      singleSignOut: this.singleSignOut,
+      silentReAuthentication: this.silentReAuthentication,
     };
-    data.settings.advanced = { skipConsent: this.applicationAdvancedSettings.skipConsent };
-    this.applicationService.patch(this.domainId, this.application.id, data).subscribe((response) => {
-      this.application = response;
-      this.route.snapshot.data['application'] = this.application;
-      this.form.reset(this.application);
+    data.settings.advanced = { skipConsent: this.skipConsent };
+    this.applicationService.patch(this.domainId, this.application.id, data).subscribe(() => {
       this.formChanged = false;
       this.snackbarService.open('Application updated');
+      this.router.navigate(['.'], { relativeTo: this.route, queryParams: { reload: true } });
     });
   }
 
@@ -263,17 +261,17 @@ export class ApplicationGeneralComponent implements OnInit {
   }
 
   enableAutoApprove(event) {
-    this.applicationAdvancedSettings.skipConsent = event.checked;
+    this.skipConsent = event.checked;
     this.formChanged = true;
   }
 
   enableSingleSignOut(event) {
-    this.applicationOAuthSettings.singleSignOut = event.checked;
+    this.singleSignOut = event.checked;
     this.formChanged = true;
   }
 
   enableSilentReAuthentication(event) {
-    this.applicationOAuthSettings.silentReAuthentication = event.checked;
+    this.silentReAuthentication = event.checked;
     this.formChanged = true;
   }
 
