@@ -287,6 +287,10 @@ public class OAuth2Request extends BaseRequest {
     }
 
     public boolean shouldGenerateIDToken() {
+        return shouldGenerateIDToken(false);
+    }
+
+    public boolean shouldGenerateIDToken(boolean acceptOpenidForServiceApp) {
         if (getResponseType() != null && ResponseType.CODE_TOKEN.equals(getResponseType())) {
             return false;
         }
@@ -295,7 +299,9 @@ public class OAuth2Request extends BaseRequest {
             return true;
         }
         if (getScopes() != null && getScopes().contains(Scope.OPENID.getKey())) {
-            if (isClientOnly()) {
+            if (isClientOnly() && acceptOpenidForServiceApp) {
+                return false;
+            } else if (isClientOnly()) {
                 throw new InvalidScopeException("Invalid scope: " + Scope.OPENID);
             } else {
                 return true;
