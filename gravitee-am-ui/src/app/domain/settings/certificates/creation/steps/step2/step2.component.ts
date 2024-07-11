@@ -27,12 +27,14 @@ export class CertificateCreationStep2Component implements OnInit, OnChanges {
   @Input() configurationIsValid: boolean;
   @Output() configurationIsValidChange = new EventEmitter<boolean>();
   configuration: any;
+  description: string;
   certificateSchema: any = {};
   constructor(private organizationService: OrganizationService) {}
 
   ngOnInit(): void {
     this.organizationService.certificateSchema(this.certificate.type).subscribe((data) => {
       this.certificateSchema = data;
+      this.description = data.description || 'Configure your certificate.';
     });
   }
 
