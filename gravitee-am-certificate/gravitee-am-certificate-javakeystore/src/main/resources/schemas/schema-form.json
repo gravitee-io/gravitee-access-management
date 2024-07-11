@@ -1,6 +1,7 @@
 {
   "type" : "object",
   "id" : "urn:jsonschema:io:gravitee:am:certificate:javakeystore:JavaKeyStoreConfiguration",
+  "description": "Configure your Java Keystore certificate.",
   "properties" : {
     "jks" : {
       "title": "Keystore file",
