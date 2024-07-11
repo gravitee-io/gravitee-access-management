@@ -1,6 +1,7 @@
 {
   "type" : "object",
   "id" : "urn:jsonschema:io:gravitee:am:certificate:pkcs12:PKCS12Configuration",
+  "description": "Configure your PKCS#12 certificate.",
   "properties" : {
     "content" : {
       "title": "PKCS#12 file",
