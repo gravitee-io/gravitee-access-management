@@ -43,7 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static io.gravitee.am.identityprovider.api.oidc.OpenIDConnectConfigurationUtils.extractCertificateId;
+import static io.gravitee.am.identityprovider.api.common.IdentityProviderConfigurationUtils.extractCertificateId;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

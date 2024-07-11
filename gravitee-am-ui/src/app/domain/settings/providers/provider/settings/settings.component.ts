@@ -25,7 +25,7 @@ import { DomainService } from '../../../../../services/domain.service';
 import { DialogService } from '../../../../../services/dialog.service';
 import { EntrypointService } from '../../../../../services/entrypoint.service';
 import { AppConfig } from '../../../../../../config/app.config';
-import { enrichOIDCFormWithCerts } from '../provider.oidc.enricher';
+import { enrichFormWithCerts } from '../provider.form.enricher';
 
 @Component({
   selector: 'provider-settings',
@@ -88,7 +88,7 @@ export class ProviderSettingsComponent implements OnInit {
     this.updateProviderConfiguration = this.providerConfiguration;
     this.organizationService
       .identitySchema(this.provider.type)
-      .pipe(map((schema) => enrichOIDCFormWithCerts(schema, this.certificates)))
+      .pipe(map((schema) => enrichFormWithCerts(schema, this.certificates)))
       .subscribe((data) => {
         this.providerSchema = data;
         if (data) {

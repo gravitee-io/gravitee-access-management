@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.api.oidc;
+package io.gravitee.am.identityprovider.api.common;
 
 import com.nimbusds.jose.util.JSONObjectUtils;
-import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
@@ -24,9 +23,12 @@ import java.text.ParseException;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.nimbusds.jose.util.JSONObjectUtils.getString;
+import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.TLS_CLIENT_AUTH;
+
 @Slf4j
 @UtilityClass
-public final class OpenIDConnectConfigurationUtils {
+public final class IdentityProviderConfigurationUtils {
 
     public static Optional<String> extractCertificateId(String configuration) {
         if (configuration == null) {
@@ -34,7 +36,7 @@ public final class OpenIDConnectConfigurationUtils {
         }
         try {
             Map<String, Object> cfg = JSONObjectUtils.parse(configuration);
-            String certId = JSONObjectUtils.getString(cfg, "clientAuthenticationCertificate");
+            String certId = getString(cfg, "clientAuthenticationCertificate");
             return Optional.ofNullable(certId);
         } catch (ParseException e) {
             log.warn("Problem at parsing certificate configuration, msg={}", e.getMessage());
@@ -42,14 +44,16 @@ public final class OpenIDConnectConfigurationUtils {
         }
     }
 
-    public static String sanitizeClientAuthMethod(String configuration) {
+    public static String sanitizeClientAuthCertificate(String configuration) {
         if (configuration == null) {
             return configuration;
         }
         try {
             Map<String, Object> cfg = JSONObjectUtils.parse(configuration);
-            String authMethod = JSONObjectUtils.getString(cfg, "clientAuthenticationMethod");
-            if (!ClientAuthenticationMethod.TLS_CLIENT_AUTH.equals(authMethod)) {
+            boolean useMutualTLS = (Boolean) cfg.getOrDefault("useMutualTLS", false);
+            String clientAuthenticationMethod = (String) cfg.get("clientAuthenticationMethod");
+            boolean mTls = useMutualTLS || TLS_CLIENT_AUTH.equals(clientAuthenticationMethod);
+            if (!mTls) {
                 cfg.remove("clientAuthenticationCertificate");
             }
             return JSONObjectUtils.toJSONString(cfg);
