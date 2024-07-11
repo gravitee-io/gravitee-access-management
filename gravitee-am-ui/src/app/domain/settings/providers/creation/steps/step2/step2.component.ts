@@ -19,7 +19,7 @@ import { map } from 'rxjs/operators';
 
 import { OrganizationService } from '../../../../../../services/organization.service';
 import { SnackbarService } from '../../../../../../services/snackbar.service';
-import { enrichOIDCFormWithCerts } from '../../../provider/provider.oidc.enricher';
+import { enrichFormWithCerts } from '../../../provider/provider.form.enricher';
 
 @Component({
   selector: 'provider-creation-step2',
@@ -49,7 +49,7 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
     if (changes.provider) {
       this.organizationService
         .identitySchema(changes.provider.currentValue.type)
-        .pipe(map((schema) => enrichOIDCFormWithCerts(schema, this.certificates)))
+        .pipe(map((schema) => enrichFormWithCerts(schema, this.certificates)))
         .subscribe((data) => {
           this.providerSchema = data;
         });

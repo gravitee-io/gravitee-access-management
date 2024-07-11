@@ -97,7 +97,7 @@ import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.certificate.api.CertificateMetadata.FILE;
 import static io.gravitee.am.certificate.api.ConfigurationCertUtils.usageContains;
-import static io.gravitee.am.identityprovider.api.oidc.OpenIDConnectConfigurationUtils.extractCertificateId;
+import static io.gravitee.am.identityprovider.api.common.IdentityProviderConfigurationUtils.extractCertificateId;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

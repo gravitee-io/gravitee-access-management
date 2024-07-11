@@ -15,9 +15,8 @@
  */
 package io.gravitee.am.service.http;
 
-import io.reactivex.rxjava3.core.Flowable;
+import io.gravitee.am.service.utils.RetryWithDelay;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.functions.Function;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.RequestOptions;
@@ -27,12 +26,6 @@ import io.vertx.rxjava3.ext.web.client.WebClient;
 import io.vertx.uritemplate.UriTemplate;
 import lombok.experimental.Delegate;
 import lombok.experimental.UtilityClass;
-import org.reactivestreams.Publisher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @UtilityClass
 public class WebClientInitializer {
@@ -116,27 +109,4 @@ public class WebClientInitializer {
         }
     }
 
-    private static final class RetryWithDelay implements Function<Flowable<Throwable>, Publisher<?>> {
-        private static final Logger LOGGER = LoggerFactory.getLogger(RetryWithDelay.class);
-
-        private final AtomicInteger delayInSec = new AtomicInteger(1);
-        private final AtomicInteger counter = new AtomicInteger(0);
-
-        @Override
-        public Publisher<?> apply(Flowable<Throwable> throwableFlowable) {
-            return throwableFlowable.flatMap(err -> {
-                if (counter.getAndIncrement() < 50) {
-                    int delay = delayInSec.get();
-                    LOGGER.warn("WebClient init failed, retry={}/50, delay={}", counter.get(), delay);
-                    if (delay < 60) {
-                        delayInSec.set(delay * 2);
-                    }
-                    return Flowable.timer(delay, TimeUnit.SECONDS);
-                } else {
-                    LOGGER.error("Retry limit exceeded");
-                    return Flowable.error(err);
-                }
-            });
-        }
-    }
 }

@@ -17,6 +17,7 @@ package io.gravitee.am.service.http;
 
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.ConfigurationCertUtils;
+import io.gravitee.am.certificate.api.DefaultTrustStoreProvider;
 import io.gravitee.am.model.Certificate;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.net.JksOptions;
@@ -44,9 +45,6 @@ class WebClientOptionsConfigurer {
     private static final String SSL_KEYSTORE_STORE_PATH = "httpClient.ssl.keystore.path";
     private static final String SSL_KEYSTORE_STORE_KEY_PATH = "httpClient.ssl.keystore.keyPath";
     private static final String SSL_KEYSTORE_STORE_PASSWORD = "httpClient.ssl.keystore.password";
-
-    private static final String JAVA_DEFAULT_TRUSTSTORE_PROPERTY = "javax.net.ssl.trustStore";
-    private static final String JAVA_DEFAULT_TRUSTSTORE_PASSWORD_PROPERTY = "javax.net.ssl.trustStorePassword";
 
     private final Environment environment;
 
@@ -83,8 +81,8 @@ class WebClientOptionsConfigurer {
         options.setKeyStoreOptions(keyStoreOptions);
 
         JksOptions trustOptions = new JksOptions();
-        trustOptions.setPassword(System.getProperty(JAVA_DEFAULT_TRUSTSTORE_PASSWORD_PROPERTY));
-        trustOptions.setPath(System.getProperty(JAVA_DEFAULT_TRUSTSTORE_PROPERTY));
+        trustOptions.setPassword(DefaultTrustStoreProvider.defaultTrustStorePassword());
+        trustOptions.setPath(DefaultTrustStoreProvider.defaultTrustStorePath());
         options.setTrustStoreOptions(trustOptions);
     }
 
