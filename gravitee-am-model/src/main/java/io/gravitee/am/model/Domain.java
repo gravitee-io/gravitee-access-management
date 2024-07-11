@@ -48,6 +48,11 @@ public class Domain implements Resource {
      * Domain name.
      */
     private String name;
+    /**
+     * Domain Version when the entity has been created. (Since 4.5.0)
+     * If this field is missing, it has to be considered as {@link DomainVersion#V1_0}
+     */
+    private DomainVersion version;
 
     /**
      * Domain description.
@@ -227,6 +232,14 @@ public class Domain implements Resource {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public DomainVersion getVersion() {
+        return version == null ? DomainVersion.V1_0 : version;
+    }
+
+    public void setVersion(DomainVersion version) {
+        this.version = version;
     }
 
     public String getDescription() {
