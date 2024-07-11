@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.plugins.certificate.core.schema;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 import java.util.Map;
 
@@ -22,42 +25,13 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public class CertificateSchema {
 
     private String type;
     private String id;
+    private String description;
     private Map<String, CertificateSchemaProperty> properties;
     private List<String> required;
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public Map<String, CertificateSchemaProperty> getProperties() {
-        return properties;
-    }
-
-    public void setProperties(Map<String, CertificateSchemaProperty> properties) {
-        this.properties = properties;
-    }
-
-    public List<String> getRequired() {
-        return required;
-    }
-
-    public void setRequired(List<String> required) {
-        this.required = required;
-    }
 }
