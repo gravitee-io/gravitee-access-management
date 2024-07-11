@@ -23,6 +23,7 @@ import io.gravitee.am.model.AuthenticationDeviceNotifier;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.ExtensionGrant;
@@ -363,6 +364,7 @@ public class DomainServiceTest {
         domain.setReferenceType(ReferenceType.ENVIRONMENT);
         domain.setReferenceId(ENVIRONMENT_ID);
         domain.setId("domain-id");
+        domain.setVersion(DomainVersion.V2_0);
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
         when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
@@ -381,7 +383,7 @@ public class DomainServiceTest {
         testObserver.assertNoErrors();
 
         verify(domainRepository, times(1)).findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain");
-        verify(domainRepository, times(1)).create(any(Domain.class));
+        verify(domainRepository, times(1)).create(argThat(argDomain -> argDomain.getVersion().equals(domain.getVersion())));
         verify(scopeService, times(io.gravitee.am.common.oidc.Scope.values().length)).create(anyString(), any(NewSystemScope.class));
         verify(certificateService).create(eq(domain.getId()));
         verify(eventService).create(any());
@@ -463,6 +465,7 @@ public class DomainServiceTest {
         domain.setReferenceId(ENVIRONMENT_ID);
         domain.setName(DOMAIN_ID);
         domain.setPath("/test");
+        domain.setVersion(DomainVersion.V2_0);
         when(patchDomain.patch(any())).thenReturn(domain);
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, domain.getHrid())).thenReturn(Maybe.just(domain));
@@ -481,7 +484,11 @@ public class DomainServiceTest {
         testObserver.assertNoErrors();
 
         verify(domainRepository, times(1)).findById(anyString());
-        verify(domainRepository, times(1)).update(any(Domain.class));
+        verify(domainRepository, times(1)).update(argThat(domainArg ->
+                domainArg.getVersion().equals(domain.getVersion()) &&
+                domainArg.getReferenceId().equals(domain.getReferenceId()) &&
+                domainArg.getReferenceType().equals(domain.getReferenceType())
+        ));
         verify(eventService, times(1)).create(any());
         verify(auditService).report(argThat(builder -> {
             var audit = builder.build(OBJECT_MAPPER);
