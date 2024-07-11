@@ -27,6 +27,7 @@ import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Reference;
@@ -117,6 +118,7 @@ import java.util.stream.Collectors;
 import static io.gravitee.am.common.web.UriBuilder.isHttp;
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static io.gravitee.am.model.ReferenceType.ORGANIZATION;
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 
@@ -337,6 +339,7 @@ public class DomainServiceImpl implements DomainService {
                         throw new DomainAlreadyExistsException(newDomain.getName());
                     } else {
                         Domain domain = new Domain();
+                        domain.setVersion(DomainVersion.V2_0);
                         domain.setId(RandomString.generate());
                         domain.setHrid(hrid);
                         domain.setPath(generateContextPath(newDomain.getName()));
@@ -412,7 +415,11 @@ public class DomainServiceImpl implements DomainService {
         LOGGER.debug("Update an existing domain: {}", domain);
         return domainRepository.findById(domainId)
                 .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)))
-                .flatMap(__ -> {
+                .flatMap(existingDomain -> {
+                    domain.setId(existingDomain.getId());
+                    domain.setVersion(existingDomain.getVersion());
+                    domain.setReferenceId(existingDomain.getReferenceId());
+                    domain.setReferenceType(existingDomain.getReferenceType());
                     domain.setHrid(IdGenerator.generate(domain.getName()));
                     domain.setUpdatedAt(new Date());
                     return validateDomain(domain)

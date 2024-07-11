@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.model.CorsSettings;
+import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
@@ -38,6 +39,8 @@ public class DomainMongo extends Auditable {
     private String hrid;
 
     private String name;
+
+    private DomainVersion version;
 
     private String description;
 
@@ -103,6 +106,14 @@ public class DomainMongo extends Auditable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public DomainVersion getVersion() {
+        return version;
+    }
+
+    public void setVersion(DomainVersion version) {
+        this.version = version;
     }
 
     public String getDescription() {

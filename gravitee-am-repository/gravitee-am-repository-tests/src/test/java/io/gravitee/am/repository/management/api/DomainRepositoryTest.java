@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.VirtualHost;
@@ -83,6 +84,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         domain.setReferenceId("refId"+name);
         domain.setReferenceType(ReferenceType.ENVIRONMENT);
         domain.setVhostMode(true);
+        domain.setVersion(DomainVersion.V2_0);
 
         VirtualHost host = new VirtualHost();
         host.setHost("hostname-"+name);
@@ -174,6 +176,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(d -> d.getReferenceType().equals(domain.getReferenceType()));
         testObserver.assertValue(d -> d.isEnabled() == domain.isEnabled());
         testObserver.assertValue(d -> d.isVhostMode() == domain.isVhostMode());
+        testObserver.assertValue(d -> d.getVersion() == domain.getVersion());
         testObserver.assertValue(d -> d.getTags() != null &&
                 domain.getTags() != null &&
                 d.getTags().size() == domain.getTags().size() &&
@@ -227,6 +230,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         // update domain
         Domain updatedDomain = initDomain();
         updatedDomain.setId(domainCreated.getId());
+        updatedDomain.setVersion(domainCreated.getVersion());
         updatedDomain.setName("testUpdatedName");
         updatedDomain.setWebAuthnSettings(null);
         updatedDomain.setLoginSettings(null);

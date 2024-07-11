@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.5.0-domain-version
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+      changes:
+        - addColumn:
+            tableName: domains
+            columns:
+              - column:
+                  name: version
+                  type: nvarchar(16)
+                  defaultValue: "V1_0"
+                  constraints:
+                    nullable: false
