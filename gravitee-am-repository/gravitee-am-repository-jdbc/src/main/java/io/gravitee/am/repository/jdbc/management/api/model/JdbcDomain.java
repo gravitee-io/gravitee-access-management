@@ -31,6 +31,7 @@ public class JdbcDomain {
     private String id;
     private String hrid;
     private String name;
+    private String version;
     private String description;
     private boolean enabled;
     @Column("alert_enabled")
@@ -85,6 +86,14 @@ public class JdbcDomain {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
     }
 
     public String getDescription() {
