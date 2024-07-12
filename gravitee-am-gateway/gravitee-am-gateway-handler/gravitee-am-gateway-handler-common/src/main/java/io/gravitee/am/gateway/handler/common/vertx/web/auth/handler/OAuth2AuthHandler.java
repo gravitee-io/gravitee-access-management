@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.auth.handler;
 
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.impl.OAuth2AuthHandlerImpl;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 
@@ -106,7 +107,17 @@ public interface OAuth2AuthHandler extends AuthHandler {
      * @param selfResource
      * @param resourceParameter
      */
-    void selfResource(boolean selfResource, String resourceParameter);
+    default void selfResource(boolean selfResource, String resourceParameter) {
+        selfResource(selfResource, resourceParameter, false);
+    }
+
+    /**
+     * Current resource must match the OAuth 2.0 token 'sub' claim
+     * @param selfResource
+     * @param resourceParameter
+     * @param asUser if true, the resource will be checked against the userId retrieved from the sub claim
+     */
+    void selfResource(boolean selfResource, String resourceParameter, boolean asUser);
 
     /**
      * Current resource must match the OAuth 2.0 token 'sub' claim
@@ -114,7 +125,18 @@ public interface OAuth2AuthHandler extends AuthHandler {
      * @param resourceParameter
      * @param requiredScope
      */
-    void selfResource(boolean selfResource, String resourceParameter, String requiredScope);
+    default void selfResource(boolean selfResource, String resourceParameter, String requiredScope) {
+        selfResource(selfResource, resourceParameter, requiredScope, false);
+    }
+
+    /**
+     * Current resource must match the OAuth 2.0 token 'sub' claim
+     * @param selfResource
+     * @param resourceParameter
+     * @param requiredScope
+     * @param asUser if true, the resource will be checked against the userId retrieved from the sub claim
+     */
+    void selfResource(boolean selfResource, String resourceParameter, String requiredScope, boolean asUser);
 
     /**
      * Only verify JWT and do not call database for extra verifications (token revocation)
@@ -123,10 +145,18 @@ public interface OAuth2AuthHandler extends AuthHandler {
     void offlineVerification(boolean offlineVerification);
 
     static OAuth2AuthHandler create(OAuth2AuthProvider oAuth2AuthProvider) {
-        return new OAuth2AuthHandlerImpl(oAuth2AuthProvider);
+        return new OAuth2AuthHandlerImpl(oAuth2AuthProvider, null);
+    }
+
+    static OAuth2AuthHandler create(OAuth2AuthProvider oAuth2AuthProvider, SubjectManager subjectManager) {
+        return new OAuth2AuthHandlerImpl(oAuth2AuthProvider, subjectManager);
     }
 
     static OAuth2AuthHandler create(OAuth2AuthProvider oAuth2AuthProvider, String requiredScope) {
-        return new OAuth2AuthHandlerImpl(oAuth2AuthProvider, requiredScope);
+        return new OAuth2AuthHandlerImpl(oAuth2AuthProvider, requiredScope, null);
+    }
+
+    static OAuth2AuthHandler create(OAuth2AuthProvider oAuth2AuthProvider, String requiredScope, SubjectManager subjectManager) {
+        return new OAuth2AuthHandlerImpl(oAuth2AuthProvider, requiredScope, subjectManager);
     }
 }

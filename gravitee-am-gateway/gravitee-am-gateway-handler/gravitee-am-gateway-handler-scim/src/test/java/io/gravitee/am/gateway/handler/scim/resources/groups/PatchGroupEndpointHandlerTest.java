@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.scim.resources.groups;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
@@ -49,8 +50,11 @@ public class PatchGroupEndpointHandlerTest extends RxWebTestBase {
     @Mock
     private UserService userService;
 
+    @Mock
+    private SubjectManager subjectManager;
+
     @InjectMocks
-    private GroupEndpoint groupEndpoint = new GroupEndpoint(groupService, objectMapper, userService);
+    private GroupEndpoint groupEndpoint = new GroupEndpoint(groupService, objectMapper, userService, subjectManager);
 
     @Override
     public void setUp() throws Exception {

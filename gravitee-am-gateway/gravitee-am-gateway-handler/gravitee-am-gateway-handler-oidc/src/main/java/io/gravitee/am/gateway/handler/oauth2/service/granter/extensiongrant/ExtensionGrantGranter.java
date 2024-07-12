@@ -38,9 +38,10 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -54,8 +55,9 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter(AccessLevel.PROTECTED)
+@Slf4j
 public class ExtensionGrantGranter extends AbstractTokenGranter {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExtensionGrantGranter.class);
     private static final String EXTENSION_GRANT_SEPARATOR = "~";
     private final ExtensionGrantProvider extensionGrantProvider;
     private final ExtensionGrant extensionGrant;
@@ -99,58 +101,81 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
         return Single.just(tokenRequest);
     }
 
+    private boolean canHandle(Client client) {
+        final List<String> authorizedGrantTypes = client.getAuthorizedGrantTypes();
+        return authorizedGrantTypes != null && !authorizedGrantTypes.isEmpty()
+                && (authorizedGrantTypes.contains(extensionGrant.getGrantType() + EXTENSION_GRANT_SEPARATOR + extensionGrant.getId())
+                || authorizedGrantTypes.contains(extensionGrant.getGrantType()) && extensionGrant.getCreatedAt().equals(minDate));
+    }
+
     @Override
     protected Maybe<User> resolveResourceOwner(TokenRequest tokenRequest, Client client) {
         return extensionGrantProvider.grant(convert(tokenRequest))
                 .flatMap(endUser -> {
                     if (extensionGrant.isCreateUser()) {
-                        Map<String, Object> additionalInformation = endUser.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(endUser.getAdditionalInformation());
-                        // set source provider
-                        additionalInformation.put("source", extensionGrant.getIdentityProvider() != null ? extensionGrant.getIdentityProvider() : extensionGrant.getId());
-                        additionalInformation.put("client_id", client.getId());
-                        ((DefaultUser) endUser).setAdditionalInformation(additionalInformation);
-                        return userAuthenticationManager.connect(endUser, false).toMaybe();
+                        return manageUserConnect(client, endUser);
                     } else {
                         // Check that the user is existing from the identity provider
                         if (extensionGrant.isUserExists()) {
                             if (extensionGrant.getIdentityProvider() == null) {
                                 return Maybe.error(new InvalidGrantException("No identity_provider provided"));
                             }
-                            return identityProviderManager
-                                    .get(extensionGrant.getIdentityProvider())
-                                    .flatMap(prov -> retrieveUserByUsernameFromIdp(prov, tokenRequest, convert(endUser))
-                                            .switchIfEmpty(Maybe.defer(() -> {
-                                                LOGGER.debug("User name '{}' not found, try as the userId", endUser.getUsername());
-                                                if (endUser.getId() != null) {
-                                                    // MongoIDP & JDBC IDP, set the userId as SUB claim, this claim is used as username by extensionGrantProvider.grant()
-                                                    // so the search by ID should be done with the username...
-                                                    return userService.findById(endUser.getUsername())
-                                                            .flatMap(user -> retrieveUserByUsernameFromIdp(prov, tokenRequest, user));
-                                                }
-                                                return Maybe.empty();
-                                            })))
-                                    .map(idpUser -> createUser(idpUser, endUser))
-                                    .switchIfEmpty(Maybe.error(new InvalidGrantException("Unknown user: " + endUser.getId())));
+                            return manageUserValidation(tokenRequest, endUser);
                         } else {
-                            User user = new User();
-                            // we do not router AM user, user id is the idp user id
-                            user.setId(endUser.getId());
-                            user.setUsername(endUser.getUsername());
-                            user.setAdditionalInformation(endUser.getAdditionalInformation());
-                            return Maybe.just(user);
+                            return forgeUserProfile(endUser);
                         }
                     }
                 })
                 .onErrorResumeNext(ex -> Maybe.error(new InvalidGrantException(ex.getMessage())));
     }
 
-    private Maybe<io.gravitee.am.identityprovider.api.User> retrieveUserByUsernameFromIdp(AuthenticationProvider provider, TokenRequest tokenRequest, User user) {
+    protected Maybe<User> forgeUserProfile(io.gravitee.am.identityprovider.api.User endUser) {
+        User user = new User();
+        // we do not router AM user, user id is the idp user id
+        user.setId(endUser.getId());
+        user.setUsername(endUser.getUsername());
+        user.setAdditionalInformation(endUser.getAdditionalInformation());
+        return Maybe.just(user);
+    }
+
+    protected Maybe<User> manageUserValidation(TokenRequest tokenRequest, io.gravitee.am.identityprovider.api.User endUser) {
+        return identityProviderManager
+                .get(extensionGrant.getIdentityProvider())
+                .flatMap(prov -> retrieveUserByUsernameFromIdp(prov, tokenRequest, convert(endUser))
+                        .switchIfEmpty(Maybe.defer(() -> {
+                            log.debug("User name '{}' not found, try as the userId", endUser.getUsername());
+                            if (endUser.getId() != null) {
+                                // MongoIDP & JDBC IDP, set the userId as SUB claim, this claim is used as username by extensionGrantProvider.grant()
+                                // so the search by ID should be done with the username...
+                                return userService.findById(endUser.getUsername())
+                                        .flatMap(user -> retrieveUserByUsernameFromIdp(prov, tokenRequest, user));
+                            }
+                            return Maybe.empty();
+                        })))
+                .map(idpUser -> createUser(idpUser, endUser))
+                .switchIfEmpty(Maybe.error(new InvalidGrantException("Unknown user: " + endUser.getId())));
+    }
+
+    protected Maybe<User> manageUserConnect(Client client, io.gravitee.am.identityprovider.api.User endUser) {
+        Map<String, Object> additionalInformation = endUser.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(endUser.getAdditionalInformation());
+        // set source provider
+        additionalInformation.put("source", retrieveSourceFrom(extensionGrant));
+        additionalInformation.put("client_id", client.getId());
+        ((DefaultUser) endUser).setAdditionalInformation(additionalInformation);
+        return userAuthenticationManager.connect(endUser, false).toMaybe();
+    }
+
+    protected final String retrieveSourceFrom(ExtensionGrant extGrant) {
+        return extGrant.getIdentityProvider() != null ? extGrant.getIdentityProvider() : extGrant.getId();
+    }
+
+    protected final Maybe<io.gravitee.am.identityprovider.api.User> retrieveUserByUsernameFromIdp(AuthenticationProvider provider, TokenRequest tokenRequest, User user) {
         SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(tokenRequest);
         final Authentication authentication = new EndUserAuthentication(user, null, authenticationContext);
         return provider.loadPreAuthenticatedUser(authentication);
     }
 
-    private User convert(io.gravitee.am.identityprovider.api.User idpUser) {
+    protected final User convert(io.gravitee.am.identityprovider.api.User idpUser) {
         User newUser = new User();
         newUser.setExternalId(idpUser.getId());
         newUser.setUsername(idpUser.getUsername());
@@ -171,14 +196,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
         return tokenRequest;
     }
 
-    private boolean canHandle(Client client) {
-        final List<String> authorizedGrantTypes = client.getAuthorizedGrantTypes();
-        return authorizedGrantTypes != null && !authorizedGrantTypes.isEmpty()
-                && (authorizedGrantTypes.contains(extensionGrant.getGrantType() + EXTENSION_GRANT_SEPARATOR + extensionGrant.getId())
-                || authorizedGrantTypes.contains(extensionGrant.getGrantType()) && extensionGrant.getCreatedAt().equals(minDate));
-    }
-
-    private User createUser(io.gravitee.am.identityprovider.api.User idpUser, io.gravitee.am.identityprovider.api.User endUser) {
+    protected final User createUser(io.gravitee.am.identityprovider.api.User idpUser, io.gravitee.am.identityprovider.api.User endUser) {
         User user = new User();
         user.setId(endUser.getId());
         user.setExternalId(idpUser.getId());

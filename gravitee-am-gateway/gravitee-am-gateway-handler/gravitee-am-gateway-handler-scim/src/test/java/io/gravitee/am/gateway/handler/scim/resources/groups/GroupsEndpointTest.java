@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.scim.resources.groups;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.scim.model.ListResponse;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
@@ -52,8 +53,11 @@ public class GroupsEndpointTest extends RxWebTestBase {
     @Mock
     private UserService userService;
 
+    @Mock
+    private SubjectManager subjectManager;
+
     @InjectMocks
-    private final GroupsEndpoint groupsEndpoint = new GroupsEndpoint(groupService, objectMapper, userService);
+    private final GroupsEndpoint groupsEndpoint = new GroupsEndpoint(groupService, objectMapper, userService, subjectManager);
 
     @Override
     public void setUp() throws Exception {

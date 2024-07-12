@@ -107,8 +107,9 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
             return Maybe.empty();
         }
 
-        return userAuthenticationManager.loadPreAuthenticatedUser(subject, tokenRequest)
-                .onErrorResumeNext(ex -> { return Maybe.error(new InvalidGrantException()); });
+        // TokenRequest has a sub containing the composed sub for Domain in v2 only for RefreshToken
+        return userAuthenticationManager.loadPreAuthenticatedUserBySub(subject, tokenRequest)
+                .onErrorResumeNext(ex -> Maybe.error(new InvalidGrantException()));
     }
 
     @Override

@@ -156,8 +156,13 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     }
 
     @Override
-    public Maybe<User> loadPreAuthenticatedUser(String subject, Request request) {
-        return userAuthenticationService.loadPreAuthenticatedUser(subject, request);
+    public Maybe<User> loadPreAuthenticatedUser(String userId, Request request) {
+        return userAuthenticationService.loadPreAuthenticatedUser(userId, request);
+    }
+
+    @Override
+    public Maybe<User> loadPreAuthenticatedUserBySub(String subject, Request request) {
+        return userAuthenticationService.loadPreAuthenticatedUserBySub(subject, request);
     }
 
     @Override
@@ -166,8 +171,8 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     }
 
     @Override
-    public Single<User> connectWithPasswordless(Client client, String subject, Authentication authentication) {
-        return userAuthenticationService.connectWithPasswordless(subject, client)
+    public Single<User> connectWithPasswordless(Client client, String userid, Authentication authentication) {
+        return userAuthenticationService.connectWithPasswordless(userid, client)
                 .doOnSuccess(user -> eventManager.publishEvent(AuthenticationEvent.SUCCESS, new AuthenticationDetails(authentication, domain, client, user)))
                 .doOnError(throwable -> eventManager.publishEvent(AuthenticationEvent.FAILURE, new AuthenticationDetails(authentication, domain, client, throwable)));
 

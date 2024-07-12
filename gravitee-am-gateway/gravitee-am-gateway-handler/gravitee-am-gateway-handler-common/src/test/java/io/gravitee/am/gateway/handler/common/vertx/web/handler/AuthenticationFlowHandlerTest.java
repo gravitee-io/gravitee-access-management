@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.SpELRuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
@@ -44,16 +45,6 @@ import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.StepUpAuthenticationSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
-
-import static io.gravitee.am.common.utils.ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.RISK_ASSESSMENT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.STRONG_AUTH_COMPLETED_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.SILENT_AUTH_CONTEXT_KEY;
-import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
-import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.UserService;
 import io.gravitee.common.http.HttpStatusCode;
@@ -65,16 +56,25 @@ import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSetting
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
-import java.util.ArrayList;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+
+import static io.gravitee.am.common.utils.ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.RISK_ASSESSMENT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.SILENT_AUTH_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.STRONG_AUTH_COMPLETED_KEY;
+import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
+import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -100,6 +100,8 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     private UserService userService;
     @Mock
     private FactorManager factorManager;
+    @Mock
+    private SubjectManager subjectManager;
 
     @Override
     public void setUp() throws Exception {
@@ -124,7 +126,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
 
         router.route("/login")
                 .order(Integer.MIN_VALUE)
-                .handler(new CookieSessionHandler(jwtService, certificateManager, userService, "am-cookie", 30 * 60 * 60));
+                .handler(new CookieSessionHandler(jwtService, certificateManager, userService, subjectManager, "am-cookie", 30 * 60 * 60));
 
         router.route("/login")
                 .handler(authenticationFlowChainHandler)

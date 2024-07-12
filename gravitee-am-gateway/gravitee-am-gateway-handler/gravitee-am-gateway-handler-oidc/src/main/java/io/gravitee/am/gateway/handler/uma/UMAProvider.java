@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.uma;
 
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.uma.resources.endpoint.PermissionEndpoint;
@@ -78,6 +79,9 @@ public class UMAProvider extends AbstractProtocolProvider {
     @Autowired
     private PermissionTicketService permissionTicketService;
 
+    @Autowired
+    private SubjectManager subjectManager;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -127,7 +131,7 @@ public class UMAProvider extends AbstractProtocolProvider {
         UMAProtectionApiAccessHandler umaProtectionApiPermissionsAccessHandler = new UMAProtectionApiAccessHandler(domain, umaProtectionApiPermissionsAuthHandler);
 
         // Resource Registration endpoint
-        ResourceRegistrationEndpoint resourceRegistrationEndpoint = new ResourceRegistrationEndpoint(domain, resourceService);
+        ResourceRegistrationEndpoint resourceRegistrationEndpoint = new ResourceRegistrationEndpoint(domain, resourceService, subjectManager);
         umaRouter.route(RESOURCE_REGISTRATION_PATH).handler(corsHandler);
         umaRouter.route(RESOURCE_REGISTRATION_PATH + "/:" + RESOURCE_ID).handler(corsHandler);
         umaRouter.route(RESOURCE_REGISTRATION_PATH + "/:" + RESOURCE_ID + RESOURCE_ACCESS_POLICIES_PATH).handler(corsHandler);
@@ -157,7 +161,7 @@ public class UMAProvider extends AbstractProtocolProvider {
                 .handler(resourceRegistrationEndpoint::delete);
 
         // Resource Access Policies endpoint
-        ResourceAccessPoliciesEndpoint resourceAccessPoliciesEndpoint = new ResourceAccessPoliciesEndpoint(domain, resourceService);
+        ResourceAccessPoliciesEndpoint resourceAccessPoliciesEndpoint = new ResourceAccessPoliciesEndpoint(domain, resourceService, subjectManager);
         umaRouter
                 .get(RESOURCE_REGISTRATION_PATH+"/:"+RESOURCE_ID+RESOURCE_ACCESS_POLICIES_PATH)
                 .handler(umaProtectionApiResourcesAccessHandler)

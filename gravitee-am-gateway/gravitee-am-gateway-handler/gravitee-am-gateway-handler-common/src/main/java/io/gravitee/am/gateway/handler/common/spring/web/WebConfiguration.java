@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.spring.web;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.CSPHandlerFactory;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.CSRFHandlerFactory;
@@ -62,8 +63,8 @@ public class WebConfiguration {
     }
 
     @Bean
-    public CookieSessionHandler sessionHandler(JWTService jwtService, CertificateManager certificateManager, UserService userService) {
-        return new CookieSessionHandler(jwtService, certificateManager, userService);
+    public CookieSessionHandler sessionHandler(JWTService jwtService, CertificateManager certificateManager, UserService userService, SubjectManager subjectManager) {
+        return new CookieSessionHandler(jwtService, certificateManager, userService, subjectManager);
     }
 
     @Bean

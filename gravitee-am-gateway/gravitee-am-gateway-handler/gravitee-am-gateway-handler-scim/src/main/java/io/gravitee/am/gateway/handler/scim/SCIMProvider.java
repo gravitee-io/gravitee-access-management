@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.scim;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
@@ -67,6 +68,9 @@ public class SCIMProvider extends AbstractProtocolProvider {
     @Autowired
     private CorsHandler corsHandler;
 
+    @Autowired
+    private SubjectManager subjectManager;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -93,8 +97,8 @@ public class SCIMProvider extends AbstractProtocolProvider {
             scimRouter.route().handler(oAuth2AuthHandler);
 
             // Users resource
-            UsersEndpoint usersEndpoint = new UsersEndpoint(domain, userService, objectMapper);
-            UserEndpoint userEndpoint = new UserEndpoint(domain, userService, objectMapper);
+            UsersEndpoint usersEndpoint = new UsersEndpoint(domain, userService, objectMapper, subjectManager);
+            UserEndpoint userEndpoint = new UserEndpoint(domain, userService, objectMapper, subjectManager);
 
             scimRouter.get("/Users").handler(usersEndpoint::list);
             scimRouter.get("/Users/:id").handler(userEndpoint::get);
@@ -104,8 +108,8 @@ public class SCIMProvider extends AbstractProtocolProvider {
             scimRouter.delete("/Users/:id").handler(userEndpoint::delete);
 
             // Groups resource
-            GroupsEndpoint groupsEndpoint = new GroupsEndpoint(groupService, objectMapper, userService);
-            GroupEndpoint groupEndpoint = new GroupEndpoint(groupService, objectMapper, userService);
+            GroupsEndpoint groupsEndpoint = new GroupsEndpoint(groupService, objectMapper, userService, subjectManager);
+            GroupEndpoint groupEndpoint = new GroupEndpoint(groupService, objectMapper, userService, subjectManager);
 
             scimRouter.get("/Groups").handler(groupsEndpoint::list);
             scimRouter.get("/Groups/:id").handler(groupEndpoint::get);

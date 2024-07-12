@@ -28,6 +28,7 @@ import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
@@ -88,6 +89,9 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
 
     @Autowired
     private RulesEngine rulesEngine;
+
+    @Autowired
+    private SubjectManager subjectManager;
 
     @Override
     public Single<User> connect(io.gravitee.am.identityprovider.api.User principal,
@@ -159,9 +163,16 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
 
     @Override
     public Maybe<User> loadPreAuthenticatedUser(String subject, Request request) {
-        // find user by its technical id
-        return userService
-                .findById(subject)
+        return internalLoadPreAuthenticateUser(subject, request, userService.findById(subject));
+    }
+
+    @Override
+    public Maybe<User> loadPreAuthenticatedUserBySub(String subject, Request request) {
+        return internalLoadPreAuthenticateUser(subject, request, subjectManager.findUserBySub(subject));
+    }
+
+    private Maybe<User> internalLoadPreAuthenticateUser(String subject, Request request, Maybe<User> maybeFindUser) {
+        return maybeFindUser
                 .switchIfEmpty(Maybe.error(() -> new UserNotFoundException(subject)))
                 .flatMap(user -> isIndefinitelyLocked(user) ?
                         Maybe.error(new AccountLockedException("User " + user.getUsername() + " is locked")) :
@@ -186,17 +197,6 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                         })
                         // no user has been found in the identity provider, just enhance user information
                         .switchIfEmpty(Maybe.defer(() -> userService.enhance(user).toMaybe())));
-    }
-
-    @Override
-    public Maybe<User> loadPreAuthenticatedUser(io.gravitee.am.identityprovider.api.User principal) {
-        String source = (String) principal.getAdditionalInformation().get(SOURCE_FIELD);
-        return userService.findByDomainAndExternalIdAndSource(domain.getId(), principal.getId(), source)
-                .switchIfEmpty(Maybe.defer(() -> userService.findByDomainAndUsernameAndSource(domain.getId(), principal.getUsername(), source)))
-                .flatMap(user -> isIndefinitelyLocked(user) ?
-                        Maybe.error(new AccountLockedException("User " + user.getUsername() + " is locked")) :
-                        Maybe.just(user)
-                );
     }
 
     @Override

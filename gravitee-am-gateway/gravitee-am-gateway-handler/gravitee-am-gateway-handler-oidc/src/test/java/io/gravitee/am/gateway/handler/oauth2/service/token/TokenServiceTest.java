@@ -22,6 +22,7 @@ import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.context.ReactableExecutionContext;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
@@ -115,14 +116,40 @@ public class TokenServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private SubjectManager subjectManager;
+
     @AfterEach
     public void after() {
         verify(auditService, times(1)).report(any());
     }
 
     @Test
-    public void shouldCreate() {
+    public void shouldCreate_clientOnly() {
         OAuth2Request oAuth2Request = new OAuth2Request();
+
+        Client client = new Client();
+        client.setClientId("my-client-id");
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+
+        when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+        TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(tokenManager, times(1)).storeAccessToken(any());
+        verify(accessTokenRepository, never()).delete(anyString());
+        verify(refreshTokenRepository, never()).delete(anyString());
+    }
+
+    @Test
+    public void shouldCreate_forUser() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setSubject("userid");
         MultiValueMap<String, String> additionalParameters = new LinkedMultiValueMap<>();
         additionalParameters.add("key", "value");
         oAuth2Request.setAdditionalParameters(additionalParameters);
@@ -131,7 +158,7 @@ public class TokenServiceTest {
         client.setClientId("my-client-id");
 
         ExecutionContext executionContext = mock(ExecutionContext.class);
-
+        when(subjectManager.generateSubFrom(any())).thenReturn("sub");
         when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenAnswer(ans -> Single.just(ans.getArgument(0)));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
@@ -150,6 +177,7 @@ public class TokenServiceTest {
     public void shouldCreateWithoutAdditionalParameters() {
         tokenService.setStrictResponse(true);
         OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setSubject("userid");
         MultiValueMap<String, String> additionalParameters = new LinkedMultiValueMap<>();
         additionalParameters.add("key", "value");
         oAuth2Request.setAdditionalParameters(additionalParameters);
@@ -172,6 +200,7 @@ public class TokenServiceTest {
         verify(tokenManager, times(1)).storeAccessToken(any());
         verify(accessTokenRepository, never()).delete(anyString());
         verify(refreshTokenRepository, never()).delete(anyString());
+        verify(subjectManager).generateSubFrom(any());
     }
 
     @Test

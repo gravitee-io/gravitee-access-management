@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.model.GraviteeUser;
@@ -68,8 +69,11 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
     @Mock
     private Domain domain;
 
+    @Mock
+    private SubjectManager subjectManager;
+
     @InjectMocks
-    private UserEndpoint userEndpoint = new UserEndpoint(domain, userService, objectMapper);
+    private UserEndpoint userEndpoint = new UserEndpoint(domain, userService, objectMapper, subjectManager);
 
     @Override
     public void setUp() throws Exception {
@@ -78,7 +82,7 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
         // object mapper
         when(objectWriter.writeValueAsString(any())).thenReturn("UserObject");
         when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriter);
-        when(userService.get(any(), any())).thenReturn(Maybe.empty());
+        when(subjectManager.getPrincipal(any())).thenReturn(Maybe.empty());
 
         router.route()
                 .handler(BodyHandler.create()).handler(rc -> {
