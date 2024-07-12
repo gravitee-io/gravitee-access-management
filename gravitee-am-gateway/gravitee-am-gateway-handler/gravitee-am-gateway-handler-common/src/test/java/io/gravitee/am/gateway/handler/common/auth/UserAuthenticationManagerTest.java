@@ -15,14 +15,22 @@
  */
 package io.gravitee.am.gateway.handler.common.auth;
 
-import io.gravitee.am.common.exception.authentication.*;
+import io.gravitee.am.common.exception.authentication.AccountDisabledException;
+import io.gravitee.am.common.exception.authentication.AccountPasswordExpiredException;
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
+import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
 import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationManagerImpl;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
-import io.gravitee.am.identityprovider.api.*;
+import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.User;
@@ -49,7 +57,13 @@ import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -114,6 +128,7 @@ public class UserAuthenticationManagerTest {
         observer.assertError(InternalAuthenticationServiceException.class);
         verify(userAuthenticationService, times(0)).connect(any());
         verify(userAuthenticationService, times(0)).connect(any(), anyBoolean());
+        verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.FAILURE), any());
     }
 
     @Test
@@ -398,6 +413,7 @@ public class UserAuthenticationManagerTest {
         observer.assertValue(user -> user.getUsername().equals("username2"));
         verify(authenticationProvider1, never()).loadUserByUsername(any(Authentication.class));
         verify(authenticationProvider2, times(1)).loadUserByUsername(any(Authentication.class));
+        verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.SUCCESS), any());
     }
 
     @Test
@@ -505,6 +521,7 @@ public class UserAuthenticationManagerTest {
 
         observer.assertNotComplete();
         observer.assertError(InternalAuthenticationServiceException.class);
+        verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.FAILURE), any());
     }
 
     @Test
@@ -571,6 +588,7 @@ public class UserAuthenticationManagerTest {
         observer.assertError(InternalAuthenticationServiceException.class);
         verify(userAuthenticationService, times(0)).connect(any());
         verify(userAuthenticationService, times(0)).connect(any(), anyBoolean());
+        verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.FAILURE), any());
     }
 
     @Test
