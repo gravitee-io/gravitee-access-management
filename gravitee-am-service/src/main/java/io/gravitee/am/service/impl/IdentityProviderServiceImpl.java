@@ -59,7 +59,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.stream.Stream;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.StreamSupport;
 
 import static io.gravitee.am.identityprovider.api.oidc.OpenIDConnectConfigurationUtils.sanitizeClientAuthMethod;
 import static java.util.Optional.ofNullable;
@@ -304,7 +306,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         }
         if (entry.getValue() instanceof ArrayNode arrayEntry) {
             var elements = arrayEntry.elements();
-            return Stream.generate(elements::next)
+            return StreamSupport.stream(Spliterators.spliteratorUnknownSize(elements, Spliterator.ORDERED), false)
                     .anyMatch(elem -> refersToCert(Map.entry(entry.getKey(), elem), certId));
         }
         if (entry.getValue() instanceof TextNode textEntry) {
