@@ -19,10 +19,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.repository.management.api.ApplicationRepository;
-import io.gravitee.am.repository.management.api.IdentityProviderRepository;
+import io.gravitee.am.model.Reference;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.CertificateService;
+import io.gravitee.am.service.IdentityProviderService;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import org.apache.commons.text.RandomStringGenerator;
@@ -54,22 +55,22 @@ class CertificateServiceProxyImplTest {
     @Test
     void shouldFindCertsWithUsages() {
         CertificateService certService = mock();
-        IdentityProviderRepository idpRepo = mock();
-        ApplicationRepository appRepo = mock();
+        IdentityProviderService idpService = mock();
+        ApplicationService appService = mock();
         CertificatePluginService certPluginService = mock();
         when(certService.findByDomain(TEST_DOMAIN)).thenReturn(Flowable.fromIterable(List.of(systemCert(), validCert(), expiredCert())));
         when(certPluginService.getSchema(any())).thenReturn(Maybe.just("{\"content\":{}}"));
-        when(appRepo.findByCertificate(any())).thenAnswer(i -> someRandomApps());
-        when(idpRepo.findByCertificate(eq(TEST_DOMAIN), any())).thenAnswer(i -> someRandomIdps());
+        when(appService.findByCertificate(any())).thenAnswer(i -> someRandomApps());
+        when(idpService.findByCertificate(eq(Reference.domain(TEST_DOMAIN)), any())).thenAnswer(i -> someRandomIdps());
 
-        var service = new CertificateServiceProxyImpl(certService, idpRepo, appRepo, certPluginService, mock(), new ObjectMapper(), new MockEnvironment());
-   var foundCerts =     service.findByDomainAndUse(TEST_DOMAIN, null)
+        var service = new CertificateServiceProxyImpl(certService, idpService, appService, certPluginService, mock(), new ObjectMapper(), new MockEnvironment());
+        var foundCerts = service.findByDomainAndUse(TEST_DOMAIN, null)
                 .test()
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertComplete()
                 .assertNoErrors()
                 .values()
-           .get(0);
+                .get(0);
         assertThat(foundCerts)
                 .hasSize(3)
                 .anySatisfy(cert -> assertThat(cert.status()).isEqualTo(CertificateStatus.VALID))
@@ -81,7 +82,7 @@ class CertificateServiceProxyImplTest {
     }
 
     private Flowable<IdentityProvider> someRandomIdps() {
-        var numIdps = random.nextInt(1,5);
+        var numIdps = random.nextInt(1, 5);
         return Flowable.fromStream(IntStream.range(0, numIdps).mapToObj(n -> {
             var idp = new IdentityProvider();
             idp.setId(randomIdGen.generate(5));
@@ -91,7 +92,7 @@ class CertificateServiceProxyImplTest {
     }
 
     private Flowable<Application> someRandomApps() {
-        var numApps = random.nextInt(1,5);
+        var numApps = random.nextInt(1, 5);
         return Flowable.fromStream(IntStream.range(0, numApps).mapToObj(n -> {
             var app = new Application();
             app.setId(randomIdGen.generate(5));

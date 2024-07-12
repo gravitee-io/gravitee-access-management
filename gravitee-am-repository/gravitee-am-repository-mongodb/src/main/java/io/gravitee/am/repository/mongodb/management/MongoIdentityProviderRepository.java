@@ -30,17 +30,14 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.PostConstruct;
 import org.bson.BsonArray;
-import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.Document;
-import org.bson.json.JsonObject;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -101,39 +98,6 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
     public Flowable<IdentityProvider> findAllByPasswordPolicy(ReferenceType referenceType, String referenceId, String passwordPolicy) {
         return Flowable.fromPublisher(withMaxTime(identitiesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_PASSWORD_POLICY, passwordPolicy)))))
                 .map(this::convert);
-    }
-
-    @Override
-    public Flowable<IdentityProvider> findByCertificate(String domainId, String certId) {
-        return Flowable.fromPublisher(withMaxTime(identitiesCollection.find(and(eq(FIELD_REFERENCE_TYPE, ReferenceType.DOMAIN.name()), eq(FIELD_REFERENCE_ID, domainId)))))
-                .map(this::convert)
-                .filter(idp -> {
-                    var config = new JsonObject(idp.getConfiguration()).toBsonDocument();
-                    return hasEntryReferringToCert(config, certId);
-                });
-    }
-
-    private boolean hasEntryReferringToCert(BsonDocument config, String certId) {
-        return config.entrySet()
-                .stream()
-                .anyMatch(entry -> refersToCert(entry, certId));
-    }
-
-    private boolean refersToCert(Map.Entry<String, BsonValue> entry, String certId) {
-        if (entry.getValue() instanceof BsonDocument nestedEntry) {
-            return hasEntryReferringToCert(nestedEntry, certId);
-        }
-        if (entry.getValue() instanceof BsonArray arrayEntry) {
-            return arrayEntry.stream()
-                    .anyMatch(elem -> refersToCert(Map.entry(entry.getKey(), elem), certId));
-        }
-        if (entry.getValue() instanceof BsonString textEntry) {
-            // various IDPs might use different keys for referring to a certificate, so we have to be lax
-            var isCertRelatedEntry = entry.getKey().toLowerCase(Locale.ROOT).contains("cert");
-            var matchesCertId = textEntry.asString().getValue().equals(certId);
-            return isCertRelatedEntry && matchesCertId;
-        }
-        return false;
     }
 
     @Override

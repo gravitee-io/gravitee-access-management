@@ -24,11 +24,12 @@ import io.gravitee.am.management.service.CertificateServiceProxy;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.repository.management.api.ApplicationRepository;
-import io.gravitee.am.repository.management.api.IdentityProviderRepository;
+import io.gravitee.am.model.Reference;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.CertificateService;
+import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.CertificatePluginSchemaNotFoundException;
 import io.gravitee.am.service.model.NewCertificate;
@@ -42,7 +43,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -56,8 +56,8 @@ import java.util.stream.Stream;
 public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implements CertificateServiceProxy {
 
     private final CertificateService certificateService;
-    private final IdentityProviderRepository idps;
-    private final ApplicationRepository apps;
+    private final IdentityProviderService idps;
+    private final ApplicationService apps;
     private final CertificatePluginService certificatePluginService;
     private final AuditService auditService;
     private final ObjectMapper objectMapper;
@@ -65,8 +65,8 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
     private final Duration certExpirationWarningThreshold;
 
     public CertificateServiceProxyImpl(CertificateService certificateService,
-                                       @Lazy IdentityProviderRepository idps,
-                                       @Lazy ApplicationRepository apps,
+                                       IdentityProviderService idps,
+                                       ApplicationService apps,
                                        CertificatePluginService certificatePluginService,
                                        AuditService auditService,
                                        ObjectMapper objectMapper,
@@ -135,7 +135,7 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
     }
 
     private Flowable<IdentityProvider> getIdpsUsing(Certificate cert) {
-        return idps.findByCertificate(cert.getDomain(), cert.getId())
+        return idps.findByCertificate(Reference.domain(cert.getDomain()), cert.getId())
                 .map(idp -> {
                     final var idpId = new IdentityProvider();
                     idpId.setId(idpId.getId());
