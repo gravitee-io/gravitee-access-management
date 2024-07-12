@@ -106,7 +106,9 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
 
         var applicationIdentityProviders = getApplicationIdentityProviders(client);
         if (isNull(applicationIdentityProviders) || applicationIdentityProviders.isEmpty()) {
-            return Single.error(() -> getInternalAuthenticationServiceException(client));
+            var error = getInternalAuthenticationServiceException(client);
+            eventManager.publishEvent(AuthenticationEvent.FAILURE, new AuthenticationDetails(authentication, domain, client, error));
+            return Single.error(error);
         }
 
         return Observable.fromIterable(applicationIdentityProviders)
