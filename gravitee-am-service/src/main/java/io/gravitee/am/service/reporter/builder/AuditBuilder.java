@@ -303,7 +303,7 @@ public abstract class AuditBuilder<T> {
             }
         } else {
             result.setStatus(Status.FAILURE);
-            result.setMessage(throwable.getMessage());
+            result.setMessage(throwable.getMessage() + (throwable.getCause() != null ?  ". Cause: " + throwable.getCause().getMessage() : ""));
         }
         audit.setOutcome(result);
 
