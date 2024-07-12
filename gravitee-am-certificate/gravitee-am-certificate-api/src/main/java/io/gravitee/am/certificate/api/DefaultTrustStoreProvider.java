@@ -16,24 +16,19 @@
 package io.gravitee.am.certificate.api;
 
 
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
 public final class DefaultTrustStoreProvider {
-    private static final String JAVA_DEFAULT_TRUSTSTORE_PROPERTY = "javax.net.ssl.trustStore";
-    private static final String JAVA_DEFAULT_TRUSTSTORE_PASSWORD_PROPERTY = "javax.net.ssl.trustStorePassword";
-    private static final String UNIFORMED_FILE_PREFIX = "file:";
+    private static final String TRUST_STORE_PATH = System.getProperty("javax.net.ssl.trustStore");
+    private static final String TRUST_STORE_PASSWORD = System.getProperty("javax.net.ssl.trustStorePassword");
 
-    private DefaultTrustStoreProvider() {
+    public static String getDefaultTrustStorePath() {
+        return TRUST_STORE_PATH;
     }
 
-    public static String defaultTrustStorePassword() {
-        return System.getProperty(JAVA_DEFAULT_TRUSTSTORE_PASSWORD_PROPERTY);
-    }
-
-    public static String defaultTrustStorePath() {
-        return System.getProperty(JAVA_DEFAULT_TRUSTSTORE_PROPERTY);
-    }
-
-    public static String uniformedDefaultTrustStorePath() {
-        return UNIFORMED_FILE_PREFIX + defaultTrustStorePath();
+    public static String getDefaultTrustStorePassword() {
+        return TRUST_STORE_PASSWORD;
     }
 
 }
