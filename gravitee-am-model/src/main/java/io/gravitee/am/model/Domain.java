@@ -184,6 +184,7 @@ public class Domain implements Resource {
         this.id = other.id;
         this.hrid = other.hrid;
         this.name = other.name;
+        this.version = other.version;
         this.description = other.description;
         this.referenceType = other.referenceType;
         this.referenceId = other.referenceId;
