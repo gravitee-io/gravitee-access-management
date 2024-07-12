@@ -15,6 +15,11 @@
  */
 package io.gravitee.am.repository.jdbc.management.api;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
@@ -36,6 +41,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
@@ -81,7 +89,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
 
     private String insertStatement;
     private String updateStatement;
-
+    private final ObjectMapper objectMapper = new ObjectMapper();
     @Autowired
     private SpringIdentityProviderRepository identityProviderRepository;
 
@@ -137,6 +145,42 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         LOGGER.debug("findAllByPasswordPolicy({},{},{})", referenceType, referenceId, passwordPolicy);
         return this.identityProviderRepository.findAllByPasswordPolicy(referenceType.name(), referenceId, passwordPolicy)
                 .map(this::toEntity);
+    }
+
+    @Override
+    public Flowable<IdentityProvider> findByCertificate(String domainId, String certId) {
+        return findAll(ReferenceType.DOMAIN, domainId)
+                .filter(idp -> {
+                    // filter in-memory because 1) there shouldn't be that many idps in a domain
+                    // 2) we need custom lax logic for matching across all possible IDP config schemas
+                    var config = objectMapper.readTree(idp.getConfiguration());
+                    return hasEntryReferringToCert(config, certId);
+                });
+
+    }
+
+    private boolean hasEntryReferringToCert(JsonNode config, String certId) {
+        return config.properties()
+                .stream()
+                .anyMatch(entry -> refersToCert(entry, certId));
+    }
+
+    private boolean refersToCert(Map.Entry<String, JsonNode> entry, String certId) {
+        if (entry.getValue() instanceof ObjectNode nestedEntry) {
+            return hasEntryReferringToCert(nestedEntry, certId);
+        }
+        if (entry.getValue() instanceof ArrayNode arrayEntry) {
+            var elements = arrayEntry.elements();
+            return Stream.generate(elements::next)
+                    .anyMatch(elem -> refersToCert(Map.entry(entry.getKey(), elem), certId));
+        }
+        if (entry.getValue() instanceof TextNode textEntry) {
+            // various IDPs might use different keys for referring to a certificate, so we have to be lax
+            var isCertRelatedEntry = entry.getKey().toLowerCase(Locale.ROOT).contains("cert");
+            var matchesCertId = textEntry.textValue().equals(certId);
+            return isCertRelatedEntry && matchesCertId;
+        }
+        return false;
     }
 
     @Override

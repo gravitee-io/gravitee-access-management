@@ -15,8 +15,12 @@
 }
 
 .badge {
-  margin-left: 0;
+  margin: 0 0 0.2em;
   text-transform: none;
+}
+
+.badge:last-child {
+  margin: 0;
 }
 
 .certificate-expiry {

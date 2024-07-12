@@ -16,7 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
-import io.gravitee.am.management.handlers.management.api.model.CertificateEntity;
+import io.gravitee.am.management.service.impl.CertificateEntity;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -62,7 +62,7 @@ public class CertificatesResourceTest extends JerseySpringTest {
         mockCertificate2.setDomain(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Flowable.just(mockCertificate, mockCertificate2)).when(certificateService).findByDomain(domainId);
+        doReturn(Flowable.just(mockCertificate, mockCertificate2)).when(certificateService).findByDomainAndUse(domainId, null);
         doReturn(Flowable.empty()).when(applicationService).findByCertificate(anyString());
 
         final Response response = target("domains").path(domainId).path("certificates").request().get();
@@ -104,7 +104,7 @@ public class CertificatesResourceTest extends JerseySpringTest {
 
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Flowable.just(mockCertificate, mockCertificate2, mockCertificate3, mockCertificate4)).when(certificateService).findByDomain(domainId);
+        doReturn(Flowable.just(mockCertificate, mockCertificate2, mockCertificate3, mockCertificate4)).when(certificateService).findByDomainAndUse(domainId, null);
         doReturn(Flowable.empty()).when(applicationService).findByCertificate(anyString());
 
         final Response response = target("domains").path(domainId).path("certificates").request().get();
@@ -113,26 +113,26 @@ public class CertificatesResourceTest extends JerseySpringTest {
         final List<CertificateEntity> responseEntity = readListEntity(response, CertificateEntity.class);
         assertEquals(4, responseEntity.size());
 
-        CertificateEntity responseCert1 = responseEntity.stream().filter(c -> c.getId().equals("certificate-1-id"))
+        CertificateEntity responseCert1 = responseEntity.stream().filter(c -> c.id().equals("certificate-1-id"))
                 .findFirst().orElseThrow();
-        CertificateEntity responseCert2 = responseEntity.stream().filter(c -> c.getId().equals("certificate-2-id"))
+        CertificateEntity responseCert2 = responseEntity.stream().filter(c -> c.id().equals("certificate-2-id"))
                 .findFirst().orElseThrow();
-        CertificateEntity responseCert3 = responseEntity.stream().filter(c -> c.getId().equals("certificate-3-id"))
+        CertificateEntity responseCert3 = responseEntity.stream().filter(c -> c.id().equals("certificate-3-id"))
                 .findFirst().orElseThrow();
-        CertificateEntity responseCert4 = responseEntity.stream().filter(c -> c.getId().equals("certificate-4-id"))
+        CertificateEntity responseCert4 = responseEntity.stream().filter(c -> c.id().equals("certificate-4-id"))
                 .findFirst().orElseThrow();
 
-        assertTrue(responseCert1.getUsage().containsAll(List.of("sig", "enc")));
-        assertTrue(responseCert2.getUsage().contains("mtls"));
-        assertTrue(responseCert3.getUsage().isEmpty());
-        assertTrue(responseCert4.getUsage().isEmpty());
+        assertTrue(responseCert1.usage().containsAll(List.of("sig", "enc")));
+        assertTrue(responseCert2.usage().contains("mtls"));
+        assertTrue(responseCert3.usage().isEmpty());
+        assertTrue(responseCert4.usage().isEmpty());
 
     }
 
     @Test
     public void shouldGetCertificates_technicalManagementException() {
         final String domainId = "domain-1";
-        doReturn(Flowable.error(new TechnicalManagementException("error occurs"))).when(certificateService).findByDomain(domainId);
+        doReturn(Flowable.error(new TechnicalManagementException("error occurs"))).when(certificateService).findByDomainAndUse(domainId, null);
 
         final Response response = target("domains").path(domainId).path("certificates").request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
@@ -185,6 +185,6 @@ public class CertificatesResourceTest extends JerseySpringTest {
                 .request().post(Entity.json(null));
 
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
-        assertTrue(response.getHeaderString(HttpHeaders.LOCATION).endsWith("certificates/"+certificate.getId()));
+        assertTrue(response.getHeaderString(HttpHeaders.LOCATION).endsWith("certificates/" + certificate.getId()));
     }
 }

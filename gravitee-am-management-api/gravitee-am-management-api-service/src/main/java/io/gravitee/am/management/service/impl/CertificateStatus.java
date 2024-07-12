@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.handlers.management.api.model;
+package io.gravitee.am.management.service.impl;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -23,5 +23,5 @@ public enum CertificateStatus {
     VALID,
     WILL_EXPIRE,
     EXPIRED,
-    RENEWED;
+    RENEWED
 }

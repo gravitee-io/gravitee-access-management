@@ -36,4 +36,6 @@ public interface IdentityProviderRepository extends CrudRepository<IdentityProvi
     Maybe<IdentityProvider> findById(ReferenceType referenceType, String referenceId, String identityProviderId);
 
     Flowable<IdentityProvider> findAllByPasswordPolicy(ReferenceType referenceType, String referenceId, String passwordPolicy);
+
+    Flowable<IdentityProvider> findByCertificate(String domainId, String certId);
 }
