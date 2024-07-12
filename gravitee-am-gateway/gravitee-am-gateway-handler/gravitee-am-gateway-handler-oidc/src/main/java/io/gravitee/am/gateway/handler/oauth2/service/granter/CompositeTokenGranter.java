@@ -19,6 +19,7 @@ import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedGrantTypeException;
@@ -103,6 +104,9 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     @Autowired
     private AuditService auditService;
 
+    @Autowired
+    private SubjectManager subjectManager;
+
     @Override
     public Single<Token> grant(TokenRequest tokenRequest, Client client) {
         return Observable
@@ -137,7 +141,7 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
         addTokenGranter(GrantType.PASSWORD, new ResourceOwnerPasswordCredentialsTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager, rulesEngine));
         addTokenGranter(GrantType.AUTHORIZATION_CODE, new AuthorizationCodeTokenGranter(tokenRequestResolver, tokenService, authorizationCodeService, userAuthenticationManager, authenticationFlowContextService, environment, rulesEngine));
         addTokenGranter(GrantType.REFRESH_TOKEN, new RefreshTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager, rulesEngine));
-        addTokenGranter(GrantType.UMA, new UMATokenGranter(tokenService, userAuthenticationManager, permissionTicketService, resourceService, jwtService, domain, executionContextFactory, rulesEngine));
+        addTokenGranter(GrantType.UMA, new UMATokenGranter(tokenService, userAuthenticationManager, permissionTicketService, resourceService, jwtService, domain, executionContextFactory, rulesEngine, subjectManager));
         addTokenGranter(GrantType.CIBA_GRANT_TYPE, new CibaTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager, authenticationRequestService, domain, rulesEngine));
     }
 }

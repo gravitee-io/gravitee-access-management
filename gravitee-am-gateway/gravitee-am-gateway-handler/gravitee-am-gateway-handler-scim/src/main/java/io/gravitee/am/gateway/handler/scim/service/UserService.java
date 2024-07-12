@@ -32,7 +32,7 @@ public interface UserService {
 
     Single<ListResponse<User>> list(Filter filter, int page, int size, String baseUrl);
 
-    Maybe<User> get(String userId, String baseUrl);
+    Maybe<User> get(String sub, String baseUrl);
 
     Single<User> create(User user, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client);
 

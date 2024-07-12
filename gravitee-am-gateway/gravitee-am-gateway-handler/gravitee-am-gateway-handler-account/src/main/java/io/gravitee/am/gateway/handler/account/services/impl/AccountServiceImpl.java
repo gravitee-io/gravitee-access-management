@@ -21,6 +21,7 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -114,8 +115,16 @@ public class AccountServiceImpl implements AccountService {
     @Autowired
     private PasswordPolicyManager passwordPolicyManager;
 
+    @Autowired
+    private SubjectManager subjectManager;
+
     @Override
-    public Maybe<User> get(String userId) {
+    public Maybe<User> getBySub(String sub) {
+        return subjectManager.findUserBySub(sub);
+    }
+
+    @Override
+    public Maybe<User> getByUserId(String userId) {
         return userService.findById(userId);
     }
 

@@ -19,11 +19,14 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.users.service.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
@@ -42,11 +45,13 @@ public class AbstractUserConsentEndpointHandler {
     protected UserService userService;
     private ClientSyncService clientSyncService;
     private Domain domain;
+    private SubjectManager subjectManager;
 
-    public AbstractUserConsentEndpointHandler(UserService userService, ClientSyncService clientSyncService, Domain domain) {
+    public AbstractUserConsentEndpointHandler(UserService userService, ClientSyncService clientSyncService, Domain domain, SubjectManager subjectManager) {
         this.userService = userService;
         this.clientSyncService = clientSyncService;
         this.domain = domain;
+        this.subjectManager = subjectManager;
     }
 
     protected Single<User> getPrincipal(RoutingContext context) {
@@ -58,7 +63,7 @@ public class AbstractUserConsentEndpointHandler {
 
         // end user
         if (!token.getSub().equals(token.getAud())) {
-            return userService.findById(token.getSub())
+            return subjectManager.findUserBySub(token.getSub())
                     .map(user -> {
                         User principal = new DefaultUser(user.getUsername());
                         ((DefaultUser) principal).setId(user.getId());
@@ -112,4 +117,9 @@ public class AbstractUserConsentEndpointHandler {
         return principal;
     }
 
+    protected Single<String> getUserIdFromSub(String sub) {
+        return this.subjectManager.findUserIdBySub(sub)
+                .onErrorResumeNext((err) -> err instanceof IllegalArgumentException ? Maybe.just(sub) : Maybe.error(err))
+                .switchIfEmpty(Single.error(() -> new UserNotFoundException(sub)));
+    }
 }

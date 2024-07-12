@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.users.resources.consents;
 
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.users.service.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
@@ -32,8 +33,8 @@ import java.util.Optional;
  */
 public class UserConsentsEndpointHandler extends AbstractUserConsentEndpointHandler {
 
-    public UserConsentsEndpointHandler(UserService userService, ClientSyncService clientSyncService, Domain domain) {
-        super(userService, clientSyncService, domain);
+    public UserConsentsEndpointHandler(UserService userService, ClientSyncService clientSyncService, Domain domain, SubjectManager subjectManager) {
+        super(userService, clientSyncService, domain, subjectManager);
     }
 
     /**
@@ -45,10 +46,11 @@ public class UserConsentsEndpointHandler extends AbstractUserConsentEndpointHand
 
         Single.just(Optional.ofNullable(clientId))
                 .flatMap(optClient -> {
+                    final var singleUserId = getUserIdFromSub(userId);
                     if (optClient.isPresent()) {
-                        return userService.consents(userId, optClient.get());
+                        return singleUserId.flatMap(id -> userService.consents(id, optClient.get()));
                     }
-                    return userService.consents(userId);
+                    return singleUserId.flatMap(id -> userService.consents(id));
                 })
                 .subscribe(
                         scopeApprovals -> context.response()
@@ -69,12 +71,13 @@ public class UserConsentsEndpointHandler extends AbstractUserConsentEndpointHand
 
         Single.just(Optional.ofNullable(clientId))
                 .flatMapCompletable(optClient -> {
+                    final var singleUserId = getUserIdFromSub(userId);
                     if (optClient.isPresent()) {
                         return getPrincipal(context)
-                                .flatMapCompletable(principal -> userService.revokeConsents(userId, optClient.get(), principal));
+                                .flatMapCompletable(principal -> singleUserId.flatMapCompletable(id -> userService.revokeConsents(id, optClient.get(), principal)));
                     }
                     return getPrincipal(context)
-                            .flatMapCompletable(principal -> userService.revokeConsents(userId, principal));
+                            .flatMapCompletable(principal -> singleUserId.flatMapCompletable(id -> userService.revokeConsents(id, principal)));
                 })
                 .subscribe(
                         () -> context.response().setStatusCode(204).end(),

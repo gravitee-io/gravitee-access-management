@@ -18,14 +18,13 @@ package io.gravitee.am.gateway.handler.scim.resources.groups;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
-import io.gravitee.am.gateway.handler.scim.mapper.UserMapper;
 import io.gravitee.am.gateway.handler.scim.model.Group;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
-import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.service.exception.GroupNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -41,8 +40,8 @@ import java.util.Optional;
  */
 public class GroupEndpoint extends AbstractGroupEndpoint {
 
-    public GroupEndpoint(GroupService groupService, ObjectMapper objectMapper, UserService userService) {
-        super(groupService, objectMapper, userService);
+    public GroupEndpoint(GroupService groupService, ObjectMapper objectMapper, UserService userService, SubjectManager subjectManager) {
+        super(groupService, objectMapper, userService, subjectManager);
     }
 
     public void get(RoutingContext context) {
@@ -123,8 +122,7 @@ public class GroupEndpoint extends AbstractGroupEndpoint {
 
             final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
             final String baseUrl = location(context.request());
-            userService.get(accessToken.getSub(), baseUrl)
-                    .map(scimUser -> new DefaultUser(UserMapper.convert(scimUser)))
+            principal(accessToken.getSub())
                     .map(Optional::ofNullable)
                     .switchIfEmpty(Maybe.just(Optional.empty()))
                     .flatMapSingle(optPrincipal -> groupService.update(groupId, group, baseUrl, optPrincipal.orElse(null)))
@@ -195,8 +193,7 @@ public class GroupEndpoint extends AbstractGroupEndpoint {
 
             final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
             final String baseUrl = location(context.request());
-            userService.get(accessToken.getSub(), baseUrl)
-                    .map(scimUser -> new DefaultUser(UserMapper.convert(scimUser)))
+            principal(accessToken.getSub())
                     .map(Optional::ofNullable)
                     .switchIfEmpty(Maybe.just(Optional.empty()))
                     .flatMapSingle(optPrincipal -> groupService.patch(groupId, patchOp, baseUrl, optPrincipal.orElse(null)))
@@ -235,8 +232,7 @@ public class GroupEndpoint extends AbstractGroupEndpoint {
         final String groupId = context.request().getParam("id");
         final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
         final String baseUrl = location(context.request());
-        userService.get(accessToken.getSub(), baseUrl)
-                .map(scimUser -> new DefaultUser(UserMapper.convert(scimUser)))
+        principal(accessToken.getSub())
                 .map(Optional::ofNullable)
                 .switchIfEmpty(Maybe.just(Optional.empty()))
                 .flatMapCompletable(optPrincipal -> groupService.delete(groupId, optPrincipal.orElse(null)))

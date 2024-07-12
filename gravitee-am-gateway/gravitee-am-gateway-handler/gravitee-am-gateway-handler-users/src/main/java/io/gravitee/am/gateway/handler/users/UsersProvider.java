@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.users;
 
 import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
@@ -52,6 +53,9 @@ public class UsersProvider extends AbstractProtocolProvider {
     @Autowired
     private OAuth2AuthProvider oAuth2AuthProvider;
 
+    @Autowired
+    private SubjectManager subjectManager;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -59,11 +63,11 @@ public class UsersProvider extends AbstractProtocolProvider {
         // Create the Users router
         final Router usersRouter = Router.router(vertx);
 
-        final UserConsentsEndpointHandler userConsentsHandler = new UserConsentsEndpointHandler(userService, clientSyncService, domain);
-        final UserConsentEndpointHandler userConsentHandler = new UserConsentEndpointHandler(userService, clientSyncService, domain);
-        final OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider, "consent_admin");
+        final UserConsentsEndpointHandler userConsentsHandler = new UserConsentsEndpointHandler(userService, clientSyncService, domain, subjectManager);
+        final UserConsentEndpointHandler userConsentHandler = new UserConsentEndpointHandler(userService, clientSyncService, domain, subjectManager);
+        final OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider, "consent_admin", subjectManager);
         oAuth2AuthHandler.extractToken(true);
-        oAuth2AuthHandler.selfResource(true, "userId");
+        oAuth2AuthHandler.selfResource(true, "userId", true);
 
         // user consent routes
         usersRouter.routeWithRegex(".*consents.*")

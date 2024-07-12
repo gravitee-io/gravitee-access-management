@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.uma.resources.endpoint;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.uma.resources.response.ResourceResponse;
 import io.gravitee.am.model.Domain;
@@ -25,10 +26,12 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.exception.ResourceNotFoundException;
+import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.model.NewResource;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
@@ -55,20 +58,23 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
 
     private ResourceService resourceService;
     private Domain domain;
+    private SubjectManager subjectManager;
 
-    public ResourceRegistrationEndpoint(Domain domain, ResourceService resourceService) {
+    public ResourceRegistrationEndpoint(Domain domain, ResourceService resourceService, SubjectManager subjectManager) {
         this.domain = domain;
         this.resourceService = resourceService;
+        this.subjectManager = subjectManager;
     }
 
     @Override
     public void handle(RoutingContext context) {
         JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
         Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-
-        this.resourceService.listByDomainAndClientAndUser(domain.getId(), client.getId(), accessToken.getSub())
+        subjectManager.findUserIdBySub(accessToken.getSub())
+                .switchIfEmpty(Single.error(() -> new UserNotFoundException(accessToken.getSub())))
+                .flatMap(userId -> this.resourceService.listByDomainAndClientAndUser(domain.getId(), client.getId(), userId)
                 .map(Resource::getId)
-                .collect(JsonArray::new, JsonArray::add)
+                .collect(JsonArray::new, JsonArray::add))
                 .subscribe(
                         buffer -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -86,7 +92,9 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
         String basePath = UriBuilderRequest.resolveProxyRequest(context);
 
         this.extractRequest(context)
-                .flatMap(request -> this.resourceService.create(request, domain.getId(), client.getId(), accessToken.getSub()))
+                .flatMap(request -> subjectManager.findUserIdBySub(accessToken.getSub())
+                        .switchIfEmpty(Single.error(() -> new UserNotFoundException(accessToken.getSub())))
+                        .flatMap(userId -> this.resourceService.create(request, domain.getId(), client.getId(), userId)))
                 .subscribe(
                         resource -> {
                             final String resourceLocation = resourceLocation(basePath, resource);
@@ -107,7 +115,9 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
         Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         String resource_id = context.request().getParam(RESOURCE_ID);
 
-        this.resourceService.findByDomainAndClientAndUserAndResource(domain.getId(), client.getId(), accessToken.getSub(), resource_id)
+        subjectManager.findUserIdBySub(accessToken.getSub())
+                .switchIfEmpty(Maybe.error(() -> new UserNotFoundException(accessToken.getSub())))
+                .flatMap(useId -> this.resourceService.findByDomainAndClientAndUserAndResource(domain.getId(), client.getId(), useId, resource_id))
                 .switchIfEmpty(Single.error(new ResourceNotFoundException(resource_id)))
                 .subscribe(
                         resource -> context.response()
@@ -132,7 +142,9 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
         String resource_id = context.request().getParam(RESOURCE_ID);
 
         this.extractRequest(context)
-                .flatMap(request -> this.resourceService.update(request, domain.getId(), client.getId(), accessToken.getSub(), resource_id))
+                .flatMap(request -> subjectManager.findUserIdBySub(accessToken.getSub())
+                        .switchIfEmpty(Single.error(() -> new UserNotFoundException(accessToken.getSub())))
+                        .flatMap(userId -> this.resourceService.update(request, domain.getId(), client.getId(), userId, resource_id)))
                 .subscribe(
                         resource -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -149,7 +161,8 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
         Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         String resource_id = context.request().getParam(RESOURCE_ID);
 
-        this.resourceService.delete(domain.getId(), client.getId(), accessToken.getSub(), resource_id)
+        subjectManager.findUserIdBySub(accessToken.getSub())
+                .flatMapCompletable(userId -> this.resourceService.delete(domain.getId(), client.getId(), userId, resource_id))
                 .subscribe(
                         () -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")

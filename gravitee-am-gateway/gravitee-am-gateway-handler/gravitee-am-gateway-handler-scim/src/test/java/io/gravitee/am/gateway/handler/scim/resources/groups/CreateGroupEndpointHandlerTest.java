@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
 import io.gravitee.am.gateway.handler.scim.model.Group;
@@ -60,8 +61,11 @@ public class CreateGroupEndpointHandlerTest extends RxWebTestBase {
     @Mock
     private UserService userService;
 
+    @Mock
+    private SubjectManager subjectManager;
+
     @InjectMocks
-    private final GroupsEndpoint groupsEndpoint = new GroupsEndpoint(groupService, objectMapper, userService);
+    private final GroupsEndpoint groupsEndpoint = new GroupsEndpoint(groupService, objectMapper, userService, subjectManager);
 
     @Override
     public void setUp() throws Exception {
@@ -70,7 +74,7 @@ public class CreateGroupEndpointHandlerTest extends RxWebTestBase {
         // object mapper
         when(objectWriter.writeValueAsString(any())).thenReturn("GroupObject");
         when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriter);
-        when(userService.get(any(), any())).thenReturn(Maybe.empty());
+        when(subjectManager.getPrincipal(any())).thenReturn(Maybe.empty());
 
         router.route()
                 .handler(BodyHandler.create())

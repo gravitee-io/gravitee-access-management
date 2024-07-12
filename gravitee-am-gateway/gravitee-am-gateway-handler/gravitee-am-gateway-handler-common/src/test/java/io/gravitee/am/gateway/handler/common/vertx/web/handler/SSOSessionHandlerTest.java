@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
 import io.gravitee.am.model.Domain;
@@ -71,6 +72,9 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
     private UserService userService;
 
     @Mock
+    private SubjectManager subjectManager;
+
+    @Mock
     private AuthenticationFlowContextService authenticationFlowContextService;
 
     @Mock
@@ -86,7 +90,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         when(jwtService.encode(any(JWT.class), (CertificateProvider) eq(null))).thenReturn(Single.just("token"));
 
         router.route("/login")
-                .handler(new CookieSessionHandler(jwtService, certificateManager, userService, "am-cookie", 30 * 60 * 60))
+                .handler(new CookieSessionHandler(jwtService, certificateManager, userService, subjectManager, "am-cookie", 30 * 60 * 60))
                 .handler(new SSOSessionHandler(clientSyncService, authenticationFlowContextService, loginAttemptService, domain))
                 .handler(rc -> {
                     if (rc.session().isDestroyed()) {

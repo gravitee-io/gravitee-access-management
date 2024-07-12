@@ -24,6 +24,7 @@ import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.policy.DefaultRule;
 import io.gravitee.am.gateway.handler.common.policy.Rule;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
@@ -93,6 +94,7 @@ public class UMATokenGranter extends AbstractTokenGranter {
     private JWTService jwtService;
     private Domain domain;
     private ExecutionContextFactory executionContextFactory;
+    private SubjectManager subjectManager;
 
     public UMATokenGranter() {
         super(GrantType.UMA);
@@ -105,7 +107,8 @@ public class UMATokenGranter extends AbstractTokenGranter {
                            JWTService jwtService,
                            Domain domain,
                            ExecutionContextFactory executionContextFactory,
-                           RulesEngine rulesEngine) {
+                           RulesEngine rulesEngine,
+                           SubjectManager subjectManager) {
         this();
         setTokenService(tokenService);
         setRulesEngine(rulesEngine);
@@ -115,6 +118,7 @@ public class UMATokenGranter extends AbstractTokenGranter {
         this.jwtService = jwtService;
         this.domain = domain;
         this.executionContextFactory = executionContextFactory;
+        this.subjectManager = subjectManager;
     }
 
     @Override
@@ -192,7 +196,7 @@ public class UMATokenGranter extends AbstractTokenGranter {
         }
 
         return jwtService.decodeAndVerify(tokenRequest.getClaimToken(), client, ACCESS_TOKEN)
-                .flatMapMaybe(jwt -> userAuthenticationManager.loadPreAuthenticatedUser(jwt.getSub(), tokenRequest))
+                .flatMapMaybe(jwt -> userAuthenticationManager.loadPreAuthenticatedUserBySub(jwt.getSub(), tokenRequest))
                 .switchIfEmpty(Maybe.error(UserInvalidException::new))
                 .onErrorResumeNext(ex -> {
                     //If user
@@ -310,7 +314,7 @@ public class UMATokenGranter extends AbstractTokenGranter {
      * Provided "previous" Requesting Party Token to extend must belong to the same user & client.
      */
     private Single<JWT> checkRequestingPartyToken(JWT rpt, Client client, User user) {
-        String expectedSub = user != null ? user.getId() : client.getClientId();
+        String expectedSub = user != null ? subjectManager.generateSubFrom(user) : client.getClientId();
         if (!expectedSub.equals(rpt.getSub()) || !client.getClientId().equals(rpt.getAud())) {
             return Single.error(InvalidTokenException::new);
         }

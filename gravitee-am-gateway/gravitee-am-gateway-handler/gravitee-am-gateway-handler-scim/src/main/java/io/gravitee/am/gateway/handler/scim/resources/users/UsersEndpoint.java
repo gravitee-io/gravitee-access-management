@@ -21,12 +21,11 @@ import io.gravitee.am.common.scim.Schema;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.scim.parser.SCIMFilterParser;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
-import io.gravitee.am.gateway.handler.scim.mapper.UserMapper;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
-import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -54,8 +53,8 @@ public class UsersEndpoint extends AbstractUserEndpoint {
     private static final int MAX_ITEMS_PER_PAGE = 100;
     private static final int DEFAULT_START_INDEX = 1;
 
-    public UsersEndpoint(Domain domain, UserService userService, ObjectMapper objectMapper) {
-        super(domain, userService, objectMapper);
+    public UsersEndpoint(Domain domain, UserService userService, ObjectMapper objectMapper, SubjectManager subjectManager) {
+        super(domain, userService, objectMapper, subjectManager);
     }
 
     public void list(RoutingContext context) {
@@ -173,8 +172,7 @@ public class UsersEndpoint extends AbstractUserEndpoint {
             final String source = userSource(context);
             final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
             final String baseUrl = location(context.request());
-            userService.get(accessToken.getSub(), baseUrl)
-                    .map(scimUser -> new DefaultUser(UserMapper.convert(scimUser)))
+            principal(accessToken.getSub())
                     .map(Optional::ofNullable)
                     .switchIfEmpty(Maybe.just(Optional.empty()))
                     .flatMapSingle(optPrincipal -> userService.create(user, source, baseUrl, optPrincipal.orElse(null), context.get(CLIENT_CONTEXT_KEY)))

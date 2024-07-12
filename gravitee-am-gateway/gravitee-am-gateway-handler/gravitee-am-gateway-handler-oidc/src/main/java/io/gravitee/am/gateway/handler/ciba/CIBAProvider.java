@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.ciba.resources.handler.AuthenticationReque
 import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
@@ -108,6 +109,9 @@ public class CIBAProvider extends AbstractProtocolProvider {
     @Autowired
     private AuditService auditService;
 
+    @Autowired
+    private SubjectManager subjectManager;
+
     @Override
     public String path() {
         return CIBA_PATH;
@@ -135,7 +139,7 @@ public class CIBAProvider extends AbstractProtocolProvider {
                 .handler(clientAuthHandler)
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(this.openIDDiscoveryService))
                 .handler(new AuthenticationRequestParseRequestObjectHandler(this.requestObjectService))
-                .handler(new AuthenticationRequestParametersHandler(domain, jwsService, jwkService, userService, scopeManager))
+                .handler(new AuthenticationRequestParametersHandler(domain, jwsService, jwkService, userService, scopeManager, subjectManager))
                 .handler(new AuthenticationRequestAcknowledgeHandler(authService, domain, jwtService));
 
         // To process the callback content we perform authentication of the caller that must be registered as AM client.

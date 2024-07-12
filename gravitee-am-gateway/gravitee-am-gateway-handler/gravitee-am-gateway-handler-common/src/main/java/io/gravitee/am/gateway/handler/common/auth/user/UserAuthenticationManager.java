@@ -31,11 +31,12 @@ public interface UserAuthenticationManager {
 
     Single<User> authenticate(Client client, Authentication authentication, boolean preAuthenticated);
 
-    Maybe<User> loadPreAuthenticatedUser(String subject, Request request);
+    Maybe<User> loadPreAuthenticatedUser(String userId, Request request);
+    Maybe<User> loadPreAuthenticatedUserBySub(String subject, Request request);
 
     Single<User> connect(io.gravitee.am.identityprovider.api.User user, Client client, Request request, boolean afterAuthentication);
 
-    Single<User> connectWithPasswordless(Client client, String subject, Authentication authentication);
+    Single<User> connectWithPasswordless(Client client, String userId, Authentication authentication);
 
     default Single<User> authenticate(Client client, Authentication authentication) {
         return authenticate(client, authentication, false);

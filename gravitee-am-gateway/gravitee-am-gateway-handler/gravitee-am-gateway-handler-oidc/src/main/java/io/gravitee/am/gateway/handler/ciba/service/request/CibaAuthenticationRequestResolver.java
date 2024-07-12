@@ -21,6 +21,7 @@ import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.exception.jwt.ExpiredJWTException;
 import io.gravitee.am.common.exception.oauth2.ExpiredLoginHintTokenException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AbstractRequestResolver;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
@@ -51,12 +52,14 @@ public class CibaAuthenticationRequestResolver extends AbstractRequestResolver<C
     private final JWSService jwsService;
     private final JWKService jwkService;
     private final UserService userService;
+    private final SubjectManager subjectManager;
 
-    public CibaAuthenticationRequestResolver(Domain domain, JWSService jwsService, JWKService jwkService, UserService userService) {
+    public CibaAuthenticationRequestResolver(Domain domain, JWSService jwsService, JWKService jwkService, UserService userService, SubjectManager subjectManager) {
         this.domain = domain;
         this.jwsService = jwsService;
         this.jwkService = jwkService;
         this.userService = userService;
+        this.subjectManager = subjectManager;
     }
 
     public Single<CibaAuthenticationRequest> resolve(CibaAuthenticationRequest authRequest, Client client) {
@@ -124,7 +127,7 @@ public class CibaAuthenticationRequestResolver extends AbstractRequestResolver<C
                         if (expirationTime != null) {
                             evaluateExp(expirationTime.toInstant().getEpochSecond(), Instant.now(), 0);
                         }
-                        return userService.findById(signedJwt.getJWTClaimsSet().getSubject()).map(user -> {
+                        return subjectManager.findUserBySub(signedJwt.getJWTClaimsSet().getSubject()).map(user -> {
                             authRequest.setSubject(user.getId());
                             return authRequest;
                         }).toSingle();

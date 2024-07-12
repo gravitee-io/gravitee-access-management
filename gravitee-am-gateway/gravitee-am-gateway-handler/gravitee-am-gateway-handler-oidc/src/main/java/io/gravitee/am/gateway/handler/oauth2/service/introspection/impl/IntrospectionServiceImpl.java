@@ -16,13 +16,13 @@
 package io.gravitee.am.gateway.handler.oauth2.service.introspection.impl;
 
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionResponse;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.model.User;
-import io.gravitee.am.service.UserService;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -39,7 +39,7 @@ public class IntrospectionServiceImpl implements IntrospectionService {
     private TokenService tokenService;
 
     @Autowired
-    private UserService userService;
+    private SubjectManager subjectManager;
 
     @Override
     public Single<IntrospectionResponse> introspect(IntrospectionRequest introspectionRequest) {
@@ -47,8 +47,8 @@ public class IntrospectionServiceImpl implements IntrospectionService {
                 .flatMap(token -> {
                     AccessToken accessToken = (AccessToken) token;
                     if (accessToken.getSubject() != null && !accessToken.getSubject().equals(accessToken.getClientId())) {
-                        return userService
-                                .findById(accessToken.getSubject())
+                        return subjectManager
+                                .findUserBySub(accessToken.getSubject())
                                 .map(user -> convert(accessToken, user))
                                 .defaultIfEmpty(convert(accessToken, null));
 
