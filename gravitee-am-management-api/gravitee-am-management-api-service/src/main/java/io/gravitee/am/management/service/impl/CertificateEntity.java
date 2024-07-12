@@ -65,7 +65,7 @@ public record CertificateEntity(
                 certificate.getCreatedAt(),
                 certificate.getExpiresAt(),
                 certificate.isSystem(),
-                determineStatus(certificate.getExpiresAt(), certExpiryWarningThreshold, certificate.isSystem() && isRenewedSystemCert),
+                determineStatus(certificate.getExpiresAt(), certExpiryWarningThreshold, isRenewedSystemCert),
                 extractUsages(certificate.getConfiguration()),
                 apps,
                 idps);
