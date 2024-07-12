@@ -61,6 +61,7 @@ public class AbstractDomainResource extends AbstractResource {
             filteredDomain.setId(domain.getId());
             filteredDomain.setHrid(domain.getHrid());
             filteredDomain.setName(domain.getName());
+            filteredDomain.setVersion(domain.getVersion());
             filteredDomain.setDescription(domain.getDescription());
             filteredDomain.setEnabled(domain.isEnabled());
             filteredDomain.setCreatedAt(domain.getCreatedAt());

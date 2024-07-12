@@ -16,6 +16,7 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
@@ -58,6 +59,7 @@ public class PatchDomainTest {
 
         //Build object to patch
         Domain toPatch = new Domain();
+        toPatch.setVersion(DomainVersion.V2_0);
         toPatch.setDescription("oldDescription");
         toPatch.setName("oldName");
         toPatch.setPath("/expectedPath");
@@ -70,6 +72,7 @@ public class PatchDomainTest {
         assertEquals("description should have been updated", "expectedDescription", result.getDescription());
         assertNull("name should have been set to null", result.getName());
         assertEquals("path should not be updated", "/expectedPath", result.getPath());
+        assertEquals("version should not be updated", DomainVersion.V2_0, result.getVersion());
     }
 
     @Test
