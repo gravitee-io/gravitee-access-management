@@ -16,8 +16,9 @@
 package io.gravitee.am.gateway.handler.users.resources.consents;
 
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
@@ -43,6 +44,8 @@ import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -64,8 +67,11 @@ public class UserConsentsEndpointHandlerTest extends RxWebTestBase {
     @Mock
     private OAuth2AuthProvider oAuth2AuthProvider;
 
+    @Mock
+    private SubjectManager subjectManager;
+
     @InjectMocks
-    private UserConsentsEndpointHandler userConsentsEndpointHandler = new UserConsentsEndpointHandler(userService, clientService, domain);
+    private UserConsentsEndpointHandler userConsentsEndpointHandler = new UserConsentsEndpointHandler(userService, clientService, domain, subjectManager);
 
     private OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider);
 
@@ -106,6 +112,7 @@ public class UserConsentsEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldListConsents() throws Exception {
         when(userService.consents(anyString())).thenReturn(Single.just(Collections.singleton(new ScopeApproval())));
+        when(subjectManager.findUserIdBySub(anyString())).thenReturn(Maybe.just("user-id"));
 
         router.route("/users/:userId/consents")
                 .handler(userConsentsEndpointHandler::list)
@@ -121,7 +128,8 @@ public class UserConsentsEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldRevokeConsents() throws Exception {
-        when(userService.findById(anyString())).thenReturn(Maybe.just(new io.gravitee.am.model.User()));
+        when(subjectManager.findUserBySub(anyString())).thenReturn(Maybe.just(new io.gravitee.am.model.User()));
+        when(subjectManager.findUserIdBySub(anyString())).thenReturn(Maybe.just("user-id"));
         when(userService.revokeConsents(anyString(), any(User.class))).thenReturn(Completable.complete());
 
         router.route("/users/:userId/consents")
@@ -139,5 +147,38 @@ public class UserConsentsEndpointHandlerTest extends RxWebTestBase {
                 req -> req.putHeader(HttpHeaders.AUTHORIZATION.toString(), "Bearer token"),
                 204,
                 "No Content", null);
+
+        verify(subjectManager).findUserBySub(any());
+        verify(subjectManager).findUserIdBySub(any());
+        verify(userService).revokeConsents(eq("user-id"), any(User.class));
+    }
+
+    @Test
+    public void shouldRevokeConsentsComposeId() throws Exception {
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setId("user-id");
+        when(subjectManager.findUserBySub(anyString())).thenReturn(Maybe.just(user));
+        when(subjectManager.findUserIdBySub(anyString())).thenReturn(Maybe.just(user.getId()));
+        when(userService.revokeConsents(anyString(), any(User.class))).thenReturn(Completable.complete());
+
+        router.route("/users/:userId/consents")
+                .handler(rc -> {
+                    JWT token = new JWT();
+                    token.setSub("sub");
+                    rc.put(ConstantKeys.TOKEN_CONTEXT_KEY, token);
+                    rc.next();
+                })
+                .handler(userConsentsEndpointHandler::revoke)
+                .failureHandler(new ErrorHandler());
+
+        testRequest(
+                HttpMethod.DELETE, "/users/user-id/consents",
+                req -> req.putHeader(HttpHeaders.AUTHORIZATION.toString(), "Bearer token"),
+                204,
+                "No Content", null);
+
+        verify(subjectManager).findUserBySub(any());
+        verify(subjectManager).findUserIdBySub(any());
+        verify(userService).revokeConsents(eq("user-id"), any(User.class));
     }
 }

@@ -29,6 +29,7 @@ import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.ciba.CIBAProvider;
 import io.gravitee.am.gateway.handler.ciba.service.request.CibaAuthenticationRequest;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
@@ -80,7 +81,8 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
     private UserService userService;
     @Mock
     private ScopeManager scopeManager;
-
+    @Mock
+    private SubjectManager subjectManager;
     private OpenIDProviderMetadata openIDProviderMetadata;
 
     private Client client;
@@ -93,7 +95,7 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
 
         when(domain.getOidc()).thenReturn(OIDCSettings.defaultSettings());
 
-        handlerUnderTest = new AuthenticationRequestParametersHandlerMock(domain, jwsService, jwkService, userService, scopeManager);
+        handlerUnderTest = new AuthenticationRequestParametersHandlerMock(domain, jwsService, jwkService, userService, scopeManager, subjectManager);
         router.route(HttpMethod.POST, "/oidc/ciba/authenticate")
                 .handler(handlerUnderTest)
                 .handler(rc -> rc.response().end())
@@ -483,7 +485,7 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
 
         final User user = new User();
         user.setId(UUID.randomUUID().toString());
-        when(userService.findById(any())).thenReturn(Maybe.just(user));
+        when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(user));
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
@@ -504,8 +506,8 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
     private class AuthenticationRequestParametersHandlerMock extends AuthenticationRequestParametersHandler {
         private CibaAuthenticationRequest cibaRequest;
 
-        public AuthenticationRequestParametersHandlerMock(Domain domain, JWSService jwsService, JWKService jwkService, UserService userService, ScopeManager scopeManager) {
-            super(domain, jwsService, jwkService, userService, scopeManager);
+        public AuthenticationRequestParametersHandlerMock(Domain domain, JWSService jwsService, JWKService jwkService, UserService userService, ScopeManager scopeManager, SubjectManager subjectManager) {
+            super(domain, jwsService, jwkService, userService, scopeManager, subjectManager);
         }
 
         @Override

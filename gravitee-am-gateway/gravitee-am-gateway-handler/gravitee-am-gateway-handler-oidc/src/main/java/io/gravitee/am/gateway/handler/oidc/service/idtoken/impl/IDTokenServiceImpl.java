@@ -27,6 +27,7 @@ import io.gravitee.am.common.oidc.idtoken.IDToken;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
@@ -40,8 +41,6 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.UserProperties;
-import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.context.SimpleExecutionContext;
@@ -93,10 +92,7 @@ public class IDTokenServiceImpl implements IDTokenService {
     private ExecutionContextFactory executionContextFactory;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
-    private AuditService auditService;
+    private SubjectManager subjectManager;
 
     @Deprecated
     @Value("${legacy.openid.openid_scope_full_profile:false}")
@@ -146,7 +142,7 @@ public class IDTokenServiceImpl implements IDTokenService {
     @Override
     public Single<User> extractUser(String idToken, Client client) {
         return jwtService.decodeAndVerify(idToken, client, ID_TOKEN)
-                .flatMap(jwt -> userService.findById(jwt.getSub())
+                .flatMap(jwt -> subjectManager.findUserBySub(jwt.getSub())
                         .switchIfEmpty(Single.error(() -> new UserNotFoundException(jwt.getSub())))
                         .map(user -> {
                             if (!user.getReferenceId().equals(domain.getId())) {
@@ -175,7 +171,7 @@ public class IDTokenServiceImpl implements IDTokenService {
         IDToken idToken = new IDToken();
         // set required claims
         idToken.setIss(openIDDiscoveryService.getIssuer(oAuth2Request.getOrigin()));
-        idToken.setSub(oAuth2Request.isClientOnly() ? oAuth2Request.getClientId() : user.getId());
+        idToken.setSub(oAuth2Request.isClientOnly() ? oAuth2Request.getClientId() : subjectManager.generateSubFrom(user));
         idToken.setAud(oAuth2Request.getClientId());
         idToken.setIat(Instant.now().getEpochSecond());
         idToken.setExp(Instant.ofEpochSecond(idToken.getIat()).plusSeconds(client.getIdTokenValiditySeconds()).getEpochSecond());

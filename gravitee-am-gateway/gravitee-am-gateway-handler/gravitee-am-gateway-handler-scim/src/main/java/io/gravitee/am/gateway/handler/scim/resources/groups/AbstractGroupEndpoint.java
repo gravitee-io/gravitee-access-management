@@ -16,11 +16,14 @@
 package io.gravitee.am.gateway.handler.scim.resources.groups;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.identityprovider.api.User;
+import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 
 import java.util.HashSet;
@@ -36,11 +39,13 @@ public class AbstractGroupEndpoint {
     protected UserService userService;
     protected GroupService groupService;
     protected ObjectMapper objectMapper;
+    protected SubjectManager subjectManager;
 
-    public AbstractGroupEndpoint(GroupService groupService, ObjectMapper objectMapper, UserService userService) {
+    public AbstractGroupEndpoint(GroupService groupService, ObjectMapper objectMapper, UserService userService, SubjectManager subjectManager) {
         this.groupService = groupService;
         this.objectMapper = objectMapper;
         this.userService = userService;
+        this.subjectManager = subjectManager;
     }
 
     protected String location(HttpServerRequest request) {
@@ -61,5 +66,9 @@ public class AbstractGroupEndpoint {
                 throw new InvalidSyntaxException("The 'schemas' attribute MUST only contain values defined as 'schema' and schemaExtensions' for the resource's defined User type");
             }
         });
+    }
+
+    protected Maybe<User> principal(String sub) {
+        return this.subjectManager.getPrincipal(sub);
     }
 }

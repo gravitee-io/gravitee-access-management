@@ -20,6 +20,7 @@ import io.gravitee.am.common.exception.jwt.PrematureJWTException;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.model.CookieSettings;
 import io.gravitee.am.model.SessionSettings;
@@ -56,6 +57,7 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
     private static final Logger logger = LoggerFactory.getLogger(CookieSessionHandler.class);
 
     final static String USER_ID_KEY = "userId";
+    final static String USER_SUB_KEY = "sub";
 
     private final JWTService jwtService;
     private final CertificateManager certificateManager;
@@ -70,20 +72,25 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
     @Value("${http.cookie.session.persistent:true}")
     private boolean persistent;
 
+    private SubjectManager subjectManager;
+
     public CookieSessionHandler(JWTService jwtService,
                                 CertificateManager certificateManager,
-                                UserService userService) {
+                                UserService userService,
+                                SubjectManager subjectManager) {
         this.jwtService = jwtService;
         this.certificateManager = certificateManager;
         this.userService = userService;
+        this.subjectManager = subjectManager;
     }
 
     public CookieSessionHandler(JWTService jwtService,
                                 CertificateManager certificateManager,
                                 UserService userService,
+                                SubjectManager subjectManager,
                                 String cookieName,
                                 long timeout) {
-        this(jwtService, certificateManager, userService);
+        this(jwtService, certificateManager, userService, subjectManager);
         this.cookieName = cookieName;
         this.timeout = timeout;
     }
@@ -107,10 +114,10 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
         if (sessionCookie != null) {
             sessionObs = session.setValue(sessionCookie.getValue())
                     .flatMap(currentSession -> {
-                        String userId = currentSession.get(USER_ID_KEY);
-                        if (StringUtils.hasText(userId)) {
+                        final String userSub = currentSession.get(USER_SUB_KEY);
+                        if (StringUtils.hasText(userSub)) {
                             // Load the user and put it back in the context.
-                            return userService.findById(userId)
+                            return subjectManager.findUserBySub(userSub)
                                     .doOnSuccess(user -> context.getDelegate().setUser(new User(user)))
                                     .flatMap(user -> userService.enhance(user).toMaybe())
                                     .map(user -> currentSession)
@@ -171,7 +178,9 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
     private void writeSessionCookie(final RoutingContext context, final CookieSession session) {
         io.vertx.ext.auth.User user = context.getDelegate().user();
         if (user instanceof User) {
-            session.putUserId(((User) user).getUser().getId());
+            final var modelUser = ((User) user).getUser();
+            session.putUserId(modelUser.getId()); // TODO [AM-3472] do we have to keep it ?
+            session.putUserSub(subjectManager.generateSubFrom(modelUser));
         }
         Cookie cookie = Cookie.cookie(cookieName, session.value());
 

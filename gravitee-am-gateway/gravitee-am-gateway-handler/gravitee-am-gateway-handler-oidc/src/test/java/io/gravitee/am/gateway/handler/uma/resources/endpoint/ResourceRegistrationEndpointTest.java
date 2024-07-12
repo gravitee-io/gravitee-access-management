@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.uma.resources.endpoint;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.uma.Resource;
@@ -75,8 +76,11 @@ public class ResourceRegistrationEndpointTest {
     @Mock
     private HttpServerRequest request;
 
+    @Mock
+    private SubjectManager subjectManager;
+
     @InjectMocks
-    private ResourceRegistrationEndpoint endpoint = new ResourceRegistrationEndpoint(domain, service);
+    private ResourceRegistrationEndpoint endpoint = new ResourceRegistrationEndpoint(domain, service, subjectManager);
 
     private static final String DOMAIN_PATH = "/domain";
     private static final String DOMAIN_ID = "123";
@@ -99,6 +103,7 @@ public class ResourceRegistrationEndpointTest {
         when(response.setStatusCode(anyInt())).thenReturn(response);
         when(context.request()).thenReturn(request);
         when(request.getParam("resource_id")).thenReturn(RESOURCE_ID);
+        when(subjectManager.findUserIdBySub(any())).thenReturn(Maybe.just(USER_ID));
     }
 
     @Test

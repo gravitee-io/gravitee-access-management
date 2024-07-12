@@ -21,7 +21,7 @@ info:
     Defines Users Endpoints exposed by AM server.
 
     Users endpoints are OAuth 2.0 secured and can be access either with a token with "consent_admin" scope
-    or if the token 'sub' claim match the "userId" path parameter.
+    or if the token 'sub' claim and the "userId" path parameter identity the same user.
   version: 2.10.x
   title: Gravitee.io - Access Management - Users API
   contact:

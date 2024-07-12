@@ -20,13 +20,12 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.scim.parser.SCIMFilterParser;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
-import io.gravitee.am.gateway.handler.scim.mapper.UserMapper;
 import io.gravitee.am.gateway.handler.scim.model.Group;
 import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
-import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
@@ -46,8 +45,8 @@ public class GroupsEndpoint extends AbstractGroupEndpoint {
     private static final int MAX_ITEMS_PER_PAGE = 100;
     private static final int DEFAULT_START_INDEX = 1;
 
-    public GroupsEndpoint(GroupService groupService, ObjectMapper objectMapper, UserService userService) {
-        super(groupService, objectMapper, userService);
+    public GroupsEndpoint(GroupService groupService, ObjectMapper objectMapper, UserService userService, SubjectManager subjectManager) {
+        super(groupService, objectMapper, userService, subjectManager);
     }
 
     public void list(RoutingContext context) {
@@ -165,8 +164,7 @@ public class GroupsEndpoint extends AbstractGroupEndpoint {
             }
             final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
             final String baseUrl = location(context.request());
-            userService.get(accessToken.getSub(), baseUrl)
-                    .map(scimUser -> new DefaultUser(UserMapper.convert(scimUser)))
+            principal(accessToken.getSub())
                     .map(Optional::ofNullable)
                     .switchIfEmpty(Maybe.just(Optional.empty()))
                     .flatMapSingle(optPrincipal ->  groupService.create(group, baseUrl, optPrincipal.orElse(null)))

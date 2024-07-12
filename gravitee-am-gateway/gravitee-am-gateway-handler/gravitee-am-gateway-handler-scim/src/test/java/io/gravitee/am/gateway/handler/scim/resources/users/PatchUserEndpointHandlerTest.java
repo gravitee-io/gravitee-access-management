@@ -17,10 +17,10 @@ package io.gravitee.am.gateway.handler.scim.resources.users;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.scim.Schema;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.scim.model.*;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
@@ -31,7 +31,6 @@ import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -40,7 +39,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
-import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -62,8 +60,11 @@ public class PatchUserEndpointHandlerTest extends RxWebTestBase {
     @Mock
     private Domain domain;
 
+    @Mock
+    private SubjectManager subjectManager;
+
     @InjectMocks
-    private UserEndpoint userEndpoint = new UserEndpoint(domain, userService, objectMapper);
+    private UserEndpoint userEndpoint = new UserEndpoint(domain, userService, objectMapper, subjectManager);
 
     @Override
     public void setUp() throws Exception {
@@ -110,7 +111,7 @@ public class PatchUserEndpointHandlerTest extends RxWebTestBase {
         router.route("/Users").handler(userEndpoint::patch);
         User scimUser = mock(User.class);
         when(scimUser.getMeta()).thenReturn(new Meta());
-        when(userService.get(any(), any())).thenReturn(Maybe.just(new User()));
+        when(subjectManager.getPrincipal(any())).thenReturn(Maybe.just(mock(io.gravitee.am.identityprovider.api.User.class)));
         when(userService.patch(any(), any(), any(), any(), any(), any())).thenReturn(Single.just(scimUser));
 
         testRequest(

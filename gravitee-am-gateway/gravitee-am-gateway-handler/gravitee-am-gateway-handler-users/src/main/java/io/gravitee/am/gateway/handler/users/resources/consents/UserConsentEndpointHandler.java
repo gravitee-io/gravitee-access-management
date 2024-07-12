@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.users.resources.consents;
 
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.users.service.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
@@ -29,8 +30,8 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
  */
 public class UserConsentEndpointHandler extends AbstractUserConsentEndpointHandler {
 
-    public UserConsentEndpointHandler(UserService userService, ClientSyncService clientSyncService, Domain domain) {
-        super(userService, clientSyncService, domain);
+    public UserConsentEndpointHandler(UserService userService, ClientSyncService clientSyncService, Domain domain, SubjectManager subjectManager) {
+        super(userService, clientSyncService, domain, subjectManager);
     }
 
     /**
@@ -55,8 +56,9 @@ public class UserConsentEndpointHandler extends AbstractUserConsentEndpointHandl
         final String userId = context.request().getParam("userId");
         final String consentId = context.request().getParam("consentId");
 
+        final var singleUserId = getUserIdFromSub(userId);
         getPrincipal(context)
-                .flatMapCompletable(principal -> userService.revokeConsent(userId, consentId, principal))
+                .flatMapCompletable(principal -> singleUserId.flatMapCompletable(id -> userService.revokeConsent(id, consentId, principal)))
                 .subscribe(
                         () -> context.response().setStatusCode(204).end(),
                         error -> context.fail(error));

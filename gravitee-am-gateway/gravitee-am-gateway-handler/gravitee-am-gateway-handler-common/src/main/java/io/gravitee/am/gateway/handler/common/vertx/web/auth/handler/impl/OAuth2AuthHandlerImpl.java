@@ -21,16 +21,20 @@ import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthResponse;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.model.oidc.Client;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.handler.HttpException;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -41,6 +45,7 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
     private static final String BEARER = "Bearer";
     private static final String REALM = "gravitee-io";
     private static final String ACCESS_TOKEN = "access_token";
+    private static final Logger log = LoggerFactory.getLogger(OAuth2AuthHandlerImpl.class);
     private final OAuth2AuthProvider oAuth2AuthProvider;
     private String requiredScope;
     private boolean extractRawToken;
@@ -49,16 +54,19 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
     private boolean forceEndUserToken;
     private boolean forceClientToken;
     private boolean selfResource;
+    private boolean isSelfResourceAUser;
     private boolean offlineVerification;
     private String resourceParameter;
     private String resourceRequiredScope;
+    private SubjectManager subjectManager;
 
-    public OAuth2AuthHandlerImpl(OAuth2AuthProvider oAuth2AuthProvider) {
+    public OAuth2AuthHandlerImpl(OAuth2AuthProvider oAuth2AuthProvider, SubjectManager subjectManager) {
         this.oAuth2AuthProvider = oAuth2AuthProvider;
+        this.subjectManager = subjectManager;
     }
 
-    public OAuth2AuthHandlerImpl(OAuth2AuthProvider oAuth2AuthProvider, String requiredScope) {
-        this(oAuth2AuthProvider);
+    public OAuth2AuthHandlerImpl(OAuth2AuthProvider oAuth2AuthProvider, String requiredScope, SubjectManager subjectManager) {
+        this(oAuth2AuthProvider, subjectManager);
         this.requiredScope = requiredScope;
     }
 
@@ -97,36 +105,51 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
                     context.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                 }
 
-                // check if current subject can access its own resources
-                if (selfResource) {
-                    final String resourceId = context.request().getParam(resourceParameter);
-                    boolean isResourceIdValid = resourceId != null && resourceId.equals(token.getSub());
-                    boolean hasRequiredScope = resourceRequiredScope == null || token.hasScope(resourceRequiredScope);
+                var single = Single.just(token.getSub());
+                if (selfResource && isSelfResourceAUser) {
+                    single = this.subjectManager.findUserIdBySub(token.getSub())
+                            .switchIfEmpty(single);
+                }
 
-                    if (isResourceIdValid && hasRequiredScope) {
-                        context.next();
+                single.subscribe(user -> {
+                    // check if current subject can access its own resources
+                    if (selfResource) {
+                        final String resourceId = context.request().getParam(resourceParameter);
+                        // since Domain V2, sub claim is not the userId anymore
+                        // we have to check if userId provided as resourceId match the user internal ID found using the sub claim
+                        // and we also have to if the resourceId match the
+                        boolean isUserValid = isSelfResourceAUser && resourceId != null && resourceId.equals(user);
+                        boolean isResourceIdValid = resourceId != null && resourceId.equals(token.getSub());
+                        boolean hasRequiredScope = resourceRequiredScope == null || token.hasScope(resourceRequiredScope);
+
+                        if ((isUserValid || isResourceIdValid) && hasRequiredScope) {
+                            context.next();
+                            return;
+                        }
+                    }
+
+                    if (forceEndUserToken && token.getSub().equals(token.getAud())) {
+                        // token for end user must not contain clientId as subject
+                        processException(context, new InvalidTokenException("The access token was not issued for an End-User"));
                         return;
                     }
-                }
 
-                if (forceEndUserToken && token.getSub().equals(token.getAud())) {
-                    // token for end user must not contain clientId as subject
-                    processException(context, new InvalidTokenException("The access token was not issued for an End-User"));
-                    return;
-                }
+                    if (forceClientToken && !token.getSub().equals(token.getAud())) {
+                        // token for end user must not contain clientId as subject
+                        processException(context, new InvalidTokenException("The access token was not issued for a Client"));
+                        return;
+                    }
 
-                if (forceClientToken && !token.getSub().equals(token.getAud())) {
-                    // token for end user must not contain clientId as subject
-                    processException(context, new InvalidTokenException("The access token was not issued for a Client"));
-                    return;
-                }
-
-                // check required scope
-                if (requiredScope != null && !token.hasScope(requiredScope)) {
-                    processException(context, new InsufficientScopeException("Invalid access token scopes. The access token should have at least '" + requiredScope + "' scope"));
-                    return;
-                }
-                context.next();
+                    // check required scope
+                    if (requiredScope != null && !token.hasScope(requiredScope)) {
+                        processException(context, new InsufficientScopeException("Invalid access token scopes. The access token should have at least '" + requiredScope + "' scope"));
+                        return;
+                    }
+                    context.next();
+                }, error -> {
+                    log.warn("Unable to validate OAuth2 authorization", error);
+                    context.fail(error);
+                });
             });
         });
     }
@@ -151,13 +174,14 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
         this.forceClientToken = forceClientToken;
     }
 
-    public void selfResource(boolean selfResource, String resourceParameter) {
+    public void selfResource(boolean selfResource, String resourceParameter, boolean asUser) {
         this.selfResource = selfResource;
+        this.isSelfResourceAUser = asUser;
         this.resourceParameter = resourceParameter;
     }
 
-    public void selfResource(boolean selfResource, String resourceParameter, String requiredScope) {
-        selfResource(selfResource, resourceParameter);
+    public void selfResource(boolean selfResource, String resourceParameter, String requiredScope, boolean asUser) {
+        selfResource(selfResource, resourceParameter, asUser);
         this.resourceRequiredScope = requiredScope;
     }
 

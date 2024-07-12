@@ -25,6 +25,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
@@ -111,6 +112,9 @@ public class TokenServiceImpl implements TokenService {
     @Autowired
     private AuditService auditService;
 
+    @Autowired
+    private SubjectManager subjectManager;
+
     @Setter
     @Value("${handlers.oauth2.response.strict:false}")
     private boolean strictResponse = false;
@@ -161,7 +165,7 @@ public class TokenServiceImpl implements TokenService {
                             (refreshToken != null ? jwtService.encode(refreshToken, client).map(Optional::of) : Single.just(Optional.<String>empty())),
                             (encodedAccessToken, optionalEncodedRefreshToken) -> convert(accessToken, encodedAccessToken, optionalEncodedRefreshToken.orElse(null), oAuth2Request))
                             .flatMap(accessToken1 -> tokenEnhancer.enhance(accessToken1, oAuth2Request, client, endUser, executionContext))
-                            .flatMap(enhancedToken -> storeTokens(accessToken, refreshToken, oAuth2Request).toSingle(() -> enhancedToken))
+                            .flatMap(enhancedToken -> storeTokens(accessToken, refreshToken, oAuth2Request, endUser).toSingle(() -> enhancedToken))
                             .doOnSuccess(enhancedToken -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
                                     .accessToken(accessToken.getJti())
                                     .refreshToken(refreshToken != null ? refreshToken.getJti() : null)
@@ -231,23 +235,24 @@ public class TokenServiceImpl implements TokenService {
         return refreshTokenRepository.delete(refreshToken);
     }
 
-    private Completable storeTokens(JWT accessToken, JWT refreshToken, OAuth2Request oAuth2Request) {
+    private Completable storeTokens(JWT accessToken, JWT refreshToken, OAuth2Request oAuth2Request, User user) {
         // store access token
-        final Completable persistAccessToken = tokenManager.storeAccessToken(convert(accessToken, refreshToken,  oAuth2Request));
+        final Completable persistAccessToken = tokenManager.storeAccessToken(convert(accessToken, refreshToken,  oAuth2Request, user));
         // store refresh token (if exists)
         if (refreshToken != null) {
-            return persistAccessToken.andThen(tokenManager.storeRefreshToken(convert(refreshToken)));
+            return persistAccessToken.andThen(tokenManager.storeRefreshToken(convert(refreshToken, user)));
         }
         return persistAccessToken;
     }
 
-    private io.gravitee.am.repository.oauth2.model.AccessToken convert(JWT token, JWT refreshToken, OAuth2Request oAuth2Request) {
+    private io.gravitee.am.repository.oauth2.model.AccessToken convert(JWT token, JWT refreshToken, OAuth2Request oAuth2Request, User user) {
         io.gravitee.am.repository.oauth2.model.AccessToken accessToken = new io.gravitee.am.repository.oauth2.model.AccessToken();
         accessToken.setId(RandomString.generate());
         accessToken.setToken(token.getJti());
         accessToken.setDomain(token.getDomain());
         accessToken.setClient(token.getAud());
-        accessToken.setSubject(token.getSub());
+        // keep reference to userId in the storage, only outside world has to see the sub which maybe based on source+extId
+        accessToken.setSubject(user == null ? token.getSub() : user.getId());
         accessToken.setCreatedAt(new Date(token.getIat() * 1000));
         accessToken.setExpireAt(new Date(token.getExp() * 1000));
         // set authorization code
@@ -257,13 +262,14 @@ public class TokenServiceImpl implements TokenService {
         return accessToken;
     }
 
-    private io.gravitee.am.repository.oauth2.model.RefreshToken convert(JWT token) {
+    private io.gravitee.am.repository.oauth2.model.RefreshToken convert(JWT token, User user) {
         io.gravitee.am.repository.oauth2.model.RefreshToken refreshToken = new io.gravitee.am.repository.oauth2.model.RefreshToken();
         refreshToken.setId(RandomString.generate());
         refreshToken.setToken(token.getJti());
         refreshToken.setDomain(token.getDomain());
         refreshToken.setClient(token.getAud());
-        refreshToken.setSubject(token.getSub());
+        // keep reference to userId in the storage, only outside world has to see the sub which maybe based on source+extId
+        refreshToken.setSubject(user == null ? token.getSub() : user.getId());
         refreshToken.setCreatedAt(new Date(token.getIat() * 1000));
         refreshToken.setExpireAt(new Date(token.getExp() * 1000));
         return refreshToken;
@@ -365,7 +371,7 @@ public class TokenServiceImpl implements TokenService {
     private JWT createJWT(OAuth2Request oAuth2Request, Client client, User user) {
         JWT jwt = new JWT();
         jwt.setIss(openIDDiscoveryService.getIssuer(oAuth2Request.getOrigin()));
-        jwt.setSub(oAuth2Request.isClientOnly() ? client.getClientId() : user.getId());
+        jwt.setSub(oAuth2Request.isClientOnly() ? client.getClientId() : subjectManager.generateSubFrom(user));
         jwt.setAud(oAuth2Request.getClientId());
         jwt.setDomain(client.getDomain());
         jwt.setIat(Instant.now().getEpochSecond());

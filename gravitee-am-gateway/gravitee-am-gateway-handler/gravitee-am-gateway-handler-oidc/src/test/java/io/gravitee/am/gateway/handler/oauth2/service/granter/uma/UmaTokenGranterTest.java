@@ -22,6 +22,7 @@ import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
@@ -131,11 +132,14 @@ public class UmaTokenGranterTest {
     @Mock
     private JWT rpt;
 
+    @Mock
+    private SubjectManager subjectManager;
+
     @InjectMocks
     private UMATokenGranter umaTokenGranter = new UMATokenGranter(
             tokenService, userAuthenticationManager,
             permissionTicketService, resourceService,
-            jwtService, domain, executionContextFactory, rulesEngine
+            jwtService, domain, executionContextFactory, rulesEngine, subjectManager
     );
 
     private TokenRequest tokenRequest;
@@ -177,7 +181,7 @@ public class UmaTokenGranterTest {
         when(rpt.get("permissions")).thenReturn(new LinkedList(List.of(permission)));
         when(jwtService.decodeAndVerify(RQP_ID_TOKEN, client, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
         when(jwtService.decodeAndVerify(RPT_OLD_TOKEN, client, ACCESS_TOKEN)).thenReturn(Single.just(rpt));
-        when(userAuthenticationManager.loadPreAuthenticatedUser(USER_ID, tokenRequest)).thenReturn(Maybe.just(user));
+        when(userAuthenticationManager.loadPreAuthenticatedUserBySub(USER_ID, tokenRequest)).thenReturn(Maybe.just(user));
         when(permissionTicketService.remove(TICKET_ID)).thenReturn(Single.just(new PermissionTicket().setId(TICKET_ID).setPermissionRequest(permissions)));
         when(resourceService.findByResources(Arrays.asList(RS_ONE, RS_TWO))).thenReturn(Flowable.just(
                 new Resource().setId(RS_ONE).setResourceScopes(Arrays.asList("scopeA", "scopeB", "scopeC")),
@@ -185,6 +189,7 @@ public class UmaTokenGranterTest {
         ));
         when(tokenService.create(oauth2RequestCaptor.capture(), eq(client), any())).thenReturn(Single.just(new AccessToken("success")));
         when(resourceService.findAccessPoliciesByResources(anyList())).thenReturn(Flowable.empty());
+        when(subjectManager.generateSubFrom(any())).thenReturn(USER_ID);
     }
 
     @Test
@@ -236,14 +241,14 @@ public class UmaTokenGranterTest {
 
     @Test
     public void grant_user_technicalException() {
-        when(userAuthenticationManager.loadPreAuthenticatedUser(USER_ID, tokenRequest)).thenReturn(Maybe.error(TechnicalException::new));
+        when(userAuthenticationManager.loadPreAuthenticatedUserBySub(USER_ID, tokenRequest)).thenReturn(Maybe.error(TechnicalException::new));
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
         testObserver.assertNotComplete().assertError(UmaException.class).assertError(this::assertNeedInfo);
     }
 
     @Test
     public void grant_user_notFound() {
-        when(userAuthenticationManager.loadPreAuthenticatedUser(USER_ID, tokenRequest)).thenReturn(Maybe.empty());
+        when(userAuthenticationManager.loadPreAuthenticatedUserBySub(USER_ID, tokenRequest)).thenReturn(Maybe.empty());
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
         testObserver.assertNotComplete().assertError(UmaException.class).assertError(this::assertNeedInfo);
     }

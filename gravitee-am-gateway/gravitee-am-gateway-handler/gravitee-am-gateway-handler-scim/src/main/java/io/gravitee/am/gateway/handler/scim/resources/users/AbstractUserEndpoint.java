@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.scim.resources.users;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
@@ -26,6 +27,7 @@ import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Domain;
+import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -47,11 +49,13 @@ public class AbstractUserEndpoint {
     protected UserService userService;
     protected ObjectMapper objectMapper;
     private Domain domain;
+    protected SubjectManager subjectManager;
 
-    public AbstractUserEndpoint(Domain domain, UserService userService, ObjectMapper objectMapper) {
+    public AbstractUserEndpoint(Domain domain, UserService userService, ObjectMapper objectMapper, SubjectManager subjectManager) {
         this.domain = domain;
         this.userService = userService;
         this.objectMapper = objectMapper;
+        this.subjectManager = subjectManager;
     }
 
     protected void checkSchemas(List<String> schemas, List<String> restrictedSchemas) {
@@ -97,5 +101,9 @@ public class AbstractUserEndpoint {
             return Json.decodeValue(body, GraviteeUser.class);
         }
         return Json.decodeValue(body, User.class);
+    }
+
+    protected Maybe<io.gravitee.am.identityprovider.api.User> principal(String sub) {
+        return this.subjectManager.getPrincipal(sub);
     }
 }

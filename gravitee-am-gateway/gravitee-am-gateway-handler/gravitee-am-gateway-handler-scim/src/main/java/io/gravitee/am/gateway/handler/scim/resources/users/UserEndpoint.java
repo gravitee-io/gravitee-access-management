@@ -19,13 +19,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.scim.Schema;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
-import io.gravitee.am.gateway.handler.scim.mapper.UserMapper;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
-import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
@@ -48,8 +47,8 @@ import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
  */
 public class UserEndpoint extends AbstractUserEndpoint {
 
-    public UserEndpoint(Domain domain, UserService userService, ObjectMapper objectMapper) {
-        super(domain, userService, objectMapper);
+    public UserEndpoint(Domain domain, UserService userService, ObjectMapper objectMapper, SubjectManager subjectManager) {
+        super(domain, userService, objectMapper, subjectManager);
     }
 
     public void get(RoutingContext context) {
@@ -133,8 +132,7 @@ public class UserEndpoint extends AbstractUserEndpoint {
 
             final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
             final String baseUrl = location(context.request());
-            userService.get(accessToken.getSub(), baseUrl)
-                    .map(scimUser -> new DefaultUser(UserMapper.convert(scimUser)))
+            principal(accessToken.getSub())
                     .map(Optional::ofNullable)
                     .switchIfEmpty(Maybe.just(Optional.empty()))
                     .flatMapSingle(optPrincipal -> userService.update(userId, user, source, baseUrl, optPrincipal.orElse(null), context.get(CLIENT_CONTEXT_KEY)))
@@ -208,8 +206,7 @@ public class UserEndpoint extends AbstractUserEndpoint {
 
             final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
             final String baseUrl = location(context.request());
-            userService.get(accessToken.getSub(), baseUrl)
-                    .map(scimUser -> new DefaultUser(UserMapper.convert(scimUser)))
+            principal(accessToken.getSub())
                     .map(Optional::ofNullable)
                     .switchIfEmpty(Maybe.just(Optional.empty()))
                     .flatMapSingle(optPrincipal -> userService.patch(userId, patchOp, source, baseUrl, optPrincipal.orElse(null), context.get(CLIENT_CONTEXT_KEY)))
@@ -248,8 +245,7 @@ public class UserEndpoint extends AbstractUserEndpoint {
         final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
 
         final String baseUrl = location(context.request());
-        userService.get(accessToken.getSub(), baseUrl)
-                .map(scimUser -> new DefaultUser(UserMapper.convert(scimUser)))
+        principal(accessToken.getSub())
                 .map(Optional::ofNullable)
                 .switchIfEmpty(Maybe.just(Optional.empty()))
                 .flatMapCompletable(optPrincipal -> userService.delete(userId, optPrincipal.orElse(null)))
