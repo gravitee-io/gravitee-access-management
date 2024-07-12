@@ -22,6 +22,7 @@ import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
@@ -73,6 +74,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
     private final JWTService jwtService;
     private final JWEService jweService;
     private final OpenIDDiscoveryService openIDDiscoveryService;
+    private final SubjectManager subjectManager;
 
     private final boolean legacyOpenidScope;
 
@@ -80,12 +82,14 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
                             JWTService jwtService,
                             JWEService jweService,
                             OpenIDDiscoveryService openIDDiscoveryService,
-                            Environment environment) {
+                            Environment environment,
+                            SubjectManager subjectManager) {
         this.userService = userService;
         this.jwtService = jwtService;
         this.jweService = jweService;
         this.openIDDiscoveryService = openIDDiscoveryService;
         this.legacyOpenidScope = environment.getProperty("legacy.openid.openid_scope_full_profile", boolean.class, false);
+        this.subjectManager = subjectManager;
     }
 
     @Override
@@ -93,7 +97,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
         JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
         Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         String subject = accessToken.getSub();
-        userService.findById(subject)
+        subjectManager.findUserBySub(subject)
                 .switchIfEmpty(Single.error(() -> new InvalidTokenException("No user found for this token")))
                 // enhance user information
                 .flatMap(user -> enhance(user, accessToken))
@@ -165,9 +169,10 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
         ID_TOKEN_EXCLUDED_CLAIMS.forEach(userClaims::remove);
 
         // Exchange the sub claim from the identity provider to its technical id
-        userClaims.put(StandardClaims.SUB, user.getId());
+        final var sub = subjectManager.generateSubFrom(user);
+        userClaims.put(StandardClaims.SUB, sub);
         // SUB claim is required
-        requestedClaims.put(StandardClaims.SUB, user.getId());
+        requestedClaims.put(StandardClaims.SUB, sub);
 
         return (requestForSpecificClaims) ? requestedClaims : userClaims;
     }

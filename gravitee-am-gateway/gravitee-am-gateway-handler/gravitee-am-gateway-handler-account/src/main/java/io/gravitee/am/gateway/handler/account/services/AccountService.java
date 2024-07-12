@@ -38,7 +38,9 @@ import java.util.Optional;
  */
 public interface AccountService {
 
-    Maybe<User> get(String userId);
+    Maybe<User> getBySub(String sub);
+
+    Maybe<User> getByUserId(String userId);
 
     Single<Page<Audit>> getActivity(User user, AuditReportableCriteria criteria, int page, int size);
 

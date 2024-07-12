@@ -16,11 +16,11 @@
 package io.gravitee.am.gateway.handler.oauth2.service.introspection;
 
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.impl.IntrospectionServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.model.User;
-import io.gravitee.am.service.UserService;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -50,7 +50,7 @@ public class IntrospectionServiceTest {
     private TokenService tokenService;
 
     @Mock
-    private UserService userService;
+    private SubjectManager subjectManager;
 
     @Test
     public void shouldSearchForAUser() {
@@ -59,7 +59,7 @@ public class IntrospectionServiceTest {
         accessToken.setSubject("user");
         accessToken.setClientId("client-id");
         when(tokenService.introspect("token")).thenReturn(Single.just(accessToken));
-        when(userService.findById("user")).thenReturn(Maybe.just(new User()));
+        when(subjectManager.findUserBySub("user")).thenReturn(Maybe.just(new User()));
 
         IntrospectionRequest introspectionRequest = new IntrospectionRequest(token);
         TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
@@ -67,7 +67,7 @@ public class IntrospectionServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        verify(userService, times(1)).findById("user");
+        verify(subjectManager, times(1)).findUserBySub("user");
     }
 
     @Test
@@ -84,7 +84,7 @@ public class IntrospectionServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        verify(userService, never()).findById(anyString());
+        verify(subjectManager, never()).findUserBySub(anyString());
     }
 
     @Test

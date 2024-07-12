@@ -71,6 +71,11 @@ public class CookieSession extends AbstractSession {
         super.put(CookieSessionHandler.USER_ID_KEY, obj);
     }
 
+    Session putUserSub(Object obj) {
+        super.put(CookieSessionHandler.USER_SUB_KEY, obj);
+        return this;
+    }
+
     @Override
     public Session put(String key, Object obj) {
         // Do not allow to push a userId key to avoid session compromise

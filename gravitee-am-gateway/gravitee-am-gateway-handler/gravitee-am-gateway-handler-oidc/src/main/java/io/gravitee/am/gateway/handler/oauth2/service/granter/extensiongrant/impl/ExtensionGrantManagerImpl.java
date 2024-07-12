@@ -17,19 +17,23 @@ package io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.imp
 
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.ExtensionGrantEvent;
+import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.CompositeTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.ExtensionGrantGranter;
+import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.ExtensionGrantGranterV2;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.ExtensionGrantManager;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
@@ -94,6 +98,9 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
 
     @Autowired
     private RulesEngine rulesEngine;
+
+    @Autowired
+    private SubjectManager subjectManager;
 
     @Override
     public void afterPropertiesSet() {
@@ -183,16 +190,7 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
 
                 var providerConfiguration = new ExtensionGrantProviderConfiguration(extensionGrant, authenticationProvider);
                 var extensionGrantProvider = extensionGrantPluginManager.create(providerConfiguration);
-                ExtensionGrantGranter extensionGrantGranter =
-                        new ExtensionGrantGranter(
-                                extensionGrantProvider,
-                                extensionGrant,
-                                userAuthenticationManager,
-                                tokenService,
-                                tokenRequestResolver,
-                                identityProviderManager,
-                                userService,
-                                rulesEngine);
+                var extensionGrantGranter = buildGranter(extensionGrant, extensionGrantProvider);
                 // backward compatibility, set min date to the extension grant granter to choose the good one for the old clients
                 extensionGrantGranter.setMinDate(minDate);
                 ((CompositeTokenGranter) tokenGranter).addTokenGranter(extensionGrant.getId(), extensionGrantGranter);
@@ -205,6 +203,32 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
             // failed to load the plugin
             logger.error("An error occurs while initializing the extension grant : {}", extensionGrant.getName(), ex);
             removeExtensionGrant(extensionGrant.getId());
+        }
+    }
+
+    private ExtensionGrantGranter buildGranter(ExtensionGrant extensionGrant, ExtensionGrantProvider extensionGrantProvider) {
+        if (domain.getVersion() == DomainVersion.V1_0) {
+            return new ExtensionGrantGranter(
+                            extensionGrantProvider,
+                            extensionGrant,
+                            userAuthenticationManager,
+                            tokenService,
+                            tokenRequestResolver,
+                            identityProviderManager,
+                            userService,
+                            rulesEngine);
+        } else {
+            return new ExtensionGrantGranterV2(
+                    extensionGrantProvider,
+                    extensionGrant,
+                    userAuthenticationManager,
+                    tokenService,
+                    tokenRequestResolver,
+                    identityProviderManager,
+                    userService,
+                    rulesEngine,
+                    domain,
+                    subjectManager);
         }
     }
 

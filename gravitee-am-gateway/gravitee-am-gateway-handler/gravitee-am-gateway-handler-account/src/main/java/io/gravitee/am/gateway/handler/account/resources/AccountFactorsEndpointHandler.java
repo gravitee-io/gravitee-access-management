@@ -488,8 +488,9 @@ public class AccountFactorsEndpointHandler {
                 () -> {
                     final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
                     //Need updated user data after recovery code generation, hence the accountService call
-                    accountService.get(user.getId()).subscribe(
-                            usr -> AccountResponseHandler.handleDefaultResponse(routingContext, getUserRecoveryCodes(usr))
+                    accountService.getByUserId(user.getId()).subscribe(
+                            usr -> AccountResponseHandler.handleDefaultResponse(routingContext, getUserRecoveryCodes(usr)),
+                            routingContext::fail
                     );
                 },
                 routingContext::fail

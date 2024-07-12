@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "c3b6f33b-c3c1-458b-813f-d21d15284077",
+		"_postman_id": "d34f4753-8921-4de7-8781-ffee8b82ed31",
 		"name": "Gravitee.io - AM - Oauth2 - app version",
 		"description": "Test Oauth2 (RFC 6749) specifications",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
@@ -11644,7 +11644,8 @@
 											"}",
 											""
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],
@@ -12060,6 +12061,73 @@
 										"domains",
 										"{{domain}}",
 										"groups"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search User to get userId",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200 and user is found\", function () {",
+											"    pm.response.to.have.status(200);",
+											"        ",
+											"    var body = pm.response.json();",
+											"    tests['Contains a data array'] = body.data !== undefined;",
+											"    tests['Contains a data array not empty'] = body.data.length > 0;",
+											"    ",
+											"    pm.environment.set('memberId', body.data[0].id);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t \"tokenCustomClaims\" : [\n\t\t  \t{\n\t\t  \t\t\"tokenType\": \"ID_TOKEN\",\n\t\t  \t\t\"claimName\": \"custom-claim\",\n\t\t  \t\t\"claimValue\": \"{#context.attributes['user'].groups}\"\n\t\t  \t}\n\t\t  ]\n  \t}\n  }\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users?q=user*",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"users"
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "user*"
+										}
 									]
 								}
 							},
@@ -15918,6 +15986,73 @@
 									"raw": "{{introspectionEndpoint}}",
 									"host": [
 										"{{introspectionEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search User to get userId On consent usecase",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200 and user is found\", function () {",
+											"    pm.response.to.have.status(200);",
+											"        ",
+											"    var body = pm.response.json();",
+											"    tests['Contains a data array'] = body.data !== undefined;",
+											"    tests['Contains a data array not empty'] = body.data.length > 0;",
+											"    ",
+											"    pm.environment.set('consentUserId', body.data[0].id);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t \"tokenCustomClaims\" : [\n\t\t  \t{\n\t\t  \t\t\"tokenType\": \"ID_TOKEN\",\n\t\t  \t\t\"claimName\": \"custom-claim\",\n\t\t  \t\t\"claimValue\": \"{#context.attributes['user'].groups}\"\n\t\t  \t}\n\t\t  ]\n  \t}\n  }\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users?q=user*",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"users"
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "user*"
+										}
 									]
 								}
 							},

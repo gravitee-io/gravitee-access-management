@@ -21,6 +21,7 @@ import io.gravitee.am.common.oidc.CustomClaims;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthResponse;
@@ -48,12 +49,16 @@ import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.env.Environment;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
@@ -65,6 +70,9 @@ import static org.mockito.Mockito.when;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class UserInfoEndpointHandlerTest extends RxWebTestBase {
+
+    @Mock
+    private SubjectManager subjectManager;
 
     @Mock
     private UserService userService;
@@ -88,7 +96,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         super.setUp();
 
         when(env.getProperty("legacy.openid.openid_scope_full_profile", boolean.class, false)).thenReturn(false);
-        userInfoEndpoint = new UserInfoEndpoint(userService, jwtService, jweService, openIDDiscoveryService, env);
+        userInfoEndpoint = new UserInfoEndpoint(userService, jwtService, jweService, openIDDiscoveryService, env, subjectManager);
 
         router.route(HttpMethod.GET, "/userinfo")
                 .handler(userInfoEndpoint);
@@ -207,7 +215,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
-        when(userService.findById(anyString())).thenReturn(Maybe.empty());
+        when(subjectManager.findUserBySub(anyString())).thenReturn(Maybe.empty());
 
         testRequest(
                 HttpMethod.GET, "/userinfo", req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
@@ -268,7 +276,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
-        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+        when(subjectManager.findUserBySub(anyString())).thenReturn(Maybe.just(user));
 
         testRequest(
                 HttpMethod.GET, "/userinfo", req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
@@ -294,7 +302,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
                 .handler(BodyHandler.create())
                 .handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
-        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+        when(subjectManager.findUserBySub(anyString())).thenReturn(Maybe.just(user));
 
         testRequest(
                 HttpMethod.POST, "/userinfo", req ->
@@ -324,7 +332,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
-        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+        when(subjectManager.findUserBySub(anyString())).thenReturn(Maybe.just(user));
 
         testRequest(
                 HttpMethod.GET, "/userinfo?access_token=test-token",
@@ -348,7 +356,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
         User user = createUser();
 
-        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+        when(subjectManager.findUserBySub(anyString())).thenReturn(Maybe.just(user));
 
         testRequest(
                 HttpMethod.GET,
@@ -379,7 +387,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
         User user = createUser();
 
-        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+        when(subjectManager.findUserBySub(anyString())).thenReturn(Maybe.just(user));
 
         testRequest(
                 HttpMethod.GET,
@@ -409,7 +417,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
         User user = createUser();
 
-        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+        when(subjectManager.findUserBySub(anyString())).thenReturn(Maybe.just(user));
 
         testRequest(
                 HttpMethod.GET,
@@ -441,7 +449,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
         User user = createUser();
 
-        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+        when(subjectManager.findUserBySub(anyString())).thenReturn(Maybe.just(user));
 
         testRequest(
                 HttpMethod.GET,
@@ -474,7 +482,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
         User user = createUser();
 
-        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+        when(subjectManager.findUserBySub(anyString())).thenReturn(Maybe.just(user));
         when(userService.enhance(user)).thenReturn(Single.just(user));
 
         testRequest(
@@ -515,7 +523,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         User user = createUser();
         user.setRoles(Arrays.asList("role1", "role2"));
         user.setRolesPermissions(new HashSet<>(Arrays.asList(role1, role2)));
-        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+        when(subjectManager.findUserBySub(anyString())).thenReturn(Maybe.just(user));
         when(userService.enhance(user)).thenReturn(Single.just(user));
 
         testRequest(
@@ -548,7 +556,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
         User user = createUser();
 
-        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+        when(subjectManager.findUserBySub(anyString())).thenReturn(Maybe.just(user));
         when(userService.enhance(user)).thenReturn(Single.just(user));
 
         testRequest(
@@ -580,7 +588,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
         User user = createUser();
         user.setGroups(Arrays.asList("group-1", "group-2"));
-        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+        when(subjectManager.findUserBySub(anyString())).thenReturn(Maybe.just(user));
         when(userService.enhance(user)).thenReturn(Single.just(user));
 
         testRequest(
@@ -622,7 +630,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         User user = createUser();
         user.setGroups(Arrays.asList("group-1", "group-2"));
         user.setRolesPermissions(new HashSet<>(Arrays.asList(role1, role2)));
-        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+        when(subjectManager.findUserBySub(anyString())).thenReturn(Maybe.just(user));
         when(userService.enhance(user)).thenReturn(Single.just(user));
 
         testRequest(
@@ -666,7 +674,8 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         User user = createUser();
         user.setRolesPermissions(new HashSet<>(Arrays.asList(role1, role2)));
         user.setGroups(Arrays.asList("group-1", "group-2"));
-        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+        when(subjectManager.findUserBySub(anyString())).thenReturn(Maybe.just(user));
+        when(subjectManager.generateSubFrom(any())).thenReturn(user.getId());
         when(userService.enhance(user)).thenReturn(Single.just(user));
 
         testRequest(
@@ -705,7 +714,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
         User user = createUser();
 
-        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+        when(subjectManager.findUserBySub(anyString())).thenReturn(Maybe.just(user));
 
         testRequest(
                 HttpMethod.GET,
@@ -744,7 +753,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
         User user = createUser();
 
-        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+        when(subjectManager.findUserBySub(anyString())).thenReturn(Maybe.just(user));
         when(jwtService.encodeUserinfo(any(),any())).thenReturn(Single.just("signedJwtBearer"));
         when(jweService.encryptUserinfo("signedJwtBearer",client)).thenReturn(Single.just("signedJwtBearer"));
 

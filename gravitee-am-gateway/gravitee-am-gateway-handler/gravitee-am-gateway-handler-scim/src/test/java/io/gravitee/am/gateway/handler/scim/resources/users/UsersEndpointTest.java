@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.scim.resources.users;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import io.gravitee.am.common.scim.filter.Filter;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.scim.model.ListResponse;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
@@ -53,8 +54,11 @@ public class UsersEndpointTest extends RxWebTestBase {
     @Mock
     private Domain domain;
 
+    @Mock
+    private SubjectManager subjectManager;
+
     @InjectMocks
-    private UsersEndpoint usersEndpoint = new UsersEndpoint(domain, userService, objectMapper);
+    private UsersEndpoint usersEndpoint = new UsersEndpoint(domain, userService, objectMapper, subjectManager);
 
     @Override
     public void setUp() throws Exception {
