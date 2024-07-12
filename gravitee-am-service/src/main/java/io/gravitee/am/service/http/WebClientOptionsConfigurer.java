@@ -81,8 +81,8 @@ class WebClientOptionsConfigurer {
         options.setKeyStoreOptions(keyStoreOptions);
 
         JksOptions trustOptions = new JksOptions();
-        trustOptions.setPassword(DefaultTrustStoreProvider.defaultTrustStorePassword());
-        trustOptions.setPath(DefaultTrustStoreProvider.defaultTrustStorePath());
+        trustOptions.setPassword(DefaultTrustStoreProvider.getDefaultTrustStorePassword());
+        trustOptions.setPath(DefaultTrustStoreProvider.getDefaultTrustStorePath());
         options.setTrustStoreOptions(trustOptions);
     }
 
