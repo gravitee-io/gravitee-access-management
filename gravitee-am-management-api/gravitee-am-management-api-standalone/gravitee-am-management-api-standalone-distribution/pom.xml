@@ -151,7 +151,7 @@
         <dependency>
             <groupId>com.graviteesource.am.certificate</groupId>
             <artifactId>gravitee-am-certificate-aws</artifactId>
-            <version>1.0.0-alpha.6</version>
+            <version>1.0.0-alpha.7</version>
             <type>zip</type>
             <scope>runtime</scope>
         </dependency>
@@ -527,7 +527,7 @@
                                 <artifactItem>
                                     <groupId>com.graviteesource.am.certificate</groupId>
                                     <artifactId>gravitee-am-certificate-aws</artifactId>
-                                    <version>1.0.0-alpha.6</version>
+                                    <version>1.0.0-alpha.7</version>
                                     <type>zip</type>
                                 </artifactItem>
 
