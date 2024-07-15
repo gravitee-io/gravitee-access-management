@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 import { DomainService } from '../services/domain.service';
@@ -35,7 +35,6 @@ export class EnvironmentComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private route: ActivatedRoute,
     private domainService: DomainService,
     private authService: AuthService,
     private navbarService: NavbarService,
@@ -52,7 +51,7 @@ export class EnvironmentComponent implements OnInit {
     // redirect user to the first domain, if any.
     this.domainService.list().subscribe((response) => {
       if (response.data && response.data.length > 0) {
-        this.router.navigate(['domains', response.data[0].hrid], { relativeTo: this.route });
+        this.router.navigate(['/environments', this.currentEnvironment.name, 'domains', response.data[0].hrid]);
       } else {
         this.isLoading = false;
         this.readonly = !this.authService.hasPermissions(['domain_create']);
