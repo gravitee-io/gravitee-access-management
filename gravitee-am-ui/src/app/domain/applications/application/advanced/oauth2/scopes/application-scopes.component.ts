@@ -56,7 +56,7 @@ export class ApplicationScopesComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.application = structuredClone(this.route.snapshot.data['application']);
-    this.scopes = { ...this.route.snapshot.data['scopes'] };
+    this.scopes = structuredClone(this.route.snapshot.data['scopes']);
     this.applicationOauthSettings = this.application.settings == null ? {} : this.application.settings.oauth || {};
     this.applicationOauthSettings.scopes = this.applicationOauthSettings.scopes || [];
     this.readonly = !this.authService.hasPermissions(['application_openid_update']);
