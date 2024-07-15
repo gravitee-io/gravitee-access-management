@@ -80,21 +80,23 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
      */
     private final Logger LOGGER = LoggerFactory.getLogger(IdentityProviderServiceImpl.class);
 
-    @Lazy
-    @Autowired
-    private IdentityProviderRepository identityProviderRepository;
+    private final IdentityProviderRepository identityProviderRepository;
+    private final ApplicationService applicationService;
+    private final EventService eventService;
+    private final AuditService auditService;
+    private final ObjectMapper objectMapper;
 
-    @Autowired
-    private ApplicationService applicationService;
-
-    @Autowired
-    private EventService eventService;
-
-    @Autowired
-    private AuditService auditService;
-
-    @Autowired
-    private ObjectMapper objectMapper;
+    public IdentityProviderServiceImpl(@Lazy IdentityProviderRepository identityProviderRepository,
+                                       ApplicationService applicationService,
+                                       EventService eventService,
+                                       AuditService auditService,
+                                       ObjectMapper objectMapper) {
+        this.identityProviderRepository = identityProviderRepository;
+        this.applicationService = applicationService;
+        this.eventService = eventService;
+        this.auditService = auditService;
+        this.objectMapper = objectMapper;
+    }
 
     @Override
     public Flowable<IdentityProvider> findAll() {
