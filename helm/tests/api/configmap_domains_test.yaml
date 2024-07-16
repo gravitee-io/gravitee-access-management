@@ -34,4 +34,36 @@ tests:
             domains:
               reporters:
                 default: .+
+  - it: should paste in the domain identities' config
+    template: api/api-configmap.yaml
+    set:
+      domains:
+        identities: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - notMatchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            domains:
+              identities:
+                default: true
+  - it: should leave identities config blank if not provided
+    template: api/api-configmap.yaml
+    set:
+      domains:
+        identities: ""
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - notMatchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            domains:
+              identities:
+                default: .+          
       

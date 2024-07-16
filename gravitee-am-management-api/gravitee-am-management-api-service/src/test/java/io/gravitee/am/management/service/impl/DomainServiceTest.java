@@ -18,6 +18,8 @@ package io.gravitee.am.management.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.management.service.DefaultIdentityProviderService;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.AuthenticationDeviceNotifier;
@@ -102,12 +104,12 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -136,7 +138,7 @@ import static org.mockito.Mockito.when;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class DomainServiceTest {
 
     private static final String DOMAIN_ID = "id-domain";
@@ -307,7 +309,7 @@ public class DomainServiceTest {
     private DomainReadService domainReadService;
 
     @Mock
-    private IdentityProviderManager identityProviderManager;
+    private DefaultIdentityProviderService defaultIdentityProviderService;
 
 
     @Test
@@ -367,9 +369,9 @@ public class DomainServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(membershipService.addOrUpdate(eq(ORGANIZATION_ID), any())).thenReturn(Single.just(new Membership()));
         when(roleService.findSystemRole(SystemRole.DOMAIN_PRIMARY_OWNER, DOMAIN)).thenReturn(Maybe.just(new Role()));
-        when(reporterService.createDefault(any())).thenReturn(Single.just(new Reporter()));
-        when(identityProviderManager.create(any())).thenReturn(Single.just(new IdentityProvider()));
         when(reporterService.notifyInheritedReporters(any(),any(),any())).thenReturn(Completable.complete());
+        when(reporterService.createDefault(any())).thenReturn(Single.just(new Reporter()));
+        when(defaultIdentityProviderService.create(any())).thenReturn(Single.just(new IdentityProvider()));
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
 
@@ -386,7 +388,8 @@ public class DomainServiceTest {
         verify(eventService).create(any());
         verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
         verify(reporterService).createDefault(Reference.domain(domain.getId()));
-        verify(identityProviderManager).create(any());
+        verify(reporterService).notifyInheritedReporters(any(), any(), any());
+        verify(defaultIdentityProviderService).create(any());
         verify(auditService).report(argThat(builder -> {
             var audit = builder.build(OBJECT_MAPPER);
             return audit.getReferenceType().equals(ORGANIZATION) && audit.getReferenceId().equals(ORGANIZATION_ID);
@@ -413,8 +416,8 @@ public class DomainServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(membershipService.addOrUpdate(eq(ORGANIZATION_ID), any())).thenReturn(Single.just(new Membership()));
         when(roleService.findSystemRole(SystemRole.DOMAIN_PRIMARY_OWNER, DOMAIN)).thenReturn(Maybe.just(new Role()));
-        when(identityProviderManager.create(any())).thenReturn(Single.just(new IdentityProvider()));
         when(reporterService.notifyInheritedReporters(any(),any(),any())).thenReturn(Completable.complete());
+        when(defaultIdentityProviderService.create(any())).thenReturn(Single.just(new IdentityProvider()));
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
 
@@ -431,6 +434,54 @@ public class DomainServiceTest {
         verify(eventService).create(any());
         verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
         verify(reporterService, never()).createDefault(any());
+        verify(reporterService).notifyInheritedReporters(any(), any(), any());
+
+        verify(auditService).report(argThat(builder -> {
+            var audit = builder.build(OBJECT_MAPPER);
+            return audit.getReferenceType().equals(ORGANIZATION) && audit.getReferenceId().equals(ORGANIZATION_ID);
+        }));
+    }
+
+    @Test
+    public void shouldCreate_withoutDefaultIdp() {
+        var underTest = domainService.withCreateDefaultIdentityProvider(false);
+
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainReadService.listAll()).thenReturn(Flowable.empty());
+        Domain domain = new Domain();
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setId("domain-id");
+        domain.setVersion(DomainVersion.V2_0);
+        when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
+        when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
+        when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
+        when(certificateService.create(eq(domain.getId()))).thenReturn(Single.just(new Certificate()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(membershipService.addOrUpdate(eq(ORGANIZATION_ID), any())).thenReturn(Single.just(new Membership()));
+        when(reporterService.createDefault(any())).thenReturn(Single.just(new Reporter()));
+        when(reporterService.notifyInheritedReporters(any(),any(),any())).thenReturn(Completable.complete());
+        when(roleService.findSystemRole(SystemRole.DOMAIN_PRIMARY_OWNER, DOMAIN)).thenReturn(Maybe.just(new Role()));
+        doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
+        doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+
+        underTest.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain, new DefaultUser("username"))
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(domainRepository, times(1)).findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain");
+        verify(domainRepository, times(1)).create(argThat(argDomain -> argDomain.getVersion().equals(domain.getVersion())));
+        verify(scopeService, times(io.gravitee.am.common.oidc.Scope.values().length)).create(anyString(), any(NewSystemScope.class));
+        verify(certificateService).create(eq(domain.getId()));
+        verify(eventService).create(any());
+        verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
+        verify(reporterService).createDefault(Reference.domain(domain.getId()));
+        verify(reporterService).notifyInheritedReporters(any(), any(), any());
+        verify(defaultIdentityProviderService, never()).create(any());
 
         verify(auditService).report(argThat(builder -> {
             var audit = builder.build(OBJECT_MAPPER);
