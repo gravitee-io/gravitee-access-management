@@ -15,10 +15,28 @@
  */
 package io.gravitee.am.management.service;
 
-import io.gravitee.am.service.CertificateService;
+import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.service.impl.CertificateEntity;
+import io.gravitee.am.model.Certificate;
+import io.gravitee.am.service.model.NewCertificate;
+import io.gravitee.am.service.model.UpdateCertificate;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 
-/**
- * @author Rémi SULTAN (remi.sultan at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface CertificateServiceProxy extends CertificateService {}
+import java.util.List;
+
+public interface CertificateServiceProxy {
+
+    Maybe<Certificate> findById(String id);
+
+    Single<List<CertificateEntity>> findByDomainAndUse(String domain, String use);
+
+    Single<Certificate> create(String domain, NewCertificate newCertificate, User principal);
+
+    Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, User principal);
+
+    Completable delete(String certificateId, User principal);
+
+    Single<Certificate> rotate(String domain, User principal);
+}
