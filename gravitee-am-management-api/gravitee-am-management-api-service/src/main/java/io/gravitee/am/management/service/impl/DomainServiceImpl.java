@@ -24,6 +24,7 @@ import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
@@ -50,7 +51,6 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationDeviceNotifierService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DomainReadService;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.EmailTemplateService;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.EventService;
@@ -98,9 +98,14 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.rxjava3.core.MultiMap;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.With;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
@@ -120,7 +125,6 @@ import java.util.stream.Collectors;
 import static io.gravitee.am.common.web.UriBuilder.isHttp;
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static io.gravitee.am.model.ReferenceType.ORGANIZATION;
-import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 
@@ -131,6 +135,8 @@ import static java.util.Optional.ofNullable;
  */
 @Component
 @Primary
+@AllArgsConstructor
+@NoArgsConstructor
 public class DomainServiceImpl implements DomainService {
     /**
      * According to https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#auth_request
@@ -246,6 +252,10 @@ public class DomainServiceImpl implements DomainService {
     @Autowired
     private IdentityProviderManager identityProviderManager;
 
+    @With(AccessLevel.PACKAGE) // to make test setup less painful
+    @Value("${domains.reporters.default.enabled:true}")
+    private boolean createDefaultReporters;
+
     @Override
     public Maybe<Domain> findById(String id) {
         return domainReadService.findById(id);
@@ -345,7 +355,7 @@ public class DomainServiceImpl implements DomainService {
                         domain.setUpdatedAt(domain.getCreatedAt());
 
                         return environmentService.findById(domain.getReferenceId())
-                                .doOnSuccess(environment  -> setDeployMode(domain, environment))
+                                .doOnSuccess(environment -> setDeployMode(domain, environment))
                                 .flatMapCompletable(environment -> validateDomain(domain, environment))
                                 .andThen(Single.defer(() -> domainRepository.create(domain)));
                     }
@@ -384,7 +394,13 @@ public class DomainServiceImpl implements DomainService {
                 })
                 .flatMap(domain -> identityProviderManager.create(domain.getId()).map(__ -> domain))
                 // create default reporter
-                .flatMap(domain -> reporterService.createDefault(Reference.domain(domain.getId())).map(__ -> domain))
+                .flatMap(domain -> {
+                        if (!createDefaultReporters) {
+                        return Single.just(domain);
+                    }
+                    //default behaviour
+                    return reporterService.createDefault(Reference.domain(domain.getId())).map(__ -> domain);
+                })
                 // create event for sync process
                 .flatMap(domain -> {
                     Event event = new Event(Type.DOMAIN, new Payload(domain.getId(), DOMAIN, domain.getId(), Action.CREATE));

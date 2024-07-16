@@ -37,7 +37,6 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.impl.application.DomainReadServiceImpl;
 import io.reactivex.rxjava3.core.Flowable;
@@ -192,7 +191,7 @@ public class EmailServiceImplTest {
                 freemarkerConfiguration,
                 auditService,
                 jwtBuilder,
-                new DomainServiceImpl(),
+                new DomainServiceImpl(true),
                 i18nDictionaryService,
                 environment
         );
