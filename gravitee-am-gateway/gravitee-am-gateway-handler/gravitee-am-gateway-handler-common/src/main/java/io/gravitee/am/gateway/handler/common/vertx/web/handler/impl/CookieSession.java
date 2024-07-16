@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.certificate.CertificateProvider;
+import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.ext.auth.VertxContextPRNG;
@@ -40,22 +40,22 @@ import static io.vertx.rxjava3.ext.web.sstore.cookie.CookieSessionStore.DEFAULT_
 public class CookieSession extends AbstractSession {
 
     private final JWTService jwtService;
-    private final CertificateProvider certificateProvider;
+    private final CertificateManager certificateManager;
     private Date lastLogin;
 
-    public CookieSession(JWTService jwtService, CertificateProvider certificateProvider, long timeout) {
+    public CookieSession(JWTService jwtService, CertificateManager certificateManager, long timeout) {
         super(VertxContextPRNG.current(), timeout, DEFAULT_SESSIONID_LENGTH);
         this.jwtService = jwtService;
-        this.certificateProvider = certificateProvider;
+        this.certificateManager = certificateManager;
         this.setTimeout(timeout);
         this.lastLogin = new Date();
     }
 
     @Override
     public String value() {
-        JWT jwt = new JWT(this.data());
+        JWT jwt = new JWT(data());
         jwt.setExp((System.currentTimeMillis() + this.timeout()) / 1000);
-        return this.jwtService.encode(jwt, certificateProvider).blockingGet();
+        return jwtService.encode(jwt, certificateManager.defaultCertificateProvider()).blockingGet();
     }
 
     @Override
@@ -67,9 +67,8 @@ public class CookieSession extends AbstractSession {
         return lastLogin;
     }
 
-    Session putUserId(Object obj) {
+    void putUserId(Object obj) {
         super.put(CookieSessionHandler.USER_ID_KEY, obj);
-        return this;
     }
 
     @Override
@@ -83,12 +82,11 @@ public class CookieSession extends AbstractSession {
     }
 
     protected Single<CookieSession> setValue(String payload) {
-
-        if (StringUtils.isEmpty(payload)) {
+        if (!StringUtils.hasText(payload)) {
             setData(new HashMap<>());
         }
 
-        return this.jwtService.decodeAndVerify(payload, certificateProvider, SESSION)
+        return jwtService.decodeAndVerify(payload, certificateManager.defaultCertificateProvider(), SESSION)
                 .doOnSuccess(jwt -> {
                     this.lastLogin = new Date(jwt.getExp() * 1000 - this.timeout());
                     this.setData(jwt);
