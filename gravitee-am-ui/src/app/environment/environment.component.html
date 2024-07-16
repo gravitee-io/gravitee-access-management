@@ -25,11 +25,7 @@
       centralize authentication, authorization and user management features.
     </div>
     <div class="environment-content-actions">
-      <a
-        mat-raised-button
-        color="primary"
-        [routerLink]="['/environments', currentEnvironment.hrids[0], 'domains', 'new']"
-        [disabled]="readonly"
+      <a mat-raised-button color="primary" [routerLink]="['/environments', envHrid, 'domains', 'new']" [disabled]="readonly"
         >Create a Security Domain</a
       >
       <span *ngIf="readonly">There is not enough permission, ask for support or wait for invitation to collaborate.</span>
