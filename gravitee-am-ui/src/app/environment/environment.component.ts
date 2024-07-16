@@ -29,8 +29,8 @@ import { EnvironmentService } from '../services/environment.service';
 })
 export class EnvironmentComponent implements OnInit {
   readonly = true;
+  envHrid: string;
   isLoading = true;
-  currentEnvironment: any;
   subscription: Subscription;
 
   constructor(
@@ -43,15 +43,15 @@ export class EnvironmentComponent implements OnInit {
 
   ngOnInit() {
     this.subscription = this.environmentService.currentEnvironmentObs$.subscribe((environment) => {
-      this.currentEnvironment = environment;
+      this.envHrid = environment.hrids.length > 0 ? environment.hrids[0] : environment.id;
       this.initDomains();
     });
   }
   initDomains() {
     // redirect user to the first domain, if any.
     this.domainService.list().subscribe((response) => {
-      if (response.data && response.data.length > 0) {
-        this.router.navigate(['/environments', this.currentEnvironment.name, 'domains', response.data[0].hrid]);
+      if (response.data?.length > 0) {
+        this.router.navigate(['/environments', this.envHrid, 'domains', response.data[0].hrid]);
       } else {
         this.isLoading = false;
         this.readonly = !this.authService.hasPermissions(['domain_create']);
