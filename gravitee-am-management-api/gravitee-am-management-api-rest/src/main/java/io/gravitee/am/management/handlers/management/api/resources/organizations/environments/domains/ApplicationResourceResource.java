@@ -21,7 +21,7 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;

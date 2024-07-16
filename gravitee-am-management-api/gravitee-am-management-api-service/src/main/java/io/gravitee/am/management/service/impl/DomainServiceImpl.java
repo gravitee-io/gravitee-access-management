@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.impl;
+package io.gravitee.am.management.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
@@ -21,10 +21,10 @@ import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestUriException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.utils.GraviteeContext;
-import io.gravitee.am.common.utils.PathUtils;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
@@ -49,7 +49,8 @@ import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationDeviceNotifierService;
 import io.gravitee.am.service.CertificateService;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.DomainReadService;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.EmailTemplateService;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.EventService;
@@ -80,6 +81,8 @@ import io.gravitee.am.service.exception.InvalidRoleException;
 import io.gravitee.am.service.exception.InvalidTargetUrlException;
 import io.gravitee.am.service.exception.InvalidWebAuthnConfigurationException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.impl.I18nDictionaryService;
+import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.PatchDomain;
@@ -98,8 +101,8 @@ import io.vertx.rxjava3.core.MultiMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -111,7 +114,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -128,6 +130,7 @@ import static java.util.Optional.ofNullable;
  * @author GraviteeSource Team
  */
 @Component
+@Primary
 public class DomainServiceImpl implements DomainService {
     /**
      * According to https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#auth_request
@@ -139,13 +142,13 @@ public class DomainServiceImpl implements DomainService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(DomainServiceImpl.class);
 
-    private static final Pattern SCHEME_PATTERN = Pattern.compile("^(https?://).*$");
-
-    private String gatewayUrl;
 
     @Lazy
     @Autowired
     private DomainRepository domainRepository;
+
+    @Autowired
+    private DomainReadService domainReadService;
 
     @Autowired
     private UserActivityService userActivityService;
@@ -240,19 +243,12 @@ public class DomainServiceImpl implements DomainService {
     @Autowired
     private PasswordPolicyService passwordPolicyService;
 
-    public DomainServiceImpl(@Value("${gateway.url:http://localhost:8092}") String gatewayUrl) {
-        this.gatewayUrl = gatewayUrl;
-    }
+    @Autowired
+    private IdentityProviderManager identityProviderManager;
 
     @Override
     public Maybe<Domain> findById(String id) {
-        LOGGER.debug("Find domain by ID: {}", id);
-        return domainRepository.findById(id)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurred while trying to find a domain using its ID: {}", id, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurred while trying to find a domain using its ID: %s", id), ex));
-                });
+        return domainReadService.findById(id);
     }
 
     @Override
@@ -298,17 +294,12 @@ public class DomainServiceImpl implements DomainService {
 
     @Override
     public Single<List<Domain>> findAll() {
-        return this.listAll().toList();
+        return listAll().toList();
     }
 
     @Override
     public Flowable<Domain> listAll() {
-        LOGGER.debug("List all domains");
-        return domainRepository.findAll()
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurred while trying to list all domains", ex);
-                    return Flowable.error(new TechnicalManagementException("An error occurred while trying to list all domains", ex));
-                });
+        return domainReadService.listAll();
     }
 
     @Override
@@ -354,10 +345,19 @@ public class DomainServiceImpl implements DomainService {
                         domain.setUpdatedAt(domain.getCreatedAt());
 
                         return environmentService.findById(domain.getReferenceId())
-                                .doOnSuccess(environment -> setDeployMode(domain, environment))
+                                .doOnSuccess(environment  -> setDeployMode(domain, environment))
                                 .flatMapCompletable(environment -> validateDomain(domain, environment))
                                 .andThen(Single.defer(() -> domainRepository.create(domain)));
                     }
+                })
+
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+
+                    LOGGER.error("An error occurred while trying to create a domain", ex);
+                    return Single.error(new TechnicalManagementException("An error occurred while trying to create a domain", ex));
                 })
                 // create default system scopes
                 .flatMap(this::createSystemScopes)
@@ -382,19 +382,13 @@ public class DomainServiceImpl implements DomainService {
                                         .map(__ -> domain);
                             });
                 })
+                .flatMap(domain -> identityProviderManager.create(domain.getId()).map(__ -> domain))
+                // create default reporter
+                .flatMap(domain -> reporterService.createDefault(Reference.domain(domain.getId())).map(__ -> domain))
                 // create event for sync process
                 .flatMap(domain -> {
                     Event event = new Event(Type.DOMAIN, new Payload(domain.getId(), DOMAIN, domain.getId(), Action.CREATE));
-                    return eventService.create(event).flatMap(e -> Single.just(domain));
-                }).flatMap(domain -> reporterService.notifyInheritedReporters(Reference.organization(organizationId), Reference.domain(domain.getId()), Action.CREATE)
-                        .andThen(Single.just(domain)))
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
-                    }
-
-                    LOGGER.error("An error occurred while trying to create a domain", ex);
-                    return Single.error(new TechnicalManagementException("An error occurred while trying to create a domain", ex));
+                    return eventService.create(event).flatMap(__ -> Single.just(domain));
                 })
                 .doOnSuccess(domain -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
                         .principal(principal)
@@ -641,6 +635,11 @@ public class DomainServiceImpl implements DomainService {
                 });
     }
 
+    @Override
+    public String buildUrl(Domain domain, String path, MultiMap queryParams) {
+        return domainReadService.buildUrl(domain, path, queryParams);
+    }
+
     private Single<Domain> createSystemScopes(Domain domain) {
         return Observable.fromArray(io.gravitee.am.common.oidc.Scope.values())
                 .flatMapSingle(systemScope -> {
@@ -657,42 +656,6 @@ public class DomainServiceImpl implements DomainService {
                 .map(scope -> domain);
     }
 
-    @Override
-    public String buildUrl(Domain domain, String path, MultiMap queryParams) {
-        String entryPoint = gatewayUrl;
-
-        if (entryPoint != null && entryPoint.endsWith("/")) {
-            entryPoint = entryPoint.substring(0, entryPoint.length() - 1);
-        }
-
-        String uri = null;
-
-        if (domain.isVhostMode()) {
-            // Try to generate uri using defined virtual hosts.
-            Matcher matcher = SCHEME_PATTERN.matcher(entryPoint);
-            String scheme = "http";
-            if (matcher.matches()) {
-                scheme = matcher.group(1);
-            }
-
-            for (VirtualHost vhost : domain.getVhosts()) {
-                if (vhost.isOverrideEntrypoint()) {
-                    uri = scheme + vhost.getHost() + vhost.getPath() + path;
-                    break;
-                }
-            }
-        }
-
-        if (uri == null) {
-            uri = entryPoint + PathUtils.sanitize(domain.getPath() + path);
-        }
-
-        if (queryParams != null && !queryParams.isEmpty()) {
-            uri = UriBuilder.fromURIString(uri).parameters(queryParams).buildString();
-        }
-
-        return uri;
-    }
 
     private Single<Domain> createDefaultCertificate(Domain domain) {
         return certificateService

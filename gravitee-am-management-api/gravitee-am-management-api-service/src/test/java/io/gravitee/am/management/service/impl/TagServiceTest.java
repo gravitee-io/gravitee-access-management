@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service;
+package io.gravitee.am.management.service.impl;
 
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.Tag;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.TagRepository;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.management.service.TagService;
 import io.gravitee.am.service.exception.TagAlreadyExistsException;
 import io.gravitee.am.service.exception.TagNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.impl.TagServiceImpl;
 import io.gravitee.am.service.model.NewTag;
 import io.gravitee.am.service.model.UpdateTag;
 import io.reactivex.rxjava3.core.Maybe;
@@ -58,6 +59,7 @@ public class TagServiceTest {
     @Mock
     private TagRepository tagRepository;
 
+    @SuppressWarnings("unused") // tag service uses it
     @Mock
     private AuditService auditService;
 

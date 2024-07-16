@@ -26,7 +26,7 @@ import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.i18n.DictionaryProvider;
 import io.vertx.rxjava3.core.MultiMap;
 import org.junit.Test;
@@ -73,7 +73,7 @@ public class EmailServiceImplTest {
     private JWTBuilder jwtBuilder;
 
     @Mock
-    private DomainService domainService;
+    private DomainReadService domainService;
 
     @InjectMocks
     private EmailService emailServiceSpy;

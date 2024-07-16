@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.impl;
+package io.gravitee.am.management.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Tag;
 import io.gravitee.am.repository.management.api.TagRepository;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.TagService;
+import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.TagService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.TagAlreadyExistsException;
 import io.gravitee.am.service.exception.TagNotFoundException;
@@ -165,6 +165,7 @@ public class TagServiceImpl implements TagService {
     }
 
     private Completable removeTagsFromDomains(String tagId){
+        // todo mre listAll() -> findByTag(tagId)
         return domainService.listAll()
                 .filter(domain -> domain.getTags() != null && domain.getTags().contains(tagId))
                 .flatMapCompletable(domain -> {

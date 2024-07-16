@@ -37,7 +37,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.RoleService;

@@ -28,7 +28,7 @@ import io.gravitee.am.repository.management.api.BotDetectionRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.BotDetectionService;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.BotDetectionNotFoundException;
@@ -68,7 +68,7 @@ public class BotDetectionServiceImpl implements BotDetectionService {
     private ApplicationService applicationService;
 
     @Autowired
-    private DomainService domainService;
+    private DomainReadService domainService;
 
     @Autowired
     private EventService eventService;
