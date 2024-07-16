@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.upgrades.system.upgraders;
 
-import io.gravitee.am.management.service.IdentityProviderManager;
+import io.gravitee.am.management.service.DefaultIdentityProviderService;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
@@ -55,19 +55,19 @@ public class DefaultIdentityProviderUpgraderTest {
     private IdentityProviderService identityProviderService;
 
     @Mock
-    private IdentityProviderManager identityProviderManager;
+    private DefaultIdentityProviderService defaultIdentityProviderService;
 
     @InjectMocks
     private DefaultIdentityProviderUpgrader defaultIdentityProviderUpgrader;
 
-    private IdentityProvider systemIdentityProvider = createDefaultTestIdp(true);
-    private IdentityProvider nonSystemIdentityProvider = createDefaultTestIdp(false);
+    private final IdentityProvider systemIdentityProvider = createDefaultTestIdp(true);
+    private final IdentityProvider nonSystemIdentityProvider = createDefaultTestIdp(false);
 
     @Test
     public void shouldUpdateDefaultIdp() throws Exception {
         Map<String, Object> cfg = new HashMap<>(Map.of("new-config", "created"));
         when(identityProviderService.findAll()).thenReturn(Flowable.just(systemIdentityProvider));
-        when(identityProviderManager.createProviderConfiguration(anyString(), isNull())).thenReturn(cfg);
+        when(defaultIdentityProviderService.createProviderConfiguration(anyString(), isNull())).thenReturn(cfg);
         when(identityProviderService.update(anyString(), anyString(), any(UpdateIdentityProvider.class), eq(true))).thenReturn(changeIdpConfig(true));
 
         TestObserver<Void> observer = defaultIdentityProviderUpgrader.upgrade().test();
@@ -102,8 +102,8 @@ public class DefaultIdentityProviderUpgraderTest {
         if (system){
             systemIdentityProvider.setConfiguration("""
                     {
-                      "attribute":"changed-system-config", 
-                      "passwordEncoder":"existing passwordEncoder", 
+                      "attribute":"changed-system-config",
+                      "passwordEncoder":"existing passwordEncoder",
                       "passwordEncoderOptions": {
                         "options":"existing options"
                         }
@@ -112,8 +112,8 @@ public class DefaultIdentityProviderUpgraderTest {
         } else {
             nonSystemIdentityProvider.setConfiguration("""
                     {
-                      "attribute":"changed-non-system-config", 
-                      "passwordEncoder":"existing passwordEncoder", 
+                      "attribute":"changed-non-system-config",
+                      "passwordEncoder":"existing passwordEncoder",
                       "passwordEncoderOptions": {
                         "options":"existing options"
                         }

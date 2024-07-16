@@ -15,27 +15,14 @@
  */
 package io.gravitee.am.management.service;
 
-import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.common.service.Service;
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Maybe;
+import io.gravitee.am.service.model.NewIdentityProvider;
+import io.reactivex.rxjava3.core.Single;
 
-import java.util.Optional;
+import java.util.Map;
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface IdentityProviderManager extends Service<IdentityProviderManager> {
+public interface DefaultIdentityProviderService {
+    Single<IdentityProvider> create(String domainId);
 
-    Maybe<UserProvider> getUserProvider(String userProvider);
-
-    Optional<IdentityProvider> getIdentityProvider(String providerId);
-
-    void setListener(InMemoryIdentityProviderListener listener);
-
-    Completable loadIdentityProviders();
-
-    Completable checkPluginDeployment(String type);
+    Map<String, Object> createProviderConfiguration(String referenceId, NewIdentityProvider identityProvider);
 }

@@ -15,10 +15,10 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
-import io.gravitee.am.management.service.IdentityProviderManager;
+import io.gravitee.am.management.service.DefaultIdentityProviderService;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import static io.gravitee.am.management.service.impl.DefaultIdentityProviderServiceImpl.DEFAULT_IDP_PREFIX;
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.DOMAIN_IDP_UPGRADER;
 
 /**
@@ -40,11 +41,10 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.DOMA
 public class DomainIdpUpgrader extends AsyncUpgrader {
 
     private static final Logger logger = LoggerFactory.getLogger(DomainIdpUpgrader.class);
-    private static final String DEFAULT_IDP_PREFIX = "default-idp-";
 
     private final DomainService domainService;
     private final IdentityProviderService identityProviderService;
-    private final IdentityProviderManager identityProviderManager;
+    private final DefaultIdentityProviderService defaultIdentityProviderService;
 
     @Override
     public Completable doUpgrade() {
@@ -57,10 +57,11 @@ public class DomainIdpUpgrader extends AsyncUpgrader {
     private Single<IdentityProvider> updateDefaultIdp(Domain domain) {
         return identityProviderService.findById(DEFAULT_IDP_PREFIX + domain.getId())
                 .isEmpty()
-                .flatMap(isEmpty -> {
+                .flatMap
+                        (isEmpty -> {
                     if (isEmpty) {
                         logger.info("No default idp found for domain {}, update domain", domain.getName());
-                        return identityProviderManager.create(domain.getId());
+                        return defaultIdentityProviderService.create(domain.getId());
                     }
                     return Single.just(new IdentityProvider());
                 });
