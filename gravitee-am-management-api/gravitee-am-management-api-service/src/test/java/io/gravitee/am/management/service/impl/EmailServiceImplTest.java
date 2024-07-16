@@ -191,7 +191,7 @@ public class EmailServiceImplTest {
                 freemarkerConfiguration,
                 auditService,
                 jwtBuilder,
-                new DomainServiceImpl(true),
+                new DomainServiceImpl(),
                 i18nDictionaryService,
                 environment
         );

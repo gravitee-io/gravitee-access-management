@@ -254,7 +254,7 @@ public class DomainServiceImpl implements DomainService {
 
     @With(AccessLevel.PACKAGE) // to make test setup less painful
     @Value("${domains.reporters.default.enabled:true}")
-    private boolean createDefaultReporters;
+    private boolean createDefaultReporters = true;
 
     @Override
     public Maybe<Domain> findById(String id) {

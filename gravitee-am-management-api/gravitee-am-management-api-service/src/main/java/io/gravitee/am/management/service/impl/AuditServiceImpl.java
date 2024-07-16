@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -49,7 +50,9 @@ public class AuditServiceImpl implements AuditService {
     @Override
     public Single<Page<Audit>> search(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria, int page, int size) {
         try {
-            return getReporter(referenceType, referenceId).search(referenceType, referenceId, criteria, page, size);
+            return Maybe.fromOptional(getReporter(referenceType, referenceId))
+                    .flatMapSingle(r -> r.search(referenceType, referenceId, criteria, page, size))
+                    .switchIfEmpty(Single.just(new Page<>()));
         } catch (Exception ex) {
             logger.error("An error occurs during audits search for {}}: {}", referenceType, referenceId, ex);
             return Single.error(ex);
@@ -65,7 +68,9 @@ public class AuditServiceImpl implements AuditService {
     @Override
     public Single<Map<Object, Object>> aggregate(String domain, AuditReportableCriteria criteria, Type analyticsType) {
         try {
-            return getReporter(domain).aggregate(ReferenceType.DOMAIN, domain, criteria, analyticsType);
+            return Maybe.fromOptional(getReporter(domain))
+                    .flatMapSingle(r ->r.aggregate(ReferenceType.DOMAIN, domain, criteria, analyticsType))
+                    .switchIfEmpty(Single.just(Map.of()));
         } catch (Exception ex) {
             logger.error("An error occurs during audits aggregation for domain: {}", domain, ex);
             return Single.error(ex);
@@ -75,7 +80,8 @@ public class AuditServiceImpl implements AuditService {
     @Override
     public Single<Audit> findById(ReferenceType referenceType, String referenceId, String auditId) {
         try {
-            return getReporter(referenceType, referenceId).findById(referenceType, referenceId, auditId)
+            return Maybe.fromOptional(getReporter(referenceType, referenceId))
+                    .flatMap(r->r.findById(referenceType, referenceId, auditId))
                     .switchIfEmpty(Single.error(() -> new AuditNotFoundException(auditId)));
         } catch (Exception ex) {
             logger.error("An error occurs while trying to find audit by id: {} and for the {}}: {}", auditId, referenceType, referenceId, ex);
@@ -88,12 +94,12 @@ public class AuditServiceImpl implements AuditService {
         return findById(ReferenceType.DOMAIN, domain, auditId).toMaybe();
     }
 
-    private Reporter getReporter(String domain) {
+    private Optional<Reporter> getReporter(String domain) {
         return auditReporterManager.getReporter(Reference.domain(domain));
     }
 
 
-    private Reporter getReporter(ReferenceType referenceType, String referenceId) {
+    private Optional<Reporter> getReporter(ReferenceType referenceType, String referenceId) {
         return auditReporterManager.getReporter(referenceType, referenceId);
     }
 }

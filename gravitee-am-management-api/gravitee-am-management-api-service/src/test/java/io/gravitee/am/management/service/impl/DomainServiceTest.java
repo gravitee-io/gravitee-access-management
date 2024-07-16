@@ -160,7 +160,7 @@ public class DomainServiceTest {
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @InjectMocks
-    private DomainServiceImpl domainService = new DomainServiceImpl(true);
+    private DomainServiceImpl domainService = new DomainServiceImpl();
 
     @Mock
     private DomainValidator domainValidator;
