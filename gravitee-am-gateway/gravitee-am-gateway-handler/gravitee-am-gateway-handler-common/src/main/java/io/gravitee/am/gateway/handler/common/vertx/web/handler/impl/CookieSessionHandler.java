@@ -98,7 +98,7 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
         }
 
         Cookie sessionCookie = context.getCookie(cookieName);
-        CookieSession session = new CookieSession(jwtService, certificateManager.defaultCertificateProvider(), timeout);
+        CookieSession session = new CookieSession(jwtService, certificateManager, timeout);
 
         registerSession(context, session);
 
