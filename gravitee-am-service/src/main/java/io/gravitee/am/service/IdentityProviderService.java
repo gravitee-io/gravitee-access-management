@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.model.AssignPasswordPolicy;
 import io.gravitee.am.service.model.NewIdentityProvider;
@@ -78,4 +79,6 @@ public interface IdentityProviderService {
     default Completable delete(String domain, String identityProviderId, User principal) {
         return delete(ReferenceType.DOMAIN, domain, identityProviderId, principal);
     }
+
+    Flowable<IdentityProvider> findByCertificate(Reference reference, String id);
 }

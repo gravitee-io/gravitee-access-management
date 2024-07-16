@@ -21,43 +21,74 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.AbstractSensitiveProxy;
 import io.gravitee.am.management.service.CertificateServiceProxy;
+import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.Reference;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.CertificateService;
+import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.CertificatePluginSchemaNotFoundException;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.CertificateAuditBuilder;
+import io.gravitee.am.service.utils.CertificateTimeComparator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
+import java.time.Duration;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-/**
- * @author Rémi SULTAN (remi.sultan at graviteesource.com)
- * @author GraviteeSource Team
- */
 @Component
 public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implements CertificateServiceProxy {
 
-    @Autowired
-    private CertificateService certificateService;
+    private final CertificateService certificateService;
+    private final IdentityProviderService idps;
+    private final ApplicationService apps;
+    private final CertificatePluginService certificatePluginService;
+    private final AuditService auditService;
+    private final ObjectMapper objectMapper;
 
-    @Autowired
-    private CertificatePluginService certificatePluginService;
+    private final Duration certExpirationWarningThreshold;
 
-    @Autowired
-    private AuditService auditService;
+    public CertificateServiceProxyImpl(CertificateService certificateService,
+                                       IdentityProviderService idps,
+                                       ApplicationService apps,
+                                       CertificatePluginService certificatePluginService,
+                                       AuditService auditService,
+                                       ObjectMapper objectMapper,
+                                       Environment environment) {
+        this.certificateService = certificateService;
+        this.idps = idps;
+        this.apps = apps;
+        this.certificatePluginService = certificatePluginService;
+        this.auditService = auditService;
+        this.objectMapper = objectMapper;
+        this.certExpirationWarningThreshold = Duration.ofDays(getCertWarningThresholdDays(environment));
+    }
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private static int getCertWarningThresholdDays(Environment env) {
+        final String expiryThresholds = env.getProperty("services.certificate.expiryThresholds", String.class, DomainNotifierServiceImpl.DEFAULT_CERTIFICATE_EXPIRY_THRESHOLDS);
+        return Stream.of(expiryThresholds.trim().split(","))
+                .map(String::trim)
+                .map(Integer::valueOf)
+                .sorted(Comparator.reverseOrder())
+                .toList()
+                .get(0);
+    }
 
     @Override
     public Maybe<Certificate> findById(String id) {
@@ -65,26 +96,67 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
     }
 
     @Override
-    public Flowable<Certificate> findAll() {
-        return certificateService.findAll().flatMapSingle(this::filterSensitiveData);
+    public Single<List<CertificateEntity>> findByDomainAndUse(String domainId, String use) {
+        return certificateService.findByDomain(domainId)
+                .filter(cert -> {
+                    if (StringUtils.isBlank(use)) {
+                        return true;
+                    }
+                    return cert.hasUse(use, objectMapper::readTree);
+                })
+                .flatMapSingle(this::filterSensitiveData)
+                .toList()
+                .map(allCerts -> {
+                    var renewedSystemCertIds = allCerts
+                            .stream()
+                            .filter(Certificate::isSystem)
+                            .sorted(new CertificateTimeComparator())
+                            // all system certs are renewed - except for the newest one
+                            .skip(1)
+                            .map(Certificate::getId)
+                            .collect(Collectors.toSet());
+                    return allCerts
+                            .stream()
+                            .map(c -> Pair.of(c, renewedSystemCertIds.contains(c.getId())))
+                            .toList();
+                })
+                .flattenAsFlowable(certsAndIds -> certsAndIds)
+                .flatMapSingle(pair -> {
+                    var cert = pair.getLeft();
+                    var isRenewedSystemCert = pair.getRight();
+                    return Single.zip(
+                            getAppsUsing(cert).toList(),
+                            getIdpsUsing(cert).toList(),
+                            (appUsage, idpUsage) -> CertificateEntity.forList(cert, certExpirationWarningThreshold, isRenewedSystemCert, appUsage, idpUsage)
+                    );
+                })
+                .sorted(Comparator.comparing(CertificateEntity::name, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+    }
+
+    private Flowable<IdentityProvider> getIdpsUsing(Certificate cert) {
+        return idps.findByCertificate(Reference.domain(cert.getDomain()), cert.getId())
+                .map(idp -> {
+                    final var idpId = new IdentityProvider();
+                    idpId.setId(idpId.getId());
+                    idpId.setName(idp.getName());
+                    return idpId;
+                });
+    }
+
+    private Flowable<Application> getAppsUsing(Certificate cert) {
+        return apps.findByCertificate(cert.getId())
+                .map(app -> {
+                    final var appId = new Application();
+                    appId.setId(app.getId());
+                    appId.setName(app.getName());
+                    return appId;
+                });
     }
 
     @Override
-    public Flowable<Certificate> findByDomain(String domain) {
-        return certificateService.findByDomain(domain).flatMapSingle(this::filterSensitiveData);
-    }
-
-    @Override
-    public Single<Certificate> create(String domain) {
-        return certificateService.create(domain)
-                .flatMap(this::filterSensitiveData)
-                .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).type(EventType.CERTIFICATE_CREATED).certificate(certificate)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).type(EventType.CERTIFICATE_CREATED).throwable(throwable)));
-    }
-
-    @Override
-    public Single<Certificate> create(String domain, NewCertificate newCertificate, User principal, boolean isSystem) {
-        return certificateService.create(domain, newCertificate, principal, isSystem)
+    public Single<Certificate> create(String domain, NewCertificate newCertificate, User principal) {
+        return certificateService.create(domain, newCertificate, principal, false)
                 .flatMap(this::filterSensitiveData)
                 .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_CREATED).certificate(certificate)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_CREATED).throwable(throwable)));
@@ -101,11 +173,6 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
                                 .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_UPDATED).oldValue(safeOldCert).certificate(certificate)))
                                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_UPDATED).throwable(throwable))))
                 );
-    }
-
-    @Override
-    public Completable updateExpirationDate(String certificateId, Date expirationDate) {
-        return this.certificateService.updateExpirationDate(certificateId, expirationDate);
     }
 
     @Override

@@ -47,7 +47,6 @@ import static com.mongodb.client.model.Filters.eq;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toCollection;
-import static java.util.stream.Collectors.toList;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -160,7 +159,7 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
         identityProvider.setDomainWhitelist(
                 ofNullable(identityProviderMongo.getDomainWhitelist()).orElse(new BsonArray())
                         .stream().map(BsonValue::asString).map(BsonString::getValue)
-                        .collect(toList()));
+                        .toList());
         identityProvider.setCreatedAt(identityProviderMongo.getCreatedAt());
         identityProvider.setUpdatedAt(identityProviderMongo.getUpdatedAt());
         identityProvider.setPasswordPolicy(identityProviderMongo.getPasswordPolicy());

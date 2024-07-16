@@ -18,10 +18,11 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.certificate.api.CertificateKey;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.model.CertificateEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.CertificateManager;
 import io.gravitee.am.management.service.CertificateServiceProxy;
+import io.gravitee.am.management.service.impl.CertificateEntity;
+import io.gravitee.am.management.service.impl.ModifiedCertificateEntity;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
@@ -48,9 +49,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
-import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
-import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -59,9 +58,6 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author GraviteeSource Team
  */
 public class CertificateResource extends AbstractResource {
-
-    @Context
-    private ResourceContext resourceContext;
 
     @Autowired
     private CertificateServiceProxy certificateService;
@@ -101,7 +97,7 @@ public class CertificateResource extends AbstractResource {
                             if (!cert.getDomain().equalsIgnoreCase(domain)) {
                                 throw new BadRequestException("Certificate does not belong to domain");
                             }
-                            return Response.ok(new CertificateEntity(cert)).build();
+                            return Response.ok(CertificateEntity.singleDetails(cert)).build();
                         }))
                 .subscribe(response::resume, response::resume);
     }
@@ -114,11 +110,10 @@ public class CertificateResource extends AbstractResource {
             description = "User must have the DOMAIN[READ] permission on the specified domain " +
                     "or DOMAIN[READ] permission on the specified environment " +
                     "or DOMAIN[READ] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Certificate key successfully fetched",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = String.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "200", description = "Certificate key successfully fetched",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = String.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void getPublicKey(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -143,11 +138,11 @@ public class CertificateResource extends AbstractResource {
             description = "User must have the DOMAIN[READ] permission on the specified domain " +
                     "or DOMAIN[READ] permission on the specified environment " +
                     "or DOMAIN[READ] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Certificate keys successfully fetched",
-                    content = @Content(mediaType =  "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = CertificateKey.class)))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+
+    @ApiResponse(responseCode = "200", description = "Certificate keys successfully fetched",
+            content = @Content(mediaType = "application/json",
+                    array = @ArraySchema(schema = @Schema(implementation = CertificateKey.class))))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void getPublicKeys(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -172,11 +167,11 @@ public class CertificateResource extends AbstractResource {
             description = "User must have the DOMAIN_CERTIFICATE[UPDATE] permission on the specified domain " +
                     "or DOMAIN_CERTIFICATE[UPDATE] permission on the specified environment " +
                     "or DOMAIN_CERTIFICATE[UPDATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Certificate successfully updated",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = CertificateEntity.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+
+    @ApiResponse(responseCode = "201", description = "Certificate successfully updated",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ModifiedCertificateEntity.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void updateCertificate(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -191,7 +186,7 @@ public class CertificateResource extends AbstractResource {
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(schema -> certificateService.update(domain, certificate, updateCertificate, authenticatedUser))
-                        .map(certificate1 -> Response.ok(new CertificateEntity(certificate1)).build()))
+                        .map(certificate1 -> Response.ok(ModifiedCertificateEntity.of(certificate1)).build()))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -202,10 +197,10 @@ public class CertificateResource extends AbstractResource {
             description = "User must have the DOMAIN_CERTIFICATE[DELETE] permission on the specified domain " +
                     "or DOMAIN_CERTIFICATE[DELETE] permission on the specified environment " +
                     "or DOMAIN_CERTIFICATE[DELETE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Certificate successfully deleted"),
-            @ApiResponse(responseCode = "400", description = "Certificate is bind to existing clients"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+
+    @ApiResponse(responseCode = "204", description = "Certificate successfully deleted")
+    @ApiResponse(responseCode = "400", description = "Certificate is bind to existing clients")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

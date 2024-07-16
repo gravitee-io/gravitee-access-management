@@ -98,7 +98,7 @@ export class DomainSettingsCertificatesComponent implements OnInit {
 
   usageBadgeLabel(cert: any): string {
     if (cert?.usage?.length > 1) {
-      return `${cert.usage.length} Usage`;
+      return `${cert.usage.length} usages`;
     } else if (cert?.usage?.length == 1) {
       return this.certificateUsage.get(cert.usage[0]);
     } else return 'Undefined';
@@ -120,14 +120,14 @@ export class DomainSettingsCertificatesComponent implements OnInit {
     return cert.status === 'renewed';
   }
 
-  computeAppsLabel(cert) {
-    const apps = cert.applications ? cert.applications.map((app) => app.name).length : 0;
-    return `${apps} app` + (apps > 1 ? 's' : '');
+  computeUsageLabel(label: string, values: any[]): string {
+    const count = values ? values.length : 0;
+    return `${count} ${label}` + (count != 1 ? 's' : '');
   }
 
-  getAppNames(cert) {
-    const names = cert.applications ? cert.applications.map((app) => app.name).join(' / ') : [];
-    const length = cert.applications ? cert.applications.map((app) => app.name).length : 0;
+  getUsageNames(values: any[]) {
+    const names = values ? values.map((x) => x.name).join(' / ') : [];
+    const length = values.length;
     return length > 4 ? names + ' / ...' : names;
   }
 

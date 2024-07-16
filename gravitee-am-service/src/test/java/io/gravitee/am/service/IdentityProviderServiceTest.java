@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
@@ -34,6 +36,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
+import org.apache.commons.text.RandomStringGenerator;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -41,12 +44,19 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -59,22 +69,24 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class IdentityProviderServiceTest {
 
-    @InjectMocks
-    private IdentityProviderService identityProviderService = new IdentityProviderServiceImpl();
 
-    @Mock
-    private IdentityProviderRepository identityProviderRepository;
+    private IdentityProviderRepository identityProviderRepository = mock();
 
-    @Mock
-    private EventService eventService;
+    private EventService eventService = mock();
 
-    @Mock
-    private ApplicationService applicationService;
+    private ApplicationService applicationService = mock();
 
-    @Mock
-    private AuditService auditService;
+    private IdentityProviderService identityProviderService = new IdentityProviderServiceImpl(
+            identityProviderRepository, applicationService, eventService, mock(), new ObjectMapper()
+    );
+
 
     private final static String DOMAIN = "domain1";
+    private final Clock testClock = Clock.fixed(Instant.parse("2024-07-15T10:00:00Z"), ZoneOffset.UTC);
+    private final Random random = new Random(1337);
+    private final RandomStringGenerator idGen = new RandomStringGenerator.Builder().usingRandom(random::nextInt)
+            .withinRange(new char[]{'0', '9'}, new char[]{'a', 'z'})
+            .build();
 
     @Test
     public void shouldFindById() {
@@ -166,7 +178,7 @@ public class IdentityProviderServiceTest {
 
     @Test
     public void shouldCreate() {
-        NewIdentityProvider newIdentityProvider = Mockito.mock(NewIdentityProvider.class);
+        NewIdentityProvider newIdentityProvider = mock(NewIdentityProvider.class);
         IdentityProvider idp = new IdentityProvider();
         idp.setReferenceType(ReferenceType.DOMAIN);
         idp.setReferenceId("domain#1");
@@ -185,7 +197,7 @@ public class IdentityProviderServiceTest {
 
     @Test
     public void shouldCreate_technicalException() {
-        NewIdentityProvider newIdentityProvider = Mockito.mock(NewIdentityProvider.class);
+        NewIdentityProvider newIdentityProvider = mock(NewIdentityProvider.class);
         when(identityProviderRepository.create(any(IdentityProvider.class))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver<IdentityProvider> testObserver = new TestObserver<>();
@@ -197,7 +209,7 @@ public class IdentityProviderServiceTest {
 
     @Test
     public void shouldUpdate() {
-        UpdateIdentityProvider updateIdentityProvider = Mockito.mock(UpdateIdentityProvider.class);
+        UpdateIdentityProvider updateIdentityProvider = mock(UpdateIdentityProvider.class);
         IdentityProvider idp = new IdentityProvider();
         idp.setReferenceType(ReferenceType.DOMAIN);
         idp.setReferenceId("domain#1");
@@ -302,7 +314,7 @@ public class IdentityProviderServiceTest {
 
     @Test
     public void shouldUpdate_technicalException() {
-        UpdateIdentityProvider updateIdentityProvider = Mockito.mock(UpdateIdentityProvider.class);
+        UpdateIdentityProvider updateIdentityProvider = mock(UpdateIdentityProvider.class);
         when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver<IdentityProvider> testObserver = new TestObserver<>();
@@ -351,7 +363,7 @@ public class IdentityProviderServiceTest {
 
     @Test
     public void shouldDelete() {
-        IdentityProvider existingIdentityProvider = Mockito.mock(IdentityProvider.class);
+        IdentityProvider existingIdentityProvider = mock(IdentityProvider.class);
         when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(existingIdentityProvider));
         when(identityProviderRepository.delete("my-identity-provider")).thenReturn(Completable.complete());
         when(applicationService.findByIdentityProvider("my-identity-provider")).thenReturn(Flowable.empty());
@@ -403,8 +415,8 @@ public class IdentityProviderServiceTest {
     }
 
     @Test
-    public void shouldUpdatePasswordPolicy(){
-        AssignPasswordPolicy assignPasswordPolicy = Mockito.mock(AssignPasswordPolicy.class);
+    public void shouldUpdatePasswordPolicy() {
+        AssignPasswordPolicy assignPasswordPolicy = mock(AssignPasswordPolicy.class);
         assignPasswordPolicy.setPasswordPolicy("newPP");
         IdentityProvider idp = new IdentityProvider();
         idp.setReferenceType(ReferenceType.DOMAIN);
@@ -427,7 +439,7 @@ public class IdentityProviderServiceTest {
 
     @Test
     public void shouldUpdatePasswordPolicy_technicalException() {
-        AssignPasswordPolicy assignPasswordPolicy = Mockito.mock(AssignPasswordPolicy.class);
+        AssignPasswordPolicy assignPasswordPolicy = mock(AssignPasswordPolicy.class);
         when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver<IdentityProvider> testObserver = new TestObserver<>();
@@ -435,5 +447,96 @@ public class IdentityProviderServiceTest {
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldFindByCertificate() {
+        var domainRef = Reference.domain("test-domain");
+        var certId = "some-cert-id";
+        when(identityProviderRepository.findAll(domainRef.type(), domainRef.id()))
+                .thenReturn(Flowable.fromIterable(List.of(
+                        mtlsOauth2Idp(domainRef, certId),
+                        minimalIdentityProvider(domainRef),
+                        idpWithDeeplyNestedCertConfig_array(domainRef, certId))));
+        identityProviderService.findByCertificate(domainRef, certId)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertNoErrors()
+                .assertComplete()
+                .assertValueCount(2);
+    }
+
+    private IdentityProvider idpWithDeeplyNestedCertConfig_array(Reference domainRef, String certId) {
+        var idp = minimalIdentityProvider(domainRef);
+        idp.setType("custom-test-idp");
+        idp.setConfiguration("""
+                {
+                  "very": {
+                    "deeply": {
+                      "nested": {
+                        "certsArray": [
+                          "another-cert",
+                          "%s",
+                          "yet-another-cert"
+                        ]
+                      }
+                    }
+                  }
+                }""".formatted(certId));
+        return idp;
+    }
+
+    private IdentityProvider idpWithDeeplyNestedCertConfig_field(Reference domainRef, String certId) {
+        var idp = minimalIdentityProvider(domainRef);
+        idp.setType("custom-test-idp");
+        idp.setConfiguration("""
+                {
+                  "very": {
+                    "deeply": {
+                      "nested": {
+                        "certificateId":"%s"
+                      }
+                    }
+                  }
+                }""".formatted(certId));
+        return idp;
+    }
+
+    private IdentityProvider mtlsOauth2Idp(Reference domainRef, String certId) {
+        var idp = minimalIdentityProvider(domainRef);
+        idp.setType("oauth2-generic-am-idp");
+        idp.setConfiguration("""
+                {
+                  "clientId": "asdasdasdasd",
+                  "clientSecret": "1234",
+                  "clientAuthenticationMethod": "tls_client_auth",
+                  "clientAuthenticationCertificate": "%s",
+                  "wellKnownUri": "https://localhost/.well-known/openid-configuration",
+                  "responseType": "code",
+                  "encodeRedirectUri": false,
+                  "useIdTokenForUserInfo": false,
+                  "signature": "RSA_RS256",
+                  "publicKeyResolver": "GIVEN_KEY",
+                  "scopes": [
+                    "openid"
+                  ],
+                  "connectTimeout": 10000,
+                  "idleTimeout": 10000,
+                  "maxPoolSize": 200,
+                  "storeOriginalTokens": false
+                }
+                """.formatted(certId));
+        return idp;
+    }
+
+    private IdentityProvider minimalIdentityProvider(Reference reference) {
+        var idp = new IdentityProvider();
+        idp.setId(idGen.generate(10));
+        idp.setReferenceType(reference.type());
+        idp.setReferenceId(reference.id());
+        idp.setCreatedAt(Date.from(testClock.instant()));
+        idp.setUpdatedAt(Date.from(testClock.instant()));
+        idp.setConfiguration("{}");
+        return idp;
     }
 }

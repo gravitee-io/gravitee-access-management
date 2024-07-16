@@ -26,6 +26,7 @@ import io.gravitee.am.management.service.IdentityProviderPluginService;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.management.service.exception.IdentityProviderPluginSchemaNotFoundException;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
@@ -143,6 +144,11 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
     @Override
     public Single<IdentityProvider> updatePasswordPolicy(String domain, String id, AssignPasswordPolicy assignPasswordPolicy) {
         return identityProviderService.updatePasswordPolicy(domain, id, assignPasswordPolicy);
+    }
+
+    @Override
+    public Flowable<IdentityProvider> findByCertificate(Reference reference, String id) {
+        return identityProviderService.findByCertificate(reference, id);
     }
 
     private Single<IdentityProvider> filterSensitiveData(IdentityProvider idp) {
