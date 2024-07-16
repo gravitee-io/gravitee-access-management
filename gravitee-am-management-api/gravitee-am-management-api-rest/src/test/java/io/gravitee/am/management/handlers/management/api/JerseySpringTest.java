@@ -28,7 +28,9 @@ import io.gravitee.am.management.service.BotDetectionPluginService;
 import io.gravitee.am.management.service.BotDetectionServiceProxy;
 import io.gravitee.am.management.service.CertificateManager;
 import io.gravitee.am.management.service.CertificateServiceProxy;
+import io.gravitee.am.management.service.DefaultIdentityProviderService;
 import io.gravitee.am.management.service.DeviceIdentifierPluginService;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.ExtensionGrantPluginService;
 import io.gravitee.am.management.service.FactorPluginService;
@@ -40,6 +42,7 @@ import io.gravitee.am.management.service.PermissionService;
 import io.gravitee.am.management.service.PolicyPluginService;
 import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.management.service.ResourcePluginService;
+import io.gravitee.am.management.service.TagService;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.service.ApplicationService;
@@ -50,7 +53,6 @@ import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.DeviceIdentifierService;
 import io.gravitee.am.service.DeviceService;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.EmailTemplateService;
 import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.EnvironmentService;
@@ -68,7 +70,6 @@ import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.ScopeService;
-import io.gravitee.am.management.service.TagService;
 import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.UserActivityService;
@@ -169,6 +170,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected IdentityProviderManager identityProviderManager;
+
+    @Autowired
+    protected DefaultIdentityProviderService defaultIdentityProviderService;
 
     @Autowired
     protected EmailTemplateService emailTemplateService;
@@ -380,6 +384,9 @@ public abstract class JerseySpringTest {
         public IdentityProviderManager identityProviderManager() {
             return mock(IdentityProviderManager.class);
         }
+
+        @Bean
+        public DefaultIdentityProviderService defaultIdentityProviderService() {return mock(DefaultIdentityProviderService.class);}
 
         @Bean
         public EmailTemplateService emailTemplateService() {

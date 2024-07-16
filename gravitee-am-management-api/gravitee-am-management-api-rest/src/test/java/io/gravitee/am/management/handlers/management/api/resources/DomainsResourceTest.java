@@ -82,7 +82,7 @@ public class DomainsResourceTest extends JerseySpringTest {
         domain.setName("domain-name");
 
         doReturn(Single.just(domain)).when(domainService).create(eq("DEFAULT"), eq("DEFAULT"), any(), any());
-        doReturn(Single.just(new IdentityProvider())).when(identityProviderManager).create(domain.getId());
+        doReturn(Single.just(new IdentityProvider())).when(defaultIdentityProviderService).create(domain.getId());
         doReturn(Single.just(new Reporter())).when(reporterService).createDefault(argThat(ref -> ref.id().equals(domain.getId())));
 
         final Response response = target("domains").request().post(Entity.json(newDomain));
