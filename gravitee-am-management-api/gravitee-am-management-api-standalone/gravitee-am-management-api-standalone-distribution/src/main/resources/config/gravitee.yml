@@ -237,6 +237,7 @@ notifiers:
 domains:
 #  identities:
 #    default:
+#      enabled: false
 #      passwordEncoder:
 #         # Algorithms used to hash the user password.
 #         # Can be one of :

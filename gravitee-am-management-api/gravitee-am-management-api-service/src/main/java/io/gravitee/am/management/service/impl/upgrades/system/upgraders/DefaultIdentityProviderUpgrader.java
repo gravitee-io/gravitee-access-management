@@ -17,7 +17,7 @@ package io.gravitee.am.management.service.impl.upgrades.system.upgraders;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.am.management.service.IdentityProviderManager;
+import io.gravitee.am.management.service.DefaultIdentityProviderService;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
@@ -39,23 +39,22 @@ public class DefaultIdentityProviderUpgrader implements SystemUpgrader {
     private static final Logger logger = LoggerFactory.getLogger(DefaultIdentityProviderUpgrader.class);
 
     private final IdentityProviderService identityProviderService;
-    private final IdentityProviderManager identityProviderManager;
+    private final DefaultIdentityProviderService defaultIdentityProviderService;
     private final ObjectMapper mapper;
 
-    public DefaultIdentityProviderUpgrader(IdentityProviderService identityProviderService,
-                                           IdentityProviderManager identityProviderManager) {
+    public DefaultIdentityProviderUpgrader(IdentityProviderService identityProviderService, DefaultIdentityProviderService defaultIdentityProviderService) {
         this.identityProviderService = identityProviderService;
-        this.identityProviderManager = identityProviderManager;
+        this.defaultIdentityProviderService = defaultIdentityProviderService;
         this.mapper = new ObjectMapper();
     }
 
 
     @Override
     public Completable upgrade() {
-         return Completable.fromPublisher(identityProviderService.findAll()
+        return Completable.fromPublisher(identityProviderService.findAll()
                 .filter(IdentityProvider::isSystem)
                 .flatMapSingle(this::updateDefaultIdp)
-                 .doOnNext(idp -> logger.info("updated IDP: id={}", idp.getId())));
+                .doOnNext(idp -> logger.info("updated IDP: id={}", idp.getId())));
 
     }
 
@@ -66,7 +65,7 @@ public class DefaultIdentityProviderUpgrader implements SystemUpgrader {
         updateIdentityProvider.setMappers(identityProvider.getMappers());
         updateIdentityProvider.setName(identityProvider.getName());
         updateIdentityProvider.setRoleMapper(identityProvider.getRoleMapper());
-        Map<String, Object> configMap = identityProviderManager.createProviderConfiguration(identityProvider.getReferenceId(), null);
+        Map<String, Object> configMap = defaultIdentityProviderService.createProviderConfiguration(identityProvider.getReferenceId(), null);
         try {
             Map<String, Object> existingConfigMap = mapper.readValue(identityProvider.getConfiguration(), Map.class);
             configMap.put("passwordEncoder", existingConfigMap.get("passwordEncoder"));
