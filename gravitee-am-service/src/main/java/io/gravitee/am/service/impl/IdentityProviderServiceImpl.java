@@ -15,12 +15,18 @@
  */
 package io.gravitee.am.service.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -51,6 +57,11 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.StreamSupport;
 
 import static io.gravitee.am.identityprovider.api.common.IdentityProviderConfigurationUtils.sanitizeClientAuthCertificate;
 import static java.util.Optional.ofNullable;
@@ -69,18 +80,23 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
      */
     private final Logger LOGGER = LoggerFactory.getLogger(IdentityProviderServiceImpl.class);
 
-    @Lazy
-    @Autowired
-    private IdentityProviderRepository identityProviderRepository;
+    private final IdentityProviderRepository identityProviderRepository;
+    private final ApplicationService applicationService;
+    private final EventService eventService;
+    private final AuditService auditService;
+    private final ObjectMapper objectMapper;
 
-    @Autowired
-    private ApplicationService applicationService;
-
-    @Autowired
-    private EventService eventService;
-
-    @Autowired
-    private AuditService auditService;
+    public IdentityProviderServiceImpl(@Lazy IdentityProviderRepository identityProviderRepository,
+                                       ApplicationService applicationService,
+                                       EventService eventService,
+                                       AuditService auditService,
+                                       ObjectMapper objectMapper) {
+        this.identityProviderRepository = identityProviderRepository;
+        this.applicationService = applicationService;
+        this.eventService = eventService;
+        this.auditService = auditService;
+        this.objectMapper = objectMapper;
+    }
 
     @Override
     public Flowable<IdentityProvider> findAll() {
@@ -270,4 +286,38 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     return Single.error(new TechnicalManagementException("An error occurs while trying to assign password policy to identity provider", ex));
                 });
     }
+
+    @Override
+    public Flowable<IdentityProvider> findByCertificate(Reference reference, String id) {
+        return identityProviderRepository.findAll(reference.type(), reference.id())
+                .filter(idp -> {
+                    var config = objectMapper.readTree(idp.getConfiguration());
+                    return hasEntryReferringToCert(config, id);
+                });
+    }
+
+    private boolean hasEntryReferringToCert(JsonNode config, String certId) {
+        return config.properties()
+                .stream()
+                .anyMatch(entry -> refersToCert(entry, certId));
+    }
+
+    private boolean refersToCert(Map.Entry<String, JsonNode> entry, String certId) {
+        if (entry.getValue() instanceof ObjectNode nestedEntry) {
+            return hasEntryReferringToCert(nestedEntry, certId);
+        }
+        if (entry.getValue() instanceof ArrayNode arrayEntry) {
+            var elements = arrayEntry.elements();
+            return StreamSupport.stream(Spliterators.spliteratorUnknownSize(elements, Spliterator.ORDERED), false)
+                    .anyMatch(elem -> refersToCert(Map.entry(entry.getKey(), elem), certId));
+        }
+        if (entry.getValue() instanceof TextNode textEntry) {
+            // various IDPs might use different keys for referring to a certificate, so we have to be lax
+            var isCertRelatedEntry = entry.getKey().toLowerCase(Locale.ROOT).contains("cert");
+            var matchesCertId = textEntry.textValue().equals(certId);
+            return isCertRelatedEntry && matchesCertId;
+        }
+        return false;
+    }
+
 }

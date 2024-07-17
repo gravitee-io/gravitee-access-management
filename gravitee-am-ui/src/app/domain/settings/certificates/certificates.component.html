@@ -28,7 +28,7 @@
       </button>
     </div>
 
-    <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="50" [rowHeight]="50" [rows]="certificates">
+    <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="50" rowHeight="auto" [rows]="certificates">
       <ngx-datatable-column name="Certificates" prop="name" [flexGrow]="2" [cellClass]="'certificate-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="certificate-header" fxLayout="row">
@@ -49,13 +49,9 @@
           </div>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Usage" prop="usage" [flexGrow]="1">
+      <ngx-datatable-column name="Usage" prop="usage" [flexGrow]="1.25">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <div class="certificate-simple-text" fxLayout="row">
-            <span *ngIf="!row.system" class="gio-badge-neutral badge" [matTooltip]="usageBadgeTooltip(row)">{{
-              usageBadgeLabel(row)
-            }}</span>
-          </div>
+          <span *ngIf="!row.system" class="gio-badge-neutral badge" [matTooltip]="usageBadgeTooltip(row)">{{ usageBadgeLabel(row) }}</span>
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="Encryption" prop="name" [flexGrow]="1">
@@ -65,7 +61,7 @@
           </div>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Expires on" prop="expiresAt" [flexGrow]="2">
+      <ngx-datatable-column name="Expires on" prop="expiresAt" [flexGrow]="1.5">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="certificate-expiry" fxLayout="row">
             <h3>{{ row.expiresAt | date: 'medium' }}</h3>
@@ -81,10 +77,18 @@
           </div>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Used" [sortable]="false" [flexGrow]="1">
+      <ngx-datatable-column name="Used by" [sortable]="false" [flexGrow]="1.25">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <div class="certificate-simple-text" fxLayout="row">
-            <span class="gio-badge-neutral badge" matTooltip="{{ getAppNames(row) }}">{{ computeAppsLabel(row) }}</span>
+          <div fxLayout="column" fxLayoutAlign="start center">
+            <span *ngIf="row.applications.length > 0" class="gio-badge-neutral badge" matTooltip="{{ getUsageNames(row.applications) }}">{{
+              computeUsageLabel('app', row.applications)
+            }}</span>
+            <span
+              *ngIf="row.identityProviders.length > 0"
+              class="gio-badge-neutral badge"
+              matTooltip="{{ getUsageNames(row.identityProviders) }}"
+              >{{ computeUsageLabel('provider', row.identityProviders) }}</span
+            >
           </div>
         </ng-template>
       </ngx-datatable-column>

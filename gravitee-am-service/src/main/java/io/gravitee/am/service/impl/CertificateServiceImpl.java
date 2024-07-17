@@ -210,12 +210,10 @@ public class CertificateServiceImpl implements CertificateService {
                     try {
                         var certificate = getCertificateToCreate(domain, newCertificate, isSystem, schema);
                         return certificateRepository.create(getValid(certificate));
-                    }
-                    catch (CertificateException ex) {
+                    } catch (CertificateException ex) {
                         log.error("An error occurs while trying to create certificate configuration", ex);
                         return Single.error(ex);
-                    }
-                    catch (Exception ex) {
+                    } catch (Exception ex) {
                         log.error("An error occurs while trying to create certificate configuration", ex);
                         return Single.error(new TechnicalManagementException("An error occurs while trying to create a certificate", ex));
                     }
@@ -266,7 +264,8 @@ public class CertificateServiceImpl implements CertificateService {
         return certificate;
     }
 
-    private record CertificateWithSchema(Certificate certificate, CertificateSchema schema) { }
+    private record CertificateWithSchema(Certificate certificate, CertificateSchema schema) {
+    }
 
     @Override
     public Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, User principal) {
@@ -279,7 +278,7 @@ public class CertificateServiceImpl implements CertificateService {
                 .flatMap(oldCertificate -> {
                     boolean oldWithMTls = usageContains(oldCertificate.certificate().getConfiguration(), "mtls");
                     boolean newWithMTls = usageContains(updateCertificate.getConfiguration(), "mtls");
-                    if (oldWithMTls && !newWithMTls){
+                    if (oldWithMTls && !newWithMTls) {
                         return checkIdentityProviderUsage(oldCertificate.certificate())
                                 .map(cert -> oldCertificate);
                     } else {
@@ -318,22 +317,22 @@ public class CertificateServiceImpl implements CertificateService {
         certificateToUpdate.setName(updateCertificate.getName());
         certificateToUpdate.setUpdatedAt(new Date());
         if (!certificateToUpdate.isSystem()) { // system certificate can't be updated
-                if (oldCertificate.certificate().getType().equals(AWS_AM_CERTIFICATE)) {
-                    validateAwsConfiguration(objectMapper.readTree(updateCertificate.getConfiguration()));
-                } else {
-                    var certificateConfiguration = objectMapper.readTree(updateCertificate.getConfiguration());
-                    var key = getFileKey(certificateConfiguration, oldCertificate.schema());
-                    var oldFileInformation = objectMapper.readTree(oldCertificate.certificate().getConfiguration()).get(key).asText();
-                    var fileInformation = certificateConfiguration.get(key).asText();
-                    // file has changed, let's update it
-                    if (!oldFileInformation.equals(fileInformation)) {
-                        var file = objectMapper.readTree(certificateConfiguration.get(key).asText());
-                        certificateToUpdate.setMetadata(Maps.newHashMap(Map.of(FILE, Base64.getDecoder().decode(file.get(CONTENT).asText()))));
-                        // update configuration to set the file path
-                        ((ObjectNode) certificateConfiguration).put(key, file.get(NAME).asText());
-                    }
+            if (oldCertificate.certificate().getType().equals(AWS_AM_CERTIFICATE)) {
+                validateAwsConfiguration(objectMapper.readTree(updateCertificate.getConfiguration()));
+            } else {
+                var certificateConfiguration = objectMapper.readTree(updateCertificate.getConfiguration());
+                var key = getFileKey(certificateConfiguration, oldCertificate.schema());
+                var oldFileInformation = objectMapper.readTree(oldCertificate.certificate().getConfiguration()).get(key).asText();
+                var fileInformation = certificateConfiguration.get(key).asText();
+                // file has changed, let's update it
+                if (!oldFileInformation.equals(fileInformation)) {
+                    var file = objectMapper.readTree(certificateConfiguration.get(key).asText());
+                    certificateToUpdate.setMetadata(Maps.newHashMap(Map.of(FILE, Base64.getDecoder().decode(file.get(CONTENT).asText()))));
+                    // update configuration to set the file path
+                    ((ObjectNode) certificateConfiguration).put(key, file.get(NAME).asText());
                 }
-                certificateToUpdate.setConfiguration(updateCertificate.getConfiguration());
+            }
+            certificateToUpdate.setConfiguration(updateCertificate.getConfiguration());
 
         }
         return certificateToUpdate;
@@ -345,7 +344,7 @@ public class CertificateServiceImpl implements CertificateService {
         }
     }
 
-    private Single<Certificate> checkIdentityProviderUsage(Certificate certificate){
+    private Single<Certificate> checkIdentityProviderUsage(Certificate certificate) {
         return identityProviderService.findByDomain(certificate.getDomain())
                 .filter(idp -> extractCertificateId(idp.getConfiguration())
                         .map(certId -> certId.equals(certificate.getId()))
@@ -572,8 +571,13 @@ public class CertificateServiceImpl implements CertificateService {
             throw new CertificateException("The configuration details entered are incorrect. Please check those and try again.");
         }
         var expiryDate = certificateProvider.getExpirationDate().orElse(null);
-        if (expiryDate != null && Instant.now().isAfter(expiryDate.toInstant())) {
-            throw new CertificateException("The certificate you uploaded has already expired. Please select a different certificate to upload.");
+        if (expiryDate != null) {
+            if (Instant.now().isAfter(expiryDate.toInstant())) {
+                throw new CertificateException("The certificate you uploaded has already expired. Please select a different certificate to upload.");
+            }
+            if (certificate.getExpiresAt() == null) {
+                certificate.setExpiresAt(expiryDate);
+            }
         }
         return certificate;
     }

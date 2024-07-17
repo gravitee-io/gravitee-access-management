@@ -16,33 +16,24 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.model.CertificateEntity;
-import io.gravitee.am.management.handlers.management.api.model.CertificateStatus;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.CertificateServiceProxy;
-import io.gravitee.am.management.service.impl.DomainNotifierServiceImpl;
+import io.gravitee.am.management.service.impl.CertificateEntity;
+import io.gravitee.am.management.service.impl.ModifiedCertificateEntity;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.Application;
-import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewCertificate;
-import io.gravitee.am.service.utils.CertificateTimeComparator;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.vertx.core.json.Json;
-import io.vertx.core.json.JsonObject;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
@@ -58,19 +49,8 @@ import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
-import org.springframework.util.StringUtils;
 
 import java.net.URI;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static io.gravitee.am.certificate.api.ConfigurationCertUtils.extractUsageFromCertConfiguration;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -79,23 +59,15 @@ import static io.gravitee.am.certificate.api.ConfigurationCertUtils.extractUsage
 @Tag(name = "certificate")
 public class CertificatesResource extends AbstractResource {
 
-    public static final int LATEST_SYSTEM_CERT = 1;
     @Context
     private ResourceContext resourceContext;
 
     @Autowired
-    private CertificateServiceProxy certificateService;
-
-    @Autowired
-    private ApplicationService applicationService;
+    private CertificateServiceProxy certificateFacade;
 
     @Autowired
     private DomainService domainService;
 
-    @Autowired
-    private Environment environment;
-
-    private List<Integer> certificateExpiryThresholds;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -106,11 +78,10 @@ public class CertificatesResource extends AbstractResource {
                     "or DOMAIN_CERTIFICATE[LIST] permission on the specified environment " +
                     "or DOMAIN_CERTIFICATE[LIST] permission on the specified organization. " +
                     "Each returned certificate is filtered and contains only basic information such as id, name and type.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List registered certificates for a security domain",
-                    content = @Content(mediaType =  "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = CertificateEntity.class)))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "200", description = "List registered certificates for a security domain",
+            content = @Content(mediaType = "application/json",
+                    array = @ArraySchema(schema = @Schema(implementation = CertificateEntity.class))))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -118,64 +89,12 @@ public class CertificatesResource extends AbstractResource {
             @QueryParam("use") String use,
             @Suspended final AsyncResponse response) {
 
-        processExpiryThresholds();
-
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_CERTIFICATE, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapPublisher(__ -> certificateService.findByDomain(domain))
-                        .filter(c -> {
-                            if (!StringUtils.isEmpty(use)) {
-                                final JsonObject config = JsonObject.mapFrom(Json.decodeValue(c.getConfiguration(), HashMap.class));
-                                if (config != null && config.getJsonArray("use") != null) {
-                                    return config.getJsonArray("use").contains(use);
-                                }
-                            }
-                            // no value, return true as sig should be the default
-                            return true;
-                        })
-                        .map(cert -> this.filterCertificateInfos(cert, certificateExpiryThresholds.get(0)))
-                        .flatMapSingle(this::addApplications)
-                        .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
-                        .toList()
-                        .map(sortedCertificates -> {
-
-                            // compute RENEWED status for System certificates
-                            sortedCertificates.stream()
-                                    .filter(Certificate::isSystem)
-                                    .sorted(new CertificateTimeComparator())
-                                    .skip(LATEST_SYSTEM_CERT)
-                                    .forEach(cert -> cert.setStatus(CertificateStatus.RENEWED));
-
-                            return Response.ok(sortedCertificates).build();
-                        }))
+                        .flatMapSingle(found -> certificateFacade.findByDomainAndUse(domain, use))
+                        .map(sortedCertificates -> Response.ok(sortedCertificates).build()))
                 .subscribe(response::resume, response::resume);
-    }
-
-    private Single<CertificateEntity> addApplications(CertificateEntity cert) {
-        return applicationService.findByCertificate(cert.getId())
-                .map(app -> {
-                    final Application minimalAppDefinition = new Application();
-                    minimalAppDefinition.setId(app.getId());
-                    minimalAppDefinition.setName(app.getName());
-                    return minimalAppDefinition;
-                })
-                .toList()
-                .map(apps -> {
-                    cert.setApplications(apps);
-                    return cert;
-                });
-    }
-
-    private void processExpiryThresholds() {
-        final String expiryThresholds = environment.getProperty("services.certificate.expiryThresholds", String.class, DomainNotifierServiceImpl.DEFAULT_CERTIFICATE_EXPIRY_THRESHOLDS);
-        if (this.certificateExpiryThresholds == null) {
-            this.certificateExpiryThresholds = Stream.of(expiryThresholds.trim().split(","))
-                    .map(String::trim)
-                    .map(Integer::valueOf)
-                    .sorted(Comparator.reverseOrder())
-                    .collect(Collectors.toList());
-        }
     }
 
     @POST
@@ -187,11 +106,10 @@ public class CertificatesResource extends AbstractResource {
             description = "User must have the DOMAIN_CERTIFICATE[CREATE] permission on the specified domain " +
                     "or DOMAIN_CERTIFICATE[CREATE] permission on the specified environment " +
                     "or DOMAIN_CERTIFICATE[CREATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Certificate successfully created",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = CertificateEntity.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "201", description = "Certificate successfully created",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = CertificateEntity.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void create(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -204,10 +122,10 @@ public class CertificatesResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_CERTIFICATE, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(schema -> certificateService.create(domain, newCertificate, authenticatedUser))
+                        .flatMapSingle(schema -> certificateFacade.create(domain, newCertificate, authenticatedUser))
                         .map(certificate -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/certificates/" + certificate.getId()))
-                                .entity(new CertificateEntity(certificate))
+                                .entity(ModifiedCertificateEntity.of(certificate))
                                 .build()))
                 .subscribe(response::resume, response::resume);
     }
@@ -221,24 +139,23 @@ public class CertificatesResource extends AbstractResource {
             description = "User must have the DOMAIN_CERTIFICATE[CREATE] permission on the specified domain " +
                     "or DOMAIN_CERTIFICATE[CREATE] permission on the specified environment " +
                     "or DOMAIN_CERTIFICATE[CREATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Certificate successfully created",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = CertificateEntity.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "201", description = "Certificate successfully created",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = CertificateEntity.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void rotateCertificate(@PathParam("organizationId") String organizationId,
-                                @PathParam("environmentId") String environmentId,
-                                @PathParam("domain") String domain,
-                                @Suspended final AsyncResponse response) {
+                                  @PathParam("environmentId") String environmentId,
+                                  @PathParam("domain") String domain,
+                                  @Suspended final AsyncResponse response) {
         var principal = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_CERTIFICATE, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(schema -> certificateService.rotate(domain, principal))
+                        .flatMapSingle(schema -> certificateFacade.rotate(domain, principal))
                         .map(certificate -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/certificates/" + certificate.getId()))
-                                .entity(new CertificateEntity(certificate))
+                                .entity(ModifiedCertificateEntity.of(certificate))
                                 .build()))
                 .subscribe(response::resume, response::resume);
     }
@@ -246,27 +163,5 @@ public class CertificatesResource extends AbstractResource {
     @Path("{certificate}")
     public CertificateResource getCertificateResource() {
         return resourceContext.getResource(CertificateResource.class);
-    }
-
-    private CertificateEntity filterCertificateInfos(Certificate certificate, int certificateExpiryThreshold) {
-        CertificateEntity filteredCertificate = new CertificateEntity();
-        filteredCertificate.setId(certificate.getId());
-        filteredCertificate.setName(certificate.getName());
-        filteredCertificate.setType(certificate.getType());
-        filteredCertificate.setExpiresAt(certificate.getExpiresAt());
-        filteredCertificate.setCreatedAt(certificate.getCreatedAt());
-        filteredCertificate.setStatus(CertificateStatus.VALID);
-        filteredCertificate.setSystem(certificate.isSystem());
-        if (certificate.getExpiresAt() != null) {
-            final Instant now = Instant.now();
-            if (certificate.getExpiresAt().getTime() <= now.toEpochMilli()) {
-                filteredCertificate.setStatus(CertificateStatus.EXPIRED);
-            } else if (certificate.getExpiresAt().getTime() < now.plus(certificateExpiryThreshold, ChronoUnit.DAYS).toEpochMilli()) {
-                filteredCertificate.setStatus(CertificateStatus.WILL_EXPIRE);
-            }
-        }
-        filteredCertificate.setUsage(extractUsageFromCertConfiguration(certificate.getConfiguration()));
-
-        return filteredCertificate;
     }
 }

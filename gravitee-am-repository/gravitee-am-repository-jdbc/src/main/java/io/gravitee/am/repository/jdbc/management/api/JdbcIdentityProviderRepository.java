@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.jdbc.management.api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
@@ -81,7 +82,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
 
     private String insertStatement;
     private String updateStatement;
-
+    private final ObjectMapper objectMapper = new ObjectMapper();
     @Autowired
     private SpringIdentityProviderRepository identityProviderRepository;
 
@@ -138,6 +139,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         return this.identityProviderRepository.findAllByPasswordPolicy(referenceType.name(), referenceId, passwordPolicy)
                 .map(this::toEntity);
     }
+
 
     @Override
     public Maybe<IdentityProvider> findById(String id) {
