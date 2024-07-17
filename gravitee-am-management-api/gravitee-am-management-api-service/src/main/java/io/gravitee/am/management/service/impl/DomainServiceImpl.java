@@ -360,15 +360,6 @@ public class DomainServiceImpl implements DomainService {
                                 .andThen(Single.defer(() -> domainRepository.create(domain)));
                     }
                 })
-
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
-                    }
-
-                    LOGGER.error("An error occurred while trying to create a domain", ex);
-                    return Single.error(new TechnicalManagementException("An error occurred while trying to create a domain", ex));
-                })
                 // create default system scopes
                 .flatMap(this::createSystemScopes)
                 // create default certificate
@@ -404,7 +395,16 @@ public class DomainServiceImpl implements DomainService {
                 // create event for sync process
                 .flatMap(domain -> {
                     Event event = new Event(Type.DOMAIN, new Payload(domain.getId(), DOMAIN, domain.getId(), Action.CREATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(domain));
+                    return eventService.create(event).flatMap(e -> Single.just(domain));
+                }).flatMap(domain -> reporterService.notifyInheritedReporters(Reference.organization(organizationId), Reference.domain(domain.getId()), Action.CREATE)
+                        .andThen(Single.just(domain)))
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+
+                    LOGGER.error("An error occurred while trying to create a domain", ex);
+                    return Single.error(new TechnicalManagementException("An error occurred while trying to create a domain", ex));
                 })
                 .doOnSuccess(domain -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
                         .principal(principal)

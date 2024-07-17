@@ -50,9 +50,9 @@ public class AuditServiceImpl implements AuditService {
     @Override
     public Single<Page<Audit>> search(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria, int page, int size) {
         try {
-            return Maybe.fromOptional(getReporter(referenceType, referenceId))
-                    .flatMapSingle(r -> r.search(referenceType, referenceId, criteria, page, size))
-                    .switchIfEmpty(Single.just(new Page<>()));
+            return getReporter(referenceType, referenceId)
+                    .map(r -> r.search(referenceType, referenceId, criteria, page, size))
+                    .orElse(Single.just(new Page<>()));
         } catch (Exception ex) {
             logger.error("An error occurs during audits search for {}}: {}", referenceType, referenceId, ex);
             return Single.error(ex);
@@ -68,9 +68,9 @@ public class AuditServiceImpl implements AuditService {
     @Override
     public Single<Map<Object, Object>> aggregate(String domain, AuditReportableCriteria criteria, Type analyticsType) {
         try {
-            return Maybe.fromOptional(getReporter(domain))
-                    .flatMapSingle(r ->r.aggregate(ReferenceType.DOMAIN, domain, criteria, analyticsType))
-                    .switchIfEmpty(Single.just(Map.of()));
+            return getReporter(domain)
+                    .map(r->r.aggregate(ReferenceType.DOMAIN, domain, criteria, analyticsType))
+                    .orElse(Single.just(Map.of()));
         } catch (Exception ex) {
             logger.error("An error occurs during audits aggregation for domain: {}", domain, ex);
             return Single.error(ex);
