@@ -97,7 +97,7 @@ public class CertificateResource extends AbstractResource {
                             if (!cert.getDomain().equalsIgnoreCase(domain)) {
                                 throw new BadRequestException("Certificate does not belong to domain");
                             }
-                            return Response.ok(CertificateEntity.singleDetails(cert)).build();
+                            return Response.ok(ModifiedCertificateEntity.of(cert)).build();
                         }))
                 .subscribe(response::resume, response::resume);
     }
