@@ -16,6 +16,8 @@
 package io.gravitee.am.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
 import lombok.Data;
@@ -28,6 +30,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -67,10 +70,10 @@ public class Certificate {
 
     public boolean hasUse(String use, ThrowingFunction<String, JsonNode> parseConfig) {
         return Optional.ofNullable(parseConfig.apply(configuration))
-                .map(config -> config.get("use"))
-                .map(JsonNode::elements)
-                .stream()
-                .flatMap(it -> Stream.generate(it::next))
+                .map(config -> (ArrayNode) config.get("use"))
+                .map(Iterable::spliterator)
+                .map(it -> StreamSupport.stream(it, false))
+                .orElse(Stream.of(new TextNode("sig"))) // if 'use' is not present, consider it as use=[sig]
                 .anyMatch(x -> use.equals(x.textValue()));
     }
 
