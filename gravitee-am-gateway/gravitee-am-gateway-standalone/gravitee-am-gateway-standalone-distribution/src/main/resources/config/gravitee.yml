@@ -333,6 +333,9 @@ handlers:
   request:
     transaction:
       header: X-Gravitee-Transaction-Id
+  oauth2:
+    response:
+      strict: false
 
 # Gateway entry point used in emails
 gateway:
