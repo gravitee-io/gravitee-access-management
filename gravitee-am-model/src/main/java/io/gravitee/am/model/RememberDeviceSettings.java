@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model;
 
+import lombok.ToString;
+
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
@@ -33,6 +35,7 @@ public class RememberDeviceSettings {
         this.active = other.active;
         this.expirationTimeSeconds = other.expirationTimeSeconds;
         this.deviceIdentifierId = other.deviceIdentifierId;
+        this.skipRememberDevice = other.skipRememberDevice;
     }
 
     public boolean isActive() {
