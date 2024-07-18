@@ -44,7 +44,7 @@ public class WebAuthnCookieService implements InitializingBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(WebAuthnCookieService.class);
     private static final String DEFAULT_COOKIE_NAME = "GRAVITEE_AM_DEVICE_RECOGNITION";
     private static final long DEFAULT_SESSION_TIMEOUT = (long) 365 * 24 * 60 * 60 * 1000; // a year
-    private static final String USER_ID = "userId";
+    static final String USER_ID = "userId";
 
     @Value("${passwordless.rememberDevice.cookie.name:" + DEFAULT_COOKIE_NAME + "}")
     private String rememberDeviceCookieName;
@@ -84,12 +84,11 @@ public class WebAuthnCookieService implements InitializingBean {
         return jwtService.encode(jwt, certificateProvider);
     }
 
-    public Completable verifyRememberDeviceCookieValue(String cookieValue) {
+    public Single<String> extractUserIdFromRememberDeviceCookieValue(String cookieValue) {
         return decodeAndVerify(cookieValue)
-                .ignoreElement()
-                .onErrorResumeNext(throwable -> {
+                .map(jwt -> (String) jwt.get(USER_ID))
+                .doOnError(throwable -> {
                     LOGGER.error("An error has occurred when parsing WebAuthn cookie {}", cookieValue, throwable);
-                    return Completable.error(throwable);
                 });
     }
 
