@@ -369,6 +369,7 @@ public class DomainServiceTest {
         when(roleService.findSystemRole(SystemRole.DOMAIN_PRIMARY_OWNER, DOMAIN)).thenReturn(Maybe.just(new Role()));
         when(reporterService.createDefault(any())).thenReturn(Single.just(new Reporter()));
         when(identityProviderManager.create(any())).thenReturn(Single.just(new IdentityProvider()));
+        when(reporterService.notifyInheritedReporters(any(),any(),any())).thenReturn(Completable.complete());
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
 
@@ -413,6 +414,7 @@ public class DomainServiceTest {
         when(membershipService.addOrUpdate(eq(ORGANIZATION_ID), any())).thenReturn(Single.just(new Membership()));
         when(roleService.findSystemRole(SystemRole.DOMAIN_PRIMARY_OWNER, DOMAIN)).thenReturn(Maybe.just(new Role()));
         when(identityProviderManager.create(any())).thenReturn(Single.just(new IdentityProvider()));
+        when(reporterService.notifyInheritedReporters(any(),any(),any())).thenReturn(Completable.complete());
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
 
