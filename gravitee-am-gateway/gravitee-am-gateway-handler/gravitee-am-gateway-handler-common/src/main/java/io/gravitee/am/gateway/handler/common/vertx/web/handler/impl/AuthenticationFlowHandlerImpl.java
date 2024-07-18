@@ -39,6 +39,7 @@ import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.CredentialService;
 import io.vertx.core.Handler;
+import io.vertx.rxjava3.ext.auth.webauthn.WebAuthn;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -94,7 +95,7 @@ public class AuthenticationFlowHandlerImpl implements AuthenticationFlowHandler 
         steps.add(new RememberMeStep(RedirectHandler.create("/login"), jwtService, userService, rememberMeCookieName));
         steps.add(new SPNEGOStep(RedirectHandler.create("/login/SSO/SPNEGO"), identityProviderManager));
         steps.add(new FormIdentifierFirstLoginStep(RedirectHandler.create("/login/identifier"), domain));
-        steps.add(new WebAuthnLoginStep(RedirectHandler.create("/webauthn/login"), domain, webAuthnCookieService));
+        steps.add(new WebAuthnLoginStep(RedirectHandler.create("/webauthn/login"), domain, credentialService, webAuthnCookieService));
         steps.add(new FormLoginStep(RedirectHandler.create("/login")));
         steps.add(new ForceResetPasswordStep(RedirectHandler.create("/resetPassword"), jwtService, certificateManager, environment));
         steps.add(new WebAuthnRegisterStep(domain, RedirectHandler.create("/webauthn/register"), factorManager, credentialService));
