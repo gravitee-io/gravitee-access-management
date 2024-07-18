@@ -42,5 +42,6 @@ public class RememberDeviceSettings {
         this.active = other.active;
         this.expirationTimeSeconds = other.expirationTimeSeconds;
         this.deviceIdentifierId = other.deviceIdentifierId;
+        this.isSkipChallengeWhenRememberDevice = other.isSkipChallengeWhenRememberDevice;
     }
 }
