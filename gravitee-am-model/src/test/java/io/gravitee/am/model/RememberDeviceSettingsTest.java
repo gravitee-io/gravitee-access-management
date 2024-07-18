@@ -46,6 +46,13 @@ class RememberDeviceSettingsTest {
         };
     }
 
+    @ParameterizedTest
+    @MethodSource("examples")
+    void copyConstructorCopiesProperly(TestCase testCase) {
+        var source = testCase.expectedSettings();
+        assertThat(new RememberDeviceSettings(source)).isEqualTo(source);
+    }
+
     // github: #9734
     @ParameterizedTest
     @MethodSource("examples")
