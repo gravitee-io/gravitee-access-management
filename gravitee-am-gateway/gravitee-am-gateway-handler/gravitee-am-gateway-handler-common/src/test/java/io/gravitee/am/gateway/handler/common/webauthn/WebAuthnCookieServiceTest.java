@@ -26,6 +26,8 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.exception.UserNotFoundException;
+
+import java.util.Map;
 import java.util.Objects;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,6 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.concurrent.TimeUnit;
 
+import static io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService.USER_ID;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -81,18 +84,19 @@ public class WebAuthnCookieServiceTest {
     }
 
     @Test
-    public void shouldVerifyRememberDeviceCookieValue_nominal_case() {
-        when(jwtService.decodeAndVerify(anyString(), eq(certificateProvider), any())).thenReturn(Single.just(new JWT()));
-        TestObserver<Void> testObserver = webAuthnCookieService.verifyRememberDeviceCookieValue("cookieValue").test();
+    public void shouldExtractUserIdFromRememberDeviceCookieValue_nominal_case() {
+        when(jwtService.decodeAndVerify(anyString(), eq(certificateProvider), any())).thenReturn(Single.just(new JWT(Map.of(USER_ID, "userId"))));
+        TestObserver<String> testObserver = webAuthnCookieService.extractUserIdFromRememberDeviceCookieValue("cookieValue").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertComplete();
+        testObserver.assertValue(value -> value.equals("userId"));
     }
 
     @Test
     public void shouldVerifyRememberDeviceCookieValue_error() {
         when(jwtService.decodeAndVerify(anyString(), eq(certificateProvider), any())).thenReturn(Single.error(new IllegalArgumentException("invalid-token")));
-        TestObserver<Void> testObserver = webAuthnCookieService.verifyRememberDeviceCookieValue("cookieValue").test();
+        TestObserver<String> testObserver = webAuthnCookieService.extractUserIdFromRememberDeviceCookieValue("cookieValue").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNotComplete();
         testObserver.assertError(IllegalArgumentException.class);
