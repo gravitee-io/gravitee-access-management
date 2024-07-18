@@ -18,8 +18,12 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.CredentialService;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.http.Cookie;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -31,11 +35,13 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 public class WebAuthnLoginStep extends AuthenticationFlowStep {
 
     private final Domain domain;
+    private final CredentialService credentialService;
     private final WebAuthnCookieService webAuthnCookieService;
 
-    public WebAuthnLoginStep(Handler<RoutingContext> handler, Domain domain, WebAuthnCookieService webAuthnCookieService) {
+    public WebAuthnLoginStep(Handler<RoutingContext> handler, Domain domain, CredentialService credentialService, WebAuthnCookieService webAuthnCookieService) {
         super(handler);
         this.domain = domain;
+        this.credentialService = credentialService;
         this.webAuthnCookieService = webAuthnCookieService;
     }
 
@@ -68,11 +74,16 @@ public class WebAuthnLoginStep extends AuthenticationFlowStep {
         }
 
         // check cookie value and continue
-        webAuthnCookieService.verifyRememberDeviceCookieValue(cookie.getValue())
+        webAuthnCookieService.extractUserIdFromRememberDeviceCookieValue(cookie.getValue())
+                .flatMap(this::getCredentialCount)
                 .subscribe(
-                        () -> {
-                            /// go to the WebAuthn login page
-                            flow.exit(this);
+                        (credentialCount) -> {
+                            if (credentialCount > 0) {
+                                /// go to the WebAuthn login page
+                                flow.exit(this);
+                            } else {
+                                flow.doNext(routingContext);
+                            }
                         },
                         error -> {
                             // unable to decode the cookie, continue
@@ -80,4 +91,10 @@ public class WebAuthnLoginStep extends AuthenticationFlowStep {
                         }
                 );
     }
+
+    private Single<Long> getCredentialCount(String userId) {
+        return credentialService.findByUserId(ReferenceType.DOMAIN, domain.getId(), userId)
+                .count();
+    }
+
 }
