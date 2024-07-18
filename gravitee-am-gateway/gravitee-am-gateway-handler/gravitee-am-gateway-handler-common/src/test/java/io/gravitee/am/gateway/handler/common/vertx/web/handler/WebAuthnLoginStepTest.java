@@ -19,10 +19,15 @@ import io.gravitee.am.common.exception.jwt.SignatureException;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.WebAuthnLoginStep;
 import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService;
+import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.CredentialService;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.http.Cookie;
@@ -62,17 +67,21 @@ public class WebAuthnLoginStepTest {
     @Mock
     private Domain domain;
 
+    @Mock
+    private CredentialService credentialService;
+
     private AuthenticationFlowChain authenticationFlowChain;
 
     private WebAuthnLoginStep webAuthnLoginStep;
 
     @Before
     public void setUp() {
-        webAuthnLoginStep = new WebAuthnLoginStep(redirectHandler, domain, webAuthnCookieService);
+        webAuthnLoginStep = new WebAuthnLoginStep(redirectHandler, domain, credentialService, webAuthnCookieService);
         authenticationFlowChain = spy(new AuthenticationFlowChain(List.of(webAuthnLoginStep)));
 
         when(webAuthnCookieService.getRememberDeviceCookieName()).thenReturn("cookieName");
         when(routingContext.request()).thenReturn(httpServerRequest);
+        when(domain.getId()).thenReturn("domainId");
         doNothing().when(authenticationFlowChain).exit(Mockito.any());
         doNothing().when(authenticationFlowChain).doNext(Mockito.any());
     }
@@ -153,7 +162,7 @@ public class WebAuthnLoginStepTest {
         when(client.getLoginSettings()).thenReturn(loginSettings);
         when(routingContext.get(CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(httpServerRequest.getCookie("cookieName")).thenReturn(Cookie.cookie("cookieName", "cookieValue"));
-        when(webAuthnCookieService.verifyRememberDeviceCookieValue("cookieValue")).thenReturn(Completable.error(new SignatureException("Invalid payload")));
+        when(webAuthnCookieService.extractUserIdFromRememberDeviceCookieValue("cookieValue")).thenReturn(Single.error(new SignatureException("Invalid payload")));
 
         webAuthnLoginStep.execute(routingContext, authenticationFlowChain);
 
@@ -170,11 +179,32 @@ public class WebAuthnLoginStepTest {
         when(client.getLoginSettings()).thenReturn(loginSettings);
         when(routingContext.get(CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(httpServerRequest.getCookie("cookieName")).thenReturn(Cookie.cookie("cookieName", "cookieValue"));
-        when(webAuthnCookieService.verifyRememberDeviceCookieValue("cookieValue")).thenReturn(Completable.complete());
+        when(webAuthnCookieService.extractUserIdFromRememberDeviceCookieValue("cookieValue")).thenReturn(Single.just("userId"));
+        when(credentialService.findByUserId(ReferenceType.DOMAIN, "domainId", "userId")).thenReturn(Flowable
+                .just(mock(Credential.class)));
 
         webAuthnLoginStep.execute(routingContext, authenticationFlowChain);
 
         verify(authenticationFlowChain, times(1)).exit(webAuthnLoginStep);
         verify(authenticationFlowChain, times(0)).doNext(routingContext);
+    }
+
+    @Test
+    public void mustDoNext_noCredentials() {
+        LoginSettings loginSettings = mock(LoginSettings.class);
+        when(loginSettings.isPasswordlessEnabled()).thenReturn(true);
+        when(loginSettings.isPasswordlessRememberDeviceEnabled()).thenReturn(true);
+        Client client = mock(Client.class);
+        when(client.getLoginSettings()).thenReturn(loginSettings);
+        when(routingContext.get(CLIENT_CONTEXT_KEY)).thenReturn(client);
+        when(httpServerRequest.getCookie("cookieName")).thenReturn(Cookie.cookie("cookieName", "cookieValue"));
+        when(webAuthnCookieService.extractUserIdFromRememberDeviceCookieValue("cookieValue")).thenReturn(Single.just("userId"));
+        when(credentialService.findByUserId(ReferenceType.DOMAIN, "domainId", "userId")).thenReturn(Flowable
+                .empty());
+
+        webAuthnLoginStep.execute(routingContext, authenticationFlowChain);
+
+        verify(authenticationFlowChain, times(0)).exit(webAuthnLoginStep);
+        verify(authenticationFlowChain, times(1)).doNext(routingContext);
     }
 }
