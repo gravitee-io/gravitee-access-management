@@ -27,7 +27,7 @@
     "wellKnownUri": {
       "type" : "string",
       "title": "Well-Known Endpoint",
-      "description": "OpenID Connect Well-Known Endpoint '/.well-known/openid-configuration' to get OpenID Provider Configuration.\nFor settings configured both in this form and received from the well-known endpoint, the value from the endpoint is used."
+      "description": "OpenID Connect Well-Known Endpoint '/.well-known/openid-configuration' to get OpenID Provider Configuration and autodiscover the endpoints.\nFor settings configured both in this form and received from the well-known endpoint, the auto discovered values are used."
 
     },
     "userAuthorizationUri" : {
