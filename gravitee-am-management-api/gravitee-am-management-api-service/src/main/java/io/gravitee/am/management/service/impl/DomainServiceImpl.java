@@ -386,7 +386,7 @@ public class DomainServiceImpl implements DomainService {
                 .flatMap(domain -> identityProviderManager.create(domain.getId()).map(__ -> domain))
                 // create default reporter
                 .flatMap(domain -> {
-                        if (!createDefaultReporters) {
+                    if (!createDefaultReporters) {
                         return Single.just(domain);
                     }
                     //default behaviour

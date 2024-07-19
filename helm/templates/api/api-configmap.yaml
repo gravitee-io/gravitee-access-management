@@ -297,7 +297,10 @@ data:
     applications:
       {{- .Values.applications | toYaml | nindent 6 }}
     {{- end }}
-
+    {{- if .Values.api.domains.reporters }}
+    reporters:
+      {{- .Values.api.domains.reporters | toYaml | nindent 6 }}
+    {{- end }}
     jwt:
       secret: {{ .Values.api.jwt.secret }}
       kid: {{ .Values.api.jwt.kid | default "default-gravitee-AM-key" }}
