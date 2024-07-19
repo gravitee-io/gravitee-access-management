@@ -1,5 +1,28 @@
 # Change Log
 
+==  - 3.21.28 (2024-07-19)
+
+== What's new !
+
+
+
+=== Gateway
+
+* Error Azure SCIM user update  https://github.com/gravitee-io/issues/issues/9674[#9674]
+
+=== Management API
+
+
+
+=== Console
+
+
+
+=== Other
+
+
+
+
 ==  - 3.21.27 (2024-06-06)
 
 == What's new !
