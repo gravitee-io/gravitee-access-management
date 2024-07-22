@@ -21,6 +21,7 @@ import lombok.Setter;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -85,6 +86,10 @@ public abstract class Token implements Serializable {
      * UMA 2.0 is introduced the capability to upgrade a previous (Requesting Party) Token with new permissions
      */
     public static final String UPGRADED = "upgraded";
+
+    public static List<String> getStandardParameters(){
+        return List.of(ACCESS_TOKEN, TOKEN_TYPE, EXPIRES_IN, REFRESH_TOKEN);
+    }
 
     protected Token(String value) {
         this.value = value;
