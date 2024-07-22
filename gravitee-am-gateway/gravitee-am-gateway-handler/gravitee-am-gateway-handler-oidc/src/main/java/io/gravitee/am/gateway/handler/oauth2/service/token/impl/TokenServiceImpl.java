@@ -67,6 +67,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.REFRESH_TOKEN;
 import static org.springframework.util.ObjectUtils.isEmpty;
@@ -275,7 +276,9 @@ public class TokenServiceImpl implements TokenService {
         token.setScope(accessToken.getScope());
         // set additional information
         if (oAuth2Request.getAdditionalParameters() != null && !oAuth2Request.getAdditionalParameters().isEmpty()) {
-            oAuth2Request.getAdditionalParameters().toSingleValueMap().forEach((k, v) -> token.getAdditionalInformation().put(k, v));
+            oAuth2Request.getAdditionalParameters().toSingleValueMap().entrySet().stream()
+                    .filter(e -> !Token.getStandardParameters().contains(e.getKey()) && !e.getKey().equals(ID_TOKEN))
+                    .forEach(e -> token.getAdditionalInformation().put(e.getKey(), e.getValue()));
         }
         // set refresh token
         token.setRefreshToken(encodedRefreshToken);
@@ -369,10 +372,10 @@ public class TokenServiceImpl implements TokenService {
 
         // set permissions (UMA 2.0)
         List<PermissionRequest> permissions = oAuth2Request.getPermissions();
-        if(permissions!=null && !permissions.isEmpty()) {
-            jwt.put("permissions",permissions);
-        }
 
+        if(permissions!=null && !permissions.isEmpty()) {
+            jwt.put("permissions", permissions);
+        }
         return jwt;
     }
 
@@ -390,7 +393,7 @@ public class TokenServiceImpl implements TokenService {
                                 if (Claims.aud.equals(claimName) && (extValue instanceof String[] || extValue instanceof List)) {
                                     var audiences = new LinkedHashSet<>();
                                     audiences.add(jwt.getAud()); // make sure the client_id is the first entry of the aud array
-                                    audiences.addAll(extValue instanceof List ? (List)extValue : List.of((String[]) extValue)); // Set will remove duplicate client_id if any
+                                    audiences.addAll(extValue instanceof List ? (List) extValue : List.of((String[]) extValue)); // Set will remove duplicate client_id if any
                                     var jsonArray = new JSONArray();
                                     jsonArray.addAll(audiences);
                                     jwt.put(claimName, jsonArray);
