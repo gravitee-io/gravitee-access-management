@@ -511,15 +511,15 @@ public class DomainServiceImpl implements DomainService {
                                 List<Completable> deleteApplicationsCompletable = applications.stream().map(a -> applicationService.delete(a.getId())).toList();
                                 return Completable.concat(deleteApplicationsCompletable);
                             })
-                            // delete certificates
-                            .andThen(certificateService.findByDomain(domainId)
-                                    .flatMapCompletable(certificate -> certificateService.delete(certificate.getId()))
-                            )
                             // delete identity providers
                             .andThen(identityProviderService.findByDomain(domainId)
                                     .flatMapCompletable(identityProvider ->
                                             identityProviderService.delete(domainId, identityProvider.getId())
                                     )
+                            )
+                            // delete certificates
+                            .andThen(certificateService.findByDomain(domainId)
+                                    .flatMapCompletable(certificate -> certificateService.delete(certificate.getId()))
                             )
                             // delete extension grants
                             .andThen(extensionGrantService.findByDomain(domainId)
