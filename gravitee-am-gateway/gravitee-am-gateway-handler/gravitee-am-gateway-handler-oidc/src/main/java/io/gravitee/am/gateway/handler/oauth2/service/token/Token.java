@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.token;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -80,7 +81,11 @@ public abstract class Token {
      */
     public static final String UPGRADED = "upgraded";
 
-    public Token(String value) {
+    public static List<String> getStandardParameters(){
+        return List.of(ACCESS_TOKEN, TOKEN_TYPE, EXPIRES_IN, REFRESH_TOKEN);
+    }
+
+    protected Token(String value) {
         this.value = value;
     }
 
