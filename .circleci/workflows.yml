@@ -1778,15 +1778,6 @@ workflows:
           context: cicd-orchestrator
           requires:
             - publish docker images
-      - job-test-am-charts:
-          name: helm tests
-          requires:
-            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
-      - job-release_helm:
-          name: publish helm charts
-          context: cicd-orchestrator
-          requires:
-            - helm tests
       - publish_maven_packages_to_maven_central:
           name: publish maven packages
           context: cicd-orchestrator
