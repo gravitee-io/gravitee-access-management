@@ -40,6 +40,7 @@ public abstract class AbstractSensitiveProxy {
     private static final String PROPERTIES_SCHEMA_KEY = "properties";
     private static final String SENSITIVE_SCHEMA_KEY = "sensitive";
     private static final String SENSITIVE_URI_SCHEMA_KEY = "sensitive-uri";
+    private static final String NULLS_AS_EMPTY_STRING = "null-as-empty-string";
 
     protected static final String SENSITIVE_VALUE = "********";
     protected static final Pattern SENSITIVE_VALUE_PATTERN = Pattern.compile("^(\\*+)$");
@@ -59,7 +60,7 @@ public abstract class AbstractSensitiveProxy {
                     final String uri = configurationNode.get(entry.getKey()).asText();
                     final String userInfo = URI.create(uri).getUserInfo();
                     extractUriPassword(userInfo).ifPresent(passwordToHide ->
-                        ((ObjectNode) configurationNode).put(entry.getKey(), uri.replaceFirst(quote(passwordToHide), SENSITIVE_VALUE))
+                            ((ObjectNode) configurationNode).put(entry.getKey(), uri.replaceFirst(quote(passwordToHide), SENSITIVE_VALUE))
                     );
                 }
             });
@@ -89,7 +90,9 @@ public abstract class AbstractSensitiveProxy {
     ) {
         if (schemaNode.has(PROPERTIES_SCHEMA_KEY)) {
             var properties = schemaNode.get(PROPERTIES_SCHEMA_KEY).fields();
-            properties.forEachRemaining(setOldConfigurationIfNecessary(updatedConfigurationNode, oldConfigurationNode));
+            properties.forEachRemaining(
+                    setOldConfigurationIfNecessary(updatedConfigurationNode, oldConfigurationNode)
+                            .andThen(handleEmptyValues(updatedConfigurationNode)));
             configurationUpdater.accept(updatedConfigurationNode.toString());
         }
     }
@@ -134,12 +137,23 @@ public abstract class AbstractSensitiveProxy {
         };
     }
 
+    protected Consumer<Entry<String, JsonNode>> handleEmptyValues(JsonNode updatedConfigurationNode) {
+        return entry -> {
+            if (isNullAsEmptyString(entry)) {
+                final JsonNode newUri = updatedConfigurationNode.get(entry.getKey());
+                if (newUri == null) {
+                    ((ObjectNode) updatedConfigurationNode).put(entry.getKey(), "");
+                }
+            }
+        };
+    }
+
     private Optional<String> extractUriPassword(String userInfo) {
         Optional<String> result = Optional.empty();
         if (!Strings.isNullOrEmpty(userInfo)) {
             final int index = userInfo.indexOf(":");
             if (index != -1) {
-                final String pwd = userInfo.substring(index+1);
+                final String pwd = userInfo.substring(index + 1);
                 result = Optional.of(pwd.trim());
             }
         }
@@ -152,6 +166,10 @@ public abstract class AbstractSensitiveProxy {
 
     protected boolean isSensitiveUri(Entry<String, JsonNode> entry) {
         return entry.getValue().has(SENSITIVE_URI_SCHEMA_KEY) && entry.getValue().get(SENSITIVE_URI_SCHEMA_KEY).asBoolean();
+    }
+
+    protected boolean isNullAsEmptyString(Entry<String, JsonNode> entry) {
+        return entry.getValue().has(NULLS_AS_EMPTY_STRING) && entry.getValue().get(NULLS_AS_EMPTY_STRING).asBoolean();
     }
 
     protected boolean valueIsUpdatable(JsonNode configNode, Entry<String, JsonNode> entry) {
