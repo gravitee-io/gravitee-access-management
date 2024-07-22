@@ -38,6 +38,8 @@ import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.common.util.LinkedMultiValueMap;
+import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.el.TemplateEngine;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Response;
@@ -133,6 +135,34 @@ public class TokenServiceTest {
         TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
+
+        verify(tokenManager, times(1)).storeAccessToken(any());
+        verify(accessTokenRepository, never()).delete(anyString());
+        verify(refreshTokenRepository, never()).delete(anyString());
+    }
+
+    @Test
+    public void shouldCreateAndSkipAdditionalParameters() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        MultiValueMap<String, String> additionalParameters = new LinkedMultiValueMap<>();
+        additionalParameters.add("access_token", "dummy token");
+        additionalParameters.add("id_token", "dummy token");
+        oAuth2Request.setAdditionalParameters(additionalParameters);
+
+        Client client = new Client();
+        client.setClientId("my-client-id");
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+
+        when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenAnswer(ans -> Single.just(ans.getArgument(0)));
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+        TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        testObserver.assertValue(token -> token.getAdditionalInformation().isEmpty());
 
         verify(tokenManager, times(1)).storeAccessToken(any());
         verify(accessTokenRepository, never()).delete(anyString());
