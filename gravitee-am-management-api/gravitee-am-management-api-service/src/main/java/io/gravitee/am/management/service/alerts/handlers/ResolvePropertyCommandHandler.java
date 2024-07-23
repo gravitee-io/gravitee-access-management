@@ -20,7 +20,7 @@ import io.gravitee.alert.api.trigger.command.Command;
 import io.gravitee.alert.api.trigger.command.Handler;
 import io.gravitee.alert.api.trigger.command.ResolvePropertyCommand;
 import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.management.service.DomainService;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

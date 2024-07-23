@@ -21,7 +21,7 @@ import io.gravitee.am.management.service.ExtensionGrantPluginService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.ExtensionGrantService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewExtensionGrant;

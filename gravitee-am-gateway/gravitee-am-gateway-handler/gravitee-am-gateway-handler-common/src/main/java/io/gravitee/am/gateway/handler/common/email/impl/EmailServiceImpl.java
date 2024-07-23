@@ -36,7 +36,7 @@ import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.i18n.FreemarkerMessageResolver;
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -100,7 +100,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     private JWTBuilder jwtBuilder;
 
     @Autowired
-    private DomainService domainService;
+    private DomainReadService domainService;
 
     @Autowired
     private GraviteeMessageResolver graviteeMessageResolver;

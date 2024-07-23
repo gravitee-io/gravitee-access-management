@@ -136,11 +136,7 @@ public class DomainsResource extends AbstractDomainResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, Permission.DOMAIN, Acl.CREATE)
-                .andThen(domainService.create(organizationId, environmentId, newDomain, authenticatedUser)
-                        // create default idp (ignore if mongodb isn't the repositories backend)
-                        .flatMap(domain -> identityProviderManager.create(domain.getId()).map(__ -> domain))
-                        // create default reporter
-                        .flatMap(domain -> reporterService.createDefault(Reference.domain(domain.getId())).map(__ -> domain)))
+                .andThen(domainService.create(organizationId, environmentId, newDomain, authenticatedUser))
                 .subscribe(domain -> response.resume(Response.created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain.getId()))
                         .entity(domain).build()), response::resume);
     }
