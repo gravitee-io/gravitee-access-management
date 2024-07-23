@@ -56,7 +56,7 @@ data:
       secured: true
       ssl:
         {{- if .Values.gateway.ssl.certificateHeader }}
-        certificateHeader: {{- .Values.gateway.ssl.certificateHeader }}
+        certificateHeader: {{ .Values.gateway.ssl.certificateHeader }}
         {{- end }}
         keystore:
           {{- if .Values.gateway.ssl.keystore.type }}
