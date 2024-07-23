@@ -22,7 +22,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Tag;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.TagService;
+import io.gravitee.am.management.service.TagService;
 import io.gravitee.am.service.model.NewTag;
 import io.gravitee.common.http.MediaType;
 import io.swagger.v3.oas.annotations.Operation;

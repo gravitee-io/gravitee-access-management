@@ -254,6 +254,12 @@ domains:
       validity: 365             # Validity of the certificate
       algorithm: SHA256withRSA  # Algorithm used to sign certificate
       name: cn=Gravitee.io      # Certificate X.500 name
+#  reporters:
+#    default:
+#      # should the default (database) reporter be created. E.g. if the organization defines a global reporter,
+#      # domain-level reporters might not be necessary
+#      enabled: true
+
 ## Refresh section is used to define the delay between a system certificate renewal
 ## and the applications update to use this new certificate
 #      refresh:

@@ -520,8 +520,10 @@ api:
 #      sslKeyStorePassword: changeme
     ui:
       enabled: true
-
   domains:
+    reporters:
+      default:
+        enabled: true
     identities:
       default:
         passwordEncoder:

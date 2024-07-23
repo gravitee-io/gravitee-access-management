@@ -20,7 +20,7 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.management.service.DomainService;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.core.Context;
 import org.springframework.beans.factory.annotation.Autowired;

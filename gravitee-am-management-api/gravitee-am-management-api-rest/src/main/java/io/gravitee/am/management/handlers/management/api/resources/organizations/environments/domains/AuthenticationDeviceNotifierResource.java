@@ -22,7 +22,7 @@ import io.gravitee.am.model.AuthenticationDeviceNotifier;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.AuthenticationDeviceNotifierService;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.exception.AuthenticationDeviceNotifierNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.UpdateAuthenticationDeviceNotifier;

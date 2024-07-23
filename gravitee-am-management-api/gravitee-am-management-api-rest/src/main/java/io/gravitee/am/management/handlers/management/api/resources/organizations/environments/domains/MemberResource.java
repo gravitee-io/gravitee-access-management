@@ -18,7 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.reactivex.rxjava3.core.Maybe;

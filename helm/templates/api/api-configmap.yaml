@@ -274,10 +274,10 @@ data:
     {{- end }}
 
     domains:
-    {{- if ( and .Values.api.domains .Values.api.domains.identities ) }}
+      {{- if ( and .Values.api.domains .Values.api.domains.identities ) }}
       identities:
-{{- .Values.api.domains.identities | toYaml | nindent 8 }}
-    {{- end }}
+        {{- .Values.api.domains.identities | toYaml | nindent 8 }}
+      {{- end }}
       certificates:
         default:
           keysize: {{ .Values.api.domains.certificates.default.keysize }}
@@ -292,12 +292,14 @@ data:
             delay: {{ .Values.api.domains.certificates.default.refresh.delay | default 10 }}
             timeUnit: {{ .Values.api.domains.certificates.default.refresh.timeUnit | default "MINUTES" }}
           {{- end }}
-
+      {{- if .Values.api.domains.reporters }}
+      reporters:
+        {{- .Values.api.domains.reporters | toYaml | nindent 8 }}
+      {{- end }}
     {{- if .Values.applications }}
     applications:
       {{- .Values.applications | toYaml | nindent 6 }}
     {{- end }}
-
     jwt:
       secret: {{ .Values.api.jwt.secret }}
       kid: {{ .Values.api.jwt.kid | default "default-gravitee-AM-key" }}

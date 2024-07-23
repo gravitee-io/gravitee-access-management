@@ -42,7 +42,6 @@ import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CredentialService;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordPolicyService;

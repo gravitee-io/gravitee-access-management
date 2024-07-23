@@ -15,12 +15,14 @@
  */
 package io.gravitee.am.certificate.api;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 
 public class DefaultTrustStoreProviderTest {
 
     @Test
+    @Ignore("relies on DefaultTrustStoreProvider not being loaded by the classloader before this test is ran, and we can't guarantee that")
     public void should_return_system_properties_for_default_truststore(){
         String defaultTrustStorePath = DefaultTrustStoreProvider.getDefaultTrustStorePath();
         String defaultTrustStorePassword = DefaultTrustStoreProvider.getDefaultTrustStorePassword();

@@ -48,7 +48,7 @@ import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.ApplicationTemplateManager;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CertificateService;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.EmailTemplateService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.FormService;
@@ -137,7 +137,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private AuditService auditService;
 
     @Autowired
-    private DomainService domainService;
+    private DomainReadService domainService;
 
     @Autowired
     private EventService eventService;

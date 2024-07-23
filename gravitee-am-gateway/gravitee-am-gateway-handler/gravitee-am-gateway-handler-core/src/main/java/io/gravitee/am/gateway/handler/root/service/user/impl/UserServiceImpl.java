@@ -52,7 +52,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CredentialService;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.exception.ClientNotFoundException;
@@ -125,7 +125,7 @@ public class UserServiceImpl implements UserService {
     private JWTParser jwtParser;
 
     @Autowired
-    private DomainService domainService;
+    private DomainReadService domainService;
 
     @Autowired
     private Domain domain;

@@ -129,7 +129,7 @@ public class ApplicationServiceTest {
     private ApplicationTemplateManager applicationTemplateManager;
 
     @Mock
-    private DomainService domainService;
+    private DomainReadService domainService;
 
     @Mock
     private EventService eventService;

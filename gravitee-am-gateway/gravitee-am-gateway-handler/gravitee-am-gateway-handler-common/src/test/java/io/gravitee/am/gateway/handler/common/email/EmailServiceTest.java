@@ -29,7 +29,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.EmailService;
 import io.gravitee.am.service.i18n.CompositeDictionaryProvider;
 import io.gravitee.am.service.i18n.DomainBasedDictionaryProvider;
@@ -88,7 +88,7 @@ public class EmailServiceTest {
     private JWTBuilder jwtBuilder;
 
     @Mock
-    private DomainService domainService;
+    private DomainReadService domainService;
 
     @Mock
     private Domain domain;

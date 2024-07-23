@@ -30,7 +30,6 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.SystemRole;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.MembershipService;

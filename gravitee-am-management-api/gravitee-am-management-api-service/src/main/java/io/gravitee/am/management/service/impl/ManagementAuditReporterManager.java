@@ -26,7 +26,7 @@ import io.gravitee.am.plugins.reporter.core.ReporterProviderConfiguration;
 import io.gravitee.am.reporter.api.audit.AuditReporter;
 import io.gravitee.am.reporter.api.provider.NoOpReporter;
 import io.gravitee.am.reporter.api.provider.Reporter;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.EnvironmentNotFoundException;
@@ -163,22 +163,16 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
     }
 
     @Override
-    public Reporter getReporter(ReferenceType referenceType, String referenceId) {
-
-        if (referenceType == ReferenceType.DOMAIN || referenceType == ReferenceType.ORGANIZATION) {
-            return doGetReporter(new Reference(referenceType, referenceId));
+    public Optional<Reporter> getReporter(Reference domain) {
+        if (domain.type() == ReferenceType.DOMAIN || domain.type() == ReferenceType.ORGANIZATION) {
+            return doGetReporter(domain);
         } else {
             // Internal reporter must be use for all other resources.
-            return internalReporter;
+            return Optional.of(internalReporter);
         }
     }
 
-    @Override
-    public Reporter getReporter(Reference domain) {
-        return doGetReporter(domain);
-    }
-
-    private Reporter doGetReporter(Reference reference) {
+    private Optional<Reporter> doGetReporter(Reference reference) {
         Optional<Reporter> optionalReporter = auditReporters
                 .entrySet()
                 .stream()
@@ -188,7 +182,7 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
                 .findFirst();
 
         if (optionalReporter.isPresent()) {
-            return optionalReporter.get();
+            return optionalReporter;
         }
 
         // reporter can be missing as it can take sometime for the reporter events
@@ -197,10 +191,11 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
         try {
             List<io.gravitee.am.model.Reporter> reporterConfigs = reporterService.findByReference(reference).toList().blockingGet();
             if (reporterConfigs.isEmpty()) {
-                throw new ReporterNotFoundForReferenceException(reference);
+                logger.warn("No reporter exists for {}", reference);
+                return Optional.empty();
             }
             logger.warn("Reporter for domain {} isn't bootstrapped yet", reference);
-            return noOpReporter;
+            return Optional.of(noOpReporter);
         } catch (Exception ex) {
             logger.error("An error has occurred while fetching reporter for {}", reference);
             throw new IllegalStateException("error fetching reporter for %s".formatted(reference), ex);

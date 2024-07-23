@@ -25,7 +25,7 @@ import io.gravitee.am.management.service.impl.CertificateEntity;
 import io.gravitee.am.management.service.impl.ModifiedCertificateEntity;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.UpdateCertificate;

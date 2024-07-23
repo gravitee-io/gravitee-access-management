@@ -37,8 +37,8 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.impl.DomainServiceImpl;
 import io.gravitee.am.service.impl.I18nDictionaryService;
+import io.gravitee.am.service.impl.application.DomainReadServiceImpl;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import org.junit.jupiter.api.BeforeEach;
@@ -138,7 +138,7 @@ public class EmailServiceImplTest {
                 freemarkerConfiguration,
                 auditService,
                 jwtBuilder,
-                new DomainServiceImpl("http://localhost:1234/unittest/"),
+                new DomainReadServiceImpl(mock(), "http://localhost:1234/unittest"),
                 i18nDictionaryService,
                 environment
         );
@@ -191,7 +191,7 @@ public class EmailServiceImplTest {
                 freemarkerConfiguration,
                 auditService,
                 jwtBuilder,
-                new DomainServiceImpl("http://localhost:1234/unittest/"),
+                new DomainServiceImpl(),
                 i18nDictionaryService,
                 environment
         );
