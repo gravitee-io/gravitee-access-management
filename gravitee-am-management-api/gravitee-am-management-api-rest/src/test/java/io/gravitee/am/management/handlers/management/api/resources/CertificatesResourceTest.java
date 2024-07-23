@@ -62,7 +62,7 @@ public class CertificatesResourceTest extends JerseySpringTest {
         mockCertificate2.setDomain(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Flowable.just(mockCertificate, mockCertificate2)).when(certificateService).findByDomainAndUse(domainId, null);
+        doReturn(Single.just(List.of(mockCertificate, mockCertificate2))).when(certificateService).findByDomainAndUse(domainId, null);
         doReturn(Flowable.empty()).when(applicationService).findByCertificate(anyString());
 
         final Response response = target("domains").path(domainId).path("certificates").request().get();
@@ -70,6 +70,29 @@ public class CertificatesResourceTest extends JerseySpringTest {
 
         final List<Certificate> responseEntity = readEntity(response, List.class);
         assertEquals(2, responseEntity.size());
+    }
+
+    @Test
+    public void shouldGetCertificatesWithDefaultSignatureUsage() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        final Certificate defaultCertificate = new Certificate();
+        defaultCertificate.setId("certificate-1-id");
+        defaultCertificate.setName("certificate-1-name");
+        defaultCertificate.setDomain(domainId);
+        defaultCertificate.setConfiguration("{}");
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.just(List.of(defaultCertificate))).when(certificateService).findByDomainAndUse(domainId, "sig");
+        doReturn(Flowable.empty()).when(applicationService).findByCertificate(anyString());
+
+        final Response response = target("domains").path(domainId).path("certificates").queryParam("use", "sig").request().get();
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        final List<Certificate> responseEntity = readEntity(response, List.class);
+        assertEquals(1, responseEntity.size());
     }
 
     @Test
@@ -104,13 +127,13 @@ public class CertificatesResourceTest extends JerseySpringTest {
 
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Flowable.just(mockCertificate, mockCertificate2, mockCertificate3, mockCertificate4)).when(certificateService).findByDomainAndUse(domainId, null);
+        doReturn(Single.just(List.of(mockCertificate, mockCertificate2, mockCertificate3, mockCertificate4))).when(certificateService).findByDomainAndUse(domainId, null);
         doReturn(Flowable.empty()).when(applicationService).findByCertificate(anyString());
 
         final Response response = target("domains").path(domainId).path("certificates").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final List<CertificateEntity> responseEntity = readListEntity(response, CertificateEntity.class);
+        final List<CertificateEntity> responseEntity = readEntity(response, List.class);
         assertEquals(4, responseEntity.size());
 
         CertificateEntity responseCert1 = responseEntity.stream().filter(c -> c.id().equals("certificate-1-id"))
@@ -132,7 +155,7 @@ public class CertificatesResourceTest extends JerseySpringTest {
     @Test
     public void shouldGetCertificates_technicalManagementException() {
         final String domainId = "domain-1";
-        doReturn(Flowable.error(new TechnicalManagementException("error occurs"))).when(certificateService).findByDomainAndUse(domainId, null);
+        doReturn(Single.error(new TechnicalManagementException("error occurs"))).when(certificateService).findByDomainAndUse(domainId, null);
 
         final Response response = target("domains").path(domainId).path("certificates").request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());

@@ -16,14 +16,14 @@
 package io.gravitee.am.gateway.handler.common.webauthn;
 
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.model.User;
+import io.gravitee.am.service.exception.UserNotFoundException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
-import io.gravitee.am.service.exception.UserNotFoundException;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -44,11 +44,13 @@ public class WebAuthnCookieService implements InitializingBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(WebAuthnCookieService.class);
     private static final String DEFAULT_COOKIE_NAME = "GRAVITEE_AM_DEVICE_RECOGNITION";
     private static final long DEFAULT_SESSION_TIMEOUT = (long) 365 * 24 * 60 * 60 * 1000; // a year
-    private static final String USER_ID = "userId";
+    static final String USER_ID = "userId";
 
+    @Getter
     @Value("${passwordless.rememberDevice.cookie.name:" + DEFAULT_COOKIE_NAME + "}")
     private String rememberDeviceCookieName;
 
+    @Getter
     @Value("${passwordless.rememberDevice.cookie.timeout:" + DEFAULT_SESSION_TIMEOUT + "}")
     private long rememberDeviceCookieTimeout;
 
@@ -61,19 +63,8 @@ public class WebAuthnCookieService implements InitializingBean {
     @Autowired
     private UserService userService;
 
-    private CertificateProvider certificateProvider;
-
     @Override
     public void afterPropertiesSet() throws Exception {
-        certificateProvider = certificateManager.defaultCertificateProvider();
-    }
-
-    public String getRememberDeviceCookieName() {
-        return rememberDeviceCookieName;
-    }
-
-    public long getRememberDeviceCookieTimeout() {
-        return rememberDeviceCookieTimeout;
     }
 
     public Single<String> generateRememberDeviceCookieValue(User user) {
@@ -81,15 +72,14 @@ public class WebAuthnCookieService implements InitializingBean {
         jwt.setIat(System.currentTimeMillis() / 1000);
         jwt.put(USER_ID, user.getId());
         // do we need to store more data ??
-        return jwtService.encode(jwt, certificateProvider);
+        return jwtService.encode(jwt, certificateManager.defaultCertificateProvider());
     }
 
-    public Completable verifyRememberDeviceCookieValue(String cookieValue) {
+    public Single<String> extractUserIdFromRememberDeviceCookieValue(String cookieValue) {
         return decodeAndVerify(cookieValue)
-                .ignoreElement()
-                .onErrorResumeNext(throwable -> {
+                .map(jwt -> (String) jwt.get(USER_ID))
+                .doOnError(throwable -> {
                     LOGGER.error("An error has occurred when parsing WebAuthn cookie {}", cookieValue, throwable);
-                    return Completable.error(throwable);
                 });
     }
 
@@ -100,6 +90,6 @@ public class WebAuthnCookieService implements InitializingBean {
     }
 
     private Single<JWT> decodeAndVerify(String cookieValue) {
-        return jwtService.decodeAndVerify(cookieValue, certificateProvider, SESSION);
+        return jwtService.decodeAndVerify(cookieValue, certificateManager.defaultCertificateProvider(), SESSION);
     }
 }

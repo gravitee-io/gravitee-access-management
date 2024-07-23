@@ -24,20 +24,11 @@ public class DefaultTrustStoreProviderTest {
     @Test
     @Ignore("relies on DefaultTrustStoreProvider not being loaded by the classloader before this test is ran, and we can't guarantee that")
     public void should_return_system_properties_for_default_truststore(){
-        // given
-        String path = "/var/trust/store";
-        String passwd = "passwd";
-
-        // when
-        System.setProperty("javax.net.ssl.trustStore", path);
-        System.setProperty("javax.net.ssl.trustStorePassword", passwd);
-
         String defaultTrustStorePath = DefaultTrustStoreProvider.getDefaultTrustStorePath();
         String defaultTrustStorePassword = DefaultTrustStoreProvider.getDefaultTrustStorePassword();
 
-        // then
-        Assertions.assertEquals(path, defaultTrustStorePath);
-        Assertions.assertEquals(passwd, defaultTrustStorePassword);
+        Assertions.assertEquals(System.getProperty("javax.net.ssl.trustStore"), defaultTrustStorePath);
+        Assertions.assertEquals(System.getProperty("javax.net.ssl.trustStorePassword"), defaultTrustStorePassword);
     }
 
 }
