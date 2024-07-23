@@ -17,7 +17,7 @@ package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.ReporterService;
 import io.reactivex.rxjava3.core.Completable;
 import org.slf4j.Logger;

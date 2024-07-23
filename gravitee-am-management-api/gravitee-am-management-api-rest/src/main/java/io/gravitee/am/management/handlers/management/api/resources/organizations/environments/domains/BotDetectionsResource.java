@@ -22,7 +22,7 @@ import io.gravitee.am.management.service.BotDetectionServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.BotDetection;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewBotDetection;
 import io.gravitee.common.http.MediaType;

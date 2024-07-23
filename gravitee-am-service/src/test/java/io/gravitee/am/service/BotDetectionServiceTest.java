@@ -74,7 +74,7 @@ public class BotDetectionServiceTest {
     private ApplicationService applicationService;
 
     @Mock
-    private DomainService domainService;
+    private DomainReadService domainService;
 
     @Mock
     private AuditService auditService;

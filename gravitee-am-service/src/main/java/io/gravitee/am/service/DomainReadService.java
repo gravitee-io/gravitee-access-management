@@ -15,28 +15,21 @@
  */
 package io.gravitee.am.service;
 
-import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.model.Tag;
-import io.gravitee.am.service.model.NewTag;
-import io.gravitee.am.service.model.UpdateTag;
-import io.reactivex.rxjava3.core.Completable;
+import io.gravitee.am.model.Domain;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.vertx.rxjava3.core.MultiMap;
 
-/**
- * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface TagService {
+import java.util.List;
 
-    Maybe<Tag> findById(String id, String organizationId);
+public interface DomainReadService {
+    Maybe<Domain> findById(String id);
+    String buildUrl(Domain domain, String path, MultiMap queryParams);
 
-    Flowable<Tag> findAll(String organizationId);
+    default String buildUrl(Domain domain, String path) {
+        return buildUrl(domain, path, MultiMap.caseInsensitiveMultiMap());
+    }
 
-    Single<Tag> create(NewTag tag, String organizationId, User principal);
-
-    Single<Tag> update(String tagId, String organizationId, UpdateTag tag, User principal);
-
-    Completable delete(String tagId, String organizationId, User principal);
+    Flowable<Domain> listAll();
 }

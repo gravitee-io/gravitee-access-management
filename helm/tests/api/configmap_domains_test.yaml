@@ -1,0 +1,37 @@
+suite: Management API configMap - domains section
+templates:
+  - "api/api-configmap.yaml"
+tests:
+  - it: should paste in the domain reporters' config
+    template: api/api-configmap.yaml
+    set:
+      domains:
+        reporters: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - notMatchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            domains:
+              reporters:
+                default: true
+  - it: should leave reporters config blank if not provided
+    template: api/api-configmap.yaml
+    set:
+      domains:
+        reporters: ""
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - notMatchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            domains:
+              reporters:
+                default: .+
+      

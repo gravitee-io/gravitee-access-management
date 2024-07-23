@@ -34,7 +34,6 @@ import io.gravitee.am.repository.management.api.search.AlertTriggerCriteria;
 import io.gravitee.am.repository.management.api.search.DomainCriteria;
 import io.gravitee.am.service.AlertNotifierService;
 import io.gravitee.am.service.AlertTriggerService;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.SimpleEvent;
 import io.reactivex.rxjava3.core.Flowable;

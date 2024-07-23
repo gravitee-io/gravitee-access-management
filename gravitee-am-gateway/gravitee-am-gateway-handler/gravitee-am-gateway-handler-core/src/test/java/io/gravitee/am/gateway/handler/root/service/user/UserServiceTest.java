@@ -45,7 +45,7 @@ import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CredentialService;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.exception.EnforceUserIdentityException;
@@ -141,7 +141,7 @@ public class UserServiceTest {
     private UserValidator userValidator;
 
     @Mock
-    private DomainService domainService;
+    private DomainReadService domainService;
 
     @Mock
     private PasswordPolicyManager passwordPolicyManager;

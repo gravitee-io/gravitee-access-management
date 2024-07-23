@@ -20,7 +20,7 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.CredentialService;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;

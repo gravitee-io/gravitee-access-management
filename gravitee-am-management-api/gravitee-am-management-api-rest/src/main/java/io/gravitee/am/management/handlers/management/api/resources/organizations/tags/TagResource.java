@@ -21,7 +21,7 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Tag;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.TagService;
+import io.gravitee.am.management.service.TagService;
 import io.gravitee.am.service.exception.TagNotFoundException;
 import io.gravitee.am.service.model.UpdateTag;
 import io.gravitee.common.http.MediaType;

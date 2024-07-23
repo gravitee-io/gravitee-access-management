@@ -35,7 +35,8 @@ import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.i18n.FreemarkerMessageResolver;
 import io.gravitee.am.service.i18n.ThreadLocalDomainDictionaryProvider;
 import io.gravitee.am.service.impl.I18nDictionaryService;
@@ -89,7 +90,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
 
     private final JWTBuilder jwtBuilder;
 
-    private final DomainService domainService;
+    private final DomainReadService domainService;
 
     private final I18nDictionaryService i18nDictionaryService;
 
@@ -104,7 +105,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
             Configuration freemarkerConfiguration,
             AuditService auditService,
             @Lazy @Qualifier("managementJwtBuilder") JWTBuilder jwtBuilder, // Need to be lazy loaded to ensure jwt builder is instantiated with all resolved configuration included eventual secrets.
-            DomainService domainService,
+            DomainReadService domainService,
             I18nDictionaryService i18nDictionaryService,
             Environment environment) {
         this.emailManager = emailManager;

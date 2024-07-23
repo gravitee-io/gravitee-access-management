@@ -22,7 +22,7 @@ import io.gravitee.am.management.service.ServiceResourceServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.resource.ServiceResource;
-import io.gravitee.am.service.DomainService;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewServiceResource;
 import io.gravitee.am.service.validators.resource.ResourceValidator;
