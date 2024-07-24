@@ -58,7 +58,7 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
     private boolean offlineVerification;
     private String resourceParameter;
     private String resourceRequiredScope;
-    private SubjectManager subjectManager;
+    private final SubjectManager subjectManager;
 
     public OAuth2AuthHandlerImpl(OAuth2AuthProvider oAuth2AuthProvider, SubjectManager subjectManager) {
         this.oAuth2AuthProvider = oAuth2AuthProvider;
@@ -107,19 +107,19 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
 
                 var single = Single.just(token.getSub());
                 if (selfResource && isSelfResourceAUser) {
-                    single = this.subjectManager.findUserIdBySub(token.getSub())
+                    single = this.subjectManager.findUserIdBySub(token)
                             .switchIfEmpty(single);
                 }
 
-                single.subscribe(user -> {
+                single.subscribe(userId -> {
                     // check if current subject can access its own resources
                     if (selfResource) {
                         final String resourceId = context.request().getParam(resourceParameter);
                         // since Domain V2, sub claim is not the userId anymore
-                        // we have to check if userId provided as resourceId match the user internal ID found using the sub claim
+                        // we have to check if userId provided as resourceId match the userId internal ID found using the sub claim
                         // and we also have to if the resourceId match the
-                        boolean isUserValid = isSelfResourceAUser && resourceId != null && resourceId.equals(user);
-                        boolean isResourceIdValid = resourceId != null && resourceId.equals(token.getSub());
+                        boolean isUserValid = isSelfResourceAUser && resourceId != null && resourceId.equals(userId);
+                        boolean isResourceIdValid = resourceId != null && (resourceId.equals(token.getSub()) || resourceId.equals(token.getInternalSub()));
                         boolean hasRequiredScope = resourceRequiredScope == null || token.hasScope(resourceRequiredScope);
 
                         if ((isUserValid || isResourceIdValid) && hasRequiredScope) {
@@ -129,13 +129,13 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
                     }
 
                     if (forceEndUserToken && token.getSub().equals(token.getAud())) {
-                        // token for end user must not contain clientId as subject
+                        // token for end userId must not contain clientId as subject
                         processException(context, new InvalidTokenException("The access token was not issued for an End-User"));
                         return;
                     }
 
                     if (forceClientToken && !token.getSub().equals(token.getAud())) {
-                        // token for end user must not contain clientId as subject
+                        // token for end userId must not contain clientId as subject
                         processException(context, new InvalidTokenException("The access token was not issued for a Client"));
                         return;
                     }

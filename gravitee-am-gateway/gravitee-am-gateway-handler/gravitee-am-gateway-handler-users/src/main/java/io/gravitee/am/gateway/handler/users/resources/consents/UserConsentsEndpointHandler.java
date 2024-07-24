@@ -15,10 +15,13 @@
  */
 package io.gravitee.am.gateway.handler.users.resources.consents;
 
+import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.users.service.UserService;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Single;
@@ -41,17 +44,23 @@ public class UserConsentsEndpointHandler extends AbstractUserConsentEndpointHand
      * Retrieve consents for a user per application basis or for all applications
      */
     public void list(RoutingContext context) {
+        final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
         final String userId = context.request().getParam("userId");
         final String clientId = context.request().getParam("clientId");
 
         Single.just(Optional.ofNullable(clientId))
-                .flatMap(optClient -> {
-                    final var singleUserId = getUserIdFromSub(userId);
-                    if (optClient.isPresent()) {
-                        return singleUserId.flatMap(id -> userService.consents(id, optClient.get()));
-                    }
-                    return singleUserId.flatMap(id -> userService.consents(id));
-                })
+                .flatMap(optClient ->
+                    getUserIdFromSub(accessToken).map(id -> {
+                                if (userIdParamMatchTokenIdentity(id, userId, accessToken)) {
+                                    return id;
+                                }
+                                throw new UserNotFoundException(userId);
+                    }).flatMap(id -> {
+                        if (optClient.isPresent()) {
+                            return userService.consents(id, optClient.get());
+                        }
+                        return userService.consents(id);
+                    }))
                 .subscribe(
                         scopeApprovals -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -66,12 +75,18 @@ public class UserConsentsEndpointHandler extends AbstractUserConsentEndpointHand
      * Revoke consents for a user per application basis or for all applications
      */
     public void revoke(RoutingContext context) {
+        final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
         final String userId = context.request().getParam("userId");
         final String clientId = context.request().getParam("clientId");
 
         Single.just(Optional.ofNullable(clientId))
                 .flatMapCompletable(optClient -> {
-                    final var singleUserId = getUserIdFromSub(userId);
+                    final var singleUserId = getUserIdFromSub(accessToken).map(id -> {
+                        if (userIdParamMatchTokenIdentity(id, userId, accessToken)) {
+                            return id;
+                        }
+                        throw new UserNotFoundException(userId);
+                    });
                     if (optClient.isPresent()) {
                         return getPrincipal(context)
                                 .flatMapCompletable(principal -> singleUserId.flatMapCompletable(id -> userService.revokeConsents(id, optClient.get(), principal)));

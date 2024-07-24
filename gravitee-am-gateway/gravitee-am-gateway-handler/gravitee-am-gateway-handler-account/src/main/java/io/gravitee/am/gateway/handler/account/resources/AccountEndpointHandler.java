@@ -77,7 +77,7 @@ public class AccountEndpointHandler {
 
     public void getUser(RoutingContext routingContext) {
         JWT token = routingContext.get(ConstantKeys.TOKEN_CONTEXT_KEY);
-        accountService.getBySub(token.getSub()).subscribe(
+        accountService.getBySub(token).subscribe(
                 user -> {
                     routingContext.put(ConstantKeys.USER_CONTEXT_KEY, user);
                     routingContext.next();

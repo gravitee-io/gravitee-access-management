@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.auth;
 import io.gravitee.am.common.exception.authentication.AccountDisabledException;
 import io.gravitee.am.common.exception.authentication.AccountEnforcePasswordException;
 import io.gravitee.am.common.exception.authentication.AccountLockedException;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
@@ -597,7 +598,7 @@ public class UserAuthenticationServiceTest {
 
         when(subjectManager.findUserBySub(any())).thenReturn(Maybe.empty());
 
-        TestObserver<User> testObserver = userAuthenticationService.loadPreAuthenticatedUserBySub("some_id", request).test();
+        TestObserver<User> testObserver = userAuthenticationService.loadPreAuthenticatedUserBySub(new JWT(), request).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
@@ -629,11 +630,14 @@ public class UserAuthenticationServiceTest {
         existingUser.setUsername("username");
         existingUser.setAccountNonLocked(false);
 
+        final var jwt = new JWT();
+        jwt.setSub(existingUser.getId());
+
         var request = mock(Request.class);
 
-        when(subjectManager.findUserBySub(existingUser.getId())).thenReturn(Maybe.just(existingUser));
+        when(subjectManager.findUserBySub(jwt)).thenReturn(Maybe.just(existingUser));
 
-        TestObserver<User> testObserver = userAuthenticationService.loadPreAuthenticatedUserBySub(existingUser.getId(), request).test();
+        TestObserver<User> testObserver = userAuthenticationService.loadPreAuthenticatedUserBySub(jwt, request).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
@@ -679,7 +683,10 @@ public class UserAuthenticationServiceTest {
 
         var request = mock(Request.class);
 
-        when(subjectManager.findUserBySub(existingUser.getId())).thenReturn(Maybe.just(existingUser));
+        final var jwt = new JWT();
+        jwt.setSub(existingUser.getId());
+
+        when(subjectManager.findUserBySub(jwt)).thenReturn(Maybe.just(existingUser));
         when(identityProviderManager.get(any())).thenReturn(Maybe.just(new AuthenticationProvider() {
             @Override
             public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
@@ -693,7 +700,7 @@ public class UserAuthenticationServiceTest {
         }));
         when(userService.enhance(existingUser)).thenReturn(Single.just(existingUser));
 
-        TestObserver<User> testObserver = userAuthenticationService.loadPreAuthenticatedUserBySub(existingUser.getId(), request).test();
+        TestObserver<User> testObserver = userAuthenticationService.loadPreAuthenticatedUserBySub(jwt, request).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -742,9 +749,12 @@ public class UserAuthenticationServiceTest {
         existingUser.setUsername("username");
         existingUser.setAccountNonLocked(true);
 
+        final var jwt = new JWT();
+        jwt.setSub(existingUser.getId());
+
         var request = mock(Request.class);
 
-        when(subjectManager.findUserBySub(existingUser.getId())).thenReturn(Maybe.just(existingUser));
+        when(subjectManager.findUserBySub(jwt)).thenReturn(Maybe.just(existingUser));
         when(identityProviderManager.get(any())).thenReturn(Maybe.just(new AuthenticationProvider() {
             @Override
             public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
@@ -763,7 +773,7 @@ public class UserAuthenticationServiceTest {
         when(userService.enhance(existingUser)).thenReturn(Single.just(existingUser));
         when(userService.update(eq(existingUser), any())).thenReturn(Single.just(existingUser));
 
-        TestObserver<User> testObserver = userAuthenticationService.loadPreAuthenticatedUserBySub(existingUser.getId(), request).test();
+        TestObserver<User> testObserver = userAuthenticationService.loadPreAuthenticatedUserBySub(jwt, request).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();

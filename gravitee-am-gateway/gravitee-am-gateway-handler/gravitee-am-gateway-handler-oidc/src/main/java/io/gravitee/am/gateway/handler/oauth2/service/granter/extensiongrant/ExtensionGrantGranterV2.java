@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant;
 
+import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
@@ -25,7 +27,6 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
@@ -42,7 +43,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ExtensionGrantGranterV2 extends ExtensionGrantGranter {
 
-    private final Domain domain;
     private final SubjectManager subjectManager;
 
     public ExtensionGrantGranterV2(ExtensionGrantProvider extensionGrantProvider,
@@ -53,7 +53,6 @@ public class ExtensionGrantGranterV2 extends ExtensionGrantGranter {
                                    IdentityProviderManager identityProviderManager,
                                    UserService userService,
                                    RulesEngine rulesEngine,
-                                   Domain domain,
                                    SubjectManager subjectManager) {
         super(extensionGrantProvider,
                 extensionGrant,
@@ -63,7 +62,6 @@ public class ExtensionGrantGranterV2 extends ExtensionGrantGranter {
                 identityProviderManager,
                 userService,
                 rulesEngine);
-        this.domain = domain;
         this.subjectManager = subjectManager;
     }
 
@@ -92,7 +90,12 @@ public class ExtensionGrantGranterV2 extends ExtensionGrantGranter {
                             if (endUser.getId() != null) {
                                 // MongoIDP & JDBC IDP, set the userId as SUB claim, this claim is used as username by extensionGrantProvider.grant()
                                 // so the search by ID should be done with the username...
-                                return subjectManager.findUserBySub(endUser.getUsername())
+                                final var jwt = new JWT();
+                                jwt.setSub(endUser.getUsername());
+                                if (endUser.getAdditionalInformation().containsKey(Claims.GIO_INTERNAL_SUB)) {
+                                    jwt.setInternalSub((String)endUser.getAdditionalInformation().get(Claims.GIO_INTERNAL_SUB));
+                                }
+                                return subjectManager.findUserBySub(jwt)
                                         .onErrorResumeNext(e -> {
                                             if (e instanceof IllegalArgumentException) {
                                                 log.debug("Subject Manager can't retrieve the profile as sub is invalid, fall back to userService.findById", e);

@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.granter.refresh;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
@@ -107,8 +108,12 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
             return Maybe.empty();
         }
 
-        // TokenRequest has a sub containing the composed sub for Domain in v2 only for RefreshToken
-        return userAuthenticationManager.loadPreAuthenticatedUserBySub(subject, tokenRequest)
+        // Build JWT using the getRefreshToken as those params contains
+        // all the claims of the original token so that we are able to
+        // provide a JWT to the auth manager to retrieve the right information
+        // to get the user profile.
+        final var jwt = new JWT(tokenRequest.getRefreshToken());
+        return userAuthenticationManager.loadPreAuthenticatedUserBySub(jwt, tokenRequest)
                 .onErrorResumeNext(ex -> Maybe.error(new InvalidGrantException()));
     }
 

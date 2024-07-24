@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.introspection.impl;
 
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionResponse;
@@ -48,7 +49,9 @@ public class IntrospectionServiceImpl implements IntrospectionService {
                     AccessToken accessToken = (AccessToken) token;
                     if (accessToken.getSubject() != null && !accessToken.getSubject().equals(accessToken.getClientId())) {
                         return subjectManager
-                                .findUserBySub(accessToken.getSubject())
+                                // accessToken additional info is initialized using the decoded JWT
+                                // we can use it to create a temporary instance of JWT
+                                .findUserBySub(new JWT(accessToken.getAdditionalInformation()))
                                 .map(user -> convert(accessToken, user))
                                 .defaultIfEmpty(convert(accessToken, null));
 

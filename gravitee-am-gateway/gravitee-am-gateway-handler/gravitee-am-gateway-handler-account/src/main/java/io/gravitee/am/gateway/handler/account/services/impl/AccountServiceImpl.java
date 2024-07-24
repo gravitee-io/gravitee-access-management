@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.account.services.impl;
 
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
@@ -119,8 +120,8 @@ public class AccountServiceImpl implements AccountService {
     private SubjectManager subjectManager;
 
     @Override
-    public Maybe<User> getBySub(String sub) {
-        return subjectManager.findUserBySub(sub);
+    public Maybe<User> getBySub(JWT token) {
+        return subjectManager.findUserBySub(token);
     }
 
     @Override

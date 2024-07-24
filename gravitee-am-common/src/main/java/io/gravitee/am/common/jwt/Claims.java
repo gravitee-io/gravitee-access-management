@@ -37,6 +37,12 @@ public interface Claims {
      * The "sub" (subject) claim identifies the principal that is the subject of the JWT.
      */
     String SUB = "sub";
+    /**
+     * The gravitee "internal" subject claim identifies the principal that is the subject of the JWT using AM internal data.
+     * This claim is used by AM instead of the sub claim to ensure the uniqueness of the user profile identified by a token.
+     * Only used by Domain in v2 or higher
+     */
+    String GIO_INTERNAL_SUB = "gis";
 
     /**
      * The "aud" (audience) claim identifies the recipients that the JWT is intended for.
