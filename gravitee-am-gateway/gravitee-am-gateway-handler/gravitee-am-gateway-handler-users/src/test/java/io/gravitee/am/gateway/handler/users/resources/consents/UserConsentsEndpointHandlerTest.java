@@ -112,7 +112,7 @@ public class UserConsentsEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldListConsents() throws Exception {
         when(userService.consents(anyString())).thenReturn(Single.just(Collections.singleton(new ScopeApproval())));
-        when(subjectManager.findUserIdBySub(anyString())).thenReturn(Maybe.just("user-id"));
+        when(subjectManager.findUserIdBySub(any())).thenReturn(Maybe.just("user-id"));
 
         router.route("/users/:userId/consents")
                 .handler(userConsentsEndpointHandler::list)
@@ -128,8 +128,8 @@ public class UserConsentsEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldRevokeConsents() throws Exception {
-        when(subjectManager.findUserBySub(anyString())).thenReturn(Maybe.just(new io.gravitee.am.model.User()));
-        when(subjectManager.findUserIdBySub(anyString())).thenReturn(Maybe.just("user-id"));
+        when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(new io.gravitee.am.model.User()));
+        when(subjectManager.findUserIdBySub(any())).thenReturn(Maybe.just("user-id"));
         when(userService.revokeConsents(anyString(), any(User.class))).thenReturn(Completable.complete());
 
         router.route("/users/:userId/consents")
@@ -157,8 +157,8 @@ public class UserConsentsEndpointHandlerTest extends RxWebTestBase {
     public void shouldRevokeConsentsComposeId() throws Exception {
         io.gravitee.am.model.User user = new io.gravitee.am.model.User();
         user.setId("user-id");
-        when(subjectManager.findUserBySub(anyString())).thenReturn(Maybe.just(user));
-        when(subjectManager.findUserIdBySub(anyString())).thenReturn(Maybe.just(user.getId()));
+        when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(user));
+        when(subjectManager.findUserIdBySub(any())).thenReturn(Maybe.just(user.getId()));
         when(userService.revokeConsents(anyString(), any(User.class))).thenReturn(Completable.complete());
 
         router.route("/users/:userId/consents")

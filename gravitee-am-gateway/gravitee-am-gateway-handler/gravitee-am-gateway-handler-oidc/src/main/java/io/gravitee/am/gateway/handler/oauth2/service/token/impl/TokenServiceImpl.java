@@ -368,7 +368,11 @@ public class TokenServiceImpl implements TokenService {
     private JWT createJWT(OAuth2Request oAuth2Request, Client client, User user) {
         JWT jwt = new JWT();
         jwt.setIss(openIDDiscoveryService.getIssuer(oAuth2Request.getOrigin()));
-        jwt.setSub(oAuth2Request.isClientOnly() ? client.getClientId() : subjectManager.generateSubFrom(user));
+        if (oAuth2Request.isClientOnly()) {
+            jwt.setSub(client.getClientId());
+        } else {
+            subjectManager.updateJWT(jwt, user);
+        }
         jwt.setAud(oAuth2Request.getClientId());
         jwt.setDomain(client.getDomain());
         jwt.setIat(Instant.now().getEpochSecond());

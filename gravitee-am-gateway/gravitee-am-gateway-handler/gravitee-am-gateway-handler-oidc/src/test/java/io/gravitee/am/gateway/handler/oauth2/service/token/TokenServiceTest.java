@@ -158,7 +158,6 @@ public class TokenServiceTest {
         client.setClientId("my-client-id");
 
         ExecutionContext executionContext = mock(ExecutionContext.class);
-        when(subjectManager.generateSubFrom(any())).thenReturn("sub");
         when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenAnswer(ans -> Single.just(ans.getArgument(0)));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
@@ -200,7 +199,7 @@ public class TokenServiceTest {
         verify(tokenManager, times(1)).storeAccessToken(any());
         verify(accessTokenRepository, never()).delete(anyString());
         verify(refreshTokenRepository, never()).delete(anyString());
-        verify(subjectManager).generateSubFrom(any());
+        verify(subjectManager).updateJWT(any(), any());
     }
 
     @Test

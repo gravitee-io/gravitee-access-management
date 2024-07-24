@@ -72,7 +72,7 @@ public class ResourceAccessPoliciesEndpoint {
         final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final String resource = context.request().getParam(RESOURCE_ID);
 
-        subjectManager.findUserIdBySub(accessToken.getSub())
+        subjectManager.findUserIdBySub(accessToken)
                 .flatMapSingle(userid -> resourceService.findAccessPolicies(domain.getId(), client.getId(), userid, resource)
                 .map(AccessPolicy::getId)
                 .toList())
@@ -97,7 +97,7 @@ public class ResourceAccessPoliciesEndpoint {
         AccessPolicy accessPolicy = extractRequest(context);
 
         // store the access policy
-        subjectManager.findUserIdBySub(accessToken.getSub())
+        subjectManager.findUserIdBySub(accessToken)
                 .flatMapSingle(userid -> resourceService.createAccessPolicy(accessPolicy, domain.getId(), client.getId(), userid, resource))
                 .subscribe(
                         p ->
@@ -118,7 +118,7 @@ public class ResourceAccessPoliciesEndpoint {
         final String resource = context.request().getParam(RESOURCE_ID);
         final String accessPolicyId = context.request().getParam(POLICY_ID);
 
-        subjectManager.findUserIdBySub(accessToken.getSub())
+        subjectManager.findUserIdBySub(accessToken)
                 .flatMapSingle(userid -> resourceService.findAccessPolicy(domain.getId(), client.getId(), userid, resource, accessPolicyId)
                 .switchIfEmpty(Single.error(new AccessPolicyNotFoundException(accessPolicyId))))
                 .subscribe(
@@ -141,7 +141,7 @@ public class ResourceAccessPoliciesEndpoint {
         AccessPolicy accessPolicy = extractRequest(context);
 
         // update the access policy
-        subjectManager.findUserIdBySub(accessToken.getSub())
+        subjectManager.findUserIdBySub(accessToken)
                 .flatMapSingle(userid -> resourceService.updateAccessPolicy(accessPolicy, domain.getId(), client.getId(), userid, resource, accessPolicyId))
                 .subscribe(
                         response -> context.response()
@@ -159,7 +159,7 @@ public class ResourceAccessPoliciesEndpoint {
         final String resource = context.request().getParam(RESOURCE_ID);
         final String accessPolicy = context.request().getParam(POLICY_ID);
 
-        subjectManager.findUserIdBySub(accessToken.getSub()).flatMapCompletable(userId ->
+        subjectManager.findUserIdBySub(accessToken).flatMapCompletable(userId ->
         resourceService.deleteAccessPolicy(domain.getId(), client.getId(), userId, resource, accessPolicy))
                 .subscribe(
                         () -> context.response()

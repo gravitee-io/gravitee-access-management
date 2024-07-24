@@ -227,7 +227,6 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
                     identityProviderManager,
                     userService,
                     rulesEngine,
-                    domain,
                     subjectManager);
         }
     }

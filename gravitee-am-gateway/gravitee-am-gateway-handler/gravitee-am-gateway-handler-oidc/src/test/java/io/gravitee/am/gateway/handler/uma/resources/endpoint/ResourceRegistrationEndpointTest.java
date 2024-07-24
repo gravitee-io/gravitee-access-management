@@ -94,7 +94,6 @@ public class ResourceRegistrationEndpointTest {
     @Before
     public void setUp() {
         when(domain.getId()).thenReturn(DOMAIN_ID);
-        when(jwt.getSub()).thenReturn(USER_ID);
         when(client.getId()).thenReturn(CLIENT_ID);
         when(context.get(ConstantKeys.TOKEN_CONTEXT_KEY)).thenReturn(jwt);
         when(context.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);

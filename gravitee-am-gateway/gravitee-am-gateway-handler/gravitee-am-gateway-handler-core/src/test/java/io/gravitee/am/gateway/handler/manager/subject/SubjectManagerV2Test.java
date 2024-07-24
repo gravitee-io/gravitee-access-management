@@ -17,6 +17,7 @@
 package io.gravitee.am.gateway.handler.manager.subject;
 
 
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.model.Domain;
@@ -67,12 +68,16 @@ public class SubjectManagerV2Test {
         user.setExternalId(UUID.randomUUID().toString());
         user.setSource(UUID.randomUUID().toString());
 
-        Assertions.assertEquals(user.getSource() + "|" + user.getExternalId(), cut.generateSubFrom(user));
+        Assertions.assertEquals(user.getSource() + ":" + user.getExternalId(), cut.generateInternalSubFrom(user));
+        Assertions.assertTrue(cut.generateSubFrom(user).startsWith("h_"));
     }
 
     @Test
     public void find_user_by_sub_requires_valid_sub() {
-        TestObserver<User> observer = cut.findUserBySub(UUID.randomUUID().toString()).test();
+        final var token = new JWT();
+        token.setInternalSub(UUID.randomUUID().toString());
+
+        TestObserver<User> observer = cut.findUserBySub(token).test();
         observer.assertError(IllegalArgumentException.class);
         verify(userService, never()).findByDomainAndExternalIdAndSource(any(), any(), any());
     }
@@ -82,9 +87,11 @@ public class SubjectManagerV2Test {
         final var user = new User();
         user.setExternalId(UUID.randomUUID().toString());
         user.setSource(UUID.randomUUID().toString());
+        final var token = new JWT();
+        cut.updateJWT(token, user);
 
         when(userService.findByDomainAndExternalIdAndSource(any(), any(), any())).thenReturn(Maybe.just(user));
-        TestObserver<User> observer = cut.findUserBySub(cut.generateSubFrom(user)).test();
+        TestObserver<User> observer = cut.findUserBySub(token).test();
 
         observer.await(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
@@ -96,9 +103,11 @@ public class SubjectManagerV2Test {
         final var user = new User();
         user.setExternalId(UUID.randomUUID().toString());
         user.setSource(UUID.randomUUID().toString());
+        final var token = new JWT();
+        cut.updateJWT(token, user);
 
         when(userService.findByDomainAndExternalIdAndSource(any(), any(), any())).thenReturn(Maybe.just(user));
-        TestObserver<io.gravitee.am.identityprovider.api.User> observer = cut.getPrincipal(cut.generateSubFrom(user)).test();
+        TestObserver<io.gravitee.am.identityprovider.api.User> observer = cut.getPrincipal(token).test();
 
         observer.await(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
@@ -106,8 +115,10 @@ public class SubjectManagerV2Test {
     }
 
     @Test
-    public void should_not_provide_principal_as_sub_is_not_composed() throws Exception {
-        TestObserver<io.gravitee.am.identityprovider.api.User> observer = cut.getPrincipal(UUID.randomUUID().toString()).test();
+    public void should_not_provide_principal_as_internalSub_is_not_composed() throws Exception {
+        final var token = new JWT();
+        token.setInternalSub(UUID.randomUUID().toString());
+        TestObserver<io.gravitee.am.identityprovider.api.User> observer = cut.getPrincipal(token).test();
 
         observer.await(10, TimeUnit.SECONDS);
         observer.assertNoErrors();

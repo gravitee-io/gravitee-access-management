@@ -25,7 +25,9 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
+import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
+import io.gravitee.am.gateway.handler.manager.subject.SubjectManagerV1;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.impl.IDTokenServiceImpl;
@@ -45,6 +47,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -102,8 +105,8 @@ public class IDTokenServiceTest {
     @Mock
     private ExecutionContextFactory executionContextFactory;
 
-    @Mock
-    private SubjectManager subjectManager;
+    @Spy
+    private SubjectManager subjectManager = new SubjectManagerV1(mock(UserService.class));
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -388,7 +391,6 @@ public class IDTokenServiceTest {
         expectedJwt.setExp(expectedJwt.getIat() + 14400);
 
         ExecutionContext executionContext = mock(ExecutionContext.class);
-        when(subjectManager.generateSubFrom(any())).thenReturn(user.getId());
         when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.empty());
         when(certificateManager.defaultCertificateProvider()).thenReturn(new io.gravitee.am.gateway.certificate.CertificateProvider(defaultCertificateProvider));
         when(certificateManager.get(anyString())).thenReturn(Maybe.just(new io.gravitee.am.gateway.certificate.CertificateProvider(certificateProvider)));
@@ -449,7 +451,6 @@ public class IDTokenServiceTest {
         Client client = new Client();
 
         User user = createUser();
-        when(subjectManager.generateSubFrom(any())).thenReturn(user.getId());
 
         JWT expectedJwt = new JWT();
         expectedJwt.setSub(user.getId());
@@ -501,7 +502,6 @@ public class IDTokenServiceTest {
         Client client = new Client();
 
         User user = createUser();
-        when(subjectManager.generateSubFrom(any())).thenReturn(user.getId());
 
         JWT expectedJwt = new JWT();
         expectedJwt.setSub(user.getId());
@@ -565,7 +565,6 @@ public class IDTokenServiceTest {
         Client client = new Client();
 
         User user = createUser();
-        when(subjectManager.generateSubFrom(any())).thenReturn(user.getId());
 
         JWT expectedJwt = new JWT();
         expectedJwt.setSub(user.getId());
@@ -608,7 +607,6 @@ public class IDTokenServiceTest {
         Client client = new Client();
 
         User user = createUser();
-        when(subjectManager.generateSubFrom(any())).thenReturn(user.getId());
 
         JWT expectedJwt = new JWT();
         expectedJwt.setSub(user.getId());
@@ -670,7 +668,6 @@ public class IDTokenServiceTest {
         Client client = new Client();
 
         User user = createUser();
-        when(subjectManager.generateSubFrom(any())).thenReturn(user.getId());
 
         JWT expectedJwt = new JWT();
         expectedJwt.setSub(user.getId());
@@ -716,7 +713,6 @@ public class IDTokenServiceTest {
         Client client = new Client();
 
         User user = createUser();
-        when(subjectManager.generateSubFrom(any())).thenReturn(user.getId());
 
         JWT expectedJwt = new JWT();
         expectedJwt.setSub(user.getId());
@@ -765,7 +761,6 @@ public class IDTokenServiceTest {
         Client client = new Client();
 
         User user = createUser();
-        when(subjectManager.generateSubFrom(any())).thenReturn(user.getId());
 
         JWT expectedJwt = new JWT();
         expectedJwt.setSub(user.getId());

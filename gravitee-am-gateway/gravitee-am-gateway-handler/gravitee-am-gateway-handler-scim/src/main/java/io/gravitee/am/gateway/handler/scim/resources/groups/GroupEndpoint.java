@@ -122,7 +122,7 @@ public class GroupEndpoint extends AbstractGroupEndpoint {
 
             final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
             final String baseUrl = location(context.request());
-            principal(accessToken.getSub())
+            principal(accessToken)
                     .map(Optional::ofNullable)
                     .switchIfEmpty(Maybe.just(Optional.empty()))
                     .flatMapSingle(optPrincipal -> groupService.update(groupId, group, baseUrl, optPrincipal.orElse(null)))
@@ -193,7 +193,7 @@ public class GroupEndpoint extends AbstractGroupEndpoint {
 
             final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
             final String baseUrl = location(context.request());
-            principal(accessToken.getSub())
+            principal(accessToken)
                     .map(Optional::ofNullable)
                     .switchIfEmpty(Maybe.just(Optional.empty()))
                     .flatMapSingle(optPrincipal -> groupService.patch(groupId, patchOp, baseUrl, optPrincipal.orElse(null)))
@@ -232,7 +232,7 @@ public class GroupEndpoint extends AbstractGroupEndpoint {
         final String groupId = context.request().getParam("id");
         final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
         final String baseUrl = location(context.request());
-        principal(accessToken.getSub())
+        principal(accessToken)
                 .map(Optional::ofNullable)
                 .switchIfEmpty(Maybe.just(Optional.empty()))
                 .flatMapCompletable(optPrincipal -> groupService.delete(groupId, optPrincipal.orElse(null)))

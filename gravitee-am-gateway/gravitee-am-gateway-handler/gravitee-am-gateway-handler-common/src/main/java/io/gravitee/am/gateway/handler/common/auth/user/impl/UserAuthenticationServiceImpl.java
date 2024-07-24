@@ -19,6 +19,7 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.authentication.AccountDisabledException;
 import io.gravitee.am.common.exception.authentication.AccountEnforcePasswordException;
 import io.gravitee.am.common.exception.authentication.AccountLockedException;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.Claims;
@@ -167,8 +168,8 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     }
 
     @Override
-    public Maybe<User> loadPreAuthenticatedUserBySub(String subject, Request request) {
-        return internalLoadPreAuthenticateUser(subject, request, subjectManager.findUserBySub(subject));
+    public Maybe<User> loadPreAuthenticatedUserBySub(JWT token, Request request) {
+        return internalLoadPreAuthenticateUser(token.getSub(), request, subjectManager.findUserBySub(token));
     }
 
     private Maybe<User> internalLoadPreAuthenticateUser(String subject, Request request, Maybe<User> maybeFindUser) {

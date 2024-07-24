@@ -17,6 +17,7 @@
 package io.gravitee.am.gateway.handler.manager.subject;
 
 
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -37,22 +38,35 @@ public class SubjectManagerV1 implements SubjectManager {
 
     @Override
     public String generateSubFrom(User user) {
+        return generateInternalSubFrom(user);
+    }
+
+    @Override
+    public String generateInternalSubFrom(User user) {
         return user.getId();
     }
 
     @Override
-    public Maybe<User> findUserBySub(String sub) {
-        return this.userService.findById(sub);
+    public void updateJWT(JWT jwt, User user) {
+        // no need to provide internal sub claim for domain V1
+        // we are deciding some actions based of the presence of
+        // this claim.
+        jwt.setSub(generateSubFrom(user));
     }
 
     @Override
-    public Maybe<String> findUserIdBySub(String sub) {
-        return Maybe.just(sub);
+    public Maybe<User> findUserBySub(JWT token) {
+        return this.userService.findById(token.getSub());
     }
 
     @Override
-    public Maybe<io.gravitee.am.identityprovider.api.User> getPrincipal(String sub) {
-        return findUserBySub(sub)
-                .map(principal -> new DefaultUser(principal));
+    public Maybe<String> findUserIdBySub(JWT token) {
+        return Maybe.just(token.getSub());
+    }
+
+    @Override
+    public Maybe<io.gravitee.am.identityprovider.api.User> getPrincipal(JWT token) {
+        return findUserBySub(token)
+                .map(DefaultUser::new);
     }
 }
