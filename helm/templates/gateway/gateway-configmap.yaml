@@ -61,6 +61,9 @@ data:
       {{- if .Values.gateway.ssl.enabled }}
       secured: true
       ssl:
+        {{- if .Values.gateway.ssl.certificateHeader }}
+        certificateHeader: {{ .Values.gateway.ssl.certificateHeader }}
+        {{- end }}
         keystore:
           {{- if .Values.gateway.ssl.keystore.type }}
           type: {{ .Values.gateway.ssl.keystore.type }}
@@ -69,6 +72,9 @@ data:
           password: {{ .Values.gateway.ssl.keystore.password | quote }}
         clientAuth: {{ .Values.gateway.ssl.clientAuth }}
         tlsProtocols: {{ .Values.gateway.ssl.tlsProtocols }}
+        {{- if .Values.gateway.ssl.ciphers }}
+        ciphers: {{.Values.gateway.ssl.ciphers}}
+        {{- end}}
         {{- if .Values.gateway.ssl.truststore }}
         truststore:
           {{- if .Values.gateway.ssl.truststore.type }}
@@ -77,6 +83,11 @@ data:
           path: {{ .Values.gateway.ssl.truststore.path }}
           password: {{ .Values.gateway.ssl.truststore.password | quote }}
         {{- end }}
+        {{- if .Values.gateway.ssl.mtls_aliases }}
+        mtls_aliases:
+          {{- .Values.gateway.ssl.mtls_aliases | toYaml | nindent 10}}
+        {{- end }}
+
       {{- end }}
 
     liquibase:
