@@ -31,7 +31,7 @@ import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequest;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Single;
@@ -71,7 +71,7 @@ import static java.util.Optional.ofNullable;
  */
 public class UserInfoEndpoint implements Handler<RoutingContext> {
 
-    private final UserService userService;
+    private final UserEnhancer userEnhancer;
     private final JWTService jwtService;
     private final JWEService jweService;
     private final OpenIDDiscoveryService openIDDiscoveryService;
@@ -79,13 +79,13 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
 
     private final boolean legacyOpenidScope;
 
-    public UserInfoEndpoint(UserService userService,
+    public UserInfoEndpoint(UserEnhancer userEnhancer,
                             JWTService jwtService,
                             JWEService jweService,
                             OpenIDDiscoveryService openIDDiscoveryService,
                             Environment environment,
                             SubjectManager subjectManager) {
-        this.userService = userService;
+        this.userEnhancer = userEnhancer;
         this.jwtService = jwtService;
         this.jweService = jweService;
         this.openIDDiscoveryService = openIDDiscoveryService;
@@ -260,7 +260,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
             return Single.just(user);
         }
 
-        return userService.enhance(user)
+        return userEnhancer.enhance(user)
                 .map(user1 -> {
                     Map<String, Object> userClaims = user.getAdditionalInformation() == null ?
                             new HashMap<>() :

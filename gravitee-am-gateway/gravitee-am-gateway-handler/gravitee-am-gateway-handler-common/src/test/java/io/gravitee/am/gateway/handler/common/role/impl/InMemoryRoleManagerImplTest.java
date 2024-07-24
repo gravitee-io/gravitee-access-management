@@ -26,7 +26,7 @@ import io.gravitee.am.repository.management.api.RoleRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.impl.SimpleEvent;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,7 +40,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -59,7 +58,7 @@ class InMemoryRoleManagerImplTest {
     private Domain domain;
 
     @InjectMocks
-    private InMemoryRoleManagerImpl roleManager;
+    private InMemoryRoleManager roleManager;
 
     @BeforeEach
     public void setUp() {
@@ -82,10 +81,11 @@ class InMemoryRoleManagerImplTest {
         userRole.setCreatedAt(new Date(Instant.now().minus(4, ChronoUnit.MINUTES).toEpochMilli()));
         roles.putAll(Map.of(ADMIN_ID, adminRole, USER_ID, userRole));
 
-        TestObserver<Set<Role>> observer = roleManager.findByIdIn(List.of(ADMIN_ID, USER_ID)).test();
+        TestSubscriber<Role> observer = roleManager.findByIdIn(List.of(ADMIN_ID, USER_ID)).test();
         observer.assertNoErrors();
         observer.assertComplete();
-        observer.assertValue(roles -> roles.stream().map(Role::getId).toList().contains(ADMIN_ID) && roles.stream().map(Role::getId).toList().contains(USER_ID));
+        observer.assertValueAt(0, role -> role.getId().equals(ADMIN_ID));
+        observer.assertValueAt(1, role -> role.getId().equals(USER_ID));
     }
 
     @Test
@@ -97,10 +97,11 @@ class InMemoryRoleManagerImplTest {
         adminRole.setCreatedAt(new Date(Instant.now().minus(1, ChronoUnit.MINUTES).toEpochMilli()));
         roles.put(ADMIN_ID, adminRole);
 
-        TestObserver<Set<Role>> observer = roleManager.findByIdIn(List.of(ADMIN_ID, USER_ID)).test();
+        TestSubscriber<Role> observer = roleManager.findByIdIn(List.of(ADMIN_ID, USER_ID)).test();
         observer.assertNoErrors();
         observer.assertComplete();
-        observer.assertValue(roles -> roles.size() == 1 && roles.stream().map(Role::getId).toList().contains(ADMIN_ID));
+        observer.assertValueCount(1);
+        observer.assertValue(role -> role.getId().equals(ADMIN_ID));
     }
 
     @Test
@@ -116,10 +117,11 @@ class InMemoryRoleManagerImplTest {
         when(roleRepository.findById(any())).thenReturn(Maybe.just(adminRole));
         when(domain.getId()).thenReturn(domainId);
         roleManager.onEvent(event);
-        TestObserver<Set<Role>> observer = roleManager.findByIdIn(List.of(ADMIN_ID, USER_ID)).test();
+        TestSubscriber<Role> observer = roleManager.findByIdIn(List.of(ADMIN_ID, USER_ID)).test();
         observer.assertNoErrors();
         observer.assertComplete();
-        observer.assertValue(roles -> roles.size() == 1 && roles.stream().map(Role::getId).toList().contains(ADMIN_ID));
+        observer.assertValueCount(1);
+        observer.assertValue(role -> role.getId().equals(ADMIN_ID));
     }
 
     @Test
@@ -129,10 +131,10 @@ class InMemoryRoleManagerImplTest {
         Event<RoleEvent, Payload> event = new SimpleEvent<>(RoleEvent.UNDEPLOY, payload);
         when(domain.getId()).thenReturn(domainId);
         roleManager.onEvent(event);
-        TestObserver<Set<Role>> observer = roleManager.findByIdIn(List.of(ADMIN_ID, USER_ID)).test();
+        TestSubscriber<Role> observer = roleManager.findByIdIn(List.of(ADMIN_ID, USER_ID)).test();
         observer.assertNoErrors();
         observer.assertComplete();
-        observer.assertValue(Set::isEmpty);
+        observer.assertNoValues();
     }
 
 }
