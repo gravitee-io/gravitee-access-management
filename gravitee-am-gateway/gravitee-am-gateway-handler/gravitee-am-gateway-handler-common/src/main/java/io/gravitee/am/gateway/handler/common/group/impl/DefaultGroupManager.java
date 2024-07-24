@@ -13,14 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.role;
+package io.gravitee.am.gateway.handler.common.group.impl;
 
-import io.gravitee.am.model.Role;
-import io.reactivex.rxjava3.core.Single;
+import io.gravitee.am.gateway.handler.common.group.GroupManager;
+import io.gravitee.am.model.Group;
+import io.gravitee.am.repository.management.api.GroupRepository;
+import io.reactivex.rxjava3.core.Flowable;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.List;
-import java.util.Set;
+public class DefaultGroupManager implements GroupManager {
 
-public interface RoleFacade {
-    Single<Set<Role>> findByIdIn(List<String> roles);
+    @Autowired
+    private GroupRepository repository;
+
+    @Override
+    public Flowable<Group> findByMember(String userId) {
+        return repository.findByMember(userId);
+    }
 }

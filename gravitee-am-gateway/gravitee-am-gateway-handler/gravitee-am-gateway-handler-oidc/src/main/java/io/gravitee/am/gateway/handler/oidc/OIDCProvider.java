@@ -30,7 +30,13 @@ import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.ExtensionGrantManager;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
-import io.gravitee.am.gateway.handler.oidc.resources.endpoint.*;
+import io.gravitee.am.gateway.handler.oidc.resources.endpoint.DynamicClientAccessEndpoint;
+import io.gravitee.am.gateway.handler.oidc.resources.endpoint.DynamicClientRegistrationEndpoint;
+import io.gravitee.am.gateway.handler.oidc.resources.endpoint.DynamicClientRegistrationTemplateEndpoint;
+import io.gravitee.am.gateway.handler.oidc.resources.endpoint.ProviderConfigurationEndpoint;
+import io.gravitee.am.gateway.handler.oidc.resources.endpoint.ProviderJWKSetEndpoint;
+import io.gravitee.am.gateway.handler.oidc.resources.endpoint.RequestObjectRegistrationEndpoint;
+import io.gravitee.am.gateway.handler.oidc.resources.endpoint.UserInfoEndpoint;
 import io.gravitee.am.gateway.handler.oidc.resources.handler.DynamicClientAccessHandler;
 import io.gravitee.am.gateway.handler.oidc.resources.handler.DynamicClientAccessTokenHandler;
 import io.gravitee.am.gateway.handler.oidc.resources.handler.DynamicClientRegistrationHandler;
@@ -43,8 +49,8 @@ import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.gateway.handler.uma.UMAProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.impl.ApplicationClientSecretService;
+import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
@@ -79,7 +85,7 @@ public class OIDCProvider extends AbstractProtocolProvider {
     private OpenIDDiscoveryService discoveryService;
 
     @Autowired
-    private UserService userService;
+    private UserEnhancer userEnhancer;
 
     @Autowired
     private ClientSyncService clientSyncService;
@@ -192,7 +198,7 @@ public class OIDCProvider extends AbstractProtocolProvider {
         userInfoAuthHandler.extractClient(true);
         userInfoAuthHandler.forceEndUserToken(true);
 
-        Handler<RoutingContext> userInfoEndpoint = new UserInfoEndpoint(userService, jwtService, jweService, discoveryService, environment, subjectManager);
+        Handler<RoutingContext> userInfoEndpoint = new UserInfoEndpoint(userEnhancer, jwtService, jweService, discoveryService, environment, subjectManager);
         oidcRouter.route("/userinfo").handler(corsHandler);
         oidcRouter
                 .route(HttpMethod.GET, "/userinfo")

@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.common.role.impl;
 
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.RoleEvent;
-import io.gravitee.am.gateway.handler.common.role.RoleFacade;
 import io.gravitee.am.gateway.handler.common.role.RoleManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
@@ -28,21 +27,21 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
+import io.gravitee.common.service.Service;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class InMemoryRoleManagerImpl extends AbstractService implements RoleFacade, InitializingBean, RoleManager, EventListener<RoleEvent, Payload> {
+public class InMemoryRoleManager extends AbstractService implements Service, InitializingBean, RoleManager, EventListener<RoleEvent, Payload> {
 
     private final ConcurrentMap<String, Role> roles = new ConcurrentHashMap<>();
 
@@ -59,7 +58,7 @@ public class InMemoryRoleManagerImpl extends AbstractService implements RoleFaca
     public void afterPropertiesSet() throws Exception {
         roleRepository.findAll(ReferenceType.DOMAIN, domain.getId()).subscribe(
                 this::updateRole,
-                error -> log.error("Unable to initialize factors for domain {}", domain.getName(), error));
+                error -> log.error("Unable to initialize roles for domain {}", domain.getName(), error));
     }
 
     @Override
@@ -95,8 +94,8 @@ public class InMemoryRoleManagerImpl extends AbstractService implements RoleFaca
     }
 
     @Override
-    public Single<Set<Role>> findByIdIn(List<String> rolesIds) {
-        return Single.just(rolesIds.stream().map(roles::get).filter(Objects::nonNull).collect(Collectors.toSet()));
+    public Flowable<Role> findByIdIn(List<String> rolesIds) {
+        return Flowable.fromIterable(rolesIds.stream().map(roles::get).filter(Objects::nonNull).collect(Collectors.toList()));
     }
 
     private void updateRole(String roleId, RoleEvent roleEvent) {
