@@ -41,9 +41,13 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
 import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionTokenServiceImpl;
+import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManagerImpl;
 import io.gravitee.am.gateway.handler.common.policy.DefaultRulesEngine;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
+import io.gravitee.am.gateway.handler.common.role.RoleFacade;
+import io.gravitee.am.gateway.handler.common.role.impl.InMemoryRoleManagerImpl;
+import io.gravitee.am.gateway.handler.common.role.impl.DefaultRoleManagerImpl;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.ruleengine.SpELRuleEngine;
 import io.gravitee.am.gateway.handler.common.spring.web.WebConfiguration;
@@ -59,20 +63,20 @@ import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.context.TemplateVariableProviderFactory;
 import io.gravitee.am.gateway.handler.context.spring.ContextConfiguration;
 import io.gravitee.am.gateway.policy.spring.PolicyConfiguration;
-import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import java.util.concurrent.TimeUnit;
-
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -103,9 +107,9 @@ public class CommonConfiguration {
     @Qualifier("oidcWebClient")
     public WebClient webClient() {
         WebClientOptions options = new WebClientOptions()
-                .setConnectTimeout(Integer.valueOf(environment.getProperty("oidc.http.connectionTimeout", "10")) * 1000)
-                .setMaxPoolSize(Integer.valueOf(environment.getProperty("oidc.http.pool.maxTotalConnection", "200")))
-                .setTrustAll(Boolean.valueOf(environment.getProperty("oidc.http.client.trustAll", "true")));
+                .setConnectTimeout(Integer.parseInt(environment.getProperty("oidc.http.connectionTimeout", "10")) * 1000)
+                .setMaxPoolSize(Integer.parseInt(environment.getProperty("oidc.http.pool.maxTotalConnection", "200")))
+                .setTrustAll(Boolean.parseBoolean(environment.getProperty("oidc.http.client.trustAll", "true")));
 
         return WebClient.create(vertx, options);
     }
@@ -246,5 +250,14 @@ public class CommonConfiguration {
     @Bean
     public PasswordPolicyManager passwordPolicyManager() {
         return new PasswordPolicyManagerImpl();
+    }
+
+    @Bean
+    public RoleFacade roleManager(@Value("${sync.roles.enabled:false}") Boolean enabled) {
+        if (enabled) {
+            return new InMemoryRoleManagerImpl();
+        } else {
+            return new DefaultRoleManagerImpl();
+        }
     }
 }

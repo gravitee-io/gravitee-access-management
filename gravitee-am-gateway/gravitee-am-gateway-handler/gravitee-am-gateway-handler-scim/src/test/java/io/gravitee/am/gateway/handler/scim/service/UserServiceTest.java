@@ -118,9 +118,6 @@ public class UserServiceTest {
     private Domain domain;
 
     @Mock
-    private RoleService roleService;
-
-    @Mock
     private GroupService groupService;
 
     @Mock
@@ -143,6 +140,9 @@ public class UserServiceTest {
 
     @Mock
     private PasswordPolicyManager passwordPolicyManager;
+
+    @Mock
+    private RoleService roleService;
 
     @Before
     public void setUp() {
