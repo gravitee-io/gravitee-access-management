@@ -15,25 +15,23 @@
  */
 package io.gravitee.am.gateway.handler.common.role.impl;
 
-import io.gravitee.am.gateway.handler.common.role.RoleFacade;
+import io.gravitee.am.gateway.handler.common.role.RoleManager;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.repository.management.api.RoleRepository;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.core.Flowable;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-public class DefaultRoleManagerImpl implements RoleFacade {
+public class DefaultRoleManager implements RoleManager {
 
     @Autowired
     private RoleRepository roleRepository;
 
     @Override
-    public Single<Set<Role>> findByIdIn(List<String> roles) {
-        return roleRepository.findByIdIn(roles).collect(() -> (Set<Role>) new HashSet<Role>(), Set::add)
-                .onErrorResumeNext(ex -> Single.error(new TechnicalManagementException("An error occurs while trying to find roles by ids", ex)));
+    public Flowable<Role> findByIdIn(List<String> roles) {
+        return roleRepository.findByIdIn(roles)
+                .onErrorResumeNext(ex -> Flowable.error(new TechnicalManagementException("An error occurs while trying to find roles by ids", ex)));
     }
 }

@@ -34,7 +34,7 @@ import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
@@ -74,7 +74,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
     private SubjectManager subjectManager;
 
     @Mock
-    private UserService userService;
+    private UserEnhancer userEnhancer;
 
     @Mock
     private JWTService jwtService;
@@ -95,7 +95,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         super.setUp();
 
         when(env.getProperty("legacy.openid.openid_scope_full_profile", boolean.class, false)).thenReturn(false);
-        userInfoEndpoint = new UserInfoEndpoint(userService, jwtService, jweService, openIDDiscoveryService, env, subjectManager);
+        userInfoEndpoint = new UserInfoEndpoint(userEnhancer, jwtService, jweService, openIDDiscoveryService, env, subjectManager);
 
         router.route(HttpMethod.GET, "/userinfo")
                 .handler(userInfoEndpoint);
@@ -482,7 +482,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         User user = createUser();
 
         when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(user));
-        when(userService.enhance(user)).thenReturn(Single.just(user));
+        when(userEnhancer.enhance(user)).thenReturn(Single.just(user));
 
         testRequest(
                 HttpMethod.GET,
@@ -523,7 +523,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         user.setRoles(Arrays.asList("role1", "role2"));
         user.setRolesPermissions(new HashSet<>(Arrays.asList(role1, role2)));
         when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(user));
-        when(userService.enhance(user)).thenReturn(Single.just(user));
+        when(userEnhancer.enhance(user)).thenReturn(Single.just(user));
 
         testRequest(
                 HttpMethod.GET,
@@ -556,7 +556,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         User user = createUser();
 
         when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(user));
-        when(userService.enhance(user)).thenReturn(Single.just(user));
+        when(userEnhancer.enhance(user)).thenReturn(Single.just(user));
 
         testRequest(
                 HttpMethod.GET,
@@ -588,7 +588,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         User user = createUser();
         user.setGroups(Arrays.asList("group-1", "group-2"));
         when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(user));
-        when(userService.enhance(user)).thenReturn(Single.just(user));
+        when(userEnhancer.enhance(user)).thenReturn(Single.just(user));
 
         testRequest(
                 HttpMethod.GET,
@@ -630,7 +630,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         user.setGroups(Arrays.asList("group-1", "group-2"));
         user.setRolesPermissions(new HashSet<>(Arrays.asList(role1, role2)));
         when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(user));
-        when(userService.enhance(user)).thenReturn(Single.just(user));
+        when(userEnhancer.enhance(user)).thenReturn(Single.just(user));
 
         testRequest(
                 HttpMethod.GET,
@@ -675,7 +675,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         user.setGroups(Arrays.asList("group-1", "group-2"));
         when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(user));
         when(subjectManager.generateSubFrom(any())).thenReturn(user.getId());
-        when(userService.enhance(user)).thenReturn(Single.just(user));
+        when(userEnhancer.enhance(user)).thenReturn(Single.just(user));
 
         testRequest(
                 HttpMethod.GET,

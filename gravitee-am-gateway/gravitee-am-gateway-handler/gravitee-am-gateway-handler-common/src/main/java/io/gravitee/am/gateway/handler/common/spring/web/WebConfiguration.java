@@ -33,7 +33,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.PolicyChainH
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.LoginAttemptService;
-import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.vertx.core.http.CookieSameSite;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -63,8 +63,8 @@ public class WebConfiguration {
     }
 
     @Bean
-    public CookieSessionHandler sessionHandler(JWTService jwtService, CertificateManager certificateManager, UserService userService, SubjectManager subjectManager) {
-        return new CookieSessionHandler(jwtService, certificateManager, userService, subjectManager);
+    public CookieSessionHandler sessionHandler(JWTService jwtService, CertificateManager certificateManager, UserEnhancer userEnhancer, SubjectManager subjectManager) {
+        return new CookieSessionHandler(jwtService, certificateManager, userEnhancer, subjectManager);
     }
 
     @Bean

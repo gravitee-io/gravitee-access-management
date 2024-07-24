@@ -46,7 +46,7 @@ import io.gravitee.am.model.StepUpAuthenticationSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.risk.assessment.api.assessment.Assessment;
 import io.gravitee.risk.assessment.api.assessment.AssessmentMessageResult;
@@ -97,7 +97,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     @Mock
     private CertificateManager certificateManager;
     @Mock
-    private UserService userService;
+    private UserEnhancer userEnhancer;
     @Mock
     private FactorManager factorManager;
     @Mock
@@ -126,7 +126,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
 
         router.route("/login")
                 .order(Integer.MIN_VALUE)
-                .handler(new CookieSessionHandler(jwtService, certificateManager, userService, subjectManager, "am-cookie", 30 * 60 * 60));
+                .handler(new CookieSessionHandler(jwtService, certificateManager, subjectManager, userEnhancer, "am-cookie", 30 * 60 * 60));
 
         router.route("/login")
                 .handler(authenticationFlowChainHandler)
