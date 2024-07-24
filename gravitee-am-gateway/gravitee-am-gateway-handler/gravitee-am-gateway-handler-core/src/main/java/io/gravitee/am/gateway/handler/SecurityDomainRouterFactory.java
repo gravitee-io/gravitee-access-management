@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.email.EmailManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.flow.FlowManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
+import io.gravitee.am.gateway.handler.common.role.RoleManager;
 import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
@@ -45,6 +46,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.Environment;
 
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -61,6 +63,9 @@ public class SecurityDomainRouterFactory {
 
     @Autowired
     private ApplicationContext gatewayApplicationContext;
+
+    @Autowired
+    private Environment environment;
 
     public VertxSecurityDomainHandler create(Domain domain) {
         if (domain.isEnabled()) {
@@ -120,6 +125,10 @@ public class SecurityDomainRouterFactory {
         components.add(I18nDictionaryManager.class);
         components.add(ThemeManager.class);
         components.add(PasswordPolicyManager.class);
+
+        if (environment.getProperty("sync.roles.enabled", Boolean.class, false)) {
+            components.add(RoleManager.class);
+        }
 
         components.forEach(componentClass -> {
             LifecycleComponent lifecyclecomponent = applicationContext.getBean(componentClass);
