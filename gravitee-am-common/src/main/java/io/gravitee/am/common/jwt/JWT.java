@@ -52,6 +52,14 @@ public class JWT extends HashMap<String, Object> {
         put(Claims.SUB, sub);
     }
 
+    public String getInternalSub() {
+        return containsKey(Claims.GIO_INTERNAL_SUB) ? (String) get(Claims.GIO_INTERNAL_SUB) : null;
+    }
+
+    public void setInternalSub(String sub) {
+        put(Claims.GIO_INTERNAL_SUB, sub);
+    }
+
     public String getAud() {
         if (containsKey(Claims.AUD)) {
             Object aud = get(Claims.AUD);

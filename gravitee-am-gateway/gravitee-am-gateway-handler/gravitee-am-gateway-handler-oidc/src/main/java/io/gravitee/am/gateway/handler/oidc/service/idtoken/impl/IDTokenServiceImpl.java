@@ -142,7 +142,7 @@ public class IDTokenServiceImpl implements IDTokenService {
     @Override
     public Single<User> extractUser(String idToken, Client client) {
         return jwtService.decodeAndVerify(idToken, client, ID_TOKEN)
-                .flatMap(jwt -> subjectManager.findUserBySub(jwt.getSub())
+                .flatMap(jwt -> subjectManager.findUserBySub(jwt)
                         .switchIfEmpty(Single.error(() -> new UserNotFoundException(jwt.getSub())))
                         .map(user -> {
                             if (!user.getReferenceId().equals(domain.getId())) {
@@ -171,7 +171,11 @@ public class IDTokenServiceImpl implements IDTokenService {
         IDToken idToken = new IDToken();
         // set required claims
         idToken.setIss(openIDDiscoveryService.getIssuer(oAuth2Request.getOrigin()));
-        idToken.setSub(oAuth2Request.isClientOnly() ? oAuth2Request.getClientId() : subjectManager.generateSubFrom(user));
+        if (oAuth2Request.isClientOnly()) {
+            idToken.setSub(oAuth2Request.getClientId());
+        } else {
+            subjectManager.updateJWT(idToken, user);
+        }
         idToken.setAud(oAuth2Request.getClientId());
         idToken.setIat(Instant.now().getEpochSecond());
         idToken.setExp(Instant.ofEpochSecond(idToken.getIat()).plusSeconds(client.getIdTokenValiditySeconds()).getEpochSecond());

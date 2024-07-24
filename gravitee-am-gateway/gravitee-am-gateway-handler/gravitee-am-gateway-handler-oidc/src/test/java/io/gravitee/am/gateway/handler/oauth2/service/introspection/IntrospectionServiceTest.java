@@ -59,7 +59,7 @@ public class IntrospectionServiceTest {
         accessToken.setSubject("user");
         accessToken.setClientId("client-id");
         when(tokenService.introspect("token")).thenReturn(Single.just(accessToken));
-        when(subjectManager.findUserBySub("user")).thenReturn(Maybe.just(new User()));
+        when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(new User()));
 
         IntrospectionRequest introspectionRequest = new IntrospectionRequest(token);
         TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
@@ -67,7 +67,7 @@ public class IntrospectionServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        verify(subjectManager, times(1)).findUserBySub("user");
+        verify(subjectManager, times(1)).findUserBySub(any());
     }
 
     @Test
@@ -84,7 +84,7 @@ public class IntrospectionServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        verify(subjectManager, never()).findUserBySub(anyString());
+        verify(subjectManager, never()).findUserBySub(any());
     }
 
     @Test

@@ -17,6 +17,8 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
 import io.gravitee.am.common.exception.jwt.ExpiredJWTException;
 import io.gravitee.am.common.exception.jwt.PrematureJWTException;
+import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
@@ -57,11 +59,11 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
     private static final Logger logger = LoggerFactory.getLogger(CookieSessionHandler.class);
 
     final static String USER_ID_KEY = "userId";
-    final static String USER_SUB_KEY = "sub";
 
     private final JWTService jwtService;
     private final CertificateManager certificateManager;
     private final UserService userService;
+    private final SubjectManager subjectManager;
 
     @Value("${http.cookie.session.name:" + DEFAULT_SESSION_COOKIE_NAME + "}")
     private String cookieName;
@@ -71,8 +73,6 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
 
     @Value("${http.cookie.session.persistent:true}")
     private boolean persistent;
-
-    private SubjectManager subjectManager;
 
     public CookieSessionHandler(JWTService jwtService,
                                 CertificateManager certificateManager,
@@ -114,10 +114,13 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
         if (sessionCookie != null) {
             sessionObs = session.setValue(sessionCookie.getValue())
                     .flatMap(currentSession -> {
-                        final String userSub = currentSession.get(USER_SUB_KEY);
+                        final String userSub = currentSession.get(Claims.GIO_INTERNAL_SUB);
                         if (StringUtils.hasText(userSub)) {
                             // Load the user and put it back in the context.
-                            return subjectManager.findUserBySub(userSub)
+                            final var jwt = new JWT();
+                            jwt.setSub(userSub);
+                            jwt.setInternalSub(userSub);
+                            return subjectManager.findUserBySub(jwt)
                                     .doOnSuccess(user -> context.getDelegate().setUser(new User(user)))
                                     .flatMap(user -> userService.enhance(user).toMaybe())
                                     .map(user -> currentSession)
@@ -179,8 +182,8 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
         io.vertx.ext.auth.User user = context.getDelegate().user();
         if (user instanceof User) {
             final var modelUser = ((User) user).getUser();
-            session.putUserId(modelUser.getId()); // TODO [AM-3472] do we have to keep it ?
-            session.putUserSub(subjectManager.generateSubFrom(modelUser));
+            session.putUserId(modelUser.getId());
+            session.putUserInternalSub(subjectManager.generateInternalSubFrom(modelUser));
         }
         Cookie cookie = Cookie.cookie(cookieName, session.value());
 

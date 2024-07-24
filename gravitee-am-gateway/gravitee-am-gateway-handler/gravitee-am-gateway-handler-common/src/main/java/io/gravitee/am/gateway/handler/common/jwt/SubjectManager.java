@@ -16,6 +16,7 @@
 
 package io.gravitee.am.gateway.handler.common.jwt;
 
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.User;
 import io.reactivex.rxjava3.core.Maybe;
@@ -24,12 +25,24 @@ public interface SubjectManager {
 
     String generateSubFrom(User user);
 
-    Maybe<User> findUserBySub(String sub);
+    String generateInternalSubFrom(User user);
 
-    Maybe<String> findUserIdBySub(String sub);
+    /**
+     * Fill the sub and internal sub claims based on the user profile provided as parameter
+     * Note: The input JWT is mutated.
+     *
+     * @param jwt jwt instance to update
+     * @param user
+     * @return the input JWT updated with additional claims
+     */
+    void updateJWT(JWT jwt, User user);
 
-    default Maybe<io.gravitee.am.identityprovider.api.User> getPrincipal(String sub) {
-        return findUserBySub(sub)
+    Maybe<User> findUserBySub(JWT token);
+
+    Maybe<String> findUserIdBySub(JWT token);
+
+    default Maybe<io.gravitee.am.identityprovider.api.User> getPrincipal(JWT token) {
+        return findUserBySub(token)
                 .map(principal -> new DefaultUser(principal));
     }
 }

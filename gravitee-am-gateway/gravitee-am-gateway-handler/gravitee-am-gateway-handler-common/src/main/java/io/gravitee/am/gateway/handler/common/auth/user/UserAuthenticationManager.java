@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.auth.user;
 
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
@@ -32,7 +33,7 @@ public interface UserAuthenticationManager {
     Single<User> authenticate(Client client, Authentication authentication, boolean preAuthenticated);
 
     Maybe<User> loadPreAuthenticatedUser(String userId, Request request);
-    Maybe<User> loadPreAuthenticatedUserBySub(String subject, Request request);
+    Maybe<User> loadPreAuthenticatedUserBySub(JWT token, Request request);
 
     Single<User> connect(io.gravitee.am.identityprovider.api.User user, Client client, Request request, boolean afterAuthentication);
 

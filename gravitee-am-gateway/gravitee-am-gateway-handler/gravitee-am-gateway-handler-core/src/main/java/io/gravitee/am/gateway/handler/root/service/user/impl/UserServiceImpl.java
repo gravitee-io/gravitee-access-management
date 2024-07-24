@@ -214,7 +214,7 @@ public class UserServiceImpl implements UserService {
                                 return jwtService.decodeAndVerify(idToken, client, ID_TOKEN)
                                         .onErrorResumeNext(ex -> (ex instanceof ExpiredJWTException) ? Single.just(jwt) : Single.error(ex))
                                         .flatMap(jwt1 -> {
-                                            return subjectManager.findUserBySub(jwt1.getSub())
+                                            return subjectManager.findUserBySub(jwt1)
                                                     .switchIfEmpty(Single.error(() -> new UserNotFoundException(jwt.getSub())))
                                                     .map(user -> {
                                                         if (!user.getReferenceId().equals(domain.getId())) {

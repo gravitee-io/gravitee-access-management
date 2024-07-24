@@ -149,8 +149,8 @@ public class UserConsentEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldRevokeConsent() throws Exception {
-        when(subjectManager.findUserBySub(anyString())).thenReturn(Maybe.just(new User()));
-        when(subjectManager.findUserIdBySub(anyString())).thenReturn(Maybe.just("user-id"));
+        when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(new User()));
+        when(subjectManager.findUserIdBySub(any())).thenReturn(Maybe.just("user-id"));
         when(userService.revokeConsent(anyString(), anyString(), any())).thenReturn(Completable.complete());
 
         router.route("/users/:userId/consents/:consentId")

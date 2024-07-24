@@ -17,6 +17,7 @@
 package io.gravitee.am.gateway.handler.manager.subject;
 
 
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.model.User;
@@ -68,9 +69,11 @@ public class SubjectManagerV1Test {
         final var user = new User();
         user.setExternalId(UUID.randomUUID().toString());
         user.setSource(UUID.randomUUID().toString());
+        final var token = new JWT();
+        cut.updateJWT(token, user);
 
         when(userService.findById(any())).thenReturn(Maybe.just(user));
-        TestObserver<io.gravitee.am.identityprovider.api.User> observer = cut.getPrincipal(cut.generateSubFrom(user)).test();
+        TestObserver<io.gravitee.am.identityprovider.api.User> observer = cut.getPrincipal(token).test();
 
         observer.await(10, TimeUnit.SECONDS);
         observer.assertNoErrors();

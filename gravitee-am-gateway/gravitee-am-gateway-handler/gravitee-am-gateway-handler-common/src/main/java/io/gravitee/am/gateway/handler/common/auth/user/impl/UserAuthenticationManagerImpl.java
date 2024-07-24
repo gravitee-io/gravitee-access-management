@@ -23,6 +23,7 @@ import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
 import io.gravitee.am.common.exception.authentication.NegotiateContinueException;
 import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
 import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
@@ -161,8 +162,8 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     }
 
     @Override
-    public Maybe<User> loadPreAuthenticatedUserBySub(String subject, Request request) {
-        return userAuthenticationService.loadPreAuthenticatedUserBySub(subject, request);
+    public Maybe<User> loadPreAuthenticatedUserBySub(JWT token, Request request) {
+        return userAuthenticationService.loadPreAuthenticatedUserBySub(token, request);
     }
 
     @Override
