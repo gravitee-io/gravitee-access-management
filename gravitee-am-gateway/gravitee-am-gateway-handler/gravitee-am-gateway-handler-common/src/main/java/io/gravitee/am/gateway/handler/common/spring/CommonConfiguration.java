@@ -37,6 +37,9 @@ import io.gravitee.am.gateway.handler.common.email.impl.EmailManagerImpl;
 import io.gravitee.am.gateway.handler.common.email.impl.EmailServiceImpl;
 import io.gravitee.am.gateway.handler.common.flow.FlowManager;
 import io.gravitee.am.gateway.handler.common.flow.impl.FlowManagerImpl;
+import io.gravitee.am.gateway.handler.common.group.GroupManager;
+import io.gravitee.am.gateway.handler.common.group.impl.DefaultGroupManager;
+import io.gravitee.am.gateway.handler.common.group.impl.InMemoryGroupManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
@@ -45,13 +48,14 @@ import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManagerImpl;
 import io.gravitee.am.gateway.handler.common.policy.DefaultRulesEngine;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
-import io.gravitee.am.gateway.handler.common.role.RoleFacade;
-import io.gravitee.am.gateway.handler.common.role.impl.InMemoryRoleManagerImpl;
-import io.gravitee.am.gateway.handler.common.role.impl.DefaultRoleManagerImpl;
+import io.gravitee.am.gateway.handler.common.role.RoleManager;
+import io.gravitee.am.gateway.handler.common.role.impl.DefaultRoleManager;
+import io.gravitee.am.gateway.handler.common.role.impl.InMemoryRoleManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.ruleengine.SpELRuleEngine;
 import io.gravitee.am.gateway.handler.common.spring.web.WebConfiguration;
 import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.impl.UserEnhancerFacade;
 import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImpl;
 import io.gravitee.am.gateway.handler.common.utils.StaticEnvironmentProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
@@ -63,10 +67,13 @@ import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.context.TemplateVariableProviderFactory;
 import io.gravitee.am.gateway.handler.context.spring.ContextConfiguration;
 import io.gravitee.am.gateway.policy.spring.PolicyConfiguration;
+import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -74,6 +81,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 
 import java.util.concurrent.TimeUnit;
@@ -91,6 +99,8 @@ import java.util.concurrent.TimeUnit;
         ContextConfiguration.class,
         RiskAssessmentConfiguration.class})
 public class CommonConfiguration {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CommonConfiguration.class);
+
 
     @Autowired
     private Environment environment;
@@ -253,11 +263,28 @@ public class CommonConfiguration {
     }
 
     @Bean
-    public RoleFacade roleManager(@Value("${sync.roles.enabled:false}") Boolean enabled) {
+    public GroupManager groupManager(@Value("${sync.groups.enabled:false}") Boolean enabled) {
         if (enabled) {
-            return new InMemoryRoleManagerImpl();
+            return new InMemoryGroupManager();
         } else {
-            return new DefaultRoleManagerImpl();
+            return new DefaultGroupManager();
         }
     }
+
+    @Bean
+    public RoleManager roleManager(@Value("${sync.roles.enabled:false}") Boolean enabled) {
+        if (enabled) {
+            return new InMemoryRoleManager();
+        } else {
+            return new DefaultRoleManager();
+        }
+    }
+
+    @Bean
+    @Primary
+    public UserEnhancer facadeManagerUserEnhancer(GroupManager groupManager, RoleManager roleManager) {
+        return new UserEnhancerFacade(groupManager, roleManager);
+    }
+
+
 }

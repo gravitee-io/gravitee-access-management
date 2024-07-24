@@ -35,12 +35,14 @@ import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.TooManyAccountTokenException;
 import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.gravitee.am.service.model.NewAccountAccessToken;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -72,12 +74,21 @@ public class OrganizationUserServiceImpl extends AbstractUserService<Organizatio
     @Autowired
     private PasswordEncoder accountAccessTokenEncoder;
 
+    @Autowired
+    @Qualifier("Default")
+    private UserEnhancer userEnhancer;
+
     @Value("${security.accountAccessTokens.limit:20}")
     private int tokensLimit = 20;
 
     @Override
     protected OrganizationUserRepository getUserRepository() {
         return this.userRepository;
+    }
+
+    @Override
+    protected UserEnhancer getUserEnhancer() {
+        return userEnhancer;
     }
 
     public Completable setRoles(io.gravitee.am.model.User user) {

@@ -320,6 +320,7 @@ public class GroupServiceTest {
         when(groupRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("group-id"))).thenReturn(Maybe.just(group));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
         when(groupRepository.update(any())).thenReturn(Single.just(new Group()));
+        when(eventService.create(Mockito.any())).thenAnswer(a -> Single.just(a.getArguments()[0]));
 
         TestObserver testObserver = groupService.assignRoles(ReferenceType.DOMAIN, DOMAIN, group.getId(), rolesIds).test();
         testObserver.assertComplete();
@@ -369,6 +370,7 @@ public class GroupServiceTest {
         when(groupRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("group-id"))).thenReturn(Maybe.just(group));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
         when(groupRepository.update(any())).thenReturn(Single.just(new Group()));
+        when(eventService.create(Mockito.any())).thenAnswer(a -> Single.just(a.getArguments()[0]));
 
         TestObserver testObserver = groupService.revokeRoles(ReferenceType.DOMAIN, DOMAIN, group.getId(), rolesIds).test();
         testObserver.assertComplete();

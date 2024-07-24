@@ -300,7 +300,7 @@ public class GroupServiceImpl implements GroupService {
 
         return findById(referenceType, referenceId, groupId)
                 .flatMapCompletable(group -> groupRepository.delete(groupId)
-                        .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(group.getId(), group.getReferenceType(), group.getReferenceId(), Action.DELETE)))))
+                        .andThen(Completable.fromSingle(eventService.create(new Event(Type.GROUP, new Payload(group.getId(), group.getReferenceType(), group.getReferenceId(), Action.DELETE)))))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).group(group)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).throwable(throwable)))
                 )
@@ -339,8 +339,11 @@ public class GroupServiceImpl implements GroupService {
                     // check roles
                     return checkRoles(roles)
                             // and update the group
-                            .andThen(Single.defer(() -> groupRepository.update(groupToUpdate)))
-                            .doOnSuccess(group1 -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_ROLES_ASSIGNED).oldValue(oldGroup).group(group1)))
+                            .andThen(Single.defer(() -> groupRepository.update(groupToUpdate)
+                                    .flatMap(group ->
+                                            eventService.create(new Event(Type.GROUP, new Payload(group.getId(), group.getReferenceType(), group.getReferenceId(), Action.UPDATE)))
+                                                    .flatMap(event -> Single.just(group)))))
+                            .doOnSuccess(group -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_ROLES_ASSIGNED).oldValue(oldGroup).group(group)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_ROLES_ASSIGNED).throwable(throwable)));
                 });
     }

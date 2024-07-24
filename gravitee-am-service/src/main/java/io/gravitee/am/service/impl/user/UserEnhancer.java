@@ -13,16 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.role;
+package io.gravitee.am.service.impl.user;
 
+import io.gravitee.am.model.User;
+import io.reactivex.rxjava3.core.Single;
 
-import io.gravitee.am.model.Role;
-import io.reactivex.rxjava3.core.Flowable;
-
-import java.util.List;
-
-public interface RoleManager {
-
-    Flowable<Role> findByIdIn(List<String> roles);
-
+public interface UserEnhancer {
+    Single<User> enhance(User user);
 }
