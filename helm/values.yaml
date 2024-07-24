@@ -652,6 +652,8 @@ gateway:
   ssl:
     enabled: false
     tlsProtocols: TLSv1.2, TLSv1.3
+  #  ciphers: TLS_DHE_RSA_WITH_AES_128_GCM_SHA256 , TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_DHE_RSA_WITH_AES_256_GCM_SHA384 , TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+  #  certificateHeader: X-ClientCert # header where the peer certificate is read if there are no sslSession (default is null)
   #  keystore:
   #    type: jks # Supports jks, pem, pkcs12
   #    path: ${gravitee.home}/security/keystore.jks
@@ -661,6 +663,13 @@ gateway:
   #    type: jks # Supports jks, pem, pkcs12
   #    path: ${gravitee.home}/security/truststore.jks
   #    password: secret
+  #  mtls_aliases: # base URL for mtls_endpoint_aliases (default is null and the standard endpoints will be used)
+  #    base_url: https://gravitee.mlts.com
+  #    endpoints:
+  #      - token_endpoint
+  #      - registration_endpoint
+  #      - userinfo_endpoint
+  #      - pushed_authorization_request_endpoint
   services:
     core:
       http:
