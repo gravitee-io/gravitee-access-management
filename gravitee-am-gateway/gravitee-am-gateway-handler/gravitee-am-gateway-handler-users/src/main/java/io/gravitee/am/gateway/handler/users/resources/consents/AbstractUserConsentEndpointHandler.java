@@ -63,7 +63,7 @@ public class AbstractUserConsentEndpointHandler {
 
         // end user
         if (!token.getSub().equals(token.getAud())) {
-            return subjectManager.findUserBySub(token.getSub())
+            return subjectManager.findUserBySub(token)
                     .map(user -> {
                         User principal = new DefaultUser(user.getUsername());
                         ((DefaultUser) principal).setId(user.getId());
@@ -117,9 +117,14 @@ public class AbstractUserConsentEndpointHandler {
         return principal;
     }
 
-    protected Single<String> getUserIdFromSub(String sub) {
-        return this.subjectManager.findUserIdBySub(sub)
-                .onErrorResumeNext((err) -> err instanceof IllegalArgumentException ? Maybe.just(sub) : Maybe.error(err))
-                .switchIfEmpty(Single.error(() -> new UserNotFoundException(sub)));
+    protected Single<String> getUserIdFromSub(JWT token) {
+        return this.subjectManager.findUserIdBySub(token)
+                .onErrorResumeNext((err) -> err instanceof IllegalArgumentException ? Maybe.just(token.getSub()) : Maybe.error(err))
+                .switchIfEmpty(Single.error(() -> new UserNotFoundException(token.getSub())));
+    }
+
+
+    protected boolean userIdParamMatchTokenIdentity(String id, String userId, JWT accessToken) {
+        return id.equals(userId) || userId.equals(accessToken.getSub()) || userId.equals(accessToken.getInternalSub());
     }
 }

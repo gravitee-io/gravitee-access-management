@@ -17,6 +17,7 @@
 package io.gravitee.am.gateway.handler.manager.subject;
 
 
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -25,6 +26,12 @@ import io.gravitee.am.model.User;
 import io.reactivex.rxjava3.core.Maybe;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -34,7 +41,8 @@ import lombok.extern.slf4j.Slf4j;
 @AllArgsConstructor
 public class SubjectManagerV2 implements SubjectManager {
 
-    private static final String SEPARATOR = "|";
+    private static final String SUB_PREFIX = "h_";
+    private static final String SEPARATOR = ":";
 
     private UserService userService;
 
@@ -42,38 +50,57 @@ public class SubjectManagerV2 implements SubjectManager {
 
     @Override
     public String generateSubFrom(User user) {
+        final var gisub = generateInternalSubFrom(user);
+        try {
+            var rawhash = MessageDigest.getInstance("SHA-256").digest(gisub.getBytes(StandardCharsets.UTF_8));
+            return SUB_PREFIX + HexFormat.of().formatHex(rawhash);
+        } catch (NoSuchAlgorithmException e) {
+            log.warn("Error while generating subject from user", e);
+            return gisub;
+        }
+    }
+
+    @Override
+    public String generateInternalSubFrom(User user) {
         return user.getSource() + SEPARATOR + user.getExternalId();
     }
 
     @Override
-    public Maybe<User> findUserBySub(String sub) {
-        if (isCompound(sub)) {
-            log.error("malformed sub value '{}'", sub);
-            return Maybe.error(new IllegalArgumentException("malformed sub value"));
-        }
-
-        final var source = sub.substring(0, sub.indexOf(SEPARATOR));
-        final var extId = sub.substring(sub.indexOf(SEPARATOR)+1);
-        return userService.findByDomainAndExternalIdAndSource(domain.getId(), extId, source);
-    }
-
-    private boolean isCompound(String sub) {
-        return sub.indexOf(SEPARATOR) <= 0;
+    public void updateJWT(JWT jwt, User user) {
+        jwt.setInternalSub(generateInternalSubFrom(user));
+        jwt.setSub(generateSubFrom(user));
     }
 
     @Override
-    public Maybe<String> findUserIdBySub(String sub) {
+    public Maybe<User> findUserBySub(JWT token) {
+        if (!hasValidInternalSub(token)) {
+            log.error("malformed internal sub value '{}'", token);
+            return Maybe.error(new IllegalArgumentException("Required internal sub value is missing"));
+        }
+
+        final var internalSub = token.getInternalSub();
+        final var source = internalSub.substring(0, internalSub.indexOf(SEPARATOR));
+        final var extId = internalSub.substring(internalSub.indexOf(SEPARATOR)+1);
+        return userService.findByDomainAndExternalIdAndSource(domain.getId(), extId, source);
+    }
+
+    private boolean hasValidInternalSub(JWT token) {
+        return StringUtils.hasLength(token.getInternalSub()) && token.getInternalSub().contains(SEPARATOR);
+    }
+
+    @Override
+    public Maybe<String> findUserIdBySub(JWT sub) {
         return this.findUserBySub(sub).map(User::getId);
     }
 
     @Override
-    public Maybe<io.gravitee.am.identityprovider.api.User> getPrincipal(String sub) {
-        if (isCompound(sub)) {
+    public Maybe<io.gravitee.am.identityprovider.api.User> getPrincipal(JWT sub) {
+        if (!hasValidInternalSub(sub)) {
             // if sub doesn't match the v2 format
             // return empty as the action is probably managed by a client app
             return Maybe.empty();
         }
         return findUserBySub(sub)
-                .map(principal -> new DefaultUser(principal));
+                .map(DefaultUser::new);
     }
 }

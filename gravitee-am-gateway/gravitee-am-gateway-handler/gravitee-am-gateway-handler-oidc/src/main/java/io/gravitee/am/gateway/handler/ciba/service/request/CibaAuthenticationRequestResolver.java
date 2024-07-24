@@ -127,7 +127,7 @@ public class CibaAuthenticationRequestResolver extends AbstractRequestResolver<C
                         if (expirationTime != null) {
                             evaluateExp(expirationTime.toInstant().getEpochSecond(), Instant.now(), 0);
                         }
-                        return subjectManager.findUserBySub(signedJwt.getJWTClaimsSet().getSubject()).map(user -> {
+                        return subjectManager.findUserBySub(new io.gravitee.am.common.jwt.JWT(signedJwt.getJWTClaimsSet().getClaims())).map(user -> {
                             authRequest.setSubject(user.getId());
                             return authRequest;
                         }).toSingle();

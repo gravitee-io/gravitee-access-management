@@ -23,6 +23,7 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
+import io.gravitee.am.gateway.handler.common.utils.Tuple;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
@@ -96,24 +97,25 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
     public void handle(RoutingContext context) {
         JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
         Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        String subject = accessToken.getSub();
-        subjectManager.findUserBySub(subject)
+        subjectManager.findUserBySub(accessToken)
                 .switchIfEmpty(Single.error(() -> new InvalidTokenException("No user found for this token")))
                 // enhance user information
                 .flatMap(user -> enhance(user, accessToken))
                 // process user claims
-                .map(user -> processClaims(user, accessToken))
+                .map(user -> Tuple.of(user, processClaims(user, accessToken)))
                 // encode response
-                .flatMap(claims -> {
+                .flatMap(tuple -> {
+                            final var user = tuple.getT1();
+                            final var claims = tuple.getT2();
+                            final var jwt = new JWT(claims);
+                            subjectManager.updateJWT(jwt, user);
                             if (!expectSignedOrEncryptedUserInfo(client)) {
                                 context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-                                return Single.just(Json.encodePrettily(claims));
+                                return Single.just(Json.encodePrettily(jwt));
                             } else {
                                 context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JWT);
 
-                                JWT jwt = new JWT(claims);
                                 jwt.setIss(openIDDiscoveryService.getIssuer(UriBuilderRequest.resolveProxyRequest(context)));
-                                jwt.setSub(accessToken.getSub());
                                 jwt.setAud(accessToken.getAud());
                                 jwt.setIat(new Date().getTime() / 1000L);
                                 jwt.setExp(accessToken.getExp() / 1000L);

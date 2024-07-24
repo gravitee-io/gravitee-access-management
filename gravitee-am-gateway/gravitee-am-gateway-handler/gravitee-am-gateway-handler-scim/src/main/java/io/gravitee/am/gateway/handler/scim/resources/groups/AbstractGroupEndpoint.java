@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.scim.resources.groups;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
@@ -68,7 +69,7 @@ public class AbstractGroupEndpoint {
         });
     }
 
-    protected Maybe<User> principal(String sub) {
-        return this.subjectManager.getPrincipal(sub);
+    protected Maybe<User> principal(JWT jwt) {
+        return this.subjectManager.getPrincipal(jwt);
     }
 }

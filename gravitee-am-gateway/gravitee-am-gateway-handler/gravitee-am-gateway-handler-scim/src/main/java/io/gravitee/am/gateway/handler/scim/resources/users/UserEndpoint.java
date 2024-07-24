@@ -132,7 +132,7 @@ public class UserEndpoint extends AbstractUserEndpoint {
 
             final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
             final String baseUrl = location(context.request());
-            principal(accessToken.getSub())
+            principal(accessToken)
                     .map(Optional::ofNullable)
                     .switchIfEmpty(Maybe.just(Optional.empty()))
                     .flatMapSingle(optPrincipal -> userService.update(userId, user, source, baseUrl, optPrincipal.orElse(null), context.get(CLIENT_CONTEXT_KEY)))
@@ -206,7 +206,7 @@ public class UserEndpoint extends AbstractUserEndpoint {
 
             final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
             final String baseUrl = location(context.request());
-            principal(accessToken.getSub())
+            principal(accessToken)
                     .map(Optional::ofNullable)
                     .switchIfEmpty(Maybe.just(Optional.empty()))
                     .flatMapSingle(optPrincipal -> userService.patch(userId, patchOp, source, baseUrl, optPrincipal.orElse(null), context.get(CLIENT_CONTEXT_KEY)))
@@ -245,7 +245,7 @@ public class UserEndpoint extends AbstractUserEndpoint {
         final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
 
         final String baseUrl = location(context.request());
-        principal(accessToken.getSub())
+        principal(accessToken)
                 .map(Optional::ofNullable)
                 .switchIfEmpty(Maybe.just(Optional.empty()))
                 .flatMapCompletable(optPrincipal -> userService.delete(userId, optPrincipal.orElse(null)))

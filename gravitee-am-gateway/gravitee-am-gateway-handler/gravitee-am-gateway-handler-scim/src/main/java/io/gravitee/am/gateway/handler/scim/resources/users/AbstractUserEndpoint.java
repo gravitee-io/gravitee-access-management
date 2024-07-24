@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.scim.resources.users;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
@@ -103,7 +104,7 @@ public class AbstractUserEndpoint {
         return Json.decodeValue(body, User.class);
     }
 
-    protected Maybe<io.gravitee.am.identityprovider.api.User> principal(String sub) {
-        return this.subjectManager.getPrincipal(sub);
+    protected Maybe<io.gravitee.am.identityprovider.api.User> principal(JWT jwt) {
+        return this.subjectManager.getPrincipal(jwt);
     }
 }

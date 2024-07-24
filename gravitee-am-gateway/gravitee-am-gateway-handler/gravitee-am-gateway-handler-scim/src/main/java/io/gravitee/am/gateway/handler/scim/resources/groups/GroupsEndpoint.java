@@ -164,7 +164,7 @@ public class GroupsEndpoint extends AbstractGroupEndpoint {
             }
             final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
             final String baseUrl = location(context.request());
-            principal(accessToken.getSub())
+            principal(accessToken)
                     .map(Optional::ofNullable)
                     .switchIfEmpty(Maybe.just(Optional.empty()))
                     .flatMapSingle(optPrincipal ->  groupService.create(group, baseUrl, optPrincipal.orElse(null)))

@@ -70,7 +70,7 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
     public void handle(RoutingContext context) {
         JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
         Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        subjectManager.findUserIdBySub(accessToken.getSub())
+        subjectManager.findUserIdBySub(accessToken)
                 .switchIfEmpty(Single.error(() -> new UserNotFoundException(accessToken.getSub())))
                 .flatMap(userId -> this.resourceService.listByDomainAndClientAndUser(domain.getId(), client.getId(), userId)
                 .map(Resource::getId)
@@ -92,7 +92,7 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
         String basePath = UriBuilderRequest.resolveProxyRequest(context);
 
         this.extractRequest(context)
-                .flatMap(request -> subjectManager.findUserIdBySub(accessToken.getSub())
+                .flatMap(request -> subjectManager.findUserIdBySub(accessToken)
                         .switchIfEmpty(Single.error(() -> new UserNotFoundException(accessToken.getSub())))
                         .flatMap(userId -> this.resourceService.create(request, domain.getId(), client.getId(), userId)))
                 .subscribe(
@@ -115,7 +115,7 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
         Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         String resource_id = context.request().getParam(RESOURCE_ID);
 
-        subjectManager.findUserIdBySub(accessToken.getSub())
+        subjectManager.findUserIdBySub(accessToken)
                 .switchIfEmpty(Maybe.error(() -> new UserNotFoundException(accessToken.getSub())))
                 .flatMap(useId -> this.resourceService.findByDomainAndClientAndUserAndResource(domain.getId(), client.getId(), useId, resource_id))
                 .switchIfEmpty(Single.error(new ResourceNotFoundException(resource_id)))
@@ -142,7 +142,7 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
         String resource_id = context.request().getParam(RESOURCE_ID);
 
         this.extractRequest(context)
-                .flatMap(request -> subjectManager.findUserIdBySub(accessToken.getSub())
+                .flatMap(request -> subjectManager.findUserIdBySub(accessToken)
                         .switchIfEmpty(Single.error(() -> new UserNotFoundException(accessToken.getSub())))
                         .flatMap(userId -> this.resourceService.update(request, domain.getId(), client.getId(), userId, resource_id)))
                 .subscribe(
@@ -161,7 +161,7 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
         Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         String resource_id = context.request().getParam(RESOURCE_ID);
 
-        subjectManager.findUserIdBySub(accessToken.getSub())
+        subjectManager.findUserIdBySub(accessToken)
                 .flatMapCompletable(userId -> this.resourceService.delete(domain.getId(), client.getId(), userId, resource_id))
                 .subscribe(
                         () -> context.response()

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
@@ -71,8 +72,8 @@ public class CookieSession extends AbstractSession {
         super.put(CookieSessionHandler.USER_ID_KEY, obj);
     }
 
-    Session putUserSub(Object obj) {
-        super.put(CookieSessionHandler.USER_SUB_KEY, obj);
+    Session putUserInternalSub(Object obj) {
+        super.put(Claims.GIO_INTERNAL_SUB, obj);
         return this;
     }
 

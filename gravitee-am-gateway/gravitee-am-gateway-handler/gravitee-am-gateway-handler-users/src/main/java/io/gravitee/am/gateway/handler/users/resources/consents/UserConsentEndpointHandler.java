@@ -15,12 +15,16 @@
  */
 package io.gravitee.am.gateway.handler.users.resources.consents;
 
+import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.users.service.UserService;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.rxjava3.core.Completable;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
@@ -53,12 +57,17 @@ public class UserConsentEndpointHandler extends AbstractUserConsentEndpointHandl
      * Revoke specific consent for a user
      */
     public void revoke(RoutingContext context) {
+        final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
         final String userId = context.request().getParam("userId");
         final String consentId = context.request().getParam("consentId");
 
-        final var singleUserId = getUserIdFromSub(userId);
         getPrincipal(context)
-                .flatMapCompletable(principal -> singleUserId.flatMapCompletable(id -> userService.revokeConsent(id, consentId, principal)))
+                .flatMapCompletable(principal -> getUserIdFromSub(accessToken).flatMapCompletable(id -> {
+                    if (userIdParamMatchTokenIdentity(id, userId, accessToken)) {
+                        return userService.revokeConsent(id, consentId, principal);
+                    }
+                    return Completable.error(() -> new UserNotFoundException(userId));
+                }))
                 .subscribe(
                         () -> context.response().setStatusCode(204).end(),
                         error -> context.fail(error));

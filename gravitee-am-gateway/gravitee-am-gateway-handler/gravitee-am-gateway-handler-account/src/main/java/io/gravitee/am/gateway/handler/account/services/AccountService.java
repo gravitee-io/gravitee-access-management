@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.account.services;
 
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Factor;
@@ -38,7 +39,7 @@ import java.util.Optional;
  */
 public interface AccountService {
 
-    Maybe<User> getBySub(String sub);
+    Maybe<User> getBySub(JWT token);
 
     Maybe<User> getByUserId(String userId);
 

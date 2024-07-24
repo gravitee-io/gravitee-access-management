@@ -175,13 +175,12 @@ public class UmaTokenGranterTest {
         when(client.getScopeSettings()).thenReturn(Arrays.asList(new ApplicationScopeSettings("scopeA"), new ApplicationScopeSettings("scopeB"), new ApplicationScopeSettings("scopeC"), new ApplicationScopeSettings("scopeD")));
         when(client.getAuthorizedGrantTypes()).thenReturn(Arrays.asList(GrantType.UMA, GrantType.REFRESH_TOKEN));
         when(user.getId()).thenReturn(USER_ID);
-        when(jwt.getSub()).thenReturn(USER_ID);
         when(rpt.getSub()).thenReturn(USER_ID);
         when(rpt.getAud()).thenReturn(CLIENT_ID);
         when(rpt.get("permissions")).thenReturn(new LinkedList(List.of(permission)));
         when(jwtService.decodeAndVerify(RQP_ID_TOKEN, client, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
         when(jwtService.decodeAndVerify(RPT_OLD_TOKEN, client, ACCESS_TOKEN)).thenReturn(Single.just(rpt));
-        when(userAuthenticationManager.loadPreAuthenticatedUserBySub(USER_ID, tokenRequest)).thenReturn(Maybe.just(user));
+        when(userAuthenticationManager.loadPreAuthenticatedUserBySub(any(), any())).thenReturn(Maybe.just(user));
         when(permissionTicketService.remove(TICKET_ID)).thenReturn(Single.just(new PermissionTicket().setId(TICKET_ID).setPermissionRequest(permissions)));
         when(resourceService.findByResources(Arrays.asList(RS_ONE, RS_TWO))).thenReturn(Flowable.just(
                 new Resource().setId(RS_ONE).setResourceScopes(Arrays.asList("scopeA", "scopeB", "scopeC")),
@@ -241,14 +240,14 @@ public class UmaTokenGranterTest {
 
     @Test
     public void grant_user_technicalException() {
-        when(userAuthenticationManager.loadPreAuthenticatedUserBySub(USER_ID, tokenRequest)).thenReturn(Maybe.error(TechnicalException::new));
+        when(userAuthenticationManager.loadPreAuthenticatedUserBySub(any(), any())).thenReturn(Maybe.error(TechnicalException::new));
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
         testObserver.assertNotComplete().assertError(UmaException.class).assertError(this::assertNeedInfo);
     }
 
     @Test
     public void grant_user_notFound() {
-        when(userAuthenticationManager.loadPreAuthenticatedUserBySub(USER_ID, tokenRequest)).thenReturn(Maybe.empty());
+        when(userAuthenticationManager.loadPreAuthenticatedUserBySub(any(), any())).thenReturn(Maybe.empty());
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
         testObserver.assertNotComplete().assertError(UmaException.class).assertError(this::assertNeedInfo);
     }
