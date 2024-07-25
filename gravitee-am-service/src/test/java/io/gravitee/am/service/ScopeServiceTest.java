@@ -25,7 +25,7 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ScopeRepository;
-import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
+import io.gravitee.am.repository.gateway.api.ScopeApprovalRepository;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.MalformedIconUriException;
 import io.gravitee.am.service.exception.ScopeAlreadyExistsException;

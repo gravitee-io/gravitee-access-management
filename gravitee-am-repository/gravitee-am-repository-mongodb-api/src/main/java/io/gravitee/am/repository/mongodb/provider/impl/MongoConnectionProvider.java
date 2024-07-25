@@ -16,15 +16,17 @@
 package io.gravitee.am.repository.mongodb.provider.impl;
 
 import com.mongodb.reactivestreams.client.MongoClient;
-import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+
+import static io.gravitee.am.repository.Scope.GATEWAY;
+import static io.gravitee.am.repository.Scope.MANAGEMENT;
+import static io.gravitee.am.repository.Scope.OAUTH2;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -35,33 +37,46 @@ import org.springframework.stereotype.Component;
 @Component("ConnectionProviderFromRepository")
 public class MongoConnectionProvider implements ConnectionProvider<MongoClient, MongoConnectionConfiguration>, InitializingBean {
 
-    @Value("${oauth2.use-management-settings:true}")
-    private boolean useManagementSettings;
-
     @Autowired
     private Environment environment;
 
     private ClientWrapper<MongoClient> commonMongoClient;
-
     private ClientWrapper<MongoClient> oauthMongoClient;
+    private ClientWrapper<MongoClient> gatewayMongoClient;
+
+    private boolean notUseMngSettingsForOauth2;
+    private boolean notUseMngSettingsForGateway;
 
     @Override
     public void afterPropertiesSet() throws Exception {
+        final var useMngSettingsForOauth2 = environment.getProperty("oauth2.use-management-settings", Boolean.class, true);
+        final var notUseGatewaySettings = environment.getProperty("gateway.use-management-settings", Boolean.class, true);
+        notUseMngSettingsForOauth2 = !useMngSettingsForOauth2;
+        notUseMngSettingsForGateway = !notUseGatewaySettings;
         // create the common client just after the bean Initialization to guaranty the uniqueness
-        this.commonMongoClient = new MongoClientWrapper(new MongoFactory(this.environment, Scope.MANAGEMENT.getName()).getObject());
-        if (!useManagementSettings) {
-            this.oauthMongoClient = new MongoClientWrapper(new MongoFactory(this.environment, Scope.OAUTH2.getName()).getObject());
+        commonMongoClient = new MongoClientWrapper(new MongoFactory(environment, MANAGEMENT.getName()).getObject());
+        if (notUseMngSettingsForOauth2) {
+            oauthMongoClient = new MongoClientWrapper(new MongoFactory(environment, OAUTH2.getName()).getObject());
+        }
+        if (notUseMngSettingsForGateway) {
+            gatewayMongoClient = new MongoClientWrapper(new MongoFactory(environment, GATEWAY.getName()).getObject());
         }
     }
 
     @Override
     public ClientWrapper<MongoClient> getClientWrapper() {
-        return getClientWrapper(Scope.MANAGEMENT.getName());
+        return getClientWrapper(MANAGEMENT.getName());
     }
 
     @Override
     public ClientWrapper getClientWrapper(String name) {
-        return Scope.OAUTH2.getName().equals(name) && !this.useManagementSettings ? this.oauthMongoClient : this.commonMongoClient;
+        if (OAUTH2.getName().equals(name) && notUseMngSettingsForOauth2) {
+            return oauthMongoClient;
+        } else if (GATEWAY.getName().equals(name) && notUseMngSettingsForGateway) {
+            return gatewayMongoClient;
+        } else {
+            return commonMongoClient;
+        }
     }
 
     @Override
@@ -71,11 +86,14 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
 
     @Override
     public ConnectionProvider stop() throws Exception {
-        if (this.commonMongoClient != null) {
-            ((MongoClientWrapper)this.commonMongoClient).shutdown();
+        if (commonMongoClient != null) {
+            ((MongoClientWrapper) commonMongoClient).shutdown();
         }
-        if (this.oauthMongoClient != null) {
-            ((MongoClientWrapper)this.oauthMongoClient).shutdown();
+        if (oauthMongoClient != null) {
+            ((MongoClientWrapper) oauthMongoClient).shutdown();
+        }
+        if (gatewayMongoClient != null) {
+            ((MongoClientWrapper) gatewayMongoClient).shutdown();
         }
         return this;
     }
