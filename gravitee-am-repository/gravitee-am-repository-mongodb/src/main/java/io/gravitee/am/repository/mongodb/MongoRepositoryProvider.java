@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb;
 
+import io.gravitee.am.repository.mongodb.gateway.GatewayRepositoryConfiguration;
 import io.gravitee.am.repository.mongodb.management.ManagementRepositoryConfiguration;
 import io.gravitee.am.repository.mongodb.oauth2.OAuth2RepositoryConfiguration;
 import io.gravitee.platform.repository.api.RepositoryProvider;
@@ -33,7 +34,7 @@ public class MongoRepositoryProvider implements RepositoryProvider {
 
     @Override
     public Scope[] scopes() {
-        return new Scope [] {Scope.MANAGEMENT, Scope.OAUTH2};
+        return new Scope [] {Scope.MANAGEMENT, Scope.OAUTH2, Scope.GATEWAY};
     }
 
     @Override
@@ -41,6 +42,7 @@ public class MongoRepositoryProvider implements RepositoryProvider {
         return switch (scope) {
             case MANAGEMENT -> ManagementRepositoryConfiguration.class;
             case OAUTH2 -> OAuth2RepositoryConfiguration.class;
+            case GATEWAY -> GatewayRepositoryConfiguration.class;
             default -> null;
         };
 

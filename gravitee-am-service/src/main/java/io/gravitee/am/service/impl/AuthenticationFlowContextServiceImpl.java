@@ -16,7 +16,7 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.model.AuthenticationFlowContext;
-import io.gravitee.am.repository.management.api.AuthenticationFlowContextRepository;
+import io.gravitee.am.repository.gateway.api.AuthenticationFlowContextRepository;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.exception.AuthenticationFlowConsistencyException;
 import io.reactivex.rxjava3.annotations.NonNull;

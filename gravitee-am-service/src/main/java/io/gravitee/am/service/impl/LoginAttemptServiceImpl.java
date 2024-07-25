@@ -18,7 +18,7 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.LoginAttempt;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.repository.management.api.LoginAttemptRepository;
+import io.gravitee.am.repository.gateway.api.LoginAttemptRepository;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.exception.AbstractManagementException;
