@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.5.0-external-id-resized
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+      changes:
+        -  modifyDataType:
+             columnName:  external_id
+             newDataType:  nvarchar(255)
+             tableName:  users
+        -  modifyDataType:
+             columnName:  external_id
+             newDataType:  nvarchar(255)
+             tableName:  organization_users
