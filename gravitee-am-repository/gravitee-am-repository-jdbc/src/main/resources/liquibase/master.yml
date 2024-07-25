@@ -141,3 +141,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_5_0/4.5.0-reporters-inherited.yml
   - include:
       - file: liquibase/changelogs/v4_5_0/4.5.0-domain-version.yml
+  - include:
+      - file: liquibase/changelogs/v4_5_0/4.5.0-external-id-resized.yml
