@@ -22,9 +22,10 @@ package io.gravitee.am.repository;
 public enum Scope {
 
     OAUTH2("oauth2"),
-    MANAGEMENT("management");
+    MANAGEMENT("management"),
+    GATEWAY("gateway");
 
-    String name;
+    private final String name;
 
     Scope(String name) {
         this.name = name;

@@ -20,7 +20,7 @@ import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.policy.enrich.auth.configuration.EnrichAuthFlowPolicyConfiguration;
 import io.gravitee.am.policy.enrich.auth.configuration.Property;
-import io.gravitee.am.repository.management.api.AuthenticationFlowContextRepository;
+import io.gravitee.am.repository.gateway.api.AuthenticationFlowContextRepository;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.Maps;
 import io.gravitee.common.util.MultiValueMap;

@@ -21,7 +21,7 @@ import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
-import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
+import io.gravitee.am.repository.gateway.api.ScopeApprovalRepository;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.impl.ScopeApprovalServiceImpl;
