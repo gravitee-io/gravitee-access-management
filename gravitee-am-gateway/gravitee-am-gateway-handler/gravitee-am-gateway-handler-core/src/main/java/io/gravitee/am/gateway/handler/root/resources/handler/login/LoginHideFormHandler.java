@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
-import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
@@ -30,7 +29,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY;
@@ -93,7 +91,7 @@ public class LoginHideFormHandler implements Handler<RoutingContext> {
         var errorDescription = context.queryParam(ERROR_DESCRIPTION_PARAM_KEY).stream().findFirst().orElse("");
 
         var redirectUri = context.request().getParam(Parameters.REDIRECT_URI);
-        if  (StringUtils.isBlank(redirectUri)) {
+        if (StringUtils.isBlank(redirectUri)) {
             context.fail(500, new IllegalStateException("Received an error but there's nowhere to redirect to. error=%s, error_code=%s, error_description=%s".formatted(error, errorCode, errorDescription)));
             return;
         }
