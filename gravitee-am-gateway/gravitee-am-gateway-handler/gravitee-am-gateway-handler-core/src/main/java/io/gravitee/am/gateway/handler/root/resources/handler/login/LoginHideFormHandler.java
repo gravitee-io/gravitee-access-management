@@ -29,6 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY;
@@ -56,7 +57,9 @@ public class LoginHideFormHandler implements Handler<RoutingContext> {
         boolean hasExactlyOneSocialProvider = socialProviders != null && socialProviders.size() == 1;
 
         boolean shouldSkipLoginForm = isHideFormEnabled && hasExactlyOneSocialProvider;
-        boolean hasError = !routingContext.queryParam(ConstantKeys.ERROR_PARAM_KEY).isEmpty();
+        // assume there's an error if any of the known error params is present
+        boolean hasError = Stream.of(ERROR_PARAM_KEY, ERROR_CODE_PARAM_KEY, ERROR_DESCRIPTION_PARAM_KEY)
+                .anyMatch(param -> !routingContext.queryParam(param).isEmpty());
 
 
         // hide form option disabled, continue
@@ -96,9 +99,9 @@ public class LoginHideFormHandler implements Handler<RoutingContext> {
             return;
         }
         var targetUri = UriBuilder.fromURIString(redirectUri)
-                .addParameter(ConstantKeys.ERROR_PARAM_KEY, error)
-                .addParameter(ERROR_CODE_PARAM_KEY, errorCode)
-                .addParameter(ERROR_DESCRIPTION_PARAM_KEY, UriBuilder.encodeURIComponent(errorDescription))
+                .addParameterIfHasValue(ConstantKeys.ERROR_PARAM_KEY, error)
+                .addParameterIfHasValue(ERROR_CODE_PARAM_KEY, errorCode)
+                .addParameterIfHasValue(ERROR_DESCRIPTION_PARAM_KEY, UriBuilder.encodeURIComponent(errorDescription))
                 .buildString();
         context.response()
                 .putHeader(HttpHeaders.LOCATION, targetUri)
