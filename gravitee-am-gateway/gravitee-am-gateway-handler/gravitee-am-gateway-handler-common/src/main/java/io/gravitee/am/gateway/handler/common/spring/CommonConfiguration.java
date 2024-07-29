@@ -55,8 +55,13 @@ import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.ruleengine.SpELRuleEngine;
 import io.gravitee.am.gateway.handler.common.spring.web.WebConfiguration;
 import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserStore;
+import io.gravitee.am.gateway.handler.common.user.impl.NoUserStore;
 import io.gravitee.am.gateway.handler.common.user.impl.UserEnhancerFacade;
 import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImpl;
+import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImplV2;
+import io.gravitee.am.gateway.handler.common.user.impl.UserStoreImpl;
+import io.gravitee.am.gateway.handler.common.user.impl.UserStoreImplV2;
 import io.gravitee.am.gateway.handler.common.utils.StaticEnvironmentProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
@@ -67,6 +72,9 @@ import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.context.TemplateVariableProviderFactory;
 import io.gravitee.am.gateway.handler.context.spring.ContextConfiguration;
 import io.gravitee.am.gateway.policy.spring.PolicyConfiguration;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.DomainVersion;
+import io.gravitee.node.api.cache.CacheManager;
 import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
@@ -210,8 +218,25 @@ public class CommonConfiguration {
     }
 
     @Bean
-    public UserService userService() {
-        return new UserServiceImpl();
+    public UserStore userStore(Domain domain, CacheManager cacheManager) {
+        boolean resilienceMode = useResilienceMode(domain);
+        boolean sessionCache = environment.getProperty("http.cookie.session.cache.enabled", Boolean.class, false);
+        if (resilienceMode || sessionCache) {
+            return domain.getVersion() == DomainVersion.V1_0 ? new UserStoreImpl(cacheManager) : new UserStoreImplV2(cacheManager);
+        }
+        return new NoUserStore();
+    }
+
+    private boolean useResilienceMode(Domain domain) {
+        return domain.getVersion() != DomainVersion.V1_0 && environment.getProperty("resilience.enabled", Boolean.class, false);
+    }
+
+    @Bean
+    public UserService userService(Domain domain) {
+        if (domain.getVersion() == DomainVersion.V1_0) {
+            return new UserServiceImpl();
+        }
+        return new UserServiceImplV2();
     }
 
     @Bean

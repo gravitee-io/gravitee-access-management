@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.user.impl;
 
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserStore;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
@@ -38,14 +39,17 @@ import java.util.List;
 public class UserServiceImpl implements UserService {
 
     @Autowired
-    private io.gravitee.am.service.UserService userService;
+    protected io.gravitee.am.service.UserService userService;
 
     @Autowired
     private AuditService auditService;
 
+    @Autowired
+    protected UserStore userStore;
+
     @Override
     public Maybe<User> findById(String id) {
-        return userService.findById(id);
+        return userStore.get(id).switchIfEmpty(Maybe.defer(() -> userService.findById(id)));
     }
 
     @Override
@@ -72,12 +76,14 @@ public class UserServiceImpl implements UserService {
     public Single<User> create(User user) {
         return userService.create(user)
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).user(user1)))
-                .doOnError(err -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).throwable(err)));
+                .doOnError(err -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).throwable(err)))
+                .flatMap(persistedUser -> userStore.add(persistedUser).switchIfEmpty(Single.just(persistedUser)));
     }
 
     @Override
     public Single<User> update(User user, UpdateActions updateActions) {
-        return userService.update(user, updateActions);
+        return userService.update(user, updateActions)
+                .flatMap(persistedUser -> userStore.add(persistedUser).switchIfEmpty(Single.just(persistedUser)));
     }
 
     @Override
