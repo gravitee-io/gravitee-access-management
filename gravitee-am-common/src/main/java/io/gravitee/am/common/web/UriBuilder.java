@@ -219,6 +219,17 @@ public class UriBuilder {
         return this;
     }
 
+    /**
+     * Add a query param if the value isn't null, otherwise return this builder unmodified
+     */
+    public UriBuilder addParameterIfHasValue(String paremeter, String value) {
+        if (value != null) {
+            return addParameter(paremeter, value);
+        } else {
+            return this;
+        }
+    }
+
     public UriBuilder addFragmentParameter(String parameter, String value) {
         if (fragment == null) {
             fragment = "";
