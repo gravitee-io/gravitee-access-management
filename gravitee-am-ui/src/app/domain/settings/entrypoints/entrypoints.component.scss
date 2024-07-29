@@ -27,6 +27,16 @@
   font-size: 75%;
 }
 
+.warning {
+  mat-icon {
+    margin-right: 20px;
+  }
+
+  p {
+    margin-block-end: 0;
+  }
+}
+
 mat-icon {
   color: grey;
 }
@@ -44,3 +54,4 @@ a {
 #cors-settings > .mat-mdc-form-field {
   margin-bottom: 15px;
 }
+
