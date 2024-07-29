@@ -31,11 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-<<<<<<< HEAD
-import static io.gravitee.am.common.utils.ConstantKeys.SOCIAL_PROVIDER_CONTEXT_KEY;
-=======
 import static io.gravitee.am.common.utils.ConstantKeys.*;
->>>>>>> c48af227e4 (fix: break redirect loop when redirected to a hidden login form with … (#4518))
 import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY;
 import static java.util.Optional.ofNullable;
 
