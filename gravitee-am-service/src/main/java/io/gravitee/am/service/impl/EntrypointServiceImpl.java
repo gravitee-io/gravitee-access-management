@@ -167,17 +167,20 @@ public class EntrypointServiceImpl implements EntrypointService {
         LOGGER.debug("Delete entrypoint by id {} and organizationId {}", id, organizationId);
 
         return findById(id, organizationId)
-                .flatMap(e -> {
-                    if (e.isDefaultEntrypoint()) {
-                        return isNotTheLastDefaultEntryPoint(e)
-                                .flatMap(notLast -> notLast ? Single.just(e) : Single.error(new LastDefaultEntrypointException("You cannot remove the last default entrypoint")));
-                    } else {
-                        return Single.just(e);
-                    }
-                })
-                .flatMapCompletable(entrypoint -> entrypointRepository.delete(id)
-                        .doOnComplete(() -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).principal(principal).type(EventType.ENTRYPOINT_DELETED).entrypoint(entrypoint)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).principal(principal).type(EventType.ENTRYPOINT_DELETED).throwable(throwable))));
+                .flatMapCompletable(e -> deleteEntrypoint(e)
+                        .flatMapCompletable(entrypoint -> entrypointRepository.delete(id))
+                        .doOnComplete(() -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).principal(principal).type(EventType.ENTRYPOINT_DELETED).entrypoint(e)))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).principal(principal).entrypoint(e).type(EventType.ENTRYPOINT_DELETED).throwable(throwable)))
+                );
+    }
+
+    private Single<Entrypoint> deleteEntrypoint(Entrypoint e) {
+        if (e.isDefaultEntrypoint()) {
+            return isNotTheLastDefaultEntryPoint(e)
+                    .flatMap(notLast -> notLast ? Single.just(e) : Single.error(new LastDefaultEntrypointException("You cannot remove the last default entrypoint")));
+        } else {
+            return Single.just(e);
+        }
     }
 
     private Single<Boolean> isNotTheLastDefaultEntryPoint(Entrypoint entrypoint) {
