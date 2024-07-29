@@ -24,6 +24,7 @@ import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
+import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
 import io.gravitee.am.repository.jdbc.common.dialect.ScimSearch;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcUser;
@@ -42,9 +43,12 @@ import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.MaybeSource;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.core.SingleSource;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.NonTransientDataAccessResourceException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.relational.core.query.Query;
@@ -552,7 +556,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         LOGGER.debug("findByExternalIdAndSource({},{},{},{})", referenceType, referenceId, externalId, source);
         return userRepository.findByExternalIdAndSource(referenceType.name(), referenceId, externalId, source)
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toMaybe());
+                .flatMap(user -> completeUser(user).toMaybe())
+                .onErrorResumeNext(this::mapException);
     }
 
     @Override
@@ -571,7 +576,19 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         LOGGER.debug("findById({},{},{})", referenceType, referenceId, userId);
         return userRepository.findById(referenceType.name(), referenceId, userId)
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toMaybe());
+                .flatMap(user -> completeUser(user).toMaybe())
+                .onErrorResumeNext(this::mapException);
+    }
+
+    private MaybeSource<? extends User> mapException(Throwable error) {
+        if (error instanceof NonTransientDataAccessResourceException) {
+            return Maybe.error(new RepositoryConnectionException(error));
+        }
+        return Maybe.error(error);
+    }
+
+    private SingleSource<? extends User> mapExceptionAsSingle(Throwable error) {
+        return Single.fromMaybe(mapException(error));
     }
 
     @Override
@@ -652,7 +669,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         LOGGER.debug("findById({})", id);
         return userRepository.findById(id)
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toMaybe());
+                .flatMap(user -> completeUser(user).toMaybe())
+                .onErrorResumeNext(this::mapException);
     }
 
     @Override
@@ -710,7 +728,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         insertAction = persistChildEntities(insertAction, item, UpdateActions.updateAll());
 
         return monoToSingle(insertAction.as(trx::transactional))
-                .flatMap((i) -> Single.just(item));
+                .flatMap((i) -> Single.just(item))
+                .onErrorResumeNext(this::mapExceptionAsSingle);
     }
 
     @Override
@@ -776,7 +795,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         }
 
         return monoToSingle(action.as(trx::transactional))
-                .flatMap((i) -> Single.just(item));
+                .flatMap((i) -> Single.just(item))
+                .onErrorResumeNext(this::mapExceptionAsSingle);
     }
 
     @Override
