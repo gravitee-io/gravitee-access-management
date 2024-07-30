@@ -15,10 +15,10 @@
  */
 package io.gravitee.am.policy.enrich.profile;
 
+import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.policy.enrich.profile.configuration.EnrichProfilePolicyConfiguration;
 import io.gravitee.am.policy.enrich.profile.configuration.Property;
-import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.el.TemplateEngine;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
@@ -127,9 +127,9 @@ public class EnrichProfilePolicy {
     }
 
     protected Single<User> enrichProfile(ExecutionContext context) {
-        UserRepository userRepository = context.getComponent(UserRepository.class);
+        UserService userService = context.getComponent(UserService.class);
         User user = (User)context.getAttribute("user");
-        return userRepository.update(user, none());
+        return userService.update(user, none());
     }
 
 }
