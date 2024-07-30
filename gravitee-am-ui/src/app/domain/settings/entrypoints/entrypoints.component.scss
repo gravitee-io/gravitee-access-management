@@ -30,6 +30,16 @@ mat-icon {
   color: grey;
 }
 
+.warning {
+  mat-icon {
+    margin-right: 20px;
+  }
+
+  p {
+    margin-block-end: 0;
+  }
+}
+
 a {
   cursor: pointer;
 }
