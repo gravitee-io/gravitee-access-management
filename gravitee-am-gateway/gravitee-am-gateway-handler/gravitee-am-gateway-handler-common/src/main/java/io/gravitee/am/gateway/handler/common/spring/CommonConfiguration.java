@@ -218,11 +218,11 @@ public class CommonConfiguration {
     }
 
     @Bean
-    public UserStore userStore(Domain domain, CacheManager cacheManager) {
+    public UserStore userStore(Domain domain, CacheManager cacheManager, Environment environment) {
         boolean resilienceMode = useResilienceMode(domain);
         boolean sessionCache = environment.getProperty("http.cookie.session.cache.enabled", Boolean.class, false);
         if (resilienceMode || sessionCache) {
-            return domain.getVersion() == DomainVersion.V1_0 ? new UserStoreImpl(cacheManager) : new UserStoreImplV2(cacheManager);
+            return domain.getVersion() == DomainVersion.V1_0 ? new UserStoreImpl(cacheManager, environment) : new UserStoreImplV2(cacheManager, environment);
         }
         return new NoUserStore();
     }
