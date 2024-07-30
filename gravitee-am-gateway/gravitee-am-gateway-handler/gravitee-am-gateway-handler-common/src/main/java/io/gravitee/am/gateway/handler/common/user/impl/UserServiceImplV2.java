@@ -23,6 +23,7 @@ import io.gravitee.am.repository.management.api.CommonUserRepository.UpdateActio
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 
@@ -32,6 +33,7 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class UserServiceImplV2 extends UserServiceImpl {
 
     private static final String SEPARATOR = ":";
@@ -41,13 +43,11 @@ public class UserServiceImplV2 extends UserServiceImpl {
     
     @Override
     public Maybe<User> findByDomainAndExternalIdAndSource(String domain, String externalId, String source) {
-        // TODO create SubjectManager method to build gis from ext+src
-        // userStore only if Domain v2 + resilient
         return userStore.getByInternalSub(generateInternalSubFrom(source, externalId))
                 .switchIfEmpty(Maybe.defer(() -> userService.findByExternalIdAndSource(ReferenceType.DOMAIN, domain, externalId, source)
                         .onErrorResumeNext(error -> {
                             if (doesResilientModeEnabled(error)) {
-                                // TODO log.Debug
+                                log.debug("Resilient mode enabled for domain {}, ignore connection error during find user by externalId", domain);
                                 return Maybe.empty();
                             }
                             return Maybe.error(error);
@@ -58,7 +58,7 @@ public class UserServiceImplV2 extends UserServiceImpl {
     public Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source) {
         return userService.findByDomainAndUsernameAndSource(domain, username, source).onErrorResumeNext(error -> {
             if (doesResilientModeEnabled(error)) {
-                // TODO log.Debug
+                log.debug("Resilient mode enabled for domain {}, ignore connection error during find user by username", domain);
                 return Maybe.empty();
             }
             return Maybe.error(error);
@@ -69,7 +69,7 @@ public class UserServiceImplV2 extends UserServiceImpl {
     public Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source, boolean includeLinkedIdentities) {
         return userService.findByUsernameAndSource(ReferenceType.DOMAIN, domain, username, source, includeLinkedIdentities).onErrorResumeNext(error -> {
             if (doesResilientModeEnabled(error)) {
-                // TODO log.Debug
+                log.debug("Resilient mode enabled for domain {}, ignore connection error during find user by username", domain);
                 return Maybe.empty();
             }
             return Maybe.error(error);
@@ -97,7 +97,7 @@ public class UserServiceImplV2 extends UserServiceImpl {
 
     private Single<User> cacheUserOnError(User user, Throwable throwable) {
         if (doesResilientModeEnabled(throwable)) {
-            // TODO log.info
+            log.debug("Resilient mode enabled, ignore connection error and keep in cache user with externalId '{}' and source '{}", user.getExternalId(), user.getSource());
             user.setId(StringUtils.hasLength(user.getId()) ? user.getId() : RandomString.generate());
             return userStore.add(user).switchIfEmpty(Single.just(user));
         }
