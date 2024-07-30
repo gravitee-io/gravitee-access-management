@@ -47,7 +47,6 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.DeviceService;
-import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.FactorNotFoundException;
@@ -136,7 +135,6 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
     private final DeviceService deviceService;
     private final Domain domain;
     private final CredentialService credentialService;
-    private final FactorService factorService;
     private final RateLimiterService rateLimiterService;
     private final VerifyAttemptService verifyAttemptService;
     private final EmailService emailService;
@@ -149,7 +147,6 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                                 ApplicationContext applicationContext,
                                 Domain domain,
                                 CredentialService credentialService,
-                                FactorService factorService,
                                 RateLimiterService rateLimiterService,
                                 VerifyAttemptService verifyAttemptService,
                                 EmailService emailService,
@@ -161,7 +158,6 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         this.deviceService = deviceService;
         this.domain = domain;
         this.credentialService = credentialService;
-        this.factorService = factorService;
         this.rateLimiterService = rateLimiterService;
         this.verifyAttemptService = verifyAttemptService;
         this.emailService = emailService;
@@ -392,7 +388,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                 redirectToAuthorize(routingContext, client, endUser);
             } else {
                 final String fidoFactorId = routingContext.session().get(ENROLLED_FACTOR_ID_KEY);
-                factorService.enrollFactor(endUser, createEnrolledFactor(fidoFactorId, credentialId))
+                userService.upsertFactor(endUser.getId(), createEnrolledFactor(fidoFactorId, credentialId), new DefaultUser(endUser))
                         .ignoreElement()
                         .subscribe(
                                 () -> {
@@ -450,7 +446,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
     }
 
     private void saveFactor(User user, Single<EnrolledFactor> enrolledFactor, Handler<AsyncResult<User>> handler) {
-        enrolledFactor.flatMap(factor -> userService.addFactor(user.getId(), factor, new DefaultUser(user)))
+        enrolledFactor.flatMap(factor -> userService.upsertFactor(user.getId(), factor, new DefaultUser(user)))
                 .subscribe(
                         user1 -> handler.handle(Future.succeededFuture(user1)),
                         error -> handler.handle(Future.failedFuture(error))

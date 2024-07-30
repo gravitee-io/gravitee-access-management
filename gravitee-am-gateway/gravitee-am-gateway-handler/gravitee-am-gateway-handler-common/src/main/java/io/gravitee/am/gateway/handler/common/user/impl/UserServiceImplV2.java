@@ -18,7 +18,6 @@ package io.gravitee.am.gateway.handler.common.user.impl;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
-import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
 import io.gravitee.am.repository.management.api.CommonUserRepository.UpdateActions;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
@@ -108,17 +107,6 @@ public class UserServiceImplV2 extends UserServiceImpl {
     private boolean doesResilientModeEnabled(Throwable throwable) {
         return resilientMode && (throwable instanceof RepositoryConnectionException || throwable.getCause() instanceof RepositoryConnectionException);
     }
-
-    @Override
-    public Single<User> addFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal) {
-        return userService.upsertFactor(userId, enrolledFactor, principal);
-    }
-
-    @Override
-    public Single<User> updateFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal) {
-        return userService.upsertFactor(userId, enrolledFactor, principal);
-    }
-
 
     private String generateInternalSubFrom(String src, String externalId) {
         return src + SEPARATOR + externalId;

@@ -47,10 +47,9 @@ public class UserStoreImplV2 implements UserStore {
 
     @Override
     public Maybe<User> add(User user) {
-        return Maybe.merge(
-                        idCache.rxPut(user.getId(), user, ttl, TimeUnit.SECONDS),
-                        gisCache.rxPut(user.getSource()+":"+user.getExternalId(), user, ttl, TimeUnit.SECONDS))
-                .firstElement();
+        return idCache.rxPut(user.getId(), user, ttl, TimeUnit.SECONDS)
+                .concatWith(gisCache.rxPut(generateInternalSubFrom(user.getSource(), user.getExternalId()), user, ttl, TimeUnit.SECONDS))
+                .lastElement();
     }
 
     @Override
