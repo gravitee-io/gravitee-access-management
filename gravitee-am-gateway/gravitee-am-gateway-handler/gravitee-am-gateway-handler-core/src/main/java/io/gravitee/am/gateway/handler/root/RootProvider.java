@@ -483,7 +483,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(localeHandler)
                 .handler(mfaChallengeUserHandler)
                 .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext,
-                        domain, credentialService, factorService, rateLimiterService, verifyAttemptService, emailService, auditService))
+                        domain, credentialService, rateLimiterService, verifyAttemptService, emailService, auditService))
                 .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)
@@ -511,7 +511,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
                 .handler(webAuthnAccessHandler)
-                .handler(new WebAuthnRegisterHandler(factorService, factorManager, domain, webAuthn, credentialService))
+                .handler(new WebAuthnRegisterHandler(userService, factorManager, domain, webAuthn, credentialService))
                 .handler(webAuthnRememberDeviceHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_WEBAUTHN_REGISTER))
                 .handler(new WebAuthnRegisterPostEndpoint(domain));
@@ -534,7 +534,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
                 .handler(webAuthnAccessHandler)
-                .handler(new WebAuthnLoginHandler(factorService, factorManager, domain, webAuthn, credentialService, userAuthenticationManager))
+                .handler(new WebAuthnLoginHandler(userService, factorManager, domain, webAuthn, credentialService, userAuthenticationManager))
                 .handler(userRememberMeHandler)
                 .handler(deviceIdentifierHandler)
                 .handler(userActivityHandler)
@@ -550,7 +550,7 @@ public class RootProvider extends AbstractProtocolProvider {
         rootRouter.post(PATH_WEBAUTHN_RESPONSE)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
-                .handler(new WebAuthnResponseHandler(factorService, factorManager, domain, webAuthn, credentialService, userAuthenticationManager))
+                .handler(new WebAuthnResponseHandler(userService, factorManager, domain, webAuthn, credentialService, userAuthenticationManager))
                 .handler(deviceIdentifierHandler)
                 .handler(userActivityHandler)
                 .handler(new WebAuthnResponseEndpoint());
