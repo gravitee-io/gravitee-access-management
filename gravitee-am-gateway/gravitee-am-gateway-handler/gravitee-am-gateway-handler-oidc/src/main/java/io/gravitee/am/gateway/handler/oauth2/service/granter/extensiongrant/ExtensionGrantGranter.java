@@ -36,6 +36,7 @@ import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.gateway.api.Request;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import lombok.AccessLevel;
@@ -113,7 +114,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
         return extensionGrantProvider.grant(convert(tokenRequest))
                 .flatMap(endUser -> {
                     if (extensionGrant.isCreateUser()) {
-                        return manageUserConnect(client, endUser);
+                        return manageUserConnect(client, endUser, tokenRequest);
                     } else {
                         // Check that the user is existing from the identity provider
                         if (extensionGrant.isUserExists()) {
@@ -156,13 +157,13 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                 .switchIfEmpty(Maybe.error(new InvalidGrantException("Unknown user: " + endUser.getId())));
     }
 
-    protected Maybe<User> manageUserConnect(Client client, io.gravitee.am.identityprovider.api.User endUser) {
+    protected Maybe<User> manageUserConnect(Client client, io.gravitee.am.identityprovider.api.User endUser, Request request) {
         Map<String, Object> additionalInformation = endUser.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(endUser.getAdditionalInformation());
         // set source provider
         additionalInformation.put("source", retrieveSourceFrom(extensionGrant));
         additionalInformation.put("client_id", client.getId());
         ((DefaultUser) endUser).setAdditionalInformation(additionalInformation);
-        return userAuthenticationManager.connect(endUser, false).toMaybe();
+        return userAuthenticationManager.connect(endUser, request, false).toMaybe();
     }
 
     protected final String retrieveSourceFrom(ExtensionGrant extGrant) {
