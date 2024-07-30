@@ -382,6 +382,14 @@
 
         <!-- External Plugins -->
         <dependency>
+            <groupId>io.gravitee.node</groupId>
+            <artifactId>gravitee-node-cache-plugin-standalone</artifactId>
+            <version>${gravitee-node.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
             <groupId>io.gravitee.policy</groupId>
             <artifactId>gravitee-policy-callout-http</artifactId>
             <version>${gravitee-policy-callout-http.version}</version>
@@ -723,6 +731,12 @@
                                 </artifactItem>
 
                                 <!-- External Plugins -->
+                                <artifactItem>
+                                    <groupId>io.gravitee.node</groupId>
+                                    <artifactId>gravitee-node-cache-plugin-standalone</artifactId>
+                                    <version>${gravitee-node.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
                                 <artifactItem>
                                     <groupId>io.gravitee.policy</groupId>
                                     <artifactId>gravitee-policy-callout-http</artifactId>
