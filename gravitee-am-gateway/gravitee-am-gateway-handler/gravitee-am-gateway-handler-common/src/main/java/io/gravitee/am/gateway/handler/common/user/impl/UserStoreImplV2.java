@@ -23,6 +23,7 @@ import io.gravitee.node.api.cache.Cache;
 import io.gravitee.node.api.cache.CacheManager;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
+import org.springframework.core.env.Environment;
 
 import java.util.concurrent.TimeUnit;
 
@@ -37,12 +38,12 @@ public class UserStoreImplV2 implements UserStore {
     private Cache<String, User> idCache;
     private Cache<String, User> gisCache;
 
-    // TODO manage it as configurable value
-    private int ttl = 36000;
+    private int ttl;
 
-    public UserStoreImplV2(CacheManager cacheManager) {
+    public UserStoreImplV2(CacheManager cacheManager, Environment environment) {
         this.idCache = cacheManager.getOrCreateCache("userStoreById");
         this.gisCache = cacheManager.getOrCreateCache("userStoreByGis");
+        this.ttl = environment.getProperty("http.cookie.session.cache.ttl", Integer.class, 36000);
     }
 
     @Override
