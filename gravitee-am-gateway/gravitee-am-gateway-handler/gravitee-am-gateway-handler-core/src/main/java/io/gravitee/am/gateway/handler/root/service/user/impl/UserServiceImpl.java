@@ -627,13 +627,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<User> addFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal) {
-        return userService.addFactor(userId, enrolledFactor, principal);
-    }
-
-    @Override
-    public Single<User> updateFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal) {
-        return userService.updateFactor(userId, enrolledFactor, principal);
+    public Single<User> upsertFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal) {
+        return userService.upsertFactor(userId, enrolledFactor, principal);
     }
 
     @Override

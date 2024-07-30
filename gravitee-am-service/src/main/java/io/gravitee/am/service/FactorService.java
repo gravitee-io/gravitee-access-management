@@ -15,10 +15,8 @@
  */
 package io.gravitee.am.service;
 
-import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Factor;
-import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.service.model.NewFactor;
 import io.gravitee.am.service.model.UpdateFactor;
 import io.reactivex.rxjava3.core.Completable;
@@ -42,8 +40,6 @@ public interface FactorService {
 
     Completable delete(String domain, String factorId, User principal);
 
-    Single<io.gravitee.am.model.User> enrollFactor(String userId, EnrolledFactor enrolledFactor, User principal);
-
     default Single<Factor> create(String domain, NewFactor factor) {
         return create(domain, factor, null);
     }
@@ -54,9 +50,5 @@ public interface FactorService {
 
     default Completable delete(String domain, String factorId) {
         return delete(domain, factorId, null);
-    }
-
-    default Single<io.gravitee.am.model.User> enrollFactor(io.gravitee.am.model.User user, EnrolledFactor enrolledFactor) {
-        return enrollFactor(user.getId(), enrolledFactor, new DefaultUser(user));
     }
 }
