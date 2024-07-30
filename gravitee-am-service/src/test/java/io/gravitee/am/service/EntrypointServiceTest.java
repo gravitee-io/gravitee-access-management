@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.Organization;
@@ -26,11 +27,13 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.EntrypointRepository;
 import io.gravitee.am.service.exception.EntrypointNotFoundException;
 import io.gravitee.am.service.exception.InvalidEntrypointException;
+import io.gravitee.am.service.exception.LastDefaultEntrypointException;
 import io.gravitee.am.service.impl.EntrypointServiceImpl;
 import io.gravitee.am.service.model.NewEntrypoint;
 import io.gravitee.am.service.model.UpdateEntrypoint;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -48,7 +51,11 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -410,7 +417,7 @@ public class EntrypointServiceTest {
         obs.assertError(InvalidEntrypointException.class);
 
         updateEntrypoint.setDescription(existingEntrypoint.getDescription());
-        updateEntrypoint.setTags(Arrays.asList("updated"));
+        updateEntrypoint.setTags(List.of("updated"));
         obs = cut.update(ENTRYPOINT_ID, ORGANIZATION_ID, updateEntrypoint, user).test();
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(InvalidEntrypointException.class);
@@ -439,6 +446,35 @@ public class EntrypointServiceTest {
         verify(auditService, times(1)).report(argThat(builder -> {
             Audit audit = builder.build(new ObjectMapper());
             assertEquals(EventType.ENTRYPOINT_DELETED, audit.getType());
+            assertEquals(ReferenceType.ORGANIZATION, audit.getReferenceType());
+            assertEquals(ORGANIZATION_ID, audit.getReferenceId());
+            assertEquals(user.getId(), audit.getActor().getId());
+
+            return true;
+        }));
+    }
+
+    @Test
+    public void shouldNotDelete_onlyDefaultEntrypoint() {
+        DefaultUser user = new DefaultUser("test");
+        user.setId(USER_ID);
+
+        Entrypoint existingEntrypoint = new Entrypoint();
+        existingEntrypoint.setId(ENTRYPOINT_ID);
+        existingEntrypoint.setOrganizationId(ORGANIZATION_ID);
+        existingEntrypoint.setDefaultEntrypoint(true);
+
+        when(entrypointRepository.findById(ENTRYPOINT_ID, ORGANIZATION_ID)).thenReturn(Maybe.just(existingEntrypoint));
+        when(entrypointRepository.findAll(ORGANIZATION_ID)).thenReturn(Flowable.just(existingEntrypoint));
+
+        cut.delete(ENTRYPOINT_ID, ORGANIZATION_ID, user).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(LastDefaultEntrypointException.class);
+
+        verify(auditService, times(1)).report(argThat(builder -> {
+            Audit audit = builder.build(new ObjectMapper());
+            assertEquals(EventType.ENTRYPOINT_DELETED, audit.getType());
+            assertEquals(Status.FAILURE, audit.getOutcome().getStatus());
             assertEquals(ReferenceType.ORGANIZATION, audit.getReferenceType());
             assertEquals(ORGANIZATION_ID, audit.getReferenceId());
             assertEquals(user.getId(), audit.getActor().getId());
