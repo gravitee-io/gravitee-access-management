@@ -30,6 +30,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.gateway.api.Request;
 import io.reactivex.rxjava3.core.Maybe;
 import lombok.extern.slf4j.Slf4j;
 
@@ -66,8 +67,8 @@ public class ExtensionGrantGranterV2 extends ExtensionGrantGranter {
     }
 
     @Override
-    protected Maybe<User> manageUserConnect(Client client, io.gravitee.am.identityprovider.api.User endUser) {
-        return super.manageUserConnect(client, endUser).map(connectedUser -> {
+    protected Maybe<User> manageUserConnect(Client client, io.gravitee.am.identityprovider.api.User endUser, Request request) {
+        return super.manageUserConnect(client, endUser, request).map(connectedUser -> {
             connectedUser.setSource(retrieveSourceFrom(getExtensionGrant()));
             return connectedUser;
         });
