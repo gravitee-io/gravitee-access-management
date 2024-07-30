@@ -18,20 +18,23 @@ package io.gravitee.am.gateway.handler.common.user;
 
 
 import io.gravitee.am.common.exception.mfa.InvalidFactorAttributeException;
-import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImpl;
+import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImplV2;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
+import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -47,7 +50,7 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
-public class UserServiceTest {
+public class UserServiceV2Test {
 
     @Mock
     private io.gravitee.am.service.UserService commonLayerUserService;
@@ -56,7 +59,12 @@ public class UserServiceTest {
     private UserStore userStore;
 
     @InjectMocks
-    private UserServiceImpl cut = new UserServiceImpl();
+    private UserServiceImplV2 cut = new UserServiceImplV2();
+
+    @Before
+    public void init() {
+        ReflectionTestUtils.setField(cut, "resilientMode", false);
+    }
 
     @Test
     public void shouldFindById_into_cache() throws Exception {
@@ -97,7 +105,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldSkipCache_if_create_fails_due_to_connection_error() throws Exception {
+    public void shouldSkipCache_if_create_fails_due_to_connection_error_resilientMode_false() throws Exception {
         when(commonLayerUserService.create(any())).thenReturn(Single.error(new RepositoryConnectionException(new RuntimeException())));
 
         TestObserver<User> observer = cut.create(new User()).test();
@@ -106,6 +114,32 @@ public class UserServiceTest {
 
         verify(userStore, never()).add(any());
     }
+
+    @Test
+    public void shouldNotSkipCache_if_create_fails_due_to_connection_error_resilientMode_true() throws Exception {
+        ReflectionTestUtils.setField(cut, "resilientMode", true);
+        when(commonLayerUserService.create(any())).thenReturn(Single.error(new RepositoryConnectionException(new RuntimeException())));
+        when(userStore.add(any())).thenReturn(Maybe.just(new User()));
+
+        TestObserver<User> observer = cut.create(new User()).test();
+        observer.await(5,TimeUnit.SECONDS);
+        observer.assertValueCount(1);
+
+        verify(userStore).add(any());
+    }
+
+    @Test
+    public void shouldSkipCache_if_create_fails_due_to_technicalError_resilientMode_true() throws Exception {
+        ReflectionTestUtils.setField(cut, "resilientMode", true);
+        when(commonLayerUserService.create(any())).thenReturn(Single.error(new TechnicalException(new RuntimeException())));
+
+        TestObserver<User> observer = cut.create(new User()).test();
+        observer.await(5,TimeUnit.SECONDS);
+        observer.assertError(TechnicalException.class);
+
+        verify(userStore, never()).add(any());
+    }
+
     @Test
     public void shouldUpdate_and_cache_value() throws Exception {
         when(userStore.add(any())).thenReturn(Maybe.empty());
@@ -120,12 +154,37 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldSkipCache_if_update_fails_due_to_connection_error() throws Exception {
+    public void shouldSkipCache_if_update_fails_due_to_connection_error_resilientMode_false() throws Exception {
         when(commonLayerUserService.update(any(), any())).thenReturn(Single.error(new RepositoryConnectionException(new RuntimeException())));
 
         TestObserver<User> observer = cut.update(new User()).test();
         observer.await(5,TimeUnit.SECONDS);
         observer.assertError(RepositoryConnectionException.class);
+
+        verify(userStore, never()).add(any());
+    }
+
+    @Test
+    public void shouldNotSkipCache_if_update_fails_due_to_connection_error_resilientMode_true() throws Exception {
+        ReflectionTestUtils.setField(cut, "resilientMode", true);
+        when(commonLayerUserService.update(any(), any())).thenReturn(Single.error(new RepositoryConnectionException(new RuntimeException())));
+        when(userStore.add(any())).thenReturn(Maybe.just(new User()));
+
+        TestObserver<User> observer = cut.update(new User()).test();
+        observer.await(5,TimeUnit.SECONDS);
+        observer.assertValueCount(1);
+
+        verify(userStore).add(any());
+    }
+
+    @Test
+    public void shouldSkipCache_if_update_fails_due_to_runtime_error_resilientMode_true() throws Exception {
+        ReflectionTestUtils.setField(cut, "resilientMode", true);
+        when(commonLayerUserService.update(any(), any())).thenReturn(Single.error(new RuntimeException()));
+        
+        TestObserver<User> observer = cut.update(new User()).test();
+        observer.await(5,TimeUnit.SECONDS);
+        observer.assertError(RuntimeException.class);
 
         verify(userStore, never()).add(any());
     }
