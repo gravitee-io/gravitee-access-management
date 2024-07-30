@@ -71,7 +71,7 @@ public class UsersProvider extends AbstractProtocolProvider {
 
         // user consent routes
         usersRouter.routeWithRegex(".*consents.*")
-                .pathRegex("\\/(?<userId>[^\\/]+)\\/([^\\/]+)")
+                .pathRegex("\\/(?<userId>[^\\/]+)\\/consents(\\/[^\\/]*)?")
                 .handler(oAuth2AuthHandler);
         usersRouter.get("/:userId/consents")
                 .handler(userConsentsHandler::list);
@@ -92,4 +92,5 @@ public class UsersProvider extends AbstractProtocolProvider {
     public String path() {
         return "/users";
     }
+
 }
