@@ -1,10 +1,9 @@
 {
 	"info": {
-		"_postman_id": "d34f4753-8921-4de7-8781-ffee8b82ed31",
+		"_postman_id": "d8379e49-ae7d-4e44-b395-9689d577765d",
 		"name": "Gravitee.io - AM - Oauth2 - app version",
 		"description": "Test Oauth2 (RFC 6749) specifications",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "31343100"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
@@ -16524,6 +16523,814 @@
 									"raw": "{{tokenEndpoint}}",
 									"host": [
 										"{{tokenEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Logout user",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 302\", function () {",
+											"    pm.response.to.have.status(302);",
+											"});",
+											"",
+											"pm.test(\"Should be redirected\", function () {",
+											"    pm.response.to.be.redirection;",
+											"    pm.response.to.have.header('Location');",
+											"    ",
+											"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{logoutEndpoint}}",
+									"host": [
+										"{{logoutEndpoint}}"
+									]
+								},
+								"description": "The client does not have a redirect_uri define"
+							},
+							"response": []
+						}
+					],
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Case - revoke consent Gateway",
+					"item": [
+						{
+							"name": "Update scopes client 2",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"// wait for sync process",
+											"setTimeout(function(){}, 10000);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{token}}"
+									},
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"scopeSettings\": [\n\t\t\t\t{\"scope\": \"scope1\", \"defaultScope\": true},\n\t\t\t\t{\"scope\" : \"openid\", \"defaultScope\": true}\n\t\t\t], \n\t\t\t\"grantTypes\": [\n\t\t\t\t\"authorization_code\",\n\t\t\t\t\"implicit\",\n\t\t\t\t\"refresh_token\",\n\t\t\t\t\"password\",\n\t\t\t\t\"client_credentials\"\n\t\t\t]\n\t\t}\n\t}\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{client2}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"applications",
+										"{{client2}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Revoke consent - Initiate the flow",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 302\", function () {",
+											"    pm.response.to.have.status(302);",
+											"});",
+											"",
+											"pm.test(\"Should be redirected\", function () {",
+											"    pm.response.to.be.redirection;",
+											"    pm.response.to.have.header('Location');",
+											"});",
+											"",
+											"pm.test(\"Should be a redirection to login page\", function() {",
+											"    var location = postman.getResponseHeader('Location');",
+											"    let domain = pm.environment.get(\"domainHrid\");",
+											"    ",
+											"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get(\"clientId2\"));",
+											"    ",
+											"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{authorizationEndpoint}}?response_type=code&client_id={{clientId2}}&redirect_uri=http://localhost:4000/",
+									"host": [
+										"{{authorizationEndpoint}}"
+									],
+									"query": [
+										{
+											"key": "response_type",
+											"value": "code"
+										},
+										{
+											"key": "client_id",
+											"value": "{{clientId2}}"
+										},
+										{
+											"key": "redirect_uri",
+											"value": "http://localhost:4000/"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Redirect to login form",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Should be ok\", function () {",
+											"    pm.response.to.be.ok;",
+											"    ",
+											"    // Extract the XSRF token to send it with the next request.",
+											"    var responseHTML = cheerio.load(pm.response.text());",
+											"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+											"    const action = responseHTML('form').attr('action');",
+											"    pm.environment.set('xsrf', xsrfToken);",
+											"    pm.environment.set('action', action);",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{redirection}}",
+									"host": [
+										"{{redirection}}"
+									]
+								},
+								"description": "The client does not have a redirect_uri define"
+							},
+							"response": []
+						},
+						{
+							"name": "Post login form",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 302\", function () {",
+											"    pm.response.to.have.status(302);",
+											"});",
+											"",
+											"pm.test(\"Should be redirected\", function () {",
+											"    pm.response.to.be.redirection;",
+											"    pm.response.to.have.header('Location');",
+											"",
+											"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "X-XSRF-TOKEN",
+											"value": "{{xsrf}}",
+											"type": "text"
+										},
+										{
+											"key": "client_id",
+											"value": "{{clientId2}}",
+											"type": "text"
+										},
+										{
+											"key": "username",
+											"value": "user",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "#CoMpL3X-P@SsW0Rd",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{action}}",
+									"host": [
+										"{{action}}"
+									]
+								},
+								"description": "The client does not have a redirect_uri define"
+							},
+							"response": []
+						},
+						{
+							"name": "Follow redirection",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 302\", function () {",
+											"    pm.response.to.have.status(302);",
+											"});",
+											"",
+											"pm.test(\"Should be redirected\", function () {",
+											"    pm.response.to.be.redirection;",
+											"    ",
+											"    pm.response.to.be.header('Content-Length', '0');",
+											"    pm.response.to.have.header('Location');",
+											"    pm.response.to.have.header('Set-Cookie');",
+											"});",
+											"",
+											"pm.test(\"Should be redirected to consent page\", function() {",
+											"    var location = postman.getResponseHeader('Location');",
+											"    let domain = pm.environment.get(\"domainHrid\");",
+											"    ",
+											"    tests['Redirect to consent page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/consent');",
+											"    ",
+											"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{redirection}}",
+									"host": [
+										"{{redirection}}"
+									]
+								},
+								"description": "The client does not have a redirect_uri define"
+							},
+							"response": []
+						},
+						{
+							"name": "Redirect to confirm access page",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Should be ok\", function () {",
+											"    pm.response.to.be.ok;",
+											"    ",
+											"    // Extract the XSRF token to send it with the next request.",
+											"    var responseHTML = cheerio.load(pm.response.text());",
+											"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+											"    const action = responseHTML('form').attr('action');",
+											"    pm.environment.set('xsrf', xsrfToken);",
+											"    pm.environment.set('action', action);",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{redirection}}",
+									"host": [
+										"{{redirection}}"
+									]
+								},
+								"description": "The client does not have a redirect_uri define"
+							},
+							"response": []
+						},
+						{
+							"name": "Post authorize form",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 302\", function () {",
+											"    pm.response.to.have.status(302);",
+											"});",
+											"",
+											"pm.test(\"Should be redirected\", function () {",
+											"    pm.response.to.be.redirection;",
+											"    pm.response.to.have.header('Location');",
+											"    ",
+											"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "X-XSRF-TOKEN",
+											"value": "{{xsrf}}",
+											"type": "text"
+										},
+										{
+											"key": "scope.scope1",
+											"value": "true",
+											"type": "text"
+										},
+										{
+											"key": "user_oauth_approval",
+											"value": "true",
+											"type": "text"
+										},
+										{
+											"key": "scope.test",
+											"value": "true",
+											"type": "text"
+										},
+										{
+											"key": "scope.openid",
+											"value": "true",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{action}}",
+									"host": [
+										"{{action}}"
+									]
+								},
+								"description": "The client does not have a redirect_uri define"
+							},
+							"response": []
+						},
+						{
+							"name": "Follow redirection",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 302\", function () {",
+											"    pm.response.to.have.status(302);",
+											"});",
+											"",
+											"pm.test(\"Should be redirected\", function () {",
+											"    pm.response.to.be.redirection;",
+											"    pm.response.to.have.header('Location');",
+											"});",
+											"",
+											"pm.test(\"Should be a redirection to redirect_uri with authorization_code\", function() {",
+											"    var location = postman.getResponseHeader('Location');",
+											"    tests['Contains an code param'] = location.includes('code=');",
+											"",
+											"    let code = location.substring(location.indexOf('code=') + 5);",
+											"    pm.environment.set('authorization_code', code);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{redirection}}",
+									"host": [
+										"{{redirection}}"
+									]
+								},
+								"description": "The client does not have a redirect_uri define"
+							},
+							"response": []
+						},
+						{
+							"name": "Generate access and refresh tokens",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('access_token');",
+											"    pm.expect(body).to.have.property('refresh_token');",
+											"    pm.environment.set('access_token_client2', body.access_token);",
+											"    pm.environment.set('refresh_token_client2', body.refresh_token);",
+											"",
+											"    // Need temporize a little to make sure token is persisted to the database (if not, revocation will miss the database deletion).",
+											"    setTimeout(function(){}, 1500);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "basic",
+									"basic": [
+										{
+											"key": "password",
+											"value": "{{clientSecret2}}",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "{{clientId2}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "authorization_code",
+											"type": "text"
+										},
+										{
+											"key": "code",
+											"value": "{{authorization_code}}",
+											"type": "text"
+										},
+										{
+											"key": "redirect_uri",
+											"value": "http://localhost:4000/",
+											"type": "text"
+										},
+										{
+											"key": "client_id",
+											"value": "{{clientId2}}",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/oauth/token",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"oauth",
+										"token"
+									]
+								},
+								"description": "The client does not have a redirect_uri define"
+							},
+							"response": []
+						},
+						{
+							"name": "Search User to get userId On consent usecase",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200 and user is found\", function () {",
+											"    pm.response.to.have.status(200);",
+											"        ",
+											"    var body = pm.response.json();",
+											"    tests['Contains a data array'] = body.data !== undefined;",
+											"    tests['Contains a data array not empty'] = body.data.length > 0;",
+											"    ",
+											"    pm.environment.set('consentUserId', body.data[0].id);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t \"tokenCustomClaims\" : [\n\t\t  \t{\n\t\t  \t\t\"tokenType\": \"ID_TOKEN\",\n\t\t  \t\t\"claimName\": \"custom-claim\",\n\t\t  \t\t\"claimValue\": \"{#context.attributes['user'].groups}\"\n\t\t  \t}\n\t\t  ]\n  \t}\n  }\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users?q=user*",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"users"
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "user*"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get user consents",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"     var body = pm.response.json();",
+											"    pm.environment.set('consentId', body[0].id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users/{{consentUserId}}/consents/",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"users",
+										"{{consentUserId}}",
+										"consents",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Revoke single user consent",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});",
+											"",
+											"// Need to wait 10s to make sure following introspections will hit the database.",
+											"setTimeout(function(){}, 11000);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token_client2}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/users/{{consentUserId}}/consents/{{consentId}}",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"users",
+										"{{consentUserId}}",
+										"consents",
+										"{{consentId}}"
 									]
 								}
 							},
