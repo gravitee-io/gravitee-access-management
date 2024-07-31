@@ -43,11 +43,11 @@ import java.util.stream.Collectors;
 @Setter
 public class User implements IUser {
 
-    protected static final Set<String> SENSITIVE_ADDITIONAL_PROPERTIES = Set.of(
+    public static final Set<String> SENSITIVE_ADDITIONAL_PROPERTIES = Set.of(
             ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY,
             ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY
     );
-    protected static final String SENSITIVE_PROPERTY_PLACEHOLDER = "●●●●●●●●";
+    public static final String SENSITIVE_PROPERTY_PLACEHOLDER = "●●●●●●●●";
     private String id;
 
     private String externalId;
@@ -410,7 +410,11 @@ public class User implements IUser {
 <<<<<<< HEAD
 =======
     public void setAdditionalInformation(Map<String, Object> additionalInformation) {
-        var newAdditionalInformation = additionalInformation
+        if (additionalInformation == null) {
+            this.additionalInformation = null;
+            return;
+        }
+        this.additionalInformation = additionalInformation
                 .entrySet()
                 .stream()
                 .map(e -> {
@@ -425,7 +429,7 @@ public class User implements IUser {
                 })
                 // Collectors.toMap() doesn't work if there's any null values, and we don't have a guarantee there aren't any
                 .collect(HashMap<String, Object>::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()), HashMap::putAll);
-        this.additionalInformation = newAdditionalInformation;
+        ;
     }
 
     public Date getLastPasswordReset() {
