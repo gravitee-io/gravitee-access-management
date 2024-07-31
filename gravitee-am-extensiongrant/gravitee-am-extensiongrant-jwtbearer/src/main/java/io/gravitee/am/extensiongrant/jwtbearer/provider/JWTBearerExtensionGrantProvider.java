@@ -58,6 +58,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static io.gravitee.am.common.jwt.Claims.GIO_INTERNAL_SUB;
+import static io.gravitee.am.common.jwt.Claims.SUB;
 import static java.util.Arrays.copyOfRange;
 import static java.util.Objects.nonNull;
 
@@ -113,12 +115,15 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
         final String sub = jwt.getSub();
         final String username = jwt.containsKey(StandardClaims.PREFERRED_USERNAME) ?
                 jwt.get(StandardClaims.PREFERRED_USERNAME).toString() : sub;
-        User user = new DefaultUser(username);
-        ((DefaultUser) user).setId(sub);
+        DefaultUser user = new DefaultUser(username);
+        user.setId(sub);
         // set claims
         Map<String, Object> additionalInformation = new HashMap<>();
         // add sub required claim
-        additionalInformation.put(io.gravitee.am.common.jwt.Claims.SUB, sub);
+        additionalInformation.put(SUB, sub);
+        if (jwt.getInternalSub() != null) {
+            additionalInformation.put(GIO_INTERNAL_SUB, jwt.getInternalSub());
+        }
         List<Map<String, String>> claimsMapper = jwtBearerTokenGranterConfiguration.getClaimsMapper();
         if (claimsMapper != null && !claimsMapper.isEmpty()) {
             claimsMapper.forEach(claimMapper -> {
@@ -129,9 +134,11 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
                 }
             });
         }
-        ((DefaultUser) user).setAdditionalInformation(additionalInformation);
+        user.setAdditionalInformation(additionalInformation);
         return user;
     }
+
+
 
     /**
      * Generate RSA Public Key from the ssh-(rsa|dsa) ([A-Za-z0-9/+]+=*) (.*) stored key.
