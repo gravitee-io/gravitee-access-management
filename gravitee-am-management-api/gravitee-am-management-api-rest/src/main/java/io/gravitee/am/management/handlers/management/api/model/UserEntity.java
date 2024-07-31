@@ -15,9 +15,17 @@
  */
 package io.gravitee.am.management.handlers.management.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.User;
 import lombok.Getter;
 import lombok.Setter;
+<<<<<<< HEAD
+=======
+
+import java.util.Map;
+import java.util.stream.Collectors;
+>>>>>>> 95f146351f (fix: hide sensitive additional properties from api)
 
 
 /**
@@ -27,7 +35,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class UserEntity extends User {
-
     private ApplicationEntity applicationEntity;
 
     private String sourceId;
@@ -62,7 +69,7 @@ public class UserEntity extends User {
         setRoles(user.getRoles());
         setDynamicRoles(user.getDynamicRoles());
         setRolesPermissions(user.getRolesPermissions());
-        setAdditionalInformation(user.getAdditionalInformation());
+        setAdditionalInformation(filterSensitiveInfo(user.getAdditionalInformation()));
         setCreatedAt(user.getCreatedAt());
         setUpdatedAt(user.getUpdatedAt());
         setLastPasswordReset(user.getLastPasswordReset());
@@ -71,4 +78,35 @@ public class UserEntity extends User {
         setServiceAccount(user.getServiceAccount());
         this.sourceId = user.getSource();
     }
+<<<<<<< HEAD
+=======
+
+    private Map<String, Object> filterSensitiveInfo(Map<String, Object> additionalInformation) {
+        return additionalInformation.entrySet()
+                .stream()
+                .map(e -> SENSITIVE_ADDITIONAL_PROPERTIES.contains(e.getKey()) ? Map.entry(e.getKey(), SENSITIVE_PROPERTY_PLACEHOLDER) : e)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+
+    public record AdditionalProperty(@JsonIgnore Object value, boolean sensitive, boolean isNewValue) {
+
+        @JsonProperty("value")
+        public Object getValue() {
+            return sensitive ? null : value;
+        }
+
+        static Map<String, Object> wrap(Map<String, Object> properties) {
+            return properties.entrySet()
+                    .stream()
+                    .map(AdditionalProperty::wrap)
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        }
+
+        private static Map.Entry<String, AdditionalProperty> wrap(Map.Entry<String, Object> e) {
+            return Map.entry(e.getKey(), new AdditionalProperty(e.getValue(), SENSITIVE_ADDITIONAL_PROPERTIES.contains(e.getKey()), false));
+        }
+    }
+
+>>>>>>> 95f146351f (fix: hide sensitive additional properties from api)
 }
