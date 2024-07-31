@@ -106,12 +106,14 @@ public class JWTBearerExtensionGrantProviderTest {
         Map<String, Object> assertionClaims = new HashMap<>();
         assertionClaims.put("username", "test_username");
         assertionClaims.put("email", "test_email");
+        assertionClaims.put("gis", "default-idp-1234:1234");
 
         User user = jwtBearerExtensionGrantProvider.createUser(new JWT(assertionClaims));
 
-        assertEquals(3, user.getAdditionalInformation().values().size());
+        assertEquals(4, user.getAdditionalInformation().values().size());
         assertEquals("test_username", user.getAdditionalInformation().get("username"));
         assertEquals("test_email", user.getAdditionalInformation().get("email"));
+        assertEquals("default-idp-1234:1234", user.getAdditionalInformation().get("gis"));
     }
 
     @Test
