@@ -16,6 +16,7 @@
 
 package io.gravitee.am.model;
 
+import io.gravitee.am.common.utils.ConstantKeys;
 import org.junit.Test;
 
 import java.util.List;
@@ -64,6 +65,7 @@ public class UserTest {
 
         assertThat(user.getLastIdentityInformation()).containsExactlyEntriesOf(additionalInfo);
     }
+
     @Test
     public void should_LastIdentity_AdditionalInfo_Return_IdentityAdditionInfo() {
         var user = new User();
@@ -119,6 +121,28 @@ public class UserTest {
                 .isNotNull()
                 .hasFieldOrPropertyWithValue("additionalInformation", identityInfo2)
                 .hasFieldOrPropertyWithValue("providerId", identity2.getProviderId());
+    }
+
+    @Test
+    public void shouldNotUpdateSensitivePropertyToPlaceholder() {
+        var user = new User();
+        final String theSensitiveProperty = ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY;
+        user.putAdditionalInformation(theSensitiveProperty, "sensitive value");
+
+        user.setAdditionalInformation(Map.of(theSensitiveProperty, User.SENSITIVE_PROPERTY_PLACEHOLDER));
+
+        assertThat(user.getAdditionalInformation().get(theSensitiveProperty)).isEqualTo("sensitive value");
+    }
+
+    @Test
+    public void shouldUpdateSensitiveProperty() {
+        var user = new User();
+        final String theSensitiveProperty = ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY;
+        user.putAdditionalInformation(theSensitiveProperty, "original value");
+
+        user.setAdditionalInformation(Map.of(theSensitiveProperty, "updated value"));
+
+        assertThat(user.getAdditionalInformation().get(theSensitiveProperty)).isEqualTo("updated value");
     }
 
 }
