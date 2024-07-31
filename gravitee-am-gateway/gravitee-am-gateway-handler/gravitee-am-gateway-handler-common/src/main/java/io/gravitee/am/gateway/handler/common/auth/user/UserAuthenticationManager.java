@@ -49,11 +49,11 @@ public interface UserAuthenticationManager {
         return connect(user, client, request, true);
     }
 
-    default Single<User> connect(io.gravitee.am.identityprovider.api.User user, boolean afterAuthentication) {
-        return connect(user, null, null, afterAuthentication);
-    }
-
     default Single<User> connect(io.gravitee.am.identityprovider.api.User user) {
         return connect(user, null, null, true);
+    }
+
+    default Single<User> connect(io.gravitee.am.identityprovider.api.User user, Request request, boolean afterAuthentication) {
+        return connect(user, null, request, afterAuthentication);
     }
 }
