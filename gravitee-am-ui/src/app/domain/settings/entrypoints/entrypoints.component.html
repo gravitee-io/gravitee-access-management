@@ -22,14 +22,14 @@
     <div fxLayout="column" fxFlex="70">
       <form (ngSubmit)="update()" #domainForm="ngForm" fxLayout="column">
         <div *ngIf="!domain.vhostMode">
-          <div *ngIf="!domain.entrypoint" class="gv-form-section warning" fxLayout="row space-between">
+          <div *ngIf="!entrypoint" class="gv-form-section warning" fxLayout="row">
             <mat-icon>warning</mat-icon>
             <p>
               Default entrypoint is missing. Please make sure there is at least one default entrypoint configured in the organization
               settings.
             </p>
           </div>
-          <div *ngIf="domain.entrypoint" class="gv-form-section">
+          <div *ngIf="entrypoint" class="gv-form-section">
             <mat-form-field appearance="outline" floatLabel="always">
               <mat-label>Domain entrypoint url</mat-label>
               <input matInput type="text" name="url" [value]="entrypoint.url" disabled />
