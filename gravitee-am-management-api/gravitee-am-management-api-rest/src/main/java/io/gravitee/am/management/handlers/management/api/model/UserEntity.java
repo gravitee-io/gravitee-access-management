@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.management.handlers.management.api.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.User;
 import lombok.Getter;
 import lombok.Setter;
@@ -82,11 +80,15 @@ public class UserEntity extends User {
 =======
 
     private Map<String, Object> filterSensitiveInfo(Map<String, Object> additionalInformation) {
+        if (additionalInformation == null) {
+            return null;
+        }
         return additionalInformation.entrySet()
                 .stream()
                 .map(e -> SENSITIVE_ADDITIONAL_PROPERTIES.contains(e.getKey()) ? Map.entry(e.getKey(), SENSITIVE_PROPERTY_PLACEHOLDER) : e)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
+<<<<<<< HEAD
 
 
     public record AdditionalProperty(@JsonIgnore Object value, boolean sensitive, boolean isNewValue) {
@@ -109,4 +111,6 @@ public class UserEntity extends User {
     }
 
 >>>>>>> 95f146351f (fix: hide sensitive additional properties from api)
+=======
+>>>>>>> c6ae6aa83b (fix: code cleanup, unit tests)
 }
