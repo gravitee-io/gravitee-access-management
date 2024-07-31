@@ -16,6 +16,7 @@
 package io.gravitee.am.model;
 
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
@@ -42,6 +43,11 @@ import java.util.stream.Collectors;
 @Setter
 public class User implements IUser {
 
+    protected static final Set<String> SENSITIVE_ADDITIONAL_PROPERTIES = Set.of(
+            ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY,
+            ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY
+    );
+    protected static final String SENSITIVE_PROPERTY_PLACEHOLDER = "●●●●●●●●";
     private String id;
 
     private String externalId;
@@ -401,6 +407,67 @@ public class User implements IUser {
         return null;
     }
 
+<<<<<<< HEAD
+=======
+    public void setAdditionalInformation(Map<String, Object> additionalInformation) {
+        var newAdditionalInformation = additionalInformation
+                .entrySet()
+                .stream()
+                .map(e -> {
+                    var isHiddenSensitiveValue = SENSITIVE_ADDITIONAL_PROPERTIES.contains(e.getKey()) && SENSITIVE_PROPERTY_PLACEHOLDER.equals(e.getValue());
+                    var propertyExistedBefore = this.additionalInformation != null && this.additionalInformation.containsKey(e.getKey());
+                    if (isHiddenSensitiveValue && propertyExistedBefore) {
+                        // the value existed before and is not being updated right now - keep old value
+                        return Map.entry(e.getKey(), this.additionalInformation.get(e.getKey()));
+                    } else {
+                        return e;
+                    }
+                })
+                // Collectors.toMap() doesn't work if there's any null values, and we don't have a guarantee there aren't any
+                .collect(HashMap<String, Object>::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()), HashMap::putAll);
+        this.additionalInformation = newAdditionalInformation;
+    }
+
+    public Date getLastPasswordReset() {
+        return lastPasswordReset;
+    }
+
+    public void setLastPasswordReset(Date lastPasswordReset) {
+        this.lastPasswordReset = lastPasswordReset;
+    }
+
+    public Date getLastUsernameReset() {
+        return lastUsernameReset;
+    }
+
+    public void setLastUsernameReset(Date lastUsernameReset) {
+        this.lastUsernameReset = lastUsernameReset;
+    }
+
+    public Date getLastLogoutAt() {
+        return lastLogoutAt;
+    }
+
+    public void setLastLogoutAt(Date lastLogoutAt) {
+        this.lastLogoutAt = lastLogoutAt;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+>>>>>>> 95f146351f (fix: hide sensitive additional properties from api)
 
     public Boolean isInactive() {
         return isPreRegistration() && !isRegistrationCompleted();
