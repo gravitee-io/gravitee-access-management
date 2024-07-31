@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.management.handlers.management.api.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.User;
 import lombok.Getter;
 import lombok.Setter;
@@ -75,30 +73,12 @@ public class UserEntity extends User {
     }
 
     private Map<String, Object> filterSensitiveInfo(Map<String, Object> additionalInformation) {
+        if (additionalInformation == null) {
+            return null;
+        }
         return additionalInformation.entrySet()
                 .stream()
                 .map(e -> SENSITIVE_ADDITIONAL_PROPERTIES.contains(e.getKey()) ? Map.entry(e.getKey(), SENSITIVE_PROPERTY_PLACEHOLDER) : e)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
-
-
-    public record AdditionalProperty(@JsonIgnore Object value, boolean sensitive, boolean isNewValue) {
-
-        @JsonProperty("value")
-        public Object getValue() {
-            return sensitive ? null : value;
-        }
-
-        static Map<String, Object> wrap(Map<String, Object> properties) {
-            return properties.entrySet()
-                    .stream()
-                    .map(AdditionalProperty::wrap)
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        }
-
-        private static Map.Entry<String, AdditionalProperty> wrap(Map.Entry<String, Object> e) {
-            return Map.entry(e.getKey(), new AdditionalProperty(e.getValue(), SENSITIVE_ADDITIONAL_PROPERTIES.contains(e.getKey()), false));
-        }
-    }
-
 }
