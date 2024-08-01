@@ -15,12 +15,16 @@
  */
 package io.gravitee.am.gateway.handler.common.user.impl;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.repository.management.api.CommonUserRepository.UpdateActions;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +39,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private io.gravitee.am.service.UserService userService;
+
+    @Autowired
+    private AuditService auditService;
 
     @Override
     public Maybe<User> findById(String id) {
@@ -63,7 +70,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Single<User> create(User user) {
-        return userService.create(user);
+        return userService.create(user)
+                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).user(user1)))
+                .doOnError(err -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).throwable(err)));
     }
 
     @Override

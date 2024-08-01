@@ -74,12 +74,15 @@ public class DefaultOrganizationUpgraderTest {
     @Mock
     private Environment environment;
 
+    @Mock
+    private AuditService auditService;
+
     private DefaultOrganizationUpgrader cut;
 
     @Before
     public void before() {
         when(environment.getProperty("security.defaultAdmin", boolean.class, true)).thenReturn(true);
-        cut = new DefaultOrganizationUpgrader(organizationService, identityProviderService, userService, membershipHelper, roleService, domainService, environment, null);
+        cut = new DefaultOrganizationUpgrader(organizationService, identityProviderService, userService, membershipHelper, roleService, domainService, environment, null, auditService);
     }
 
     @Test

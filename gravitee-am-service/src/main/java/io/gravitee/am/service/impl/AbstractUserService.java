@@ -209,7 +209,9 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
                         user.setAdditionalInformation(newUser.getAdditionalInformation());
                         user.setCreatedAt(new Date());
                         user.setUpdatedAt(user.getCreatedAt());
-                        return create(user);
+                        return create(user)
+                                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).user(user1)))
+                                .doOnError(err -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).throwable(err)));
                     }
                 })
                 .onErrorResumeNext(ex -> {
@@ -231,7 +233,6 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
 
         return userValidator.validate(user)
                 .andThen(getUserRepository().create(user))
-                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).user(user1)))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
