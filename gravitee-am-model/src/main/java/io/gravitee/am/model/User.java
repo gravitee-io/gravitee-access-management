@@ -16,6 +16,7 @@
 package io.gravitee.am.model;
 
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
@@ -33,6 +34,11 @@ import java.util.stream.Collectors;
  */
 public class User implements IUser {
 
+    public static final Set<String> SENSITIVE_ADDITIONAL_PROPERTIES = Set.of(
+            ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY,
+            ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY
+    );
+    public static final String SENSITIVE_PROPERTY_PLACEHOLDER = "●●●●●●●●";
     private String id;
 
     private String externalId;
@@ -699,7 +705,26 @@ public class User implements IUser {
     }
 
     public void setAdditionalInformation(Map<String, Object> additionalInformation) {
-        this.additionalInformation = additionalInformation;
+        if (additionalInformation == null) {
+            this.additionalInformation = null;
+            return;
+        }
+        this.additionalInformation = additionalInformation
+                .entrySet()
+                .stream()
+                .map(e -> {
+                    var isHiddenSensitiveValue = SENSITIVE_ADDITIONAL_PROPERTIES.contains(e.getKey()) && SENSITIVE_PROPERTY_PLACEHOLDER.equals(e.getValue());
+                    var propertyExistedBefore = this.additionalInformation != null && this.additionalInformation.containsKey(e.getKey());
+                    if (isHiddenSensitiveValue && propertyExistedBefore) {
+                        // the value existed before and is not being updated right now - keep old value
+                        return Map.entry(e.getKey(), this.additionalInformation.get(e.getKey()));
+                    } else {
+                        return e;
+                    }
+                })
+                // Collectors.toMap() doesn't work if there's any null values, and we don't have a guarantee there aren't any
+                .collect(HashMap<String, Object>::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()), HashMap::putAll);
+        ;
     }
 
     public Date getLastPasswordReset() {
