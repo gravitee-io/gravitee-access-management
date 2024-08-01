@@ -26,6 +26,7 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.OrganizationUserService;
@@ -90,12 +91,15 @@ public class DefaultOrganizationUpgraderTest {
     @Mock
     private Environment environment;
 
+    @Mock
+    private AuditService auditService;
+
     private DefaultOrganizationUpgrader cut;
 
     @BeforeEach
     public void before() {
         when(environment.getProperty("security.defaultAdmin", boolean.class, true)).thenReturn(true);
-        cut = new DefaultOrganizationUpgrader(organizationService, identityProviderService, userService, membershipHelper, roleService, domainService, environment, null);
+        cut = new DefaultOrganizationUpgrader(organizationService, identityProviderService, userService, membershipHelper, roleService, domainService, environment, null, auditService);
     }
 
     @Test
