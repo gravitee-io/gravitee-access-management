@@ -16,14 +16,20 @@
 package io.gravitee.am.management.handlers.management.api.model;
 
 import io.gravitee.am.model.User;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.Map;
+import java.util.stream.Collectors;
 
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public class UserEntity extends User {
-
     private ApplicationEntity applicationEntity;
 
     private String sourceId;
@@ -58,7 +64,7 @@ public class UserEntity extends User {
         setRoles(user.getRoles());
         setDynamicRoles(user.getDynamicRoles());
         setRolesPermissions(user.getRolesPermissions());
-        setAdditionalInformation(user.getAdditionalInformation());
+        setAdditionalInformation(filterSensitiveInfo(user.getAdditionalInformation()));
         setCreatedAt(user.getCreatedAt());
         setUpdatedAt(user.getUpdatedAt());
         setLastPasswordReset(user.getLastPasswordReset());
@@ -66,19 +72,13 @@ public class UserEntity extends User {
         this.sourceId = user.getSource();
     }
 
-    public ApplicationEntity getApplicationEntity() {
-        return applicationEntity;
-    }
-
-    public void setApplicationEntity(ApplicationEntity applicationEntity) {
-        this.applicationEntity = applicationEntity;
-    }
-
-    public String getSourceId() {
-        return sourceId;
-    }
-
-    public void setSourceId(String sourceId) {
-        this.sourceId = sourceId;
+    private Map<String, Object> filterSensitiveInfo(Map<String, Object> additionalInformation) {
+        if (additionalInformation == null) {
+            return null;
+        }
+        return additionalInformation.entrySet()
+                .stream()
+                .map(e -> SENSITIVE_ADDITIONAL_PROPERTIES.contains(e.getKey()) ? Map.entry(e.getKey(), SENSITIVE_PROPERTY_PLACEHOLDER) : e)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 }
