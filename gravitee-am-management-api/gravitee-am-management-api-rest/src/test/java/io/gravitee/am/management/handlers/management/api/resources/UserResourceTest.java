@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.management.handlers.management.api.model.PasswordValue;
 import io.gravitee.am.management.handlers.management.api.model.StatusEntity;
@@ -33,6 +34,8 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
+import org.assertj.core.api.Assertions;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.Test;
 
 import java.util.Date;
@@ -60,6 +63,7 @@ public class UserResourceTest extends JerseySpringTest {
     @Test
     public void shouldGetUser() {
         final String domainId = "domain-id";
+        final String someSensitiveProperty = ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY;
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);
 
@@ -70,6 +74,7 @@ public class UserResourceTest extends JerseySpringTest {
         mockUser.setReferenceType(ReferenceType.DOMAIN);
         mockUser.setReferenceId(domainId);
         mockUser.setSource("source");
+        mockUser.putAdditionalInformation(someSensitiveProperty, "example of sensitive property value");
         doReturn(Maybe.empty()).when(identityProviderService).findById(any());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockUser)).when(userService).findById(userId);
@@ -77,11 +82,16 @@ public class UserResourceTest extends JerseySpringTest {
         final Response response = target("domains").path(domainId).path("users").path(userId).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final Map user = readEntity(response, HashMap.class);
+        final Map<?, ?> user = readEntity(response, HashMap.class);
         assertEquals(domainId, user.get("referenceId"));
         assertEquals(mockUser.getUsername(), user.get("username"));
         assertEquals(mockUser.getSource(), user.get("sourceId"));
-     }
+        Assertions.assertThat(user.get("additionalInformation"))
+                .asInstanceOf(InstanceOfAssertFactories.map(String.class, String.class))
+                .hasEntrySatisfying(someSensitiveProperty, actual -> Assertions.assertThat(actual)
+                        .as("Sensitive property should be censored")
+                        .isEqualTo(User.SENSITIVE_PROPERTY_PLACEHOLDER));
+    }
 
     @Test
     public void shouldGetUser_notFound() {
@@ -271,8 +281,8 @@ public class UserResourceTest extends JerseySpringTest {
         doReturn(Single.just(userToUpdate)).when(userService).updateUsername(eq(ReferenceType.DOMAIN), eq(domainId), eq(userId), eq(usernameEntity.getUsername()), any());
 
         final var response = target("domains").path(domainId).path("users").path(userId).path("username").request()
-                                              .property(SET_METHOD_WORKAROUND, true)
-                                              .method(PATCH, Entity.json(usernameEntity));
+                .property(SET_METHOD_WORKAROUND, true)
+                .method(PATCH, Entity.json(usernameEntity));
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
         final var updatedUser = readEntity(response, User.class);
         assertEquals(usernameEntity.getUsername(), updatedUser.getUsername());
@@ -284,8 +294,8 @@ public class UserResourceTest extends JerseySpringTest {
         var usernameEntity = new UsernameEntity();
         usernameEntity.setUsername("username");
         var response = target("domains").path("domainId").path("users").path("userId").path("username").request()
-                                        .property(SET_METHOD_WORKAROUND, true)
-                                        .method(PATCH, Entity.json(usernameEntity));
+                .property(SET_METHOD_WORKAROUND, true)
+                .method(PATCH, Entity.json(usernameEntity));
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
 
@@ -331,7 +341,7 @@ public class UserResourceTest extends JerseySpringTest {
         var statusEntity = new StatusEntity();
         statusEntity.setEnabled(false);
         doReturn(Single.just(mockUser)).when(organizationUserService)
-            .updateStatus(eq(ReferenceType.ORGANIZATION), eq(referenceId), eq(userId), eq(statusEntity.isEnabled()), any());
+                .updateStatus(eq(ReferenceType.ORGANIZATION), eq(referenceId), eq(userId), eq(statusEntity.isEnabled()), any());
 
         final Response response = target("organizations").path(referenceId).path("users").path(userId).path("status").request().put(Entity.json(statusEntity));
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -366,6 +376,8 @@ public class UserResourceTest extends JerseySpringTest {
         mockDomain.setId(domainId);
 
         final String userId = "userId";
+        final String sensitivePropertyLeftAsIs = ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY;
+        final String sensitivePropertyToUpdate = ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY;
         final User mockUser = new User();
         mockUser.setId(userId);
         mockUser.setUsername("username");
@@ -373,10 +385,18 @@ public class UserResourceTest extends JerseySpringTest {
         mockUser.setReferenceType(ReferenceType.DOMAIN);
         mockUser.setReferenceId(domainId);
         mockUser.setEnabled(false);
+        mockUser.putAdditionalInformation(sensitivePropertyLeftAsIs, "sensitive value");
+        mockUser.putAdditionalInformation(sensitivePropertyToUpdate, "sensitive value");
+        mockUser.putAdditionalInformation("not-sensitive", "lorem ipsum");
 
         final UpdateUser updateUser = new UpdateUser();
         updateUser.setEmail("email@email.com");
         updateUser.setFirstName("firstname");
+        updateUser.setAdditionalInformation(Map.of(
+                sensitivePropertyLeftAsIs, User.SENSITIVE_PROPERTY_PLACEHOLDER,
+                sensitivePropertyToUpdate, "updated sensitive value",
+                "not-sensitive", "lorem ipsum"
+        ));
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(mockUser)).when(userService).update(eq(ReferenceType.DOMAIN), eq(domainId), eq(userId), any(), any());
@@ -386,6 +406,8 @@ public class UserResourceTest extends JerseySpringTest {
         final User user = readEntity(response, User.class);
         assertEquals(domainId, user.getReferenceId());
         assertEquals("firstname", user.getFirstName());
+        assertEquals(User.SENSITIVE_PROPERTY_PLACEHOLDER, user.getAdditionalInformation().get(sensitivePropertyLeftAsIs));
+        assertEquals(User.SENSITIVE_PROPERTY_PLACEHOLDER, user.getAdditionalInformation().get(sensitivePropertyToUpdate));
     }
 
     @Test
@@ -408,11 +430,11 @@ public class UserResourceTest extends JerseySpringTest {
         doReturn(Single.just(mockUser)).when(organizationUserService).update(eq(ReferenceType.ORGANIZATION), eq(organization), eq(userId), any(), any());
 
         final Response response = target("organizations")
-            .path(organization)
-            .path("users")
-            .path(userId)
-            .request()
-            .put(Entity.json(updateUser));
+                .path(organization)
+                .path("users")
+                .path(userId)
+                .request()
+                .put(Entity.json(updateUser));
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final User user = readEntity(response, User.class);
@@ -472,7 +494,7 @@ public class UserResourceTest extends JerseySpringTest {
     }
 
     @Test
-    public void shouldUpdateServiceAccount(){
+    public void shouldUpdateServiceAccount() {
         final String organization = "DEFAULT";
 
         final String userId = "userId";
