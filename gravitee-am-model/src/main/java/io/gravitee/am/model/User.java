@@ -400,8 +400,6 @@ public class User implements IUser {
         return null;
     }
 
-<<<<<<< HEAD
-=======
     public void setAdditionalInformation(Map<String, Object> additionalInformation) {
         if (additionalInformation == null) {
             this.additionalInformation = null;
@@ -422,7 +420,6 @@ public class User implements IUser {
                 })
                 // Collectors.toMap() doesn't work if there's any null values, and we don't have a guarantee there aren't any
                 .collect(HashMap<String, Object>::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()), HashMap::putAll);
-        ;
     }
 
     public Date getLastPasswordReset() {
@@ -464,7 +461,6 @@ public class User implements IUser {
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
     }
->>>>>>> 95f146351f (fix: hide sensitive additional properties from api)
 
     public Boolean isInactive() {
         return isPreRegistration() && !isRegistrationCompleted();

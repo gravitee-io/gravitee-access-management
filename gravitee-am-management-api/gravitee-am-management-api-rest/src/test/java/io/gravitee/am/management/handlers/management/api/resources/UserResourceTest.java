@@ -34,16 +34,11 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
-<<<<<<< HEAD
-import org.junit.Test;
-
-import java.util.Date;
-=======
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.Test;
 
->>>>>>> c6ae6aa83b (fix: code cleanup, unit tests)
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -499,7 +494,7 @@ public class UserResourceTest extends JerseySpringTest {
     }
 
     @Test
-    public void shouldUpdateServiceAccount(){
+    public void shouldUpdateServiceAccount() {
         final String organization = "DEFAULT";
 
         final String userId = "userId";
