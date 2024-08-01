@@ -17,7 +17,10 @@
 package io.gravitee.am.gateway.handler.common.user.impl;
 
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.gateway.handler.common.user.UserStore;
+import io.gravitee.am.gateway.handler.common.user.UserValueMapper;
 import io.gravitee.am.model.User;
 import io.gravitee.node.api.cache.Cache;
 import io.gravitee.node.api.cache.CacheManager;
@@ -38,7 +41,8 @@ public class UserStoreImpl implements UserStore {
     private int ttlInSec;
 
     public UserStoreImpl(CacheManager cacheManager, Environment environment) {
-        this.idCache = cacheManager.getOrCreateCache("userStoreById");
+        final var mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        this.idCache = cacheManager.getOrCreateCache("userStoreById", new UserValueMapper(mapper));
         this.ttlInSec = environment.getProperty("http.cookie.session.cache.ttl", Integer.class, 36000);
     }
 
