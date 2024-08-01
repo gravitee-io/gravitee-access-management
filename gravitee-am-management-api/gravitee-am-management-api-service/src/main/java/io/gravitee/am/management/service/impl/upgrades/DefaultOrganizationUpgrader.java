@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.impl.upgrades.helpers.MembershipHelper;
@@ -27,12 +28,15 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.OrganizationUserService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.PatchOrganization;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.node.api.upgrader.Upgrader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,8 +73,9 @@ public class DefaultOrganizationUpgrader implements Upgrader {
 
     private final DomainService domainService;
 
-
     private final IdentityProviderManager identityProviderManager;
+
+    private final AuditService auditService;
 
     private final boolean useDefaultAdmin;
 
@@ -81,7 +86,8 @@ public class DefaultOrganizationUpgrader implements Upgrader {
                                        RoleService roleService,
                                        DomainService domainService,
                                        Environment environment,
-                                       IdentityProviderManager identityProviderManager) {
+                                       IdentityProviderManager identityProviderManager,
+                                       AuditService auditService) {
         this.organizationService = organizationService;
         this.identityProviderService = identityProviderService;
         this.userService = userService;
@@ -89,6 +95,7 @@ public class DefaultOrganizationUpgrader implements Upgrader {
         this.roleService = roleService;
         this.domainService = domainService;
         this.identityProviderManager = identityProviderManager;
+        this.auditService = auditService;
         this.useDefaultAdmin = environment.getProperty("security.defaultAdmin", boolean.class, true);
     }
 
@@ -211,7 +218,10 @@ public class DefaultOrganizationUpgrader implements Upgrader {
         newUser.setReferenceType(ReferenceType.ORGANIZATION);
         newUser.setReferenceId(Organization.DEFAULT);
 
-        var adminUser = userService.create(newUser).blockingGet();
+        var adminUser = userService.create(newUser)
+                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).user(user1)))
+                .doOnError(err -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).throwable(err)))
+                .blockingGet();
         membershipHelper.setOrganizationPrimaryOwnerRole(adminUser);
         return adminUser;
     }
