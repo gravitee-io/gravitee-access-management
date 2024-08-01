@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.impl.upgrades.helpers.MembershipHelper;
 import io.gravitee.am.model.*;
@@ -23,6 +25,8 @@ import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.PatchOrganization;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
@@ -63,6 +67,8 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
 
     private final IdentityProviderManager identityProviderManager;
 
+    private final AuditService auditService;
+
     private final boolean useDefaultAdmin;
 
     public DefaultOrganizationUpgrader(OrganizationService organizationService,
@@ -72,7 +78,8 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
                                        RoleService roleService,
                                        DomainService domainService,
                                        Environment environment,
-                                       IdentityProviderManager identityProviderManager) {
+                                       IdentityProviderManager identityProviderManager,
+                                       AuditService auditService) {
         this.organizationService = organizationService;
         this.identityProviderService = identityProviderService;
         this.userService = userService;
@@ -81,6 +88,7 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
         this.domainService = domainService;
         this.environment = environment;
         this.identityProviderManager = identityProviderManager;
+        this.auditService = auditService;
         this.useDefaultAdmin = environment.getProperty("security.defaultAdmin", boolean.class, true);
     }
 
@@ -202,7 +210,10 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
         newUser.setReferenceType(ReferenceType.ORGANIZATION);
         newUser.setReferenceId(Organization.DEFAULT);
 
-        return userService.create(newUser).blockingGet();
+        return userService.create(newUser)
+                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).user(user1)))
+                .doOnError(err -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).throwable(err)))
+                .blockingGet();
     }
 
     @Override
