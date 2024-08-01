@@ -388,6 +388,13 @@
             <type>zip</type>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>io.gravitee.node</groupId>
+            <artifactId>gravitee-node-cache-plugin-redis</artifactId>
+            <version>${gravitee-node.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
 
         <dependency>
             <groupId>io.gravitee.policy</groupId>
@@ -734,6 +741,12 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.node</groupId>
                                     <artifactId>gravitee-node-cache-plugin-standalone</artifactId>
+                                    <version>${gravitee-node.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>io.gravitee.node</groupId>
+                                    <artifactId>gravitee-node-cache-plugin-redis</artifactId>
                                     <version>${gravitee-node.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
