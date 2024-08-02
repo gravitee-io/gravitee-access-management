@@ -69,4 +69,9 @@ public class SubjectManagerV1 implements SubjectManager {
         return findUserBySub(token)
                 .map(DefaultUser::new);
     }
+
+    @Override
+    public String extractUserId(String gis) {
+        return gis;
+    }
 }

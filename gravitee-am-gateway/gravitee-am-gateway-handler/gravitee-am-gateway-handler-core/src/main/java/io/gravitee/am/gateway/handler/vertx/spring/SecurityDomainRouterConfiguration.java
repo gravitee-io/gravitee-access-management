@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.spring;
 
+import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.spring.FreemarkerConfiguration;
 import io.gravitee.am.gateway.handler.common.user.UserService;
@@ -48,11 +49,11 @@ public class SecurityDomainRouterConfiguration {
     }
 
     @Bean
-    public SubjectManager subjectManager(Domain domain, UserService userService) {
+    public SubjectManager subjectManager(Domain domain, ClientManager clientManager, UserService userService) {
         if (domain.getVersion() == DomainVersion.V1_0) {
             return new SubjectManagerV1(userService);
         } else {
-            return new SubjectManagerV2(userService, domain);
+            return new SubjectManagerV2(userService, clientManager, domain);
         }
     }
 }

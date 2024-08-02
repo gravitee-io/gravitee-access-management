@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.manager.subject;
 
 
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -43,6 +44,8 @@ public class SubjectManagerV2 implements SubjectManager {
 
     private UserService userService;
 
+    private ClientManager clientManager;
+
     private Domain domain;
 
     @Override
@@ -57,8 +60,12 @@ public class SubjectManagerV2 implements SubjectManager {
 
     @Override
     public void updateJWT(JWT jwt, User user) {
-        jwt.setInternalSub(generateInternalSubFrom(user));
-        jwt.setSub(generateSubFrom(user));
+        if (clientManager.get(user.getId()) != null) { //This is for extension grant because we cannot do distinguish between service and user profile
+            jwt.setSub(user.getId());
+        } else {
+            jwt.setInternalSub(generateInternalSubFrom(user));
+            jwt.setSub(generateSubFrom(user));
+        }
     }
 
     @Override
@@ -70,7 +77,7 @@ public class SubjectManagerV2 implements SubjectManager {
 
         final var internalSub = token.getInternalSub();
         final var source = internalSub.substring(0, internalSub.indexOf(SEPARATOR));
-        final var extId = internalSub.substring(internalSub.indexOf(SEPARATOR)+1);
+        final var extId = internalSub.substring(internalSub.indexOf(SEPARATOR) + 1);
         return userService.findByDomainAndExternalIdAndSource(domain.getId(), extId, source);
     }
 
@@ -92,5 +99,10 @@ public class SubjectManagerV2 implements SubjectManager {
         }
         return findUserBySub(sub)
                 .map(DefaultUser::new);
+    }
+
+    @Override
+    public String extractUserId(String gis) {
+        return gis.substring(gis.indexOf(SEPARATOR) + 1);
     }
 }
