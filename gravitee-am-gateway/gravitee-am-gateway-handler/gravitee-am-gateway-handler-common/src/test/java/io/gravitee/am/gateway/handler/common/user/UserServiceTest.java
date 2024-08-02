@@ -24,6 +24,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
+import io.gravitee.am.service.AuditService;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -51,6 +52,9 @@ public class UserServiceTest {
 
     @Mock
     private io.gravitee.am.service.UserService commonLayerUserService;
+
+    @Mock
+    private AuditService auditService;
 
     @Mock
     private UserStore userStore;
