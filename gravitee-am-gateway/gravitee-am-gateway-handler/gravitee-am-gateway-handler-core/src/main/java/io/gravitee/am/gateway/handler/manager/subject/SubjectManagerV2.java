@@ -29,9 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
+import java.util.UUID;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -41,7 +39,6 @@ import java.util.HexFormat;
 @AllArgsConstructor
 public class SubjectManagerV2 implements SubjectManager {
 
-    private static final String SUB_PREFIX = "h_";
     private static final String SEPARATOR = ":";
 
     private UserService userService;
@@ -50,14 +47,7 @@ public class SubjectManagerV2 implements SubjectManager {
 
     @Override
     public String generateSubFrom(User user) {
-        final var gisub = generateInternalSubFrom(user);
-        try {
-            var rawhash = MessageDigest.getInstance("SHA-256").digest(gisub.getBytes(StandardCharsets.UTF_8));
-            return SUB_PREFIX + HexFormat.of().formatHex(rawhash);
-        } catch (NoSuchAlgorithmException e) {
-            log.warn("Error while generating subject from user", e);
-            return gisub;
-        }
+        return UUID.nameUUIDFromBytes(generateInternalSubFrom(user).getBytes(StandardCharsets.UTF_8)).toString();
     }
 
     @Override
