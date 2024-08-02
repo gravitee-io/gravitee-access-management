@@ -16,12 +16,11 @@
 package io.gravitee.am.gateway.handler.oauth2.service.code.impl;
 
 import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
@@ -56,13 +55,15 @@ public class AuthorizationCodeServiceImpl implements AuthorizationCodeService {
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
 
+    private final AuthorizationCodeGenerator codeGenerator = new AuthorizationCodeGenerator();
+
     @Override
     public Single<AuthorizationCode> create(AuthorizationRequest authorizationRequest, User user) {
         AuthorizationCode authorizationCode = new AuthorizationCode();
         authorizationCode.setId(RandomString.generate());
         authorizationCode.setTransactionId(authorizationRequest.transactionId());
         authorizationCode.setContextVersion(authorizationRequest.getContextVersion());
-        authorizationCode.setCode(SecureRandomString.generate());
+        authorizationCode.setCode(codeGenerator.generate());
         authorizationCode.setClientId(authorizationRequest.getClientId());
         authorizationCode.setSubject(user.getId());
         authorizationCode.setScopes(authorizationRequest.getScopes());
