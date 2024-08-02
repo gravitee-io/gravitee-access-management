@@ -25,6 +25,7 @@ import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.service.AuditService;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -57,6 +58,9 @@ public class UserServiceV2Test {
 
     @Mock
     private UserStore userStore;
+
+    @Mock
+    private AuditService auditService;
 
     @InjectMocks
     private UserServiceImplV2 cut = new UserServiceImplV2();
