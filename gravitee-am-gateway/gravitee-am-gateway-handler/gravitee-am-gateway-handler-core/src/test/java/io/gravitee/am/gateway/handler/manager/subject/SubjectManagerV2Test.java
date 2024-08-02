@@ -69,7 +69,7 @@ public class SubjectManagerV2Test {
         user.setSource(UUID.randomUUID().toString());
 
         Assertions.assertEquals(user.getSource() + ":" + user.getExternalId(), cut.generateInternalSubFrom(user));
-        Assertions.assertTrue(cut.generateSubFrom(user).startsWith("h_"));
+        Assertions.assertEquals(3, UUID.fromString(cut.generateSubFrom(user)).version());
     }
 
     @Test
