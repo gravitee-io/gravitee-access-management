@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.manager.subject;
 
 
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.model.Domain;
@@ -55,11 +56,14 @@ public class SubjectManagerV2Test {
     @Mock
     private UserService userService;
 
+    @Mock
+    private ClientManager clientManager;
+
     private SubjectManager cut;
 
     @BeforeEach
     protected void setup() {
-        cut = new SubjectManagerV2(userService, domain);
+        cut = new SubjectManagerV2(userService, clientManager, domain);
     }
 
     @Test
