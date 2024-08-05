@@ -146,19 +146,15 @@ public class UriBuilder {
         if (s == null) {
             return null;
         }
-        String result;
-        result = URLEncoder.encode(s, StandardCharsets.UTF_8);
-        return result;
+        return URLEncoder.encode(s, StandardCharsets.UTF_8);
     }
 
     public static String decodeURIComponent(String s) {
-        String result;
         try {
-            result = URLDecoder.decode(s, StandardCharsets.UTF_8);
+            return URLDecoder.decode(s, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            result = s;
+            return s;
         }
-        return result;
     }
 
     public UriBuilder scheme(String scheme) {
