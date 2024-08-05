@@ -21,9 +21,14 @@
       <span *ngFor="let role of providerRoles">
         <h3 matSubheader>{{ getRole(role) }}</h3>
         <mat-list-item *ngFor="let user of providerRoleMapper[role]">
-          <mat-icon mat-list-icon>person</mat-icon>
+          <mat-icon matListItemIcon>person</mat-icon>
           <h4 matLine>{{ user }}</h4>
-          <button *hasPermission="['domain_identity_provider_update']" mat-button (click)="deleteUserFromRole(role, user, $event)">
+          <button
+            matListItemMeta
+            *hasPermission="['domain_identity_provider_update']"
+            mat-button
+            (click)="deleteUserFromRole(role, user, $event)"
+          >
             <mat-icon>delete</mat-icon>
           </button>
         </mat-list-item>
