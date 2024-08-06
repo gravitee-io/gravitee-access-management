@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.jupiter.api.Assertions;
@@ -34,6 +35,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -129,5 +131,19 @@ public class SubjectManagerV2Test {
         observer.assertValueCount(0);
 
         verify(userService, never()).findByDomainAndExternalIdAndSource(any(), any(), any());
+    }
+
+    @Test
+    public void should_not_add_gis_when_user_is_service(){
+        final User user = new User();
+        user.setId("client-id");
+        final var token = new JWT();
+        Client client = new Client();
+        client.setClientId("client-id");
+        when(clientManager.entities()).thenReturn(List.of(client));
+
+        cut.updateJWT(token, user);
+
+        Assertions.assertNull(token.getInternalSub());
     }
 }
