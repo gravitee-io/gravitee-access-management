@@ -18,6 +18,7 @@ package io.gravitee.am.repository.jdbc.management.api;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Device;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcDevice;
 import io.gravitee.am.repository.management.api.DeviceRepository;
@@ -25,6 +26,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
 
@@ -48,39 +50,49 @@ public class JdbcDeviceRepository extends AbstractJdbcRepository implements Devi
     private static final String REF_TYPE_FIELD = "reference_type";
     private static final String ID_FIELD = "id";
     private static final String CLIENT_FIELD = "client";
-    private static final String USER_FIELD = "user_id";
+    private static final String USER_ID_FIELD = "user_id";
+    private static final String USER_EXTERNAL_ID_FIELD = "user_external_id";
+    private static final String USER_SOURCE_FIELD = "user_source";
     public static final String EXPIRES_AT_FIELD = "expires_at";
     public static final String DEVICE_IDENTIFIER_ID = "device_identifier_id";
     public static final String DEVICE_ID = "device_id";
 
-    protected Device toEntity(JdbcDevice entity) {
-        return mapper.map(entity, Device.class);
+    protected Device toEntity(JdbcDevice dbEntity) {
+        return dbEntity.toEntity();
     }
 
     @Override
-    public Flowable<Device> findByReferenceAndUser(ReferenceType referenceType, String referenceId, String user) {
+    public Flowable<Device> findByReferenceAndUser(ReferenceType referenceType, String referenceId, UserId userId) {
         LOGGER.debug("findByReferenceAndApplicationAndUser({}, {})", referenceType, referenceId);
         LocalDateTime now = LocalDateTime.now(UTC);
         return fluxToFlowable(getTemplate().select(JdbcDevice.class)
                 .matching(Query.query(
                         where(REFERENCE_ID_FIELD).is(referenceId)
                                 .and(where(REF_TYPE_FIELD).is(referenceType.name()))
-                                .and(where(USER_FIELD).is(user))
+                                .and(userMatches(userId))
                                 .and(where(EXPIRES_AT_FIELD).greaterThanOrEquals(now))
                 ))
                 .all())
                 .map(this::toEntity);
     }
 
+    private Criteria userMatches(UserId user) {
+        if (user.isExternal()) {
+            return where(USER_ID_FIELD).is(user.id()).or(where(USER_EXTERNAL_ID_FIELD).is(user.externalId()).and(USER_SOURCE_FIELD).is(user.source()));
+        } else {
+            return where(USER_ID_FIELD).is(user.id());
+        }
+    }
+
     @Override
     public Maybe<Device> findByReferenceAndClientAndUserAndDeviceIdentifierAndDeviceId(
-            ReferenceType referenceType, String referenceId, String client, String user, String rememberDevice, String deviceId) {
+            ReferenceType referenceType, String referenceId, String client, UserId userId, String rememberDevice, String deviceId) {
         LocalDateTime now = LocalDateTime.now(UTC);
         return monoToMaybe(getTemplate().select(JdbcDevice.class)
                 .matching(Query.query(where(REFERENCE_ID_FIELD).is(referenceId)
                         .and(where(REF_TYPE_FIELD).is(referenceType.name()))
                         .and(where(CLIENT_FIELD).is(client))
-                        .and(where(USER_FIELD).is(user))
+                        .and(userMatches(userId))
                         .and(where(DEVICE_IDENTIFIER_ID).is(rememberDevice))
                         .and(where(DEVICE_ID).is(deviceId))
                         .and(where(EXPIRES_AT_FIELD).greaterThanOrEquals(now))
@@ -90,7 +102,7 @@ public class JdbcDeviceRepository extends AbstractJdbcRepository implements Devi
     }
 
     protected JdbcDevice toJdbcEntity(Device entity) {
-        return mapper.map(entity, JdbcDevice.class);
+        return JdbcDevice.from(entity);
     }
 
     @Override

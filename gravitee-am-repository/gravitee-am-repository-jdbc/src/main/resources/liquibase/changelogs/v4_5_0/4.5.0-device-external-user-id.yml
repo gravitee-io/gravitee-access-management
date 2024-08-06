@@ -1,0 +1,27 @@
+#private static final String USER_EXTERNAL_ID_FIELD = "user_external_id";
+#private static final String USER_SOURCE_FIELD = "user_source";
+databaseChangeLog:
+  - changeSet:
+      id: 4.5.0-device-external-user-id
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+      changes:
+        - addColumn:
+            tableName: devices
+            columns:
+              - column:
+                  name: user_external_id
+                  type: nvarchar(255)
+              - column:
+                  name: user_source
+                  type: nvarchar(64)
+        - createIndex:
+            indexName: idx_devices_user_ext_id
+            tableName: devices
+            columns:
+              - column:
+                  name: user_source
+              - column:
+                  name: user_external_id

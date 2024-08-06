@@ -16,17 +16,30 @@
 
 package io.gravitee.am.repository.jdbc.management.api.model;
 
+import io.gravitee.am.model.Device;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.UserId;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Date;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Table("devices")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class JdbcDevice {
     @Id
     private String id;
@@ -38,6 +51,10 @@ public class JdbcDevice {
     private String client;
     @Column("user_id")
     private String userId;
+    @Column("user_external_id")
+    private String userExternalId;
+    @Column("user_source")
+    private String userSource;
     @Column("device_identifier_id")
     private String deviceIdentifierId;
     @Column("device_id")
@@ -50,83 +67,35 @@ public class JdbcDevice {
     @Column("expires_at")
     private LocalDateTime expiresAt;
 
-    public String getId() {
-        return id;
+
+    public static JdbcDevice from(Device device) {
+        return JdbcDevice.builder()
+                .id(device.getId())
+                .referenceType(device.getReferenceType().name())
+                .referenceId(device.getReferenceId())
+                .client(device.getClient())
+                .userId(device.getUserId().id())
+                .userExternalId(device.getUserId().externalId())
+                .userSource(device.getUserId().source())
+                .deviceIdentifierId(device.getDeviceIdentifierId())
+                .deviceId(device.getDeviceId())
+                .type(device.getType())
+                .createdAt(device.getCreatedAt() == null ? null : device.getCreatedAt().toInstant().atOffset(ZoneOffset.UTC).toLocalDateTime())
+                .expiresAt(device.getExpiresAt() == null ? null : device.getExpiresAt().toInstant().atOffset(ZoneOffset.UTC).toLocalDateTime())
+                .build();
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getReferenceType() {
-        return referenceType;
-    }
-
-    public void setReferenceType(String referenceType) {
-        this.referenceType = referenceType;
-    }
-
-    public String getReferenceId() {
-        return referenceId;
-    }
-
-    public void setReferenceId(String referenceId) {
-        this.referenceId = referenceId;
-    }
-
-    public String getClient() {
-        return client;
-    }
-
-    public void setClient(String client) {
-        this.client = client;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    public String getDeviceIdentifierId() {
-        return deviceIdentifierId;
-    }
-
-    public void setDeviceIdentifierId(String deviceIdentifierId) {
-        this.deviceIdentifierId = deviceIdentifierId;
-    }
-
-    public String getDeviceId() {
-        return deviceId;
-    }
-
-    public void setDeviceId(String deviceId) {
-        this.deviceId = deviceId;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getExpiresAt() {
-        return expiresAt;
-    }
-
-    public void setExpiresAt(LocalDateTime expiresAt) {
-        this.expiresAt = expiresAt;
+    public Device toEntity() {
+        return new Device()
+                .setId(this.id)
+                .setDeviceId(this.deviceId)
+                .setClient(this.client)
+                .setCreatedAt(Date.from(this.createdAt.toInstant(ZoneOffset.UTC)))
+                .setExpiresAt(Date.from(this.expiresAt.toInstant(ZoneOffset.UTC)))
+                .setReferenceType(ReferenceType.valueOf(this.referenceType))
+                .setReferenceId(this.referenceId)
+                .setDeviceIdentifierId(this.deviceIdentifierId)
+                .setType(this.type)
+                .setUserId(new UserId(this.userId, this.userExternalId, this.userSource));
     }
 }
