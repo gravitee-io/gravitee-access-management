@@ -26,9 +26,9 @@ import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.RateLimiterService;
-import io.gravitee.am.model.Domain;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.Router;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
@@ -118,6 +118,9 @@ public class AccountProvider extends AbstractProtocolProvider {
             accountRouter.get(AccountRoutes.FACTORS_OTP_QR.getRoute())
                     .handler(accountHandler::getUser)
                     .handler(accountFactorsEndpointHandler::getEnrolledFactorQrCode);
+            accountRouter.get(AccountRoutes.FACTORS_OTP_SHARED_SECRET.getRoute())
+                    .handler(accountHandler::getUser)
+                    .handler(accountFactorsEndpointHandler::getEnrolledFactorSharedSecretCode);
             accountRouter.delete(AccountRoutes.FACTORS_BY_ID.getRoute())
                     .handler(accountHandler::getUser)
                     .handler(accountFactorsEndpointHandler::removeFactor);
