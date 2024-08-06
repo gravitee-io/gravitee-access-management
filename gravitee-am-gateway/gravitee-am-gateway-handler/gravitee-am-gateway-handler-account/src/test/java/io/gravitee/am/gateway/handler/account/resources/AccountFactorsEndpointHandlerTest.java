@@ -19,7 +19,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.exception.mfa.InvalidCodeException;
 import io.gravitee.am.common.exception.mfa.SendChallengeException;
-import io.gravitee.am.common.factor.FactorSecurityType;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.factor.api.Enrollment;
@@ -30,13 +29,12 @@ import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
-import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
+import io.gravitee.am.service.RateLimiterService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -59,11 +57,7 @@ import java.util.Map;
 import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
@@ -747,7 +741,7 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
 
         EnrolledFactor enrolledFactorCaptorValue = enrolledFactorCaptor.getValue();
         Assert.assertNotNull(enrolledFactorCaptorValue);
-        Assert.assertEquals(SHARED_SECRET, enrolledFactorCaptorValue.getSecurity().getValue());
+        Assert.assertNull(enrolledFactorCaptorValue.getSecurity());
     }
 
     @Test
@@ -792,6 +786,30 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
         Assert.assertEquals(EnrolledFactorChannel.Type.SMS, enrolledFactorCaptorValue.getChannel().getType());
         Assert.assertEquals("+33611111111", enrolledFactorCaptorValue.getChannel().getTarget());
         Assert.assertEquals("1234", enrolledFactorCaptorValue.getChannel().getAdditionalData().get(ConstantKeys.MFA_ENROLLMENT_EXTENSION_PHONE_NUMBER));
+    }
+
+    @Test
+    public void shouldReturnSharedSecret() throws Exception {
+        final EnrolledFactor securityEnrolledFactor = new EnrolledFactor();
+        securityEnrolledFactor.setFactorId("factor-id");
+        securityEnrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET, "1234"));
+        user.setFactors(List.of(securityEnrolledFactor));
+
+        router.route(AccountRoutes.FACTORS_OTP_SHARED_SECRET.getRoute())
+                .handler(accountFactorsEndpointHandler::getEnrolledFactorSharedSecretCode)
+                .handler(rc -> rc.response().end());
+
+
+
+        testRequest(HttpMethod.GET, "/api/factors/factor-id/sharedSecret",
+                null,
+                res -> res.bodyHandler(h -> {
+                    assertEquals("{\n" +
+                            "  \"sharedSecret\" : \"1234\"\n" +
+                            "}", h.toString());
+                }),
+                200,
+                "OK", null);
     }
 
     private void addFactors(User user) {
