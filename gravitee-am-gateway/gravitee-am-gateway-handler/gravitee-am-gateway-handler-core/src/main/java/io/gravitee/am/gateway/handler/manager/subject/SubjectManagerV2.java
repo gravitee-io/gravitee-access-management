@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.gravitee.am.gateway.handler.manager.subject;
 
 
@@ -24,6 +23,7 @@ import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,7 +60,7 @@ public class SubjectManagerV2 implements SubjectManager {
 
     @Override
     public void updateJWT(JWT jwt, User user) {
-        if (clientManager.get(user.getId()) != null) { //This is for extension grant because we cannot do distinguish between service and user profile
+        if (user.getId() != null && clientManager.entities().stream().map(Client::getClientId).anyMatch(user.getId()::equals)) { //This is for extension grant because we cannot do distinguish between service and user profile
             jwt.setSub(user.getId());
         } else {
             jwt.setInternalSub(generateInternalSubFrom(user));
