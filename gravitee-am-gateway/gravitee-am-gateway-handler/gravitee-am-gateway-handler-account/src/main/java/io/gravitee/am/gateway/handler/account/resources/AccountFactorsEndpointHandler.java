@@ -129,6 +129,7 @@ public class AccountFactorsEndpointHandler {
     public void listEnrolledFactors(RoutingContext routingContext) {
         final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
         final List<EnrolledFactor> enrolledFactors = user.getFactors() != null ? filteredEnrolledFactors(user) : Collections.emptyList();
+        enrolledFactors.forEach(this::sanitizeEnrolledFactor);
         AccountResponseHandler.handleDefaultResponse(routingContext, enrolledFactors);
     }
 
@@ -210,7 +211,7 @@ public class AccountFactorsEndpointHandler {
                     if (optionalEnrolledFactor.isPresent()) {
                         EnrolledFactor existingEnrolledFactor = optionalEnrolledFactor.get();
                         if (FactorStatus.ACTIVATED.equals(existingEnrolledFactor.getStatus())) {
-                            AccountResponseHandler.handleDefaultResponse(routingContext, existingEnrolledFactor);
+                            AccountResponseHandler.handleDefaultResponse(routingContext, sanitizeEnrolledFactor(existingEnrolledFactor));
                             return;
                         }
                     }
@@ -235,7 +236,7 @@ public class AccountFactorsEndpointHandler {
                         // save enrolled factor
                         accountService.upsertFactor(user.getId(), enrolledFactor, new DefaultUser(user))
                                 .subscribe(
-                                        __ -> AccountResponseHandler.handleDefaultResponse(routingContext, enrolledFactor),
+                                        __ -> AccountResponseHandler.handleDefaultResponse(routingContext, sanitizeEnrolledFactor(enrolledFactor)),
                                         routingContext::fail);
                     });
                 });
@@ -323,7 +324,7 @@ public class AccountFactorsEndpointHandler {
                     factorProvider.changeVariableFactorSecurity(enrolledFactor)
                             .flatMap(eF -> accountService.upsertFactor(user.getId(), eF, new DefaultUser(user)).map(__ -> eF))
                             .subscribe(
-                                    eF -> AccountResponseHandler.handleDefaultResponse(routingContext, eF),
+                                    eF -> AccountResponseHandler.handleDefaultResponse(routingContext, sanitizeEnrolledFactor(eF)),
                                     routingContext::fail
                             );
                 });
@@ -356,11 +357,11 @@ public class AccountFactorsEndpointHandler {
 
         // Remove recovery code from enrolled factor
         EnrolledFactor enrolledFactor = optionalEnrolledFactor.get();
-        if (RECOVERY_CODE.equals(enrolledFactor.getSecurity().getValue())) {
+        if (RECOVERY_CODE.equals(enrolledFactor.getSecurity().getType())) {
             routingContext.fail(new FactorNotFoundException(factorId));
             return;
         }
-        AccountResponseHandler.handleDefaultResponse(routingContext, enrolledFactor);
+        AccountResponseHandler.handleDefaultResponse(routingContext, sanitizeEnrolledFactor(enrolledFactor));
     }
 
     /**
@@ -400,6 +401,35 @@ public class AccountFactorsEndpointHandler {
                 );
     }
 
+    /**
+     * Get shared secret code for the selected enrolled factor (TOTP only)
+     *
+     * @param routingContext the routingContext holding the current user
+     */
+    public void getEnrolledFactorSharedSecretCode(RoutingContext routingContext) {
+        final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
+        final String factorId = routingContext.request().getParam(FACTOR_ID);
+
+        if (user.getFactors() == null) {
+            routingContext.fail(new FactorNotFoundException(factorId));
+            return;
+        }
+
+        Optional<EnrolledFactor> optionalEnrolledFactor = getEnrolledFactor(factorId, user);
+
+        if (optionalEnrolledFactor.isEmpty()) {
+            routingContext.fail(new FactorNotFoundException(factorId));
+            return;
+        }
+
+        EnrolledFactor enrolledFactor = optionalEnrolledFactor.get();
+        if (SHARED_SECRET.equals(enrolledFactor.getSecurity().getType())) {
+            AccountResponseHandler.handleDefaultResponse(routingContext, new JsonObject().put("sharedSecret", enrolledFactor.getSecurity().getValue()));
+        } else {
+            routingContext.fail(new FactorNotFoundException(factorId));
+        }
+    }
+
     public void updateEnrolledFactor(RoutingContext routingContext) {
         try {
             if (!validBody(routingContext)) {
@@ -432,7 +462,7 @@ public class AccountFactorsEndpointHandler {
                 enrolledFactor.setPrimary(updateEnrolledFactor.isPrimary());
                 accountService.upsertFactor(user.getId(), enrolledFactor, new DefaultUser(user))
                         .subscribe(
-                                __ -> AccountResponseHandler.handleDefaultResponse(routingContext, enrolledFactor),
+                                __ -> AccountResponseHandler.handleDefaultResponse(routingContext, sanitizeEnrolledFactor(enrolledFactor)),
                                 routingContext::fail
                         );
             });
@@ -579,7 +609,7 @@ public class AccountFactorsEndpointHandler {
                     return;
                 }
                 // challenge has been sent, respond with OK status
-                AccountResponseHandler.handleDefaultResponse(routingContext, enrolledFactor);
+                AccountResponseHandler.handleDefaultResponse(routingContext, sanitizeEnrolledFactor(enrolledFactor));
             });
         });
     }
@@ -812,5 +842,10 @@ public class AccountFactorsEndpointHandler {
 
     private InvalidRequestException invalidBodyException() {
         throw new InvalidRequestException("Unable to parse body message");
+    }
+
+    private EnrolledFactor sanitizeEnrolledFactor(EnrolledFactor enrolledFactor) {
+        enrolledFactor.setSecurity(null);
+        return enrolledFactor;
     }
 }
