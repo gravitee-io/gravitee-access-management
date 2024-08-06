@@ -79,14 +79,6 @@ public class MongoDeviceRepository extends AbstractManagementMongoRepository imp
 
     }
 
-    private Bson userIdMatches(UserId user) {
-        if (user.hasExternal()) {
-            return or(eq(FIELD_USER_ID, user.id()), and(eq(FIELD_USER_EXTERNAL_ID, user.externalId()), eq(FIELD_USER_SOURCE, user.source())));
-        } else {
-            return eq(FIELD_USER_ID, user.id());
-        }
-    }
-
     @Override
     public Maybe<Device> findByReferenceAndClientAndUserAndDeviceIdentifierAndDeviceId(
             ReferenceType referenceType, String referenceId, String client, UserId user, String deviceIdentifierId, String deviceId) {
