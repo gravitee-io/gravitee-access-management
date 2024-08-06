@@ -28,6 +28,7 @@ public enum AccountRoutes {
     FACTORS_CATALOG("/api/factors/catalog"),
     FACTORS_BY_ID("/api/factors/:factorId"),
     FACTORS_OTP_QR("/api/factors/:factorId/qr"),
+    FACTORS_OTP_SHARED_SECRET("/api/factors/:factorId/sharedSecret"),
     FACTORS_RECOVERY_CODE("/api/auth/recovery_code"),
     FACTORS_VERIFY("/api/factors/:factorId/verify"),
     FACTORS_SEND_CHALLENGE("/api/factors/:factorId/sendChallenge"),
