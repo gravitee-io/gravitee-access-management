@@ -29,14 +29,14 @@ import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
-import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.RateLimiterService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -62,9 +62,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
@@ -761,7 +761,7 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
 
         EnrolledFactor enrolledFactorCaptorValue = enrolledFactorCaptor.getValue();
         Assert.assertNotNull(enrolledFactorCaptorValue);
-        Assert.assertEquals(SHARED_SECRET, enrolledFactorCaptorValue.getSecurity().getValue());
+        Assert.assertNull(enrolledFactorCaptorValue.getSecurity());
         verify(auditService, times(1)).report(any());
     }
 
@@ -840,6 +840,30 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
                 429, "Too Many Requests", null);
 
         verify(auditService, times(1)).report(any());
+    }
+
+    @Test
+    public void shouldReturnSharedSecret() throws Exception {
+        final EnrolledFactor securityEnrolledFactor = new EnrolledFactor();
+        securityEnrolledFactor.setFactorId("factor-id");
+        securityEnrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET, "1234"));
+        user.setFactors(List.of(securityEnrolledFactor));
+
+        router.route(AccountRoutes.FACTORS_OTP_SHARED_SECRET.getRoute())
+                .handler(accountFactorsEndpointHandler::getEnrolledFactorSharedSecretCode)
+                .handler(rc -> rc.response().end());
+
+
+
+        testRequest(HttpMethod.GET, "/api/factors/factor-id/sharedSecret",
+                null,
+                res -> res.bodyHandler(h -> {
+                    assertEquals("{\n" +
+                            "  \"sharedSecret\" : \"1234\"\n" +
+                            "}", h.toString());
+                }),
+                200,
+                "OK", null);
     }
 
     private void addFactors(User user) {
