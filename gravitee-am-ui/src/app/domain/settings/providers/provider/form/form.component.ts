@@ -60,7 +60,6 @@ export class ProviderFormComponent implements OnChanges {
       this.applyPasswordInputToSensitiveFields(schema[key]);
       if (schema[key].sensitive) {
         schema[key].widget = 'password';
-        // Object.assign(schema[key], { 'widget': { type: 'password' } });
       }
     }
     return schema;
