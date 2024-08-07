@@ -3,6 +3,7 @@
 {{- $serviceAPIName := include "gravitee.api.fullname" . -}}
 {{- $serviceAPIPort := .Values.api.http.services.core.service.externalPort -}}
 {{- $ingressPath   := .Values.api.http.services.core.ingress.path -}}
+{{- $ingressPathType   := .Values.api.http.services.core.ingress.pathType -}}
 {{- $apiVersion := include "common.capabilities.ingress.apiVersion" . -}}
 apiVersion: {{ $apiVersion }}
 kind: Ingress
@@ -28,7 +29,7 @@ spec:
   - host: {{ $host | quote }}
     http:
       paths:
-      - pathType: Prefix
+      - pathType: {{ $ingressPathType }}
         path: {{ $ingressPath }}
         backend:
           {{- if (eq $apiVersion "networking.k8s.io/v1") }}
