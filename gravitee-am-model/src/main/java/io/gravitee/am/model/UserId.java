@@ -16,11 +16,6 @@
 package io.gravitee.am.model;
 
 public record UserId(String id, String externalId, String source) {
-    public UserId {
-        if (externalId == null ^ source == null) {
-            throw new IllegalArgumentException("externalId and source must both be null or neither can be null");
-        }
-    }
 
     /**
      * Create a new UserId without source information
