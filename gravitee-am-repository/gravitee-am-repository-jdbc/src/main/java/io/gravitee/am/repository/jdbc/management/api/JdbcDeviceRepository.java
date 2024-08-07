@@ -26,7 +26,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
 
@@ -50,9 +49,6 @@ public class JdbcDeviceRepository extends AbstractJdbcRepository implements Devi
     private static final String REF_TYPE_FIELD = "reference_type";
     private static final String ID_FIELD = "id";
     private static final String CLIENT_FIELD = "client";
-    private static final String USER_ID_FIELD = "user_id";
-    private static final String USER_EXTERNAL_ID_FIELD = "user_external_id";
-    private static final String USER_SOURCE_FIELD = "user_source";
     public static final String EXPIRES_AT_FIELD = "expires_at";
     public static final String DEVICE_IDENTIFIER_ID = "device_identifier_id";
     public static final String DEVICE_ID = "device_id";
@@ -74,14 +70,6 @@ public class JdbcDeviceRepository extends AbstractJdbcRepository implements Devi
                 ))
                 .all())
                 .map(this::toEntity);
-    }
-
-    private Criteria userMatches(UserId user) {
-        if (user.isExternal()) {
-            return where(USER_ID_FIELD).is(user.id()).or(where(USER_EXTERNAL_ID_FIELD).is(user.externalId()).and(USER_SOURCE_FIELD).is(user.source()));
-        } else {
-            return where(USER_ID_FIELD).is(user.id());
-        }
     }
 
     @Override

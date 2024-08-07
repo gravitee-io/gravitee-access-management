@@ -18,8 +18,8 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.management.handlers.management.api.resources.AbstractUsersResource;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
-import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -72,14 +72,15 @@ public class DevicesResource extends AbstractUsersResource {
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("user") String user,
+            @PathParam("domain") String domainId,
+            @PathParam("user") String userId,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER_DEVICE, Acl.LIST)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> this.deviceService.findByDomainAndUser(domain, UserId.internal(user)).toList()))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER_DEVICE, Acl.LIST)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapSingle(domain -> this.userService.findById(ReferenceType.DOMAIN, domain.getId(), userId))
+                        .flatMapSingle(user -> this.deviceService.findByDomainAndUser(domainId, user.getFullId()).toList()))
                 .subscribe(response::resume, response::resume);
     }
 

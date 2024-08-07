@@ -24,7 +24,7 @@ public record UserId(String id, String externalId, String source) {
         return new UserId(id, null, null);
     }
 
-    public boolean isExternal() {
+    public boolean hasExternal() {
         return source != null && externalId != null;
     }
 }
