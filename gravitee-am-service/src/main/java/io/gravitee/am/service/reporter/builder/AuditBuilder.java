@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ContainerNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.fge.jsonpatch.diff.JsonDiff;
+import com.google.common.collect.ImmutableMap;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
@@ -38,8 +39,10 @@ import io.gravitee.am.reporter.api.audit.model.AuditOutcome;
 
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.HashMap;
 
 import static com.fasterxml.jackson.core.JsonToken.VALUE_EMBEDDED_OBJECT;
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -49,9 +52,11 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
 
     private static final String UPDATED_AT = "updatedAt";
     private static final String CREATED_AT = "createdAt";
-    private String id;
+    private static final String EXTERNAL_ID = "externalId";
+    private static final String SOURCE_ID = "sourceId";
+    private final String id;
     private String transactionalId;
-    private Instant timestamp;
+    private final Instant timestamp;
     private ReferenceType referenceType;
     private String referenceId;
     private String accessPointId;
@@ -65,12 +70,16 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
     private String actorDisplayName;
     private ReferenceType actorReferenceType;
     private String actorReferenceId;
+    private String actorExternalId;
+    private String actorSourceId;
     private String targetId;
     private String targetType;
     private String targetAlternativeId;
     private String targetDisplayName;
     private ReferenceType targetReferenceType;
     private String targetReferenceId;
+    private String targetExternalId;
+    private String targetSourceId;
     private String ipAddress;
     private String userAgent;
     private Object oldValue;
@@ -172,7 +181,7 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
     }
 
     private String getDisplayName(User user) {
-       return user.getAdditionalInformation() != null && user.getAdditionalInformation().containsKey(StandardClaims.NAME) ?
+        return user.getAdditionalInformation() != null && user.getAdditionalInformation().containsKey(StandardClaims.NAME) ?
                 (String) user.getAdditionalInformation().get(StandardClaims.NAME) :
                 // default to username
                 user.getUsername();
@@ -216,21 +225,33 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
     }
 
     protected void setActor(String actorId, String actorType, String actorAlternativeId, String actorDisplayName, ReferenceType actorReferenceType, String actorReferenceId) {
+        setActor(actorId, actorType, actorAlternativeId, actorDisplayName, actorReferenceType, actorReferenceId, null, null);
+    }
+
+    protected void setActor(String actorId, String actorType, String actorAlternativeId, String actorDisplayName, ReferenceType actorReferenceType, String actorReferenceId, String actorExternalId, String actorSourceId) {
         this.actorId = actorId;
         this.actorType = actorType;
         this.actorAlternativeId = actorAlternativeId;
         this.actorDisplayName = actorDisplayName;
         this.actorReferenceType = actorReferenceType;
         this.actorReferenceId = actorReferenceId;
+        this.actorExternalId = actorExternalId;
+        this.actorSourceId = actorSourceId;
     }
 
     protected void setTarget(String targetId, String targetType, String targetAlternativeId, String targetDisplayName, ReferenceType targetReferenceType, String targetReferenceId) {
+        setTarget(targetId, targetType, targetAlternativeId, targetDisplayName, targetReferenceType, targetReferenceId, null, null);
+    }
+
+    protected void setTarget(String targetId, String targetType, String targetAlternativeId, String targetDisplayName, ReferenceType targetReferenceType, String targetReferenceId, String targetExternalId, String targetSourceId) {
         this.targetId = targetId;
         this.targetType = targetType;
         this.targetAlternativeId = targetAlternativeId;
         this.targetDisplayName = targetDisplayName;
         this.targetReferenceType = targetReferenceType;
         this.targetReferenceId = targetReferenceId;
+        this.targetExternalId = targetExternalId;
+        this.targetSourceId = targetSourceId;
     }
 
     protected void setNewValue(Object newValue) {
@@ -259,6 +280,10 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
         actor.setDisplayName(actorDisplayName);
         actor.setReferenceType(actorReferenceType);
         actor.setReferenceId(actorReferenceId);
+        var actorAttributes = new HashMap<String, Object>();
+        ofNullable(actorExternalId).ifPresent(v -> actorAttributes.put(EXTERNAL_ID, v));
+        ofNullable(actorSourceId).ifPresent(v -> actorAttributes.put(SOURCE_ID, v));
+        actor.setAttributes(ImmutableMap.copyOf(actorAttributes));
         audit.setActor(actor);
 
         // Network access point
@@ -279,6 +304,10 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
             target.setDisplayName(targetDisplayName);
             target.setReferenceType(targetReferenceType);
             target.setReferenceId(targetReferenceId);
+            var targetAttributes = new HashMap<String, Object>();
+            ofNullable(targetExternalId).ifPresent(v -> targetAttributes.put(EXTERNAL_ID, v));
+            ofNullable(targetSourceId).ifPresent(v -> targetAttributes.put(SOURCE_ID, v));
+            target.setAttributes(ImmutableMap.copyOf(targetAttributes));
             audit.setTarget(target);
         }
 
@@ -311,7 +340,7 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
             }
         } else {
             result.setStatus(Status.FAILURE);
-            result.setMessage(throwable.getMessage() + (throwable.getCause() != null ?  ". Cause: " + throwable.getCause().getMessage() : ""));
+            result.setMessage(throwable.getMessage() + (throwable.getCause() != null ? ". Cause: " + throwable.getCause().getMessage() : ""));
         }
         audit.setOutcome(result);
 
