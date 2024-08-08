@@ -61,7 +61,7 @@ public class UserAuditBuilder extends ManagementAuditBuilder<UserAuditBuilder> {
             referenceType(user.getReferenceType());
             referenceId(user.getReferenceId());
 
-            setTarget(user.getId(), EntityType.USER, user.getUsername(), getDisplayName(user), user.getReferenceType(), user.getReferenceId());
+            setTarget(user.getId(), EntityType.USER, user.getUsername(), getDisplayName(user), user.getReferenceType(), user.getReferenceId(), user.getExternalId(), user.getSource());
         }
         return this;
     }

@@ -30,6 +30,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.Mockito.mock;
 
 class AuditMessageValueDtoMappingTest {
 
@@ -67,18 +68,37 @@ class AuditMessageValueDtoMappingTest {
     }
 
     @Test
-    void shouldIgnoreEntityAdditionalAttributes() {
+    void shouldMapAdditionalAttributes() {
         var auditEntity = new AuditEntity();
         auditEntity.setId("id");
         auditEntity.setAlternativeId("alternativeId");
         auditEntity.setDisplayName("displayName");
         auditEntity.setReferenceId("referenceId");
         auditEntity.setReferenceType(ReferenceType.APPLICATION);
-        auditEntity.setAttributes(Map.of("a", 1, "b", "two"));
+        auditEntity.setAttributes(Map.of("a", "1", "b", "two"));
         assertThat(AuditEntityDto.from(auditEntity))
                 .usingRecursiveComparison()
                 .withEnumStringComparison()
                 .isEqualTo(auditEntity);
+    }
+
+    @Test
+    void shouldIntInMapAdditionalAttributeBeParsed() {
+        var auditEntity = new AuditEntity();
+        var value = 1;
+        var key = "a";
+        auditEntity.setAttributes(Map.of(key, value, "b", "two"));
+        AuditEntityDto from = AuditEntityDto.from(auditEntity);
+        assertThat(from.attributes().get(key)).isEqualTo(Integer.toString(value));
+    }
+
+    @Test
+    void shouldNotParsableInMapAdditionalAttributesBeReplaced() {
+        var auditEntity = new AuditEntity();
+        var key = "a";
+        auditEntity.setAttributes(Map.of(key, mock(Object.class), "b", "two"));
+        AuditEntityDto from = AuditEntityDto.from(auditEntity);
+        assertThat(from.attributes().get(key)).isEqualTo("");
     }
 
     private Node testNode() {
