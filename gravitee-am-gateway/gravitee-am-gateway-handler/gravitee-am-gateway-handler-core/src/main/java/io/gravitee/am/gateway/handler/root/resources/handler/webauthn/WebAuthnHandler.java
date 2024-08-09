@@ -25,7 +25,9 @@ import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
+import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Credential;
@@ -38,7 +40,6 @@ import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.CredentialService;
-import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.reactivex.rxjava3.core.Completable;
@@ -77,7 +78,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
     private static final String DEFAULT_ORIGIN = "http://localhost:8092";
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnHandler.class);
     private FactorManager factorManager;
-    private FactorService factorService;
+    private UserService userService;
     protected CredentialService credentialService;
     private UserAuthenticationManager userAuthenticationManager;
     protected Domain domain;
@@ -93,8 +94,8 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
         this.factorManager = factorManager;
     }
 
-    public void setFactorService(FactorService factorService) {
-        this.factorService = factorService;
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 
     public void setCredentialService(CredentialService credentialService) {
@@ -157,7 +158,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
     }
 
     protected void enrollFido2Factor(RoutingContext ctx, User authenticatedUser, EnrolledFactor enrolledFactor, Credential credential) {
-        factorService.enrollFactor(authenticatedUser, enrolledFactor)
+        userService.upsertFactor(authenticatedUser.getId(), enrolledFactor, new DefaultUser(authenticatedUser))
                 .ignoreElement()
                 .subscribe(
                         () -> {

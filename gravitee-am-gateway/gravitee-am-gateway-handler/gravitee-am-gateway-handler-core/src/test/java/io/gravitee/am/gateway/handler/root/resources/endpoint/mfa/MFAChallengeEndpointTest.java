@@ -38,7 +38,6 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.DeviceService;
-import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.MFAValidationAttemptException;
@@ -98,8 +97,6 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
     @Mock
     private CredentialService credentialService;
     @Mock
-    private FactorService factorService;
-    @Mock
     private RateLimiterService rateLimiterService;
     @Mock
     private VerifyAttemptService verifyAttemptService;
@@ -120,7 +117,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         localSessionStore = LocalSessionStore.create(vertx);
         mfaChallengeEndpoint =
                 new MFAChallengeEndpoint(factorManager, userService, templateEngine, deviceService, applicationContext,
-                        domain, credentialService, factorService, rateLimiterService, verifyAttemptService, emailService, auditService);
+                        domain, credentialService, rateLimiterService, verifyAttemptService, emailService, auditService);
 
         router.route("/mfa/challenge")
                 .handler(SessionHandler.create(localSessionStore))
@@ -140,7 +137,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         when(factorManager.getFactor("factorId")).thenReturn(factor);
         when(credentialService.update(any(), any(), any(), any())).thenReturn(Single.just(new Credential()));
         when(verifyAttemptService.checkVerifyAttempt(any(), any(), any(), any())).thenReturn(Maybe.empty());
-        when(factorService.enrollFactor(any(), any())).thenReturn(Single.just(mock(User.class)));
+        when(userService.upsertFactor(any(), any(), any())).thenReturn(Single.just(mock(User.class)));
 
         router.route(HttpMethod.POST, "/mfa/challenge")
                 .order(-1)
@@ -198,7 +195,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         when(factorManager.get("factorId")).thenReturn(factorProvider);
         when(factorManager.getFactor("factorId")).thenReturn(factor);
         when(verifyAttemptService.checkVerifyAttempt(any(), any(), any(), any())).thenReturn(Maybe.empty());
-        when(userService.addFactor(any(), any(), any())).thenReturn(Single.just(mock(User.class)));
+        when(userService.upsertFactor(any(), any(), any())).thenReturn(Single.just(mock(User.class)));
 
         router.route("/mfa/challenge/for/phoneExt")
                 .handler(SessionHandler.create(localSessionStore))
@@ -380,7 +377,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         when(factorManager.getFactor("factor")).thenReturn(factor);
         when(factorManager.get("factor")).thenReturn(factorProvider);
         when(verifyAttemptService.checkVerifyAttempt(any(), any(), any(), any())).thenReturn(Maybe.empty());
-        when(userService.addFactor(any(), any(), any())).thenAnswer(args -> Single.just(endUser));
+        when(userService.upsertFactor(any(), any(), any())).thenAnswer(args -> Single.just(endUser));
         testRequest(HttpMethod.POST,
                 "/mfa/challenge",
                 req -> {
@@ -396,7 +393,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
                 "Found", null);
 
         verify(auditService).report(any());
-        verify(userService).addFactor(any(), any(), any());
+        verify(userService).upsertFactor(any(), any(), any());
     }
 
     @Test
@@ -429,7 +426,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         when(factorManager.getFactor("factor")).thenReturn(factor);
         when(factorManager.get("factor")).thenReturn(factorProvider);
         when(verifyAttemptService.checkVerifyAttempt(any(), any(), any(), any())).thenReturn(Maybe.empty());
-        when(userService.addFactor(any(), any(), any())).thenAnswer(args -> Single.just(endUser));
+        when(userService.upsertFactor(any(), any(), any())).thenAnswer(args -> Single.just(endUser));
         testRequest(HttpMethod.POST,
                 "/mfa/challenge",
                 req -> {
@@ -445,7 +442,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
                 "Found", null);
 
         verify(auditService).report(any());
-        verify(userService).addFactor(any(), any(), any());
+        verify(userService).upsertFactor(any(), any(), any());
     }
 
     @Test

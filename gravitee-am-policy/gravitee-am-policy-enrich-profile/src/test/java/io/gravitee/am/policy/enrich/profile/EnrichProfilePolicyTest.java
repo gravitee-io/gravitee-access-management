@@ -15,11 +15,11 @@
  */
 package io.gravitee.am.policy.enrich.profile;
 
+import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.model.User;
 import io.gravitee.am.policy.enrich.profile.configuration.EnrichProfilePolicyConfiguration;
 import io.gravitee.am.policy.enrich.profile.configuration.Property;
-import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.el.TemplateEngine;
@@ -81,7 +81,7 @@ public class EnrichProfilePolicyTest {
     private EnrichProfilePolicyConfiguration configuration;
 
     @Mock
-    private UserRepository userRepository;
+    private UserService userService;
 
     @Before
     public void init() {
@@ -99,7 +99,7 @@ public class EnrichProfilePolicyTest {
         TemplateEngine tplEngine = new SpelTemplateEngineFactory().templateEngine();
         tplEngine.getTemplateContext().setVariable("request", new EvaluableRequest(requestWrapper));
         when(executionContext.getTemplateEngine()).thenReturn(tplEngine);
-        when(executionContext.getComponent(UserRepository.class)).thenReturn(userRepository);
+        when(executionContext.getComponent(UserService.class)).thenReturn(userService);
     }
 
     @Test
@@ -149,7 +149,7 @@ public class EnrichProfilePolicyTest {
         User user = mock(User.class);
         when(executionContext.getAttribute("user")).thenReturn(user);
 
-        when(userRepository.update(any(), any())).thenReturn(Single.error(new RuntimeException("Exception thrown for test")));
+        when(userService.update(any(), any())).thenReturn(Single.error(new RuntimeException("Exception thrown for test")));
 
 
         new EnrichProfilePolicy(configuration){
@@ -174,7 +174,7 @@ public class EnrichProfilePolicyTest {
         lock.await(1, TimeUnit.SECONDS);
         verify(policyChain, never()).failWith(any());
         verify(policyChain).doNext(any(), any());
-        verify(userRepository, never()).update(any());
+        verify(userService, never()).update(any());
     }
 
     @Test
@@ -191,7 +191,7 @@ public class EnrichProfilePolicyTest {
         when(user.getAdditionalInformation()).thenReturn(additionalInformation);
         when(executionContext.getAttribute("user")).thenReturn(user);
 
-        when(userRepository.update(any(), any())).thenReturn(Single.just(user));
+        when(userService.update(any(), any())).thenReturn(Single.just(user));
 
         EnrichProfilePolicy enrichProfilePolicy = new EnrichProfilePolicy(configuration);
         enrichProfilePolicy.onRequest(request, response, executionContext, policyChain);
@@ -199,7 +199,7 @@ public class EnrichProfilePolicyTest {
         lock.await(1, TimeUnit.SECONDS);
         verify(policyChain, never()).failWith(any());
         verify(policyChain).doNext(any(), any());
-        verify(userRepository).update(argThat(u ->
+        verify(userService).update(argThat(u ->
                 u.getAdditionalInformation() != null &&
                 u.getAdditionalInformation().containsKey("myclaim") &&
                 "myclaimValue".equals(u.getAdditionalInformation().get("myclaim")) &&
@@ -226,7 +226,7 @@ public class EnrichProfilePolicyTest {
         when(user.getAdditionalInformation()).thenReturn(additionalInformation);
         when(executionContext.getAttribute("user")).thenReturn(user);
 
-        when(userRepository.update(any(), any())).thenReturn(Single.just(user));
+        when(userService.update(any(), any())).thenReturn(Single.just(user));
 
         EnrichProfilePolicy enrichProfilePolicy = new EnrichProfilePolicy(configuration);
         enrichProfilePolicy.onRequest(request, response, executionContext, policyChain);
@@ -235,7 +235,7 @@ public class EnrichProfilePolicyTest {
         verify(policyChain, never()).failWith(any());
         verify(policyChain).doNext(any(), any());
         var captor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository).update(captor.capture(),
+        verify(userService).update(captor.capture(),
                 argThat(actions -> !actions.updateRequire()));
         var updatedUser = captor.getValue();
         assertNotNull(updatedUser.getAdditionalInformation());

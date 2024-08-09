@@ -13,27 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.user;
 
-import io.gravitee.am.model.User;
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Maybe;
+package io.gravitee.am.repository.exceptions;
+
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UserStore {
-
-    Maybe<User> add(User user);
-
-    Completable remove(String userId);
-
-    Maybe<User> get(String userId);
-
-    Completable removeByInternalSub(String gis);
-
-    Maybe<User> getByInternalSub(String gis);
-
-    Completable clear();
+public class RepositoryConnectionException extends TechnicalException {
+    public RepositoryConnectionException(Throwable cause) {
+        super(cause);
+    }
 }

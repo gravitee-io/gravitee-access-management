@@ -57,9 +57,17 @@ public interface UserService {
 
     Completable logout(User user, boolean invalidateTokens, io.gravitee.am.identityprovider.api.User principal);
 
-    Single<User> addFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal);
+    @Deprecated(since = "4.5.0", forRemoval = true)
+    default Single<User> addFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal) {
+        return upsertFactor(userId, enrolledFactor, principal);
+    }
 
-    Single<User> updateFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal);
+    @Deprecated(since = "4.5.0", forRemoval = true)
+    default Single<User> updateFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal) {
+        return upsertFactor(userId, enrolledFactor, principal);
+    }
+
+    Single<User> upsertFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal);
 
     Completable setMfaEnrollmentSkippedTime(Client client, User user);
 

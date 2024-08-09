@@ -16,14 +16,10 @@
 package io.gravitee.am.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.am.common.exception.mfa.InvalidFactorAttributeException;
-import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.factor.EnrolledFactor;
-import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
@@ -530,71 +526,4 @@ public class UserServiceTest {
         verify(userRepository, never()).delete("my-user");
     }
 
-    @Test
-    public void shouldUpsertFactor_SMS() {
-        final var userid = "userid";
-        final var enrolledFactor = new EnrolledFactor();
-        enrolledFactor.setFactorId("factorid");
-        enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.SMS, "+33606060606"));
-
-        when(userRepository.findById(userid)).thenReturn(Maybe.just(new User()));
-        when(userRepository.update(any(), any())).thenReturn(Single.just(new User()));
-
-        final var observer = userService.upsertFactor(userid, enrolledFactor, new DefaultUser()).test();
-        observer.awaitDone(10, TimeUnit.SECONDS);
-        observer.assertNoErrors();
-
-        verify(userRepository).update(argThat(user -> user.getFactors() != null
-                && !user.getFactors().isEmpty()
-                && user.getFactors().get(0).getFactorId().equals(enrolledFactor.getFactorId()) ), any());
-    }
-
-    @Test
-    public void shouldUpsertFactor_Email() {
-        final var userid = "userid";
-        final var enrolledFactor = new EnrolledFactor();
-        enrolledFactor.setFactorId("factorid");
-        enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.EMAIL, "test@acme.com"));
-
-        when(userRepository.findById(userid)).thenReturn(Maybe.just(new User()));
-        when(userRepository.update(any(), any())).thenReturn(Single.just(new User()));
-
-        final var observer = userService.upsertFactor(userid, enrolledFactor, new DefaultUser()).test();
-        observer.awaitDone(10, TimeUnit.SECONDS);
-        observer.assertNoErrors();
-
-        verify(userRepository).update(argThat(user -> user.getFactors() != null
-                && !user.getFactors().isEmpty()
-                && user.getFactors().get(0).getFactorId().equals(enrolledFactor.getFactorId()) ), any());
-    }
-
-    @Test
-    public void shouldNotUpsertFactor_MissingPhoneNumber() {
-        final var userid = "userid";
-        final var enrolledFactor = new EnrolledFactor();
-        enrolledFactor.setFactorId("factorid");
-        enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.SMS, null));
-
-        when(userRepository.findById(userid)).thenReturn(Maybe.just(new User()));
-
-        final var observer = userService.upsertFactor(userid, enrolledFactor, new DefaultUser()).test();
-        observer.awaitDone(10, TimeUnit.SECONDS);
-        observer.assertError(InvalidFactorAttributeException.class);
-
-        verify(userRepository, never()).update(any());
-    }
-    @Test
-    public void shouldNotUpsertFactor_MissingEmail() {
-        final var userid = "userid";
-        final var enrolledFactor = new EnrolledFactor();
-        enrolledFactor.setFactorId("factorid");
-        enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.EMAIL, null));
-
-        when(userRepository.findById(userid)).thenReturn(Maybe.just(new User()));
-
-        final var observer = userService.upsertFactor(userid, enrolledFactor, new DefaultUser()).test();
-        observer.awaitDone(10, TimeUnit.SECONDS);
-        observer.assertError(InvalidFactorAttributeException.class);
-        verify(userRepository, never()).update(any());
-    }
 }

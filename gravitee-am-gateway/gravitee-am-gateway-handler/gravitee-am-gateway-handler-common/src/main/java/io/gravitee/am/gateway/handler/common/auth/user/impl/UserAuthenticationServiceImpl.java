@@ -70,8 +70,8 @@ import static java.util.Optional.ofNullable;
  */
 public class UserAuthenticationServiceImpl implements UserAuthenticationService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserAuthenticationServiceImpl.class);
     private static final String SOURCE_FIELD = "source";
+    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     private Domain domain;

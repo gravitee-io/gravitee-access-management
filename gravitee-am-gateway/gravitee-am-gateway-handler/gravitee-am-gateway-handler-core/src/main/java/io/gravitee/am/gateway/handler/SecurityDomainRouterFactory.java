@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.common.flow.FlowManager;
 import io.gravitee.am.gateway.handler.common.group.impl.InMemoryGroupManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.role.impl.InMemoryRoleManager;
+import io.gravitee.am.gateway.handler.common.utils.ConfigurationHelper;
 import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
@@ -42,12 +43,12 @@ import io.gravitee.common.component.LifecycleComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.Environment;
 
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -65,13 +66,8 @@ public class SecurityDomainRouterFactory {
     @Autowired
     private ApplicationContext gatewayApplicationContext;
 
-    @Value("${sync.groups.enabled:false}")
-    private Boolean groupsSyncEnabled;
-
-
-    @Value("${sync.roles.enabled:false}")
-    private Boolean rolesSyncEnabled;
-
+    @Autowired
+    private Environment environment;
 
     public VertxSecurityDomainHandler create(Domain domain) {
         if (domain.isEnabled()) {
@@ -132,11 +128,8 @@ public class SecurityDomainRouterFactory {
         components.add(ThemeManager.class);
         components.add(PasswordPolicyManager.class);
 
-        if (rolesSyncEnabled) {
+        if (ConfigurationHelper.useInMemoryRoleAndGroupManager(environment)) {
             components.add(InMemoryRoleManager.class);
-        }
-
-        if (groupsSyncEnabled) {
             components.add(InMemoryGroupManager.class);
         }
 
@@ -148,6 +141,5 @@ public class SecurityDomainRouterFactory {
                 logger.error("An error occurs while starting component {}", componentClass.getSimpleName(), e);
             }
         });
-
     }
 }

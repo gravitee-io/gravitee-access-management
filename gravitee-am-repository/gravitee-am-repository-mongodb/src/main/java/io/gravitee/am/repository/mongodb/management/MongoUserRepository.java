@@ -16,18 +16,24 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.MongoServerUnavailableException;
+import com.mongodb.MongoSocketOpenException;
+import com.mongodb.MongoTimeoutException;
 import com.mongodb.client.model.Accumulators;
 import com.mongodb.client.model.Aggregates;
 import io.gravitee.am.common.analytics.Field;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
+import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.UserMongo;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.MaybeSource;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.core.SingleSource;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -180,5 +186,57 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
     @Override
     protected UserMongo convert(User user) {
         return convert(user, new UserMongo());
+    }
+
+    @Override
+    public Maybe<User> findById(String userId) {
+        return super.findById(userId).onErrorResumeNext(this::mapException);
+    }
+
+    @Override
+    public Maybe<User> findById(ReferenceType referenceType, String referenceId, String userId) {
+        return super.findById(referenceType, referenceId, userId).onErrorResumeNext(this::mapException);
+    }
+
+    @Override
+    public Maybe<User> findByExternalIdAndSource(ReferenceType referenceType, String referenceId, String externalId, String source) {
+        return super.findByExternalIdAndSource(referenceType, referenceId, externalId, source).onErrorResumeNext(this::mapException);
+    }
+
+    @Override
+    public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source) {
+        return super.findByUsernameAndSource(referenceType, referenceId, username, source).onErrorResumeNext(this::mapException);
+    }
+
+    @Override
+    public Single<User> create(User item) {
+        return super.create(item).onErrorResumeNext(this::mapExceptionAsSingle);
+    }
+
+    @Override
+    public Single<User> update(User item) {
+        return super.update(item).onErrorResumeNext(this::mapExceptionAsSingle);
+    }
+
+    @Override
+    public Single<User> update(User item, UpdateActions actions) {
+        return super.update(item, actions).onErrorResumeNext(this::mapExceptionAsSingle);
+    }
+
+    private MaybeSource<? extends User> mapException(Throwable error) {
+        if (isConnectionError(error) || isConnectionError(error.getCause())) {
+            return Maybe.error(new RepositoryConnectionException(error));
+        }
+        return Maybe.error(error);
+    }
+
+    private SingleSource<? extends User> mapExceptionAsSingle(Throwable error) {
+        return Single.fromMaybe(mapException(error));
+    }
+
+    private static boolean isConnectionError(Throwable error) {
+        return error != null && (error instanceof MongoTimeoutException ||
+                error instanceof MongoServerUnavailableException ||
+                error instanceof MongoSocketOpenException);
     }
 }

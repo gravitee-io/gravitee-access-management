@@ -55,8 +55,14 @@ import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.ruleengine.SpELRuleEngine;
 import io.gravitee.am.gateway.handler.common.spring.web.WebConfiguration;
 import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserStore;
+import io.gravitee.am.gateway.handler.common.user.impl.NoUserStore;
 import io.gravitee.am.gateway.handler.common.user.impl.UserEnhancerFacade;
 import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImpl;
+import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImplV2;
+import io.gravitee.am.gateway.handler.common.user.impl.UserStoreImpl;
+import io.gravitee.am.gateway.handler.common.user.impl.UserStoreImplV2;
+import io.gravitee.am.gateway.handler.common.utils.ConfigurationHelper;
 import io.gravitee.am.gateway.handler.common.utils.StaticEnvironmentProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
@@ -67,7 +73,10 @@ import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.context.TemplateVariableProviderFactory;
 import io.gravitee.am.gateway.handler.context.spring.ContextConfiguration;
 import io.gravitee.am.gateway.policy.spring.PolicyConfiguration;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.service.impl.user.UserEnhancer;
+import io.gravitee.node.api.cache.CacheManager;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
@@ -76,7 +85,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -210,8 +218,19 @@ public class CommonConfiguration {
     }
 
     @Bean
-    public UserService userService() {
-        return new UserServiceImpl();
+    public UserStore userStore(Domain domain, CacheManager cacheManager, Environment environment) {
+        if (ConfigurationHelper.useUserStore(environment)) {
+            return domain.getVersion() == DomainVersion.V1_0 ? new UserStoreImpl(cacheManager, environment) : new UserStoreImplV2(cacheManager, environment);
+        }
+        return new NoUserStore();
+    }
+
+    @Bean
+    public UserService userService(Domain domain) {
+        if (domain.getVersion() == DomainVersion.V1_0) {
+            return new UserServiceImpl();
+        }
+        return new UserServiceImplV2();
     }
 
     @Bean
@@ -261,10 +280,9 @@ public class CommonConfiguration {
     public PasswordPolicyManager passwordPolicyManager() {
         return new PasswordPolicyManagerImpl();
     }
-
     @Bean
-    public GroupManager groupManager(@Value("${sync.groups.enabled:false}") Boolean enabled) {
-        if (enabled) {
+    public GroupManager groupManager(Environment environment) {
+        if (ConfigurationHelper.useInMemoryRoleAndGroupManager(environment)) {
             return new InMemoryGroupManager();
         } else {
             return new DefaultGroupManager();
@@ -272,8 +290,8 @@ public class CommonConfiguration {
     }
 
     @Bean
-    public RoleManager roleManager(@Value("${sync.roles.enabled:false}") Boolean enabled) {
-        if (enabled) {
+    public RoleManager roleManager(Environment environment) {
+        if (ConfigurationHelper.useInMemoryRoleAndGroupManager(environment)) {
             return new InMemoryRoleManager();
         } else {
             return new DefaultRoleManager();
