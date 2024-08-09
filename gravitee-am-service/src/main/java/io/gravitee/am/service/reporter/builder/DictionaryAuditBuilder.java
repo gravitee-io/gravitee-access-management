@@ -38,7 +38,7 @@ public class DictionaryAuditBuilder extends ManagementAuditBuilder<DictionaryAud
             }
             referenceType(dictionary.getReferenceType());
             referenceId(dictionary.getReferenceId());
-            setTarget(dictionary.getId(), I18N_DICTIONARY, null, dictionary.getName(), dictionary.getReferenceType(), dictionary.getReferenceId());
+            setTarget(dictionary.getId(), I18N_DICTIONARY, null, dictionary.getName(), dictionary.getReferenceType(), dictionary.getReferenceId(), null, null);
         }
         return this;
     }

@@ -31,7 +31,7 @@ public class MFAAuditBuilder extends GatewayAuditBuilder<MFAAuditBuilder> {
     }
 
     public MFAAuditBuilder factor(Factor factor) {
-        setTarget(factor.getId(), MFA_FACTOR, null, factor.getName(), null, null);
+        setTarget(factor.getId(), MFA_FACTOR, null, factor.getName(), null, null, null, null);
         return this;
     }
 
@@ -63,7 +63,7 @@ public class MFAAuditBuilder extends GatewayAuditBuilder<MFAAuditBuilder> {
 
     public MFAAuditBuilder user(User user) {
         if (user != null) {
-            setActor(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId());
+            setActor(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId(), user.getExternalId(), user.getSource());
             if (user.getAdditionalInformation() != null) {
                 if (user.getAdditionalInformation().containsKey(Claims.IP_ADDRESS)) {
                     ipAddress((String) user.getAdditionalInformation().get(Claims.IP_ADDRESS));

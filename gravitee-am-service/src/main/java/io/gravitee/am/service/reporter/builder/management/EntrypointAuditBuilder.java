@@ -39,7 +39,7 @@ public class EntrypointAuditBuilder extends ManagementAuditBuilder<EntrypointAud
 
             referenceId(entrypoint.getOrganizationId());
 
-            setTarget(entrypoint.getId(), EntityType.ENTRYPOINT, null, entrypoint.getName(), ReferenceType.ORGANIZATION, entrypoint.getOrganizationId());
+            setTarget(entrypoint.getId(), EntityType.ENTRYPOINT, null, entrypoint.getName(), ReferenceType.ORGANIZATION, entrypoint.getOrganizationId(), null, null);
         }
         return this;
     }

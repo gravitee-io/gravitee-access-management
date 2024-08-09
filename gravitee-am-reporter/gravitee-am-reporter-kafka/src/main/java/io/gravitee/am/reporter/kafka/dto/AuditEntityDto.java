@@ -15,10 +15,14 @@
  */
 package io.gravitee.am.reporter.kafka.dto;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.reporter.api.audit.model.AuditEntity;
 import lombok.Builder;
 
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Builder
 public record AuditEntityDto(String id,
@@ -26,7 +30,8 @@ public record AuditEntityDto(String id,
                              String type,
                              String displayName,
                              String referenceType,
-                             String referenceId) {
+                             String referenceId,
+                             Map<String, String> attributes) {
 
     public static AuditEntityDto from(AuditEntity entity) {
         if (entity == null) {
@@ -39,6 +44,22 @@ public record AuditEntityDto(String id,
                 .displayName(entity.getDisplayName())
                 .referenceType(Objects.toString(entity.getReferenceType()))
                 .referenceId(entity.getReferenceId())
+                .attributes(getStringAttributes(entity))
                 .build();
+    }
+
+    private static Map<String, String> getStringAttributes(AuditEntity entity) {
+        var mapper = new ObjectMapper();
+        return entity.getAttributes().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> {
+            if (e.getValue() instanceof String value) {
+                return value;
+            } else {
+                try {
+                    return mapper.writeValueAsString(e.getValue());
+                } catch (JsonProcessingException ex) {
+                    return "";
+                }
+            }
+        }));
     }
 }

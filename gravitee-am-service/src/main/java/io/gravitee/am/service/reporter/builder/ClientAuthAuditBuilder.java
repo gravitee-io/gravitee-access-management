@@ -30,7 +30,7 @@ public class ClientAuthAuditBuilder extends GatewayAuditBuilder<ClientAuthAuditB
     public ClientAuthAuditBuilder clientActor(Client client) {
         if (client != null) {
             var domainId = client.getDomain();
-            setActor(client.getId(), EntityType.APPLICATION, client.getClientName(), client.getClientName(), ReferenceType.DOMAIN, domainId);
+            setActor(client.getId(), EntityType.APPLICATION, client.getClientName(), client.getClientName(), ReferenceType.DOMAIN, domainId, null, null);
             super.client(client);
             super.domain(domainId);
         }

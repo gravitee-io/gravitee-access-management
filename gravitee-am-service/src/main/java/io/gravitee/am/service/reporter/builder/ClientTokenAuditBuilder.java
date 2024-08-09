@@ -80,7 +80,7 @@ public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAudi
 
     public ClientTokenAuditBuilder tokenActor(Client client) {
         if (client != null) {
-            setActor(client.getId(), EntityType.APPLICATION, client.getClientName(), client.getClientName(), ReferenceType.DOMAIN, client.getDomain());
+            setActor(client.getId(), EntityType.APPLICATION, client.getClientName(), client.getClientName(), ReferenceType.DOMAIN, client.getDomain(), null, null);
             super.client(client);
             super.domain(client.getDomain());
         }
@@ -89,7 +89,7 @@ public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAudi
 
     public ClientTokenAuditBuilder tokenActor(User user) {
         if (user != null) {
-            setActor(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId());
+            setActor(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId(), user.getExternalId(), user.getSource());
             if (ReferenceType.DOMAIN.equals(user.getReferenceType())) {
                 super.domain(user.getReferenceId());
             }
@@ -99,7 +99,7 @@ public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAudi
 
     public ClientTokenAuditBuilder tokenTarget(User user) {
         if (user != null) {
-            setTarget(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId());
+            setTarget(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId(), user.getExternalId(), user.getSource());
             if (ReferenceType.DOMAIN.equals(user.getReferenceType())) {
                 super.domain(user.getReferenceId());
             }

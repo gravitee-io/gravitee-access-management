@@ -36,7 +36,7 @@ public class ServiceResourceAuditBuilder extends ManagementAuditBuilder<ServiceR
             }
             this.referenceId(resource.getReferenceId());
             this.referenceType(resource.getReferenceType());
-            setTarget(resource.getId(), EntityType.RESOURCE, null, resource.getName(), resource.getReferenceType(), resource.getReferenceId());
+            setTarget(resource.getId(), EntityType.RESOURCE, null, resource.getName(), resource.getReferenceType(), resource.getReferenceId(), null, null);
         }
         return this;
     }

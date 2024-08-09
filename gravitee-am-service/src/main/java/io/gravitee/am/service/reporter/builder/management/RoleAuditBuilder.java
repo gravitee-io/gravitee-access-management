@@ -38,7 +38,7 @@ public class RoleAuditBuilder extends ManagementAuditBuilder<RoleAuditBuilder> {
             referenceType(role.getReferenceType());
             referenceId(role.getReferenceId());
 
-            setTarget(role.getId(), EntityType.ROLE, null, role.getName(), role.getReferenceType(), role.getReferenceId());
+            setTarget(role.getId(), EntityType.ROLE, null, role.getName(), role.getReferenceType(), role.getReferenceId(), null, null);
         }
         return this;
     }

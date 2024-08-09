@@ -36,7 +36,7 @@ public class FactorAuditBuilder extends ManagementAuditBuilder<FactorAuditBuilde
                 setNewValue(factor);
             }
             domain(factor.getDomain());
-            setTarget(factor.getId(), EntityType.FACTOR, null, factor.getName(), ReferenceType.DOMAIN, factor.getDomain());
+            setTarget(factor.getId(), EntityType.FACTOR, null, factor.getName(), ReferenceType.DOMAIN, factor.getDomain(), null, null);
         }
         return this;
     }

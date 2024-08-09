@@ -36,7 +36,7 @@ public class CertificateAuditBuilder extends ManagementAuditBuilder<CertificateA
                 setNewValue(certificate);
             }
             domain(certificate.getDomain());
-            setTarget(certificate.getId(), EntityType.CERTIFICATE, null, certificate.getName(), ReferenceType.DOMAIN, certificate.getDomain());
+            setTarget(certificate.getId(), EntityType.CERTIFICATE, null, certificate.getName(), ReferenceType.DOMAIN, certificate.getDomain(), null, null);
         }
         return this;
     }

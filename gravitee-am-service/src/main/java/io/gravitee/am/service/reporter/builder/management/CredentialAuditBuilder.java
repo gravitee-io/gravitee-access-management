@@ -36,7 +36,7 @@ public class CredentialAuditBuilder extends ManagementAuditBuilder<CredentialAud
             }
             referenceId(credential.getReferenceId());
             referenceType(credential.getReferenceType());
-            setTarget(credential.getId(), EntityType.CREDENTIAL, credential.getAaguid(), credential.getCredentialId(), credential.getReferenceType(), credential.getReferenceId());
+            setTarget(credential.getId(), EntityType.CREDENTIAL, credential.getAaguid(), credential.getCredentialId(), credential.getReferenceType(), credential.getReferenceId(), null, null);
         }
         return this;
     }

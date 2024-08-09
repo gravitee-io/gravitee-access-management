@@ -38,7 +38,7 @@ public class AlertTriggerAuditBuilder extends ManagementAuditBuilder<AlertTrigge
             referenceType(alertTrigger.getReferenceType());
             referenceId(alertTrigger.getReferenceId());
 
-            setTarget(alertTrigger.getId(), EntityType.ALERT_TRIGGER, null, alertTrigger.getType().name(), alertTrigger.getReferenceType(), alertTrigger.getReferenceId());
+            setTarget(alertTrigger.getId(), EntityType.ALERT_TRIGGER, null, alertTrigger.getType().name(), alertTrigger.getReferenceType(), alertTrigger.getReferenceId(), null, null);
         }
         return this;
     }

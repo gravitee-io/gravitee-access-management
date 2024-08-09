@@ -385,6 +385,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
             actorMongo.setDisplayName(actor.getDisplayName());
             actorMongo.setReferenceType(actor.getReferenceType() != null ? actor.getReferenceType().name() : null);
             actorMongo.setReferenceId(actor.getReferenceId());
+            actorMongo.setAttributes(new Document(actor.getAttributes()));
             auditMongo.setActor(actorMongo);
         }
 
@@ -410,6 +411,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
             targetMongo.setDisplayName(target.getDisplayName());
             targetMongo.setReferenceType(target.getReferenceType() != null ? target.getReferenceType().name() : null);
             targetMongo.setReferenceId(target.getReferenceId());
+            targetMongo.setAttributes(new Document(target.getAttributes()));
             auditMongo.setTarget(targetMongo);
         }
 
@@ -443,6 +445,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
             actor.setDisplayName(actorMongo.getDisplayName());
             actor.setReferenceType(actorMongo.getReferenceType() != null ? ReferenceType.valueOf(actorMongo.getReferenceType()) : null);
             actor.setReferenceId(actorMongo.getReferenceId());
+            actor.setAttributes(actorMongo.getAttributes());
             audit.setActor(actor);
         }
 
@@ -468,6 +471,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
             target.setDisplayName(targetMongo.getDisplayName());
             target.setReferenceType(targetMongo.getReferenceType() != null ? ReferenceType.valueOf(targetMongo.getReferenceType()) : null);
             target.setReferenceId(targetMongo.getReferenceId());
+            target.setAttributes(targetMongo.getAttributes());
             audit.setTarget(target);
         }
 

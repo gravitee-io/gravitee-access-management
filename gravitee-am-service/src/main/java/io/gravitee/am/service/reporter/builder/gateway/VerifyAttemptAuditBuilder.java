@@ -44,7 +44,7 @@ public class VerifyAttemptAuditBuilder extends GatewayAuditBuilder<VerifyAttempt
 
     public VerifyAttemptAuditBuilder user(User user) {
         if (user != null) {
-            setActor(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId());
+            setActor(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId(), user.getExternalId(), user.getSource());
         }
 
         return this;

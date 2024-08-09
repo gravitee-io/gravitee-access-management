@@ -40,7 +40,7 @@ public class GroupAuditBuilder extends ManagementAuditBuilder<GroupAuditBuilder>
             referenceType(group.getReferenceType());
             referenceId(group.getReferenceId());
 
-            setTarget(group.getId(), EntityType.GROUP, null, group.getName(), group.getReferenceType(), group.getReferenceId());
+            setTarget(group.getId(), EntityType.GROUP, null, group.getName(), group.getReferenceType(), group.getReferenceId(), null, null);
         }
         return this;
     }

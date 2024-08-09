@@ -36,7 +36,7 @@ public class ScopeAuditBuilder extends ManagementAuditBuilder<ScopeAuditBuilder>
                 setNewValue(scope);
             }
             domain(scope.getDomain());
-            setTarget(scope.getId(), EntityType.SCOPE, scope.getKey(), scope.getName(), ReferenceType.DOMAIN, scope.getDomain());
+            setTarget(scope.getId(), EntityType.SCOPE, scope.getKey(), scope.getName(), ReferenceType.DOMAIN, scope.getDomain(), null, null);
         }
         return this;
     }

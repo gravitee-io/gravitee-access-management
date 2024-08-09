@@ -36,7 +36,7 @@ public class PasswordPolicyAuditBuilder extends ManagementAuditBuilder<PasswordP
             }
             referenceId(policy.getReferenceId());
             referenceType(policy.getReferenceType());
-            setTarget(policy.getId(), EntityType.PASSWORD_POLICY, null, policy.getName(), policy.getReferenceType(), policy.getReferenceId());
+            setTarget(policy.getId(), EntityType.PASSWORD_POLICY, null, policy.getName(), policy.getReferenceType(), policy.getReferenceId(), null, null);
         }
         return this;
     }

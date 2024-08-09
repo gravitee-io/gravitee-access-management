@@ -34,11 +34,11 @@ public abstract class ManagementAuditBuilder<T extends ManagementAuditBuilder<T>
     protected ManagementAuditBuilder() {
         super();
         client(ADMIN_CLIENT);
-        setActor(SYSTEM, SYSTEM, SYSTEM, SYSTEM, ReferenceType.PLATFORM, Platform.DEFAULT);
+        setActor(SYSTEM, SYSTEM, SYSTEM, SYSTEM, ReferenceType.PLATFORM, Platform.DEFAULT, null, null);
     }
 
     public T systemPrincipal() {
-        setActor(SYSTEM, SYSTEM, SYSTEM, SYSTEM, ReferenceType.PLATFORM, Platform.DEFAULT);
+        setActor(SYSTEM, SYSTEM, SYSTEM, SYSTEM, ReferenceType.PLATFORM, Platform.DEFAULT, null, null);
         return (T) this;
     }
 

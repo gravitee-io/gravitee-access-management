@@ -34,7 +34,7 @@ public class EmailAuditBuilder extends AuditBuilder<EmailAuditBuilder> {
     public EmailAuditBuilder() {
         super();
         // emails are sent by system actor
-        setActor(SYSTEM, SYSTEM, SYSTEM, SYSTEM, ReferenceType.PLATFORM, Platform.DEFAULT);
+        setActor(SYSTEM, SYSTEM, SYSTEM, SYSTEM, ReferenceType.PLATFORM, Platform.DEFAULT, null, null);
     }
 
     public EmailAuditBuilder email(Email email) {
@@ -46,7 +46,7 @@ public class EmailAuditBuilder extends AuditBuilder<EmailAuditBuilder> {
 
     public EmailAuditBuilder user(User user) {
         if (user != null) {
-            setTarget(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId());
+            setTarget(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId(), user.getExternalId(), user.getSource());
         }
         return this;
     }

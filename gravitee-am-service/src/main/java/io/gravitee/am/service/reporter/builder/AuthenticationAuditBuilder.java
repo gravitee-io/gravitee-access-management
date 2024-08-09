@@ -42,14 +42,14 @@ public class AuthenticationAuditBuilder extends AuditBuilder<AuthenticationAudit
                 userAgent((String) principal.getContext().get(Claims.USER_AGENT));
             }
 
-            setActor(null, EntityType.USER, (String) principal.getPrincipal(), null, null, null);
+            setActor(null, EntityType.USER, (String) principal.getPrincipal(), null, null, null, null, null);
         }
         return this;
     }
 
     public AuthenticationAuditBuilder user(User user) {
         if (user != null) {
-            setActor(user.getId(), EntityType.USER, user.getUsername(), getDisplayName(user), user.getReferenceType(), user.getReferenceId());
+            setActor(user.getId(), EntityType.USER, user.getUsername(), getDisplayName(user), user.getReferenceType(), user.getReferenceId(), user.getExternalId(), user.getSource());
         }
         return this;
     }

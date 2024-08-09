@@ -43,7 +43,7 @@ public class MembershipAuditBuilder extends ManagementAuditBuilder<MembershipAud
                 referenceId(membership.getReferenceId());
             }
 
-            setTarget(membership.getId(), EntityType.MEMBERSHIP, null, membership.getId(), ReferenceType.DOMAIN, membership.getDomain());
+            setTarget(membership.getId(), EntityType.MEMBERSHIP, null, membership.getId(), ReferenceType.DOMAIN, membership.getDomain(), null, null);
         }
         return this;
     }

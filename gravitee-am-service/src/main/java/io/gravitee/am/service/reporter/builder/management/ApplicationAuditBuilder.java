@@ -38,7 +38,7 @@ public class ApplicationAuditBuilder extends ManagementAuditBuilder<ApplicationA
                 setNewValue(application);
             }
             domain(application.getDomain());
-            setTarget(application.getId(), EntityType.APPLICATION, null, application.getName(), ReferenceType.DOMAIN, application.getDomain());
+            setTarget(application.getId(), EntityType.APPLICATION, null, application.getName(), ReferenceType.DOMAIN, application.getDomain(), null, null);
         }
         return this;
     }

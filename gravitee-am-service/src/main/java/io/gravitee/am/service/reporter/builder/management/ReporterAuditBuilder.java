@@ -35,7 +35,7 @@ public class ReporterAuditBuilder extends ManagementAuditBuilder<ReporterAuditBu
                 setNewValue(reporter);
             }
             reference(reporter.getReference());
-            setTarget(reporter.getId(), EntityType.REPORTER, null, reporter.getName(), reporter.getReference().type(), reporter.getReference().id());
+            setTarget(reporter.getId(), EntityType.REPORTER, null, reporter.getName(), reporter.getReference().type(), reporter.getReference().id(), null, null);
         }
         return this;
     }

@@ -42,4 +42,24 @@ export class AuditComponent implements OnInit {
       return this.audit.type + ' success';
     }
   }
+
+  getActorDetails(): string {
+    return this.getEntityDetails(this.audit.actor);
+  }
+
+  getTargetDetails(): string {
+    return this.getEntityDetails(this.audit.target);
+  }
+
+  private getEntityDetails(entity: any): string {
+    if (!entity?.attributes) {
+      return entity ? `${entity.displayName} id: ${entity.id}` : '';
+    } else {
+      let details = entity ? `${entity.displayName} id: ${entity.id} ` : '';
+      new Map(Object.entries(entity?.attributes))?.forEach((v: string, k: string) => {
+        details += `${k}: ${v} `;
+      });
+      return details;
+    }
+  }
 }

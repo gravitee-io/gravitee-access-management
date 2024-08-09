@@ -38,7 +38,7 @@ public class BotDetectionAuditBuilder extends ManagementAuditBuilder<BotDetectio
             referenceId(botDetection.getReferenceId());
             referenceType(botDetection.getReferenceType());
 
-            setTarget(botDetection.getId(), EntityType.BOT_DETECTION, null, botDetection.getName(), botDetection.getReferenceType(), botDetection.getReferenceId());
+            setTarget(botDetection.getId(), EntityType.BOT_DETECTION, null, botDetection.getName(), botDetection.getReferenceType(), botDetection.getReferenceId(), null, null);
         }
         return this;
     }

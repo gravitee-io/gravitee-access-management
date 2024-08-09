@@ -37,7 +37,7 @@ public class AuthDeviceNotifierAuditBuilder extends ManagementAuditBuilder<AuthD
         referenceId(notifier.getReferenceId());
         referenceType(notifier.getReferenceType());
 
-        setTarget(notifier.getId(), EntityType.AUTH_DEVICE_NOTIFIER, null, notifier.getName(), notifier.getReferenceType(), notifier.getReferenceId());
+        setTarget(notifier.getId(), EntityType.AUTH_DEVICE_NOTIFIER, null, notifier.getName(), notifier.getReferenceType(), notifier.getReferenceId(), null, null);
         return this;
     }
 }

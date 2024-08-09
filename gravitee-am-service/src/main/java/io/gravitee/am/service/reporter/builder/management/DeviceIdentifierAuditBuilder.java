@@ -45,7 +45,7 @@ public class DeviceIdentifierAuditBuilder extends ManagementAuditBuilder<DeviceI
             referenceId(deviceIdentifier.getReferenceId());
             referenceType(deviceIdentifier.getReferenceType());
 
-            setTarget(deviceIdentifier.getId(), EntityType.DEVICE_IDENTIFIER, null, deviceIdentifier.getName(), deviceIdentifier.getReferenceType(), deviceIdentifier.getReferenceId());
+            setTarget(deviceIdentifier.getId(), EntityType.DEVICE_IDENTIFIER, null, deviceIdentifier.getName(), deviceIdentifier.getReferenceType(), deviceIdentifier.getReferenceId(), null, null);
         }
         return this;
     }

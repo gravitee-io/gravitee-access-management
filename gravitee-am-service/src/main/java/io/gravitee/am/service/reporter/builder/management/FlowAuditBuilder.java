@@ -38,7 +38,7 @@ public class FlowAuditBuilder extends ManagementAuditBuilder<FlowAuditBuilder> {
             referenceType(flow.getReferenceType());
             referenceId(flow.getReferenceId());
 
-            setTarget(flow.getId(), EntityType.FLOW, null, flow.getName(), flow.getReferenceType(), flow.getReferenceId());
+            setTarget(flow.getId(), EntityType.FLOW, null, flow.getName(), flow.getReferenceType(), flow.getReferenceId(), null, null);
         }
         return this;
     }

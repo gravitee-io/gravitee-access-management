@@ -40,7 +40,7 @@ public class ThemeAuditBuilder extends ManagementAuditBuilder<ThemeAuditBuilder>
             referenceType(theme.getReferenceType());
             referenceId(theme.getReferenceId());
 
-            setTarget(theme.getId(), EntityType.THEME, null, null, theme.getReferenceType(), theme.getReferenceId());
+            setTarget(theme.getId(), EntityType.THEME, null, null, theme.getReferenceType(), theme.getReferenceId(), null, null);
         }
         return this;
     }
