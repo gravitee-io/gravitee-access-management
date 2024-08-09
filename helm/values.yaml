@@ -550,6 +550,7 @@ api:
 gateway:
   enabled: true
   name: gateway
+  type: mongodb
 
   http:
     maxHeaderSize: 8192

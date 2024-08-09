@@ -276,6 +276,7 @@ tests:
     set:
       management.type: jdbc
       oauth2.type: jdbc
+      gateway.type: jdbc
       jdbc.sslEnabled: true
       jdbc.sslMode: verify-ca
       jdbc.sslServerCert: jdbc-ssl-cert
