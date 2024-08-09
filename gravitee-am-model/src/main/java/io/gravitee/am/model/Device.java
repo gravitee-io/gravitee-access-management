@@ -17,6 +17,9 @@
 package io.gravitee.am.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import java.util.Date;
 import java.util.Objects;
@@ -25,6 +28,9 @@ import java.util.Objects;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
+@Accessors(chain = true)
 public class Device {
 
     private String id;
@@ -33,7 +39,7 @@ public class Device {
     private String referenceId;
 
     private String client;
-    private String userId;
+    private UserId userId;
     private String deviceIdentifierId;
     private String deviceId;
 
@@ -60,95 +66,6 @@ public class Device {
                 .setExpiresAt(other.expiresAt);
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public Device setId(String id) {
-        this.id = id;
-        return this;
-    }
-
-    public ReferenceType getReferenceType() {
-        return referenceType;
-    }
-
-    public Device setReferenceType(ReferenceType referenceType) {
-        this.referenceType = referenceType;
-        return this;
-    }
-
-    public String getReferenceId() {
-        return referenceId;
-    }
-
-    public Device setReferenceId(String referenceId) {
-        this.referenceId = referenceId;
-        return this;
-    }
-
-    public String getClient() {
-        return client;
-    }
-
-    public Device setClient(String client) {
-        this.client = client;
-        return this;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public Device setUserId(String userId) {
-        this.userId = userId;
-        return this;
-    }
-
-    public String getDeviceIdentifierId() {
-        return deviceIdentifierId;
-    }
-
-    public Device setDeviceIdentifierId(String deviceIdentifierId) {
-        this.deviceIdentifierId = deviceIdentifierId;
-        return this;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public String getDeviceId() {
-        return deviceId;
-    }
-
-    public Device setDeviceId(String deviceId) {
-        this.deviceId = deviceId;
-        return this;
-    }
-
-    public Device setType(String type) {
-        this.type = type;
-        return this;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public Device setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-        return this;
-    }
-
-    public Date getExpiresAt() {
-        return expiresAt;
-    }
-
-    public Device setExpiresAt(Date expiresAt) {
-        this.expiresAt = expiresAt;
-        return this;
-    }
 
     @Override
     public boolean equals(Object o) {

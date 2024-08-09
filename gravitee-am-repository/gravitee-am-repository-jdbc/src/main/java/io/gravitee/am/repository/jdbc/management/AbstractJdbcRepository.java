@@ -17,6 +17,7 @@ package io.gravitee.am.repository.jdbc.management;
 
 import com.github.dozermapper.core.DozerBeanMapperBuilder;
 import com.github.dozermapper.core.Mapper;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.management.api.model.mapper.LocalDateConverter;
 import lombok.Getter;
@@ -25,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.transaction.ReactiveTransactionManager;
@@ -37,13 +39,17 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.springframework.data.relational.core.query.Criteria.where;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 public abstract class AbstractJdbcRepository {
+    public static final String USER_ID_FIELD = "user_id";
+    public static final String USER_EXTERNAL_ID_FIELD = "user_external_id";
+    public static final String USER_SOURCE_FIELD = "user_source";
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
-
     @Autowired
     @Getter
     private R2dbcEntityTemplate template;
@@ -110,6 +116,19 @@ public abstract class AbstractJdbcRepository {
 
     protected Date toDate(LocalDateTime localDateTime) {
         return Date.from(localDateTime.toInstant(ZoneOffset.UTC));
+    }
+
+
+    protected Criteria userMatches(UserId userId, String userIdField, String userExternalIdField, String userSourceField) {
+        if (userId.hasExternal()) {
+            return where(userIdField).is(userId.id()).or(where(userExternalIdField).is(userId.externalId()).and(userSourceField).is(userId.source()));
+        } else {
+            return where(userIdField).is(userId.id());
+        }
+    }
+
+    protected Criteria userMatches(UserId user) {
+        return userMatches(user, USER_ID_FIELD, USER_EXTERNAL_ID_FIELD, USER_SOURCE_FIELD);
     }
 
     /**

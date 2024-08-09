@@ -36,6 +36,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.VerifyAttempt;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
@@ -414,7 +415,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         var rememberDeviceSettings = getRememberDeviceSettings(client);
         boolean rememberDeviceConsent = REMEMBER_DEVICE_CONSENT_ON.equalsIgnoreCase(routingContext.request().getParam(REMEMBER_DEVICE_CONSENT));
         if (rememberDeviceSettings.isActive() && rememberDeviceConsent) {
-            saveDeviceAndRedirect(routingContext, client, user.getId(), rememberDeviceSettings, returnURL);
+            saveDeviceAndRedirect(routingContext, client, user.getFullId(), rememberDeviceSettings, returnURL);
         } else {
             doRedirect(routingContext.request().response(), returnURL);
         }
@@ -478,7 +479,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
             rateLimiterService.tryConsume(endUser.getId(), factor.getId(), endUser.getClient(), client.getDomain())
                     .subscribe(allowRequest -> {
                                 if (allowRequest) {
-                                    sendChallenge(routingContext, factorProvider, factorContext,endUser, client, factor, handler);
+                                    sendChallenge(routingContext, factorProvider, factorContext, endUser, client, factor, handler);
                                 } else {
                                     updateAuditLog(routingContext, MFA_RATE_LIMIT_REACHED, endUser, client, factor, factorContext, new Throwable("MFA rate limit reached"));
                                     handleException(routingContext, RATE_LIMIT_ERROR_PARAM_KEY, "mfa_request_limit_exceed");
@@ -662,7 +663,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                 .orElse(new RememberDeviceSettings());
     }
 
-    private void saveDeviceAndRedirect(RoutingContext routingContext, Client client, String userId, RememberDeviceSettings settings, String redirectUrl) {
+    private void saveDeviceAndRedirect(RoutingContext routingContext, Client client, UserId userId, RememberDeviceSettings settings, String redirectUrl) {
         var deviceId = routingContext.session().<String>get(DEVICE_ID);
         var rememberDeviceId = settings.getDeviceIdentifierId();
         if (isNullOrEmpty(deviceId)) {

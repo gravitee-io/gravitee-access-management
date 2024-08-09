@@ -220,10 +220,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldInvoke_differentClient_sameIdp() throws Exception {
-        User user = new User();
-        user.setId("user-id");
-        user.setClient("test-client");
-        user.setSource("idp-1");
+        User user = userFromTestClient();
 
         Client client = new Client();
         client.setId("client-id");
@@ -263,10 +260,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldInvoke_differentClient_sameIdp_using_UserIdentities() throws Exception {
-        User user = new User();
-        user.setId("user-id");
-        user.setClient("test-client");
-        user.setSource("idp-1");
+        User user = userFromTestClient();
         UserIdentity userIdentity = new UserIdentity();
         userIdentity.setProviderId("idp-2");
         user.setIdentities(List.of(userIdentity));
@@ -308,10 +302,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldInvoke_differentClient_sameIdp_UserBlocked() throws Exception {
-        User user = new User();
-        user.setId("user-id");
-        user.setClient("test-client");
-        user.setSource("idp-1");
+        User user = userFromTestClient();
 
         Client client = new Client();
         client.setId("client-id");
@@ -363,13 +354,19 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
                 HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
     }
 
-
-    @Test
-    public void shouldInvoke_differentClient_sameIdp_UserNotBlocked() throws Exception {
+    private static User userFromTestClient() {
         User user = new User();
         user.setId("user-id");
         user.setClient("test-client");
         user.setSource("idp-1");
+        user.setExternalId("idp1-user-id");
+        return user;
+    }
+
+
+    @Test
+    public void shouldInvoke_differentClient_sameIdp_UserNotBlocked() throws Exception {
+        User user = userFromTestClient();
 
         Client client = new Client();
         client.setId("client-id");
@@ -423,10 +420,8 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldInvoke_differentClient_differentIdp() throws Exception {
-        User user = new User();
-        user.setId("user-id");
-        user.setClient("test-client");
-        user.setSource("idp-1");
+        User user = userFromTestClient();
+
 
         Client client = new Client();
         client.setId("client-id");

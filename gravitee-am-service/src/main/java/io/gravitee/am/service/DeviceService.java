@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Device;
+import io.gravitee.am.model.UserId;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
@@ -27,12 +28,12 @@ import io.reactivex.rxjava3.core.Single;
  */
 public interface DeviceService {
 
-    Flowable<Device> findByDomainAndUser(String domain, String user);
+    Flowable<Device> findByDomainAndUser(String domain, UserId user);
 
-    Single<Boolean> deviceExists(String domain, String client, String user, String rememberDevice, String deviceId);
+    Single<Boolean> deviceExists(String domain, String client, UserId user, String rememberDevice, String deviceId);
 
-    Single<Device> create(String domain, String client, String user, String rememberDevice, String type, Long timeExpirationMs, String deviceId);
+    Single<Device> create(String domain, String client, UserId user, String rememberDevice, String type, Long timeExpirationMs, String deviceId);
 
-    Completable delete(String domain, String user, String id, User authenticatedUser);
+    Completable delete(String domain, UserId user, String id, User authenticatedUser);
 
 }

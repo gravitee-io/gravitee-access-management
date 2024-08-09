@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Device;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.common.utils.UUID;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -59,7 +60,7 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
         Device device = buildDevice(new Date(System.currentTimeMillis() - 10000));
         Device createdDevice = repository.create(device).blockingGet();
 
-       var observer = repository.findById(createdDevice.getUserId()).test();
+        var observer = repository.findById(createdDevice.getId()).test();
 
         observer.awaitDone(5, TimeUnit.SECONDS);
         observer.assertComplete();
@@ -77,7 +78,7 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
         device.setReferenceType(ReferenceType.DOMAIN);
         device.setReferenceId("domain" + random);
         device.setClient("client" + random);
-        device.setUserId("user" + random);
+        device.setUserId(UserId.internal("user" + random));
         device.setDeviceIdentifierId("device" + random);
         device.setType("type" + random);
         device.setDeviceId("deviceId" + random);
@@ -107,7 +108,7 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFindById_expired()  {
+    public void testNotFindById_expired() {
         Device device = buildDevice(new Date(System.currentTimeMillis() - 10000));
         Device deviceCreated = repository.create(device).blockingGet();
 

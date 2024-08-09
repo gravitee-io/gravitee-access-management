@@ -25,6 +25,7 @@ import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.UserActivity;
 import io.gravitee.am.model.UserActivity.Type;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.UserActivityService;
@@ -99,7 +100,7 @@ public class RiskAssessmentHandler implements Handler<RoutingContext> {
         var assessmentMessage = Single.just(new AssessmentMessage().setSettings(riskAssessment).setData(new AssessmentData()));
         final String deviceId = context.session().get(DEVICE_ID);
         assessmentMessage
-                .flatMap(buildDeviceMessage(client, user.getId(), deviceId))
+                .flatMap(buildDeviceMessage(client, user.getFullId(), deviceId))
                 .flatMap(buildIpReputationMessage(context.request()))
                 .flatMap(buildGeoVelocityMessage(client.getDomain(), user.getId()))
                 .subscribe(message -> decorateWithRiskAssessment(context, message), throwable -> {
@@ -110,7 +111,7 @@ public class RiskAssessmentHandler implements Handler<RoutingContext> {
 
     private Function<AssessmentMessage, Single<AssessmentMessage>> buildDeviceMessage(
             Client client,
-            String userId,
+            UserId userId,
             String deviceId) {
         return assessmentMessage -> {
 

@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Device;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.management.api.DeviceRepository;
 import io.gravitee.am.service.exception.DeviceNotFoundException;
 import io.gravitee.am.service.impl.DeviceServiceImpl;
@@ -66,7 +67,7 @@ public class DeviceServiceTest {
     private final static String DOMAIN = "domain1";
     private final static String DOMAIN2 = "domain2";
     private final static String CLIENT = "client1";
-    private final static String USER = "user1";
+    private final static UserId USER = UserId.internal("user1");
     private final static String DEVICE_IDENTIFIER = "rememberDevice1";
     private final static String REMEMBER_DEVICE2 = "rememberDevice2";
     private final static String TYPE = "type";

@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Device;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.UserId;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -49,8 +50,8 @@ public class DevicesResourceTest extends JerseySpringTest {
 
         doReturn(Flowable.just(
                 List.of(device, device2, device3)
-        )).when(deviceService).findByDomainAndUser(domainId, userId);
-        doReturn(Flowable.empty()).when(deviceService).findByDomainAndUser(domainId, "wrong user");
+        )).when(deviceService).findByDomainAndUser(domainId, UserId.internal(userId));
+        doReturn(Flowable.empty()).when(deviceService).findByDomainAndUser(domainId, UserId.internal("wrong user"));
 
         final Response response = target("domains")
                 .path(domainId)

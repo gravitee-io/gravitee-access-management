@@ -21,7 +21,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.risk.RiskAssessmentHandler;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Device;
+import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.RememberDeviceSettings;
+import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserActivity;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.UserActivityService;
@@ -34,7 +38,6 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.rxjava3.core.eventbus.EventBus;
 import io.vertx.rxjava3.core.eventbus.Message;
-import java.util.Date;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,13 +45,24 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Date;
+
 import static com.google.common.net.HttpHeaders.X_FORWARDED_FOR;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
-import static io.gravitee.risk.assessment.api.assessment.Assessment.*;
-import static org.junit.Assert.*;
+import static io.gravitee.risk.assessment.api.assessment.Assessment.HIGH;
+import static io.gravitee.risk.assessment.api.assessment.Assessment.MEDIUM;
+import static io.gravitee.risk.assessment.api.assessment.Assessment.NONE;
+import static io.gravitee.risk.assessment.api.assessment.Assessment.SAFE;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -153,7 +167,7 @@ public class RiskAssessmentHandlerTest {
         when(eventBus.request(anyString(), anyString())).thenReturn(Single.just(mockMessage));
 
         doReturn(Flowable.just(new Device().setDeviceId("1"), new Device().setDeviceId("2")))
-                .when(deviceService).findByDomainAndUser(anyString(), anyString());
+                .when(deviceService).findByDomainAndUser(anyString(), any());
 
         handler.handle(routingContext);
 
@@ -179,7 +193,7 @@ public class RiskAssessmentHandlerTest {
         routingContext.session().put(DEVICE_ID, "deviceId");
 
         doReturn(Flowable.error(new IllegalArgumentException()))
-                .when(deviceService).findByDomainAndUser(anyString(), anyString());
+                .when(deviceService).findByDomainAndUser(anyString(), any());
 
         handler.handle(routingContext);
 

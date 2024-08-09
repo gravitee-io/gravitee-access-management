@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Device;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -29,15 +30,15 @@ import io.reactivex.rxjava3.core.Maybe;
 public interface DeviceRepository extends CrudRepository<Device, String> {
 
     Maybe<Device> findByReferenceAndClientAndUserAndDeviceIdentifierAndDeviceId(
-            ReferenceType referenceType, String referenceId, String client, String user, String rememberDevice, String deviceId);
+            ReferenceType referenceType, String referenceId, String client, UserId user, String rememberDevice, String deviceId);
 
-    default Maybe<Device> findByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId(String domain, String client, String user, String deviceIdentifier, String deviceId){
-        return findByReferenceAndClientAndUserAndDeviceIdentifierAndDeviceId(ReferenceType.DOMAIN, domain, client, user, deviceIdentifier, deviceId);
+    default Maybe<Device> findByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId(String domain, String client, UserId userId, String deviceIdentifier, String deviceId) {
+        return findByReferenceAndClientAndUserAndDeviceIdentifierAndDeviceId(ReferenceType.DOMAIN, domain, client, userId, deviceIdentifier, deviceId);
     }
 
-    Flowable<Device> findByReferenceAndUser(ReferenceType referenceType, String referenceId, String user);
+    Flowable<Device> findByReferenceAndUser(ReferenceType referenceType, String referenceId, UserId user);
 
-    default Flowable<Device> findByDomainAndClientAndUser(String domain, String user) {
+    default Flowable<Device> findByDomainAndClientAndUser(String domain, UserId user) {
         return findByReferenceAndUser(ReferenceType.DOMAIN, domain, user);
     }
 

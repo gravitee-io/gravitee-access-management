@@ -19,6 +19,7 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Device;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.management.api.DeviceRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DeviceService;
@@ -37,7 +38,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.Objects;
 import java.util.Optional;
 
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
@@ -61,22 +61,21 @@ public class DeviceServiceImpl implements DeviceService {
     private AuditService auditService;
 
     @Override
-    public Flowable<Device> findByDomainAndUser(String domain, String user) {
-        return deviceRepository.findByDomainAndClientAndUser(domain, user).onErrorResumeNext(ex -> {
-            LOGGER.error("An error occurs while trying to find Devices by {} {}", domain, user, ex);
-            return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find Devices by %s %s", domain, user), ex));
+    public Flowable<Device> findByDomainAndUser(String domain, UserId userId) {
+        return deviceRepository.findByDomainAndClientAndUser(domain, userId).onErrorResumeNext(ex -> {
+            LOGGER.error("An error occurs while trying to find Devices by {} {}", domain, userId, ex);
+            return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find Devices by %s %s", domain, userId), ex));
         });
     }
 
     @Override
-    public Single<Boolean> deviceExists(String domain, String client, String user, String rememberDevice, String deviceId) {
+    public Single<Boolean> deviceExists(String domain, String client, UserId user, String rememberDevice, String deviceId) {
         return deviceRepository.findByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId(domain, client, user, rememberDevice, deviceId).isEmpty();
     }
 
     @Override
-    public Single<Device> create(String domain, String client, String user, String rememberDevice, String deviceType, Long timeExpirationSeconds, String deviceId) {
+    public Single<Device> create(String domain, String client, UserId user, String rememberDevice, String deviceType, Long timeExpirationSeconds, String deviceId) {
         long expiresAt = System.currentTimeMillis() + Optional.ofNullable(timeExpirationSeconds)
-                .filter(Objects::nonNull)
                 .filter(time -> time > 0L)
                 .orElse(DEFAULT_DEVICE_EXPIRATION_TIME_SECONDS) * 1000L;
         return deviceRepository.create(new Device()
@@ -93,7 +92,7 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
     @Override
-    public Completable delete(String domain, String user, String deviceId, User principal) {
+    public Completable delete(String domain, UserId user, String deviceId, User principal) {
         return deviceRepository.findById(deviceId)
                 .switchIfEmpty(Maybe.error(new DeviceNotFoundException(deviceId)))
                 .flatMapCompletable(device -> {

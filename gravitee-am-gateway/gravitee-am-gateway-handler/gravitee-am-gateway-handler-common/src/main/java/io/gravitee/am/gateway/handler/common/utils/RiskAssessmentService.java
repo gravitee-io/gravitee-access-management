@@ -105,7 +105,7 @@ public class RiskAssessmentService {
             var deviceAssessment = ofNullable(riskAssessmentSettings.getDeviceAssessment()).orElse(new AssessmentSettings());
             if (deviceAssessment.isEnabled()) {
                 logger.debug("Decorating assessment with devices");
-                return deviceService.findByDomainAndUser(domain.getId(), user.getId())
+                return deviceService.findByDomainAndUser(domain.getId(), user.getFullId())
                         .map(Device::getDeviceId)
                         .toList().flatMap(deviceIds -> {
                             assessmentMessage.getData().setDevices(new Devices()
