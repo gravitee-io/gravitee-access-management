@@ -64,11 +64,27 @@ public abstract class OTPFactorProvider implements FactorProvider {
             try {
                 final String otpCode = generateOTP(enrolledFactor, returnDigits);
                 if (!code.equals(otpCode)) {
+<<<<<<< HEAD
                     emitter.onError(new InvalidCodeException("Invalid 2FA Code"));
                 }
                 // get last connection date of the user to test code
                 Long expireAt = enrolledFactor.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Long.class);
                 if (expireAt == null || Instant.now().isAfter(Instant.ofEpochMilli(expireAt))) {
+=======
+                    log.debug("Invalid 2FA code, not the same value");
+                    emitter.onError(invalid2faCodeException());
+                }
+                // get last connection date of the user to test code
+                Long expireAt = enrolledFactor.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Long.class);
+                Instant now = Instant.now();
+                if (expireAt == null || now.isAfter(Instant.ofEpochMilli(expireAt))) {
+                    if (expireAt != null) {
+                        long differenceMillis = now.toEpochMilli() - expireAt;
+                        String msg = "Invalid 2FA code, expiry date " + Instant.ofEpochMilli(expireAt) + ". Current time: " + now + ", a difference of " + differenceMillis + " milliseconds.";
+                        log.debug(msg);
+                    }
+                    log.debug("Invalid 2FA code, expiry date is null");
+>>>>>>> bfb972fa95 (chore: added more debug logs on failed MFA validation)
                     emitter.onError(new InvalidCodeException("Invalid 2FA Code"));
                 }
                 emitter.onComplete();
