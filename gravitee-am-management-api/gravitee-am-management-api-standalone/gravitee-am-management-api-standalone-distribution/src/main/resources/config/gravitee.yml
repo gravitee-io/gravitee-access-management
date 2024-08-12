@@ -406,7 +406,7 @@ user:
 # Gateway entry point used in emails
 gateway:
   url: http://localhost:8092
-  type: mongodb
+  type: ${management.type}
   use-management-settings: true
   mongodb:
     dbname: ${ds.mongodb.dbname}
