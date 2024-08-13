@@ -75,8 +75,9 @@ public abstract class OTPFactorProvider implements FactorProvider {
                         long differenceMillis = now.toEpochMilli() - expireAt;
                         String msg = "Invalid 2FA code, expiry date " + Instant.ofEpochMilli(expireAt) + ". Current time: " + now + ", a difference of " + differenceMillis + " milliseconds.";
                         log.debug(msg);
+                    } else {
+                        log.debug("Invalid 2FA code, expiry date is null");
                     }
-                    log.debug("Invalid 2FA code, expiry date is null");
                     emitter.onError(new InvalidCodeException("Invalid 2FA Code"));
                 }
                 emitter.onComplete();
