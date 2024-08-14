@@ -180,6 +180,17 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
     }
 
     @Override
+    public Completable deleteByDomainIdAndClientId(String domainId, String clientId) {
+        LOGGER.debug("deleteByDomainIdClientId({},{})", domainId, clientId);
+        return monoToCompletable(getTemplate().delete(JdbcAccessToken.class)
+                .matching(Query.query(where("domain").is(domainId)
+                        .and(where("client").is(clientId))))
+                .all())
+                .doOnError(error -> LOGGER.error("Unable to delete access token with domain {}, client {}",
+                        domainId, clientId, error));
+    }
+
+    @Override
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
