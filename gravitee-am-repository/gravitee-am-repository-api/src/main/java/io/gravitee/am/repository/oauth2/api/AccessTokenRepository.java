@@ -95,6 +95,8 @@ public interface AccessTokenRepository {
 
     Completable deleteByDomainIdAndUserId(String domainId, String userId);
 
+    Completable deleteByDomainIdAndClientId(String domainId, String clientId);
+
     default Completable purgeExpiredData() {
         return Completable.complete();
     }
