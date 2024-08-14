@@ -34,4 +34,6 @@ public interface TokenService {
     Single<TotalToken> findTotalTokens();
 
     Completable deleteByUser(User user);
+
+    Completable deleteByApplication(Application application);
 }
