@@ -383,7 +383,14 @@ public class ApplicationServiceImpl implements ApplicationService {
                     if (!accountSettingsValidator.validate(accountSettings)) {
                         return Single.error(new InvalidParameterException("Unexpected forgot password field"));
                     }
-                    return update0(domain, existingApplication, toPatch, principal);
+                    return update0(domain, existingApplication, toPatch, principal)
+                            .flatMap(app -> {
+                                if (toPatch.isEnabled() != existingApplication.isEnabled() && !toPatch.isEnabled()) {
+                                    return tokenService.deleteByApplication(app).onErrorComplete().toSingleDefault(app);
+                                } else {
+                                    return Single.just(app);
+                                }
+                            });
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {

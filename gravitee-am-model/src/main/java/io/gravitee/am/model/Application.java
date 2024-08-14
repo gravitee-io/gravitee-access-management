@@ -22,11 +22,17 @@ import io.gravitee.am.model.oidc.Client;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class Application implements Resource, PasswordSettingsAware {
 
     /**
@@ -87,9 +93,6 @@ public class Application implements Resource, PasswordSettingsAware {
      */
     @Schema(type = "java.lang.Long")
     private Date updatedAt;
-
-    public Application() {
-    }
 
     public Application(Application other) {
         this.id = other.id;

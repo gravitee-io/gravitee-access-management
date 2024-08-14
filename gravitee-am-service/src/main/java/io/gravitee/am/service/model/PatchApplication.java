@@ -24,11 +24,17 @@ import io.gravitee.am.service.utils.SetterUtils;
 import java.util.*;
 
 import static java.util.stream.Collectors.toCollection;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PatchApplication {
 
     private Optional<String> name;

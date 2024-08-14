@@ -33,4 +33,6 @@ public interface TokenService {
     Single<TotalToken> findTotalTokens();
 
     Completable deleteByUserId(String userId);
+
+    Completable deleteByApplication(Application application);
 }
