@@ -25,11 +25,17 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.risk.assessment.api.assessment.settings.AssessmentSettings;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import java.util.Optional;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ApplicationSettings {
     /**
      * OAuth 2.0/OIDC Client settings
@@ -72,10 +78,6 @@ public class ApplicationSettings {
      * Note: configuration can be set but effective only if EE
      */
     private RiskAssessmentSettings riskAssessment;
-
-
-    public ApplicationSettings() {
-    }
 
     public ApplicationSettings(ApplicationSettings other) {
         this.oauth = other.oauth != null ? new ApplicationOAuthSettings(other.oauth) : null;

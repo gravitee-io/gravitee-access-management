@@ -24,6 +24,7 @@ import io.gravitee.am.repository.mongodb.oauth2.internal.model.RefreshTokenMongo
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.CompletableSource;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
@@ -113,6 +114,11 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
 
     private List<WriteModel<RefreshTokenMongo>> convert(List<RefreshToken> refreshTokens) {
         return refreshTokens.stream().map(refreshToken -> new InsertOneModel<>(convert(refreshToken))).collect(Collectors.toList());
+    }
+
+    @Override
+    public CompletableSource deleteByDomainIdAndClientId(String domainId, String clientId) {
+        return Completable.fromPublisher(refreshTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_CLIENT, clientId))));
     }
 
     private RefreshTokenMongo convert(RefreshToken refreshToken) {

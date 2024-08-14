@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
@@ -23,8 +22,6 @@ import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.media.SchemaProperty;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -34,11 +31,17 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Application implements Resource, PasswordSettingsAware {
 
     /**
@@ -103,9 +106,6 @@ public class Application implements Resource, PasswordSettingsAware {
     private List<ApplicationSecretSettings> secretSettings;
 
     private List<ClientSecret> secrets;
-
-    public Application() {
-    }
 
     public Application(Application other) {
         this.id = other.id;
