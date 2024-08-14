@@ -162,6 +162,9 @@ public class ApplicationServiceTest {
     @Mock
     private ClientSecret clientSecret;
 
+    @Mock
+    private TokenService tokenService;
+
     private final static String DOMAIN = "domain1";
 
     @Test
@@ -1807,6 +1810,60 @@ public class ApplicationServiceTest {
 
         verify(applicationRepository, times(1)).findById(anyString());
         verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+
+    @Test
+    public void shouldDisableApplicationAndRemoveTokens() {
+        var client = Application.builder().enabled(true).settings(ApplicationSettings.builder().build()).build();
+
+        when(applicationRepository.findById(any())).thenReturn(Maybe.just(client));
+        when(applicationRepository.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(eventService.create(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(tokenService.deleteByApplication(any())).thenAnswer(invocation -> Completable.complete());
+        doReturn(true).when(accountSettingsValidator).validate(any());
+
+        var patch =  PatchApplication.builder().enabled(Optional.of(false)).build();
+        applicationService.patch(client.getDomain(), client.getId(), patch)
+                .test()
+                .assertNoErrors();
+
+        verify(tokenService, times(1)).deleteByApplication(any());
+    }
+
+    @Test
+    public void shouldDisableApplicationEvenIfTokenRemoveThrowError() {
+        var client = Application.builder().enabled(true).settings(ApplicationSettings.builder().build()).build();
+
+        when(applicationRepository.findById(any())).thenReturn(Maybe.just(client));
+        when(applicationRepository.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(eventService.create(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(tokenService.deleteByApplication(any())).thenAnswer(invocation -> Completable.error(new RuntimeException()));
+        doReturn(true).when(accountSettingsValidator).validate(any());
+
+        var patch =  PatchApplication.builder().enabled(Optional.of(false)).build();
+        applicationService.patch(client.getDomain(), client.getId(), patch)
+                .test()
+                .assertNoErrors();
+
+        verify(tokenService, times(1)).deleteByApplication(any());
+    }
+
+    @Test
+    public void shouldNotDisableApplicationAndRemoveTokensWhenItIsAlreadyDisabled() {
+        var client = Application.builder().enabled(false).settings(ApplicationSettings.builder().build()).build();
+
+        when(applicationRepository.findById(any())).thenReturn(Maybe.just(client));
+        when(applicationRepository.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(eventService.create(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        doReturn(true).when(accountSettingsValidator).validate(any());
+
+        var patch = PatchApplication.builder().enabled(Optional.of(false)).build();
+        applicationService.patch(client.getDomain(), client.getId(), patch)
+                .test()
+                .assertNoErrors();
+
+        verify(tokenService, never()).deleteByApplication(any());
     }
 
     private Application createClientWithPostLogoutRedirectUris(String uri){

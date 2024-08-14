@@ -112,16 +112,29 @@ public class TokenServiceImpl implements TokenService {
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to delete tokens by user {}", userId, ex);
                     return Completable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find total tokens by user: %s", userId), ex));
+                            String.format("An error occurs while trying to delete tokens by user: %s", userId), ex));
+                });
+    }
+
+    @Override
+    public Completable deleteByApplication(Application application) {
+        LOGGER.debug("Delete tokens by application : {}", application);
+        var applicationId = application.getId();
+        return accessTokenRepository.deleteByDomainIdAndClientId(application.getDomain(), applicationId)
+                .andThen(refreshTokenRepository.deleteByDomainIdAndClientId(application.getDomain(), applicationId))
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to delete tokens by application {}", applicationId, ex);
+                    return Completable.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to delete tokens by application: %s", applicationId), ex));
                 });
     }
 
     private Single<Long> countByClientId(Application application) {
         if (application.getSettings() == null) {
-            return Single.just(0l);
+            return Single.just(0L);
         }
         if (application.getSettings().getOauth() == null) {
-            return Single.just(0l);
+            return Single.just(0L);
         }
         return accessTokenRepository.countByClientId(application.getSettings().getOauth().getClientId());
     }
