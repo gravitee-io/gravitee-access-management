@@ -57,9 +57,9 @@ import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.UMA_PATH
  */
 public class ResourceAccessPoliciesEndpoint {
 
-    private Domain domain;
-    private ResourceService resourceService;
-    private SubjectManager subjectManager;
+    private final Domain domain;
+    private final ResourceService resourceService;
+    private final SubjectManager subjectManager;
 
     public ResourceAccessPoliciesEndpoint(Domain domain, ResourceService resourceService, SubjectManager subjectManager) {
         this.domain = domain;
@@ -73,9 +73,9 @@ public class ResourceAccessPoliciesEndpoint {
         final String resource = context.request().getParam(RESOURCE_ID);
 
         subjectManager.findUserIdBySub(accessToken)
-                .flatMapSingle(userid -> resourceService.findAccessPolicies(domain.getId(), client.getId(), userid, resource)
-                .map(AccessPolicy::getId)
-                .toList())
+                .flatMapSingle(userid -> resourceService.findAccessPolicies(domain.getId(), client.getId(), userid.id() /*todo degraded mode: should we use full id here as well?*/, resource)
+                        .map(AccessPolicy::getId)
+                        .toList())
                 .subscribe(
                         response -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -98,16 +98,16 @@ public class ResourceAccessPoliciesEndpoint {
 
         // store the access policy
         subjectManager.findUserIdBySub(accessToken)
-                .flatMapSingle(userid -> resourceService.createAccessPolicy(accessPolicy, domain.getId(), client.getId(), userid, resource))
+                .flatMapSingle(userid -> resourceService.createAccessPolicy(accessPolicy, domain.getId(), client.getId(), userid.id() /*todo degraded mode: should we use full id here as well?*/, resource))
                 .subscribe(
                         p ->
-                            context.response()
-                                    .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                    .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                    .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                    .putHeader(HttpHeaders.LOCATION, resourceLocation(basePath, p))
-                                    .setStatusCode(HttpStatusCode.CREATED_201)
-                                    .end(Json.encodePrettily(p))
+                                context.response()
+                                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                                        .putHeader(HttpHeaders.LOCATION, resourceLocation(basePath, p))
+                                        .setStatusCode(HttpStatusCode.CREATED_201)
+                                        .end(Json.encodePrettily(p))
                         , error -> context.fail(error)
                 );
     }
@@ -119,8 +119,8 @@ public class ResourceAccessPoliciesEndpoint {
         final String accessPolicyId = context.request().getParam(POLICY_ID);
 
         subjectManager.findUserIdBySub(accessToken)
-                .flatMapSingle(userid -> resourceService.findAccessPolicy(domain.getId(), client.getId(), userid, resource, accessPolicyId)
-                .switchIfEmpty(Single.error(new AccessPolicyNotFoundException(accessPolicyId))))
+                .flatMapSingle(userid -> resourceService.findAccessPolicy(domain.getId(), client.getId(), userid.id() /*todo degraded mode: should we use full id here as well?*/, resource, accessPolicyId)
+                        .switchIfEmpty(Single.error(new AccessPolicyNotFoundException(accessPolicyId))))
                 .subscribe(
                         response -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -142,7 +142,7 @@ public class ResourceAccessPoliciesEndpoint {
 
         // update the access policy
         subjectManager.findUserIdBySub(accessToken)
-                .flatMapSingle(userid -> resourceService.updateAccessPolicy(accessPolicy, domain.getId(), client.getId(), userid, resource, accessPolicyId))
+                .flatMapSingle(userid -> resourceService.updateAccessPolicy(accessPolicy, domain.getId(), client.getId(), userid.id()/*todo degraded mode: should we use full id here as well?*/, resource, accessPolicyId))
                 .subscribe(
                         response -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -160,7 +160,7 @@ public class ResourceAccessPoliciesEndpoint {
         final String accessPolicy = context.request().getParam(POLICY_ID);
 
         subjectManager.findUserIdBySub(accessToken).flatMapCompletable(userId ->
-        resourceService.deleteAccessPolicy(domain.getId(), client.getId(), userId, resource, accessPolicy))
+                        resourceService.deleteAccessPolicy(domain.getId(), client.getId(), userId.id()/*todo degraded mode: should we use full id here as well?*/, resource, accessPolicy))
                 .subscribe(
                         () -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -179,7 +179,7 @@ public class ResourceAccessPoliciesEndpoint {
             // check missing values
             Arrays.asList("name", "type", "description", "condition").forEach(key -> {
                 if (!body.containsKey(key)) {
-                    throw new InvalidRequestException("["+ key +": must not be null]");
+                    throw new InvalidRequestException("[" + key + ": must not be null]");
                 }
             });
             // check type value
@@ -202,15 +202,13 @@ public class ResourceAccessPoliciesEndpoint {
     }
 
     private String resourceLocation(String basePath, AccessPolicy accessPolicy) {
-        return new StringBuilder()
-                .append(basePath)
-                .append(UMA_PATH)
-                .append(RESOURCE_REGISTRATION_PATH)
-                .append("/")
-                .append(accessPolicy.getResource())
-                .append(RESOURCE_ACCESS_POLICIES_PATH)
-                .append("/")
-                .append(accessPolicy.getId())
-                .toString();
+        return basePath +
+                UMA_PATH +
+                RESOURCE_REGISTRATION_PATH +
+                "/" +
+                accessPolicy.getResource() +
+                RESOURCE_ACCESS_POLICIES_PATH +
+                "/" +
+                accessPolicy.getId();
     }
 }

@@ -19,7 +19,7 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
-import io.gravitee.am.gateway.handler.users.service.UserService;
+import io.gravitee.am.gateway.handler.users.service.DomainUserConsentFacade;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
@@ -34,7 +34,8 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
  */
 public class UserConsentEndpointHandler extends AbstractUserConsentEndpointHandler {
 
-    public UserConsentEndpointHandler(UserService userService, ClientSyncService clientSyncService, Domain domain, SubjectManager subjectManager) {
+
+    public UserConsentEndpointHandler(DomainUserConsentFacade userService, ClientSyncService clientSyncService, Domain domain, SubjectManager subjectManager) {
         super(userService, clientSyncService, domain, subjectManager);
     }
 
@@ -58,18 +59,18 @@ public class UserConsentEndpointHandler extends AbstractUserConsentEndpointHandl
      */
     public void revoke(RoutingContext context) {
         final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
-        final String userId = context.request().getParam("userId");
-        final String consentId = context.request().getParam("consentId");
+        final String userIdParam = context.request().getParam("userId");
+        final String consentIdParam = context.request().getParam("consentId");
 
         getPrincipal(context)
-                .flatMapCompletable(principal -> getUserIdFromSub(accessToken).flatMapCompletable(id -> {
-                    if (userIdParamMatchTokenIdentity(id, userId, accessToken)) {
-                        return userService.revokeConsent(id, consentId, principal);
+                .flatMapCompletable(principal -> getUserIdFromSub(accessToken).flatMapCompletable(foundId -> {
+                    if (userIdParamMatchTokenIdentity(foundId, userIdParam, accessToken)) {
+                        return userService.revokeConsent(foundId, consentIdParam, principal);
                     }
-                    return Completable.error(() -> new UserNotFoundException(userId));
+                    return Completable.error(() -> new UserNotFoundException(userIdParam));
                 }))
                 .subscribe(
                         () -> context.response().setStatusCode(204).end(),
-                        error -> context.fail(error));
+                        context::fail);
     }
 }

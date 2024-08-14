@@ -16,16 +16,17 @@
 package io.gravitee.am.gateway.handler.users.resources.consents;
 
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
-import io.gravitee.am.gateway.handler.users.service.UserService;
+import io.gravitee.am.gateway.handler.users.service.DomainUserConsentFacade;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.service.exception.ScopeApprovalNotFoundException;
 import io.gravitee.common.http.HttpStatusCode;
@@ -36,12 +37,12 @@ import io.vertx.core.http.HttpMethod;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
@@ -52,25 +53,21 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class UserConsentEndpointHandlerTest extends RxWebTestBase {
 
-    @Mock
-    private UserService userService;
 
-    @Mock
-    private ClientSyncService clientService;
+    private final DomainUserConsentFacade userService = mock();
 
-    @Mock
-    private Domain domain;
+    private final ClientSyncService clientService = mock();
 
-    @Mock
-    private SubjectManager subjectManager;
+    private final SubjectManager subjectManager = mock();
 
-    @InjectMocks
+    private final Domain domain = new Domain();
+
     private UserConsentEndpointHandler userConsentEndpointHandler = new UserConsentEndpointHandler(userService, clientService, domain, subjectManager);
 
     @Mock
     private OAuth2AuthProvider oAuth2AuthProvider;
 
-    private OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider);
+    private final OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider);
 
     @Override
     public void setUp() throws Exception {
@@ -94,9 +91,6 @@ public class UserConsentEndpointHandlerTest extends RxWebTestBase {
     @Test
     @Ignore
     public void shouldNotGetConsent_invalid_token() throws Exception {
-        JWT jwt = new JWT();
-        jwt.setAud("client-id");
-
         router.route("/users/:userId/consents/:consentId")
                 .handler(oAuth2AuthHandler)
                 .handler(userConsentEndpointHandler::get)
@@ -111,9 +105,6 @@ public class UserConsentEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldNotGetConsent_notFound() throws Exception {
-        JWT jwt = new JWT();
-        jwt.setAud("client-id");
-
         when(userService.consent(anyString())).thenReturn(Maybe.error(new ScopeApprovalNotFoundException("consentId")));
 
         router.route("/users/:userId/consents/:consentId")
@@ -150,8 +141,8 @@ public class UserConsentEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRevokeConsent() throws Exception {
         when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(new User()));
-        when(subjectManager.findUserIdBySub(any())).thenReturn(Maybe.just("user-id"));
-        when(userService.revokeConsent(anyString(), anyString(), any())).thenReturn(Completable.complete());
+        when(subjectManager.findUserIdBySub(any())).thenReturn(Maybe.just(UserId.internal("user-id")));
+        when(userService.revokeConsent(any(), any(), any())).thenReturn(Completable.complete());
 
         router.route("/users/:userId/consents/:consentId")
                 .handler(rc -> {

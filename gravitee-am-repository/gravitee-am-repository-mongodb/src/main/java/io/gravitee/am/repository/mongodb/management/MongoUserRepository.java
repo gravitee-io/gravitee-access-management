@@ -24,6 +24,7 @@ import com.mongodb.client.model.Aggregates;
 import io.gravitee.am.common.analytics.Field;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
 import io.gravitee.am.repository.management.api.UserRepository;
@@ -90,24 +91,25 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
     }
 
     @Override
+    public Maybe<User> findById(UserId id) {
+        return findOne(usersCollection, userIdMatches(id), this::convert);
+    }
+
+    @Override
     public Maybe<User> findByUsernameAndDomain(String domain, String username) {
-        return Observable.fromPublisher(
-                usersCollection
-                        .find(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain), eq(FIELD_USERNAME, username)))
-                        .limit(1)
-                        .first())
-                .firstElement()
-                .map(this::convert);
+        var query = and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain), eq(FIELD_USERNAME, username));
+        return findOne(usersCollection, query, this::convert);
+
     }
 
     @Override
     public Single<Long> countByReference(ReferenceType referenceType, String referenceId) {
-        return Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)), countOptions())).first(0l);
+        return Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)), countOptions())).first(0L);
     }
 
     @Override
     public Single<Long> countByApplication(String domain, String application) {
-        return Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain), eq(FIELD_CLIENT, application)), countOptions())).first(0l);
+        return Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain), eq(FIELD_CLIENT, application)), countOptions())).first(0L);
     }
 
     @Override
@@ -140,19 +142,19 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
         }
 
         return Observable.fromPublisher(withMaxTime(usersCollection.aggregate(
-                Arrays.asList(
-                        Aggregates.match(and(filters)),
-                        Aggregates.group(
-                                new BasicDBObject("_id", query.getField()),
-                                Accumulators.sum(TOTAL, 1),
-                                Accumulators.sum("disabled", new BasicDBObject(DOLLAR_COND, Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$enabled", false)), 1, 0))),
-                                Accumulators.sum("locked", new BasicDBObject(DOLLAR_COND, Arrays.asList(new BasicDBObject("$and", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$accountNonLocked", false)), new BasicDBObject("$gte", Arrays.asList("$accountLockedUntil", new Date())))), 1, 0))),
-                                Accumulators.sum("inactive", new BasicDBObject(DOLLAR_COND, Arrays.asList(new BasicDBObject("$lte", Arrays.asList("$loggedAt", new Date(Instant.now().minus(90, ChronoUnit.DAYS).toEpochMilli()))), 1, 0)))
-                        )
-                ), Document.class)))
+                        Arrays.asList(
+                                Aggregates.match(and(filters)),
+                                Aggregates.group(
+                                        new BasicDBObject("_id", query.getField()),
+                                        Accumulators.sum(TOTAL, 1),
+                                        Accumulators.sum("disabled", new BasicDBObject(DOLLAR_COND, Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$enabled", false)), 1, 0))),
+                                        Accumulators.sum("locked", new BasicDBObject(DOLLAR_COND, Arrays.asList(new BasicDBObject("$and", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$accountNonLocked", false)), new BasicDBObject("$gte", Arrays.asList("$accountLockedUntil", new Date())))), 1, 0))),
+                                        Accumulators.sum("inactive", new BasicDBObject(DOLLAR_COND, Arrays.asList(new BasicDBObject("$lte", Arrays.asList("$loggedAt", new Date(Instant.now().minus(90, ChronoUnit.DAYS).toEpochMilli()))), 1, 0)))
+                                )
+                        ), Document.class)))
                 .map(doc -> {
-                    Long nonActiveUsers = ((Number) doc.get("disabled")).longValue() + ((Number) doc.get("locked")).longValue() + ((Number) doc.get("inactive")).longValue();
-                    Long activeUsers = ((Number) doc.get(TOTAL)).longValue() - nonActiveUsers;
+                    long nonActiveUsers = ((Number) doc.get("disabled")).longValue() + ((Number) doc.get("locked")).longValue() + ((Number) doc.get("inactive")).longValue();
+                    long activeUsers = ((Number) doc.get(TOTAL)).longValue() - nonActiveUsers;
                     Map<Object, Object> users = new HashMap<>();
                     users.put("active", activeUsers);
                     users.putAll(doc.entrySet()
@@ -166,20 +168,16 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
 
     private Single<Map<Object, Object>> registrationsStatusRepartition(AnalyticsQuery query) {
         return Observable.fromPublisher(withMaxTime(usersCollection.aggregate(
-                Arrays.asList(
-                        Aggregates.match(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, query.getDomain()), eq(FIELD_PRE_REGISTRATION, true))),
-                        Aggregates.group(new BasicDBObject("_id", query.getField()),
-                                Accumulators.sum(TOTAL, 1),
-                                Accumulators.sum("completed", new BasicDBObject(DOLLAR_COND, Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$registrationCompleted", true)), 1, 0))))
-                ), Document.class)))
-                .map(doc -> {
-                    Map<Object, Object> registrations = new HashMap<>();
-                    registrations.putAll(doc.entrySet()
-                            .stream()
-                            .filter(e -> !"_id".equals(e.getKey()))
-                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
-                    return registrations;
-                })
+                        Arrays.asList(
+                                Aggregates.match(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, query.getDomain()), eq(FIELD_PRE_REGISTRATION, true))),
+                                Aggregates.group(new BasicDBObject("_id", query.getField()),
+                                        Accumulators.sum(TOTAL, 1),
+                                        Accumulators.sum("completed", new BasicDBObject(DOLLAR_COND, Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$registrationCompleted", true)), 1, 0))))
+                        ), Document.class)))
+                .map(doc -> (Map<Object, Object>) new HashMap<Object, Object>(doc.entrySet()
+                        .stream()
+                        .filter(e -> !"_id".equals(e.getKey()))
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))))
                 .first(Collections.emptyMap());
     }
 

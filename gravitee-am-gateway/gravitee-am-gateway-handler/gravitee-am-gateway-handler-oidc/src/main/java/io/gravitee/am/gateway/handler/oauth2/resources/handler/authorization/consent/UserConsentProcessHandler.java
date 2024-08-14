@@ -33,7 +33,12 @@ import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.gateway.handler.oauth2.service.utils.OAuth2Constants.SCOPE_PREFIX;
@@ -81,10 +86,10 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
             value = value == null ? "" : value.toLowerCase();
             if ("true".equals(value) || value.startsWith("approve")) {
                 approvedConsent.add(requestedScope);
-                approvals.add(new ScopeApproval(authorizationRequest.transactionId(), user.getId(), client.getClientId(), domain.getId(),
+                approvals.add(new ScopeApproval(authorizationRequest.transactionId(), user.getFullId(), client.getClientId(), domain.getId(),
                         requestedScope, ScopeApproval.ApprovalStatus.APPROVED));
             } else {
-                approvals.add(new ScopeApproval(authorizationRequest.transactionId(), user.getId(), client.getClientId(), domain.getId(),
+                approvals.add(new ScopeApproval(authorizationRequest.transactionId(), user.getFullId(), client.getClientId(), domain.getId(),
                         requestedScope, ScopeApproval.ApprovalStatus.DENIED));
             }
         }
@@ -128,7 +133,7 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
         if (canSaveIp(context)) {
             additionalInformation.put(Claims.IP_ADDRESS, RequestUtils.remoteAddress(request));
         }
-        if (canSaveUserAgent(context)){
+        if (canSaveUserAgent(context)) {
             additionalInformation.put(Claims.USER_AGENT, RequestUtils.userAgent(request));
         }
         additionalInformation.put(Claims.DOMAIN, domain.getId());

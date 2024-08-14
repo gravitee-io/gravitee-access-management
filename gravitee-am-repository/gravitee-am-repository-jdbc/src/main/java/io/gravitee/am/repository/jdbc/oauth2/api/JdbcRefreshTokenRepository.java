@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.jdbc.oauth2.api;
 
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcRefreshToken;
 import io.gravitee.am.repository.jdbc.oauth2.api.spring.SpringRefreshTokenRepository;
@@ -57,7 +58,7 @@ public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implement
 
     @Override
     public Maybe<RefreshToken> findByToken(String token) {
-        LOGGER.debug("findByToken({token})", token);
+        LOGGER.debug("findByToken({})", token);
         return refreshTokenRepository.findByToken(token, LocalDateTime.now(UTC))
                 .map(this::toEntity)
                 .doOnError(error -> LOGGER.error("Unable to retrieve RefreshToken", error));
@@ -89,10 +90,10 @@ public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implement
     }
 
     @Override
-    public Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, String userId) {
+    public Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, UserId userId) {
         LOGGER.debug("deleteByDomainIdClientIdAndUserId({},{},{})", domainId, clientId, userId);
         return monoToCompletable(getTemplate().delete(JdbcRefreshToken.class)
-                .matching(Query.query(where(SUBJECT).is(userId)
+                .matching(Query.query(where(SUBJECT).is(userId.getInternalSubject())
                         .and(where("domain").is(domainId))
                         .and(where("client").is(clientId)))).all())
                 .doOnError(error -> LOGGER.error("Unable to delete refresh token with domain {}, client {} and subject {}",
@@ -100,10 +101,10 @@ public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implement
     }
 
     @Override
-    public Completable deleteByDomainIdAndUserId(String domainId, String userId) {
+    public Completable deleteByDomainIdAndUserId(String domainId, UserId userId) {
         LOGGER.debug("deleteByDomainIdAndUserId({},{})", domainId, userId);
         return monoToCompletable(getTemplate().delete(JdbcRefreshToken.class)
-                .matching(Query.query(where(SUBJECT).is(userId)
+                .matching(Query.query(where(SUBJECT).is(userId.getInternalSubject())
                         .and(where("domain").is(domainId))))
                 .all())
                 .doOnError(error -> LOGGER.error("Unable to delete refresh token with domain {} and subject {}",

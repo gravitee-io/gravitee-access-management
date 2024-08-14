@@ -28,7 +28,13 @@ import io.gravitee.am.service.ScopeApprovalService;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -62,7 +68,7 @@ public class UserConsentServiceImpl implements UserConsentService {
 
     @Override
     public Single<Set<String>> checkConsent(Client client, io.gravitee.am.model.User user) {
-        return scopeApprovalService.findByDomainAndUserAndClient(domain.getId(), user.getId(), client.getClientId())
+        return scopeApprovalService.findByDomainAndUserAndClient(domain.getId(), user.getFullId(), client.getClientId())
                 .filter(approval -> {
                     Date today = new Date();
                     return approval.getExpiresAt().after(today) && APPROVED.equals(approval.getStatus());

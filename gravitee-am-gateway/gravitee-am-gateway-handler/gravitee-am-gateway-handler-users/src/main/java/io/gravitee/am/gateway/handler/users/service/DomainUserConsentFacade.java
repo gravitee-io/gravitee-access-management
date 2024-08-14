@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.users.service;
 
-import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -24,34 +24,31 @@ import io.reactivex.rxjava3.core.Single;
 import java.util.Set;
 
 /**
+ * Manages gateway operations on users within a single domain
+ *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UserService {
+public interface DomainUserConsentFacade {
 
-    Maybe<User> findById(String id);
+    Single<Set<ScopeApproval>> consents(UserId userId);
 
-    Single<Set<ScopeApproval>> consents(String userId);
-
-    Single<Set<ScopeApproval>> consents(String userId, String clientId);
+    Single<Set<ScopeApproval>> consents(UserId userId, String clientId);
 
     Maybe<ScopeApproval> consent(String consentId);
 
-    Completable revokeConsent(String userId, String consentId, io.gravitee.am.identityprovider.api.User principal);
+    Completable revokeConsent(UserId userId, String consentId, io.gravitee.am.identityprovider.api.User principal);
 
-    Completable revokeConsents(String userId, io.gravitee.am.identityprovider.api.User principal);
+    Completable revokeConsents(UserId userId, io.gravitee.am.identityprovider.api.User principal);
 
-    Completable revokeConsents(String userId, String clientId, io.gravitee.am.identityprovider.api.User principal);
+    Completable revokeConsents(UserId userId, String clientId, io.gravitee.am.identityprovider.api.User principal);
 
-    default Completable revokeConsent(String userId, String consentId) {
-        return revokeConsent(userId, consentId, null);
-    }
-
-    default Completable revokeConsents(String userId) {
-        return revokeConsents(userId, (io.gravitee.am.identityprovider.api.User) null);
-    }
-
-    default Completable revokeConsents(String userId, String clientId) {
-        return revokeConsents(userId, clientId, null);
-    }
+    // TODO MRE: remove
+//    default Completable revokeConsent(UserId userId, String consentId) {
+//        return revokeConsent(userId, consentId, null);
+//    }
+//
+//    default Completable revokeConsents(UserId userId) {
+//        return revokeConsents(userId, null);
+//    }
 }

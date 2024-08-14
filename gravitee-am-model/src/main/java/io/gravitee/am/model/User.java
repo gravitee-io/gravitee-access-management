@@ -22,6 +22,8 @@ import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -41,6 +43,8 @@ import java.util.stream.Collectors;
  */
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
 public class User implements IUser {
 
 

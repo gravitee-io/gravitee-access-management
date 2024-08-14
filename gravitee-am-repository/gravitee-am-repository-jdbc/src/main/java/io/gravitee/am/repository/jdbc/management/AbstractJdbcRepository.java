@@ -18,6 +18,7 @@ package io.gravitee.am.repository.jdbc.management;
 import com.github.dozermapper.core.DozerBeanMapperBuilder;
 import com.github.dozermapper.core.Mapper;
 import io.gravitee.am.model.UserId;
+import io.gravitee.am.repository.jdbc.DateHelper;
 import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.management.api.model.mapper.LocalDateConverter;
 import lombok.Getter;
@@ -32,7 +33,6 @@ import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.transaction.ReactiveTransactionManager;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -79,7 +79,7 @@ public abstract class AbstractJdbcRepository {
     protected String createInsertStatement(String table, List<String> columns) {
         return "INSERT INTO " + table + " (" +
                 columns.stream().map(SqlIdentifier::quoted).map(databaseDialectHelper::toSql).collect(Collectors.joining(","))
-                + ") VALUES (:" + columns.stream().collect(Collectors.joining(",:")) + ")";
+                + ") VALUES (:" + String.join(",:", columns) + ")";
     }
 
     protected String createUpdateStatement(String table, List<String> columns, List<String> whereClauseColumns) {
@@ -107,15 +107,20 @@ public abstract class AbstractJdbcRepository {
         return builder.toString();
     }
 
+    /**
+     * @deprecated Use {@link DateHelper#toLocalDateTime} instead
+     */
+    @Deprecated(since = "4.5.0", forRemoval = true)
     protected LocalDateTime toLocalDateTime(Date date) {
-        if (date == null) {
-            return null;
-        }
-        return date.toInstant().atOffset(ZoneOffset.UTC).toLocalDateTime();
+        return DateHelper.toLocalDateTime(date);
     }
 
+    /**
+     * @deprecated Use {@link DateHelper#toDate} instead
+     */
+    @Deprecated(since = "4.5.0", forRemoval = true)
     protected Date toDate(LocalDateTime localDateTime) {
-        return Date.from(localDateTime.toInstant(ZoneOffset.UTC));
+        return DateHelper.toDate(localDateTime);
     }
 
 

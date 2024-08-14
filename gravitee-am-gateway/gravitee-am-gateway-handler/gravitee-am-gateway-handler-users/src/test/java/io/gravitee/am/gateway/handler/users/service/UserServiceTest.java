@@ -15,8 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.users.service;
 
-import io.gravitee.am.gateway.handler.users.service.impl.UserServiceImpl;
+import io.gravitee.am.gateway.handler.users.service.impl.DomainUserConsentFacadeImpl;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.exception.ScopeApprovalNotFoundException;
@@ -43,7 +44,7 @@ import static org.mockito.Mockito.when;
 public class UserServiceTest {
 
     @InjectMocks
-    private UserService userService = new UserServiceImpl();
+    private DomainUserConsentFacade userService = new DomainUserConsentFacadeImpl();
 
     @Mock
     private Domain domain;
@@ -58,14 +59,14 @@ public class UserServiceTest {
 
         final ScopeApproval scopeApproval = new ScopeApproval();
         scopeApproval.setId("consentId");
-        scopeApproval.setUserId(userId);
+        scopeApproval.setUserId(UserId.internal(userId));
         scopeApproval.setClientId("");
         scopeApproval.setScope("");
 
         when(domain.getId()).thenReturn(domainId);
-        when(scopeApprovalService.findByDomainAndUser(domainId, userId)).thenReturn(Flowable.just(scopeApproval));
+        when(scopeApprovalService.findByDomainAndUser(domainId, UserId.internal(userId))).thenReturn(Flowable.just(scopeApproval));
 
-        TestObserver<Set<ScopeApproval>> testObserver = userService.consents(userId).test();
+        TestObserver<Set<ScopeApproval>> testObserver = userService.consents(UserId.internal(userId)).test();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -88,32 +89,25 @@ public class UserServiceTest {
 
     @Test
     public void shouldNotFindUserConsent_consentNotFound() {
-        final ScopeApproval scopeApproval = new ScopeApproval();
-        scopeApproval.setId("consentId");
 
         when(scopeApprovalService.findById(anyString())).thenReturn(Maybe.empty());
 
-        TestObserver<ScopeApproval> testObserver = userService.consent("consentId").test();
-
-        testObserver.assertNotComplete();
-        testObserver.assertError(ScopeApprovalNotFoundException.class);
+        userService.consent("consentId").test()
+                .assertNotComplete()
+                .assertError(ScopeApprovalNotFoundException.class);
     }
 
     @Test
     public void shouldRevokeConsents() {
-        final String userId = "userId";
+        final var userId = UserId.internal("userId");
         final String domainId = "domainId";
-
-        final ScopeApproval scopeApproval = new ScopeApproval();
-        scopeApproval.setId("consentId");
 
         when(domain.getId()).thenReturn(domainId);
         when(scopeApprovalService.revokeByUser(domainId, userId, null)).thenReturn(Completable.complete());
 
-        TestObserver testObserver = userService.revokeConsents(userId).test();
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
+       userService.revokeConsents(userId, null).test()
+               .assertComplete()
+               .assertNoErrors();
     }
 
     @Test
@@ -123,9 +117,9 @@ public class UserServiceTest {
         final String consentId = "consentId";
 
         when(domain.getId()).thenReturn(domainId);
-        when(scopeApprovalService.revokeByConsent(domainId, userId, consentId, null)).thenReturn(Completable.complete());
+        when(scopeApprovalService.revokeByConsent(domainId, UserId.internal(userId), consentId, null)).thenReturn(Completable.complete());
 
-        TestObserver testObserver = userService.revokeConsent(userId, consentId).test();
+        TestObserver testObserver = userService.revokeConsent(UserId.internal(userId), consentId, null).test();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();

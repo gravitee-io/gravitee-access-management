@@ -16,8 +16,8 @@
 package io.gravitee.am.gateway.handler.users.spring;
 
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
-import io.gravitee.am.gateway.handler.users.service.UserService;
-import io.gravitee.am.gateway.handler.users.service.impl.UserServiceImpl;
+import io.gravitee.am.gateway.handler.users.service.DomainUserConsentFacade;
+import io.gravitee.am.gateway.handler.users.service.impl.DomainUserConsentFacadeImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -29,7 +29,7 @@ import org.springframework.context.annotation.Configuration;
 public class UsersConfiguration implements ProtocolConfiguration {
 
     @Bean
-    public UserService userService() {
-        return new UserServiceImpl();
+    public DomainUserConsentFacade userService() {
+        return new DomainUserConsentFacadeImpl();
     }
 }

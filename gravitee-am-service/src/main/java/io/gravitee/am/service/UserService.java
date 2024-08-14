@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.CommonUserRepository.UpdateActions;
@@ -46,7 +47,15 @@ public interface UserService extends CommonUserService {
 
     Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source, boolean includeLinkedIdentities);
 
+    /**
+     * TODO MRE: verify we can even fucking do that
+     *
+     * @deprecated use {@link #findById(UserId)}
+     */
+    @Deprecated(since = "4.5.0", forRemoval = true)
     Maybe<User> findById(String id);
+
+    Maybe<User> findById(UserId id);
 
     Single<User> create(String domain, NewUser newUser);
 

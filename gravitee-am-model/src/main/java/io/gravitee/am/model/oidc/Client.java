@@ -35,6 +35,8 @@ import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -59,6 +61,8 @@ import static org.springframework.util.CollectionUtils.isEmpty;
  * @author GraviteeSource Team
  * See https://openid.net/specs/openid-connect-registration-1_0.html#ClientMetadata
  */
+@Builder
+@AllArgsConstructor
 public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public static final int DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS = 7200;

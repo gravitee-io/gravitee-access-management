@@ -56,9 +56,9 @@ import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.UMA_PATH
  */
 public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
 
-    private ResourceService resourceService;
-    private Domain domain;
-    private SubjectManager subjectManager;
+    private final ResourceService resourceService;
+    private final Domain domain;
+    private final SubjectManager subjectManager;
 
     public ResourceRegistrationEndpoint(Domain domain, ResourceService resourceService, SubjectManager subjectManager) {
         this.domain = domain;
@@ -72,15 +72,15 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
         Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         subjectManager.findUserIdBySub(accessToken)
                 .switchIfEmpty(Single.error(() -> new UserNotFoundException(accessToken.getSub())))
-                .flatMap(userId -> this.resourceService.listByDomainAndClientAndUser(domain.getId(), client.getId(), userId)
-                .map(Resource::getId)
-                .collect(JsonArray::new, JsonArray::add))
+                .flatMap(userId -> this.resourceService.listByDomainAndClientAndUser(domain.getId(), client.getId(), userId.id()/*todo degraded mode: should we use full id here as well?*/)
+                        .map(Resource::getId)
+                        .collect(JsonArray::new, JsonArray::add))
                 .subscribe(
                         buffer -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
                                 .putHeader(HttpHeaders.PRAGMA, "no-cache")
                                 .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                .setStatusCode(buffer.isEmpty()?HttpStatusCode.NO_CONTENT_204:HttpStatusCode.OK_200)
+                                .setStatusCode(buffer.isEmpty() ? HttpStatusCode.NO_CONTENT_204 : HttpStatusCode.OK_200)
                                 .end(Json.encodePrettily(buffer))
                         , error -> context.fail(error)
                 );
@@ -94,7 +94,7 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
         this.extractRequest(context)
                 .flatMap(request -> subjectManager.findUserIdBySub(accessToken)
                         .switchIfEmpty(Single.error(() -> new UserNotFoundException(accessToken.getSub())))
-                        .flatMap(userId -> this.resourceService.create(request, domain.getId(), client.getId(), userId)))
+                        .flatMap(userId -> this.resourceService.create(request, domain.getId(), client.getId(), userId.id()/*todo degraded mode: should we use full id here as well?*/)))
                 .subscribe(
                         resource -> {
                             final String resourceLocation = resourceLocation(basePath, resource);
@@ -117,7 +117,7 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
 
         subjectManager.findUserIdBySub(accessToken)
                 .switchIfEmpty(Maybe.error(() -> new UserNotFoundException(accessToken.getSub())))
-                .flatMap(useId -> this.resourceService.findByDomainAndClientAndUserAndResource(domain.getId(), client.getId(), useId, resource_id))
+                .flatMap(useId -> this.resourceService.findByDomainAndClientAndUserAndResource(domain.getId(), client.getId(), useId.id()/*todo degraded mode: should we use full id here as well?*/, resource_id))
                 .switchIfEmpty(Single.error(new ResourceNotFoundException(resource_id)))
                 .subscribe(
                         resource -> context.response()
@@ -134,6 +134,7 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
      * https://docs.kantarainitiative.org/uma/wg/rec-oauth-uma-federated-authz-2.0.html#reg-api
      * The spec state that if the resource can not be found, it must result in a 404.
      * By the way this may be better than a 403 to avoid confirming ids to a potential attacks.
+     *
      * @param context
      */
     public void update(RoutingContext context) {
@@ -144,7 +145,7 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
         this.extractRequest(context)
                 .flatMap(request -> subjectManager.findUserIdBySub(accessToken)
                         .switchIfEmpty(Single.error(() -> new UserNotFoundException(accessToken.getSub())))
-                        .flatMap(userId -> this.resourceService.update(request, domain.getId(), client.getId(), userId, resource_id)))
+                        .flatMap(userId -> this.resourceService.update(request, domain.getId(), client.getId(), userId.id()/*todo degraded mode: should we use full id here as well?*/, resource_id)))
                 .subscribe(
                         resource -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -162,7 +163,7 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
         String resource_id = context.request().getParam(RESOURCE_ID);
 
         subjectManager.findUserIdBySub(accessToken)
-                .flatMapCompletable(userId -> this.resourceService.delete(domain.getId(), client.getId(), userId, resource_id))
+                .flatMapCompletable(userId -> this.resourceService.delete(domain.getId(), client.getId(), userId.id()/*todo degraded mode: should we use full id here as well?*/, resource_id))
                 .subscribe(
                         () -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -189,12 +190,10 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
     }
 
     private String resourceLocation(String basePath, Resource resource) {
-        return new StringBuilder()
-                .append(basePath)
-                .append(UMA_PATH)
-                .append(RESOURCE_REGISTRATION_PATH)
-                .append("/")
-                .append(resource.getId())
-                .toString();
+        return basePath +
+                UMA_PATH +
+                RESOURCE_REGISTRATION_PATH +
+                "/" +
+                resource.getId();
     }
 }

@@ -15,10 +15,10 @@
  */
 package io.gravitee.am.repository.gateway.api;
 
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.gateway.AbstractGatewayTest;
 import io.gravitee.am.repository.jdbc.gateway.api.JdbcScopeApprovalRepository;
-import io.gravitee.am.repository.oauth2.AbstractOAuthTest;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +44,7 @@ public class ScopeApprovalRepositoryPurgeTest extends AbstractGatewayTest {
         ScopeApproval scope1 = new ScopeApproval();
         scope1.setScope("scope1");
         scope1.setDomain("domain");
-        scope1.setUserId("user");
+        scope1.setUserId(UserId.internal("user"));
         scope1.setClientId("cli1");
         scope1.setStatus(ScopeApproval.ApprovalStatus.APPROVED);
         scope1.setExpiresAt(new Date(now.plus(1, ChronoUnit.MINUTES).toEpochMilli()));
@@ -52,7 +52,7 @@ public class ScopeApprovalRepositoryPurgeTest extends AbstractGatewayTest {
         ScopeApproval scope2 = new ScopeApproval();
         scope2.setScope("scope2");
         scope2.setDomain("domain");
-        scope2.setUserId("user");
+        scope2.setUserId(UserId.internal("user"));
         scope2.setClientId("cli2");
         scope2.setStatus(ScopeApproval.ApprovalStatus.APPROVED);
         scope2.setExpiresAt(new Date(now.minus(1, ChronoUnit.MINUTES).toEpochMilli()));
@@ -60,7 +60,7 @@ public class ScopeApprovalRepositoryPurgeTest extends AbstractGatewayTest {
         scopeApprovalRepository.create(scope1).test().awaitDone(10, TimeUnit.SECONDS);
         scopeApprovalRepository.create(scope2).test().awaitDone(10, TimeUnit.SECONDS);
 
-        TestObserver<HashSet<ScopeApproval>> testObserver = scopeApprovalRepository.findByDomainAndUser("domain", "user").collect(HashSet<ScopeApproval>::new, Set::add).test();
+        TestObserver<HashSet<ScopeApproval>> testObserver = scopeApprovalRepository.findByDomainAndUser("domain", UserId.internal("user")).collect(HashSet<ScopeApproval>::new, Set::add).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(s -> s.size() == 1);
@@ -70,7 +70,7 @@ public class ScopeApprovalRepositoryPurgeTest extends AbstractGatewayTest {
         testPurge.awaitDone(10, TimeUnit.SECONDS);
         testPurge.assertNoErrors();
 
-        testObserver = scopeApprovalRepository.findByDomainAndUser("domain", "user").collect(HashSet<ScopeApproval>::new, Set::add).test();
+        testObserver = scopeApprovalRepository.findByDomainAndUser("domain", UserId.internal("user")).collect(HashSet<ScopeApproval>::new, Set::add).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(s -> s.size() == 1);

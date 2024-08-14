@@ -17,6 +17,7 @@ package io.gravitee.am.repository.mongodb.oauth2;
 
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.AccessTokenMongo;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
@@ -125,8 +126,8 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     }
 
     @Override
-    public Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, String userId) {
-        return Completable.fromPublisher(accessTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_CLIENT, clientId), eq(FIELD_SUBJECT, userId))));
+    public Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, UserId userId) {
+        return Completable.fromPublisher(accessTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_CLIENT, clientId), eq(FIELD_SUBJECT, userId.getInternalSubject()))));
     }
 
     @Override
@@ -135,8 +136,8 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     }
 
     @Override
-    public Completable deleteByDomainIdAndUserId(String domainId, String userId) {
-        return Completable.fromPublisher(accessTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_SUBJECT, userId))));
+    public Completable deleteByDomainIdAndUserId(String domainId, UserId userId) {
+        return Completable.fromPublisher(accessTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_SUBJECT, userId.getInternalSubject()))));
     }
 
     private AccessTokenMongo convert(AccessToken accessToken) {

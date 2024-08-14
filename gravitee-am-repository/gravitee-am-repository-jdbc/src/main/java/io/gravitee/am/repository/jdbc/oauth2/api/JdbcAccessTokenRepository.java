@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.jdbc.oauth2.api;
 
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcAccessToken;
 import io.gravitee.am.repository.jdbc.oauth2.api.spring.SpringAccessTokenRepository;
@@ -104,9 +105,9 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
     public Completable delete(String token) {
         LOGGER.debug("delete({})", token);
         return Completable.fromMaybe(findByToken(token).flatMap(accessToken ->
-            monoToMaybe(getTemplate().delete(Query.query(where("token").is(token)), JdbcAccessToken.class)
-                    .map(i -> accessToken)
-        ).doOnError(error -> LOGGER.error("Unable to delete AccessToken", error))));
+                monoToMaybe(getTemplate().delete(Query.query(where("token").is(token)), JdbcAccessToken.class)
+                        .map(i -> accessToken)
+                ).doOnError(error -> LOGGER.error("Unable to delete AccessToken", error))));
     }
 
     @Override
@@ -151,15 +152,15 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
                 .matching(Query.query(where(SUBJECT).is(userId)))
                 .all())
                 .doOnError(error -> LOGGER.error("Unable to delete access tokens with subject {}",
-                userId, error));
+                        userId, error));
     }
 
     @Override
-    public Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, String userId) {
+    public Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, UserId userId) {
         LOGGER.debug("deleteByDomainIdClientIdAndUserId({},{},{})", domainId, clientId, userId);
         return monoToCompletable(getTemplate().delete(JdbcAccessToken.class)
                 .matching(Query.query(
-                        where(SUBJECT).is(userId)
+                        where(SUBJECT).is(userId.getInternalSubject())
                                 .and(where("domain").is(domainId))
                                 .and(where("client").is(clientId))))
                 .all())
@@ -168,11 +169,11 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
     }
 
     @Override
-    public Completable deleteByDomainIdAndUserId(String domainId, String userId) {
+    public Completable deleteByDomainIdAndUserId(String domainId, UserId userId) {
         LOGGER.debug("deleteByDomainIdAndUserId({},{})", domainId, userId);
         return monoToCompletable(getTemplate().delete(JdbcAccessToken.class)
                 .matching(Query.query(
-                        where(SUBJECT).is(userId)
+                        where(SUBJECT).is(userId.getInternalSubject())
                                 .and(where("domain").is(domainId))))
                 .all())
                 .doOnError(error -> LOGGER.error("Unable to delete access tokens with domain {} and subject {}",

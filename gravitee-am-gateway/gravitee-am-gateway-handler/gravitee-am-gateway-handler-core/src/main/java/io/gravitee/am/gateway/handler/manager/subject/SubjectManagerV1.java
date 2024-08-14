@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.reactivex.rxjava3.core.Maybe;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,8 +61,8 @@ public class SubjectManagerV1 implements SubjectManager {
     }
 
     @Override
-    public Maybe<String> findUserIdBySub(JWT token) {
-        return Maybe.just(token.getSub());
+    public Maybe<UserId> findUserIdBySub(JWT token) {
+        return Maybe.just(UserId.internal(token.getSub()));
     }
 
     @Override

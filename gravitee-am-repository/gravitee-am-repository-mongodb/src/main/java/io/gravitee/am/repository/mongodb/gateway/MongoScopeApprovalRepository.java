@@ -18,6 +18,7 @@ package io.gravitee.am.repository.mongodb.gateway;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.gateway.api.ScopeApprovalRepository;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.ScopeApprovalMongo;
@@ -66,8 +67,17 @@ public class MongoScopeApprovalRepository extends AbstractGatewayMongoRepository
         final var indexes = new HashMap<Document, IndexOptions>();
         indexes.put(new Document(FIELD_TRANSACTION_ID, 1), new IndexOptions().name("t1"));
         indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_USER_ID, 1), new IndexOptions().name("d1u1"));
-        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1), new IndexOptions().name("d1c1u1"));
-        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1).append(FIELD_SCOPE, 1), new IndexOptions().name("d1c1u1s1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1)
+                .append(FIELD_CLIENT_ID, 1)
+                .append(FIELD_USER_ID, 1)
+                .append(FIELD_USER_SOURCE, 1)
+                .append(FIELD_USER_EXTERNAL_ID, 1), new IndexOptions().name("d1c1u1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1)
+                .append(FIELD_CLIENT_ID, 1)
+                .append(FIELD_USER_ID, 1)
+                .append(FIELD_USER_SOURCE, 1)
+                .append(FIELD_USER_EXTERNAL_ID, 1)
+                .append(FIELD_SCOPE, 1), new IndexOptions().name("d1c1u1s1"));
         // expire after index
         indexes.put(new Document(FIELD_EXPIRES_AT, 1), new IndexOptions().name("e1").expireAfter(0L, TimeUnit.SECONDS));
 
@@ -81,13 +91,13 @@ public class MongoScopeApprovalRepository extends AbstractGatewayMongoRepository
     }
 
     @Override
-    public Flowable<ScopeApproval> findByDomainAndUserAndClient(String domain, String userId, String clientId) {
-        return Flowable.fromPublisher(scopeApprovalsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId), eq(FIELD_USER_ID, userId), gte(FIELD_EXPIRES_AT, new Date())))).map(this::convert);
+    public Flowable<ScopeApproval> findByDomainAndUserAndClient(String domain, UserId userId, String clientId) {
+        return Flowable.fromPublisher(scopeApprovalsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId), userIdMatches(userId), gte(FIELD_EXPIRES_AT, new Date())))).map(this::convert);
     }
 
     @Override
-    public Flowable<ScopeApproval> findByDomainAndUser(String domain, String user) {
-        return Flowable.fromPublisher(scopeApprovalsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_USER_ID, user), gte(FIELD_EXPIRES_AT, new Date())))).map(this::convert);
+    public Flowable<ScopeApproval> findByDomainAndUser(String domain, UserId userId) {
+        return Flowable.fromPublisher(scopeApprovalsCollection.find(and(eq(FIELD_DOMAIN, domain), userIdMatches(userId), gte(FIELD_EXPIRES_AT, new Date())))).map(this::convert);
     }
 
     @Override
@@ -119,7 +129,7 @@ public class MongoScopeApprovalRepository extends AbstractGatewayMongoRepository
         return Observable.fromPublisher(scopeApprovalsCollection.find(
                         and(eq(FIELD_DOMAIN, scopeApproval.getDomain()),
                                 eq(FIELD_CLIENT_ID, scopeApproval.getClientId()),
-                                eq(FIELD_USER_ID, scopeApproval.getUserId()),
+                                userIdMatches(scopeApproval.getUserId()),
                                 eq(FIELD_SCOPE, scopeApproval.getScope()))).first())
                 .firstElement()
                 .map(Optional::of)
@@ -149,15 +159,15 @@ public class MongoScopeApprovalRepository extends AbstractGatewayMongoRepository
     }
 
     @Override
-    public Completable deleteByDomainAndUserAndClient(String domain, String user, String client) {
+    public Completable deleteByDomainAndUserAndClient(String domain, UserId userId, String client) {
         return Completable.fromPublisher(scopeApprovalsCollection.deleteMany(
-                and(eq(FIELD_DOMAIN, domain), eq(FIELD_USER_ID, user), eq(FIELD_CLIENT_ID, client))));
+                and(eq(FIELD_DOMAIN, domain), userIdMatches(userId), eq(FIELD_CLIENT_ID, client))));
     }
 
     @Override
-    public Completable deleteByDomainAndUser(String domain, String user) {
+    public Completable deleteByDomainAndUser(String domain, UserId userId) {
         return Completable.fromPublisher(scopeApprovalsCollection.deleteMany(
-                and(eq(FIELD_DOMAIN, domain), eq(FIELD_USER_ID, user))));
+                and(eq(FIELD_DOMAIN, domain), userIdMatches(userId))));
     }
 
     private ScopeApproval convert(ScopeApprovalMongo scopeApprovalMongo) {
@@ -169,7 +179,7 @@ public class MongoScopeApprovalRepository extends AbstractGatewayMongoRepository
         scopeApproval.setId(scopeApprovalMongo.getId());
         scopeApproval.setTransactionId(scopeApprovalMongo.getTransactionId());
         scopeApproval.setClientId(scopeApprovalMongo.getClientId());
-        scopeApproval.setUserId(scopeApprovalMongo.getUserId());
+        scopeApproval.setUserId(new UserId(scopeApprovalMongo.getUserId(), scopeApprovalMongo.getUserExternalId(), scopeApprovalMongo.getUserSource()));
         scopeApproval.setScope(scopeApprovalMongo.getScope());
         scopeApproval.setExpiresAt(scopeApprovalMongo.getExpiresAt());
         scopeApproval.setStatus(ScopeApproval.ApprovalStatus.valueOf(scopeApprovalMongo.getStatus().toUpperCase()));
@@ -189,7 +199,9 @@ public class MongoScopeApprovalRepository extends AbstractGatewayMongoRepository
         scopeApprovalMongo.setId(scopeApproval.getId());
         scopeApprovalMongo.setTransactionId(scopeApproval.getTransactionId());
         scopeApprovalMongo.setClientId(scopeApproval.getClientId());
-        scopeApprovalMongo.setUserId(scopeApproval.getUserId());
+        scopeApprovalMongo.setUserId(scopeApproval.getUserId().id());
+        scopeApprovalMongo.setUserExternalId(scopeApproval.getUserId().externalId());
+        scopeApprovalMongo.setUserSource(scopeApproval.getUserId().source());
         scopeApprovalMongo.setScope(scopeApproval.getScope());
         scopeApprovalMongo.setExpiresAt(scopeApproval.getExpiresAt());
         scopeApprovalMongo.setStatus(scopeApproval.getStatus().name().toUpperCase());

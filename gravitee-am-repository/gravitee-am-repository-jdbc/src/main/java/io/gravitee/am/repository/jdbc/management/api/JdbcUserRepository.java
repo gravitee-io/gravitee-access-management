@@ -19,6 +19,7 @@ import io.gravitee.am.common.analytics.Field;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
@@ -76,6 +77,7 @@ import static java.util.stream.Stream.concat;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToMaybe;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
@@ -230,7 +232,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     private static final String USER_ID = "user_id";
 
 
-    private static short concurrentFlatmap = 1;
+    private static final short flatMapMaxConcurrency = 1;
 
     private String updateUserStatement;
     private String insertUserStatement;
@@ -259,9 +261,9 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     @Autowired
     protected SpringUserIdentitiesRepository identitiesRepository;
 
-    private EnrolledFactorsConverter enrolledFactorsConverter = new EnrolledFactorsConverter();
-    private MapToStringConverter mapToStringConverter = new MapToStringConverter();
-    private X509Converter x509Converter = new X509Converter();
+    private final EnrolledFactorsConverter enrolledFactorsConverter = new EnrolledFactorsConverter();
+    private final MapToStringConverter mapToStringConverter = new MapToStringConverter();
+    private final X509Converter x509Converter = new X509Converter();
 
     protected User toEntity(JdbcUser entity) {
         var result = new User();
@@ -429,7 +431,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                         .with(PageRequest.of(page, size))
                 ).all())
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toFlowable(), concurrentFlatmap)
+                .flatMap(user -> completeUser(user).toFlowable(), flatMapMaxConcurrency)
                 .toList()
                 .flatMap(content -> userRepository.countByReference(referenceType.name(), referenceId)
                         .map(count -> new Page<>(content, page, count)));
@@ -451,7 +453,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .bind(REF_TYPE, referenceType.name())
                 .map((row, rowMetadata) -> rowMapper.read(JdbcUser.class, row)).all())
                 .map(this::toEntity)
-                .flatMap(app -> completeUser(app).toFlowable(), concurrentFlatmap) // single thread to keep order
+                .flatMap(app -> completeUser(app).toFlowable(), flatMapMaxConcurrency) // single thread to keep order
                 .toList()
                 .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
                         .bind(ATTR_COL_VALUE, wildcardSearch ? wildcardValue : query)
@@ -534,6 +536,13 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .flatMap(user -> completeUser(user).toMaybe());
     }
 
+    public Maybe<User> findById(UserId id) {
+        return monoToMaybe(getTemplate().select(JdbcUser.class)
+                .matching(Query.query(userMatches(id)))
+                .first())
+                .map(this::toEntity);
+    }
+
     @Override
     public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source) {
         LOGGER.debug("findByUsernameAndSource({},{},{},{})", referenceType, referenceId, username, source);
@@ -568,7 +577,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         }
         return userRepository.findByIdIn(ids)
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toFlowable(), concurrentFlatmap);
+                .flatMap(user -> completeUser(user).toFlowable(), flatMapMaxConcurrency);
     }
 
     @Override
@@ -817,7 +826,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     }
 
     private Mono<Long> deleteChildEntitiesByRef(String refType, String refId) {
-        Mono<Long> deleteRoles =  getTemplate().getDatabaseClient().sql("DELETE FROM user_roles WHERE user_id IN (SELECT id FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind(REF_TYPE, refType).bind(REF_ID, refId).fetch().rowsUpdated();
+        Mono<Long> deleteRoles = getTemplate().getDatabaseClient().sql("DELETE FROM user_roles WHERE user_id IN (SELECT id FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind(REF_TYPE, refType).bind(REF_ID, refId).fetch().rowsUpdated();
         Mono<Long> deleteAddresses = getTemplate().getDatabaseClient().sql("DELETE FROM user_addresses WHERE user_id IN (SELECT id FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind(REF_TYPE, refType).bind(REF_ID, refId).fetch().rowsUpdated();
         Mono<Long> deleteAttributes = getTemplate().getDatabaseClient().sql("DELETE FROM user_attributes WHERE user_id IN (SELECT id FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind(REF_TYPE, refType).bind(REF_ID, refId).fetch().rowsUpdated();
         Mono<Long> deleteEntitlements = getTemplate().getDatabaseClient().sql("DELETE FROM user_entitlements WHERE user_id IN (SELECT id FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind(REF_TYPE, refType).bind(REF_ID, refId).fetch().rowsUpdated();

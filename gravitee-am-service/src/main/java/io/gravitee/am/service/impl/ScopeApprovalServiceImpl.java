@@ -17,11 +17,12 @@ package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.repository.gateway.api.ScopeApprovalRepository;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
-import io.gravitee.am.repository.gateway.api.ScopeApprovalRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.UserService;
@@ -86,24 +87,24 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
     }
 
     @Override
-    public Flowable<ScopeApproval> findByDomainAndUser(String domain, String user) {
-        LOGGER.debug("Find scope approvals by domain: {} and user: {}", domain, user);
-        return scopeApprovalRepository.findByDomainAndUser(domain, user)
+    public Flowable<ScopeApproval> findByDomainAndUser(String domain, UserId userId) {
+        LOGGER.debug("Find scope approvals by domain: {} and user: {}", domain, userId);
+        return scopeApprovalRepository.findByDomainAndUser(domain, userId)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a scope approval for domain: {} and user: {}", domain, user);
+                    LOGGER.error("An error occurs while trying to find a scope approval for domain: {} and user: {}", domain, userId);
                     return Flowable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a scope approval for domain: %s and user: %s", domain, user), ex));
+                            String.format("An error occurs while trying to find a scope approval for domain: %s and user: %s", domain, userId), ex));
                 });
     }
 
     @Override
-    public Flowable<ScopeApproval> findByDomainAndUserAndClient(String domain, String user, String client) {
-        LOGGER.debug("Find scope approvals by domain: {} and user: {} and client: {}", domain, user);
-        return scopeApprovalRepository.findByDomainAndUserAndClient(domain, user, client)
+    public Flowable<ScopeApproval> findByDomainAndUserAndClient(String domain, UserId userId, String client) {
+        LOGGER.debug("Find scope approvals by domain: {} and user: {} and client: {}", domain, userId, client);
+        return scopeApprovalRepository.findByDomainAndUserAndClient(domain, userId, client)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a scope approval for domain: {}, user: {} and client: {}", domain, user, client);
+                    LOGGER.error("An error occurs while trying to find a scope approval for domain: {}, user: {} and client: {}", domain, userId, client);
                     return Flowable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a scope approval for domain: %s, user: %s and client: %s", domain, user, client), ex));
+                            String.format("An error occurs while trying to find a scope approval for domain: %s, user: %s and client: %s", domain, userId, client), ex));
                 });
     }
 
@@ -123,7 +124,7 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
     }
 
     @Override
-    public Completable revokeByConsent(String domain, String userId, String consentId, User principal) {
+    public Completable revokeByConsent(String domain, UserId userId, String consentId, User principal) {
         LOGGER.debug("Revoke approval for consent: {} and user: {}", consentId, userId);
 
         return userService.findById(userId)
@@ -134,7 +135,7 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
                                 .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user).approvals(Collections.singleton(scopeApproval))))
                                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user).throwable(throwable)))
                                 .andThen(Completable.mergeArrayDelayError(accessTokenRepository.deleteByDomainIdClientIdAndUserId(scopeApproval.getDomain(), scopeApproval.getClientId(), scopeApproval.getUserId()),
-                                            refreshTokenRepository.deleteByDomainIdClientIdAndUserId(scopeApproval.getDomain(), scopeApproval.getClientId(), scopeApproval.getUserId())))))
+                                        refreshTokenRepository.deleteByDomainIdClientIdAndUserId(scopeApproval.getDomain(), scopeApproval.getClientId(), scopeApproval.getUserId())))))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
@@ -147,47 +148,48 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
     }
 
     @Override
-    public Completable revokeByUser(String domain, String user, User principal) {
-        LOGGER.debug("Revoke approvals for domain: {} and user: {}", domain, user);
-        return userService.findById(user)
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(user)))
-                .flatMapCompletable(user1 -> scopeApprovalRepository.findByDomainAndUser(domain, user).collect(HashSet<ScopeApproval>::new, Set::add)
-                        .flatMapCompletable(scopeApprovals -> scopeApprovalRepository.deleteByDomainAndUser(domain, user)
-                                .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user1).approvals(scopeApprovals)))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user1).throwable(throwable))))
-                        .andThen(Completable.mergeArrayDelayError(accessTokenRepository.deleteByDomainIdAndUserId(domain, user),
-                                refreshTokenRepository.deleteByDomainIdAndUserId(domain, user))))
+    public Completable revokeByUser(String domain, UserId userId, User principal) {
+        LOGGER.debug("Revoke approvals for domain: {} and user: {}", domain, userId);
+
+        return userService.findById(userId)
+                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
+                .flatMapCompletable(user -> scopeApprovalRepository.findByDomainAndUser(domain, user.getFullId()).collect(HashSet<ScopeApproval>::new, Set::add)
+                        .flatMapCompletable(scopeApprovals -> scopeApprovalRepository.deleteByDomainAndUser(domain, user.getFullId())
+                                .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user).approvals(scopeApprovals)))
+                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user).throwable(throwable))))
+                        .andThen(Completable.mergeArrayDelayError(accessTokenRepository.deleteByDomainIdAndUserId(domain, userId),
+                                refreshTokenRepository.deleteByDomainIdAndUserId(domain, userId))))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to revoke scope approvals for domain: {} and user : {}", domain, user);
+                    LOGGER.error("An error occurs while trying to revoke scope approvals for domain: {} and user : {}", domain, userId);
                     return Completable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to revoke scope approvals for domain: %s and user: %s", domain, user), ex));
+                            String.format("An error occurs while trying to revoke scope approvals for domain: %s and user: %s", domain, userId), ex));
                 });
     }
 
     @Override
-    public Completable revokeByUserAndClient(String domain, String user, String clientId, User principal) {
-        LOGGER.debug("Revoke approvals for domain: {}, user: {} and client: {}", domain, user, clientId);
-        return userService.findById(user)
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(user)))
-                .flatMapCompletable(user1 -> scopeApprovalRepository.findByDomainAndUserAndClient(domain, user, clientId)
+    public Completable revokeByUserAndClient(String domain, UserId userId, String clientId, User principal) {
+        LOGGER.debug("Revoke approvals for domain: {}, user: {} and client: {}", domain, userId, clientId);
+        return userService.findById(userId)
+                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
+                .flatMapCompletable(user -> scopeApprovalRepository.findByDomainAndUserAndClient(domain, user.getFullId(), clientId)
                         .collect(HashSet<ScopeApproval>::new, Set::add)
-                        .flatMapCompletable(scopeApprovals -> scopeApprovalRepository.deleteByDomainAndUserAndClient(domain, user, clientId)
-                                .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user1).approvals(scopeApprovals)))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user1).throwable(throwable))))
-                        .andThen(Completable.mergeArrayDelayError(accessTokenRepository.deleteByDomainIdClientIdAndUserId(domain, clientId, user),
-                                refreshTokenRepository.deleteByDomainIdClientIdAndUserId(domain, clientId, user))))
+                        .flatMapCompletable(scopeApprovals -> scopeApprovalRepository.deleteByDomainAndUserAndClient(domain, user.getFullId(), clientId)
+                                .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user).approvals(scopeApprovals)))
+                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user).throwable(throwable))))
+                        .andThen(Completable.mergeArrayDelayError(accessTokenRepository.deleteByDomainIdClientIdAndUserId(domain, clientId, userId),
+                                refreshTokenRepository.deleteByDomainIdClientIdAndUserId(domain, clientId, userId))))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to revoke scope approvals for domain: {}, user: {} and client: {}", domain, user, clientId);
+                    LOGGER.error("An error occurs while trying to revoke scope approvals for domain: {}, user: {} and client: {}", domain, userId, clientId);
                     return Completable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to revoke scope approvals for domain: %s, user: %s and client: %s", domain, user, clientId), ex));
+                            String.format("An error occurs while trying to revoke scope approvals for domain: %s, user: %s and client: %s", domain, userId, clientId), ex));
                 });
 
     }

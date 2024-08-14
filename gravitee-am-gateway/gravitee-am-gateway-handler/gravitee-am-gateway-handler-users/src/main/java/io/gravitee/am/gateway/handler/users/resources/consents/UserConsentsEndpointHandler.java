@@ -19,7 +19,7 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
-import io.gravitee.am.gateway.handler.users.service.UserService;
+import io.gravitee.am.gateway.handler.users.service.DomainUserConsentFacade;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
@@ -36,7 +36,7 @@ import java.util.Optional;
  */
 public class UserConsentsEndpointHandler extends AbstractUserConsentEndpointHandler {
 
-    public UserConsentsEndpointHandler(UserService userService, ClientSyncService clientSyncService, Domain domain, SubjectManager subjectManager) {
+    public UserConsentsEndpointHandler(DomainUserConsentFacade userService, ClientSyncService clientSyncService, Domain domain, SubjectManager subjectManager) {
         super(userService, clientSyncService, domain, subjectManager);
     }
 
@@ -45,22 +45,22 @@ public class UserConsentsEndpointHandler extends AbstractUserConsentEndpointHand
      */
     public void list(RoutingContext context) {
         final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
-        final String userId = context.request().getParam("userId");
+        final String userIdParam = context.request().getParam("userId");
         final String clientId = context.request().getParam("clientId");
 
         Single.just(Optional.ofNullable(clientId))
                 .flatMap(optClient ->
-                    getUserIdFromSub(accessToken).map(id -> {
-                                if (userIdParamMatchTokenIdentity(id, userId, accessToken)) {
-                                    return id;
-                                }
-                                throw new UserNotFoundException(userId);
-                    }).flatMap(id -> {
-                        if (optClient.isPresent()) {
-                            return userService.consents(id, optClient.get());
-                        }
-                        return userService.consents(id);
-                    }))
+                        getUserIdFromSub(accessToken).map(id -> {
+                            if (userIdParamMatchTokenIdentity(id, userIdParam, accessToken)) {
+                                return id;
+                            }
+                            throw new UserNotFoundException(userIdParam);
+                        }).flatMap(id -> {
+                            if (optClient.isPresent()) {
+                                return userService.consents(id, optClient.get());
+                            }
+                            return userService.consents(id);
+                        }))
                 .subscribe(
                         scopeApprovals -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")

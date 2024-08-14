@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.users.service.impl;
 
-import io.gravitee.am.gateway.handler.users.service.UserService;
+import io.gravitee.am.gateway.handler.users.service.DomainUserConsentFacade;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.exception.ScopeApprovalNotFoundException;
@@ -33,10 +33,7 @@ import java.util.Set;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UserServiceImpl implements UserService {
-
-    @Autowired
-    private io.gravitee.am.service.UserService userService;
+public class DomainUserConsentFacadeImpl implements DomainUserConsentFacade {
 
     @Autowired
     private Domain domain;
@@ -44,18 +41,16 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private ScopeApprovalService scopeApprovalService;
 
-    @Override
-    public Maybe<User> findById(String id) {
-        return userService.findById(id);
-    }
 
     @Override
-    public Single<Set<ScopeApproval>> consents(String userId) {
+    public Single<Set<ScopeApproval>> consents(UserId userId) {
+        // todo mre: lookup by userId in (user.id, user.externalId) regardless of user.source?
         return scopeApprovalService.findByDomainAndUser(domain.getId(), userId).collect(HashSet::new, Set::add);
     }
 
     @Override
-    public Single<Set<ScopeApproval>> consents(String userId, String clientId) {
+    public Single<Set<ScopeApproval>> consents(UserId userId, String clientId) {
+        // todo mre: lookup by userId in (user.id, user.externalId) regardless of user.source?
         return scopeApprovalService.findByDomainAndUserAndClient(domain.getId(), userId, clientId).collect(HashSet::new, Set::add);
     }
 
@@ -66,17 +61,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Completable revokeConsent(String userId, String consentId, io.gravitee.am.identityprovider.api.User principal) {
+    public Completable revokeConsent(UserId userId, String consentId, io.gravitee.am.identityprovider.api.User principal) {
         return scopeApprovalService.revokeByConsent(domain.getId(), userId, consentId, principal);
     }
 
     @Override
-    public Completable revokeConsents(String userId, io.gravitee.am.identityprovider.api.User principal) {
+    public Completable revokeConsents(UserId userId, io.gravitee.am.identityprovider.api.User principal) {
         return scopeApprovalService.revokeByUser(domain.getId(), userId, principal);
     }
 
     @Override
-    public Completable revokeConsents(String userId, String clientId, io.gravitee.am.identityprovider.api.User principal) {
+    public Completable revokeConsents(UserId userId, String clientId, io.gravitee.am.identityprovider.api.User principal) {
         return scopeApprovalService.revokeByUserAndClient(domain.getId(), userId, clientId, principal);
     }
 
