@@ -399,7 +399,6 @@ afterAll(async () => {
   }
 });
 
-
 const login = async (authResponse, user, clientId) => {
   const loginResult = await extractXsrfTokenAndActionResponse(authResponse);
   return await performFormPost(
@@ -594,7 +593,7 @@ const createMfaApp = async (domain, accessToken, factors: Array<number>) => {
         factors: factors,
       },
       app.id,
-    ).then(updatedApp => {
+    ).then((updatedApp) => {
       // restore the clientSecret coming from the create order
       updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
       return updatedApp;
@@ -636,7 +635,7 @@ const createBruteForceTestApp = async (smsFactor, domain, accessToken, mfaChalle
         factors: [smsFactor.id],
       },
       app.id,
-    ).then(updatedApp => {
+    ).then((updatedApp) => {
       // restore the clientSecret coming from the create order
       updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
       return updatedApp;
