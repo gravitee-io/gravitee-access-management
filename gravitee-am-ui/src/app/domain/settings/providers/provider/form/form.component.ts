@@ -37,12 +37,8 @@ export class ProviderFormComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges) {
     if (changes.providerSchema) {
       const _providerSchema = changes.providerSchema.currentValue;
-<<<<<<< HEAD
-      if (_providerSchema?.id) {
-=======
       if (_providerSchema && _providerSchema.id) {
         this.providerSchema = this.applyPasswordInputToSensitiveFields(structuredClone(_providerSchema));
->>>>>>> 021e8455eb (AM-3499 OIDC idp secret input should be password (#4572))
         this.displayForm = true;
       }
     }
