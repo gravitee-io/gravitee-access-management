@@ -194,7 +194,7 @@ settings.forEach((setting) => {
             identityProviders: [{ identity: `default-idp-${domain.id}`, priority: 0 }],
           },
           app.id,
-        ).then(updatedApp => {
+        ).then((updatedApp) => {
           // restore the clientSecret coming from the create order
           updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
           return updatedApp;

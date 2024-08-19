@@ -17,7 +17,7 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import {createDomain, deleteDomain, patchDomain, startDomain} from '@management-commands/domain-management-commands';
+import { createDomain, deleteDomain, patchDomain, startDomain } from '@management-commands/domain-management-commands';
 import {
   createApplication,
   deleteApplication,
@@ -153,15 +153,20 @@ describe('Entrypoints: User accounts', () => {
 
     const createdApp = await createApplication(domain.id, accessToken, app);
 
-    const patchedApplication = await patchApplication(domain.id, accessToken, {
-      settings: {
-        account: {
-          inherited: false,
-          rememberMe: true,
-          rememberMeDuration: 7200,
+    const patchedApplication = await patchApplication(
+      domain.id,
+      accessToken,
+      {
+        settings: {
+          account: {
+            inherited: false,
+            rememberMe: true,
+            rememberMeDuration: 7200,
+          },
         },
       },
-    }, createdApp.id);
+      createdApp.id,
+    );
 
     const accountSettings = patchedApplication.settings.account;
     expect(accountSettings.rememberMe).toBe(true);

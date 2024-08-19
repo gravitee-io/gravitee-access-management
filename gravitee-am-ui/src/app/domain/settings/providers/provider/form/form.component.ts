@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { isObject } from 'lodash';
 
 import { MaterialCertificateComponent } from '../../../../../components/json-schema-form/material-certificate-component';
 
@@ -26,6 +27,7 @@ export class ProviderFormComponent implements OnChanges {
   @Input('providerConfiguration') configuration: any = {};
   @Input('providerSchema') providerSchema: any;
   @Output() configurationCompleted = new EventEmitter<any>();
+  schemaWithLayout: any;
   displayForm = false;
   data: any = {};
   customWidgets = {
@@ -36,6 +38,7 @@ export class ProviderFormComponent implements OnChanges {
     if (changes.providerSchema) {
       const _providerSchema = changes.providerSchema.currentValue;
       if (_providerSchema && _providerSchema.id) {
+        this.providerSchema = this.applyPasswordInputToSensitiveFields(JSON.parse(JSON.stringify(_providerSchema)));
         this.displayForm = true;
       }
     }
@@ -46,6 +49,22 @@ export class ProviderFormComponent implements OnChanges {
         this.data = _providerConfiguration;
       }
     }
+  }
+
+  applyPasswordInputToSensitiveFields(schema: any) {
+    if (!isObject(schema)) {
+      return schema;
+    }
+    for (const key in schema) {
+      if (!schema.hasOwnProperty(key)) {
+        continue;
+      }
+      this.applyPasswordInputToSensitiveFields(schema[key]);
+      if (schema[key].sensitive) {
+        schema[key].widget = 'password';
+      }
+    }
+    return schema;
   }
 
   onChanges(providerConfiguration) {

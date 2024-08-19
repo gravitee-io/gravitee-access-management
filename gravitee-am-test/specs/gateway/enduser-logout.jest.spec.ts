@@ -76,7 +76,7 @@ beforeAll(async () => {
         identityProviders: [{ identity: idpSet.values().next().value.id, priority: -1 }],
       },
       app.id,
-    ).then(updatedApp => {
+    ).then((updatedApp) => {
       // restore the clientSecret coming from the create order
       updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
       return updatedApp;
