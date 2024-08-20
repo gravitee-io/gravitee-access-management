@@ -25,8 +25,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
-import java.util.Objects;
-
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
@@ -54,19 +52,19 @@ public class DeviceIdentifierHandler implements Handler<RoutingContext> {
         final User user = routingContext.get(USER_CONTEXT_KEY);
         var rememberDeviceSettings = getRememberDeviceSettings(client);
         if (nonNull(user) && rememberDeviceSettings.isActive()) {
-            checkIfDeviceExists(routingContext, client, user.getId(), rememberDeviceSettings);
+            checkIfDeviceExists(routingContext, client, user, rememberDeviceSettings);
         } else {
             routingContext.next();
         }
     }
 
     private RememberDeviceSettings getRememberDeviceSettings(Client client) {
-        return ofNullable(client.getMfaSettings()).filter(Objects::nonNull)
+        return ofNullable(client.getMfaSettings())
                 .map(MFASettings::getRememberDevice)
                 .orElse(new RememberDeviceSettings());
     }
 
-    private void checkIfDeviceExists(RoutingContext routingContext, Client client, String userId, RememberDeviceSettings rememberDeviceSettings) {
+    private void checkIfDeviceExists(RoutingContext routingContext, Client client, User user, RememberDeviceSettings rememberDeviceSettings) {
         var domain = client.getDomain();
         var deviceId = routingContext.request().getParam(DEVICE_ID);
         var deviceIdentifierId = rememberDeviceSettings.getDeviceIdentifierId();
@@ -74,7 +72,7 @@ public class DeviceIdentifierHandler implements Handler<RoutingContext> {
             routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, false);
             routingContext.next();
         } else {
-            this.deviceService.deviceExists(domain, client.getClientId(), userId, deviceIdentifierId, deviceId).flatMapMaybe(isEmpty -> {
+            this.deviceService.deviceExists(domain, client.getClientId(), user.getFullId(), deviceIdentifierId, deviceId).flatMapMaybe(isEmpty -> {
                 routingContext.session().put(DEVICE_ID, deviceId);
                 if (!isEmpty) {
                     routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, true);

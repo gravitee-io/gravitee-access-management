@@ -43,6 +43,7 @@ import java.util.stream.Collectors;
 @Setter
 public class User implements IUser {
 
+
     public static final Set<String> SENSITIVE_ADDITIONAL_PROPERTIES = Set.of(
             ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY,
             ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY
@@ -244,6 +245,9 @@ public class User implements IUser {
         this.forceResetPassword = other.forceResetPassword;
     }
 
+    public UserId getFullId() {
+        return new UserId(id, externalId, source);
+    }
 
     public String getEmail() {
         if (email == null && getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.EMAIL) != null) {
@@ -278,9 +282,9 @@ public class User implements IUser {
 
     public String getFirstName() {
         if (firstName == null && getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.GIVEN_NAME) != null) {
-                // fall back to OIDC standard claims
-                firstName = (String) getAdditionalInformation().get(StandardClaims.GIVEN_NAME);
-            }
+            // fall back to OIDC standard claims
+            firstName = (String) getAdditionalInformation().get(StandardClaims.GIVEN_NAME);
+        }
 
         return firstName;
     }
@@ -298,9 +302,9 @@ public class User implements IUser {
 
     public String getLastName() {
         if (lastName == null && getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.FAMILY_NAME) != null) {
-                // fall back to OIDC standard claims
-                lastName = (String) getAdditionalInformation().get(StandardClaims.FAMILY_NAME);
-            }
+            // fall back to OIDC standard claims
+            lastName = (String) getAdditionalInformation().get(StandardClaims.FAMILY_NAME);
+        }
 
         return lastName;
     }
@@ -325,6 +329,7 @@ public class User implements IUser {
     public Boolean isAccountNonExpired() {
         return accountNonExpired;
     }
+
     public Boolean isAccountNonLocked() {
         return accountNonLocked;
     }
@@ -352,7 +357,6 @@ public class User implements IUser {
     public Boolean isNewsletter() {
         return newsletter;
     }
-
 
 
     public String getLastIdentityUsed() {

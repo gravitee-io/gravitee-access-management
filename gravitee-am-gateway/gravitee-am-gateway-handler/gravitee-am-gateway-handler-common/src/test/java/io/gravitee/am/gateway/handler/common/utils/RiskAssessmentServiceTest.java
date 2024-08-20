@@ -33,26 +33,23 @@ import io.gravitee.risk.assessment.api.assessment.settings.AssessmentSettings;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.core.eventbus.EventBus;
 import io.vertx.rxjava3.core.eventbus.Message;
-import java.util.Objects;
-import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Date;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static io.gravitee.risk.assessment.api.assessment.Assessment.*;
+import static io.gravitee.risk.assessment.api.assessment.Assessment.HIGH;
+import static io.gravitee.risk.assessment.api.assessment.Assessment.LOW;
+import static io.gravitee.risk.assessment.api.assessment.Assessment.MEDIUM;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.any;
@@ -152,7 +149,7 @@ public class RiskAssessmentServiceTest {
 
         //device
         doReturn(Flowable.just(new Device().setDeviceId("1"), new Device().setDeviceId("2")))
-                .when(deviceService).findByDomainAndUser(anyString(), anyString());
+                .when(deviceService).findByDomainAndUser(anyString(), any());
         //geo
         doReturn(Flowable.just(
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date()),
@@ -187,7 +184,7 @@ public class RiskAssessmentServiceTest {
 
         //device
         doReturn(Flowable.just(new Device().setDeviceId("1"), new Device().setDeviceId("2")))
-                .when(deviceService).findByDomainAndUser(anyString(), anyString());
+                .when(deviceService).findByDomainAndUser(anyString(), any());
         //geo
         doReturn(Flowable.just(
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date()),
@@ -222,7 +219,7 @@ public class RiskAssessmentServiceTest {
 
         //device
         doReturn(Flowable.just(new Device().setDeviceId("1"), new Device().setDeviceId("2")))
-                .when(deviceService).findByDomainAndUser(anyString(), anyString());
+                .when(deviceService).findByDomainAndUser(anyString(), any());
         //geo
         doReturn(Flowable.just(
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date()),
