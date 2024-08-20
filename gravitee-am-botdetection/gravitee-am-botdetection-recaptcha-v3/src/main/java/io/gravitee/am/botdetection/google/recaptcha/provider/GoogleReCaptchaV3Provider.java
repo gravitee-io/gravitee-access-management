@@ -44,6 +44,9 @@ public class GoogleReCaptchaV3Provider implements BotDetectionProvider  {
     @Autowired
     private GoogleReCaptchaV3Configuration configuration;
 
+    @Autowired
+    private WebClientBuilder webClientBuilder;
+
     private WebClient client;
 
     public void setClient(WebClient client) {
@@ -52,7 +55,7 @@ public class GoogleReCaptchaV3Provider implements BotDetectionProvider  {
 
     @Override
     public BotDetectionProvider start() throws Exception {
-        this.setClient(new WebClientBuilder().createWebClient(vertx, new URL(configuration.getServiceUrl())));// TODO use version with exclude URL when available in master
+        this.setClient(webClientBuilder.createWebClient(vertx, new URL(configuration.getServiceUrl())));// TODO use version with exclude URL when available in master
         return this;
     }
 

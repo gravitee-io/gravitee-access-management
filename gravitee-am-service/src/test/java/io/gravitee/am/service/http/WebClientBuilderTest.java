@@ -21,7 +21,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.Environment;
 
@@ -43,17 +42,18 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class WebClientBuilderTest {
 
-    @Mock
-    private Environment environment;
-
     @InjectMocks
-    private WebClientBuilder webClientBuilder = new WebClientBuilder();
+    private WebClientBuilder webClientBuilder;
+
+    private Environment environment;
     private Vertx vertx;
 
     @BeforeEach
     void setup() {
         io.vertx.core.Vertx vertDelegate = mock(io.vertx.core.Vertx.class);
         vertx = mock(Vertx.class);
+        environment = mock(Environment.class);
+        webClientBuilder = new WebClientBuilder(environment);
         when(vertx.getDelegate()).thenReturn(vertDelegate);
         lenient().when(environment.getProperty(anyString(), eq(Boolean.class), anyBoolean())).thenReturn(false);
         lenient().when(environment.getProperty("httpClient.ssl.truststore.type")).thenReturn(null);
