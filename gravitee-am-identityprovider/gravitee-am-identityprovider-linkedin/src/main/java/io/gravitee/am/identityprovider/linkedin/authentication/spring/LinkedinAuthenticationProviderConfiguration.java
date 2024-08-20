@@ -43,6 +43,9 @@ public class LinkedinAuthenticationProviderConfiguration {
     @Autowired
     private LinkedinIdentityProviderConfiguration configuration;
 
+    @Autowired
+    private WebClientBuilder webClientBuilder;
+
     @Bean
     @Qualifier("linkedinWebClient")
     public WebClient httpClient() {
@@ -54,6 +57,6 @@ public class LinkedinAuthenticationProviderConfiguration {
                 .setIdleTimeoutUnit(DEFAULT_IDLE_TIMEOUT_UNIT)
                 .setMaxPoolSize(configuration.getMaxPoolSize());
 
-        return new WebClientBuilder().createWebClient(vertx, httpClientOptions, configuration.getUserAuthorizationUri());
+        return webClientBuilder.createWebClient(vertx, httpClientOptions, configuration.getUserAuthorizationUri());
     }
 }
