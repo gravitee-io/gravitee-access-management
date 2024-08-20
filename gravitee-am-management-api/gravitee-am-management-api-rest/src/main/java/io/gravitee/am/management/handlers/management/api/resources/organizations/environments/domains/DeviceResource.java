@@ -16,10 +16,11 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DeviceService;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,9 +29,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.container.AsyncResponse;
-import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
-import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -39,9 +38,6 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author GraviteeSource Team
  */
 public class DeviceResource extends AbstractResource {
-
-    @Context
-    private ResourceContext resourceContext;
 
     @Autowired
     private DomainService domainService;
@@ -68,7 +64,7 @@ public class DeviceResource extends AbstractResource {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER_DEVICE, Acl.DELETE)
                 .andThen(domainService.findById(domain).switchIfEmpty(Maybe.error(new DomainNotFoundException(domain))))
-                .flatMapCompletable(__ -> deviceService.delete(domain, user, device, authenticatedUser))
+                .flatMapCompletable(__ -> deviceService.delete(domain, UserId.internal(user), device, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
