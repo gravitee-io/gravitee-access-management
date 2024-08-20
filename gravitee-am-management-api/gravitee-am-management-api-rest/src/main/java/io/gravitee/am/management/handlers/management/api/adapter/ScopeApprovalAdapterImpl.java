@@ -35,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.List;
 
 @RequiredArgsConstructor
+
 public class ScopeApprovalAdapterImpl implements ScopeApprovalAdapter {
 
     public static final String UNKNOWN_ID = "unknown-id";
@@ -50,6 +51,7 @@ public class ScopeApprovalAdapterImpl implements ScopeApprovalAdapter {
     public Single<List<ScopeApprovalEntity>> getUserConsents(String domain, String userId, String clientId) {
         return domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                // in management context, all users either have the internal ID, or aren't available anyway
                 .flatMapSingle(d -> userService.findById(ReferenceType.DOMAIN, d.getId(), userId))
                 .flatMapPublisher(u -> {
                     if (clientId == null || clientId.isEmpty()) {

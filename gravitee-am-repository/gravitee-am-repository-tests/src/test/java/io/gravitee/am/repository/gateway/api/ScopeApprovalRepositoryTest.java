@@ -1,0 +1,87 @@
+/**
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.gravitee.am.repository.gateway.api;
+
+import io.gravitee.am.model.UserId;
+import io.gravitee.am.model.oauth2.ScopeApproval;
+import io.gravitee.am.repository.gateway.AbstractGatewayTest;
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+
+public class ScopeApprovalRepositoryTest extends AbstractGatewayTest {
+
+    public static final String TEST_DOMAIN = "test-domain";
+    @Autowired
+    protected ScopeApprovalRepository repository;
+
+    @Test
+    public void shouldCreate() {
+        var approval = basicApproval();
+        repository.create(approval)
+                .test()
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertValue(x -> x.getId() != null)
+                .assertComplete();
+    }
+
+    @Test
+    public void shouldFindByInternalId() {
+        var fullUserId = new UserId("user-internal", "user-external", "some-idp");
+        var externalUserId = new UserId(null, "user-external", "some-idp");
+        var randomUserId = new UserId("blabla", "blabla", "random-4");
+        List.of(basicApprovalFor(fullUserId),
+                        basicApprovalFor(externalUserId),
+                        basicApprovalFor(randomUserId))
+                .forEach(x -> repository.create(x).blockingSubscribe());
+        // then only & all those matching by id or external id are returned
+        var foundApprovals = repository.findByDomainAndUser(TEST_DOMAIN, externalUserId)
+                .test()
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValueCount(2)
+                .values();
+        assertThat(foundApprovals).map(ScopeApproval::getUserId).containsExactlyInAnyOrder(fullUserId, externalUserId);
+    }
+
+    private ScopeApproval basicApproval() {
+        var it = new ScopeApproval();
+        it.setId(UUID.randomUUID().toString());
+        it.setScope("test-scope");
+        it.setDomain(TEST_DOMAIN);
+        it.setUserId(UserId.internal(UUID.randomUUID().toString()));
+        it.setCreatedAt(Date.from(Instant.now()));
+        it.setUpdatedAt(Date.from(Instant.now()));
+        it.setClientId("test-client-id");
+        it.setExpiresAt(Date.from(Instant.now().plus(10, ChronoUnit.DAYS)));
+        it.setStatus(ScopeApproval.ApprovalStatus.APPROVED);
+        return it;
+    }
+
+    private ScopeApproval basicApprovalFor(UserId userId) {
+        var it = basicApproval();
+        it.setUserId(userId);
+        return it;
+    }
+}

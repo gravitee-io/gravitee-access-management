@@ -51,8 +51,8 @@ public abstract class AbstractMongoRepository {
     protected static final String FIELD_ORGANIZATION_ID = "organizationId";
     protected static final String FIELD_NAME = "name";
     protected static final String FIELD_USER_ID = "userId";
-    protected static final String FIELD_USER_EXTERNAL_ID = "userId";
-    protected static final String FIELD_USER_SOURCE = "userId";
+    protected static final String FIELD_USER_EXTERNAL_ID = "userExternalId";
+    protected static final String FIELD_USER_SOURCE = "userSource";
 
 
     protected void init(MongoCollection<?> collection) {

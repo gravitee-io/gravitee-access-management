@@ -37,6 +37,8 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +55,8 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 @Component
+@NoArgsConstructor
+@AllArgsConstructor
 public class ScopeApprovalServiceImpl implements ScopeApprovalService {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(ScopeApprovalServiceImpl.class);

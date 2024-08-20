@@ -16,29 +16,27 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <parent>
-        <groupId>io.gravitee.am</groupId>
-        <artifactId>gravitee-am-parent</artifactId>
+        <groupId>io.gravitee.am.repository</groupId>
+        <artifactId>gravitee-am-repository</artifactId>
         <version>4.6.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>io.gravitee.am.repository</groupId>
-    <artifactId>gravitee-am-repository</artifactId>
-    <packaging>pom</packaging>
+    <artifactId>gravitee-am-repository-junit</artifactId>
+    <name>Gravitee IO - Access Management - Repositories for unit tests</name>
 
-    <version>4.6.0-SNAPSHOT</version>
-    <name>Gravitee IO - Access Management - Repository</name>
 
-    <modules>
-        <module>gravitee-am-repository-api</module>
-        <module>gravitee-am-repository-mongodb</module>
-        <module>gravitee-am-repository-jdbc</module>
-        <module>gravitee-am-repository-tests</module>
-        <module>gravitee-am-repository-jdbc-api</module>
-        <module>gravitee-am-repository-mongodb-api</module><module>gravitee-am-repository-junit</module>
-    </modules>
+    <dependencies>
+        <dependency>
+            <groupId>io.gravitee.am.repository</groupId>
+            <artifactId>gravitee-am-repository-api</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
 </project>
