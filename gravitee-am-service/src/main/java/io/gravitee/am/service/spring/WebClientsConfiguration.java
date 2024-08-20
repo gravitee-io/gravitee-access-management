@@ -18,10 +18,11 @@ package io.gravitee.am.service.spring;
 import io.gravitee.am.service.http.WebClientBuilder;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.env.Environment;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -34,9 +35,12 @@ import java.net.URI;
 @Configuration
 public class WebClientsConfiguration {
 
+    @Autowired
+    private Environment environment;
+
     @Bean
     protected WebClientBuilder webClientBuilder() {
-        return new WebClientBuilder();
+        return new WebClientBuilder(environment);
     }
 
     @Bean("recaptchaWebClient")
