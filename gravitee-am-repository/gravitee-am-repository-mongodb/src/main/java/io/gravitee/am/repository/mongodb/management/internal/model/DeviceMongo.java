@@ -16,16 +16,19 @@
 
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import lombok.Data;
+import lombok.experimental.Accessors;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import java.util.Date;
-import java.util.Objects;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Data
+@Accessors(chain = true)
 public class DeviceMongo {
 
     @BsonId
@@ -36,6 +39,8 @@ public class DeviceMongo {
 
     private String client;
     private String userId;
+    private String userExternalId;
+    private String userSource;
     private String deviceIdentifierId;
     private String deviceId;
 
@@ -46,106 +51,4 @@ public class DeviceMongo {
     @BsonProperty("expires_at")
     private Date expiresAt;
 
-    public String getId() {
-        return id;
-    }
-
-    public DeviceMongo setId(String id) {
-        this.id = id;
-        return this;
-    }
-
-    public String getReferenceType() {
-        return referenceType;
-    }
-
-    public DeviceMongo setReferenceType(String referenceType) {
-        this.referenceType = referenceType;
-        return this;
-    }
-
-    public String getReferenceId() {
-        return referenceId;
-    }
-
-    public DeviceMongo setReferenceId(String referenceId) {
-        this.referenceId = referenceId;
-        return this;
-    }
-
-    public String getClient() {
-        return client;
-    }
-
-    public DeviceMongo setClient(String client) {
-        this.client = client;
-        return this;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public DeviceMongo setUserId(String userId) {
-        this.userId = userId;
-        return this;
-    }
-
-    public String getDeviceIdentifierId() {
-        return deviceIdentifierId;
-    }
-
-    public DeviceMongo setDeviceIdentifierId(String deviceIdentifierId) {
-        this.deviceIdentifierId = deviceIdentifierId;
-        return this;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public DeviceMongo setType(String type) {
-        this.type = type;
-        return this;
-    }
-
-    public String getDeviceId() {
-        return deviceId;
-    }
-
-    public DeviceMongo setDeviceId(String deviceId) {
-        this.deviceId = deviceId;
-        return this;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public DeviceMongo setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-        return this;
-    }
-
-    public Date getExpiresAt() {
-        return expiresAt;
-    }
-
-    public DeviceMongo setExpiresAt(Date expiresAt) {
-        this.expiresAt = expiresAt;
-        return this;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        DeviceMongo that = (DeviceMongo) o;
-        return Objects.equals(id, that.id) && Objects.equals(referenceType, that.referenceType) && Objects.equals(referenceId, that.referenceId) && Objects.equals(client, that.client) && Objects.equals(userId, that.userId) && Objects.equals(deviceIdentifierId, that.deviceIdentifierId) && Objects.equals(type, that.type) && Objects.equals(createdAt, that.createdAt) && Objects.equals(expiresAt, that.expiresAt);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, referenceType, referenceId, client, userId, deviceIdentifierId, type, createdAt, expiresAt);
-    }
 }

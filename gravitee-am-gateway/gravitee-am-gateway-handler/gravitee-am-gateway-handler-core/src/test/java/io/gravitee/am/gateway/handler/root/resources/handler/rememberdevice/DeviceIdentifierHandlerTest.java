@@ -38,6 +38,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_TYPE;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -84,7 +85,7 @@ public class DeviceIdentifierHandlerTest {
 
         Assert.assertNull(spyRoutingContext.get(DEVICE_ALREADY_EXISTS_KEY));
         verify(spyRoutingContext, times(1)).next();
-        verify(deviceService, times(0)).deviceExists(anyString(), anyString(), anyString(), anyString(), anyString());
+        verify(deviceService, times(0)).deviceExists(anyString(), anyString(), any(), anyString(), anyString());
     }
 
     @Test
@@ -99,7 +100,7 @@ public class DeviceIdentifierHandlerTest {
 
         Assert.assertNull(spyRoutingContext.get(DEVICE_ALREADY_EXISTS_KEY));
         verify(spyRoutingContext, times(1)).next();
-        verify(deviceService, times(0)).deviceExists(anyString(), anyString(), anyString(), anyString(), anyString());
+        verify(deviceService, times(0)).deviceExists(anyString(), anyString(), any(), anyString(), anyString());
     }
 
     @Test
@@ -115,7 +116,7 @@ public class DeviceIdentifierHandlerTest {
 
         Assert.assertNull(spyRoutingContext.get(DEVICE_ALREADY_EXISTS_KEY));
         verify(spyRoutingContext, times(1)).next();
-        verify(deviceService, times(0)).deviceExists(anyString(), anyString(), anyString(), anyString(), anyString());
+        verify(deviceService, times(0)).deviceExists(anyString(), anyString(), any(), anyString(), anyString());
     }
 
     @Test
@@ -131,7 +132,7 @@ public class DeviceIdentifierHandlerTest {
 
         Assert.assertNull(spyRoutingContext.get(DEVICE_ALREADY_EXISTS_KEY));
         verify(spyRoutingContext, times(1)).next();
-        verify(deviceService, times(0)).deviceExists(anyString(), anyString(), anyString(), anyString(), anyString());
+        verify(deviceService, times(0)).deviceExists(anyString(), anyString(), any(), anyString(), anyString());
     }
 
     @Test
@@ -148,7 +149,7 @@ public class DeviceIdentifierHandlerTest {
 
         Assert.assertNull(spyRoutingContext.get(DEVICE_ALREADY_EXISTS_KEY));
         verify(spyRoutingContext, times(1)).next();
-        verify(deviceService, times(0)).deviceExists(anyString(), anyString(), anyString(), anyString(), anyString());
+        verify(deviceService, times(0)).deviceExists(anyString(), anyString(), any(), anyString(), anyString());
     }
 
     @Test
@@ -169,7 +170,7 @@ public class DeviceIdentifierHandlerTest {
 
         Assert.assertNull(spyRoutingContext.get(DEVICE_ALREADY_EXISTS_KEY));
         verify(spyRoutingContext, times(1)).next();
-        verify(deviceService, times(0)).deviceExists(anyString(), anyString(), anyString(), anyString(), anyString());
+        verify(deviceService, times(0)).deviceExists(anyString(), anyString(), any(), anyString(), anyString());
     }
 
     @Test
@@ -187,7 +188,7 @@ public class DeviceIdentifierHandlerTest {
         spyRoutingContext.put(USER_CONTEXT_KEY, user);
         spyRoutingContext.putParam(DEVICE_ID, "deviceId");
 
-        doReturn(Single.just(false)).when(deviceService).deviceExists(anyString(), anyString(), anyString(), anyString(), anyString());
+        doReturn(Single.just(false)).when(deviceService).deviceExists(anyString(), anyString(), any(), anyString(), anyString());
         handler.handle(spyRoutingContext);
 
         Assert.assertTrue(spyRoutingContext.session().get(DEVICE_ALREADY_EXISTS_KEY));
@@ -210,7 +211,7 @@ public class DeviceIdentifierHandlerTest {
         spyRoutingContext.putParam(DEVICE_ID, "deviceId2");
         spyRoutingContext.putParam(DEVICE_TYPE, "deviceType");
 
-        doReturn(Single.just(true)).when(deviceService).deviceExists(anyString(), anyString(), anyString(), anyString(), anyString());
+        doReturn(Single.just(true)).when(deviceService).deviceExists(anyString(), anyString(), any(), anyString(), anyString());
         handler.handle(spyRoutingContext);
 
         Assert.assertFalse(spyRoutingContext.session().get(DEVICE_ALREADY_EXISTS_KEY));

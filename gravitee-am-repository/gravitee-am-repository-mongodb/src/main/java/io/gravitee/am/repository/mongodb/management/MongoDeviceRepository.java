@@ -20,6 +20,7 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Device;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.management.api.DeviceRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.DeviceMongo;
 import io.reactivex.rxjava3.core.Completable;
@@ -29,16 +30,17 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gte;
+import static com.mongodb.client.model.Filters.or;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -52,7 +54,8 @@ public class MongoDeviceRepository extends AbstractManagementMongoRepository imp
     private static final String FIELD_EXPIRES_AT = "expires_at";
     public static final String DEVICE_IDENTIFIER_ID = "deviceIdentifierId";
     public static final String DEVICE_ID = "deviceId";
-    public static final String CLIENT = "client";
+    private static final String FIELD_USER_EXTERNAL_ID = "userExternalId";
+    public static final String FIELD_USER_SOURCE = "userSource";
     private MongoCollection<DeviceMongo> rememberDeviceMongoCollection;
 
 
@@ -69,19 +72,27 @@ public class MongoDeviceRepository extends AbstractManagementMongoRepository imp
     }
 
     @Override
-    public Flowable<Device> findByReferenceAndUser(ReferenceType referenceType, String referenceId, String user) {
-        var query = and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_USER_ID, user), gte(FIELD_EXPIRES_AT, new Date()));
+    public Flowable<Device> findByReferenceAndUser(ReferenceType referenceType, String referenceId, UserId user) {
+        var query = and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()), userIdMatches(user), gte(FIELD_EXPIRES_AT, new Date()));
         var devicePublisher = rememberDeviceMongoCollection.find(query);
         return Flowable.fromPublisher(devicePublisher).map(this::convert);
 
     }
 
+    private Bson userIdMatches(UserId user) {
+        if (user.hasExternal()) {
+            return or(eq(FIELD_USER_ID, user.id()), and(eq(FIELD_USER_EXTERNAL_ID, user.externalId()), eq(FIELD_USER_SOURCE, user.source())));
+        } else {
+            return eq(FIELD_USER_ID, user.id());
+        }
+    }
+
     @Override
     public Maybe<Device> findByReferenceAndClientAndUserAndDeviceIdentifierAndDeviceId(
-            ReferenceType referenceType, String referenceId, String client, String user, String deviceIdentifierId, String deviceId) {
+            ReferenceType referenceType, String referenceId, String client, UserId user, String deviceIdentifierId, String deviceId) {
         var query = and(
                 eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()),
-                eq(FIELD_CLIENT, client), eq(FIELD_USER_ID, user), eq(DEVICE_IDENTIFIER_ID, deviceIdentifierId), eq(DEVICE_ID, deviceId), gte(FIELD_EXPIRES_AT, new Date()));
+                eq(FIELD_CLIENT, client), userIdMatches(user), eq(DEVICE_IDENTIFIER_ID, deviceIdentifierId), eq(DEVICE_ID, deviceId), gte(FIELD_EXPIRES_AT, new Date()));
         return Observable.fromPublisher(rememberDeviceMongoCollection.find(query).first()).firstElement().map(this::convert);
     }
 
@@ -94,7 +105,10 @@ public class MongoDeviceRepository extends AbstractManagementMongoRepository imp
     public Single<Device> create(Device item) {
         DeviceMongo entity = convert(item);
         entity.setId(entity.getId() == null ? RandomString.generate() : entity.getId());
-        return Single.fromPublisher(rememberDeviceMongoCollection.insertOne(entity)).flatMap(success -> { item.setId(entity.getId()); return Single.just(item); });
+        return Single.fromPublisher(rememberDeviceMongoCollection.insertOne(entity)).flatMap(success -> {
+            item.setId(entity.getId());
+            return Single.just(item);
+        });
     }
 
     @Override
@@ -109,12 +123,12 @@ public class MongoDeviceRepository extends AbstractManagementMongoRepository imp
     }
 
     private Device convert(DeviceMongo entity) {
-        return ofNullable(entity).filter(Objects::nonNull).map(device -> new Device().setId(device.getId())
+        return ofNullable(entity).map(device -> new Device().setId(device.getId())
                 .setType(device.getType())
                 .setReferenceId(device.getReferenceId())
                 .setReferenceType(ReferenceType.valueOf(device.getReferenceType()))
                 .setClient(device.getClient())
-                .setUserId(device.getUserId())
+                .setUserId(new UserId(device.getUserId(), device.getUserExternalId(), device.getUserSource()))
                 .setDeviceIdentifierId(device.getDeviceIdentifierId())
                 .setDeviceId(device.getDeviceId())
                 .setCreatedAt(device.getCreatedAt())
@@ -123,13 +137,15 @@ public class MongoDeviceRepository extends AbstractManagementMongoRepository imp
     }
 
     private DeviceMongo convert(Device bean) {
-        return ofNullable(bean).filter(Objects::nonNull).map(device -> new DeviceMongo()
+        return ofNullable(bean).map(device -> new DeviceMongo()
                 .setId(device.getId())
                 .setType(device.getType())
                 .setReferenceType(device.getReferenceType().name())
                 .setReferenceId(device.getReferenceId())
                 .setClient(device.getClient())
-                .setUserId(device.getUserId())
+                .setUserId(device.getUserId().id())
+                .setUserExternalId(device.getUserId().externalId())
+                .setUserSource(device.getUserId().source())
                 .setDeviceIdentifierId(device.getDeviceIdentifierId())
                 .setDeviceId(device.getDeviceId())
                 .setCreatedAt(device.getCreatedAt())
