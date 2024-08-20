@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 import java.util.concurrent.TimeUnit;
 
@@ -41,11 +42,14 @@ public class HttpAuthenticationDeviceProviderSpringConfiguration {
     private Vertx vertx;
 
     @Autowired
+    private Environment environment;
+
+    @Autowired
     private HttpAuthenticationDeviceNotifierConfiguration configuration;
 
     @Bean
     public WebClientBuilder webClientBuilder() {
-        return new WebClientBuilder();
+        return new WebClientBuilder(environment);
     }
 
     @Bean
