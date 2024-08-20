@@ -24,8 +24,10 @@ import io.gravitee.common.http.HttpHeader;
 import io.gravitee.common.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.Vertx;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -36,6 +38,9 @@ import java.util.Collections;
  */
 @Configuration
 public class HttpAuthenticationProviderTestConfiguration {
+
+    @Autowired
+    private Environment environment;
 
     @Bean
     public HttpIdentityProviderConfiguration httpIdentityProviderConfiguration() {
@@ -85,6 +90,6 @@ public class HttpAuthenticationProviderTestConfiguration {
 
     @Bean
     public WebClientBuilder webClientBuilder() {
-        return new WebClientBuilder();
+        return new WebClientBuilder(environment);
     }
 }

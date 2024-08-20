@@ -22,7 +22,6 @@ import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
@@ -99,9 +98,11 @@ public class WebClientBuilder {
     @Value("${httpClient.ssl.keystore.type:#{null}}")
     private String sslKeyStoreType;
 
-    @Autowired
-    private Environment environment;
+    private final Environment environment;
 
+    public WebClientBuilder(Environment environment) {
+        this.environment = environment;
+    }
     public WebClient createWebClient(Vertx vertx, URL url) {
 
         final int port = url.getPort() != -1 ? url.getPort() : (HTTPS_SCHEME.equals(url.getProtocol()) ? 443 : 80);
