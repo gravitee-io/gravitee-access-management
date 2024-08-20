@@ -21,7 +21,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.Environment;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -36,17 +35,18 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class WebClientBuilderTest {
 
-    @Mock
-    private Environment environment;
-
     @InjectMocks
-    private WebClientBuilder webClientBuilder = new WebClientBuilder();
+    private WebClientBuilder webClientBuilder;
+
+    private Environment environment;
     private Vertx vertx;
 
     @BeforeEach
     public void setup() {
         io.vertx.core.Vertx vertDelegate = mock(io.vertx.core.Vertx.class);
         vertx = mock(Vertx.class);
+        environment = mock(Environment.class);
+        webClientBuilder = new WebClientBuilder(environment);
         when(vertx.getDelegate()).thenReturn(vertDelegate);
 
     }
