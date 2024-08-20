@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.env.Environment;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -43,9 +44,12 @@ public class HttpUserProviderConfiguration {
     @Autowired
     private HttpIdentityProviderConfiguration configuration;
 
+    @Autowired
+    private Environment environment;
+
     @Bean
     public WebClientBuilder webClientBuilder() {
-        return new WebClientBuilder();
+        return new WebClientBuilder(environment);
     }
 
     @Bean
