@@ -23,8 +23,10 @@ import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.http.WebClientBuilder;
 import io.vertx.rxjava3.core.Vertx;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 import java.util.Properties;
 
@@ -34,6 +36,9 @@ import java.util.Properties;
  */
 @Configuration
 public class OAuth2GenericAuthenticationProviderTestConfiguration {
+
+    @Autowired
+    private Environment environment;
 
     @Bean
     public OAuth2GenericIdentityProviderConfiguration oAuth2GenericIdentityProviderConfiguration() {
@@ -80,6 +85,6 @@ public class OAuth2GenericAuthenticationProviderTestConfiguration {
 
     @Bean
     public WebClientBuilder webClientBuilder() {
-        return new WebClientBuilder();
+        return new WebClientBuilder(environment);
     }
 }
