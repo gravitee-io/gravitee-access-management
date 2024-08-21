@@ -237,4 +237,9 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
                 error instanceof MongoServerUnavailableException ||
                 error instanceof MongoSocketOpenException);
     }
+
+    @Override
+    protected Bson userIdMatches(UserId user) {
+        return super.userIdMatches(user, new UserFields(FIELD_ID, FIELD_EXTERNAL_ID, FIELD_SOURCE));
+    }
 }

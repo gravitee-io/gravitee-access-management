@@ -35,6 +35,7 @@ import java.util.Map;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.or;
+import static java.util.Objects.requireNonNullElse;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -84,10 +85,22 @@ public abstract class AbstractMongoRepository {
     }
 
     protected Bson userIdMatches(UserId user) {
+       return userIdMatches(user, UserFields.EMPTY);
+    }
+
+    public record UserFields(String idField, String sourceField, String externalIdField) {
+        static UserFields EMPTY = new UserFields(null,null,null);
+    }
+
+    protected Bson userIdMatches(UserId user, UserFields userFields) {
+        var idField = requireNonNullElse(userFields.idField(), FIELD_USER_ID);
+        var externalIdField = requireNonNullElse(userFields.externalIdField(), FIELD_USER_EXTERNAL_ID);
+        var sourceField = requireNonNullElse(userFields.sourceField(), FIELD_USER_SOURCE);
+
         if (user.hasExternal()) {
-            return or(eq(FIELD_USER_ID, user.id()), and(eq(FIELD_USER_EXTERNAL_ID, user.externalId()), eq(FIELD_USER_SOURCE, user.source())));
+            return or(eq(idField, user.id()), and(eq(externalIdField, user.externalId()), eq(sourceField, user.source())));
         } else if (user.id() != null) {
-            return eq(FIELD_USER_ID, user.id());
+            return eq(idField, user.id());
         } else {
             return Filters.nor(Filters.empty());
         }
