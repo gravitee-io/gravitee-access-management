@@ -38,6 +38,9 @@ public class DateHelper {
      * Convert LocalDateTime to Date, assuming UTC timezone
      */
     public static Date toDate(LocalDateTime localDateTime) {
+        if (localDateTime == null) {
+            return null;
+        }
         return Date.from(localDateTime.toInstant(ZoneOffset.UTC));
     }
 }
