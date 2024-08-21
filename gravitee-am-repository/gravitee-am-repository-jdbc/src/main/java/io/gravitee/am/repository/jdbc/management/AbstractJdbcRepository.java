@@ -126,10 +126,17 @@ public abstract class AbstractJdbcRepository {
 
 
     protected Criteria userMatches(UserId userId, String userIdField, String userExternalIdField, String userSourceField) {
-        if (userId.hasExternal()) {
+        if (userId.id() != null && userId.hasExternal()) {
             return where(userIdField).is(userId.id()).or(where(userExternalIdField).is(userId.externalId()).and(userSourceField).is(userId.source()));
-        } else {
+        } else if (userId.hasExternal()) {
+            return where(userExternalIdField).is(userId.externalId()).and(userSourceField).is(userId.source());
+        } else if (userId.id() != null){
             return where(userIdField).is(userId.id());
+        } else {
+            // All parts of id are null, this probably should never happen.
+            // Make sure we match no results. Criteria doesn't allow using literals, e.g. "1 != 1", so we have
+            // to create a contradiction some other way
+            return where(userIdField).isNull().and(userIdField).isNotNull();
         }
     }
 

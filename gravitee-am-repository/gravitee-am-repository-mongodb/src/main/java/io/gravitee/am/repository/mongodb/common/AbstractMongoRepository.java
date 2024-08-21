@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.common;
 
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
@@ -85,8 +86,10 @@ public abstract class AbstractMongoRepository {
     protected Bson userIdMatches(UserId user) {
         if (user.hasExternal()) {
             return or(eq(FIELD_USER_ID, user.id()), and(eq(FIELD_USER_EXTERNAL_ID, user.externalId()), eq(FIELD_USER_SOURCE, user.source())));
-        } else {
+        } else if (user.id() != null) {
             return eq(FIELD_USER_ID, user.id());
+        } else {
+            return Filters.nor(Filters.empty());
         }
     }
 

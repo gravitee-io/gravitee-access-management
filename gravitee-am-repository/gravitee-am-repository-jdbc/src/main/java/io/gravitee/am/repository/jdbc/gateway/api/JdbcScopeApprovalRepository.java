@@ -144,6 +144,7 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
     @Override
     public Completable deleteByDomainAndUser(String domain, UserId userId) {
         LOGGER.debug("deleteByDomainAndUser({}, {})", domain, userId);
+
         return monoToCompletable(getTemplate().delete(JdbcScopeApproval.class)
                 .matching(Query.query(domain(domain)
                         .and(userMatches(userId))))

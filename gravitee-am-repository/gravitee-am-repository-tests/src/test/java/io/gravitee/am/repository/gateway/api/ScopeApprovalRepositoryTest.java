@@ -33,36 +33,75 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 public class ScopeApprovalRepositoryTest extends AbstractGatewayTest {
 
     public static final String TEST_DOMAIN = "test-domain";
+
+    private final UserId fullUserId = new UserId("user-internal", "user-external", "some-idp");
+    private final UserId externalUserId = new UserId(null, "user-external", "some-idp");
+    private final UserId randomUserId = new UserId("blabla", "blabla", "random-4");
+
+
     @Autowired
     protected ScopeApprovalRepository repository;
 
     @Test
     public void shouldCreate() {
         var approval = basicApproval();
+        // when
         repository.create(approval)
                 .test()
+                // then
                 .awaitDone(5, TimeUnit.SECONDS)
                 .assertValue(x -> x.getId() != null)
                 .assertComplete();
     }
 
     @Test
-    public void shouldFindByInternalId() {
-        var fullUserId = new UserId("user-internal", "user-external", "some-idp");
-        var externalUserId = new UserId(null, "user-external", "some-idp");
-        var randomUserId = new UserId("blabla", "blabla", "random-4");
-        List.of(basicApprovalFor(fullUserId),
-                        basicApprovalFor(externalUserId),
-                        basicApprovalFor(randomUserId))
-                .forEach(x -> repository.create(x).blockingSubscribe());
-        // then only & all those matching by id or external id are returned
+    public void shouldFindAllByExternalId() {
+        givenStandardTestApprovalsExist();
+        // when searching by external user id
         var foundApprovals = repository.findByDomainAndUser(TEST_DOMAIN, externalUserId)
                 .test()
+                // then all matching approvals are returned
                 .awaitDone(5, TimeUnit.SECONDS)
                 .assertComplete()
                 .assertValueCount(2)
                 .values();
         assertThat(foundApprovals).map(ScopeApproval::getUserId).containsExactlyInAnyOrder(fullUserId, externalUserId);
+    }
+
+    @Test
+    public void shouldFindAllByFullId() {
+        givenStandardTestApprovalsExist();
+        // when searching by the full user id
+        var foundApprovals = repository.findByDomainAndUser(TEST_DOMAIN, fullUserId)
+                .test()
+                // then all matching approvals are returned
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValueCount(2)
+                .values();
+        assertThat(foundApprovals).map(ScopeApproval::getUserId).containsExactlyInAnyOrder(fullUserId, externalUserId);
+    }
+
+    @Test
+    public void shouldFindNothingByNullId() {
+        var nullUserId = new UserId(null, null, null);
+        givenStandardTestApprovalsExist();
+        // when searching by an empty user id
+        repository.findByDomainAndUser(TEST_DOMAIN, nullUserId)
+                .test()
+                // then no data is returned
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValueCount(0)
+                .values();
+    }
+
+    // common test data
+    private void givenStandardTestApprovalsExist() {
+        List.of(basicApprovalFor(fullUserId),
+                        basicApprovalFor(externalUserId),
+                        basicApprovalFor(randomUserId))
+                .forEach(x -> repository.create(x).blockingSubscribe());
     }
 
     private ScopeApproval basicApproval() {
