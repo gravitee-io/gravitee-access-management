@@ -661,11 +661,15 @@ gateway:
   #    type: jks # Supports jks, pem, pkcs12
   #    path: ${gravitee.home}/security/keystore.jks
   #    password: secret
+  #    secret: secret://kubernetes/gravitee-tls
+  #    watch: true
     clientAuth: false
   #  truststore:
   #    type: jks # Supports jks, pem, pkcs12
   #    path: ${gravitee.home}/security/truststore.jks
   #    password: secret
+  #    secret: secret://kubernetes/gravitee-tls
+  #    watch: true
   #  mtls_aliases: # base URL for mtls_endpoint_aliases (default is null and the standard endpoints will be used)
   #    base_url: https://gravitee.mlts.com
   #    endpoints:
