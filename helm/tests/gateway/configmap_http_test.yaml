@@ -198,3 +198,53 @@ tests:
       - notMatchRegex:
           path: data.[gravitee.yml]
           pattern: "certificateHeader:"
+  - it: Should add ssl secret and watch
+    template: gateway/gateway-configmap.yaml
+    set:
+      gateway:
+        ssl:
+          enabled: true
+          tlsProtocols: TLSv1.2, TLSv1.3
+          ciphers: TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_DHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+          certificateHeader: X-Test-CertHeader
+          keystore:
+            type: jks
+            path: ${gravitee.home}/security/keystore.jks
+            password: t0pS3cre7
+            secret: secret_jks
+            watch: true
+          truststore:
+            type: pkcs12
+            path: /etc/security/my_awesome_pkcs12_truststore
+            password: t0pS3cre7
+            secret: secret_pkcs12
+            watch: true
+
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            http:
+              [a-zA-Z0-9:.# \n]*
+              secured: true
+              ssl:
+                certificateHeader: X-Test-CertHeader
+                keystore:
+                  type: jks
+                  path: \$\{gravitee\.home\}/security/keystore\.jks
+                  password: "t0pS3cre7"
+                  secret: secret_jks
+                  watch: true
+                clientAuth: false
+                tlsProtocols: TLSv1.2, TLSv1.3
+                ciphers: TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_DHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+                truststore:
+                  type: pkcs12
+                  path: /etc/security/my_awesome_pkcs12_truststore
+                  password: "t0pS3cre7"
+                  secret: secret_pkcs12
+                  watch: true
