@@ -25,6 +25,8 @@ import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.gateway.api.ScopeApprovalRepository;
 import io.gravitee.am.repository.junit.gateway.MemoryScopeApprovalRepository;
+import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
+import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.ScopeService;
@@ -33,10 +35,13 @@ import io.gravitee.am.service.impl.ScopeApprovalServiceImpl;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -46,10 +51,15 @@ class ScopeApprovalAdapterImplTest {
     public static final String TEST_DOMAIN = "test-domain";
     private final DomainService domainService = mock();
     private final UserService userService = mock();
+    private final AccessTokenRepository accessTokenRepository = mock();
+    private final RefreshTokenRepository refreshTokenRepository = mock();
+
     private final ScopeApprovalRepository scopeApprovalRepository = new MemoryScopeApprovalRepository();
-    private final ScopeApprovalService scopeApprovalService = new ScopeApprovalServiceImpl(scopeApprovalRepository, mock(), mock(), userService, mock());
+    private final ScopeApprovalService scopeApprovalService = new ScopeApprovalServiceImpl(scopeApprovalRepository, accessTokenRepository, refreshTokenRepository, userService, mock());
     private final ApplicationService appService = mock();
     private final ScopeService scopeService = mock();
+
+
 
     private final ScopeApprovalAdapterImpl underTest = new ScopeApprovalAdapterImpl(domainService, scopeApprovalService, appService, scopeService, userService);
 
@@ -61,14 +71,40 @@ class ScopeApprovalAdapterImplTest {
         when(appService.findByDomainAndClientId(TEST_DOMAIN, "client-id")).thenReturn(Maybe.just(new Application()));
         when(scopeService.findByDomainAndKey(TEST_DOMAIN, "test-scope")).thenReturn(Maybe.just(new Scope()));
 
-        Completable.mergeArray(
-                        scopeApprovalRepository.create(approvalWithUser("internal-user-id")).ignoreElement(),
-                        scopeApprovalRepository.create(approvalWithUser("some-other-user")).ignoreElement())
-                .andThen(underTest.getUserConsents(TEST_DOMAIN, "internal-user-id", "client-id"))
+        var created = Single.mergeArray(
+                        scopeApprovalRepository.create(approvalWithUser("internal-user-id")),
+                        scopeApprovalRepository.create(approvalWithUser("some-other-user")))
+                .ignoreElements()
+                .blockingAwait(5, TimeUnit.SECONDS);
+        if (!created) {
+            Assertions.fail("creating test data failed");
+        }
+        underTest.getUserConsents(TEST_DOMAIN, "internal-user-id", "client-id")
                 .test()
                 .awaitDone(5, TimeUnit.SECONDS)
                 .assertComplete();
 
+    }
+
+    @Test
+    void shouldRevokeConsents() {
+        when(domainService.findById(TEST_DOMAIN)).thenReturn(Maybe.just(Domain.builder().id(TEST_DOMAIN).build()));
+        when(userService.findById(any(UserId.class)))
+                .thenReturn(Maybe.just(new User()));
+        when(accessTokenRepository.deleteByDomainIdClientIdAndUserId(any(),any(),any())).thenReturn(Completable.complete());
+        when(refreshTokenRepository.deleteByDomainIdClientIdAndUserId(any(),any(),any())).thenReturn(Completable.complete());
+        var created = Single.mergeArray(
+                        scopeApprovalRepository.create(approvalWithUser("internal-user-id")),
+                        scopeApprovalRepository.create(approvalWithUser("some-other-user")))
+                .ignoreElements()
+                .blockingAwait(5, TimeUnit.SECONDS);
+        if (!created) {
+            Assertions.fail("creating test data failed");
+        }
+        underTest.revokeUserConsents(TEST_DOMAIN, UserId.internal("internal-user-id"), "client-id", null)
+                .test()
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertComplete();
     }
 
     private ScopeApproval approvalWithUser(String userId) {

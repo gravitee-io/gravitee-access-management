@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.users.resources.consents;
 
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
@@ -28,18 +29,26 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.ScopeApprovalNotFoundException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.rxjava3.ext.web.handler.SessionHandler;
+import io.vertx.rxjava3.ext.web.sstore.LocalSessionStore;
+import org.assertj.core.api.AssertionsForInterfaceTypes;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.concurrent.TimeUnit;
+
+import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_IP_LOCATION;
+import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_USER_AGENT;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -160,4 +169,106 @@ public class UserConsentEndpointHandlerTest extends RxWebTestBase {
                 204,
                 "No Content", null);
     }
+
+
+    // for sonar branch coverage mostly
+    @Test
+    public void revokeConsent_shouldStoreIp() throws Exception {
+        when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(new User()));
+        router.route("/users/:userId/consents/:consentId")
+                .handler(SessionHandler.create(LocalSessionStore.create(vertx)))
+                .handler(rc -> {
+                    rc.session().put(USER_CONSENT_IP_LOCATION, true).put(USER_CONSENT_USER_AGENT, true);
+                    rc.next();
+                })
+                .handler(rc -> {
+                    JWT token = new JWT();
+                    token.setSub("sub");
+                    rc.put(ConstantKeys.TOKEN_CONTEXT_KEY, token);
+                    rc.next();
+                })
+                .handler(rc -> {
+                    var principal = userConsentEndpointHandler.getPrincipal(rc)
+                            .test()
+                            .awaitDone(1, TimeUnit.SECONDS)
+                            .assertValueCount(1)
+                            .values()
+                            .get(0);
+                    AssertionsForInterfaceTypes.assertThat(principal.getAdditionalInformation())
+                            .containsKey(Claims.IP_ADDRESS)
+                            .containsKey(Claims.USER_AGENT);
+                    rc.response().setStatusCode(204).setStatusMessage("No Content").end();
+                })
+                .failureHandler(new ErrorHandler());
+
+        testRequest(
+                HttpMethod.DELETE, "/users/user-id/consents/consent-id",
+                req -> req.putHeader(HttpHeaders.AUTHORIZATION.toString(), "Bearer token"),
+                204,
+                "No Content", null);
+    }
+
+    // for sonar branch coverage mostly
+    @Test
+    public void revokeConsent_byAud_shouldStoreIp() throws Exception {
+        when(clientService.findByClientId(any())).thenReturn(Maybe.just(new Client()));
+
+        router.route("/users/:userId/consents/:consentId")
+                .handler(SessionHandler.create(LocalSessionStore.create(vertx)))
+                .handler(rc -> {
+                    rc.session().put(USER_CONSENT_IP_LOCATION, true).put(USER_CONSENT_USER_AGENT, true);
+                    rc.next();
+                })
+                .handler(rc -> {
+                    JWT token = new JWT();
+                    token.setSub("sub");
+                    token.setAud(token.getSub());
+                    rc.put(ConstantKeys.TOKEN_CONTEXT_KEY, token);
+                    rc.next();
+                })
+                .handler(rc -> {
+                    var principal = userConsentEndpointHandler.getPrincipal(rc)
+                            .test()
+                            .awaitDone(1, TimeUnit.SECONDS)
+                            .assertValueCount(1)
+                            .values()
+                            .get(0);
+                    AssertionsForInterfaceTypes.assertThat(principal.getAdditionalInformation())
+                            .containsKey(Claims.IP_ADDRESS)
+                            .containsKey(Claims.USER_AGENT);
+                    rc.response().setStatusCode(204).setStatusMessage("No Content").end();
+                })
+                .failureHandler(new ErrorHandler());
+
+        testRequest(
+                HttpMethod.DELETE, "/users/user-id/consents/consent-id",
+                req -> req.putHeader(HttpHeaders.AUTHORIZATION.toString(), "Bearer token"),
+                204,
+                "No Content", null);
+    }
+
+    // for sonar branch coverage mostly
+    @Test
+    public void shouldRevokeConsent_byAud() throws Exception {
+        when(subjectManager.findUserIdBySub(any())).thenReturn(Maybe.just(UserId.internal("user-id")));
+        when(userService.revokeConsent(any(), any(), any())).thenReturn(Completable.complete());
+        when(clientService.findByClientId(any())).thenReturn(Maybe.just(new Client()));
+        router.route("/users/:userId/consents/:consentId")
+                .handler(rc -> {
+                    JWT token = new JWT();
+                    token.setSub("sub");
+                    token.setAud(token.getSub());
+                    rc.put(ConstantKeys.TOKEN_CONTEXT_KEY, token);
+                    rc.next();
+                })
+                .handler(userConsentEndpointHandler::revoke)
+                .failureHandler(new ErrorHandler());
+
+        testRequest(
+                HttpMethod.DELETE, "/users/user-id/consents/consent-id",
+                req -> req.putHeader(HttpHeaders.AUTHORIZATION.toString(), "Bearer token"),
+                204,
+                "No Content", null);
+    }
+
 }

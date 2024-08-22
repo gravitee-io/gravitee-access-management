@@ -120,8 +120,8 @@ public class MongoScopeApprovalRepository extends AbstractGatewayMongoRepository
                 and(eq(FIELD_DOMAIN, scopeApproval.getDomain()),
                         eq(FIELD_CLIENT_ID, scopeApproval.getClientId()),
                         eq(FIELD_USER_ID, scopeApproval.getUserId()),
-                        eq(FIELD_SCOPE, scopeApproval.getScope()))
-                , scopeApprovalMongo)).flatMap(updateResult -> Single.just(scopeApproval));
+                        eq(FIELD_SCOPE, scopeApproval.getScope())),
+                scopeApprovalMongo)).flatMap(updateResult -> Single.just(scopeApproval));
     }
 
     @Override

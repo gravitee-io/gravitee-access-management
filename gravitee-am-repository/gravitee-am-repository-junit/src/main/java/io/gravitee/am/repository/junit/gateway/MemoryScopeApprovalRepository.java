@@ -56,7 +56,7 @@ public class MemoryScopeApprovalRepository extends MemoryRepository<ScopeApprova
 
     @Override
     public Completable deleteByDomainAndUserAndClient(String domain, UserId userId, String client) {
-        throw new UnsupportedOperationException("not implemented yet");
+        return findByDomainAndUserAndClient(domain, userId, client).flatMapCompletable(x -> delete(x.getId()));
     }
 
     @Override
