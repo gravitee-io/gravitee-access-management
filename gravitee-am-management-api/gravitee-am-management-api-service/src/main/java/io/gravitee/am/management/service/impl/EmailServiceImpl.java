@@ -24,6 +24,8 @@ import io.gravitee.am.common.email.Email;
 import io.gravitee.am.common.email.EmailBuilder;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.jwt.TokenPurpose;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.EmailService;
@@ -35,7 +37,6 @@ import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.i18n.FreemarkerMessageResolver;
 import io.gravitee.am.service.i18n.ThreadLocalDomainDictionaryProvider;
@@ -225,7 +226,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     }
 
     private Email prepareEmail(Domain domain, Application client, io.gravitee.am.model.Template template, io.gravitee.am.model.Email emailTemplate, User user) {
-        Map<String, Object> params = prepareEmailParams(domain, client, user, emailTemplate.getExpiresAfter(), template.redirectUri());
+        Map<String, Object> params = prepareEmailParams(domain, client, user, emailTemplate.getExpiresAfter(), template.redirectUri(), template);
         return new EmailBuilder()
                 .to(user.getEmail())
                 .from(emailTemplate.getFrom())
@@ -236,7 +237,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
                 .build();
     }
 
-    private Map<String, Object> prepareEmailParams(Domain domain, Application client, User user, Integer expiresAfter, String redirectUri) {
+    private Map<String, Object> prepareEmailParams(Domain domain, Application client, User user, Integer expiresAfter, String redirectUri, io.gravitee.am.model.Template template) {
         // generate a JWT to store user's information and for security purpose
         final Map<String, Object> claims = new HashMap<>();
         Instant now = Instant.now();
@@ -245,6 +246,10 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
         claims.put(Claims.SUB, user.getId());
         if (user.getClient() != null) {
             claims.put(Claims.AUD, user.getClient());
+        }
+
+        if (template == io.gravitee.am.model.Template.REGISTRATION_CONFIRMATION) {
+            claims.put(ConstantKeys.CLAIM_TOKEN_PURPOSE, TokenPurpose.REGISTRATION_CONFIRMATION);
         }
 
         String token = jwtBuilder.sign(new JWT(claims));
@@ -310,11 +315,11 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
         }
     }
 
-    private Boolean enabled(){
+    private Boolean enabled() {
         return Boolean.valueOf(environment.getProperty("email.enabled", "false"));
     }
 
-    private String registrationSubject(){
+    private String registrationSubject() {
         return environment.getProperty("user.registration.email.subject", "New user registration");
     }
 
@@ -334,4 +339,4 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
         return environment.getProperty("services.certificate.expiryEmailSubject", "Certificate will expire soon");
     }
 
-    }
+}
