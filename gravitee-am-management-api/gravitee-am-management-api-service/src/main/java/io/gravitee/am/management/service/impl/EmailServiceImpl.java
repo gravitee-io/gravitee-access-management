@@ -20,6 +20,8 @@ import io.gravitee.am.common.email.Email;
 import io.gravitee.am.common.email.EmailBuilder;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.jwt.TokenPurpose;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.EmailService;
@@ -37,14 +39,12 @@ import io.gravitee.am.service.i18n.ThreadLocalDomainDictionaryProvider;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
-import io.gravitee.am.service.validators.email.EmailDomainValidator;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.rxjava3.core.MultiMap;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -221,7 +221,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     }
 
     private Email prepareEmail(Domain domain, Application client, io.gravitee.am.model.Template template, io.gravitee.am.model.Email emailTemplate, User user) {
-        Map<String, Object> params = prepareEmailParams(domain, client, user, emailTemplate.getExpiresAfter(), template.redirectUri());
+        Map<String, Object> params = prepareEmailParams(domain, client, user, emailTemplate.getExpiresAfter(), template.redirectUri(), template);
         return new EmailBuilder()
                 .to(user.getEmail())
                 .from(emailTemplate.getFrom())
@@ -232,7 +232,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
                 .build();
     }
 
-    private Map<String, Object> prepareEmailParams(Domain domain, Application client, User user, Integer expiresAfter, String redirectUri) {
+    private Map<String, Object> prepareEmailParams(Domain domain, Application client, User user, Integer expiresAfter, String redirectUri, io.gravitee.am.model.Template template) {
         // generate a JWT to store user's information and for security purpose
         final Map<String, Object> claims = new HashMap<>();
         Instant now = Instant.now();
@@ -241,6 +241,10 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
         claims.put(Claims.sub, user.getId());
         if (user.getClient() != null) {
             claims.put(Claims.aud, user.getClient());
+        }
+
+        if (template == io.gravitee.am.model.Template.REGISTRATION_CONFIRMATION) {
+            claims.put(ConstantKeys.CLAIM_TOKEN_PURPOSE, TokenPurpose.REGISTRATION_CONFIRMATION);
         }
 
         String token = jwtBuilder.sign(new JWT(claims));
