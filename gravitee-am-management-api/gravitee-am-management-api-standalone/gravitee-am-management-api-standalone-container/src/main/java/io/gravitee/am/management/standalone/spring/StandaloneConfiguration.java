@@ -45,11 +45,10 @@ import io.gravitee.platform.repository.api.RepositoryScopeProvider;
 import io.gravitee.plugin.core.spring.PluginConfiguration;
 import io.vertx.rxjava3.core.Vertx;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.ApplicationListener;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.env.Environment;
 
 
@@ -121,5 +120,10 @@ public class StandaloneConfiguration {
     @Bean
     public ClusterManager clusterManager(Vertx vertx) {
         return new StandaloneClusterManager(vertx.getDelegate());
+    }
+
+    @Bean
+    public GatewayTypeBeanFactoryFallbackPostProcessor gatewayTypeBeanFactoryFallbackPostProcessor(Environment environment, ApplicationContext applicationContext) {
+        return new GatewayTypeBeanFactoryFallbackPostProcessor(environment, applicationContext);
     }
 }
