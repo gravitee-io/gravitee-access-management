@@ -50,7 +50,7 @@ public class InstallationServiceImpl implements InstallationService {
     }
 
     @Override
-    public Single<Installation> getOrInitialize() {
+    public synchronized Single<Installation> getOrInitialize() {
         return this.installationRepository.find()
                 .switchIfEmpty(createInternal());
     }
