@@ -65,14 +65,26 @@ class RedirectUriValidatorTest {
         }
 
         @Test
-        void operationOptionalRedirect_redirectUriRegistered_ok() {
+        void operationOptionalRedirect_redirectUriRegistered_ok_resetPassword() {
             assertThatCode(()->validator.validate(getClient(), REGISTERED_URI_1, TokenPurpose.RESET_PASSWORD, strictUriChecker))
                     .doesNotThrowAnyException();
         }
 
         @Test
-        void operationOptionalRedirect_noRedirectGiven_ok() {
+        void operationOptionalRedirect_noRedirectGiven_ok_resetPassword() {
             assertThatCode(()->validator.validate(getClient(), null, TokenPurpose.RESET_PASSWORD, strictUriChecker))
+                    .doesNotThrowAnyException();
+        }
+
+        @Test
+        void operationOptionalRedirect_redirectUriRegistered_ok_registrationConfirmation() {
+            assertThatCode(()->validator.validate(getClient(), REGISTERED_URI_1, TokenPurpose.REGISTRATION_CONFIRMATION, strictUriChecker))
+                    .doesNotThrowAnyException();
+        }
+
+        @Test
+        void operationOptionalRedirect_noRedirectGiven_ok_registrationConfirmation() {
+            assertThatCode(()->validator.validate(getClient(), null, TokenPurpose.REGISTRATION_CONFIRMATION, strictUriChecker))
                     .doesNotThrowAnyException();
         }
 
