@@ -47,9 +47,11 @@ import io.gravitee.platform.repository.api.RepositoryScopeProvider;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.jackson.DatabindCodec;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.env.Environment;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -123,5 +125,10 @@ public class StandaloneConfiguration {
     @Bean
     public ClusterManager clusterManager(io.vertx.rxjava3.core.Vertx vertx) {
         return new StandaloneClusterManager(vertx.getDelegate());
+    }
+
+    @Bean
+    public GatewayTypeBeanFactoryFallbackPostProcessor gatewayTypeBeanFactoryFallbackPostProcessor(Environment environment, ApplicationContext applicationContext) {
+        return new GatewayTypeBeanFactoryFallbackPostProcessor(environment, applicationContext);
     }
 }
