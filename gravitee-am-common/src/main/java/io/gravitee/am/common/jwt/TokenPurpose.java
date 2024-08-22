@@ -20,7 +20,8 @@ import java.util.Arrays;
 public enum TokenPurpose {
     UNSPECIFIED,
     RESET_PASSWORD,
-    REGISTRATION_VERIFY;
+    REGISTRATION_VERIFY,
+    REGISTRATION_CONFIRMATION;
 
     public static TokenPurpose of(String string) {
         return Arrays.stream(values())
