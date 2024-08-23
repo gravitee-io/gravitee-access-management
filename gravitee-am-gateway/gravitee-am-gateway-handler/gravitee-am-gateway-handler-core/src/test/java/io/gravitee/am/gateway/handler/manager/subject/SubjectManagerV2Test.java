@@ -36,9 +36,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static io.gravitee.am.common.jwt.Claims.GIO_INTERNAL_SUB;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -140,10 +142,10 @@ public class SubjectManagerV2Test {
         final var token = new JWT();
         Client client = new Client();
         client.setClientId("client-id");
-        when(clientManager.entities()).thenReturn(List.of(client));
 
         cut.updateJWT(token, user);
 
         Assertions.assertNull(token.getInternalSub());
     }
+
 }
