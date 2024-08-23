@@ -47,4 +47,7 @@ public interface SubjectManager {
     }
 
     String extractUserId(String gis);
+
+    String extractSourceId(String gis);
+
 }
