@@ -81,10 +81,18 @@ public class ExtensionGrantGranterV2 extends ExtensionGrantGranter {
 
     @Override
     protected Maybe<User> forgeUserProfile(io.gravitee.am.identityprovider.api.User endUser) {
-        return super.forgeUserProfile(endUser).map(user -> {
-            user.setSource(retrieveSourceFrom(getExtensionGrant()));
-            return user;
-        });
+        User user = new User();
+        // we do not router AM user, user id is the idp user id
+        user.setId(endUser.getId());
+        user.setUsername(endUser.getUsername());
+        user.setAdditionalInformation(endUser.getAdditionalInformation());
+
+        String gis = (String) endUser.getAdditionalInformation().get(Claims.GIO_INTERNAL_SUB);
+        if (gis != null) {
+            user.setExternalId(subjectManager.extractUserId(gis));
+            user.setSource(subjectManager.extractSourceId(gis));
+        }
+        return Maybe.just(user);
     }
 
     protected Maybe<User> manageUserValidation(TokenRequest tokenRequest, io.gravitee.am.identityprovider.api.User endUser) {
