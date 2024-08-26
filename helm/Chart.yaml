@@ -23,5 +23,4 @@ annotations:
   # List of changes for the release in artifacthub.io
   # https://artifacthub.io/packages/helm/graviteeio/am?modal=changelog
   artifacthub.io/changes: |
-    - BREAKING CHANGE: In gateway ingress controller, change ssl-redirect option from "false" to default. More info here: https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#server-side-https-enforcement-through-redirect
-    
+    - 'BREAKING CHANGE: In gateway ingress controller, change ssl-redirect option from "false" to default. More info here: https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#server-side-https-enforcement-through-redirect'
