@@ -36,9 +36,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class UserStoreImpl implements UserStore {
 
-    private Cache<String, User> idCache;
+    private final Cache<String, User> idCache;
 
-    private int ttlInSec;
+    private final int ttlInSec;
 
     public UserStoreImpl(CacheManager cacheManager, Environment environment) {
         final var mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);

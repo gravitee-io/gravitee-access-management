@@ -36,7 +36,7 @@ import java.util.List;
 @Slf4j
 public class UserServiceImplV2 extends UserServiceImpl {
 
-    private static final String SEPARATOR = ":";
+    public static final String SEPARATOR = ":";
 
     @Value("${resilience.enabled:false}")
     private boolean resilientMode = false;
@@ -108,7 +108,7 @@ public class UserServiceImplV2 extends UserServiceImpl {
         return resilientMode && (throwable instanceof RepositoryConnectionException || throwable.getCause() instanceof RepositoryConnectionException);
     }
 
-    private String generateInternalSubFrom(String src, String externalId) {
+    public static String generateInternalSubFrom(String src, String externalId) {
         return src + SEPARATOR + externalId;
     }
 }
