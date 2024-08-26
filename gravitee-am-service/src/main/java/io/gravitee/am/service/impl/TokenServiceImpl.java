@@ -16,6 +16,9 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.User;
+import io.gravitee.am.model.application.ApplicationOAuthSettings;
+import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.service.ApplicationService;
@@ -30,6 +33,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+
+import java.util.Optional;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -119,13 +124,15 @@ public class TokenServiceImpl implements TokenService {
     @Override
     public Completable deleteByApplication(Application application) {
         LOGGER.debug("Delete tokens by application : {}", application);
-        var applicationId = application.getId();
-        return accessTokenRepository.deleteByDomainIdAndClientId(application.getDomain(), applicationId)
-                .andThen(refreshTokenRepository.deleteByDomainIdAndClientId(application.getDomain(), applicationId))
+        var clientId = Optional.ofNullable(application.getSettings())
+                .map(ApplicationSettings::getOauth)
+                .map(ApplicationOAuthSettings::getClientId);
+        return clientId.isEmpty() ? Completable.complete() : accessTokenRepository.deleteByDomainIdAndClientId(application.getDomain(), clientId.get())
+                .andThen(refreshTokenRepository.deleteByDomainIdAndClientId(application.getDomain(), clientId.get()))
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to delete tokens by application {}", applicationId, ex);
+                    LOGGER.error("An error occurs while trying to delete tokens by client {}", clientId, ex);
                     return Completable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to delete tokens by application: %s", applicationId), ex));
+                            String.format("An error occurs while trying to delete tokens by client: %s", clientId), ex));
                 });
     }
 
