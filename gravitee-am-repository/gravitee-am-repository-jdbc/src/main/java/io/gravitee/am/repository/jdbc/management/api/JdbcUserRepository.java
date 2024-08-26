@@ -17,6 +17,7 @@ package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.analytics.Field;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
@@ -581,9 +582,11 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     }
 
     @Override
-    public Maybe<User> findById(ReferenceType referenceType, String referenceId, String userId) {
-        LOGGER.debug("findById({},{},{})", referenceType, referenceId, userId);
-        return userRepository.findById(referenceType.name(), referenceId, userId)
+    public Maybe<User> findById(Reference reference, UserId userId) {
+        LOGGER.debug("findById({},{})", reference, userId);
+        var criteria = userMatches(userId, "id", "external_id", "source")
+                .and(referenceMatches(reference));
+        return findOne(Query.query(criteria), JdbcUser.class)
                 .map(this::toEntity)
                 .flatMap(user -> completeUser(user).toMaybe())
                 .onErrorResumeNext(this::mapException);

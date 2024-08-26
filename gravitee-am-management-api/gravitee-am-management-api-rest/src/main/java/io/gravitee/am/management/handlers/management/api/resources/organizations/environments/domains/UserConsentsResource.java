@@ -95,7 +95,7 @@ public class UserConsentsResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.UPDATE)
-                .andThen(approvalFacade.revokeUserConsents(domain, UserId.internal(user), clientId, authenticatedUser))
+                .andThen(approvalFacade.revokeUserConsents(domain, UserId.parse(user), clientId, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 

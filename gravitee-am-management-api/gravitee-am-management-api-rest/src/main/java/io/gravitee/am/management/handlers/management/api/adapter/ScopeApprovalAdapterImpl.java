@@ -20,7 +20,7 @@ import io.gravitee.am.management.handlers.management.api.model.ApplicationEntity
 import io.gravitee.am.management.handlers.management.api.model.ScopeApprovalEntity;
 import io.gravitee.am.management.handlers.management.api.model.ScopeEntity;
 import io.gravitee.am.management.service.DomainService;
-import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.ScopeApprovalService;
@@ -48,11 +48,13 @@ public class ScopeApprovalAdapterImpl implements ScopeApprovalAdapter {
     private final UserService userService;
 
 
-    public Single<List<ScopeApprovalEntity>> getUserConsents(String domain, String userId, String clientId) {
+    public Single<List<ScopeApprovalEntity>> getUserConsents(String domain, String rawUserId, String clientId) {
+        // TODO mre: user id might be: actual user id / sub claim / ??? wtf do we do here
+        var userId = UserId.parse(rawUserId);
         return domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                 // in management context, all users either have the internal ID, or aren't available anyway
-                .flatMapSingle(d -> userService.findById(ReferenceType.DOMAIN, d.getId(), userId))
+                .flatMapSingle(d -> userService.findById(Reference.domain(d.getId()), userId))
                 .flatMapPublisher(u -> {
                     if (clientId == null || clientId.isEmpty()) {
                         return scopeApprovalService.findByDomainAndUser(domain, u.getFullId());

@@ -51,13 +51,13 @@ public class SubjectManagerV2 implements SubjectManager {
     private Domain domain;
 
     @Override
-    public String generateSubFrom(User user) {
-        return UUID.nameUUIDFromBytes(generateInternalSubFrom(user).getBytes(StandardCharsets.UTF_8)).toString();
+    public String generateSubFrom(UserId userId) {
+        return UUID.nameUUIDFromBytes(generateInternalSubFrom(userId).getBytes(StandardCharsets.UTF_8)).toString();
     }
 
     @Override
-    public String generateInternalSubFrom(User user) {
-        return UserServiceImplV2.generateInternalSubFrom(user.getSource(), user.getExternalId());
+    public String generateInternalSubFrom(UserId user) {
+        return UserServiceImplV2.generateInternalSubFrom(user.source(), user.externalId());
     }
 
     @Override
@@ -65,8 +65,8 @@ public class SubjectManagerV2 implements SubjectManager {
         if (user.getId() != null && clientManager.entities().stream().map(Client::getClientId).anyMatch(user.getId()::equals)) { //This is for extension grant because we cannot do distinguish between service and user profile
             jwt.setSub(user.getId());
         } else {
-            jwt.setInternalSub(generateInternalSubFrom(user));
-            jwt.setSub(generateSubFrom(user));
+            jwt.setInternalSub(generateInternalSubFrom(user.getFullId()));
+            jwt.setSub(generateSubFrom(user.getFullId()));
         }
     }
 

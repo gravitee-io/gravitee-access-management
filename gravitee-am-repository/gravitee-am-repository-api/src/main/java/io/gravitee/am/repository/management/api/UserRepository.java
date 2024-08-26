@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
@@ -56,7 +57,7 @@ public interface UserRepository extends CommonUserRepository {
 
     Flowable<User> findByIdIn(List<String> ids);
 
-    Maybe<User> findById(ReferenceType referenceType, String referenceId, String userId);
+    Maybe<User> findById(Reference reference, UserId userId);
 
     Single<Long> countByReference(ReferenceType referenceType, String referenceId);
 

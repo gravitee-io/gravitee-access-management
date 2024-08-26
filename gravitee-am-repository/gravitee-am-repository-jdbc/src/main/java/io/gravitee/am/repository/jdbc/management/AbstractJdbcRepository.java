@@ -17,10 +17,13 @@ package io.gravitee.am.repository.jdbc.management;
 
 import com.github.dozermapper.core.DozerBeanMapperBuilder;
 import com.github.dozermapper.core.Mapper;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.jdbc.DateHelper;
 import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.management.api.model.mapper.LocalDateConverter;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +31,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.query.CriteriaDefinition;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.transaction.ReactiveTransactionManager;
@@ -40,6 +45,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
+import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToMaybe;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -124,6 +131,16 @@ public abstract class AbstractJdbcRepository {
         return DateHelper.toDate(localDateTime);
     }
 
+    protected <T> Flowable<T> findAll(Query query, Class<T> type) {
+        return fluxToFlowable(getTemplate().select(type)
+                .matching(query).all());
+    }
+
+    protected <T> Maybe<T> findOne(Query query, Class<T> type) {
+        return monoToMaybe(getTemplate().select(type)
+                .matching(query).one());
+    }
+
 
     protected Criteria userMatches(UserId userId, String userIdField, String userExternalIdField, String userSourceField) {
         if (userId.id() != null && userId.hasExternal()) {
@@ -133,15 +150,16 @@ public abstract class AbstractJdbcRepository {
         } else if (userId.id() != null){
             return where(userIdField).is(userId.id());
         } else {
-            // All parts of id are null, this probably should never happen.
-            // Make sure we match no results. Criteria doesn't allow using literals, e.g. "1 != 1", so we have
-            // to create a contradiction some other way
-            return where(userIdField).isNull().and(userIdField).isNotNull();
+            throw new IllegalStateException("attempt to search by an empty UserId");
         }
     }
 
     protected Criteria userMatches(UserId user) {
         return userMatches(user, USER_ID_FIELD, USER_EXTERNAL_ID_FIELD, USER_SOURCE_FIELD);
+    }
+
+    protected CriteriaDefinition referenceMatches(Reference reference) {
+        return where("reference_type").is(reference.type()).and("reference_id").is(reference.id());
     }
 
     /**

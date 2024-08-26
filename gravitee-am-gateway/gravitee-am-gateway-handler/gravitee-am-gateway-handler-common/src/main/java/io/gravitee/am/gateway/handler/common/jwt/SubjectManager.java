@@ -24,9 +24,34 @@ import io.reactivex.rxjava3.core.Maybe;
 
 public interface SubjectManager {
 
-    String generateSubFrom(User user);
 
-    String generateInternalSubFrom(User user);
+    /**
+     * @return `sub` claim value generated from the user's id
+     */
+    String generateSubFrom(UserId user);
+
+    /**
+     * @deprecated use {@link #generateSubFrom(UserId)} directly
+     * @return `sub` claim value generated from the user's id
+     */
+    @Deprecated(since = "4.5.0", forRemoval = true)
+    default String generateSubFrom(User user) {
+        return generateSubFrom(user.getFullId());
+    }
+
+    /**
+     * @return `gis` claim value generated from the user's id
+     */
+    String generateInternalSubFrom(UserId userId);
+
+    /**
+     * @deprecated use {@link #generateInternalSubFrom(UserId)} directly
+     * @return `gis` claim value generated from the user's id
+     */
+    @Deprecated(since = "4.5.0", forRemoval = true)
+    default String generateInternalSubFrom(User user) {
+        return generateInternalSubFrom(user.getFullId());
+    }
 
     /**
      * Fill the sub and internal sub claims based on the user profile provided as parameter

@@ -16,8 +16,10 @@
 package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
@@ -40,6 +42,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.util.StreamUtils;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -365,9 +368,11 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
     }
 
     @Override
-    public Maybe<User> findById(ReferenceType referenceType, String referenceId, String userId) {
-        LOGGER.debug("findById({},{},{})", referenceType, referenceId, userId);
-        return userRepository.findById(referenceType.name(), referenceId, userId)
+    public Maybe<User> findById(Reference reference, UserId userId) {
+        Criteria criteria = userMatches(userId, "id", "external_id", "source")
+                .and(referenceMatches(reference));
+        LOGGER.debug("findById({},{})", reference, userId);
+        return findOne(Query.query(criteria), JdbcOrganizationUser.class)
                 .map(this::toEntity)
                 .flatMap(user -> completeUser(user).toMaybe());
     }

@@ -125,7 +125,10 @@ public class AbstractUserConsentEndpointHandler {
     }
 
 
-    protected boolean userIdParamMatchTokenIdentity(UserId id, String requestedUserId, JWT accessToken) {
-        return id.id().equals(requestedUserId) || requestedUserId.equals(accessToken.getSub()) || requestedUserId.equals(accessToken.getInternalSub());
+    protected boolean userIdParamMatchTokenIdentity(UserId idFromSub, String requestedUserId, JWT accessToken) {
+        var sameUser = requestedUserId.equals(idFromSub.id());
+        var matchesGis = requestedUserId.equals(idFromSub.getInternalSubject());
+        var matchesSub = requestedUserId.equals(accessToken.getSub());
+        return sameUser || matchesSub || matchesGis;
     }
 }

@@ -38,13 +38,13 @@ public class SubjectManagerV1 implements SubjectManager {
     private UserService userService;
 
     @Override
-    public String generateSubFrom(User user) {
+    public String generateSubFrom(UserId user) {
         return generateInternalSubFrom(user);
     }
 
     @Override
-    public String generateInternalSubFrom(User user) {
-        return user.getId();
+    public String generateInternalSubFrom(UserId userId) {
+        return userId.id();
     }
 
     @Override
@@ -52,7 +52,7 @@ public class SubjectManagerV1 implements SubjectManager {
         // no need to provide internal sub claim for domain V1
         // we are deciding some actions based of the presence of
         // this claim.
-        jwt.setSub(generateSubFrom(user));
+        jwt.setSub(generateSubFrom(user.getFullId()));
     }
 
     @Override

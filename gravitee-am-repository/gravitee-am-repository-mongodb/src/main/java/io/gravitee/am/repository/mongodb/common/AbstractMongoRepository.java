@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.common;
 
-import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
@@ -92,17 +91,19 @@ public abstract class AbstractMongoRepository {
         static UserFields EMPTY = new UserFields(null,null,null);
     }
 
-    protected Bson userIdMatches(UserId user, UserFields userFields) {
+    protected Bson userIdMatches(UserId userId, UserFields userFields) {
         var idField = requireNonNullElse(userFields.idField(), FIELD_USER_ID);
         var externalIdField = requireNonNullElse(userFields.externalIdField(), FIELD_USER_EXTERNAL_ID);
         var sourceField = requireNonNullElse(userFields.sourceField(), FIELD_USER_SOURCE);
 
-        if (user.hasExternal()) {
-            return or(eq(idField, user.id()), and(eq(externalIdField, user.externalId()), eq(sourceField, user.source())));
-        } else if (user.id() != null) {
-            return eq(idField, user.id());
+        if (userId.id() != null && userId.hasExternal()) {
+            return or(eq(idField, userId.id()), and(eq(externalIdField, userId.externalId()), eq(sourceField, userId.source())));
+        } else if (userId.hasExternal()) {
+            return and(eq(externalIdField, userId.externalId()), eq(sourceField, userId.source()));
+        } else if (userId.id() != null) {
+            return eq(idField, userId.id());
         } else {
-            return Filters.nor(Filters.empty());
+           throw new IllegalStateException("attempt to search by an empty UserId");
         }
     }
 
