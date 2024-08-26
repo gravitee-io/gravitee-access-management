@@ -20,6 +20,7 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImplV2;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
@@ -32,6 +33,8 @@ import org.springframework.util.StringUtils;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
+import static io.gravitee.am.gateway.handler.common.user.impl.UserServiceImplV2.SEPARATOR;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -39,8 +42,6 @@ import java.util.UUID;
 @Slf4j
 @AllArgsConstructor
 public class SubjectManagerV2 implements SubjectManager {
-
-    private static final String SEPARATOR = ":";
 
     private UserService userService;
 
@@ -55,7 +56,7 @@ public class SubjectManagerV2 implements SubjectManager {
 
     @Override
     public String generateInternalSubFrom(User user) {
-        return user.getSource() + SEPARATOR + user.getExternalId();
+        return UserServiceImplV2.generateInternalSubFrom(user.getSource(), user.getExternalId());
     }
 
     @Override
