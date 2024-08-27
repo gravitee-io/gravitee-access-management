@@ -18,7 +18,7 @@ package io.gravitee.am.management.handlers.management.api.adapter;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.Scope;
@@ -41,7 +41,6 @@ import org.junit.jupiter.api.Test;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -66,7 +65,7 @@ class ScopeApprovalAdapterImplTest {
     @Test
     void shouldFindConsents() {
         when(domainService.findById(TEST_DOMAIN)).thenReturn(Maybe.just(Domain.builder().id(TEST_DOMAIN).build()));
-        when(userService.findById(ReferenceType.DOMAIN, TEST_DOMAIN, "internal-user-id"))
+        when(userService.findById(Reference.domain(TEST_DOMAIN), UserId.internal("internal-user-id")))
                 .thenReturn(Single.just(new User()));
         when(appService.findByDomainAndClientId(TEST_DOMAIN, "client-id")).thenReturn(Maybe.just(new Application()));
         when(scopeService.findByDomainAndKey(TEST_DOMAIN, "test-scope")).thenReturn(Maybe.just(new Scope()));

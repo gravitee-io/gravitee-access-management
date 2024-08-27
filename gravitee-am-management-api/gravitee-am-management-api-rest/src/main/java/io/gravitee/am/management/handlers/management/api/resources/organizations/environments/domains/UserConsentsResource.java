@@ -51,7 +51,7 @@ public class UserConsentsResource extends AbstractResource {
     private ResourceContext resourceContext;
 
     @Autowired
-    private ScopeApprovalAdapter approvalFacade;
+    private ScopeApprovalAdapter approvalAdapter;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -73,7 +73,7 @@ public class UserConsentsResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.READ)
-                .andThen(approvalFacade.getUserConsents(domain, user, clientId))
+                .andThen(approvalAdapter.getUserConsents(domain, user, clientId))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -95,7 +95,7 @@ public class UserConsentsResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.UPDATE)
-                .andThen(approvalFacade.revokeUserConsents(domain, UserId.parse(user), clientId, authenticatedUser))
+                .andThen(approvalAdapter.revokeUserConsents(domain, UserId.parse(user), clientId, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 

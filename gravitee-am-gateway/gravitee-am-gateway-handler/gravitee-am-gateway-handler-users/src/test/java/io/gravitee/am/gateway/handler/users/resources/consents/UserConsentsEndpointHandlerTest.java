@@ -110,6 +110,12 @@ public class UserConsentsEndpointHandlerTest extends RxWebTestBase {
         when(subjectManager.findUserIdBySub(any())).thenReturn(Maybe.just(UserId.internal("user-id")));
 
         router.route("/users/:userId/consents")
+                .handler(rc -> {
+                    JWT token = new JWT();
+                    token.setSub("sub");
+                    rc.put(ConstantKeys.TOKEN_CONTEXT_KEY, token);
+                    rc.next();
+                })
                 .handler(userConsentsEndpointHandler::list)
                 .failureHandler(new ErrorHandler());
 

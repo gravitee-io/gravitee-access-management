@@ -18,14 +18,20 @@ package io.gravitee.am.model;
 public record UserId(String id, String externalId, String source) {
 
     public static UserId parse(String rawUserId) {
-        var parts = rawUserId.split(":");
-        return switch (parts.length) {
-            // internal id
-            case 1 -> new UserId(parts[0], null, null);
-            // `gis` claim format
-            case 2 -> new UserId(null, parts[1], parts[0]);
-            default -> throw new IllegalArgumentException("Malformed userId: " + rawUserId);
-        };
+        var firstSeparatorLocation = rawUserId.indexOf(':');
+        if (firstSeparatorLocation == -1) {
+            // "userid"
+            return new UserId(rawUserId, null, null);
+        } else if (firstSeparatorLocation != rawUserId.length() - 1) {
+            // "source:userid"
+            var source = rawUserId.substring(0, firstSeparatorLocation);
+            var externalId = rawUserId.substring(firstSeparatorLocation + 1);
+            return new UserId(null, externalId, source);
+        } else {
+            // "source:" (missing external id)
+            throw new IllegalArgumentException("Malformed userId: " + rawUserId);
+        }
+
     }
 
     public String getInternalSubject() {
