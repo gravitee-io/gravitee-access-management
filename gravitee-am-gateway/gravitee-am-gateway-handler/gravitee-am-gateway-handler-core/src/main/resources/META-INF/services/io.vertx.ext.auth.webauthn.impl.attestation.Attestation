@@ -1,7 +1,7 @@
 io.gravitee.am.gateway.handler.vertx.auth.webauthn.attestation.GraviteeNoneAttestation
+io.gravitee.am.gateway.handler.vertx.auth.webauthn.attestation.GraviteeTPMAttestation
 io.vertx.ext.auth.webauthn.impl.attestation.FidoU2fAttestation
 io.vertx.ext.auth.webauthn.impl.attestation.PackedAttestation
 io.vertx.ext.auth.webauthn.impl.attestation.AndroidKeyAttestation
 io.vertx.ext.auth.webauthn.impl.attestation.AndroidSafetynetAttestation
-io.vertx.ext.auth.webauthn.impl.attestation.TPMAttestation
 io.vertx.ext.auth.webauthn.impl.attestation.AppleAttestation
