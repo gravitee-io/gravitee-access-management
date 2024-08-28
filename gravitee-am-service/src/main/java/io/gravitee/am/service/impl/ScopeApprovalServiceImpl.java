@@ -130,7 +130,6 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
     @Override
     public Completable revokeByConsent(String domain, UserId userId, String consentId, User principal) {
         LOGGER.debug("Revoke approval for consent: {} and user: {}", consentId, userId);
-
         return userService.findById(userId)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
                 .flatMapCompletable(user -> scopeApprovalRepository.findById(consentId)

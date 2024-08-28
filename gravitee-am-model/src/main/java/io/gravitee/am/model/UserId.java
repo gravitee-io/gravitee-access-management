@@ -31,20 +31,10 @@ public record UserId(String id, String externalId, String source) {
             // "source:" (missing external id)
             throw new IllegalArgumentException("Malformed userId: " + rawUserId);
         }
-
     }
 
-    public String getInternalSubject() {
-        if (hasExternal()) {
-            return generateInternalSubject(source, externalId);
-        } else {
-            return id;
-        }
-    }
-
-    public static String generateInternalSubject(String source, String externalId) {
-        return source + ":" + externalId;
-
+    public String lookupSubject() {
+        return hasExternal() ? (source + ":" + externalId) : id;
     }
 
     /**
@@ -57,4 +47,6 @@ public record UserId(String id, String externalId, String source) {
     public boolean hasExternal() {
         return source != null && externalId != null;
     }
+
+
 }

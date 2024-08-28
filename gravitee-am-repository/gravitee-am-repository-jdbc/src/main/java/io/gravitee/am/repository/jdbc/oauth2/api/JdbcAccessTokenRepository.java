@@ -160,7 +160,7 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
         LOGGER.debug("deleteByDomainIdClientIdAndUserId({},{},{})", domainId, clientId, userId);
         return monoToCompletable(getTemplate().delete(JdbcAccessToken.class)
                 .matching(Query.query(
-                        where(SUBJECT).is(userId.getInternalSubject())
+                        where(SUBJECT).is(userId.lookupSubject())
                                 .and(where("domain").is(domainId))
                                 .and(where("client").is(clientId))))
                 .all())
@@ -173,7 +173,7 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
         LOGGER.debug("deleteByDomainIdAndUserId({},{})", domainId, userId);
         return monoToCompletable(getTemplate().delete(JdbcAccessToken.class)
                 .matching(Query.query(
-                        where(SUBJECT).is(userId.getInternalSubject())
+                        where(SUBJECT).is(userId.lookupSubject())
                                 .and(where("domain").is(domainId))))
                 .all())
                 .doOnError(error -> LOGGER.error("Unable to delete access tokens with domain {} and subject {}",

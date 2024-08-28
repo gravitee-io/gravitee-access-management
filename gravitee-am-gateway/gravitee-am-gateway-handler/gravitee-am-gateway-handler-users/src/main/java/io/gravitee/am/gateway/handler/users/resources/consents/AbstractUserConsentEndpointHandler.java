@@ -127,7 +127,7 @@ public class AbstractUserConsentEndpointHandler {
 
     protected boolean userIdParamMatchTokenIdentity(UserId idFromSub, String requestedUserId, JWT accessToken) {
         var sameUser = requestedUserId.equals(idFromSub.id());
-        var matchesGis = requestedUserId.equals(idFromSub.getInternalSubject());
+        var matchesGis = requestedUserId.equals(this.subjectManager.generateInternalSubFrom(idFromSub));
         var matchesSub = requestedUserId.equals(accessToken.getSub());
         return sameUser || matchesSub || matchesGis;
     }

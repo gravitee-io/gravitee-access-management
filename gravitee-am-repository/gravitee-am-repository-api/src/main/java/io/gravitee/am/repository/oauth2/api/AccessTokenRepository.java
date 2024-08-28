@@ -105,4 +105,5 @@ public interface AccessTokenRepository {
     default Completable purgeExpiredData() {
         return Completable.complete();
     }
+
 }
