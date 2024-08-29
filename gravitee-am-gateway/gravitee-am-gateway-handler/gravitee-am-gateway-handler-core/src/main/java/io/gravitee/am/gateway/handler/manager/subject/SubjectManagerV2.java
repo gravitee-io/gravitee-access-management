@@ -24,7 +24,6 @@ import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImplV2;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
-import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +60,12 @@ public class SubjectManagerV2 implements SubjectManager {
 
     @Override
     public void updateJWT(JWT jwt, User user) {
-        if (user.getId() != null && clientManager.entities().stream().map(Client::getClientId).anyMatch(user.getId()::equals)) { //This is for extension grant because we cannot do distinguish between service and user profile
+        if (user.getSource() == null) { // This is for extension grant because we cannot do distinguish between service and user profile
+            // in the ExtensionGrant implementation for V2 domain,
+            // if Create or Verify Account is enabled the source will be present
+            // as we are playing user profile
+            // otherwise we just want to generate a token
+            // based on the assertion, in that cas we only set the sub equals to the userId
             jwt.setSub(user.getId());
         } else {
             jwt.setInternalSub(generateInternalSubFrom(user));
@@ -105,5 +109,10 @@ public class SubjectManagerV2 implements SubjectManager {
     @Override
     public String extractUserId(String gis) {
         return gis.substring(gis.indexOf(SEPARATOR) + 1);
+    }
+
+    @Override
+    public String extractSourceId(String gis) {
+        return gis.substring(0, gis.indexOf(SEPARATOR));
     }
 }
