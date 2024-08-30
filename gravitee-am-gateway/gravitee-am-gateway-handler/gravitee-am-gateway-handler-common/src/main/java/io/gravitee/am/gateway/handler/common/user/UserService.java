@@ -101,7 +101,7 @@ public interface UserService {
      */
     @Deprecated(since = "4.5.0", forRemoval = true)
     default Single<User> addFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal) {
-        return updateFactor(userId, enrolledFactor, principal);
+        return upsertFactor(userId, enrolledFactor, principal);
     }
 
     /**
@@ -115,7 +115,7 @@ public interface UserService {
      */
     @Deprecated(since = "4.5.0", forRemoval = true)
     default Single<User> updateFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal) {
-        return updateFactor(userId, enrolledFactor, principal);
+        return upsertFactor(userId, enrolledFactor, principal);
     }
 
     Single<User> upsertFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal);
