@@ -291,8 +291,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         // apply default oauth 2.0 settings
         ApplicationSettings applicationSettings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
-        oAuthSettings.setClientId(newApplication.getClientId());
-        oAuthSettings.setClientSecret(newApplication.getClientSecret());
+        oAuthSettings.setClientId(newApplication.getClientId() != null && newApplication.getClientId().isBlank() ? null : newApplication.getClientId());
+        oAuthSettings.setClientSecret(newApplication.getClientSecret() != null && newApplication.getClientSecret().isBlank() ? null : newApplication.getClientSecret());
         oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
         oAuthSettings.setRedirectUris(newApplication.getRedirectUris());
         applicationSettings.setOauth(oAuthSettings);
