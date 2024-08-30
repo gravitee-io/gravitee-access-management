@@ -34,7 +34,7 @@ public record UserId(String id, String externalId, String source) {
     }
 
     public String lookupSubject() {
-        return hasExternal() ? (source + ":" + externalId) : id;
+        return id != null ? id :  (source + ":" + externalId);
     }
 
     /**
