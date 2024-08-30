@@ -22,6 +22,7 @@ import com.mongodb.MongoTimeoutException;
 import com.mongodb.client.model.Accumulators;
 import com.mongodb.client.model.Aggregates;
 import io.gravitee.am.common.analytics.Field;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
@@ -192,8 +193,8 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
     }
 
     @Override
-    public Maybe<User> findById(ReferenceType referenceType, String referenceId, String userId) {
-        return super.findById(referenceType, referenceId, userId).onErrorResumeNext(this::mapException);
+    public Maybe<User> findById(Reference reference, UserId userId) {
+        return super.findById(reference, userId).onErrorResumeNext(this::mapException);
     }
 
     @Override
