@@ -48,7 +48,6 @@ public interface UserService extends CommonUserService {
     Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source, boolean includeLinkedIdentities);
 
     /**
-     * TODO MRE: verify we can even fucking do that
      *
      * @deprecated use {@link #findById(UserId)}
      */

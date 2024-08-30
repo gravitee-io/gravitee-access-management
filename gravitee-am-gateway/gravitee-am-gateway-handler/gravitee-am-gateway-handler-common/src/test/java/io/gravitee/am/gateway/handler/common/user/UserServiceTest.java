@@ -21,6 +21,7 @@ import io.gravitee.am.common.exception.mfa.InvalidFactorAttributeException;
 import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImpl;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
@@ -57,6 +58,10 @@ public class UserServiceTest {
     @Mock
     private UserStore userStore;
 
+    @Mock
+    private AuditService auditService;
+
+
     @InjectMocks
     private UserServiceImpl cut = new UserServiceImpl();
 
@@ -69,7 +74,7 @@ public class UserServiceTest {
         observer.assertValueCount(1);
 
         verify(userStore).get(any());
-        verify(commonLayerUserService, never()).findById(anyString());
+        verify(commonLayerUserService, never()).findById(any(UserId.class));
     }
 
     @Test

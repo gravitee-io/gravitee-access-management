@@ -43,12 +43,4 @@ public interface DomainUserConsentFacade {
 
     Completable revokeConsents(UserId userId, String clientId, io.gravitee.am.identityprovider.api.User principal);
 
-    // TODO MRE: remove
-//    default Completable revokeConsent(UserId userId, String consentId) {
-//        return revokeConsent(userId, consentId, null);
-//    }
-//
-//    default Completable revokeConsents(UserId userId) {
-//        return revokeConsents(userId, null);
-//    }
 }

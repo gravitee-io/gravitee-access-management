@@ -49,7 +49,6 @@ public class ScopeApprovalAdapterImpl implements ScopeApprovalAdapter {
 
 
     public Single<List<ScopeApprovalEntity>> getUserConsents(String domain, String rawUserId, String clientId) {
-        // TODO mre: user id might be: actual user id / sub claim / ??? wtf do we do here
         var userId = UserId.parse(rawUserId);
         return domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
