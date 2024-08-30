@@ -33,15 +33,15 @@ import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -117,21 +117,22 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         if (this.listener != null) {
             final IdentityProvider graviteeIdp = buildOrganizationUserIdentityProvider();
 
-            final List<IdentityProvider> providers = loadProvidersFromConfig();
-            // add the Gravitee provider to allow addition of OrganizationUser through the console
-            providers.add(graviteeIdp);
-            providers.forEach(listener::registerAuthenticationProvider);
-
-            // load gravitee idp into this component to allow user creation and update
-            return loadUserProvider(graviteeIdp).ignoreElement();
+            return loadProvidersFromConfig()
+                    // add the Gravitee provider to allow addition of OrganizationUser through the console
+                    .mergeWith(Single.just(graviteeIdp))
+                    .doOnNext(listener::registerAuthenticationProvider)
+                    // load gravitee idp into this component to allow user creation and update
+                    .flatMapMaybe(this::loadUserProvider)
+                    .ignoreElements();
         }
         return Completable.complete();
     }
 
-    private List<IdentityProvider> loadProvidersFromConfig() {
-        List<IdentityProvider> providers = new ArrayList<>();
+    private Flowable<IdentityProvider> loadProvidersFromConfig() {
         boolean found = true;
         int idx = 0;
+
+        Flowable<IdentityProvider> identityProvidersFlow = Flowable.empty();
 
         while (found) {
             String type = environment.getProperty("security.providers[" + idx + "].type");
@@ -140,7 +141,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
                 if (type.equals(MEMORY_TYPE)) {
                     InlineOrganizationProviderConfiguration providerConfig = new InlineOrganizationProviderConfiguration(roleService, environment, idx);
                     if (providerConfig.isEnabled()) {
-                        providers.add(providerConfig.buildIdentityProvider());
+                        identityProvidersFlow = identityProvidersFlow.mergeWith(providerConfig.buildIdentityProvider());
                     }
                 } else {
                     logger.warn("Unsupported provider with type '{}'", type);
@@ -149,7 +150,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             idx++;
         }
 
-        return providers;
+        return identityProvidersFlow;
     }
 
     private IdentityProvider buildOrganizationUserIdentityProvider() {
