@@ -101,6 +101,7 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.web.UriBuilder.isHttp;
 import static java.util.Objects.nonNull;
+import static org.springframework.util.StringUtils.hasLength;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -274,8 +275,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         // apply default oauth 2.0 settings
         ApplicationSettings applicationSettings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
-        oAuthSettings.setClientId(newApplication.getClientId());
-        oAuthSettings.setClientSecret(newApplication.getClientSecret());
+        oAuthSettings.setClientId(hasLength(newApplication.getClientId()) ? newApplication.getClientId() : null);
+        oAuthSettings.setClientSecret(hasLength(newApplication.getClientSecret()) ? newApplication.getClientSecret() : null);
         oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
         oAuthSettings.setRedirectUris(newApplication.getRedirectUris());
         applicationSettings.setOauth(oAuthSettings);
