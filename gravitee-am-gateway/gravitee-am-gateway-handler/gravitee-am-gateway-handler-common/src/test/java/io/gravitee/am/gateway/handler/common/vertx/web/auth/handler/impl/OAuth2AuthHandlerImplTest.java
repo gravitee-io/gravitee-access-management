@@ -30,14 +30,10 @@ import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.http.HttpClientRequest;
-import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.assertj.core.api.AssertionsForInterfaceTypes;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -46,41 +42,22 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 
-public class OAuth2AuthHandlerImplTest extends RxWebTestBase {
+public class    OAuth2AuthHandlerImplTest extends RxWebTestBase {
 
     private static final String TEST_SUB = "test-sub";
     private OAuth2AuthHandlerImpl handler;
     private OAuth2AuthProvider provider;
-    private ContextAssertionsHandler assertionsHandler;
-
-
-    static class ContextAssertionsHandler implements Handler<RoutingContext> {
-
-        List<Consumer<RoutingContext>> contextAssertions = new ArrayList<>();
-
-        void afterRequest(Consumer<RoutingContext> ...assertions) {
-            contextAssertions.addAll(Arrays.asList(assertions));
-        }
-
-        @Override
-        public void handle(RoutingContext ctx) {
-            contextAssertions.forEach(assertion -> assertion.accept(ctx));
-            ctx.next();
-        }
-    }
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
         provider = mock();
         handler = new OAuth2AuthHandlerImpl(provider, mock());
-        assertionsHandler = new ContextAssertionsHandler();
         router.route("/test")
                 .handler(handler)
-                .handler(assertionsHandler)
+                .handler(checkContextAssertions())
                 .handler(rc -> rc.response().setStatusCode(200).setStatusMessage("OK").end())
                 .failureHandler(new ErrorHandler());
-
     }
 
     @Test
@@ -150,10 +127,6 @@ public class OAuth2AuthHandlerImplTest extends RxWebTestBase {
         }).when(provider).decodeToken(any(), anyBoolean(), any());
     }
 
-
-    private void assertAfterRequest(Consumer<RoutingContext> ...assertions) {
-        assertionsHandler.afterRequest(assertions);
-    }
 
     private Consumer<HttpClientRequest> withAuthorization(String authorization) {
         return req -> req.putHeader(HttpHeaders.AUTHORIZATION, authorization);

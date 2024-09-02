@@ -19,6 +19,7 @@ package io.gravitee.am.gateway.handler.common.vertx;
 import io.gravitee.am.model.Domain;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.vertx.core.Handler;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerOptions;
@@ -28,6 +29,7 @@ import io.vertx.rxjava3.core.http.HttpClientRequest;
 import io.vertx.rxjava3.core.http.HttpClientResponse;
 import io.vertx.rxjava3.core.http.HttpServer;
 import io.vertx.rxjava3.ext.web.Router;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -35,8 +37,11 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.ServerSocket;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
@@ -53,7 +58,7 @@ public class RxWebTestBase extends RxVertxTestBase {
     protected HttpClient client;
     protected Router router;
     protected Domain domain;
-
+    private ContextAssertionsHandler contextAssertionsHandler;
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -72,11 +77,68 @@ public class RxWebTestBase extends RxVertxTestBase {
                 }).doFinally(latch::countDown)
                 .subscribe();
         awaitLatch(latch);
+        contextAssertionsHandler = new ContextAssertionsHandler();
     }
 
     protected Router router() {
         return Router.router(vertx);
     }
+
+
+    /**
+     * Enable asserting on RoutingContext state via {@link #assertAfterRequest(Consumer[])}
+     * @return
+     */
+    protected Handler<RoutingContext> checkContextAssertions() {
+        return contextAssertionsHandler;
+    }
+
+    /**
+     * Check RoutingContext state after the request. Exact moment of the check depends on where {@link #checkContextAssertions()}
+     * handler is registered on the tested route.
+     * Example:
+     * <pre>{@code
+     * router.get("/test")
+     *      .handler(setupHandler)
+     *      .handler(handlerUnderTest)
+     *      .handler(checkContextAssertions());
+     *      // ...
+     *      assertAfterRequests(rc -> assertThat(rc.get("some-param-set-by-tested-handler")).isEqualTo(42));
+     *      testWebRequest(...)
+     * }</pre>
+     *
+     *
+     * If this method is called multiple times, all the assertions from all calls will be run in order.
+     * @param assertions
+     */
+    protected void assertAfterRequest(Consumer<RoutingContext> ...assertions) {
+        contextAssertionsHandler.addAssertions(assertions);
+    }
+
+    /**
+     * Returns a handler that puts the given value under the given key in the RoutingContext
+     */
+    protected Handler<RoutingContext> givenContextHas(String key, Object value) {
+        return rc -> {
+            rc.put(key, value);
+            rc.next();
+        };
+    }
+
+    /**
+     * Returns a handler that adds all entries from the given map into the RoutingContext
+     */
+    protected Handler<RoutingContext> givenContextHasParams(Map<String, Object> params) {
+        return rc -> {
+            params.forEach(rc::put);
+            rc.next();
+        };
+    }
+
+
+
+
+
 
     protected HttpServerOptions getHttpServerOptions() {
         return new HttpServerOptions().setPort(RANDOM_PORT).setHost("localhost");
@@ -252,6 +314,21 @@ public class RxWebTestBase extends RxVertxTestBase {
             in.close();
 
             assertEquals(responseBody, response.toString());
+        }
+    }
+
+    protected static class ContextAssertionsHandler implements Handler<RoutingContext> {
+
+        private final List<Consumer<RoutingContext>> contextAssertions = new ArrayList<>();
+
+        void addAssertions(Consumer<RoutingContext> ...assertions) {
+            contextAssertions.addAll(Arrays.asList(assertions));
+        }
+
+        @Override
+        public void handle(RoutingContext ctx) {
+            contextAssertions.forEach(assertion -> assertion.accept(ctx));
+            ctx.next();
         }
     }
 }

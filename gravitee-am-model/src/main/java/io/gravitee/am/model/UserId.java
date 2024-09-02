@@ -48,5 +48,12 @@ public record UserId(String id, String externalId, String source) {
         return source != null && externalId != null;
     }
 
-
+    @Override
+    public String toString() {
+        if (hasExternal()) {
+            return "%s [%s:%s]".formatted(id, source, externalId);
+        } else {
+            return id;
+        }
+    }
 }
