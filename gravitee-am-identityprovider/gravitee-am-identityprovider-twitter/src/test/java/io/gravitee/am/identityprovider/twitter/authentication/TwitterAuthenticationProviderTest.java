@@ -20,6 +20,7 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.User;
@@ -43,15 +44,18 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.matches;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -80,6 +84,9 @@ public class TwitterAuthenticationProviderTest {
 
     @Mock
     private DefaultIdentityProviderRoleMapper roleMapper;
+
+    @Mock
+    private DefaultIdentityProviderGroupMapper groupMapper;
 
     @InjectMocks
     private TwitterAuthenticationProvider provider;
@@ -149,6 +156,8 @@ public class TwitterAuthenticationProviderTest {
         when(configuration.getClientId()).thenReturn("testClientId");
         when(configuration.getClientSecret()).thenReturn("testClientSecret");
 
+        when(groupMapper.apply(Mockito.any(), Mockito.any())).thenReturn(List.of("Group1"));
+
         when(httpResponse.statusCode())
                 .thenReturn(HttpStatusCode.OK_200)
                 .thenReturn(HttpStatusCode.OK_200)
@@ -184,6 +193,7 @@ public class TwitterAuthenticationProviderTest {
             assertEquals("Expected same description", "blablabla", user.getAdditionalInformation().get("description"));
             assertEquals("Expected same followers", 987, user.getAdditionalInformation().get("followers"));
             assertEquals("Expected same friends", 45, user.getAdditionalInformation().get("friends"));
+            assertTrue(user.getGroups().contains("Group1"));
             return true;
         });
 

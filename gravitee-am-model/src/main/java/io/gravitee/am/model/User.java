@@ -95,6 +95,8 @@ public class User implements IUser {
 
     private List<String> dynamicRoles;
 
+    private List<String> dynamicGroups;
+
     private Set<Role> rolesPermissions;
 
     private List<String> groups;
@@ -215,6 +217,7 @@ public class User implements IUser {
         this.addresses = other.addresses != null ? new ArrayList<>(other.addresses) : null;
         this.roles = other.roles != null ? new ArrayList<>(other.roles) : null;
         this.dynamicRoles = other.dynamicRoles != null ? new ArrayList<>(other.dynamicRoles) : null;
+        this.dynamicGroups = other.dynamicGroups != null ? new ArrayList<>(other.dynamicGroups) : null;
         this.rolesPermissions = other.rolesPermissions;
         this.x509Certificates = other.x509Certificates != null ? new ArrayList<>(other.x509Certificates) : null;
         this.accountNonExpired = other.accountNonExpired;

@@ -50,7 +50,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
@@ -195,6 +194,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     }
                     identityToUpdate.setMappers(updateIdentityProvider.getMappers());
                     identityToUpdate.setRoleMapper(updateIdentityProvider.getRoleMapper());
+                    identityToUpdate.setGroupMapper(updateIdentityProvider.getGroupMapper());
                     identityToUpdate.setDomainWhitelist(ofNullable(updateIdentityProvider.getDomainWhitelist()).orElse(List.of()));
                     identityToUpdate.setUpdatedAt(new Date());
                     identityToUpdate.setConfiguration(sanitizeClientAuthCertificate(identityToUpdate.getConfiguration()));

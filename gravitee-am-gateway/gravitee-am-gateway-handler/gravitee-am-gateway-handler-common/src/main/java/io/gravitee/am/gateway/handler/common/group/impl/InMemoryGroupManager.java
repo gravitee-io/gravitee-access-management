@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -96,5 +97,11 @@ public class InMemoryGroupManager extends AbstractService implements Service, In
     public Flowable<Group> findByMember(String userId) {
         return Flowable.fromIterable(groups.values())
                 .filter(g -> g.getMembers().contains(userId));
+    }
+
+    @Override
+    public Flowable<Group> findByIds(List<String> ids) {
+        return Flowable.fromIterable(ids)
+                .map(groups::get);
     }
 }

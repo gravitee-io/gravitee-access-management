@@ -20,6 +20,7 @@ import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.am.identityprovider.api.IdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.User;
@@ -51,6 +52,7 @@ public abstract class AbstractSocialAuthenticationProvider<T extends SocialIdent
     protected abstract T getConfiguration();
     protected abstract IdentityProviderMapper getIdentityProviderMapper();
     protected abstract IdentityProviderRoleMapper getIdentityProviderRoleMapper();
+    protected abstract IdentityProviderGroupMapper getIdentityProviderGroupMapper();
     protected abstract WebClient getClient();
 
     @Override
@@ -117,6 +119,13 @@ public abstract class AbstractSocialAuthenticationProvider<T extends SocialIdent
         return this.getIdentityProviderRoleMapper().apply(authContext, attributes);
     }
 
+    protected List<String> applyGroupMapping(AuthenticationContext authContext, Map<String, Object> attributes) {
+        if (!groupMappingEnabled()) {
+            return Collections.emptyList();
+        }
+        return this.getIdentityProviderGroupMapper().apply(authContext, attributes);
+    }
+
     protected abstract Maybe<Token> authenticate(Authentication authentication);
 
     protected abstract Maybe<User> profile(Token token, Authentication authentication);
@@ -133,7 +142,9 @@ public abstract class AbstractSocialAuthenticationProvider<T extends SocialIdent
         return this.getIdentityProviderRoleMapper() != null;
     }
 
-
+    private boolean groupMappingEnabled() {
+        return this.getIdentityProviderGroupMapper() != null;
+    }
 
     public record Token(String value, String secret, TokenTypeHint typeHint) {
         public Token(String value, TokenTypeHint typeHint) {

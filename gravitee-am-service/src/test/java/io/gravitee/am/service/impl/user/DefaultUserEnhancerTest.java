@@ -71,6 +71,7 @@ public class DefaultUserEnhancerTest {
         group2.setName("gr2");
         group2.setRoles(List.of("role2"));
         Mockito.when(groupService.findByMember(user.getId())).thenReturn(Flowable.just(group1, group2));
+        Mockito.when(groupService.findByIdIn(Mockito.any())).thenReturn(Flowable.empty());
         Mockito.when(roleService.findByIdIn(Mockito.anyList())).thenAnswer(a -> Single.just(roles(a.getArgument(0))));
 
         // when
@@ -85,6 +86,50 @@ public class DefaultUserEnhancerTest {
         observer.assertValue(u -> u.getRolesPermissions().stream().map(Role::getId).collect(toSet()).contains("role3"));
         observer.assertValue(u -> u.getRolesPermissions().stream().map(Role::getId).collect(toSet()).contains("role4"));
     }
+
+    @Test
+    public void shouldCollectRolesFromUserAndGroupsAndDynamicGroups(){
+        // given
+        User user = new User();
+        user.setRoles(List.of("role0"));
+        user.setDynamicRoles(List.of("role4"));
+        user.setDynamicGroups(List.of("gr3"));
+        Group group1 = new Group();
+
+        group1.setId("gr1");
+        group1.setName("gr1");
+        group1.setRoles(List.of("role1"));
+
+        Group group2 = new Group();
+        group2.setId("gr2");
+        group2.setName("gr2");
+        group2.setRoles(List.of("role2"));
+
+        Group group3 = new Group();
+        group3.setId("gr3");
+        group3.setName("gr3");
+        group3.setRoles(List.of("role3"));
+
+        Mockito.when(groupService.findByMember(user.getId())).thenReturn(Flowable.just(group1, group2));
+        Mockito.when(groupService.findByIdIn(user.getDynamicGroups())).thenReturn(Flowable.just(group2, group3));
+        Mockito.when(roleService.findByIdIn(Mockito.anyList())).thenAnswer(a -> Single.just(roles(a.getArgument(0))));
+
+        // when
+        TestObserver<User> observer = defaultUserEnhancer.enhance(user).test();
+
+        // then
+        observer.assertComplete();
+        observer.assertValue(u -> u.getGroups().contains(group1.getName()));
+        observer.assertValue(u -> u.getGroups().contains(group2.getName()));
+        observer.assertValue(u -> u.getGroups().contains(group3.getName()));
+        observer.assertValue(u -> u.getGroups().size() == 3);
+        observer.assertValue(u -> u.getRolesPermissions().stream().map(Role::getId).collect(toSet()).contains("role0"));
+        observer.assertValue(u -> u.getRolesPermissions().stream().map(Role::getId).collect(toSet()).contains("role1"));
+        observer.assertValue(u -> u.getRolesPermissions().stream().map(Role::getId).collect(toSet()).contains("role2"));
+        observer.assertValue(u -> u.getRolesPermissions().stream().map(Role::getId).collect(toSet()).contains("role3"));
+        observer.assertValue(u -> u.getRolesPermissions().stream().map(Role::getId).collect(toSet()).contains("role4"));
+    }
+
 
     private Set<Role> roles(List<String> ids) {
         return ids.stream().map(id -> {

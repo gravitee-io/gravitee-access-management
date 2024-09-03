@@ -62,6 +62,7 @@ export class ProviderService {
       domainWhitelist: provider.domainWhitelist,
       mappers: provider.mappers,
       roleMapper: provider.roleMapper,
+      groupMapper: provider.groupMapper,
       passwordPolicy: provider.passwordPolicy,
     });
   }

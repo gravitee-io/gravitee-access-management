@@ -28,7 +28,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -100,6 +99,7 @@ public class NonBCryptIterationsRoundsUpgrader extends SystemTaskUpgrader {
         updateIdentityProvider.setName(idp.getName());
         updateIdentityProvider.setPasswordPolicy(idp.getPasswordPolicy());
         updateIdentityProvider.setRoleMapper(idp.getRoleMapper());
+        updateIdentityProvider.setGroupMapper(idp.getGroupMapper());
         updateIdentityProvider.setDomainWhitelist(idp.getDomainWhitelist());
         return updateIdentityProvider;
     }

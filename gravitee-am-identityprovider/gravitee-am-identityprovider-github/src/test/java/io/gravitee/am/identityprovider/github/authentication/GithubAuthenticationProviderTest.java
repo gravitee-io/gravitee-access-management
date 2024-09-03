@@ -18,6 +18,7 @@ package io.gravitee.am.identityprovider.github.authentication;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.common.oauth2.utils.URLEncodedUtils;
@@ -68,6 +69,9 @@ public class GithubAuthenticationProviderTest {
 
     @Autowired
     private DefaultIdentityProviderRoleMapper roleMapper;
+
+    @Autowired
+    private DefaultIdentityProviderGroupMapper groupMapper;
 
     @Autowired
     private GithubIdentityProviderConfiguration configuration;
@@ -183,6 +187,40 @@ public class GithubAuthenticationProviderTest {
         assertNull(authentication.getContext().get("access_token"));
     }
 
+    @Test
+    public void shouldLoadUserByUsername_dynamicRoleAndGroupMapping() {
+        configuration.setStoreOriginalTokens(false);
+
+        Map<String, String[]> groups = new HashMap<>();
+        groups.put("gr1", new String[]{"preferred_username=bob"});
+        groupMapper.setGroups(groups);
+
+        stubFor(any(urlPathEqualTo("/oauth/token"))
+                .withHeader(HttpHeaders.CONTENT_TYPE, containing(URLEncodedUtils.CONTENT_TYPE))
+                .withRequestBody(matching(".*"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBody("access_token=test_token&token_type=bearer")));
+
+        stubFor(any(urlPathEqualTo("/profile"))
+                .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token test_token"))
+                .willReturn(okJson("{ \"login\": \"bob\", \"preferred_username\": \"bob\"}")));
+
+        final HashMap<String, Object> attributes = new HashMap<>(singletonMap("redirect_uri", "http://redirect_uri"));
+        final Map<String, List<String>> parameters = singletonMap("code", Arrays.asList("test-code"));
+        var authentication = new DummySocialAuthentication(parameters, attributes);
+        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(authentication).test();
+
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "bob".equals(u.getUsername()));
+        testObserver.assertValue(u -> u.getRoles().contains("admin"));
+        testObserver.assertValue(u -> u.getGroups().contains("gr1"));
+
+        assertNull(authentication.getContext().get("access_token"));
+    }
 
     @Test
     public void shouldLoadUserByUsername_authentication_and_storeToken() {

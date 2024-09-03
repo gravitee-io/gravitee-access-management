@@ -35,7 +35,11 @@ import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Template;
+import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
@@ -55,7 +59,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.common.utils.ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY;
@@ -330,9 +340,11 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                 existingUser.setDisplayName(buildDisplayName(existingUser));
             }
 
-            // set roles
+            // set roles and groups
             updateActions.updateDynamicRole(!Objects.equals(existingUser.getDynamicRoles(), preConnectedUser.getDynamicRoles()));
+            updateActions.updateDynamicGroup(!Objects.equals(existingUser.getDynamicGroups(), preConnectedUser.getDynamicGroups()));
             existingUser.setDynamicRoles(preConnectedUser.getDynamicRoles());
+            existingUser.setDynamicGroups(preConnectedUser.getDynamicGroups());
 
             // set last password reset
             if (existingUser.getLastPasswordReset() == null) {
@@ -388,6 +400,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
             preConnectedUser.setLoginsCount(1L);
         }
         preConnectedUser.setDynamicRoles(principal.getRoles());
+        preConnectedUser.setDynamicGroups(principal.getGroups());
 
         Map<String, Object> additionalInformation = principal.getAdditionalInformation();
         extractAdditionalInformation(preConnectedUser, additionalInformation);

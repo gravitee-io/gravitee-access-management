@@ -61,6 +61,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
     public static final String COL_DOMAIN_WHITELIST = "domain_whitelist";
     public static final String COL_MAPPERS = "mappers";
     public static final String COL_ROLE_MAPPER = "role_mapper";
+    public static final String COL_GROUP_MAPPER = "group_mapper";
     public static final String COL_PASSWORD_POLICY = "password_policy";
 
     private static final List<String> columns = List.of(
@@ -77,6 +78,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
             COL_DOMAIN_WHITELIST,
             COL_MAPPERS,
             COL_ROLE_MAPPER,
+            COL_GROUP_MAPPER,
             COL_PASSWORD_POLICY
     );
 
@@ -90,6 +92,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         IdentityProvider idp = mapper.map(entity, IdentityProvider.class);
         // init to empty map t adopt same behaviour as Mongo Repository
         idp.setRoleMapper(ofNullable(idp.getRoleMapper()).orElse(new HashMap<>()));
+        idp.setGroupMapper(ofNullable(idp.getGroupMapper()).orElse(new HashMap<>()));
         idp.setMappers(ofNullable(idp.getMappers()).orElse(new HashMap<>()));
         idp.setDomainWhitelist(ofNullable(idp.getDomainWhitelist()).orElse(new ArrayList<>()));
         return idp;
@@ -168,6 +171,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_DOMAIN_WHITELIST, ofNullable(item.getDomainWhitelist()).orElse(List.of()));
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_MAPPERS, item.getMappers());
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_ROLE_MAPPER, item.getRoleMapper());
+        insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_GROUP_MAPPER, item.getGroupMapper());
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_PASSWORD_POLICY, item.getPasswordPolicy());
         insertSpec = addQuotedField(insertSpec, COL_PASSWORD_POLICY, item.getPasswordPolicy(), String.class);
 
@@ -195,6 +199,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         update = databaseDialectHelper.addJsonField(update, COL_DOMAIN_WHITELIST, ofNullable(item.getDomainWhitelist()).orElse(List.of()));
         update = databaseDialectHelper.addJsonField(update, COL_MAPPERS, item.getMappers());
         update = databaseDialectHelper.addJsonField(update, COL_ROLE_MAPPER, item.getRoleMapper());
+        update = databaseDialectHelper.addJsonField(update, COL_GROUP_MAPPER, item.getGroupMapper());
         update = addQuotedField(update, COL_PASSWORD_POLICY, item.getPasswordPolicy(), String.class);
 
         Mono<Long> action = update.fetch().rowsUpdated();

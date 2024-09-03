@@ -40,6 +40,8 @@ public class JdbcIdentityProvider {
     private String mappers;
     @Column("role_mapper")
     private String roleMapper;
+    @Column("group_mapper")
+    private String groupMapper;
     @Column("domain_whitelist")
     private String domainWhitelist;
     @Column("reference_type")

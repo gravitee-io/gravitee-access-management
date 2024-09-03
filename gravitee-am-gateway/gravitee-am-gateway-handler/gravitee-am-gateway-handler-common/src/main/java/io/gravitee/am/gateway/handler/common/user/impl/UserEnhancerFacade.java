@@ -39,4 +39,9 @@ public class UserEnhancerFacade extends BaseUserEnhancer {
     protected Flowable<Role> getRolesByIds(List<String> roleIds) {
         return roleManager.findByIdIn(roleIds);
     }
+
+    @Override
+    protected Flowable<Group> getGroupsByIds(List<String> groupIds) {
+        return groupManager.findByIds(groupIds);
+    }
 }

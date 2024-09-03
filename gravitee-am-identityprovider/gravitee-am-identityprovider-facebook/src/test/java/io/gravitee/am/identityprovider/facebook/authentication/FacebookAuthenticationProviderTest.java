@@ -20,6 +20,7 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.User;
@@ -42,6 +43,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -49,6 +51,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.identityprovider.facebook.model.FacebookUser.LOCATION_CITY_FIELD;
@@ -59,6 +62,7 @@ import static io.gravitee.am.identityprovider.facebook.model.FacebookUser.LOCATI
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -85,6 +89,9 @@ public class FacebookAuthenticationProviderTest {
 
     @Mock
     private DefaultIdentityProviderRoleMapper roleMapper;
+
+    @Mock
+    private DefaultIdentityProviderGroupMapper groupMapper;
 
     @InjectMocks
     private FacebookAuthenticationProvider cut;
@@ -167,6 +174,8 @@ public class FacebookAuthenticationProviderTest {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.set("code", "facebookAuthorizationCode");
 
+        when(groupMapper.apply(Mockito.any(), Mockito.any())).thenReturn(List.of("Group1"));
+
         when(request.parameters()).thenReturn(parameters);
         when(configuration.getCodeParameter()).thenReturn("code");
         when(configuration.getClientId()).thenReturn("testClientId");
@@ -211,6 +220,7 @@ public class FacebookAuthenticationProviderTest {
             assertEquals("facebookCountry", address.get("country"));
             assertEquals("0000-10-24", user.getAdditionalInformation().get(StandardClaims.BIRTHDATE));
             assertNotNull(user.getAdditionalInformation().get(FacebookUser.ABOUT));
+            assertTrue(user.getGroups().contains("Group1"));
             return true;
         });
 

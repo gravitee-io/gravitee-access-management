@@ -19,6 +19,7 @@ import io.gravitee.am.certificate.api.CertificateManager;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.IdentityProvider;
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.api.IdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.UserProvider;
@@ -99,6 +100,13 @@ public abstract class IdentityProviderPluginManager extends
             super("roleMapper", roleMapper);
         }
     }
+
+    protected static class IdentityProviderGroupMapperBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<IdentityProviderGroupMapper> {
+        public IdentityProviderGroupMapperBeanFactoryPostProcessor(IdentityProviderGroupMapper groupMapper) {
+            super("groupMapper", groupMapper);
+        }
+    }
+
 
     protected static class PropertiesBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<Properties> {
         public PropertiesBeanFactoryPostProcessor(Properties properties) {

@@ -273,6 +273,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
         user.setAdditionalInformation(additionalInformation);
         // set user roles
         user.setRoles(applyRoleMapping(authContext, attributes));
+        user.setGroups(applyGroupMapping(authContext, attributes));
         return user;
     }
 
