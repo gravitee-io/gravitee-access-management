@@ -26,6 +26,7 @@ import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
+import io.gravitee.am.repository.common.UserIdFields;
 import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
 import io.gravitee.am.repository.jdbc.common.dialect.ScimSearch;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
@@ -53,6 +54,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.NonTransientDataAccessResourceException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.util.StreamUtils;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -234,6 +236,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
 
     private static final short flatMapMaxConcurrency = 1;
+    private static final UserIdFields USER_ID_FIELDS = new UserIdFields(USER_COL_ID, USER_COL_SOURCE, USER_COL_EXTERNAL_ID);
 
     private String updateUserStatement;
     private String insertUserStatement;
@@ -539,7 +542,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
     public Maybe<User> findById(UserId id) {
         return monoToMaybe(getTemplate().select(JdbcUser.class)
-                .matching(Query.query(userMatches(id)))
+                .matching(Query.query(userIdMatches(id)))
                 .first())
                 .map(this::toEntity);
     }
@@ -584,7 +587,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     @Override
     public Maybe<User> findById(Reference reference, UserId userId) {
         LOGGER.debug("findById({},{})", reference, userId);
-        var criteria = userMatches(userId, "id", "external_id", "source")
+        var criteria = userIdMatches(userId)
                 .and(referenceMatches(reference));
         return findOne(Query.query(criteria), JdbcUser.class)
                 .map(this::toEntity)
@@ -620,7 +623,11 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
             case Field.USER_REGISTRATION -> registrationsStatusRepartition(query);
             default -> Single.just(Collections.emptyMap());
         };
+    }
 
+    @Override
+    public Criteria userIdMatches(UserId userId) {
+        return userIdMatches(userId, USER_ID_FIELDS);
     }
 
     private Single<Map<Object, Object>> usersStatusRepartition(AnalyticsQuery query) {

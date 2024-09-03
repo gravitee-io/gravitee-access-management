@@ -28,6 +28,7 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
+import io.gravitee.am.repository.common.UserIdFields;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.CommonUserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
@@ -341,7 +342,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
 
     @Override
     protected Bson userIdMatches(UserId user) {
-        return super.userIdMatches(user, new UserFields(FIELD_ID, FIELD_SOURCE, FIELD_EXTERNAL_ID));
+        return super.userIdMatches(user, new UserIdFields(FIELD_ID, FIELD_SOURCE, FIELD_EXTERNAL_ID));
     }
 
     protected User convert(T userMongo) {

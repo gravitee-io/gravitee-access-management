@@ -27,6 +27,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
+import io.gravitee.am.repository.common.UserIdFields;
 import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.UserMongo;
@@ -68,6 +69,8 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
     private static final String FIELD_PRE_REGISTRATION = "preRegistration";
     private static final String TOTAL = "total";
     private static final String DOLLAR_COND = "$cond";
+
+    private static final UserIdFields USER_ID_FIELDS = new UserIdFields(FIELD_ID, FIELD_EXTERNAL_ID, FIELD_SOURCE);
 
     @PostConstruct
     public void init() {
@@ -241,6 +244,6 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
 
     @Override
     protected Bson userIdMatches(UserId user) {
-        return super.userIdMatches(user, new UserFields(FIELD_ID, FIELD_EXTERNAL_ID, FIELD_SOURCE));
+        return super.userIdMatches(user, USER_ID_FIELDS);
     }
 }

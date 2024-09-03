@@ -19,6 +19,7 @@ import com.github.dozermapper.core.DozerBeanMapperBuilder;
 import com.github.dozermapper.core.Mapper;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.UserId;
+import io.gravitee.am.repository.common.UserIdFields;
 import io.gravitee.am.repository.jdbc.DateHelper;
 import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.management.api.model.mapper.LocalDateConverter;
@@ -56,6 +57,8 @@ public abstract class AbstractJdbcRepository {
     public static final String USER_ID_FIELD = "user_id";
     public static final String USER_EXTERNAL_ID_FIELD = "user_external_id";
     public static final String USER_SOURCE_FIELD = "user_source";
+
+    protected static final UserIdFields DEFAULT_USER_ID_FIELDS = new UserIdFields(USER_ID_FIELD, USER_SOURCE_FIELD, USER_EXTERNAL_ID_FIELD);
 
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
     @Autowired
@@ -142,20 +145,23 @@ public abstract class AbstractJdbcRepository {
     }
 
 
-    protected Criteria userMatches(UserId userId, String userIdField, String userExternalIdField, String userSourceField) {
+    protected Criteria userIdMatches(UserId userId, UserIdFields userIdFields) {
+        var idColumn = userIdFields.idField();
+        var extIdColumn = userIdFields.externalIdField();
+        var sourceColumn = userIdFields.sourceField();
         if (userId.id() != null && userId.hasExternal()) {
-            return where(userIdField).is(userId.id()).or(where(userExternalIdField).is(userId.externalId()).and(userSourceField).is(userId.source()));
+            return where(idColumn).is(userId.id()).or(where(extIdColumn).is(userId.externalId()).and(sourceColumn).is(userId.source()));
         } else if (userId.hasExternal()) {
-            return where(userExternalIdField).is(userId.externalId()).and(userSourceField).is(userId.source());
+            return where(extIdColumn).is(userId.externalId()).and(sourceColumn).is(userId.source());
         } else if (userId.id() != null){
-            return where(userIdField).is(userId.id());
+            return where(idColumn).is(userId.id());
         } else {
             throw new IllegalStateException("attempt to search by an empty UserId");
         }
     }
 
-    protected Criteria userMatches(UserId user) {
-        return userMatches(user, USER_ID_FIELD, USER_EXTERNAL_ID_FIELD, USER_SOURCE_FIELD);
+    protected Criteria userIdMatches(UserId user) {
+        return userIdMatches(user, DEFAULT_USER_ID_FIELDS);
     }
 
     protected CriteriaDefinition referenceMatches(Reference reference) {

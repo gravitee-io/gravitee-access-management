@@ -19,6 +19,7 @@ import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.UserId;
+import io.gravitee.am.repository.common.UserIdFields;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
@@ -55,6 +56,10 @@ public abstract class AbstractMongoRepository {
     protected static final String FIELD_USER_EXTERNAL_ID = "userExternalId";
     protected static final String FIELD_USER_SOURCE = "userSource";
 
+    /**
+     * Default UserFields for entities linked to the User.
+     */
+    protected static final UserIdFields DEFAULT_USER_FIELDS = new UserIdFields(FIELD_USER_ID, FIELD_USER_SOURCE, FIELD_USER_EXTERNAL_ID);
 
     protected void init(MongoCollection<?> collection) {
         Single.fromPublisher(collection.createIndex(new Document(FIELD_ID, 1), new IndexOptions()))
@@ -84,17 +89,13 @@ public abstract class AbstractMongoRepository {
     }
 
     protected Bson userIdMatches(UserId user) {
-       return userIdMatches(user, UserFields.EMPTY);
+       return userIdMatches(user, DEFAULT_USER_FIELDS);
     }
 
-    public record UserFields(String idField, String sourceField, String externalIdField) {
-        static UserFields EMPTY = new UserFields(null,null,null);
-    }
-
-    protected Bson userIdMatches(UserId userId, UserFields userFields) {
-        var idField = requireNonNullElse(userFields.idField(), FIELD_USER_ID);
-        var externalIdField = requireNonNullElse(userFields.externalIdField(), FIELD_USER_EXTERNAL_ID);
-        var sourceField = requireNonNullElse(userFields.sourceField(), FIELD_USER_SOURCE);
+    protected Bson userIdMatches(UserId userId, UserIdFields userIdFields) {
+        var idField = requireNonNullElse(userIdFields.idField(), FIELD_USER_ID);
+        var externalIdField = requireNonNullElse(userIdFields.externalIdField(), FIELD_USER_EXTERNAL_ID);
+        var sourceField = requireNonNullElse(userIdFields.sourceField(), FIELD_USER_SOURCE);
 
         if (userId.id() != null && userId.hasExternal()) {
             return or(eq(idField, userId.id()), and(eq(externalIdField, userId.externalId()), eq(sourceField, userId.source())));

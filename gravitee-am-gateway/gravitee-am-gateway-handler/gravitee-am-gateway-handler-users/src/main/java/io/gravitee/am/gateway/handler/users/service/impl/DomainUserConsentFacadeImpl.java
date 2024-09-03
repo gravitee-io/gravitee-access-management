@@ -44,13 +44,11 @@ public class DomainUserConsentFacadeImpl implements DomainUserConsentFacade {
 
     @Override
     public Single<Set<ScopeApproval>> consents(UserId userId) {
-        // todo mre: lookup by userId in (user.id, user.externalId) regardless of user.source?
         return scopeApprovalService.findByDomainAndUser(domain.getId(), userId).collect(HashSet::new, Set::add);
     }
 
     @Override
     public Single<Set<ScopeApproval>> consents(UserId userId, String clientId) {
-        // todo mre: lookup by userId in (user.id, user.externalId) regardless of user.source?
         return scopeApprovalService.findByDomainAndUserAndClient(domain.getId(), userId, clientId).collect(HashSet::new, Set::add);
     }
 

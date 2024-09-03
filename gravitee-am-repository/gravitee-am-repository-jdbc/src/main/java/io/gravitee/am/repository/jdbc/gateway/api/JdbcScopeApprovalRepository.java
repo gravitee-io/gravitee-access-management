@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
@@ -47,6 +48,7 @@ import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
  * @author GraviteeSource Team
  */
 @Repository
+@Slf4j
 public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implements ScopeApprovalRepository {
 
     public static final String DOMAIN = "domain";
@@ -65,7 +67,7 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
     public Flowable<ScopeApproval> findByDomainAndUserAndClient(String domain, UserId userId, String clientId) {
         LOGGER.debug("findByDomainAndUserAndClient({}, {}, {})", domain, userId, clientId);
         LocalDateTime now = LocalDateTime.now(UTC);
-        return findAll(Query.query(userMatches(userId)
+            return findAll(Query.query(userIdMatches(userId)
                 .and(client(clientId))
                 .and(domain(domain))))
                 .filter(bean -> bean.getExpiresAt() == null || bean.getExpiresAt().isAfter(now))
@@ -93,7 +95,7 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
     public Flowable<ScopeApproval> findByDomainAndUser(String domain, UserId userId) {
         LOGGER.debug("findByDomainAndUser({}, {})", domain, userId);
         LocalDateTime now = LocalDateTime.now(UTC);
-        return findAll(Query.query(userMatches(userId).and(domain(domain))))
+        return findAll(Query.query(userIdMatches(userId).and(domain(domain))))
                 .filter(bean -> bean.getExpiresAt() == null || bean.getExpiresAt().isAfter(now))
                 .map(this::toEntity);
     }
@@ -101,11 +103,12 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
     @Override
     public Single<ScopeApproval> upsert(ScopeApproval scopeApproval) {
         return monoToMaybe(getTemplate().select(JdbcScopeApproval.class)
-                // Select * from scope_approvals s where domain = :domain and user_id = :user and client_id = :client and scope = :scope
-                .matching(Query.query(userMatches(scopeApproval.getUserId())
-                        .and(client(scopeApproval.getClientId()))
-                        .and(scope(scopeApproval.getScope()))
-                        .and(domain(scopeApproval.getDomain()))
+                // Criteria.empty() forces wrapping the userMatches() in parentheses, which is required
+                // as otherwise SQL's operator precedecce breaks the query.
+                .matching(Query.query(Criteria.empty().and(userIdMatches(scopeApproval.getUserId()))
+                        .and(client(scopeApproval.getClientId())
+                                .and(scope(scopeApproval.getScope()))
+                                .and(domain(scopeApproval.getDomain())))
                 )).first())
                 .map(this::toEntity)
                 .map(Optional::of)
@@ -136,9 +139,10 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
         LOGGER.debug("deleteByDomainAndUserAndClient({}, {}, {})", domain, userId, client);
         return monoToCompletable(getTemplate().delete(JdbcScopeApproval.class)
                 .matching(Query.query(domain(domain)
-                        .and(userMatches(userId))
+                        .and(userIdMatches(userId))
                         .and(client(client))))
-                .all());
+                .all()
+                .doOnNext(rows -> log.warn("deleteByDomainAndUserAndClient({},{},{}): {} deleted", domain, userId, client, rows)));
     }
 
     @Override
@@ -147,7 +151,7 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
 
         return monoToCompletable(getTemplate().delete(JdbcScopeApproval.class)
                 .matching(Query.query(domain(domain)
-                        .and(userMatches(userId))))
+                        .and(userIdMatches(userId))))
                 .all());
     }
 

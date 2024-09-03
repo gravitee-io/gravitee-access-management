@@ -65,7 +65,7 @@ public class JdbcDeviceRepository extends AbstractJdbcRepository implements Devi
                 .matching(Query.query(
                         where(REFERENCE_ID_FIELD).is(referenceId)
                                 .and(where(REF_TYPE_FIELD).is(referenceType.name()))
-                                .and(userMatches(userId))
+                                .and(userIdMatches(userId))
                                 .and(where(EXPIRES_AT_FIELD).greaterThanOrEquals(now))
                 ))
                 .all())
@@ -80,7 +80,7 @@ public class JdbcDeviceRepository extends AbstractJdbcRepository implements Devi
                 .matching(Query.query(where(REFERENCE_ID_FIELD).is(referenceId)
                         .and(where(REF_TYPE_FIELD).is(referenceType.name()))
                         .and(where(CLIENT_FIELD).is(client))
-                        .and(userMatches(userId))
+                        .and(userIdMatches(userId))
                         .and(where(DEVICE_IDENTIFIER_ID).is(rememberDevice))
                         .and(where(DEVICE_ID).is(deviceId))
                         .and(where(EXPIRES_AT_FIELD).greaterThanOrEquals(now))
