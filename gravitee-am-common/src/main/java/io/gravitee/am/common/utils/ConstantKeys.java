@@ -90,6 +90,7 @@ public interface ConstantKeys {
     String FACTOR_KEY = "factor";
     String MFA_FACTOR_ID_CONTEXT_KEY = "mfaFactorId";
     String MFA_ENROLLING_FIDO2_FACTOR = "enrollingFido2Factor";
+    String AUTH_FLOW_FINALIZED_KEY = "auth_flow_finalized";
 
     String MFA_ALTERNATIVES_ACTION_KEY = "mfaAlternativesAction";
 

@@ -50,7 +50,6 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import java.util.Set;
 
-import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -389,6 +388,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
             rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
@@ -773,6 +773,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
             rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            rc.session().put(AUTH_FLOW_FINALIZED_KEY, true);
             rc.next();
         });
 
@@ -975,6 +976,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
             rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            rc.session().put(AUTH_FLOW_FINALIZED_KEY, true);
             rc.next();
         });
 
@@ -1148,6 +1150,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
             rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            rc.session().put(AUTH_FLOW_FINALIZED_KEY, true);
             rc.next();
         });
 
