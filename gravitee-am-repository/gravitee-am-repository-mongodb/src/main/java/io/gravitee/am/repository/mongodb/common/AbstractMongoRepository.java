@@ -104,7 +104,7 @@ public abstract class AbstractMongoRepository {
         } else if (userId.id() != null) {
             return eq(idField, userId.id());
         } else {
-           throw new IllegalStateException("attempt to search by an empty UserId");
+           throw new IllegalArgumentException("attempt to search by an empty UserId");
         }
     }
 

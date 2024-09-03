@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 public class ScopeApprovalRepositoryTest extends AbstractGatewayTest {
@@ -87,14 +88,12 @@ public class ScopeApprovalRepositoryTest extends AbstractGatewayTest {
         var nullUserId = new UserId(null, null, null);
         givenStandardTestApprovalsExist();
         // when searching by an empty user id
-        repository.findByDomainAndUser(TEST_DOMAIN, nullUserId)
+        assertThatThrownBy(() -> repository.findByDomainAndUser(TEST_DOMAIN, nullUserId)
                 .test()
-                // then no data is returned
-                .awaitDone(5, TimeUnit.SECONDS)
-                .assertComplete()
-                .assertValueCount(0)
-                .values();
-    }
+                .awaitDone(1, TimeUnit.SECONDS))
+                // an error is thrown
+                .isInstanceOf(IllegalArgumentException.class);
+   }
 
     // common test data
     private void givenStandardTestApprovalsExist() {

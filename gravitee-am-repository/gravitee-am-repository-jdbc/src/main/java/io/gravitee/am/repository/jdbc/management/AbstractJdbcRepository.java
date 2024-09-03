@@ -156,7 +156,7 @@ public abstract class AbstractJdbcRepository {
         } else if (userId.id() != null){
             return where(idColumn).is(userId.id());
         } else {
-            throw new IllegalStateException("attempt to search by an empty UserId");
+            throw new IllegalArgumentException("attempt to search by an empty UserId");
         }
     }
 
