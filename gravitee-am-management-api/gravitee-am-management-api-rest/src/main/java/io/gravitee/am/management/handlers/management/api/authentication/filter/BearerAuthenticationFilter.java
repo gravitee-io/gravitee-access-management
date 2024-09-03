@@ -174,6 +174,7 @@ public class BearerAuthenticationFilter extends AbstractAuthenticationProcessing
         user.setId((String) claims.get(StandardClaims.SUB));
         user.setAdditionalInformation(claims);
         user.setRoles((List<String>) claims.get(CustomClaims.ROLES));
+        user.setGroups((List<String>) claims.get(CustomClaims.GROUPS));
         // check for roles
         return new UsernamePasswordAuthenticationToken(user, null, getAuthorities(user));
     }

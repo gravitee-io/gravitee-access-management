@@ -52,6 +52,11 @@ public class IdentityProviderMongo extends Auditable {
      */
     private Document roleMapper;
 
+    /**
+     * Map codec support is planned for version 3.7 jira.mongodb.org issue: JAVA-2695
+     */
+    private Document groupMapper;
+
     private BsonArray domainWhitelist;
 
     private ReferenceType referenceType;

@@ -40,6 +40,8 @@ public class UpdateIdentityProvider {
 
     private Map<String, String[]> roleMapper;
 
+    private Map<String, String[]> groupMapper;
+
     private List<String> domainWhitelist;
 
     private String passwordPolicy;

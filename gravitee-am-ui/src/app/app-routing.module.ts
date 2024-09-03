@@ -243,6 +243,7 @@ import { PasswordPoliciesComponent } from './domain/settings/password-policies/d
 import { DomainPasswordPolicyComponent } from './domain/settings/password-policy/domain-password-policy.component';
 import { PasswordPolicyResolver } from './resolvers/password-policy-resolver';
 import { PasswordPoliciesResolver } from './resolvers/password-policies-resolver.service';
+import { ProviderGroupsComponent } from './domain/settings/providers/provider/groups/groups/groups.component';
 
 const applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -400,6 +401,12 @@ export const routes: Routes = [
                   { path: 'settings', component: ProviderSettingsComponent },
                   { path: 'mappers', component: ProviderMappersComponent },
                   { path: 'roles', component: ProviderRolesComponent, resolve: { roles: RolesResolver } },
+                  {
+                    path: 'groups',
+                    component: ProviderGroupsComponent,
+                    resolve: { groups: GroupsResolver },
+                    data: { organizationContext: true },
+                  },
                 ],
               },
             ],
@@ -1688,6 +1695,19 @@ export const routes: Routes = [
                                 data: {
                                   breadcrumb: {
                                     label: 'role mappers',
+                                  },
+                                },
+                              },
+                              {
+                                path: 'groups',
+                                component: ProviderGroupsComponent,
+                                resolve: {
+                                  groups: GroupsResolver,
+                                },
+                                data: {
+                                  organizationContext: false,
+                                  breadcrumb: {
+                                    label: 'group mappers',
                                   },
                                 },
                               },

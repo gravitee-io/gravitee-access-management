@@ -20,6 +20,7 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.User;
@@ -43,17 +44,20 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -80,6 +84,9 @@ public class LinkedinAuthenticationProviderTest {
 
     @Mock
     private DefaultIdentityProviderRoleMapper roleMapper;
+
+    @Mock
+    private DefaultIdentityProviderGroupMapper groupMapper;
 
     @InjectMocks
     private LinkedinAuthenticationProvider cut;
@@ -148,6 +155,9 @@ public class LinkedinAuthenticationProviderTest {
         parameters.set("code", "code");
 
         when(request.parameters()).thenReturn(parameters);
+
+        when(groupMapper.apply(Mockito.any(), Mockito.any())).thenReturn(List.of("Group1"));
+
         when(configuration.getCodeParameter()).thenReturn("code");
         when(configuration.getClientId()).thenReturn("testClientId");
         when(configuration.getClientSecret()).thenReturn("testClientSecret");
@@ -191,6 +201,7 @@ public class LinkedinAuthenticationProviderTest {
             assertEquals("My HEADLINE", user.getAdditionalInformation().get("HEADLINE"));
             assertEquals("http://profile.linkedin/", user.getAdditionalInformation().get(StandardClaims.PROFILE));
             assertEquals("http://picture", user.getAdditionalInformation().get(StandardClaims.PICTURE));
+            assertTrue(user.getGroups().contains("Group1"));
             return true;
         });
 

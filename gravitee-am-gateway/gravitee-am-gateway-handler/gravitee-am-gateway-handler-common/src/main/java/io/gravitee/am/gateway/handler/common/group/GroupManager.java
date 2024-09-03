@@ -18,8 +18,12 @@ package io.gravitee.am.gateway.handler.common.group;
 import io.gravitee.am.model.Group;
 import io.reactivex.rxjava3.core.Flowable;
 
+import java.util.List;
+
 public interface GroupManager {
 
     Flowable<Group> findByMember(String userId);
+
+    Flowable<Group> findByIds(List<String> ids);
 
 }

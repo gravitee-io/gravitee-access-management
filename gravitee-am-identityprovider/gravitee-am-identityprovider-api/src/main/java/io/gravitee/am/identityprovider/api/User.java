@@ -111,4 +111,12 @@ public interface User extends Serializable {
      * @return the last time when user has been updated
      */
     Date getUpdatedAt();
+
+    /**
+     * Returns the user groups
+     *
+     * @return the user groups
+     */
+    List<String> getGroups();
+
 }

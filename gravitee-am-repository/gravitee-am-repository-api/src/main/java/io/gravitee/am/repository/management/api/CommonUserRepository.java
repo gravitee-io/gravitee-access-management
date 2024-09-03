@@ -73,6 +73,7 @@ public interface CommonUserRepository extends CrudRepository<User, String> {
     class UpdateActions {
         private boolean role = true;
         private boolean dynamicRole = true;
+        private boolean dynamicGroup = true;
         private boolean attributes = true;
         private boolean entitlements = true;
         private boolean addresses = true;
@@ -95,6 +96,15 @@ public interface CommonUserRepository extends CrudRepository<User, String> {
 
         public UpdateActions updateDynamicRole(boolean dynamicRole) {
             this.dynamicRole = dynamicRole;
+            return this;
+        }
+
+        public boolean updateDynamicGroup() {
+            return dynamicGroup;
+        }
+
+        public UpdateActions updateDynamicGroup(boolean dynamicGroup) {
+            this.dynamicGroup = dynamicGroup;
             return this;
         }
 

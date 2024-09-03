@@ -216,6 +216,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
         user.setCreatedAt(idpUser.getCreatedAt());
         user.setUpdatedAt(idpUser.getUpdatedAt());
         user.setDynamicRoles(idpUser.getRoles());
+        user.setDynamicGroups(idpUser.getGroups());
         return user;
     }
 }

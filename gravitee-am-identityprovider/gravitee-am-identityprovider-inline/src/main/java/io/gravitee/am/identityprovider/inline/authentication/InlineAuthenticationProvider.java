@@ -21,6 +21,7 @@ import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.IdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
@@ -63,6 +64,9 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
     private IdentityProviderRoleMapper roleMapper;
 
     @Autowired
+    private IdentityProviderGroupMapper groupMapper;
+
+    @Autowired
     private IdentityProviderMapper mapper;
 
     @Override
@@ -100,6 +104,13 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
         return Collections.emptyList();
     }
 
+    private List<String> getUserGroups(AuthenticationContext authContext, io.gravitee.am.identityprovider.inline.model.User inlineUser) {
+        if (groupMapper != null) {
+            return groupMapper.apply(authContext, inlineUser.toMap());
+        }
+        return Collections.emptyList();
+    }
+
     private User createUser(AuthenticationContext authContext, io.gravitee.am.identityprovider.inline.model.User inlineUser) {
         DefaultUser user = new DefaultUser(inlineUser.getUsername());
         user.setId(inlineUser.getUsername());
@@ -123,8 +134,9 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
         }
         user.setAdditionalInformation(claims);
 
-        // set user roles
+        // set user roles and groups
         user.setRoles(getUserRoles(authContext, inlineUser));
+        user.setGroups(getUserGroups(authContext, inlineUser));
 
         return user;
     }

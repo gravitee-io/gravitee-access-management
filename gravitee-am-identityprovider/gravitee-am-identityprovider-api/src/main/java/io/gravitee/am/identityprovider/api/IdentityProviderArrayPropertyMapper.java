@@ -1,0 +1,85 @@
+/**
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.gravitee.am.identityprovider.api;
+
+import io.gravitee.el.TemplateEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static io.gravitee.am.identityprovider.api.AuthenticationContext.CONTEXT_KEY_PROFILE;
+import static java.util.function.Predicate.not;
+
+abstract class IdentityProviderArrayPropertyMapper {
+    public static final Logger LOGGER = LoggerFactory.getLogger(IdentityProviderArrayPropertyMapper.class);
+
+    protected Map<String, String[]> properties;
+
+    protected Map<String, String[]> getProperties() {
+        return properties;
+    }
+
+    protected void setProperties(Map<String, String[]> properties) {
+        this.properties = properties;
+    }
+
+    public List<String> apply(AuthenticationContext context, Map<String, Object> userInfo) {
+        Set<String> mappedGroups = new HashSet<>();
+        if (properties != null) {
+
+            TemplateEngine templateEngine = context.getTemplateEngine();
+            if (templateEngine != null) {
+                templateEngine.getTemplateContext().setVariable(CONTEXT_KEY_PROFILE, userInfo);
+            }
+
+            properties.forEach((group, users) -> {
+                Arrays.stream(users).filter(not(StringUtils::isEmpty)).map(String::trim).forEach(u -> {
+                    if (u.startsWith("{") && u.endsWith("}") && templateEngine != null) {
+                        try {
+                            if (templateEngine.getValue(u, Boolean.class)) {
+                                mappedGroups.add(group);
+                            }
+                        } catch (Exception e) {
+                            LOGGER.warn("Group mapper can't evaluate the expression [{}] as boolean", u);
+                        }
+                    } else {
+                        // user/group have the following syntax userAttribute=userValue
+                        String[] attributes = u.split("=", 2);
+                        if (attributes.length == 2){
+                            String userAttribute = attributes[0];
+                            String userValue = attributes[1];
+                            if (userInfo.containsKey(userAttribute)
+                                    && ((userInfo.get(userAttribute) instanceof Collection
+                                    && ((Collection<?>) userInfo.get(userAttribute)).contains(userValue))
+                                    || userValue.equals(String.valueOf(userInfo.get(userAttribute))))) {
+                                mappedGroups.add(group);
+                            }
+                        }
+                    }
+                });
+            });
+        }
+        return new ArrayList<>(mappedGroups);
+    }
+}

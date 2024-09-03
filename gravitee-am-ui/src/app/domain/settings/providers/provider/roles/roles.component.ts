@@ -21,7 +21,7 @@ import { NgForm } from '@angular/forms';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { ProviderService } from '../../../../../services/provider.service';
 import { DialogService } from '../../../../../services/dialog.service';
-import { OrganizationService } from '../../../../../services/organization.service';
+import { SpelGrammarService } from '../../../../../services/spel-grammar.service';
 
 @Component({
   selector: 'app-roles',
@@ -156,38 +156,22 @@ export class ProviderRolesComponent implements OnInit {
 })
 export class CreateRoleMapperComponent implements OnInit {
   @ViewChild('userRoleForm', { static: true }) form: NgForm;
-  spelGrammar: any;
   rule: string;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<CreateRoleMapperComponent>,
-    private organizationService: OrganizationService,
+    private spelGrammarChecker: SpelGrammarService,
   ) {
     this.rule = '';
   }
 
   ngOnInit() {
-    this.organizationService
-      .spelGrammar()
-      .toPromise()
-      .then((response) => {
-        this.spelGrammar = response;
-      });
+    this.spelGrammarChecker.init();
   }
 
   getGrammar() {
-    if (this.spelGrammar != null) {
-      return Promise.resolve(this.spelGrammar);
-    }
-
-    return this.organizationService
-      .spelGrammar()
-      .toPromise()
-      .then((response) => {
-        this.spelGrammar = response;
-        return this.spelGrammar;
-      });
+    return this.spelGrammarChecker.getGrammar();
   }
 
   @HostListener(':gv-expression-language:ready', ['$event.detail'])

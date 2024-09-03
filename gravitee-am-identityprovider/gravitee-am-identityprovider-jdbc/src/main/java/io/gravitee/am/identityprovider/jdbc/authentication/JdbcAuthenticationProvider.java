@@ -23,6 +23,7 @@ import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.IdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
@@ -58,6 +59,9 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
 
     @Autowired
     private IdentityProviderRoleMapper roleMapper;
+
+    @Autowired
+    private IdentityProviderGroupMapper groupMapper;
 
     @Override
     public Maybe<User> loadUserByUsername(Authentication authentication) {
@@ -166,6 +170,7 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
         user.setEmail(email);
         // set user roles
         user.setRoles(applyRoleMapping(authContext, claims));
+        user.setGroups(applyGroupMapping(authContext, claims));
         // set additional information
         Map<String, Object> additionalInformation = new HashMap<>();
         additionalInformation.put(StandardClaims.SUB, sub);
@@ -221,12 +226,23 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
         return roleMapper.apply(authContext, attributes);
     }
 
+    private List<String> applyGroupMapping(AuthenticationContext authContext, Map<String, Object> attributes) {
+        if (!groupMappingEnabled()) {
+            return Collections.emptyList();
+        }
+        return groupMapper.apply(authContext, attributes);
+    }
+
     private boolean mappingEnabled() {
         return this.mapper != null;
     }
 
     private boolean roleMappingEnabled() {
         return this.roleMapper != null;
+    }
+
+    private boolean groupMappingEnabled() {
+        return this.groupMapper != null;
     }
 
     private String getIndexParameter(String field) {
