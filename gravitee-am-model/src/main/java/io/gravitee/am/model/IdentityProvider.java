@@ -48,6 +48,8 @@ public class IdentityProvider {
 
     private Map<String, String[]> roleMapper;
 
+    private Map<String, String[]> groupMapper;
+
     private ReferenceType referenceType;
 
     private String referenceId;
@@ -72,6 +74,7 @@ public class IdentityProvider {
         this.configuration = other.configuration;
         this.mappers = other.mappers;
         this.roleMapper = other.roleMapper;
+        this.groupMapper = other.groupMapper;
         this.referenceType = other.referenceType;
         this.referenceId = other.referenceId;
         this.external = other.external;

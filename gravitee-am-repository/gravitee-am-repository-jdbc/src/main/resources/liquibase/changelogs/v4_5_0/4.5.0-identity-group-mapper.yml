@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.5.0-identity-group-mapper
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      changes:
+        - addColumn:
+            tableName: identities
+            columns:
+              - column:
+                  name: group_mapper
+                  type: clob
+                  constraints:
+                    nullable: true
+        - sql:
+            dbms: postgresql
+            sql: ALTER TABLE identities ALTER group_mapper TYPE JSON USING group_mapper::json
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE identities MODIFY group_mapper JSON;

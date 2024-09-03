@@ -46,6 +46,8 @@ public class DefaultUser implements User {
 
     private List<String> roles;
 
+    private List<String> groups;
+
     private Map<String, Object> additionalInformation;
 
     private Date createdAt;
@@ -184,6 +186,15 @@ public class DefaultUser implements User {
 
     public void setRoles(List<String> roles) {
         this.roles = roles;
+    }
+
+    @Override
+    public List<String> getGroups() {
+        return groups;
+    }
+
+    public void setGroups(List<String> groups) {
+        this.groups = groups;
     }
 
     @Override

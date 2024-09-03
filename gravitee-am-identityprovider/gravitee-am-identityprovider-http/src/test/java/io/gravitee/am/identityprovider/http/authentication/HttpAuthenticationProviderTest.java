@@ -21,6 +21,7 @@ import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.DummyRequest;
@@ -62,6 +63,9 @@ public class HttpAuthenticationProviderTest {
 
     @Autowired
     private DefaultIdentityProviderRoleMapper roleMapper;
+
+    @Autowired
+    private DefaultIdentityProviderGroupMapper groupMapper;
 
     @Autowired
     private DefaultIdentityProviderMapper mapper;
@@ -193,11 +197,14 @@ public class HttpAuthenticationProviderTest {
 
 
     @Test
-    public void shouldLoadUserByUsername_roleMapping() {
+    public void shouldLoadUserByUsername_roleAndGroupMapping() {
         // configure role mapping
         Map<String, String[]> roles = new HashMap<>();
         roles.put("admin", new String[] { "preferred_username=johndoe"});
         roleMapper.setRoles(roles);
+
+        // configure group mapping
+        groupMapper.setGroups(Map.of("GR1", new String[] { "preferred_username=johndoe"}));
 
         stubFor(any(urlPathEqualTo("/api/authentication"))
                 .withRequestBody(matching(".*"))
@@ -227,6 +234,7 @@ public class HttpAuthenticationProviderTest {
         testObserver.assertValue(u -> "123456789".equals(u.getId()));
         testObserver.assertValue(u -> "johndoe".equals(u.getUsername()));
         testObserver.assertValue(u -> u.getRoles().contains("admin"));
+        testObserver.assertValue(u -> u.getGroups().contains("GR1"));
     }
 
 }

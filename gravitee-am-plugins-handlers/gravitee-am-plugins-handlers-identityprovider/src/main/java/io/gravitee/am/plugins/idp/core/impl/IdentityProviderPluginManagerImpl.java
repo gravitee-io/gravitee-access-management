@@ -24,6 +24,7 @@ import io.gravitee.am.plugins.handlers.api.core.AmPluginContextConfigurer;
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.plugins.idp.core.AuthenticationProviderConfiguration;
+import io.gravitee.am.plugins.idp.core.IdentityProviderGroupMapperFactory;
 import io.gravitee.am.plugins.idp.core.IdentityProviderMapperFactory;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.plugins.idp.core.IdentityProviderRoleMapperFactory;
@@ -56,6 +57,7 @@ public class IdentityProviderPluginManagerImpl extends IdentityProviderPluginMan
     private final ConfigurationFactory<IdentityProviderConfiguration> configurationFactory;
     private final IdentityProviderMapperFactory mapperFactory;
     private final IdentityProviderRoleMapperFactory roleMapperFactory;
+    private final IdentityProviderGroupMapperFactory groupMapperFactory;
     private final Properties graviteeProperties;
     private final Vertx vertx;
 
@@ -63,6 +65,7 @@ public class IdentityProviderPluginManagerImpl extends IdentityProviderPluginMan
                                              ConfigurationFactory<IdentityProviderConfiguration> identityProviderConfigurationFactory,
                                              IdentityProviderMapperFactory identityProviderMapperFactory,
                                              IdentityProviderRoleMapperFactory identityProviderRoleMapperFactory,
+                                             IdentityProviderGroupMapperFactory identityProviderGroupMapperFactory,
                                              Properties graviteeProperties,
                                              Vertx vertx
     ) {
@@ -70,6 +73,7 @@ public class IdentityProviderPluginManagerImpl extends IdentityProviderPluginMan
         this.configurationFactory = identityProviderConfigurationFactory;
         this.mapperFactory = identityProviderMapperFactory;
         this.roleMapperFactory = identityProviderRoleMapperFactory;
+        this.groupMapperFactory = identityProviderGroupMapperFactory;
         this.graviteeProperties = graviteeProperties;
         this.vertx = vertx;
     }
@@ -97,11 +101,13 @@ public class IdentityProviderPluginManagerImpl extends IdentityProviderPluginMan
         var identityProviderConfiguration = configurationFactory.create(identityProvider.configuration(), providerConfig.getConfiguration());
         var identityProviderMapper = mapperFactory.create(identityProvider.mapper(), providerConfig.getMappers());
         var identityProviderRoleMapper = roleMapperFactory.create(identityProvider.roleMapper(), providerConfig.getRoleMapper());
+        var identityProviderGroupMapper = groupMapperFactory.create(identityProvider.groupMapper(), providerConfig.getGroupMapper());
 
         var postProcessors = Stream.of(
                 new IdentityProviderConfigurationBeanFactoryPostProcessor(identityProviderConfiguration),
                 new IdentityProviderMapperBeanFactoryPostProcessor(identityProviderMapper),
                 new IdentityProviderRoleMapperBeanFactoryPostProcessor(identityProviderRoleMapper),
+                new IdentityProviderGroupMapperBeanFactoryPostProcessor(identityProviderGroupMapper),
                 new PropertiesBeanFactoryPostProcessor(graviteeProperties),
                 new VertxBeanFactoryPostProcessor(vertx),
                 new IdentityProviderEntityBeanFactoryPostProcessor(providerConfig.getIdentityProvider())

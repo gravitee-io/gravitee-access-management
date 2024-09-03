@@ -23,7 +23,9 @@ import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.IdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.User;
@@ -98,6 +100,9 @@ public class TwitterAuthenticationProvider extends AbstractSocialAuthenticationP
     private IdentityProviderRoleMapper roleMapper;
 
     @Autowired
+    private DefaultIdentityProviderGroupMapper groupMapper;
+
+    @Autowired
     private TwitterIdentityProviderConfiguration configuration;
 
     @Override
@@ -113,6 +118,11 @@ public class TwitterAuthenticationProvider extends AbstractSocialAuthenticationP
     @Override
     protected IdentityProviderRoleMapper getIdentityProviderRoleMapper() {
         return this.roleMapper;
+    }
+
+    @Override
+    protected IdentityProviderGroupMapper getIdentityProviderGroupMapper() {
+        return this.groupMapper;
     }
 
     @Override
@@ -291,6 +301,7 @@ public class TwitterAuthenticationProvider extends AbstractSocialAuthenticationP
                     Map<String, Object> additionalInfos = new HashMap<>(applyUserMapping(authentication.getContext(), jsonObject.getMap()));
                     user.setAdditionalInformation(additionalInfos);
                     user.setRoles(applyRoleMapping(authentication.getContext(), jsonObject.getMap()));
+                    user.setGroups(applyGroupMapping(authentication.getContext(), jsonObject.getMap()));
 
                     return Maybe.just(user);
                 });

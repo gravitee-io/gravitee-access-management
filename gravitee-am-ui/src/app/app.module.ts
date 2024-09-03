@@ -279,8 +279,8 @@ import { ApplicationAccountSettingsComponent } from './domain/applications/appli
 import { ApplicationOAuth2Component } from './domain/applications/application/advanced/oauth2/oauth2.component';
 import { ApplicationSaml2Component } from './domain/applications/application/advanced/saml2/saml2.component';
 import {
-  ApplicationScopesComponent,
   AddScopeComponent,
+  ApplicationScopesComponent,
 } from './domain/applications/application/advanced/oauth2/scopes/application-scopes.component';
 import {
   ApplicationTokensComponent,
@@ -446,6 +446,7 @@ import { AccountTokenDialogModule } from './domain/settings/users/user/profile/t
 import { PasswordPoliciesResolver } from './resolvers/password-policies-resolver.service';
 import { PasswordPolicyResolver } from './resolvers/password-policy-resolver';
 import { PasswordPolicyService } from './services/password-policy.service';
+import { CreateGroupMapperComponent, ProviderGroupsComponent } from './domain/settings/providers/provider/groups/groups/groups.component';
 
 @NgModule({
   declarations: [
@@ -500,6 +501,7 @@ import { PasswordPolicyService } from './services/password-policy.service';
     ProviderSettingsComponent,
     ProviderMappersComponent,
     ProviderRolesComponent,
+    ProviderGroupsComponent,
     CreateMapperComponent,
     CreateIdpSelectionRuleComponent,
     LogoutComponent,
@@ -515,6 +517,7 @@ import { PasswordPolicyService } from './services/password-policy.service';
     RoleCreationComponent,
     RoleComponent,
     CreateRoleMapperComponent,
+    CreateGroupMapperComponent,
     ExtensionGrantCreationComponent,
     ExtensionGrantComponent,
     ExtensionGrantCreationStep1Component,

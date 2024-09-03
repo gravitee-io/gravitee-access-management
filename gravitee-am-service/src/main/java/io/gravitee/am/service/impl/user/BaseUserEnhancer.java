@@ -37,10 +37,18 @@ public abstract class BaseUserEnhancer implements UserEnhancer {
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
     protected abstract Flowable<Group> getGroupsByMemberId(String memberId);
     protected abstract Flowable<Role> getRolesByIds(List<String> roleIds);
+    protected abstract Flowable<Group> getGroupsByIds(List<String> groupIds);
+
+    private Flowable<Group> collectGroups(User user) {
+        Flowable<Group> groupsByMemberId = getGroupsByMemberId(user.getId());
+        Flowable<Group> groupsByIds = getGroupsByIds(user.getDynamicGroups() == null ? List.of() : user.getDynamicGroups());
+        return groupsByMemberId.mergeWith(groupsByIds);
+    }
 
     public Single<User> enhance(User user) {
-        return getGroupsByMemberId(user.getId())
+        return collectGroups(user)
                 .toList()
+                .map(HashSet::new)
                 .flatMap(groups -> {
                     Set<String> roles = new HashSet<>();
                     if (groups != null && !groups.isEmpty()) {
@@ -53,6 +61,7 @@ public abstract class BaseUserEnhancer implements UserEnhancer {
                                 .flatMap(group -> group.getRoles().stream())
                                 .collect(Collectors.toSet()));
                     }
+
                     // get user roles
                     if (user.getRoles() != null && !user.getRoles().isEmpty()) {
                         roles.addAll(user.getRoles());
@@ -60,6 +69,7 @@ public abstract class BaseUserEnhancer implements UserEnhancer {
                     if (user.getDynamicRoles() != null && !user.getDynamicRoles().isEmpty()) {
                         roles.addAll(user.getDynamicRoles());
                     }
+
                     // fetch roles information and enhance user data
                     if (!roles.isEmpty()) {
                         return getRolesByIds(new ArrayList<>(roles))
@@ -79,4 +89,7 @@ public abstract class BaseUserEnhancer implements UserEnhancer {
                     return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to enhance user %s", user.getId()), ex));
                 });
     }
+
+
+
 }

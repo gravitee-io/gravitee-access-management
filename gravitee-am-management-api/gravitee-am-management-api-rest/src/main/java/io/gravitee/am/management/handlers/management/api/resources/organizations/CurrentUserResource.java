@@ -94,6 +94,7 @@ public class CurrentUserResource extends AbstractResource {
                     profile.put("permissions", permissions);
                     profile.put("newsletter_enabled", newsletterEnabled);
                     profile.remove(CustomClaims.ROLES);
+                    profile.remove(CustomClaims.GROUPS);
 
                     return profile;
                 }).subscribe(response::resume, response::resume);

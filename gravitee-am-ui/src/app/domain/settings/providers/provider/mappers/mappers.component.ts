@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, ElementRef, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 
@@ -22,6 +22,7 @@ import { ProviderService } from '../../../../../services/provider.service';
 import { DialogService } from '../../../../../services/dialog.service';
 import { OrganizationService } from '../../../../../services/organization.service';
 import '@gravitee/ui-components/wc/gv-expression-language';
+import { SpelGrammarService } from '../../../../../services/spel-grammar.service';
 
 @Component({
   selector: 'provider-mappers',
@@ -174,36 +175,19 @@ export class ProviderMappersComponent implements OnInit {
   templateUrl: './create/create.component.html',
 })
 export class CreateMapperComponent implements OnInit {
-  spelGrammar: any;
   rule: string;
 
   constructor(
     public dialogRef: MatDialogRef<CreateMapperComponent>,
-    private elementRef: ElementRef,
-    private organizationService: OrganizationService,
+    private spelGrammarChecker: SpelGrammarService,
   ) {}
 
   ngOnInit() {
-    this.organizationService
-      .spelGrammar()
-      .toPromise()
-      .then((response) => {
-        this.spelGrammar = response;
-      });
+    this.spelGrammarChecker.init();
   }
 
   getGrammar() {
-    if (this.spelGrammar != null) {
-      return Promise.resolve(this.spelGrammar);
-    }
-
-    return this.organizationService
-      .spelGrammar()
-      .toPromise()
-      .then((response) => {
-        this.spelGrammar = response;
-        return this.spelGrammar;
-      });
+    return this.spelGrammarChecker.getGrammar();
   }
 
   @HostListener(':gv-expression-language:ready', ['$event.detail'])

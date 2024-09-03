@@ -20,6 +20,7 @@ import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.User;
@@ -56,8 +57,6 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyMap;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -82,8 +81,11 @@ public class GoogleAuthenticationProviderTest {
     @Mock
     private DefaultIdentityProviderMapper mapper;
 
-    @Mock
-    private DefaultIdentityProviderRoleMapper roleMapper;
+    @Spy
+    private DefaultIdentityProviderRoleMapper roleMapper = new DefaultIdentityProviderRoleMapper();
+
+    @Spy
+    private DefaultIdentityProviderGroupMapper groupMapper = new DefaultIdentityProviderGroupMapper();
 
     @InjectMocks
     private GoogleAuthenticationProvider provider;
@@ -223,12 +225,13 @@ public class GoogleAuthenticationProviderTest {
         verify(client, times(1)).postAbs(GoogleIdentityProviderConfiguration.TOKEN_URL);
     }
     @Test
-    public void shouldAuthenticate_RoleMapping() throws Exception {
+    public void shouldAuthenticate_RoleAndGroupMapping() throws Exception {
         forceProviderInfoForTest();
         Map<String, String[]> roles = new HashMap<>();
         roles.put("admin", new String[] { "preferred_username=john.doe@graviteesource.com"});
-        when(roleMapper.getRoles()).thenReturn(roles);
-        when(roleMapper.apply(any(), anyMap())).thenCallRealMethod();
+        roleMapper.setRoles(roles);
+
+        groupMapper.setGroups(Map.of("gr1", new String[]{"preferred_username=john.doe@graviteesource.com"}));
 
         Authentication authentication = mock(Authentication.class);
         AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
@@ -268,6 +271,7 @@ public class GoogleAuthenticationProviderTest {
             assertEquals("value-non-std-field", user.getAdditionalInformation().get("non-standard-field"));
 
             assertTrue(user.getRoles().contains("admin"));
+            assertTrue(user.getGroups().contains("gr1"));
             return true;
         });
         verify(authenticationContext, times(1)).set("id_token", jwt);

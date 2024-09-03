@@ -48,4 +48,9 @@ public class DefaultUserEnhancer extends BaseUserEnhancer {
     protected Flowable<Role> getRolesByIds(List<String> roleIds) {
         return roleService.findByIdIn(roleIds).flattenAsFlowable(set -> set);
     }
+
+    @Override
+    protected Flowable<Group> getGroupsByIds(List<String> groupIds) {
+        return groupService.findByIdIn(groupIds);
+    }
 }

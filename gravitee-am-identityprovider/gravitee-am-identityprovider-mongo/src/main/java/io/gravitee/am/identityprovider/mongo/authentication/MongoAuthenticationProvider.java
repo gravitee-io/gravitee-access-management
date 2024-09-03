@@ -24,6 +24,7 @@ import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.IdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
@@ -66,6 +67,9 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
 
     @Autowired
     private IdentityProviderRoleMapper roleMapper;
+
+    @Autowired
+    private IdentityProviderGroupMapper groupMapper;
 
     @Override
     public AuthenticationProvider stop() throws Exception {
@@ -163,6 +167,7 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
         user.setId(sub);
         // set user roles
         user.setRoles(applyRoleMapping(authContext, document));
+        user.setGroups(applyGroupMapping(authContext, document));
         // set additional information
         Map<String, Object> additionalInformation = new HashMap<>();
         additionalInformation.put(StandardClaims.SUB, sub);
@@ -199,6 +204,8 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
         return user;
     }
 
+
+
     private String getClaim(Map<String, Object> claims, String userAttribute, String defaultValue) {
         return claims.containsKey(userAttribute) ? claims.get(userAttribute).toString() : defaultValue;
     }
@@ -222,11 +229,22 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
         return roleMapper.apply(authContext, attributes);
     }
 
+    private List<String> applyGroupMapping(AuthenticationContext authContext, Map<String, Object> attributes) {
+        if (!groupMappingEnabled()) {
+            return Collections.emptyList();
+        }
+        return groupMapper.apply(authContext, attributes);
+    }
+
     private boolean mappingEnabled() {
         return this.mapper != null;
     }
 
     private boolean roleMappingEnabled() {
         return this.roleMapper != null;
+    }
+
+    private boolean groupMappingEnabled() {
+        return this.groupMapper != null;
     }
 }
