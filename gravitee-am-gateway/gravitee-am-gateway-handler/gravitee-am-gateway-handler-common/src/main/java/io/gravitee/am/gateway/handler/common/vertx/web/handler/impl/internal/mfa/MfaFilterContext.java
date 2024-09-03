@@ -124,6 +124,10 @@ public class MfaFilterContext {
         return MfaUtils.isUserStronglyAuth(session);
     }
 
+    public boolean isUserFullyAuthenticated() {
+        return nonNull(session.get(AUTH_FLOW_FINALIZED_KEY)) && TRUE.equals(session.get(AUTH_FLOW_FINALIZED_KEY));
+    }
+
     public RememberDeviceSettings getRememberDeviceSettings() {
         return MfaUtils.getRememberDeviceSettings(client);
     }
@@ -166,8 +170,8 @@ public class MfaFilterContext {
     }
 
     public boolean isMfaChallengeComplete() {
-        return nonNull(session.get(MFA_CHALLENGE_COMPLETED_KEY)) &&
-                TRUE.equals(session.get(MFA_CHALLENGE_COMPLETED_KEY));
+        return (nonNull(session.get(MFA_CHALLENGE_COMPLETED_KEY)) &&
+                TRUE.equals(session.get(MFA_CHALLENGE_COMPLETED_KEY)));
     }
 
     public boolean userHasMatchingActivatedFactors() {

@@ -20,14 +20,10 @@ import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.chain.MfaFilterChain;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.AdaptiveMfaFilter;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.ClientNullFilter;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.MfaChallengeCompleteFilter;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.MfaChallengeFilter;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.MfaSkipUserSilentAuthFilter;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.MfaSkipUserStronglyAuthFilter;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.NoFactorFilter;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.RememberDeviceFilter;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.StepUpAuthenticationFilter;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -56,11 +52,7 @@ public class MFAChallengeStep extends MFAStep {
                 new MfaSkipUserSilentAuthFilter(context),
                 new ClientNullFilter(client),
                 new NoFactorFilter(client.getFactors(), factorManager),
-                new MfaChallengeCompleteFilter(context),
-                new AdaptiveMfaFilter(context, ruleEngine),
-                new StepUpAuthenticationFilter(context, ruleEngine),
-                new RememberDeviceFilter(context),
-                new MfaSkipUserStronglyAuthFilter(context)
+                new MfaChallengeFilter(context, ruleEngine)
         );
         // We want to force strong auth if we skip challenge
         mfaFilterChain.doFilter(this, flow, routingContext, true);
