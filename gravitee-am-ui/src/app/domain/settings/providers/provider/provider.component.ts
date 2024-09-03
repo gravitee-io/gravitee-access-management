@@ -35,12 +35,14 @@ export class ProviderComponent implements OnInit {
       this.navLinks = [
         { href: 'mappers', label: 'User mappers' },
         { href: 'roles', label: 'Role mappers' },
+        { href: 'groups', label: 'Group mappers' },
       ];
     } else {
       this.navLinks = [
         { href: 'settings', label: 'Settings' },
         { href: 'mappers', label: 'User mappers' },
         { href: 'roles', label: 'Role mappers' },
+        { href: 'groups', label: 'Group mappers' },
       ];
     }
   }

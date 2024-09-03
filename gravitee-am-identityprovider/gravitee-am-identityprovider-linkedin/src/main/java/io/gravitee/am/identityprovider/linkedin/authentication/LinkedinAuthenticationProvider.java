@@ -20,9 +20,11 @@ import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.IdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.User;
@@ -85,6 +87,9 @@ public class LinkedinAuthenticationProvider extends AbstractSocialAuthentication
     @Autowired
     private DefaultIdentityProviderRoleMapper roleMapper;
 
+    @Autowired
+    private DefaultIdentityProviderGroupMapper groupMapper;
+
     @Override
     protected LinkedinIdentityProviderConfiguration getConfiguration() {
         return this.configuration;
@@ -98,6 +103,11 @@ public class LinkedinAuthenticationProvider extends AbstractSocialAuthentication
     @Override
     protected IdentityProviderRoleMapper getIdentityProviderRoleMapper() {
         return this.roleMapper;
+    }
+
+    @Override
+    protected IdentityProviderGroupMapper getIdentityProviderGroupMapper() {
+        return this.groupMapper;
     }
 
     @Override
@@ -204,7 +214,7 @@ public class LinkedinAuthenticationProvider extends AbstractSocialAuthentication
 
         user.setAdditionalInformation(applyUserMapping(authContext, profileInfo.getMap()));
         user.setRoles(applyRoleMapping(authContext, profileInfo.getMap()));
-
+        user.setGroups(applyGroupMapping(authContext, profileInfo.getMap()));
         return user;
     }
 

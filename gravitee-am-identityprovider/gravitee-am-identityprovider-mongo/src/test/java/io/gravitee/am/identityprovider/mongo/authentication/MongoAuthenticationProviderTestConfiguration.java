@@ -18,8 +18,10 @@ package io.gravitee.am.identityprovider.mongo.authentication;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.api.IdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderConfiguration;
@@ -87,6 +89,11 @@ public class MongoAuthenticationProviderTestConfiguration implements Initializin
     @Bean
     public IdentityProviderRoleMapper roleMapper() {
         return new DefaultIdentityProviderRoleMapper();
+    }
+
+    @Bean
+    public IdentityProviderGroupMapper groupMapper() {
+        return new DefaultIdentityProviderGroupMapper();
     }
 
     @Bean

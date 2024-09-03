@@ -308,6 +308,9 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         if (actions.updateDynamicRole()) {
             updateFields.add(Updates.set("dynamicRoles", item.getDynamicRoles()));
         }
+        if (actions.updateDynamicGroup()) {
+            updateFields.add(Updates.set("dynamicGroups", item.getDynamicGroups()));
+        }
         if (actions.updateAddresses()) {
             updateFields.add(Updates.set("addresses", toMongoAddresses(item.getAddresses())));
         }
@@ -376,6 +379,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         user.setLastLogoutAt(userMongo.getLastLogoutAt());
         user.setRoles(userMongo.getRoles());
         user.setDynamicRoles(userMongo.getDynamicRoles());
+        user.setDynamicGroups(userMongo.getDynamicGroups());
         user.setEmails(toModelAttributes(userMongo.getEmails()));
         user.setPhoneNumbers(toModelAttributes(userMongo.getPhoneNumbers()));
         user.setIms(toModelAttributes(userMongo.getIms()));
@@ -437,6 +441,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         userMongo.setLastUsernameReset(user.getLastUsernameReset());
         userMongo.setRoles(user.getRoles());
         userMongo.setDynamicRoles(user.getDynamicRoles());
+        userMongo.setDynamicGroups(user.getDynamicGroups());
         userMongo.setEmails(toMongoAttributes(user.getEmails()));
         userMongo.setPhoneNumbers(toMongoAttributes(user.getPhoneNumbers()));
         userMongo.setIms(toMongoAttributes(user.getIms()));

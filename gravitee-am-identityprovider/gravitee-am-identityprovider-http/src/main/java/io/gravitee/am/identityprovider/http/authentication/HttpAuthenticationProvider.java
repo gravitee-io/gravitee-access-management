@@ -22,6 +22,7 @@ import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.IdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
@@ -89,6 +90,9 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
 
     @Autowired
     private IdentityProviderRoleMapper roleMapper;
+
+    @Autowired
+    private IdentityProviderGroupMapper groupMapper;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -289,9 +293,6 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
             throw new InternalAuthenticationServiceException("The 'sub' claim for the user is required");
         }
 
-        // apply role mapping
-        List<String> roles = applyRoleMapping(authContext, attributes);
-
         // create the user
         String username = mappedAttributes.getOrDefault(StandardClaims.PREFERRED_USERNAME, mappedAttributes.get(StandardClaims.SUB)).toString();
         DefaultUser user = new DefaultUser(username);
@@ -304,8 +305,12 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
             user.setUsername(additionalInformation.get(StandardClaims.PREFERRED_USERNAME).toString());
         }
         user.setAdditionalInformation(additionalInformation);
-        // set user roles
+
+        // set user roles and groups
+        List<String> roles = applyRoleMapping(authContext, attributes);
+        List<String> groups = applyGroupMapping(authContext, attributes);
         user.setRoles(roles);
+        user.setGroups(groups);
         return user;
     }
 
@@ -323,12 +328,23 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
         return this.roleMapper.apply(authContext, attributes);
     }
 
+    private List<String> applyGroupMapping(AuthenticationContext authContext, Map<String, Object> attributes) {
+        if (!groupsMappingEnabled()) {
+            return Collections.emptyList();
+        }
+        return this.groupMapper.apply(authContext, attributes);
+    }
+
     private boolean mappingEnabled() {
         return this.mapper != null;
     }
 
     private boolean roleMappingEnabled() {
         return this.roleMapper != null;
+    }
+
+    private boolean groupsMappingEnabled() {
+        return this.groupMapper != null;
     }
 
     private static Map<String, String> format(String query) {

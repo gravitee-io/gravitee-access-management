@@ -21,6 +21,8 @@ import io.gravitee.am.repository.management.api.GroupRepository;
 import io.reactivex.rxjava3.core.Flowable;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.List;
+
 public class DefaultGroupManager implements GroupManager {
 
     @Autowired
@@ -29,5 +31,10 @@ public class DefaultGroupManager implements GroupManager {
     @Override
     public Flowable<Group> findByMember(String userId) {
         return repository.findByMember(userId);
+    }
+
+    @Override
+    public Flowable<Group> findByIds(List<String> ids) {
+        return repository.findByIdIn(ids);
     }
 }

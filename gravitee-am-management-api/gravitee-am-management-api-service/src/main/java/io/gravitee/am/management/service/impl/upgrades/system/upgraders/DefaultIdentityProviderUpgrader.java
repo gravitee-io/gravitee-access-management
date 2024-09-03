@@ -65,6 +65,7 @@ public class DefaultIdentityProviderUpgrader implements SystemUpgrader {
         updateIdentityProvider.setMappers(identityProvider.getMappers());
         updateIdentityProvider.setName(identityProvider.getName());
         updateIdentityProvider.setRoleMapper(identityProvider.getRoleMapper());
+        updateIdentityProvider.setGroupMapper(identityProvider.getGroupMapper());
         Map<String, Object> configMap = defaultIdentityProviderService.createProviderConfiguration(identityProvider.getReferenceId(), null);
         try {
             Map<String, Object> existingConfigMap = mapper.readValue(identityProvider.getConfiguration(), Map.class);

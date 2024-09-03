@@ -18,9 +18,11 @@ package io.gravitee.am.plugins.idp.spring;
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
 import io.gravitee.am.plugins.handlers.api.core.impl.ConfigurationFactoryImpl;
+import io.gravitee.am.plugins.idp.core.IdentityProviderGroupMapperFactory;
 import io.gravitee.am.plugins.idp.core.IdentityProviderMapperFactory;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.plugins.idp.core.IdentityProviderRoleMapperFactory;
+import io.gravitee.am.plugins.idp.core.impl.IdentityProviderGroupMapperFactoryImpl;
 import io.gravitee.am.plugins.idp.core.impl.IdentityProviderMapperFactoryImpl;
 import io.gravitee.am.plugins.idp.core.impl.IdentityProviderPluginManagerImpl;
 import io.gravitee.am.plugins.idp.core.impl.IdentityProviderRoleMapperFactoryImpl;
@@ -45,6 +47,7 @@ public class IdentityProviderSpringConfiguration {
             ConfigurationFactory<IdentityProviderConfiguration> identityProviderConfigurationFactory,
             IdentityProviderMapperFactory identityProviderMapperFactory,
             IdentityProviderRoleMapperFactory identityProviderRoleMapperFactory,
+            IdentityProviderGroupMapperFactory identityProviderGroupMapperFactory,
             @Qualifier("graviteeProperties") Properties graviteeProperties,
             Vertx vertx
     ) {
@@ -53,6 +56,7 @@ public class IdentityProviderSpringConfiguration {
                 identityProviderConfigurationFactory,
                 identityProviderMapperFactory,
                 identityProviderRoleMapperFactory,
+                identityProviderGroupMapperFactory,
                 graviteeProperties,
                 vertx
         );
@@ -71,5 +75,10 @@ public class IdentityProviderSpringConfiguration {
     @Bean
     public IdentityProviderRoleMapperFactory identityProviderRoleMapperFactory() {
         return new IdentityProviderRoleMapperFactoryImpl();
+    }
+
+    @Bean
+    public IdentityProviderGroupMapperFactory identityProviderGroupMapperFactory() {
+        return new IdentityProviderGroupMapperFactoryImpl();
     }
 }

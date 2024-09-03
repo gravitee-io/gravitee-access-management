@@ -19,6 +19,7 @@ import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.common.oidc.Scope;
+import io.gravitee.am.identityprovider.api.IdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectIdentityProviderConfiguration;
@@ -52,6 +53,9 @@ public class GoogleAuthenticationProvider extends AbstractOpenIDConnectAuthentic
     private IdentityProviderRoleMapper roleMapper;
 
     @Autowired
+    private IdentityProviderGroupMapper groupMapper;
+
+    @Autowired
     private GoogleIdentityProviderConfiguration configuration;
 
     @Override
@@ -76,6 +80,11 @@ public class GoogleAuthenticationProvider extends AbstractOpenIDConnectAuthentic
     @Override
     protected IdentityProviderRoleMapper getIdentityProviderRoleMapper() {
         return this.roleMapper;
+    }
+
+    @Override
+    protected IdentityProviderGroupMapper getIdentityProviderGroupMapper() {
+        return this.groupMapper;
     }
 
     private void forceOpenIdScope() {

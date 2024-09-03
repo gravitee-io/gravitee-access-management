@@ -38,4 +38,8 @@ public abstract class IdentityProvider<
     public Class<? extends IdentityProviderRoleMapper> roleMapper() {
         return DefaultIdentityProviderRoleMapper.class;
     }
+
+    public Class<? extends IdentityProviderGroupMapper> groupMapper() {
+        return DefaultIdentityProviderGroupMapper.class;
+    }
 }

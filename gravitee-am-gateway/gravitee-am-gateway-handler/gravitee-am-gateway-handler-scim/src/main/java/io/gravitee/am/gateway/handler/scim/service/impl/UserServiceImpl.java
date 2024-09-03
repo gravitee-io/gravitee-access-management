@@ -22,7 +22,6 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
-import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
@@ -517,6 +516,7 @@ public class UserServiceImpl implements UserService {
         userToUpdate.setUpdatedAt(new Date());
         userToUpdate.setFactors(existingUser.getFactors());
         userToUpdate.setDynamicRoles(existingUser.getDynamicRoles());
+        userToUpdate.setDynamicGroups(existingUser.getDynamicGroups());
         if (Objects.nonNull(existingUser.getAdditionalInformation())) {
             // retrieve additionalInformation from the existing user.
             // as SCIM doesn't define additionalInformation attributes, we have to

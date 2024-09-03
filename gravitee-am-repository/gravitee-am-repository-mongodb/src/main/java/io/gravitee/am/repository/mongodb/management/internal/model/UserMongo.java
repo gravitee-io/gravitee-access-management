@@ -83,6 +83,7 @@ public class UserMongo extends Auditable {
     private List<EnrolledFactor> factors;
     private List<String> roles;
     private List<String> dynamicRoles;
+    private List<String> dynamicGroups;
     private List<UserIdentity> identities;
     private String lastIdentityUsed;
     private Boolean forceResetPassword;

@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.oauth2.authentication;
 
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderConfiguration;
@@ -66,6 +67,11 @@ public class OAuth2GenericAuthenticationProviderTestConfiguration {
     @Bean
     public DefaultIdentityProviderRoleMapper roleMapper() {
         return new DefaultIdentityProviderRoleMapper();
+    }
+
+    @Bean
+    public DefaultIdentityProviderGroupMapper groupMapper() {
+        return new DefaultIdentityProviderGroupMapper();
     }
 
     @Bean

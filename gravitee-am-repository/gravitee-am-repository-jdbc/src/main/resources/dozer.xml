@@ -90,6 +90,12 @@
             <!-- hint required otherwise generic Collection interface can't be mapped -->
             <a-hint>java.util.Map</a-hint>
         </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.MapToStringArrayConverter">
+            <a>groupMapper</a>
+            <b>groupMapper</b>
+            <!-- hint required otherwise generic Collection interface can't be mapped -->
+            <a-hint>java.util.Map</a-hint>
+        </field>
         <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.ListToStringConverter">
             <a>domainWhitelist</a>
             <b>domainWhitelist</b>

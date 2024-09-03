@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -153,6 +154,17 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
             identityProvider.setRoleMapper(roleMapper);
         }
 
+        Map<String, String[]> groupMappers = ofNullable(identityProviderMongo.getGroupMapper())
+                .orElseGet(Document::new)
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
+                    List<?> lstValue = (List<?>) entry.getValue();
+                    return lstValue.toArray(new String[0]);
+                }));
+
+        identityProvider.setGroupMapper(groupMappers);
+
         identityProvider.setReferenceType(identityProviderMongo.getReferenceType());
         identityProvider.setReferenceId(identityProviderMongo.getReferenceId());
         identityProvider.setExternal(identityProviderMongo.isExternal());
@@ -181,8 +193,10 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
             identityProviderMongo.setUpdatedAt(identityProvider.getUpdatedAt());
             var mappers = new Document(ofNullable(identityProvider.getMappers()).filter(Objects::nonNull).orElse(Map.of()));
             var roleMapper = new Document(convert(ofNullable(identityProvider.getRoleMapper()).filter(Objects::nonNull).orElse(Map.of())));
+            var groupMapper = new Document(convert(ofNullable(identityProvider.getGroupMapper()).filter(Objects::nonNull).orElse(Map.of())));
             identityProviderMongo.setMappers(mappers);
             identityProviderMongo.setRoleMapper(roleMapper);
+            identityProviderMongo.setGroupMapper(groupMapper);
             identityProviderMongo.setDomainWhitelist(
                     ofNullable(identityProvider.getDomainWhitelist()).orElse(List.of()).stream()
                             .map(BsonString::new)
