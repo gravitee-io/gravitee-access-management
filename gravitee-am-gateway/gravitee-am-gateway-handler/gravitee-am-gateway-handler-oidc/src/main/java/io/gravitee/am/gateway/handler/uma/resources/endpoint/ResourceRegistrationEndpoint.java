@@ -72,7 +72,7 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
         Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         subjectManager.findUserIdBySub(accessToken)
                 .switchIfEmpty(Single.error(() -> new UserNotFoundException(accessToken.getSub())))
-                .flatMap(userId -> this.resourceService.listByDomainAndClientAndUser(domain.getId(), client.getId(), userId.id()/*todo degraded mode: should we use full id here as well?*/)
+                .flatMap(userId -> this.resourceService.listByDomainAndClientAndUser(domain.getId(), client.getId(), userId.id())
                         .map(Resource::getId)
                         .collect(JsonArray::new, JsonArray::add))
                 .subscribe(

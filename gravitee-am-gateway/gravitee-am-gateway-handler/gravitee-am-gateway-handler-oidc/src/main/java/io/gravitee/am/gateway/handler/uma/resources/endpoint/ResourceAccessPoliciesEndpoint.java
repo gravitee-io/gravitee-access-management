@@ -73,7 +73,7 @@ public class ResourceAccessPoliciesEndpoint {
         final String resource = context.request().getParam(RESOURCE_ID);
 
         subjectManager.findUserIdBySub(accessToken)
-                .flatMapSingle(userid -> resourceService.findAccessPolicies(domain.getId(), client.getId(), userid.id() /*todo degraded mode: should we use full id here as well?*/, resource)
+                .flatMapSingle(userid -> resourceService.findAccessPolicies(domain.getId(), client.getId(), userid.id(), resource)
                         .map(AccessPolicy::getId)
                         .toList())
                 .subscribe(
@@ -98,7 +98,7 @@ public class ResourceAccessPoliciesEndpoint {
 
         // store the access policy
         subjectManager.findUserIdBySub(accessToken)
-                .flatMapSingle(userid -> resourceService.createAccessPolicy(accessPolicy, domain.getId(), client.getId(), userid.id() /*todo degraded mode: should we use full id here as well?*/, resource))
+                .flatMapSingle(userid -> resourceService.createAccessPolicy(accessPolicy, domain.getId(), client.getId(), userid.id(), resource))
                 .subscribe(
                         p ->
                                 context.response()
@@ -119,7 +119,7 @@ public class ResourceAccessPoliciesEndpoint {
         final String accessPolicyId = context.request().getParam(POLICY_ID);
 
         subjectManager.findUserIdBySub(accessToken)
-                .flatMapSingle(userid -> resourceService.findAccessPolicy(domain.getId(), client.getId(), userid.id() /*todo degraded mode: should we use full id here as well?*/, resource, accessPolicyId)
+                .flatMapSingle(userid -> resourceService.findAccessPolicy(domain.getId(), client.getId(), userid.id(), resource, accessPolicyId)
                         .switchIfEmpty(Single.error(new AccessPolicyNotFoundException(accessPolicyId))))
                 .subscribe(
                         response -> context.response()
@@ -142,7 +142,7 @@ public class ResourceAccessPoliciesEndpoint {
 
         // update the access policy
         subjectManager.findUserIdBySub(accessToken)
-                .flatMapSingle(userid -> resourceService.updateAccessPolicy(accessPolicy, domain.getId(), client.getId(), userid.id()/*todo degraded mode: should we use full id here as well?*/, resource, accessPolicyId))
+                .flatMapSingle(userid -> resourceService.updateAccessPolicy(accessPolicy, domain.getId(), client.getId(), userid.id(), resource, accessPolicyId))
                 .subscribe(
                         response -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -160,7 +160,7 @@ public class ResourceAccessPoliciesEndpoint {
         final String accessPolicy = context.request().getParam(POLICY_ID);
 
         subjectManager.findUserIdBySub(accessToken).flatMapCompletable(userId ->
-                        resourceService.deleteAccessPolicy(domain.getId(), client.getId(), userId.id()/*todo degraded mode: should we use full id here as well?*/, resource, accessPolicy))
+                        resourceService.deleteAccessPolicy(domain.getId(), client.getId(), userId.id(), resource, accessPolicy))
                 .subscribe(
                         () -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
