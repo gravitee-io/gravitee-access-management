@@ -89,6 +89,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.junit.Assert.assertEquals;
@@ -434,7 +435,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldCreate_noCertificate() {
-        NewApplication newClient = prepareCreateApp();
+        NewApplication newClient = prepareCreateServiceApp();
         when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.empty());
         doAnswer(invocation -> {
             Application mock = invocation.getArgument(0);
@@ -460,6 +461,7 @@ public class ApplicationServiceTest {
     }
 
     @Test
+<<<<<<< HEAD
     public void shouldCreate_WithClientSecretHash() {
         NewApplication newClient = prepareCreateApp();
         when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.empty());
@@ -474,6 +476,14 @@ public class ApplicationServiceTest {
 
         DefaultUser user = new DefaultUser("username");
         user.setAdditionalInformation(Collections.singletonMap(Claims.ORGANIZATION, ORGANIZATION_ID));
+=======
+    public void shouldCreate_AppWithRedirectUri() {
+        NewApplication newClient = prepareCreateApp(true);
+        when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.empty());
+
+        DefaultUser user = new DefaultUser("username");
+        user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
+>>>>>>> 3191c9c8a5 (fix: redirect_uri required for application type different from SERVICE)
 
         TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -481,6 +491,7 @@ public class ApplicationServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
+<<<<<<< HEAD
         verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, CLIENT_ID);
         verify(applicationRepository, times(1)).create(argThat(app ->
             app.getSecretSettings() != null &&
@@ -490,12 +501,36 @@ public class ApplicationServiceTest {
                     app.getSecretSettings().get(0).getProperties().containsKey("rounds")
         ));
 
+=======
+        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, null);
+        verify(applicationRepository, times(1)).create(any(Application.class));
+>>>>>>> 3191c9c8a5 (fix: redirect_uri required for application type different from SERVICE)
         verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
     }
 
     @Test
+<<<<<<< HEAD
+=======
+    public void shouldCreate_AppWithoutRedirectUri() {
+        NewApplication newClient = prepareCreateApp(false);
+
+        DefaultUser user = new DefaultUser("username");
+        user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
+
+        TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidRedirectUriException.class);
+
+        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, null);
+        verify(applicationRepository, never()).create(any(Application.class));
+        verify(membershipService, never()).addOrUpdate(eq(ORGANIZATION_ID), any());
+    }
+
+    @Test
+>>>>>>> 3191c9c8a5 (fix: redirect_uri required for application type different from SERVICE)
     public void shouldCreate_withSystemCertificate() {
-        NewApplication newClient = prepareCreateApp();
+        NewApplication newClient = prepareCreateServiceApp();
 
         final LocalDateTime now = LocalDateTime.now();
 
@@ -545,7 +580,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldCreate_withLegacyCertificate() {
-        NewApplication newClient = prepareCreateApp();
+        NewApplication newClient = prepareCreateServiceApp();
 
         final LocalDateTime now = LocalDateTime.now();
 
@@ -596,7 +631,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldCreate_withFirstCertificate() {
-        NewApplication newClient = prepareCreateApp();
+        NewApplication newClient = prepareCreateServiceApp();
 
         final LocalDateTime now = LocalDateTime.now();
 
@@ -638,7 +673,7 @@ public class ApplicationServiceTest {
         verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
     }
 
-    private NewApplication prepareCreateApp() {
+    private NewApplication prepareCreateServiceApp() {
         NewApplication newClient = Mockito.mock(NewApplication.class);
         Application createClient = Mockito.mock(Application.class);
         when(newClient.getName()).thenReturn("my-client");
@@ -647,6 +682,31 @@ public class ApplicationServiceTest {
         when(domainService.findById(anyString())).thenReturn(Maybe.just(new Domain()));
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(membershipService.addOrUpdate(eq(ORGANIZATION_ID), any())).thenReturn(Single.just(new Membership()));
+        when(roleService.findSystemRole(SystemRole.APPLICATION_PRIMARY_OWNER, ReferenceType.APPLICATION)).thenReturn(Maybe.just(new Role()));
+        return newClient;
+    }
+
+    private NewApplication prepareCreateApp(boolean withRedirectUri) {
+        NewApplication newClient = Mockito.mock(NewApplication.class);
+        Application createClient = Mockito.mock(Application.class);
+        when(newClient.getName()).thenReturn("my-client");
+        when(newClient.getType()).thenReturn(Stream.of(ApplicationType.values()).filter(type -> type != ApplicationType.SERVICE).toList().get(new Random().nextInt(0, ApplicationType.values().length - 1)));
+        if (withRedirectUri) {
+            when(newClient.getRedirectUris()).thenReturn(List.of("https://redirect"));
+        } else {
+            when(newClient.getRedirectUris()).thenReturn(List.of());
+        }
+        when(applicationRepository.findByDomainAndClientId(DOMAIN, null)).thenReturn(Maybe.empty());
+        when(applicationRepository.create(any(Application.class))).thenReturn(Single.just(createClient));
+        when(domainService.findById(anyString())).thenReturn(Maybe.just(new Domain()));
+        when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        doAnswer(invocation -> {
+            Application mock = invocation.getArgument(0);
+            mock.getSettings().getOauth().setGrantTypes(Collections.singletonList(GrantType.CLIENT_CREDENTIALS));
+            return mock;
+        }).when(applicationTemplateManager).apply(any());
         when(membershipService.addOrUpdate(eq(ORGANIZATION_ID), any())).thenReturn(Single.just(new Membership()));
         when(roleService.findSystemRole(SystemRole.APPLICATION_PRIMARY_OWNER, ReferenceType.APPLICATION)).thenReturn(Maybe.just(new Role()));
         return newClient;
@@ -1009,6 +1069,7 @@ public class ApplicationServiceTest {
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
         oAuthSettings.setGrantTypes(Arrays.asList("client_credentials"));
         oAuthSettings.setResponseTypes(Arrays.asList());
+        oAuthSettings.setRedirectUris(List.of("https://redirect"));
         settings.setOauth(oAuthSettings);
         toPatch.setSettings(settings);
 
@@ -1919,6 +1980,7 @@ public class ApplicationServiceTest {
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
         oAuthSettings.setPostLogoutRedirectUris(Arrays.asList(uri));
         oAuthSettings.setGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        oAuthSettings.setRedirectUris(List.of("https://redirect"));
         settings.setOauth(oAuthSettings);
         client.setSettings(settings);
 

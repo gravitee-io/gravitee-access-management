@@ -359,7 +359,11 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         return applicationRepository.findById(application.getId())
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(application.getId())))
+<<<<<<< HEAD
                 .flatMap(application1 -> update0(application1, application, null))
+=======
+                .flatMap(application1 -> innerUpdate(application1.getDomain(), application1, application, null))
+>>>>>>> 3191c9c8a5 (fix: redirect_uri required for application type different from SERVICE)
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
@@ -379,7 +383,11 @@ public class ApplicationServiceImpl implements ApplicationService {
                     Application toPatch = new Application(existingApplication);
                     toPatch.setType(type);
                     applicationTemplateManager.changeType(toPatch);
+<<<<<<< HEAD
                     return update0(existingApplication, toPatch, principal);
+=======
+                    return innerUpdate(domain, existingApplication, toPatch, principal, true);
+>>>>>>> 3191c9c8a5 (fix: redirect_uri required for application type different from SERVICE)
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
@@ -411,7 +419,11 @@ public class ApplicationServiceImpl implements ApplicationService {
                     if (Boolean.FALSE.equals(accountSettingsValidator.validate(accountSettings))) {
                         return Single.error(new InvalidParameterException("Unexpected forgot password field"));
                     }
+<<<<<<< HEAD
                     return update0(existingApplication, toPatch, principal)
+=======
+                    return innerUpdate(domain, existingApplication, toPatch, principal)
+>>>>>>> 3191c9c8a5 (fix: redirect_uri required for application type different from SERVICE)
                             .flatMap(app -> {
                                 if (toPatch.isEnabled() != existingApplication.isEnabled() && !toPatch.isEnabled()) {
                                     return tokenService.deleteByApplication(app).onErrorComplete().toSingleDefault(app);
@@ -672,12 +684,21 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CREATED).throwable(throwable)));
     }
 
+<<<<<<< HEAD
     private Single<Application> update0(Application currentApplication, Application applicationToUpdate, User principal) {
+=======
+    //TODO Boualem : domain never used
+    private Single<Application> innerUpdate(String domain, Application currentApplication, Application applicationToUpdate, User principal) {
+        return innerUpdate(domain, currentApplication, applicationToUpdate, principal, false);
+    }
+
+    private Single<Application> innerUpdate(String domain, Application currentApplication, Application applicationToUpdate, User principal, boolean fromUpdateType) {
+>>>>>>> 3191c9c8a5 (fix: redirect_uri required for application type different from SERVICE)
         // updated date
         applicationToUpdate.setUpdatedAt(new Date());
 
         // validate application metadata
-        return validateApplicationMetadata(applicationToUpdate)
+        return validateApplicationMetadata(applicationToUpdate, fromUpdateType)
                 // validate identity providers
                 .flatMap(this::validateApplicationIdentityProviders)
                 .flatMap(appToValidate -> validateApplicationAuthMethodUpdate(appToValidate, currentApplication))
@@ -798,9 +819,24 @@ public class ApplicationServiceImpl implements ApplicationService {
      * </pre>
      *
      * @param application application to check
-     * @return a client only if every conditions are respected.
+     * @return a client only if every condition are respected.
      */
     private Single<Application> validateApplicationMetadata(Application application) {
+        return validateApplicationMetadata(application, false);
+    }
+
+    /**
+     * <pre>
+     * This function will return an error if :
+     * We try to enable Dynamic Client Registration on client side while it is not enabled on domain.
+     * The redirect_uris do not respect domain conditions (localhost, scheme and wildcard)
+     * </pre>
+     *
+     * @param application application to check
+     * @param updateTypeOnly does the method call comes from the application type update ? (if true, redirect_uri validation is skipped)
+     * @return a client only if every condition are respected.
+     */
+    private Single<Application> validateApplicationMetadata(Application application, boolean updateTypeOnly) {
         // do nothing if application has no settings
         if (application.getSettings() == null) {
             return Single.just(application);
@@ -809,7 +845,7 @@ public class ApplicationServiceImpl implements ApplicationService {
             return Single.just(application);
         }
         return GrantTypeUtils.validateGrantTypes(application)
-                .flatMap(this::validateRedirectUris)
+                .flatMap(app -> this.validateRedirectUris(app, updateTypeOnly))
                 .flatMap(this::validateScopes)
                 .flatMap(this::validateTokenEndpointAuthMethod)
                 .flatMap(this::validateTlsClientAuth)
@@ -817,7 +853,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .flatMap(this::validateRequestUris);
     }
 
-    private Single<Application> validateRedirectUris(Application application) {
+    private Single<Application> validateRedirectUris(Application application, boolean updateTypeOnly) {
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
 
         return domainService.findById(application.getDomain())
@@ -835,7 +871,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     }
 
                     //check redirect_uri content
-                    if (oAuthSettings.getRedirectUris() != null) {
+                    if (!CollectionUtils.isEmpty(oAuthSettings.getRedirectUris())) {
                         for (String redirectUri : oAuthSettings.getRedirectUris()) {
                             try {
                                 URI uri = redirectUri.contains("*") ? new URI(redirectUri) : UriBuilder.fromURIString(redirectUri).build();
@@ -867,6 +903,8 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 return Single.error(new InvalidRedirectUriException("redirect_uri : " + redirectUri + IS_MALFORMED));
                             }
                         }
+                    } else if (application.getType() != ApplicationType.SERVICE && !updateTypeOnly) {
+                        return Single.error(new InvalidRedirectUriException("At least one redirect_uri is required"));
                     }
                     return Single.just(application);
                 });
