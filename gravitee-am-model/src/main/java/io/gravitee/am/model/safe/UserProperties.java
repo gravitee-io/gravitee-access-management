@@ -24,6 +24,8 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.HashMap;
 import java.util.List;
@@ -39,6 +41,8 @@ import static java.util.stream.Collectors.toList;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public class UserProperties {
 
     private String id;
@@ -52,6 +56,7 @@ public class UserProperties {
     private String source;
     private String preferredLanguage;
     private Set<String> roles;
+    private Set<RoleProperties> rolesPermissions;
     private List<String> groups;
     private Map<String, Object> claims;
     private Map<String, Object> additionalInformation;
@@ -115,6 +120,10 @@ public class UserProperties {
                     removeSensitiveClaims(filteredIdentity.getAdditionalInformation());
                     return filteredIdentity;
                 }).collect(toList())).orElse(List.of());
+
+        this.rolesPermissions = ofNullable(user.getRolesPermissions())
+                .map(roles -> roles.stream().map(RoleProperties::from).collect(Collectors.toSet()))
+                .orElse(Set.of());
     }
 
     private void removeSensitiveClaims(Map claimsToClean) {
@@ -123,183 +132,7 @@ public class UserProperties {
         claimsToClean.remove(ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY);
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getExternalId() {
-        return externalId;
-    }
-
-    public void setExternalId(String externalId) {
-        this.externalId = externalId;
-    }
-
-    public String getDomain() {
-        return domain;
-    }
-
-    public void setDomain(String domain) {
-        this.domain = domain;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
-    public Set<String> getRoles() {
-        return roles;
-    }
-
-    public void setRoles(Set<String> roles) {
-        this.roles = roles;
-    }
-
-    public List<String> getGroups() {
-        return groups;
-    }
-
-    public void setGroups(List<String> groups) {
-        this.groups = groups;
-    }
-
-    public Map<String, Object> getClaims() {
-        return claims;
-    }
-
-    public void setClaims(Map<String, Object> claims) {
-        this.claims = claims;
-    }
-
-    public String getSource() {
-        return source;
-    }
-
-    public void setSource(String source) {
-        this.source = source;
-    }
-
-    public String getPreferredLanguage() {
-        return preferredLanguage;
-    }
-
-    public void setPreferredLanguage(String preferredLanguage) {
-        this.preferredLanguage = preferredLanguage;
-    }
-
-    public Map<String, Object> getAdditionalInformation() {
-        return additionalInformation;
-    }
-
-    public void setAdditionalInformation(Map<String, Object> additionalInformation) {
-        this.additionalInformation = additionalInformation;
-    }
-
-    public List<Attribute> getEmails() {
-        return emails;
-    }
-
-    public void setEmails(List<Attribute> emails) {
-        this.emails = emails;
-    }
-
-    public List<Attribute> getPhoneNumbers() {
-        return phoneNumbers;
-    }
-
-    public void setPhoneNumbers(List<Attribute> phoneNumbers) {
-        this.phoneNumbers = phoneNumbers;
-    }
-
-    public List<Attribute> getIms() {
-        return ims;
-    }
-
-    public void setIms(List<Attribute> ims) {
-        this.ims = ims;
-    }
-
-    public List<Attribute> getPhotos() {
-        return photos;
-    }
-
-    public void setPhotos(List<Attribute> photos) {
-        this.photos = photos;
-    }
-
-    public List<String> getEntitlements() {
-        return entitlements;
-    }
-
-    public void setEntitlements(List<String> entitlements) {
-        this.entitlements = entitlements;
-    }
-
-    public List<Address> getAddresses() {
-        return addresses;
-    }
-
-    public void setAddresses(List<Address> addresses) {
-        this.addresses = addresses;
-    }
-
-    public List<UserIdentity> getIdentities() {
-        return identities;
-    }
-
-    public void setIdentities(List<UserIdentity> identities) {
-        this.identities = identities;
-    }
-
-    public String getLastIdentityUsed() {
-        return lastIdentityUsed;
-    }
-
-    public void setLastIdentityUsed(String lastIdentityUsed) {
-        this.lastIdentityUsed = lastIdentityUsed;
-    }
-
-
+    // do not remove this "unused" method, it has been developed to easy EL expressions
     public Map<String, Object> getLastIdentityInformation() {
         if (this.lastIdentityUsed != null && this.identities != null) {
             return this.identities.stream()
@@ -311,9 +144,18 @@ public class UserProperties {
         return getAdditionalInformation();
     }
 
+    // do not remove this "unused" method, it has been developed to easy EL expressions
     public Map<String, Object> getIdentitiesAsMap() {
         if (this.identities != null) {
             return this.identities.stream().collect(Collectors.toMap(UserIdentity::getProviderId, Function.identity()));
+        }
+        return Map.of();
+    }
+
+    // do not remove this "unused" method, it has been developed to easy EL expressions
+    public Map<String, List<String>> getScopesByRole() {
+        if (this.rolesPermissions != null) {
+            return this.rolesPermissions.stream().collect(Collectors.toMap(RoleProperties::getName, RoleProperties::getOauthScopes));
         }
         return Map.of();
     }
