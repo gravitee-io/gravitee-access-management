@@ -10328,7 +10328,7 @@
 													"    });",
 													"    ",
 													"    let jwt = jwt_decode(params['access_token']);",
-													"    pm.environment.set('consentUserId', jwt.gis);",
+													"    pm.environment.set('consentUserId', jwt.sub);",
 													"    pm.environment.set('consentAccessToken', params['access_token']);",
 													"});",
 													"",

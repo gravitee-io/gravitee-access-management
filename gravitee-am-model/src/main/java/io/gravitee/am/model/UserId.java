@@ -17,22 +17,6 @@ package io.gravitee.am.model;
 
 public record UserId(String id, String externalId, String source) {
 
-    public static UserId parse(String rawUserId) {
-        var firstSeparatorLocation = rawUserId.indexOf(':');
-        if (firstSeparatorLocation == -1) {
-            // "userid"
-            return new UserId(rawUserId, null, null);
-        } else if (firstSeparatorLocation != rawUserId.length() - 1) {
-            // "source:userid"
-            var source = rawUserId.substring(0, firstSeparatorLocation);
-            var externalId = rawUserId.substring(firstSeparatorLocation + 1);
-            return new UserId(null, externalId, source);
-        } else {
-            // "source:" (missing external id)
-            throw new IllegalArgumentException("Malformed userId: " + rawUserId);
-        }
-    }
-
     public String lookupSubject() {
         return id != null ? id :  (source + ":" + externalId);
     }

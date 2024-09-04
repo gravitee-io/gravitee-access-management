@@ -49,7 +49,7 @@ public class ScopeApprovalAdapterImpl implements ScopeApprovalAdapter {
 
 
     public Single<List<ScopeApprovalEntity>> getUserConsents(String domain, String rawUserId, String clientId) {
-        var userId = UserId.parse(rawUserId);
+        var userId = UserId.internal(rawUserId);
         return domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                 // in management context, all users either have the internal ID, or aren't available anyway
