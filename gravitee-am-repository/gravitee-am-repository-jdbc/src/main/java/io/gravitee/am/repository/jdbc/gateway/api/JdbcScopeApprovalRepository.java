@@ -103,9 +103,7 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
     @Override
     public Single<ScopeApproval> upsert(ScopeApproval scopeApproval) {
         return monoToMaybe(getTemplate().select(JdbcScopeApproval.class)
-                // Criteria.empty() forces wrapping the userMatches() in parentheses, which is required
-                // as otherwise SQL's operator precedecce breaks the query.
-                .matching(Query.query(Criteria.empty().and(userIdMatches(scopeApproval.getUserId()))
+                .matching(Query.query(userIdMatches(scopeApproval.getUserId())
                         .and(client(scopeApproval.getClientId())
                                 .and(scope(scopeApproval.getScope()))
                                 .and(domain(scopeApproval.getDomain())))

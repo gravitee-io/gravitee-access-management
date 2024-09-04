@@ -92,7 +92,7 @@ public abstract class AbstractMongoRepository {
        return userIdMatches(user, DEFAULT_USER_FIELDS);
     }
 
-    protected Bson userIdMatches(UserId userId, UserIdFields userIdFields) {
+    protected final Bson userIdMatches(UserId userId, UserIdFields userIdFields) {
         var idField = requireNonNullElse(userIdFields.idField(), FIELD_USER_ID);
         var externalIdField = requireNonNullElse(userIdFields.externalIdField(), FIELD_USER_EXTERNAL_ID);
         var sourceField = requireNonNullElse(userIdFields.sourceField(), FIELD_USER_SOURCE);

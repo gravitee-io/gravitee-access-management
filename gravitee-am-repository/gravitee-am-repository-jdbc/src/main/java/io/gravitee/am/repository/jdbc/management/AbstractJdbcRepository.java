@@ -145,12 +145,14 @@ public abstract class AbstractJdbcRepository {
     }
 
 
-    protected Criteria userIdMatches(UserId userId, UserIdFields userIdFields) {
+    protected final Criteria userIdMatches(UserId userId, UserIdFields userIdFields) {
         var idColumn = userIdFields.idField();
         var extIdColumn = userIdFields.externalIdField();
         var sourceColumn = userIdFields.sourceField();
         if (userId.id() != null && userId.hasExternal()) {
-            return where(idColumn).is(userId.id()).or(where(extIdColumn).is(userId.externalId()).and(sourceColumn).is(userId.source()));
+            var actualQuery = where(idColumn).is(userId.id()).or(where(extIdColumn).is(userId.externalId()).and(sourceColumn).is(userId.source()));
+            // this somewhat silly workaround is required to force correct parentheses placement in the final query
+            return Criteria.empty().and(actualQuery);
         } else if (userId.hasExternal()) {
             return where(extIdColumn).is(userId.externalId()).and(sourceColumn).is(userId.source());
         } else if (userId.id() != null){
@@ -159,6 +161,7 @@ public abstract class AbstractJdbcRepository {
             throw new IllegalArgumentException("attempt to search by an empty UserId");
         }
     }
+
 
     protected Criteria userIdMatches(UserId user) {
         return userIdMatches(user, DEFAULT_USER_ID_FIELDS);
