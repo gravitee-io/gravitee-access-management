@@ -19,7 +19,7 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
-import io.gravitee.am.gateway.handler.users.service.DomainUserConsentFacade;
+import io.gravitee.am.gateway.handler.users.service.DomainUserConsentService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
@@ -35,7 +35,7 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 public class UserConsentEndpointHandler extends AbstractUserConsentEndpointHandler {
 
 
-    public UserConsentEndpointHandler(DomainUserConsentFacade userService, ClientSyncService clientSyncService, Domain domain, SubjectManager subjectManager) {
+    public UserConsentEndpointHandler(DomainUserConsentService userService, ClientSyncService clientSyncService, Domain domain, SubjectManager subjectManager) {
         super(userService, clientSyncService, domain, subjectManager);
     }
 

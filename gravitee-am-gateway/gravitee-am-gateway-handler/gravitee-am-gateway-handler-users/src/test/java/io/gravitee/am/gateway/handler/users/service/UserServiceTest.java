@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.users.service;
 
-import io.gravitee.am.gateway.handler.users.service.impl.DomainUserConsentFacadeImpl;
+import io.gravitee.am.gateway.handler.users.service.impl.DomainUserConsentServiceImpl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
@@ -44,7 +44,7 @@ import static org.mockito.Mockito.when;
 public class UserServiceTest {
 
     @InjectMocks
-    private DomainUserConsentFacade userService = new DomainUserConsentFacadeImpl();
+    private DomainUserConsentService userService = new DomainUserConsentServiceImpl();
 
     @Mock
     private Domain domain;

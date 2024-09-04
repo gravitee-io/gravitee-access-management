@@ -29,7 +29,7 @@ import java.util.Set;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface DomainUserConsentFacade {
+public interface DomainUserConsentService {
 
     Single<Set<ScopeApproval>> consents(UserId userId);
 

@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.users.service.impl;
 
-import io.gravitee.am.gateway.handler.users.service.DomainUserConsentFacade;
+import io.gravitee.am.gateway.handler.users.service.DomainUserConsentService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
@@ -33,7 +33,7 @@ import java.util.Set;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class DomainUserConsentFacadeImpl implements DomainUserConsentFacade {
+public class DomainUserConsentServiceImpl implements DomainUserConsentService {
 
     @Autowired
     private Domain domain;

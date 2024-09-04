@@ -23,7 +23,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthP
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
 import io.gravitee.am.gateway.handler.users.resources.consents.UserConsentEndpointHandler;
 import io.gravitee.am.gateway.handler.users.resources.consents.UserConsentsEndpointHandler;
-import io.gravitee.am.gateway.handler.users.service.DomainUserConsentFacade;
+import io.gravitee.am.gateway.handler.users.service.DomainUserConsentService;
 import io.gravitee.am.model.Domain;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.Router;
@@ -42,7 +42,7 @@ public class UsersProvider extends AbstractProtocolProvider {
     private Domain domain;
 
     @Autowired
-    private DomainUserConsentFacade userService;
+    private DomainUserConsentService domainUserConsentService;
 
     @Autowired
     private ClientSyncService clientSyncService;
@@ -63,8 +63,8 @@ public class UsersProvider extends AbstractProtocolProvider {
         // Create the Users router
         final Router usersRouter = Router.router(vertx);
 
-        final UserConsentsEndpointHandler userConsentsHandler = new UserConsentsEndpointHandler(userService, clientSyncService, domain, subjectManager);
-        final UserConsentEndpointHandler userConsentHandler = new UserConsentEndpointHandler(userService, clientSyncService, domain, subjectManager);
+        final UserConsentsEndpointHandler userConsentsHandler = new UserConsentsEndpointHandler(domainUserConsentService, clientSyncService, domain, subjectManager);
+        final UserConsentEndpointHandler userConsentHandler = new UserConsentEndpointHandler(domainUserConsentService, clientSyncService, domain, subjectManager);
         final OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider, "consent_admin", subjectManager);
         oAuth2AuthHandler.extractToken(true);
         oAuth2AuthHandler.selfResource(true, "userId", true);

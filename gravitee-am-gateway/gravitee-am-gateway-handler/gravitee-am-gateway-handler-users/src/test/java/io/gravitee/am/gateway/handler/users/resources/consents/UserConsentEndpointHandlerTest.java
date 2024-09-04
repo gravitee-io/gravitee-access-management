@@ -24,7 +24,7 @@ import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
-import io.gravitee.am.gateway.handler.users.service.DomainUserConsentFacade;
+import io.gravitee.am.gateway.handler.users.service.DomainUserConsentService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
@@ -64,7 +64,7 @@ import static org.mockito.Mockito.when;
 public class UserConsentEndpointHandlerTest extends RxWebTestBase {
 
 
-    private final DomainUserConsentFacade userService = mock();
+    private final DomainUserConsentService userService = mock();
 
     private final ClientSyncService clientService = mock();
 

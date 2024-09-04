@@ -20,7 +20,7 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
-import io.gravitee.am.gateway.handler.users.service.DomainUserConsentFacade;
+import io.gravitee.am.gateway.handler.users.service.DomainUserConsentService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
@@ -43,12 +43,12 @@ import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSa
  */
 public class AbstractUserConsentEndpointHandler {
 
-    protected final DomainUserConsentFacade userService;
+    protected final DomainUserConsentService userService;
     private final ClientSyncService clientSyncService;
     private final Domain domain;
     private final SubjectManager subjectManager;
 
-    public AbstractUserConsentEndpointHandler(DomainUserConsentFacade userService, ClientSyncService clientSyncService, Domain domain, SubjectManager subjectManager) {
+    public AbstractUserConsentEndpointHandler(DomainUserConsentService userService, ClientSyncService clientSyncService, Domain domain, SubjectManager subjectManager) {
         this.userService = userService;
         this.clientSyncService = clientSyncService;
         this.domain = domain;
