@@ -1,8 +1,9 @@
 {
 	"info": {
-		"_postman_id": "e4fbebb2-fed8-4eb7-b301-ce361971b7c4",
+		"_postman_id": "0e95dfd4-d197-4a28-823a-b9fcc41a3dc6",
 		"name": "Gravitee.io - AM - User Management - app version",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31343100"
 	},
 	"item": [
 		{
@@ -3464,7 +3465,8 @@
 											"pm.environment.set('clientId', body.settings.oauth.clientId);",
 											"pm.environment.set('clientSecret', body.settings.oauth.clientSecret);"
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],
@@ -3485,7 +3487,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"name\": \"client-um\",\n  \"type\": \"WEB\"\n}"
+									"raw": "{\n  \"name\": \"client-um\",\n  \"type\": \"WEB\",\n  \"redirectUris\": [\"https://callback\"]\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
