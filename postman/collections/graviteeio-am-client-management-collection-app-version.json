@@ -1,8 +1,9 @@
 {
 	"info": {
-		"_postman_id": "db24733c-1b80-4a57-81a8-648229f3eff0",
+		"_postman_id": "cc5bf1bc-7688-4873-a55d-d28836f2bbfd",
 		"name": "Gravitee.io - AM - Application Management",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31343100"
 	},
 	"item": [
 		{
@@ -153,7 +154,8 @@
 											"});",
 											""
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],
@@ -193,6 +195,72 @@
 							"response": []
 						},
 						{
+							"name": "Set type Web application",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"is webapp\", function () {",
+											"    var body = JSON.parse(responseBody);",
+											"    pm.expect(body).to.have.property('settings');",
+											"    pm.expect(body.settings).to.have.property('oauth');",
+											"    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
+											"    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
+											"    pm.expect(body.settings.oauth).to.have.property('applicationType');",
+											"    pm.expect(body.settings.oauth.grantTypes).to.eql(['authorization_code', 'password']);",
+											"    pm.expect(body.settings.oauth.responseTypes).to.eql(['code','code id_token token','code id_token','code token']);",
+											"    pm.expect(body.settings.oauth.applicationType).to.eql('web');",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"type\": \"WEB\"\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}/type",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"applications",
+										"{{app}}",
+										"type"
+									]
+								}
+							},
+							"response": []
+						},
+						{
 							"name": "missing redirect_uris",
 							"event": [
 								{
@@ -206,11 +274,12 @@
 											"pm.test(\"missing redirect_uri\", function () {",
 											"    var body = JSON.parse(responseBody);",
 											"    pm.expect(body).to.have.property('message');",
-											"    pm.expect(body.message).to.eql('Missing or invalid redirect_uris.');",
+											"    pm.expect(body.message).to.contains('redirect_uris.');",
 											"});",
 											""
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],
@@ -268,7 +337,8 @@
 											"});",
 											""
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],
@@ -286,7 +356,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n  \t\t\"grantTypes\": [\"refresh_token\"],\n  \t\t\"responseTypes\": [\"\"] \n  \t}\n  }\n}"
+									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [\"https://callback\"],\n  \t\t\"grantTypes\": [\"refresh_token\"],\n  \t\t\"responseTypes\": [\"\"] \n  \t}\n  }\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
@@ -326,7 +396,8 @@
 											"});",
 											""
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],
@@ -344,7 +415,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n  \t\t\"grantTypes\": [\"refresh_token\",\"client_credentials\"],\n  \t\t\"responseTypes\": [\"\"] \n  \t}\n  }\n}"
+									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [\"https://callback\"],\n  \t\t\"grantTypes\": [\"refresh_token\",\"client_credentials\"],\n  \t\t\"responseTypes\": [\"\"] \n  \t}\n  }\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
@@ -520,7 +591,8 @@
 											"});",
 											""
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],
@@ -587,7 +659,8 @@
 											"});",
 											""
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],
@@ -605,7 +678,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"redirectUris\": [\"https://callback\"],\n\t\t\t\"grantTypes\": [\"authorization_code\"],\n\t\t\t  \"scopeSettings\": [ {\"scope\" : \"openid\"} ]\n\t\t}\n\t}\n}"
+									"raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"redirectUris\": [\"https://callback\"],\n\t\t\t\"grantTypes\": [\"authorization_code\"],\n\t\t\t\"scopeSettings\": [ {\"scope\" : \"openid\"} ]\n\t\t}\n\t}\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
