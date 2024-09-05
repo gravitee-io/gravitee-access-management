@@ -124,6 +124,10 @@ public class MfaFilterContext {
         return MfaUtils.isUserStronglyAuth(session);
     }
 
+    public boolean isUserFullyAuthenticated() {
+        return nonNull(session.get(AUTH_FLOW_FINALIZED_KEY)) && TRUE.equals(session.get(AUTH_FLOW_FINALIZED_KEY));
+    }
+
     public RememberDeviceSettings getRememberDeviceSettings() {
         return MfaUtils.getRememberDeviceSettings(client);
     }
