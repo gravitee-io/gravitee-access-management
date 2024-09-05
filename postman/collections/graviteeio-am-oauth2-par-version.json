@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "bbb1b63f-1c67-4838-9d1f-6f21640087e5",
+		"_postman_id": "dfcd5b83-54df-4e0d-95e2-1e9847f236eb",
 		"name": "Gravitee.io - AM - Oauth2 - Pushed Authorization Request",
 		"description": "Test Oauth2 (RFC 6749) specifications",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
@@ -414,7 +414,8 @@
 									"pm.environment.set('clientId2', body.settings.oauth.clientId);",
 									"pm.environment.set('clientSecret2', body.settings.oauth.clientSecret);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -432,7 +433,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"my-client2\",\n  \"type\": \"WEB\"\n}"
+							"raw": "{\n  \"name\": \"my-client2\",\n  \"type\": \"WEB\",\n  \"redirectUris\": [\"http://localhost:4000/\", \"http://localhost:4000/path\"]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",

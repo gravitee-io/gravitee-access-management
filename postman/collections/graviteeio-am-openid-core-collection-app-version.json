@@ -1,9 +1,10 @@
 {
 	"info": {
-		"_postman_id": "e0cdfef4-246f-4cdc-a71b-e2e87c37e499",
+		"_postman_id": "3e8971ea-d292-42f6-8466-eb7b3cc29223",
 		"name": "Gravitee.io - AM - Openid Core - app version",
 		"description": "Test Openid core specifications: https://openid.net/specs/openid-connect-core-1_0.html",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31343100"
 	},
 	"item": [
 		{
@@ -354,7 +355,8 @@
 									"pm.environment.set('clientId1', body.settings.oauth.clientId);",
 									"pm.environment.set('clientSecret1', body.settings.oauth.clientSecret);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -372,7 +374,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"my-client\",\n  \"type\": \"WEB\"\n}"
+							"raw": "{\n  \"name\": \"my-client\",\n  \"type\": \"WEB\",\n  \"redirectUris\": [\"https://domain/callback\",\"https://another/callback\"]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
@@ -460,7 +462,8 @@
 									"pm.environment.set('clientId2', body.settings.oauth.clientId);",
 									"pm.environment.set('clientSecret2', body.settings.oauth.clientSecret);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -478,7 +481,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"my-client2\",\n  \"type\": \"WEB\"\n}"
+							"raw": "{\n  \"name\": \"my-client2\",\n  \"type\": \"WEB\",\n  \"redirectUris\": [\"http://localhost:4000/\"]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
