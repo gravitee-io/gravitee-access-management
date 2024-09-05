@@ -1,8 +1,9 @@
 {
 	"info": {
-		"_postman_id": "db24733c-1b80-4a57-81a8-648229f3eff0",
+		"_postman_id": "15466c53-8087-4313-a2c8-a59c7d0279ea",
 		"name": "Gravitee.io - AM - Application Management",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31343100"
 	},
 	"item": [
 		{
@@ -268,7 +269,8 @@
 											"});",
 											""
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],
@@ -286,7 +288,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n  \t\t\"grantTypes\": [\"refresh_token\"],\n  \t\t\"responseTypes\": [\"\"] \n  \t}\n  }\n}"
+									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [\"https://callback\"],\n  \t\t\"grantTypes\": [\"refresh_token\"],\n  \t\t\"responseTypes\": [\"\"] \n  \t}\n  }\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
@@ -326,7 +328,8 @@
 											"});",
 											""
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],
@@ -344,7 +347,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n  \t\t\"grantTypes\": [\"refresh_token\",\"client_credentials\"],\n  \t\t\"responseTypes\": [\"\"] \n  \t}\n  }\n}"
+									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [\"https://callback\"],\n  \t\t\"grantTypes\": [\"refresh_token\",\"client_credentials\"],\n  \t\t\"responseTypes\": [\"\"] \n  \t}\n  }\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
@@ -520,7 +523,8 @@
 											"});",
 											""
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],
@@ -587,7 +591,8 @@
 											"});",
 											""
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],
@@ -605,7 +610,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"redirectUris\": [\"https://callback\"],\n\t\t\t\"grantTypes\": [\"authorization_code\"],\n\t\t\t  \"scopeSettings\": [ {\"scope\" : \"openid\"} ]\n\t\t}\n\t}\n}"
+									"raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"redirectUris\": [\"https://callback\"],\n\t\t\t\"grantTypes\": [\"authorization_code\"],\n\t\t\t\"scopeSettings\": [ {\"scope\" : \"openid\"} ]\n\t\t}\n\t}\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",

@@ -172,6 +172,7 @@ settings.forEach((setting) => {
         name: faker.company.bsBuzz(),
         type: 'WEB',
         clientId: faker.company.bsAdjective(),
+        redirectUris: ['http://localhost:4000'],
       }).then((app) =>
         updateApplication(
           domain.id,
