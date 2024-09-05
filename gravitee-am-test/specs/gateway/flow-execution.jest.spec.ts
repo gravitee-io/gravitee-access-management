@@ -78,6 +78,7 @@ beforeAll(async () => {
     type: 'WEB',
     clientId: 'flow-app',
     clientSecret: 'flow-app',
+    redirectUris: ['https://callback'],
   }).then((app) =>
     updateApplication(
       domain.id,

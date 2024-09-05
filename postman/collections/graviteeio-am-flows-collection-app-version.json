@@ -1,8 +1,9 @@
 {
 	"info": {
-		"_postman_id": "e49efe0f-20a1-44f9-87e9-15932d5a7415",
+		"_postman_id": "cd01323b-f121-4c87-9e9a-cae52bd0fd60",
 		"name": "Gravitee.io - AM - Flows - app version",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31343100"
 	},
 	"item": [
 		{
@@ -191,7 +192,8 @@
 									"pm.environment.set('clientId', body.settings.oauth.clientId);",
 									"pm.environment.set('clientSecret', body.settings.oauth.clientSecret);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -209,7 +211,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"my-client\",\n  \"type\": \"WEB\"\n}"
+							"raw": "{\n  \"name\": \"my-client\",\n  \"type\": \"WEB\",\n  \"redirectUris\": [\"https://auth-nightly.gravitee.io/myApp/callback\"]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",

@@ -1,9 +1,10 @@
 {
 	"info": {
-		"_postman_id": "759a4491-bd61-4a8e-95c3-cc72e94d3ec3",
+		"_postman_id": "ffed7de4-cf70-4aa4-a4ca-dac26e299fdc",
 		"name": "Gravitee.io - AM - Oauth2 - app version",
 		"description": "Test Oauth2 (RFC 6749) specifications",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31343100"
 	},
 	"item": [
 		{
@@ -465,7 +466,8 @@
 									"pm.environment.set('clientId1', body.settings.oauth.clientId);",
 									"pm.environment.set('clientSecret1', body.settings.oauth.clientSecret);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -483,7 +485,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"my-client\",\n  \"type\": \"WEB\"\n}"
+							"raw": "{\n  \"name\": \"my-client\",\n  \"type\": \"WEB\",\n  \"redirectUris\": [\"http://localhost:4000/\"]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
@@ -515,7 +517,8 @@
 									"    pm.response.to.have.status(200);",
 									"});"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -533,7 +536,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n  \t\t\"grantTypes\": [\"authorization_code\", \"password\", \"refresh_token\"],\n  \t\t\"scopeSettings\": [ { \"scope\" : \"scope1\", \"defaultScope\": true }, { \"scope\" : \"openid\", \"defaultScope\": true }]\n  \t}\n  },\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n  ]\n}"
+							"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\":  [\"http://localhost:4000/\"],\n  \t\t\"grantTypes\": [\"authorization_code\", \"password\", \"refresh_token\"],\n  \t\t\"scopeSettings\": [ { \"scope\" : \"scope1\", \"defaultScope\": true }, { \"scope\" : \"openid\", \"defaultScope\": true }]\n  \t}\n  },\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n  ]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{client1}}",
@@ -571,7 +574,8 @@
 									"pm.environment.set('clientId2', body.settings.oauth.clientId);",
 									"pm.environment.set('clientSecret2', body.settings.oauth.clientSecret);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -589,7 +593,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"my-client2\",\n  \"type\": \"WEB\"\n}"
+							"raw": "{\n  \"name\": \"my-client2\",\n  \"type\": \"WEB\",\n  \"redirectUris\": [\"http://localhost:4000/\"]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
@@ -8492,7 +8496,123 @@
 									"response": []
 								},
 								{
-									"name": "No redirect_uri",
+									"name": "No redirect_uri with one registered redirect_uri",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.be.header('Content-Length', '0');",
+													"    pm.response.to.have.header('Location');",
+													"});",
+													"",
+													"pm.test(\"Should be a location error\", function() {",
+													"    var location = postman.getResponseHeader('Location');",
+													"    let domain = pm.environment.get(\"domainHrid\");",
+													"    ",
+													"    tests['Redirect to error page'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login');",
+													"});"
+												],
+												"type": "text/javascript",
+												"packages": {}
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript",
+												"packages": {}
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{authorizationEndpoint}}?response_type=code&client_id={{clientId1}}",
+											"host": [
+												"{{authorizationEndpoint}}"
+											],
+											"query": [
+												{
+													"key": "response_type",
+													"value": "code"
+												},
+												{
+													"key": "client_id",
+													"value": "{{clientId1}}"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Configure application 1 Copy",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"// wait for sync process",
+													"setTimeout(function(){}, 10000);"
+												],
+												"type": "text/javascript",
+												"packages": {}
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\":  [\"http://localhost:4000/\", \"https://callback/\"],\n  \t\t\"grantTypes\": [\"authorization_code\", \"password\", \"refresh_token\"],\n  \t\t\"scopeSettings\": [ { \"scope\" : \"scope1\", \"defaultScope\": true }, { \"scope\" : \"openid\", \"defaultScope\": true }]\n  \t}\n  },\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n  ]\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{client1}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
+												"domains",
+												"{{domain}}",
+												"applications",
+												"{{client1}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "No redirect_uri with more than one registered redirect_uri",
 									"event": [
 										{
 											"listen": "test",
@@ -8514,10 +8634,11 @@
 													"    ",
 													"    tests['Redirect to error page'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
 													"    tests['Contains an error query-parameter'] = location.includes('error=invalid_request');",
-													"    tests['Contains an error description query-parameter'] = location.includes('error_description=A+redirect_uri+must+be+supplied');",
+													"    tests['Contains an error description query-parameter'] = location.includes('redirect_uri+must+be+supplied');",
 													"});"
 												],
-												"type": "text/javascript"
+												"type": "text/javascript",
+												"packages": {}
 											}
 										},
 										{
@@ -8526,7 +8647,8 @@
 												"exec": [
 													""
 												],
-												"type": "text/javascript"
+												"type": "text/javascript",
+												"packages": {}
 											}
 										}
 									],
@@ -8575,7 +8697,8 @@
 													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId1'));",
 													"});"
 												],
-												"type": "text/javascript"
+												"type": "text/javascript",
+												"packages": {}
 											}
 										},
 										{
@@ -8584,7 +8707,8 @@
 												"exec": [
 													""
 												],
-												"type": "text/javascript"
+												"type": "text/javascript",
+												"packages": {}
 											}
 										}
 									],
@@ -8592,7 +8716,7 @@
 										"method": "GET",
 										"header": [],
 										"url": {
-											"raw": "{{authorizationEndpoint}}?response_type=code&client_id={{clientId1}}&redirect_uri=http://localhost:4000",
+											"raw": "{{authorizationEndpoint}}?response_type=code&client_id={{clientId1}}&redirect_uri=http://localhost:4000/",
 											"host": [
 												"{{authorizationEndpoint}}"
 											],
@@ -8607,7 +8731,7 @@
 												},
 												{
 													"key": "redirect_uri",
-													"value": "http://localhost:4000"
+													"value": "http://localhost:4000/"
 												}
 											]
 										},
@@ -12535,7 +12659,8 @@
 											"pm.environment.set('publicClientId', body.settings.oauth.clientId);",
 											"pm.environment.set('publicClientSecret', body.settings.oauth.clientSecret);"
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],
@@ -12553,7 +12678,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"name\": \"my-public-client\",\n  \"type\": \"WEB\"\n}"
+									"raw": "{\n  \"name\": \"my-public-client\",\n  \"type\": \"WEB\",\n  \"redirectUris\": [\"https://callback\"]\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",

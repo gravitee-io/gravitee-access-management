@@ -62,6 +62,7 @@ beforeAll(async () => {
     type: 'WEB',
     clientId: 'app-logout',
     clientSecret: 'app-logout',
+    redirectUris: ['https://callback'],
   }).then((app) =>
     updateApplication(
       domain.id,
