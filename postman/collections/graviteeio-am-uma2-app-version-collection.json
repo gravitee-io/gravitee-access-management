@@ -1,9 +1,10 @@
 {
 	"info": {
-		"_postman_id": "207bc982-68fc-4c33-9eab-a7c65823593d",
+		"_postman_id": "efb735de-28b2-4e98-a990-917bb0d290a3",
 		"name": "Gravitee.io - AM - UMA 2.0 - app version",
 		"description": "Test openid connect discovery specifications: https://openid.net/specs/openid-connect-discovery-1_0.html",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31343100"
 	},
 	"item": [
 		{
@@ -253,7 +254,8 @@
 									"    pm.environment.set('rs_client_authentication', authentication);",
 									"});"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -271,7 +273,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"RS-client\",\n  \"type\": \"RESOURCE_SERVER\"\n}"
+							"raw": "{\n  \"name\": \"RS-client\",\n  \"type\": \"RESOURCE_SERVER\",\n  \"redirectUris\": [\"https://callback\"]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
@@ -309,7 +311,8 @@
 									"    pm.expect(body.settings.oauth.scopeSettings[0].scope).to.eql(\"uma_protection\");",
 									"});"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -327,7 +330,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"scopeSettings\": [{\"scope\": \"uma_protection\"}],\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\"password\"]\n\t}\n  }\n}\n"
+							"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"scopeSettings\": [{\"scope\": \"uma_protection\"}],\n  \t\t\"redirectUris\": [\"https://callback\"],\n\t\t\"grantTypes\": [\"password\"]\n\t}\n  }\n}\n"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{rs_app}}",
@@ -375,7 +378,8 @@
 									"    pm.environment.set('rqp_client_authentication', authentication);",
 									"});"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -393,7 +397,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"RQP-client\",\n  \"type\": \"WEB\"\n}"
+							"raw": "{\n  \"name\": \"RQP-client\",\n  \"type\": \"WEB\",\n  \"redirectUris\": [\"https://callback\"]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
@@ -430,7 +434,8 @@
 									"    pm.expect(body.settings.oauth.grantTypes).to.have.members([\"password\",\"refresh_token\",\"urn:ietf:params:oauth:grant-type:uma-ticket\"]);",
 									"});"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -448,7 +453,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\"password\",\"refresh_token\",\"urn:ietf:params:oauth:grant-type:uma-ticket\"],\n\t\t\"scopeSettings\": [ {\"scope\": \"openid\"} , {\"scope\": \"profile\"} , {\"scope\": \"email\"} , {\"scope\": \"phone\"} , {\"scope\": \"address\"}]\n\t}\n  }\n}\n"
+							"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n        \"redirectUris\": [\"https://callback\"],\n\t\t\"grantTypes\": [\"password\",\"refresh_token\",\"urn:ietf:params:oauth:grant-type:uma-ticket\"],\n\t\t\"scopeSettings\": [ {\"scope\": \"openid\"} , {\"scope\": \"profile\"} , {\"scope\": \"email\"} , {\"scope\": \"phone\"} , {\"scope\": \"address\"}]\n\t}\n  }\n}\n"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{rqp_app}}",
