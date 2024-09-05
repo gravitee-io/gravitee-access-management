@@ -401,7 +401,6 @@ afterAll(async () => {
   }
 });
 
-
 const login = async (authResponse, user, clientId) => {
   const loginResult = await extractXsrfTokenAndActionResponse(authResponse);
   return await performFormPost(
@@ -569,6 +568,7 @@ const createMfaApp = async (domain, accessToken, factors: Array<number>) => {
     name: faker.company.bsBuzz(),
     type: 'WEB',
     clientId: faker.internet.domainWord(),
+    redirectUris: ['https://auth-nightly.gravitee.io/myApp/callback'],
   }).then((app) =>
     updateApplication(
       domain.id,
@@ -631,6 +631,7 @@ const createBruteForceTestApp = async (smsFactor, domain, accessToken, mfaChalle
     name: 'mfa-bruteforce-test',
     type: 'WEB',
     clientId: 'mfa-bruteforce-test-id',
+    redirectUris: ['https://auth-nightly.gravitee.io/myApp/callback'],
   }).then((app) =>
     updateApplication(
       domain.id,

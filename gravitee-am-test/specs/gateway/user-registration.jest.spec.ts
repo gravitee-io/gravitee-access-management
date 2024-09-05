@@ -61,6 +61,7 @@ beforeAll(async () => {
     type: 'WEB',
     clientId: faker.random.alphaNumeric,
     clientSecret: faker.random.alphaNumeric,
+    redirectUris: ['https://callback'],
   }).then((app) =>
     updateApplication(
       domain.id,
