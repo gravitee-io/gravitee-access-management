@@ -162,6 +162,7 @@ const createMfaApp = async (domain, accessToken, factors: Array<number>, enrollA
     name: faker.company.bsBuzz(),
     type: 'WEB',
     clientId: faker.internet.domainWord(),
+    redirectUris: ['https://auth-nightly.gravitee.io/myApp/callback'],
   }).then((app) =>
     updateApplication(
       domain.id,

@@ -1,8 +1,9 @@
 {
 	"info": {
-		"_postman_id": "2551b100-c026-48be-a008-a36974b3f9e1",
+		"_postman_id": "247e759d-baeb-4ee1-b7d1-7af1047e8c35",
 		"name": "Gravitee.io - AM - API Management",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31343100"
 	},
 	"item": [
 		{
@@ -773,6 +774,54 @@
 							"response": []
 						},
 						{
+							"name": "Accept unsecured redirect_uris",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\"oidc\":\n    {\"clientRegistrationSettings\":\n        {\n            \"allowLocalhostRedirectUri\":true,\n            \"allowHttpSchemeRedirectUri\":true,\n            \"allowWildCardRedirectUri\":true,\n            \"isDynamicClientRegistrationEnabled\":false,\n            \"isOpenDynamicClientRegistrationEnabled\":false,\n            \"isAllowedScopesEnabled\":false,\n            \"isClientTemplateEnabled\":false\n        }\n    }\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
 							"name": "Create social in-memory IDP",
 							"event": [
 								{
@@ -852,7 +901,8 @@
 											"pm.environment.set('clientId', body.settings.oauth.clientId);",
 											"pm.environment.set('clientSecret', body.settings.oauth.clientSecret);"
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],
@@ -870,7 +920,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"name\": \"my-client\",\n  \"type\": \"WEB\",\n  \"clientId\": \"my-client\",\n  \"clientSecret\": \"my-client-secret\"\n}"
+									"raw": "{\n  \"name\": \"my-client\",\n  \"type\": \"WEB\",\n  \"clientId\": \"my-client\",\n  \"clientSecret\": \"my-client-secret\",\n  \"redirectUris\": [\"https://nowhere.com\"]\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
@@ -902,7 +952,8 @@
 											"    pm.response.to.have.status(200);",
 											"});"
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],
@@ -920,7 +971,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"tokenEndpointAuthMethod\": \"client_secret_post\",\n        \"scopeSettings\": [{\"scope\": \"openid\", \"defaultScope\" : true}]\n   \n\t},\n    \"advanced\": {\n        \"skipConsent\": true\n    }\n  }\n}"
+									"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [\"https://nowhere.com\", \"http://localhost:8093/management/auth/login/callback*\"],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"tokenEndpointAuthMethod\": \"client_secret_post\",\n        \"scopeSettings\": [{\"scope\": \"openid\", \"defaultScope\" : true}]\n   \n\t},\n    \"advanced\": {\n        \"skipConsent\": true\n    }\n  }\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
@@ -1205,7 +1256,8 @@
 											"    pm.environment.set('cookieRedirectUrl', redirectUrl);",
 											"});"
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],
@@ -1213,7 +1265,7 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{management_url}}/management/auth/authorize?redirect_uri=http://nowhere.com",
+									"raw": "{{management_url}}/management/auth/authorize?redirect_uri=https://nowhere.com",
 									"host": [
 										"{{management_url}}"
 									],
@@ -1225,7 +1277,7 @@
 									"query": [
 										{
 											"key": "redirect_uri",
-											"value": "http://nowhere.com"
+											"value": "https://nowhere.com"
 										}
 									]
 								}
@@ -1553,7 +1605,7 @@
 											"pm.test(\"Should be a redirection to login page\", function() {",
 											"    var location = postman.getResponseHeader('Location');",
 											"      ",
-											"    tests['Redirect initial redirect uri'] = location.includes('http://nowhere.com');",
+											"    tests['Redirect initial redirect uri'] = location.includes('https://nowhere.com');",
 											"});",
 											"",
 											"pm.test(\"Should not have redirect cookie anymore\", function() {",
@@ -1562,7 +1614,8 @@
 											"    pm.environment.unset('cookieRedirectUrl');",
 											"});"
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								},
 								{
@@ -1571,7 +1624,8 @@
 										"exec": [
 											""
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],

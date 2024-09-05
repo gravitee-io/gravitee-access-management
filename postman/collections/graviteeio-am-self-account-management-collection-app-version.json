@@ -142,7 +142,8 @@
 									"pm.environment.set('clientId', body.settings.oauth.clientId);",
 									"pm.environment.set('clientSecret', body.settings.oauth.clientSecret);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -160,7 +161,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"my-client\",\n  \"type\": \"WEB\"\n}"
+							"raw": "{\n  \"name\": \"my-client\",\n  \"type\": \"WEB\",\n  \"redirectUris\": [\"https://auth-nightly.gravitee.io/myApp/callback\"]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
