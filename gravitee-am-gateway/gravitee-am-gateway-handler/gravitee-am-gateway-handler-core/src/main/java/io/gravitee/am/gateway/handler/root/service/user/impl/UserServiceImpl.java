@@ -66,6 +66,7 @@ import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.LogoutAuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.validators.email.EmailValidator;
 import io.gravitee.am.service.validators.user.UserValidator;
@@ -622,8 +623,8 @@ public class UserServiceImpl implements UserService {
                                 return complete();
                             });
                 })
-                .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_LOGOUT)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_LOGOUT).throwable(throwable)));
+                .doOnComplete(() -> auditService.report(AuditBuilder.builder(LogoutAuditBuilder.class).domain(domain.getId()).client(user.getClient()).user(user).type(EventType.USER_LOGOUT)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(LogoutAuditBuilder.class).domain(domain.getId()).client(user.getClient()).user(user).type(EventType.USER_LOGOUT).throwable(throwable)));
     }
 
     @Override
