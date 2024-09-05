@@ -35,19 +35,19 @@ export const initiateLoginFlow = async (clientId, openIdConfiguration, domain, r
 export const login = async (authResponse, userName, clientId, password = 'SomeP@ssw0rd', rememberMe = false) => {
   const loginResult = await extractXsrfTokenAndActionResponse(authResponse);
   return await performFormPost(
-    loginResult.action,
-    '',
-    {
-      'X-XSRF-TOKEN': loginResult.token,
-      username: userName,
-      password: password,
-      rememberMe: rememberMe ? 'on' : 'off',
-      client_id: clientId,
-    },
-    {
-      Cookie: loginResult.headers['set-cookie'],
-      'Content-type': 'application/x-www-form-urlencoded',
-    },
+      loginResult.action,
+      '',
+      {
+        'X-XSRF-TOKEN': loginResult.token,
+        username: userName,
+        password: password,
+        rememberMe: rememberMe ? 'on' : 'off',
+        client_id: clientId,
+      },
+      {
+        Cookie: loginResult.headers['set-cookie'],
+        'Content-type': 'application/x-www-form-urlencoded',
+      },
   ).expect(302);
 };
 
@@ -61,17 +61,17 @@ export const postConsent = async (consent) => {
   const dom = cheerio.load(consent.text);
   const xsrfToken = dom('[name=X-XSRF-TOKEN]').val();
   return await performFormPost(
-    consent.request.url,
-    '',
-    {
-      'X-XSRF-TOKEN': xsrfToken,
-      'scope.openid': true,
-      user_oauth_approval: true,
-    },
-    {
-      Cookie: consent.headers['set-cookie'],
-      'Content-type': 'application/x-www-form-urlencoded',
-    },
+      consent.request.url,
+      '',
+      {
+        'X-XSRF-TOKEN': xsrfToken,
+        'scope.openid': true,
+        user_oauth_approval: true,
+      },
+      {
+        Cookie: consent.headers['set-cookie'],
+        'Content-type': 'application/x-www-form-urlencoded',
+      },
   ).expect(302);
 };
 

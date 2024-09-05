@@ -970,6 +970,7 @@ async function createApp1(domain: Domain, accessToken: string, scopeKey: string,
     name: 'my-client 1',
     type: 'WEB',
     clientId: 'clientId-test-1',
+    redirectUris: ['http://localhost:4000/'],
   }).then((app) =>
     updateApplication(
       domain.id,
@@ -977,7 +978,7 @@ async function createApp1(domain: Domain, accessToken: string, scopeKey: string,
       {
         settings: {
           oauth: {
-            redirectUris: [],
+            redirectUris: ['http://localhost:4000/'],
             grantTypes: ['authorization_code', 'password', 'refresh_token'],
             scopeSettings: [
               { scope: scopeKey, defaultScope: true },
@@ -1007,6 +1008,7 @@ async function createApp2(domain: Domain, accessToken: string, scopeKey: string,
     name: 'my-client 2',
     type: 'WEB',
     clientId: 'client-test-2',
+    redirectUris: ['http://localhost:4000/'],
   }).then((app) =>
     updateApplication(
       domain.id,
@@ -1034,7 +1036,7 @@ async function createApp2(domain: Domain, accessToken: string, scopeKey: string,
 async function createApp3(domain: Domain, accessToken: string, scopeKey: string) {
   const application = await createApplication(domain.id, accessToken, {
     name: 'my-client 3',
-    type: 'WEB',
+    type: 'SERVICE',
   }).then((app) =>
     updateApplication(
       domain.id,
