@@ -71,6 +71,7 @@ beforeAll(async () => {
     type: 'WEB',
     clientId: 'selfaccount-changepwd',
     clientSecret: 'selfaccount-changepwd',
+    redirectUris: ['https://callback'],
   }).then((app) =>
     updateApplication(
       domain.id,

@@ -1,8 +1,9 @@
 {
 	"info": {
-		"_postman_id": "952ba507-1696-4cc3-8e7b-952481081f5d",
+		"_postman_id": "cf728efb-a467-4fb7-a50b-1e130008b500",
 		"name": "Gravitee.io - AM - Logout - app version",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31343100"
 	},
 	"item": [
 		{
@@ -252,7 +253,8 @@
 									"pm.environment.set('clientId', body.settings.oauth.clientId);",
 									"pm.environment.set('clientSecret', body.settings.oauth.clientSecret);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -270,7 +272,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"my-client\",\n  \"type\": \"WEB\"\n}"
+							"raw": "{\n  \"name\": \"my-client\",\n  \"type\": \"WEB\",\n  \"redirectUris\": [\"http://localhost:4000\"]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
