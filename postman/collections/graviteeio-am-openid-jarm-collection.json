@@ -635,7 +635,8 @@
 									"var body = JSON.parse(responseBody);",
 									"pm.environment.set('clientDCR', body.id);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -653,7 +654,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"clientId\": \"dcr-client\",\n    \"clientSecret\": \"dcr-client-secret\",\n    \"name\": \"dcr-client-public-name\",\n    \"type\": \"WEB\"\n}"
+							"raw": "{\n    \"clientId\": \"dcr-client\",\n    \"clientSecret\": \"dcr-client-secret\",\n    \"name\": \"dcr-client-public-name\",\n    \"type\": \"WEB\",\n    \"redirectUris\": [\"https://callback\"]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",

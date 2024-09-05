@@ -149,6 +149,7 @@ describe('Entrypoints: User accounts', () => {
       name: faker.commerce.productName(),
       type: 'browser',
       description: faker.lorem.paragraph(),
+      redirectUris: ['https://callback'],
     };
 
     const createdApp = await createApplication(domain.id, accessToken, app);
