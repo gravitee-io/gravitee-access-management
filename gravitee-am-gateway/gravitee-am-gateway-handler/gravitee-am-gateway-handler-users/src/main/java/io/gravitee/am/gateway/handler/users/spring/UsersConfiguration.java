@@ -29,7 +29,7 @@ import org.springframework.context.annotation.Configuration;
 public class UsersConfiguration implements ProtocolConfiguration {
 
     @Bean
-    public DomainUserConsentService userService() {
+    public DomainUserConsentService domainUserConsentService() {
         return new DomainUserConsentServiceImpl();
     }
 }
