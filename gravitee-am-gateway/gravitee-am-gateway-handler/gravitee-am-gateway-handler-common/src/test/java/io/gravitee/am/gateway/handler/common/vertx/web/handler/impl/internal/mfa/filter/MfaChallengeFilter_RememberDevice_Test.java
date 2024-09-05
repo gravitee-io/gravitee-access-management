@@ -16,13 +16,9 @@
 
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter;
 
-import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MfaFilterContext;
-import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.RememberDeviceSettings;
-import io.gravitee.am.model.oidc.Client;
-import io.vertx.rxjava3.ext.web.RoutingContext;
-import org.junit.Before;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
@@ -30,13 +26,14 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -44,10 +41,12 @@ import static org.mockito.Mockito.when;
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
-public class RememberDevideFilterTest {
+public class MfaChallengeFilter_RememberDevice_Test {
 
     @Mock
     private MfaFilterContext mfaFilterContext;
+    @Mock
+    private RuleEngine ruleEngine;
 
     private RememberDeviceSettings rememberDeviceSettings = new RememberDeviceSettings();
 
@@ -63,7 +62,7 @@ public class RememberDevideFilterTest {
         @Test
         public void should_return_UNSAFE_when_adaptiveMFA_return_true_and_remember_device_disabled() {
             lenient().when(mfaFilterContext.getRememberDeviceSettings()).thenReturn(rememberDeviceSettings);
-            assertFalse(new RememberDeviceFilter(mfaFilterContext).get());
+            assertFalse(new MfaChallengeFilter(mfaFilterContext, ruleEngine).get());
         }
     }
 
@@ -78,28 +77,31 @@ public class RememberDevideFilterTest {
 
         @Test
         public void should_return_UNSAFE_when_adaptiveMFA_return_false_and_remember_device_enabled() {
+            lenient().when(ruleEngine.evaluate(any(), anyMap(), any(), eq(false))).thenReturn(false);
             lenient().when(mfaFilterContext.isMfaSkipped()).thenReturn(false);
             lenient().when(mfaFilterContext.isAmfaActive()).thenReturn(true);
             lenient().when(mfaFilterContext.isAmfaRuleTrue()).thenReturn(false);
             lenient().when(mfaFilterContext.userHasMatchingActivatedFactors()).thenReturn(true);
             lenient().when(mfaFilterContext.getRememberDeviceSettings()).thenReturn(rememberDeviceSettings);
 
-            assertFalse(new RememberDeviceFilter(mfaFilterContext).get());
+            assertFalse(new MfaChallengeFilter(mfaFilterContext, ruleEngine).get());
         }
 
         @Test
         public void should_return_UNSAFE_when_adaptiveMFA_return_true_and_remember_device_enabled_with_unknown_device() {
+            lenient().when(ruleEngine.evaluate(any(), anyMap(), any(), eq(false))).thenReturn(true);
             lenient().when(mfaFilterContext.isMfaSkipped()).thenReturn(false);
             lenient().when(mfaFilterContext.isAmfaActive()).thenReturn(true);
             lenient().when(mfaFilterContext.isAmfaRuleTrue()).thenReturn(true);
             lenient().when(mfaFilterContext.userHasMatchingActivatedFactors()).thenReturn(true);
             lenient().when(mfaFilterContext.getRememberDeviceSettings()).thenReturn(rememberDeviceSettings);
 
-            assertFalse(new RememberDeviceFilter(mfaFilterContext).get());
+            assertFalse(new MfaChallengeFilter(mfaFilterContext, ruleEngine).get());
         }
 
         @Test
         public void should_return_SAFE_when_adaptiveMFA_return_true_and_remember_device_enabled_with_known_device() {
+            lenient().when(ruleEngine.evaluate(any(), anyMap(), any(), eq(false))).thenReturn(true);
             lenient().when(mfaFilterContext.isMfaSkipped()).thenReturn(false);
             lenient().when(mfaFilterContext.isAmfaActive()).thenReturn(true);
             lenient().when(mfaFilterContext.isAmfaRuleTrue()).thenReturn(true);
@@ -107,11 +109,12 @@ public class RememberDevideFilterTest {
             lenient().when(mfaFilterContext.userHasMatchingActivatedFactors()).thenReturn(true);
             lenient().when(mfaFilterContext.getRememberDeviceSettings()).thenReturn(rememberDeviceSettings);
 
-            assertTrue(new RememberDeviceFilter(mfaFilterContext).get());
+            assertTrue(new MfaChallengeFilter(mfaFilterContext, ruleEngine).get());
         }
 
         @Test
         public void should_return_UNSAFE_when_adaptiveMFA_return_false_even_if_user_strongly_authenticated_and_stepup_active() {
+            lenient().when(ruleEngine.evaluate(any(), anyMap(), any(), eq(false))).thenReturn(false);
             lenient().when(mfaFilterContext.isUserStronglyAuth()).thenReturn(true);
             lenient().when(mfaFilterContext.isMfaSkipped()).thenReturn(false);
             lenient().when(mfaFilterContext.isAmfaActive()).thenReturn(true);
@@ -121,11 +124,12 @@ public class RememberDevideFilterTest {
             lenient().when(mfaFilterContext.isStepUpActive()).thenReturn(true);
             lenient().when(mfaFilterContext.getRememberDeviceSettings()).thenReturn(rememberDeviceSettings);
 
-            assertFalse(new RememberDeviceFilter(mfaFilterContext).get());
+            assertFalse(new MfaChallengeFilter(mfaFilterContext, ruleEngine).get());
         }
 
         @Test
         public void should_return_SAFE_when_adaptiveMFA_return_false_even_if_user_strongly_authenticated_and_stepup_inactive() {
+            lenient().when(ruleEngine.evaluate(any(), anyMap(), any(), eq(false))).thenReturn(false);
             lenient().when(mfaFilterContext.isUserStronglyAuth()).thenReturn(true);
             lenient().when(mfaFilterContext.isMfaSkipped()).thenReturn(false);
             lenient().when(mfaFilterContext.isAmfaActive()).thenReturn(true);
@@ -135,11 +139,12 @@ public class RememberDevideFilterTest {
             lenient().when(mfaFilterContext.isStepUpActive()).thenReturn(false);
             lenient().when(mfaFilterContext.getRememberDeviceSettings()).thenReturn(rememberDeviceSettings);
 
-            assertTrue(new RememberDeviceFilter(mfaFilterContext).get());
+            assertTrue(new MfaChallengeFilter(mfaFilterContext, ruleEngine).get());
         }
 
         @Test
         public void should_return_SAFE_when_adaptiveMFA_return_true_and_user_strongly_authenticated() {
+            lenient().when(ruleEngine.evaluate(any(), anyMap(), any(), eq(false))).thenReturn(true);
             lenient().when(mfaFilterContext.isUserStronglyAuth()).thenReturn(true);
             lenient().when(mfaFilterContext.isMfaSkipped()).thenReturn(false);
             lenient().when(mfaFilterContext.isAmfaActive()).thenReturn(true);
@@ -148,7 +153,7 @@ public class RememberDevideFilterTest {
             lenient().when(mfaFilterContext.userHasMatchingActivatedFactors()).thenReturn(true);
             lenient().when(mfaFilterContext.getRememberDeviceSettings()).thenReturn(rememberDeviceSettings);
 
-            assertTrue(new RememberDeviceFilter(mfaFilterContext).get());
+            assertTrue(new MfaChallengeFilter(mfaFilterContext, ruleEngine).get());
         }
     }
 
@@ -163,17 +168,19 @@ public class RememberDevideFilterTest {
 
         @Test
         public void should_return_UNSAFE_when_adaptiveMFA_return_false_and_device_is_unknown() {
+            lenient().when(ruleEngine.evaluate(any(), anyMap(), any(), eq(false))).thenReturn(false);
             lenient().when(mfaFilterContext.isMfaSkipped()).thenReturn(false);
             lenient().when(mfaFilterContext.isAmfaActive()).thenReturn(true);
             lenient().when(mfaFilterContext.isAmfaRuleTrue()).thenReturn(false);
             lenient().when(mfaFilterContext.userHasMatchingActivatedFactors()).thenReturn(true);
             lenient().when(mfaFilterContext.getRememberDeviceSettings()).thenReturn(rememberDeviceSettings);
 
-            assertFalse(new RememberDeviceFilter(mfaFilterContext).get());
+            assertFalse(new MfaChallengeFilter(mfaFilterContext, ruleEngine).get());
         }
 
         @Test
         public void should_return_SAFE_when_adaptiveMFA_return_false_and_user_strongly_authenticate_and_stepup_inactive() {
+            lenient().when(ruleEngine.evaluate(any(), anyMap(), any(), eq(false))).thenReturn(false);
             lenient().when(mfaFilterContext.isUserStronglyAuth()).thenReturn(true);
             lenient().when(mfaFilterContext.isMfaSkipped()).thenReturn(false);
             lenient().when(mfaFilterContext.isAmfaActive()).thenReturn(true);
@@ -182,11 +189,12 @@ public class RememberDevideFilterTest {
             lenient().when(mfaFilterContext.userHasMatchingActivatedFactors()).thenReturn(true);
             lenient().when(mfaFilterContext.getRememberDeviceSettings()).thenReturn(rememberDeviceSettings);
 
-            assertTrue(new RememberDeviceFilter(mfaFilterContext).get());
+            assertTrue(new MfaChallengeFilter(mfaFilterContext, ruleEngine).get());
         }
 
         @Test
         public void should_return_UNSAFE_when_adaptiveMFA_return_false_and_user_strongly_authenticate_and_stepup_active() {
+            lenient().when(ruleEngine.evaluate(any(), anyMap(), any(), eq(false))).thenReturn(false);
             lenient().when(mfaFilterContext.isUserStronglyAuth()).thenReturn(true);
             lenient().when(mfaFilterContext.isMfaSkipped()).thenReturn(false);
             lenient().when(mfaFilterContext.isAmfaActive()).thenReturn(true);
@@ -195,23 +203,26 @@ public class RememberDevideFilterTest {
             lenient().when(mfaFilterContext.userHasMatchingActivatedFactors()).thenReturn(true);
             lenient().when(mfaFilterContext.getRememberDeviceSettings()).thenReturn(rememberDeviceSettings);
 
-            assertFalse(new RememberDeviceFilter(mfaFilterContext).get());
+            assertFalse(new MfaChallengeFilter(mfaFilterContext, ruleEngine).get());
         }
 
         @Test
         public void should_return_SAFE_when_adaptiveMFA_return_true_and_user_strongly_authenticate() {
+            lenient().when(ruleEngine.evaluate(any(), anyMap(), any(), eq(false))).thenReturn(true);
             lenient().when(mfaFilterContext.isUserStronglyAuth()).thenReturn(true);
+            lenient().when(mfaFilterContext.isUserFullyAuthenticated()).thenReturn(true);
             lenient().when(mfaFilterContext.isMfaSkipped()).thenReturn(false);
             lenient().when(mfaFilterContext.isAmfaActive()).thenReturn(true);
             lenient().when(mfaFilterContext.isAmfaRuleTrue()).thenReturn(true);
             lenient().when(mfaFilterContext.userHasMatchingActivatedFactors()).thenReturn(true);
             lenient().when(mfaFilterContext.getRememberDeviceSettings()).thenReturn(rememberDeviceSettings);
 
-            assertTrue(new RememberDeviceFilter(mfaFilterContext).get());
+            assertTrue(new MfaChallengeFilter(mfaFilterContext, ruleEngine).get());
         }
 
         @Test
         public void should_return_SAFE_when_adaptiveMFA_return_false_and_device_is_known() {
+            lenient().when(ruleEngine.evaluate(any(), anyMap(), any(), eq(false))).thenReturn(false);
             lenient().when(mfaFilterContext.isMfaSkipped()).thenReturn(false);
             lenient().when(mfaFilterContext.isAmfaActive()).thenReturn(true);
             lenient().when(mfaFilterContext.isAmfaRuleTrue()).thenReturn(false);
@@ -219,11 +230,12 @@ public class RememberDevideFilterTest {
             lenient().when(mfaFilterContext.userHasMatchingActivatedFactors()).thenReturn(true);
             lenient().when(mfaFilterContext.getRememberDeviceSettings()).thenReturn(rememberDeviceSettings);
 
-            assertTrue(new RememberDeviceFilter(mfaFilterContext).get());
+            assertTrue(new MfaChallengeFilter(mfaFilterContext, ruleEngine).get());
         }
 
         @Test
         public void should_return_SAFE_when_adaptiveMFA_return_true_and_device_is_unknown() {
+            lenient().when(ruleEngine.evaluate(any(), anyMap(), any(), eq(false))).thenReturn(true);
             lenient().when(mfaFilterContext.isMfaSkipped()).thenReturn(false);
             lenient().when(mfaFilterContext.isAmfaActive()).thenReturn(true);
             lenient().when(mfaFilterContext.isAmfaRuleTrue()).thenReturn(true);
@@ -231,11 +243,12 @@ public class RememberDevideFilterTest {
             lenient().when(mfaFilterContext.userHasMatchingActivatedFactors()).thenReturn(true);
             lenient().when(mfaFilterContext.getRememberDeviceSettings()).thenReturn(rememberDeviceSettings);
 
-            assertTrue(new RememberDeviceFilter(mfaFilterContext).get());
+            assertTrue(new MfaChallengeFilter(mfaFilterContext, ruleEngine).get());
         }
 
         @Test
         public void should_return_SAFE_when_adaptiveMFA_return_true_and_device_is_known() {
+            lenient().when(ruleEngine.evaluate(any(), anyMap(), any(), eq(false))).thenReturn(true);
             lenient().when(mfaFilterContext.isMfaSkipped()).thenReturn(false);
             lenient().when(mfaFilterContext.isAmfaActive()).thenReturn(true);
             lenient().when(mfaFilterContext.isAmfaRuleTrue()).thenReturn(true);
@@ -243,7 +256,7 @@ public class RememberDevideFilterTest {
             lenient().when(mfaFilterContext.userHasMatchingActivatedFactors()).thenReturn(true);
             lenient().when(mfaFilterContext.getRememberDeviceSettings()).thenReturn(rememberDeviceSettings);
 
-            assertTrue(new RememberDeviceFilter(mfaFilterContext).get());
+            assertTrue(new MfaChallengeFilter(mfaFilterContext, ruleEngine).get());
         }
     }
 }

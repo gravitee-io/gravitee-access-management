@@ -773,6 +773,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
             rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            rc.session().put(AUTH_FLOW_FINALIZED_KEY, true);
             rc.next();
         });
 
@@ -1178,6 +1179,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
             rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            rc.session().put(AUTH_FLOW_FINALIZED_KEY, true);
             rc.next();
         });
 
