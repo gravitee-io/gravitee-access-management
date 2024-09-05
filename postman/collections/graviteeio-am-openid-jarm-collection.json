@@ -1,6 +1,10 @@
 {
 	"info": {
+<<<<<<< HEAD
 		"_postman_id": "ef15b860-7f3b-4cf2-bbcf-65857a89e2d4",
+=======
+		"_postman_id": "85609e6d-dba7-4909-9c73-dfc945abe76f",
+>>>>>>> 40e89f63f0 (chore: adapt integration test to provide redirectUri value on application creation or update)
 		"name": "Gravitee.io - AM - Openid JARM",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "31343100"
@@ -635,7 +639,8 @@
 									"var body = JSON.parse(responseBody);",
 									"pm.environment.set('clientDCR', body.id);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -653,7 +658,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"clientId\": \"dcr-client\",\n    \"clientSecret\": \"dcr-client-secret\",\n    \"name\": \"dcr-client-public-name\",\n    \"type\": \"WEB\"\n}"
+							"raw": "{\n    \"clientId\": \"dcr-client\",\n    \"clientSecret\": \"dcr-client-secret\",\n    \"name\": \"dcr-client-public-name\",\n    \"type\": \"WEB\",\n    \"redirectUris\": [\"https://callback\"]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",

@@ -51,7 +51,11 @@ export const login = async (authResponse, userName, clientId, password = 'SomeP@
   ).expect(302);
 };
 
+<<<<<<< HEAD
 export const getHeaderLocation = async (postLogin) => {
+=======
+export const postLoginAuthentication = async (postLogin) => {
+>>>>>>> 40e89f63f0 (chore: adapt integration test to provide redirectUri value on application creation or update)
   return await performGet(postLogin.headers['location'], '', {
     Cookie: postLogin.headers['set-cookie'],
   }).expect(302);
@@ -90,7 +94,11 @@ export const loginUser = async (clientId, nameOrAdditionalInfo, userPassword, re
   if (postLogin.headers['location'].includes('error=login_failed&error_code=invalid_user&error_description=Invalid+or+unknown+user')) {
     return postLogin;
   }
+<<<<<<< HEAD
   const authorize = await getHeaderLocation(postLogin);
+=======
+  const authorize = await postLoginAuthentication(postLogin);
+>>>>>>> 40e89f63f0 (chore: adapt integration test to provide redirectUri value on application creation or update)
   expect(authorize.headers['location']).toBeDefined();
 
   //log in for the very first time

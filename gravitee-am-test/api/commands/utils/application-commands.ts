@@ -18,6 +18,7 @@ import { createApplication, updateApplication } from '@management-commands/appli
 import { expect } from '@jest/globals';
 
 export const createTestApp = async (name, domain, accessToken, applicationType = 'web', body = {}) => {
+<<<<<<< HEAD
   const application = await createApplication(domain.id, accessToken, {
     name: name,
     type: applicationType,
@@ -28,6 +29,23 @@ export const createTestApp = async (name, domain, accessToken, applicationType =
       updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
       return updatedApp;
     }),
+=======
+  const creatAppSettings =
+    applicationType !== 'service'
+      ? {
+          name: name,
+          type: applicationType,
+          clientId: `${name}-id`,
+          redirectUris: body['settings']?.oauth?.redirectUris,
+        }
+      : {
+          name: name,
+          type: applicationType,
+          clientId: `${name}-id`,
+        };
+  const application = await createApplication(domain.id, accessToken, creatAppSettings).then((app) =>
+    updateApplication(domain.id, accessToken, body, app.id),
+>>>>>>> 40e89f63f0 (chore: adapt integration test to provide redirectUri value on application creation or update)
   );
 
   expect(application).toBeDefined();

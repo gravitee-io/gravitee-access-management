@@ -67,6 +67,7 @@ beforeAll(async () => {
 describe('multiple user', () => {
   const contractValue = '1234';
   let user1;
+<<<<<<< HEAD
   const user1Password = 'ZxcPrm7123!!';
   let user2;
   const commonPassword = 'AsdPrm7123!!';
@@ -77,6 +78,18 @@ describe('multiple user', () => {
   let user5;
   let user6;
   const secondCommonPassword = 'PhdPrm7123!!';
+=======
+  const user1Password = 'Zxc123!!';
+  let user2;
+  const commonPassword = 'Asd123!!';
+  const commonEmail = 'common@test.com';
+  let user3; //user3 has same password as user2
+  let user4;
+  const user4Password = 'Qwe123!!';
+  let user5;
+  let user6;
+  const secondCommonPassword = 'Phd123!!';
+>>>>>>> 40e89f63f0 (chore: adapt integration test to provide redirectUri value on application creation or update)
   const secondCommonEmail = 'second.common@test.com';
 
   beforeAll(async () => {

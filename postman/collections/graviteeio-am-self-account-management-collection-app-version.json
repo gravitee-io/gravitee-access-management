@@ -1,6 +1,10 @@
 {
 	"info": {
+<<<<<<< HEAD
 		"_postman_id": "60499cb4-7d51-4b7a-900b-ff8c44c48c09",
+=======
+		"_postman_id": "fea85f73-349e-41b9-bad3-caa8d701ee82",
+>>>>>>> 40e89f63f0 (chore: adapt integration test to provide redirectUri value on application creation or update)
 		"name": "Gravitee.io - AM - Self Account Management - app version",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "31343100"
@@ -142,7 +146,8 @@
 									"pm.environment.set('clientId', body.settings.oauth.clientId);",
 									"pm.environment.set('clientSecret', body.settings.oauth.clientSecret);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -160,7 +165,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"my-client\",\n  \"type\": \"WEB\"\n}"
+							"raw": "{\n  \"name\": \"my-client\",\n  \"type\": \"WEB\",\n  \"redirectUris\": [\"https://auth-nightly.gravitee.io/myApp/callback\"]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",

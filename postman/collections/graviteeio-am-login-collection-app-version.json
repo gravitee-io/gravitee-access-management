@@ -1,6 +1,10 @@
 {
 	"info": {
+<<<<<<< HEAD
 		"_postman_id": "f62f9340-96d6-4a94-a8c0-538f9c46032b",
+=======
+		"_postman_id": "a2182ff4-7c3f-44cb-bb47-4b90fccc1118",
+>>>>>>> 40e89f63f0 (chore: adapt integration test to provide redirectUri value on application creation or update)
 		"name": "Gravitee.io - AM - Login - app version",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "31343100"
@@ -177,6 +181,54 @@
 					"response": []
 				},
 				{
+					"name": "Domain accept localhost redirection",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"oidc\":{\n    \"clientRegistrationSettings\":{\n        \"allowLocalhostRedirectUri\":true,\n        \"allowHttpSchemeRedirectUri\":true\n        }\n    }\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Create application",
 					"event": [
 						{
@@ -192,7 +244,8 @@
 									"pm.environment.set('clientId', body.settings.oauth.clientId);",
 									"pm.environment.set('clientSecret', body.settings.oauth.clientSecret);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -210,7 +263,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"my-client\",\n  \"type\": \"WEB\"\n}"
+							"raw": "{\n  \"name\": \"my-client\",\n  \"type\": \"WEB\",\n  \"redirectUris\": [\"http://localhost:4000/\", \"http://localhost:4001/\"]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
@@ -247,7 +300,8 @@
 									"pm.environment.set('clientId2', body.settings.oauth.clientId);",
 									"pm.environment.set('clientSecret2', body.settings.oauth.clientSecret);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -265,7 +319,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"my-client-2\",\n  \"type\": \"WEB\"\n}"
+							"raw": "{\n  \"name\": \"my-client-2\",\n  \"type\": \"WEB\",\n  \"redirectUris\": [\"http://localhost:4000/\", \"http://localhost:4001/\"]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
@@ -302,7 +356,8 @@
 									"pm.environment.set('clientId3', body.settings.oauth.clientId);",
 									"pm.environment.set('clientSecret3', body.settings.oauth.clientSecret);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -320,7 +375,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"my-client-3\",\n  \"type\": \"WEB\"\n}"
+							"raw": "{\n  \"name\": \"my-client-3\",\n  \"type\": \"WEB\",\n  \"redirectUris\": [\"http://localhost:4000/\", \"http://localhost:4001/\"]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
@@ -357,7 +412,8 @@
 									"pm.environment.set('clientId4', body.settings.oauth.clientId);",
 									"pm.environment.set('clientSecret4', body.settings.oauth.clientSecret);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -375,7 +431,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"my-client-4\",\n  \"type\": \"WEB\"\n}"
+							"raw": "{\n  \"name\": \"my-client-4\",\n  \"type\": \"WEB\",\n  \"redirectUris\": [\"http://localhost:4000/\", \"http://localhost:4001/\"]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
@@ -407,7 +463,8 @@
 									"    pm.response.to.have.status(200);",
 									"});"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -425,7 +482,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [{\"scope\" : \"openid\"}]\n\t}\n  }\n}"
+							"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [\"http://localhost:4000/\", \"http://localhost:4001/\"],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [{\"scope\" : \"openid\"}]\n\t}\n  }\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
@@ -458,7 +515,8 @@
 									"    pm.response.to.have.status(200);",
 									"});"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						},
 						{
@@ -469,7 +527,8 @@
 									"let identityProvider = 'default-idp-'+domain;",
 									"pm.environment.set(\"identityProvider\",identityProvider)"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -487,7 +546,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{identityProvider}}\", \"priority\" : -1 }\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [{\"scope\" : \"openid\"}]\n\t}\n  }\n}"
+							"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{identityProvider}}\", \"priority\" : -1 }\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [\"http://localhost:4000/\", \"http://localhost:4001/\"],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [{\"scope\" : \"openid\"}]\n\t}\n  }\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app2}}",
@@ -520,7 +579,8 @@
 									"    pm.response.to.have.status(200);",
 									"});"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -538,7 +598,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n  ],\n  \"settings\": {\n    \"login\": {\n        \"identifierFirstEnabled\" : true,\n        \"inherited\" : false\n    },\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [ { \"scope\" : \"openid\" }]\n\t}\n  }\n}"
+							"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n  ],\n  \"settings\": {\n    \"login\": {\n        \"identifierFirstEnabled\" : true,\n        \"inherited\" : false\n    },\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [\"http://localhost:4000/\", \"http://localhost:4001/\"],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [ { \"scope\" : \"openid\" }]\n\t}\n  }\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app3}}",
@@ -571,7 +631,8 @@
 									"    pm.response.to.have.status(200);",
 									"});"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -589,7 +650,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [ { \"scope\" : \"openid\" } ]\n\t}\n  }\n}"
+							"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [\"http://localhost:4000/\", \"http://localhost:4001/\"],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [ { \"scope\" : \"openid\" } ]\n\t}\n  }\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app4}}",
@@ -1163,7 +1224,8 @@
 													"});",
 													"setTimeout(function(){}, 10000);"
 												],
-												"type": "text/javascript"
+												"type": "text/javascript",
+												"packages": {}
 											}
 										}
 									],
@@ -1181,7 +1243,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"selectionRule\" : \"{#request.params['username'] matches 'user' }\", \"priority\" : -1 }\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [{\"scope\" : \"openid\"}]\n\t}\n  }\n}"
+											"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"selectionRule\" : \"{#request.params['username'] matches 'user' }\", \"priority\" : -1 }\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [\"http://localhost:4000/\", \"http://localhost:4001/\"],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [{\"scope\" : \"openid\"}]\n\t}\n  }\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
@@ -1516,7 +1578,8 @@
 													"    pm.response.to.have.status(200);",
 													"});"
 												],
-												"type": "text/javascript"
+												"type": "text/javascript",
+												"packages": {}
 											}
 										}
 									],
@@ -1534,7 +1597,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"selectionRule\" : \"{#request.params['username'] == 'user' }\", \"priority\" : -1 },\n    { \"identity\": \"{{idp.inmemory2}}\", \"selectionRule\" : \"{#request.params['username'] == 'something-else' }\", \"priority\" : -1 }\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [{\"scope\" : \"openid\"}]\n\t}\n  }\n}"
+											"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"selectionRule\" : \"{#request.params['username'] == 'user' }\", \"priority\" : -1 },\n    { \"identity\": \"{{idp.inmemory2}}\", \"selectionRule\" : \"{#request.params['username'] == 'something-else' }\", \"priority\" : -1 }\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [\"http://localhost:4000/\", \"http://localhost:4001/\"],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [{\"scope\" : \"openid\"}]\n\t}\n  }\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
@@ -1871,7 +1934,8 @@
 													"",
 													"setTimeout(function(){}, 10000);"
 												],
-												"type": "text/javascript"
+												"type": "text/javascript",
+												"packages": {}
 											}
 										}
 									],
@@ -1889,7 +1953,11 @@
 										],
 										"body": {
 											"mode": "raw",
+<<<<<<< HEAD
 											"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"selectionRule\" : \"{#request.params['username'] == 'something-else' }\", \"priority\" : -1 },\n    { \"identity\": \"{{idp.inmemory2}}\", \"priority\" : -1 }  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [{\"scope\" : \"openid\"}]\n\t}\n  }\n}"
+=======
+											"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"selectionRule\" : \"{#request,params['username'] == 'something-else' }\", \"priority\" : -1 },\n    { \"identity\": \"{{idp.inmemory2}}\", \"priority\" : -1 }  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [\"http://localhost:4000/\", \"http://localhost:4001/\"],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [{\"scope\" : \"openid\"}]\n\t}\n  }\n}"
+>>>>>>> 40e89f63f0 (chore: adapt integration test to provide redirectUri value on application creation or update)
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
@@ -2226,7 +2294,8 @@
 													"",
 													"setTimeout(function(){}, 10000);"
 												],
-												"type": "text/javascript"
+												"type": "text/javascript",
+												"packages": {}
 											}
 										}
 									],
@@ -2244,7 +2313,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"selectionRule\" : \"{#request.params['username'] == 'something-else' }\", \"priority\" : -1 },\n    { \"identity\": \"{{idp.inmemory2}}\", \"selectionRule\" : \"{#request.params['username'] == 'something-else' }\", \"priority\" : -1 }\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [{\"scope\" : \"openid\"}]\n\t}\n  }\n}"
+											"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"selectionRule\" : \"{#request.params['username'] == 'something-else' }\", \"priority\" : -1 },\n    { \"identity\": \"{{idp.inmemory2}}\", \"selectionRule\" : \"{#request.params['username'] == 'something-else' }\", \"priority\" : -1 }\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [\"http://localhost:4000/\", \"http://localhost:4001/\"],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [{\"scope\" : \"openid\"}]\n\t}\n  }\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
@@ -2487,7 +2556,8 @@
 											"    pm.response.to.have.status(200);",
 											"});"
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],
@@ -2505,7 +2575,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [{\"scope\" : \"openid\"}]\n\t}\n  }\n}"
+									"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [\"http://localhost:4000/\", \"http://localhost:4001/\"],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [{\"scope\" : \"openid\"}]\n\t}\n  }\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
@@ -13844,7 +13914,8 @@
 											"// wait for sync process",
 											"setTimeout(function(){}, 10000);"
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],
@@ -13862,7 +13933,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : 2 },\n    { \"identity\": \"{{idp.inmemory2}}\", \"priority\" : 1 }\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [{\"scope\" : \"openid\"}, {\"scope\" : \"profile\"}, {\"scope\" : \"email\"}]\n\t},\n    \"advanced\": {\n        \"skipConsent\": true\n    }\n  }\n}"
+									"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : 2 },\n    { \"identity\": \"{{idp.inmemory2}}\", \"priority\" : 1 }\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [\"http://localhost:4000/\", \"http://localhost:4001/\"],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [{\"scope\" : \"openid\"}, {\"scope\" : \"profile\"}, {\"scope\" : \"email\"}]\n\t},\n    \"advanced\": {\n        \"skipConsent\": true\n    }\n  }\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
