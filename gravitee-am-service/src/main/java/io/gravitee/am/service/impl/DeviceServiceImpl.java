@@ -96,7 +96,7 @@ public class DeviceServiceImpl implements DeviceService {
         return deviceRepository.findById(deviceId)
                 .switchIfEmpty(Maybe.error(new DeviceNotFoundException(deviceId)))
                 .flatMapCompletable(device -> {
-                    if (DOMAIN.equals(device.getReferenceType()) && device.getReferenceId().equals(domain) && device.getUserId().equals(user)) {
+                    if (DOMAIN.equals(device.getReferenceType()) && device.getReferenceId().equals(domain) && device.getUserId().id().equals(user.id())) {
                         return deviceRepository.delete(deviceId).andThen(Completable.complete());
                     } else {
                         return Completable.error(new DeviceNotFoundException(deviceId));
