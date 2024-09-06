@@ -21,6 +21,7 @@ package io.gravitee.am.gateway.handler.account.resources.util;
  */
 public enum AccountRoutes {
     PROFILE("/api/profile"),
+    PROFILE_USERNAME("/api/profile/username"),
     ACTIVITIES("/api/activity"),
     CHANGE_PASSWORD("/api/changePassword"),
     CHANGE_PASSWORD_REDIRECT("/forgotPassword"),
