@@ -31,7 +31,7 @@
     <artifactId>gravitee-am-parent</artifactId>
     <packaging>pom</packaging>
 
-    <version>4.3.10-SNAPSHOT</version>
+    <version>4.3.13-SNAPSHOT</version>
     <name>Gravitee IO - Access Management</name>
 
     <scm>
@@ -155,7 +155,7 @@
 
         <!-- EE plugin included in default bundle -->
         <gravitee-am-idp-saml2.version>3.0.4</gravitee-am-idp-saml2.version>
-        <gravitee-am-idp-ldap.version>1.0.1</gravitee-am-idp-ldap.version>
+        <gravitee-am-idp-ldap.version>1.0.3</gravitee-am-idp-ldap.version>
         <gravitee-am-idp-azure-ad.version>1.0.0</gravitee-am-idp-azure-ad.version>
         <gravitee-am-idp-franceconnect.version>2.0.0</gravitee-am-idp-franceconnect.version>
         <gravitee-am-idp-salesforce.version>1.0.0</gravitee-am-idp-salesforce.version>

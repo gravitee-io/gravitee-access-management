@@ -22,6 +22,7 @@ import io.gravitee.am.repository.jdbc.oauth2.api.spring.SpringRefreshTokenReposi
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.CompletableSource;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -108,6 +109,17 @@ public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implement
                         domainId, userId, error));
     }
 
+    @Override
+    public CompletableSource deleteByDomainIdAndClientId(String domainId, String clientId) {
+        LOGGER.debug("deleteByDomainIdClientId({},{},{})", domainId, clientId);
+        return monoToCompletable(getTemplate().delete(JdbcRefreshToken.class)
+                .matching(Query.query(where("domain").is(domainId)
+                        .and(where("client").is(clientId)))).all())
+                .doOnError(error -> LOGGER.error("Unable to delete refresh tokens with domain {}, client {}",
+                        domainId, clientId, error));
+    }
+
+    @Override
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);

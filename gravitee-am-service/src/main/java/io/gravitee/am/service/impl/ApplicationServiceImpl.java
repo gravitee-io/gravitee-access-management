@@ -105,6 +105,10 @@ import static io.gravitee.am.common.web.UriBuilder.isHttp;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static org.springframework.util.CollectionUtils.isEmpty;
+
+import org.springframework.util.StringUtils;
+
+import static org.springframework.util.StringUtils.hasLength;
 import static org.springframework.util.StringUtils.hasText;
 
 /**
@@ -285,8 +289,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         // apply default oauth 2.0 settings
         ApplicationSettings applicationSettings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
-        oAuthSettings.setClientId(newApplication.getClientId());
-        oAuthSettings.setClientSecret(newApplication.getClientSecret());
+        oAuthSettings.setClientId(hasLength(newApplication.getClientId()) ? newApplication.getClientId() : null);
+        oAuthSettings.setClientSecret(hasLength(newApplication.getClientSecret()) ? newApplication.getClientSecret() : null);
         oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
         oAuthSettings.setRedirectUris(newApplication.getRedirectUris());
         applicationSettings.setOauth(oAuthSettings);
@@ -402,7 +406,14 @@ public class ApplicationServiceImpl implements ApplicationService {
                     if (Boolean.FALSE.equals(accountSettingsValidator.validate(accountSettings))) {
                         return Single.error(new InvalidParameterException("Unexpected forgot password field"));
                     }
-                    return update0(domain, existingApplication, toPatch, principal);
+                    return update0(domain, existingApplication, toPatch, principal)
+                            .flatMap(app -> {
+                                if (toPatch.isEnabled() != existingApplication.isEnabled() && !toPatch.isEnabled()) {
+                                    return tokenService.deleteByApplication(app).onErrorComplete().toSingleDefault(app);
+                                } else {
+                                    return Single.just(app);
+                                }
+                            });
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {

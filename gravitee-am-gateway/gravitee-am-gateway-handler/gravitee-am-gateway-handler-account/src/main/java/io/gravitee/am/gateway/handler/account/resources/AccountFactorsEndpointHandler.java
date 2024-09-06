@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.account.resources;
 
-import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.mfa.InvalidFactorAttributeException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.factor.FactorDataKeys;
@@ -32,7 +31,6 @@ import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.User;
@@ -62,19 +60,10 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.springframework.context.ApplicationContext;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import static io.gravitee.am.common.audit.EventType.MFA_CHALLENGE;
-import static io.gravitee.am.common.audit.EventType.MFA_CHALLENGE_SENT;
-import static io.gravitee.am.common.audit.EventType.MFA_ENROLLMENT;
-import static io.gravitee.am.common.audit.EventType.MFA_RATE_LIMIT_REACHED;
+import static io.gravitee.am.common.audit.EventType.*;
 import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
 import static io.gravitee.am.factor.api.FactorContext.KEY_USER;
@@ -129,6 +118,7 @@ public class AccountFactorsEndpointHandler {
     public void listEnrolledFactors(RoutingContext routingContext) {
         final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
         final List<EnrolledFactor> enrolledFactors = user.getFactors() != null ? filteredEnrolledFactors(user) : Collections.emptyList();
+        enrolledFactors.forEach(this::sanitizeEnrolledFactor);
         AccountResponseHandler.handleDefaultResponse(routingContext, enrolledFactors);
     }
 
@@ -208,7 +198,7 @@ public class AccountFactorsEndpointHandler {
                     if (optionalEnrolledFactor.isPresent()) {
                         EnrolledFactor existingEnrolledFactor = optionalEnrolledFactor.get();
                         if (FactorStatus.ACTIVATED.equals(existingEnrolledFactor.getStatus())) {
-                            AccountResponseHandler.handleDefaultResponse(routingContext, existingEnrolledFactor);
+                            AccountResponseHandler.handleDefaultResponse(routingContext, sanitizeEnrolledFactor(existingEnrolledFactor));
                             return;
                         }
                     }
@@ -233,8 +223,8 @@ public class AccountFactorsEndpointHandler {
                         // save enrolled factor
                         accountService.upsertFactor(user.getId(), enrolledFactor, new DefaultUser(user))
                                 .subscribe(
-                                        __ -> AccountResponseHandler.handleDefaultResponse(routingContext, enrolledFactor),
-                                        error -> routingContext.fail(error));
+                                        __ -> AccountResponseHandler.handleDefaultResponse(routingContext, sanitizeEnrolledFactor(enrolledFactor)),
+                                        routingContext::fail);
                     });
                 });
             });
@@ -323,9 +313,8 @@ public class AccountFactorsEndpointHandler {
                     factorProvider.changeVariableFactorSecurity(enrolledFactor)
                             .flatMap(eF -> accountService.upsertFactor(user.getId(), eF, new DefaultUser(user)).map(__ -> eF))
                             .subscribe(
-                                    eF -> AccountResponseHandler.handleDefaultResponse(routingContext, eF),
-                                    error -> routingContext.fail(error)
-                            );
+                                    eF -> AccountResponseHandler.handleDefaultResponse(routingContext, sanitizeEnrolledFactor(eF)),
+                                    routingContext::fail);
                 });
             });
         } catch (DecodeException ex) {
@@ -356,11 +345,12 @@ public class AccountFactorsEndpointHandler {
 
         // Remove recovery code from enrolled factor
         EnrolledFactor enrolledFactor = optionalEnrolledFactor.get();
-        if (RECOVERY_CODE.equals(enrolledFactor.getSecurity())) {
+
+        if (RECOVERY_CODE.equals(enrolledFactor.getSecurity().getType())) {
             routingContext.fail(new FactorNotFoundException(factorId));
             return;
         }
-        AccountResponseHandler.handleDefaultResponse(routingContext, enrolledFactor);
+        AccountResponseHandler.handleDefaultResponse(routingContext, sanitizeEnrolledFactor(enrolledFactor));
     }
 
     /**
@@ -395,9 +385,38 @@ public class AccountFactorsEndpointHandler {
         factorProvider.generateQrCode(user, enrolledFactor)
                 .subscribe(
                         barCode -> AccountResponseHandler.handleDefaultResponse(routingContext, new JsonObject().put("qrCode", barCode)),
-                        error -> routingContext.fail(error),
+                        routingContext::fail,
                         () -> routingContext.fail(404)
                 );
+    }
+
+    /**
+     * Get shared secret code for the selected enrolled factor (TOTP only)
+     *
+     * @param routingContext the routingContext holding the current user
+     */
+    public void getEnrolledFactorSharedSecretCode(RoutingContext routingContext) {
+        final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
+        final String factorId = routingContext.request().getParam("factorId");
+
+        if (user.getFactors() == null) {
+            routingContext.fail(new FactorNotFoundException(factorId));
+            return;
+        }
+
+        Optional<EnrolledFactor> optionalEnrolledFactor = getEnrolledFactor(factorId, user);
+
+        if (optionalEnrolledFactor.isEmpty()) {
+            routingContext.fail(new FactorNotFoundException(factorId));
+            return;
+        }
+
+        EnrolledFactor enrolledFactor = optionalEnrolledFactor.get();
+        if (SHARED_SECRET.equals(enrolledFactor.getSecurity().getType())) {
+            AccountResponseHandler.handleDefaultResponse(routingContext, new JsonObject().put("sharedSecret", enrolledFactor.getSecurity().getValue()));
+        } else {
+            routingContext.fail(new FactorNotFoundException(factorId));
+        }
     }
 
     public void updateEnrolledFactor(RoutingContext routingContext) {
@@ -434,8 +453,8 @@ public class AccountFactorsEndpointHandler {
                 enrolledFactor.setPrimary(updateEnrolledFactor.isPrimary());
                 accountService.upsertFactor(user.getId(), enrolledFactor, new DefaultUser(user))
                         .subscribe(
-                                __ -> AccountResponseHandler.handleDefaultResponse(routingContext, enrolledFactor),
-                                error -> routingContext.fail(error)
+                                __ -> AccountResponseHandler.handleDefaultResponse(routingContext, sanitizeEnrolledFactor(enrolledFactor)),
+                                routingContext::fail
                         );
             });
         } catch (DecodeException ex) {
@@ -571,18 +590,18 @@ public class AccountFactorsEndpointHandler {
             }
 
             final EnrolledFactor enrolledFactor = optionalEnrolledFactor.get();
-            sendChallenge(factorProvider, enrolledFactor, user, routingContext , sh -> {
+            sendChallenge(factorProvider, enrolledFactor, user, routingContext, sh -> {
                 if (sh.failed()) {
                     routingContext.fail(sh.cause());
                     return;
                 }
                 // challenge has been sent, respond with OK status
-                AccountResponseHandler.handleDefaultResponse(routingContext, enrolledFactor);
+                AccountResponseHandler.handleDefaultResponse(routingContext, sanitizeEnrolledFactor(enrolledFactor));
             });
         });
     }
 
-    private List<String> getUserRecoveryCodes(User user){
+    private List<String> getUserRecoveryCodes(User user) {
         final Optional<Object> securityCodes = user.getFactors()
                 .stream()
                 .filter(ef -> ef.getSecurity() != null && RECOVERY_CODE.equals(ef.getSecurity().getType()))
@@ -664,7 +683,7 @@ public class AccountFactorsEndpointHandler {
         FactorContext factorContext = new FactorContext(applicationContext, factorData);
         final Factor factor = factorManager.getFactor(enrolledFactor.getFactorId());
 
-        if(rateLimiterService.isRateLimitEnabled()){
+        if (rateLimiterService.isRateLimitEnabled()) {
             rateLimiterService.tryConsume(endUser.getId(), factor.getId(), endUser.getClient(), client.getDomain())
                     .subscribe(allowRequest -> {
                                 if (allowRequest) {
@@ -677,13 +696,13 @@ public class AccountFactorsEndpointHandler {
                             },
                             error -> handler.handle(Future.failedFuture(error))
                     );
-        }else {
+        } else {
             sendChallenge(routingContext, factorProvider, factorContext, endUser, client, enrolledFactor, factor, handler);
         }
     }
 
     private void sendChallenge(RoutingContext routingContext, FactorProvider factorProvider, FactorContext factorContext, User user, Client client,
-                               EnrolledFactor enrolledFactor, Factor factor, Handler<AsyncResult<Void>> handler){
+                               EnrolledFactor enrolledFactor, Factor factor, Handler<AsyncResult<Void>> handler) {
         factorProvider.sendChallenge(factorContext)
                 .subscribeOn(Schedulers.io())
                 .subscribe(
@@ -775,7 +794,7 @@ public class AccountFactorsEndpointHandler {
      * @param factors list of Factor objects
      * @return list of Factor without recovery codes
      */
-    private List<Factor> filteredFactorCatalog(List<Factor> factors){
+    private List<Factor> filteredFactorCatalog(List<Factor> factors) {
         return factors
                 .stream()
                 .filter(factor -> !FactorType.RECOVERY_CODE.equals(factor.getFactorType()))
@@ -797,5 +816,10 @@ public class AccountFactorsEndpointHandler {
                 .throwable(cause, channel);
 
         auditService.report(builder);
+    }
+
+    private EnrolledFactor sanitizeEnrolledFactor(EnrolledFactor enrolledFactor) {
+        enrolledFactor.setSecurity(null);
+        return enrolledFactor;
     }
 }

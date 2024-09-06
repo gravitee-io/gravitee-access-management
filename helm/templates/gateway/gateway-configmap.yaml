@@ -70,6 +70,15 @@ data:
           {{- end }}
           path: {{ .Values.gateway.ssl.keystore.path }}
           password: {{ .Values.gateway.ssl.keystore.password | quote }}
+          {{- if .Values.gateway.ssl.keystore.kubernetes }}
+          kubernetes: {{ .Values.gateway.ssl.keystore.kubernetes }}
+          {{- end }}
+          {{- if .Values.gateway.ssl.keystore.secret }}
+          secret: {{ .Values.gateway.ssl.keystore.secret }}
+          {{- end }}
+          {{- if hasKey .Values.gateway.ssl.keystore "watch" }}
+          watch: {{ .Values.gateway.ssl.keystore.watch }}
+          {{- end }}
         clientAuth: {{ .Values.gateway.ssl.clientAuth }}
         tlsProtocols: {{ .Values.gateway.ssl.tlsProtocols }}
         {{- if .Values.gateway.ssl.ciphers }}
@@ -82,6 +91,12 @@ data:
           {{- end }}
           path: {{ .Values.gateway.ssl.truststore.path }}
           password: {{ .Values.gateway.ssl.truststore.password | quote }}
+          {{- if .Values.gateway.ssl.truststore.secret }}
+          secret: {{ .Values.gateway.ssl.truststore.secret }}
+          {{- end }}
+          {{- if hasKey .Values.gateway.ssl.truststore "watch" }}
+          watch: {{ .Values.gateway.ssl.truststore.watch }}
+          {{- end }}
         {{- end }}
         {{- if .Values.gateway.ssl.mtls_aliases }}
         mtls_aliases:

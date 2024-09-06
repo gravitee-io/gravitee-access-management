@@ -92,7 +92,9 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                         return Single.error(() -> new UserInvalidException("Field [username] is required"));
                     }
                     User user = transform(newUser, referenceType, referenceId);
-                    return userService.create(user);
+                    return userService.create(user)
+                            .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).user(user1)))
+                            .doOnError(err -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).throwable(err)));
                 }));
     }
 

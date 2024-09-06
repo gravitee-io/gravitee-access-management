@@ -31,6 +31,15 @@ mat-icon {
   color: grey;
 }
 
+.warning {
+  align-items: center;
+
+  p {
+    margin-left: 20px;
+    margin-block-end: 0;
+  }
+}
+
 a {
   cursor: pointer;
 }
