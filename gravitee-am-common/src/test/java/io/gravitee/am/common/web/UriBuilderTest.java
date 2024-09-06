@@ -15,24 +15,28 @@
  */
 package io.gravitee.am.common.web;
 
-import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.junit.runners.Parameterized.Parameters;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-@RunWith(Parameterized.class)
+//@RunWith(Parameterized.class)
 public class UriBuilderTest {
 
+<<<<<<< HEAD
     private final String uri;
     private final String scheme;
     private final String host;
@@ -42,65 +46,85 @@ public class UriBuilderTest {
     private final String query;
     private final String fragment;
     private final boolean isHttp;
+=======
+>>>>>>> 52a2137733 (fix: keep app's redirect uri's query params on error (#4544))
 
-    public UriBuilderTest(String uri, int port, String[] params, boolean isHttp) {
-        this.uri = uri;
-        this.port = port;
-        this.scheme = params[0];
-        this.host = params[1];
-        this.userinfo = params[2];
-        this.path = params[3];
-        this.query = params[4];
-        this.fragment = params[5];
-        this.isHttp = isHttp;
-    }
-
-    @Parameters(name="Testing {0}")
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][] {
-                {"http://localhost:8080/callback",8080,Arrays.asList("http","localhost",null,"/callback",null,null).toArray(new String[6]),true},
-                {"https://admin:password@localhost/callback",-1,Arrays.asList("https","localhost","admin:password","/callback",null,null).toArray(new String[6]),true},
-                {"https://gravitee.is?the=best",-1,Arrays.asList("https","gravitee.is",null,"","the=best",null).toArray(new String[6]),true},
-                {"myapp://callback#token=fragment",-1,Arrays.asList("myapp","callback",null,"",null,"token=fragment").toArray(new String[6]),false},
-                {"https://op-test:60001/requests/something?the=best#fragment",60001,
-                        Arrays.asList("https","op-test",null,"/requests/something","the=best","fragment").toArray(new String[6]),true},
-                {"com.google.app:/callback",-1,Arrays.asList("com.google.app",null,null,"/callback",null,null).toArray(new String[6]),false}
+        return Arrays.asList(new Object[][]{
+                {"http://localhost:8080/callback", 8080, new UriParts("http", "localhost", null, "/callback", null, null), true},
+                {"https://admin:password@localhost/callback", -1, new UriParts("https", "localhost", "admin:password", "/callback", null, null), true},
+                {"https://gravitee.is?the=best", -1, new UriParts("https", "gravitee.is", null, "", "the=best", null), true},
+                {"myapp://callback#token=fragment", -1, new UriParts("myapp", "callback", null, "", null, "token=fragment"), false},
+                {"https://op-test:60001/requests/something?the=best#fragment", 60001,
+                        new UriParts("https", "op-test", null, "/requests/something", "the=best", "fragment"), true},
+                {"com.google.app:/callback", -1, new UriParts("com.google.app", null, null, "/callback", null, null), false},
         });
     }
 
-    @Test
-    public void testFromUri() throws Exception{
-        URI uri = UriBuilder.fromURIString(this.uri).build();
-        Assert.assertEquals("scheme",this.scheme,uri.getScheme());
-        Assert.assertEquals("user info",this.userinfo,uri.getUserInfo());
-        Assert.assertEquals("host",this.host,uri.getHost());
-        Assert.assertEquals("port",this.port,uri.getPort());
-        Assert.assertEquals("path",this.path,uri.getPath());
-        Assert.assertEquals("query",this.query,uri.getQuery());
-        Assert.assertEquals("fragment",this.fragment,uri.getFragment());
-        Assert.assertEquals("Scheme isHttp does not match",this.isHttp, UriBuilder.isHttp(uri.getScheme()));
+    record UriParts(String scheme,
+                    String host,
+                    String userinfo,
+                    String path,
+                    String query,
+                    String fragment) {
+
     }
 
-    @Test
-    public void testFromHttp() throws Exception{
-        if(this.isHttp) {
-            URI uri = UriBuilder.fromHttpUrl(this.uri).build();
-            Assert.assertEquals("scheme",this.scheme,uri.getScheme());
-            Assert.assertEquals("user info",this.userinfo,uri.getUserInfo());
-            Assert.assertEquals("host",this.host,uri.getHost());
-            Assert.assertEquals("port",this.port,uri.getPort());
-            Assert.assertEquals("path",this.path,uri.getPath());
-            Assert.assertEquals("query",this.query,uri.getQuery());
-            Assert.assertEquals("fragment",this.fragment,uri.getFragment());
-            Assert.assertEquals("Scheme isHttp does not match",this.isHttp, UriBuilder.isHttp(uri.getScheme()));
-        }else {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("data")
+    void testFromUri2(String testUri, int port, UriParts uriParts, boolean isHttp) throws Exception {
+        URI builtUri = UriBuilder.fromURIString(testUri).build();
+        assertEquals(uriParts.scheme(), builtUri.getScheme(), "scheme");
+        assertEquals(uriParts.userinfo(), builtUri.getUserInfo(), "user info");
+        assertEquals(uriParts.host(), builtUri.getHost(), "host");
+        assertEquals(port, builtUri.getPort(), "port");
+        assertEquals(uriParts.path(), builtUri.getPath(), "path");
+        assertEquals(uriParts.query(), builtUri.getQuery(), "query");
+        assertEquals(uriParts.fragment(), builtUri.getFragment(), "fragment");
+        assertEquals(isHttp, UriBuilder.isHttp(builtUri.getScheme()), "Scheme isHttp does not match");
+    }
+
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("data")
+    public void testFromHttp(String testUri, int port, UriParts uriParts, boolean isHttp) throws Exception {
+        if (isHttp) {
+            URI uri = UriBuilder.fromHttpUrl(testUri).build();
+            assertEquals(uriParts.scheme(), uri.getScheme(), "scheme");
+            assertEquals(uriParts.userinfo(), uri.getUserInfo(), "user info");
+            assertEquals(uriParts.host(), uri.getHost(), "host");
+            assertEquals(port, uri.getPort(), "port");
+            assertEquals(uriParts.path(), uri.getPath(), "path");
+            assertEquals(uriParts.query(), uri.getQuery(), "query");
+            assertEquals(uriParts.fragment(), uri.getFragment(), "fragment");
+            assertEquals(isHttp, UriBuilder.isHttp(uri.getScheme()), "Scheme isHttp does not match");
+        } else {
             boolean assertThrowException = false;
             try {
-                UriBuilder.fromHttpUrl(this.uri).build();
+                UriBuilder.fromHttpUrl(testUri).build();
             } catch (IllegalArgumentException ex) {
                 assertThrowException = true;
             }
-            Assert.assertTrue("We expecting an exception, but did not happen", assertThrowException);
+            Assertions.assertTrue(assertThrowException, "We expecting an exception, but did not happen");
         }
     }
+
+    @Test
+    public void errorKeepsQueryParams() throws Exception {
+        var mockError = new ErrorInfo("test", "T01", "test failed", null);
+        var uri = UriBuilder.buildErrorRedirect("https://redirect.example.com?test=1", mockError, false);
+        assertThat(uri.getQuery().split("&")).hasSize(4)
+
+                .containsExactlyInAnyOrder(
+                        "error=" + uriEncoded(mockError.error()),
+                        "error_code=" + uriEncoded(mockError.code()),
+                        "error_description=" + uriEncoded(mockError.description()),
+                        "test=1");
+    }
+
+    private String uriEncoded(String s) {
+        return URLEncoder.encode(s, StandardCharsets.UTF_8);
+    }
+
+
 }

@@ -19,8 +19,13 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestObjectException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.exception.oauth2.RedirectMismatchException;
 import io.gravitee.am.common.oauth2.Parameters;
+<<<<<<< HEAD
 import io.gravitee.am.common.oauth2.ResponseMode;
 import io.gravitee.am.common.utils.ConstantKeys;
+=======
+import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.common.web.ErrorInfo;
+>>>>>>> 52a2137733 (fix: keep app's redirect uri's query params on error (#4544))
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
@@ -48,7 +53,7 @@ import org.springframework.core.env.Environment;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
 
 import static io.gravitee.am.common.oauth2.GrantType.CLIENT_CREDENTIALS;
@@ -62,11 +67,11 @@ import static org.springframework.util.StringUtils.hasLength;
  * If the request fails due to a missing, invalid, or mismatching redirection URI, or if the client identifier is missing or invalid,
  * the authorization server SHOULD inform the resource owner of the error and MUST NOT automatically redirect the user-agent to the
  * invalid redirection URI.
- *
+ * <p>
  * If the resource owner denies the access request or if the request fails for reasons other than a missing or invalid redirection URI,
  * the authorization server informs the client by adding the following parameters to the fragment component of the redirection URI using the
  * "application/x-www-form-urlencoded" format
- *
+ * <p>
  * See <a href="https://tools.ietf.org/html/rfc6749#section-4.2.2.1">4.2.2.1. Error Response</a>
  *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -217,19 +222,23 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
     private String buildRedirectUri(String error, String errorDescription, AuthorizationRequest authorizationRequest, RoutingContext context) throws URISyntaxException {
         String errorPath = context.get(CONTEXT_PATH) + ERROR_ENDPOINT;
 
-        // prepare query
-        Map<String, String> query = new LinkedHashMap<>();
-        // put client_id parameter for the default error page for branding/custom html purpose
-        if (isDefaultErrorPage(authorizationRequest.getRedirectUri(), errorPath)) {
-            query.computeIfAbsent(Parameters.CLIENT_ID, val -> authorizationRequest.getClientId());
-        }
+        var errorInfo = new ErrorInfo(error, null, errorDescription, authorizationRequest.getState());
 
-        query.computeIfAbsent("error", val -> error);
-        query.computeIfAbsent("error_description", val -> errorDescription);
-        query.computeIfAbsent(Parameters.STATE, val -> authorizationRequest.getState());
-
+<<<<<<< HEAD
         boolean fragment = !isDefaultErrorPage(authorizationRequest.getRedirectUri(), errorPath) && requiresFragment(authorizationRequest);
         return append(authorizationRequest.getRedirectUri(), query, fragment);
+=======
+        boolean fragment = !isDefaultErrorPage(authorizationRequest.getRedirectUri(), errorPath) &&
+                (isImplicitFlow(authorizationRequest.getResponseType()) || isHybridFlow(authorizationRequest.getResponseType()));
+        Map<String, String> extraParams = new HashMap<>();
+        if (isDefaultErrorPage(authorizationRequest.getRedirectUri(), errorPath)) {
+            extraParams.put(Parameters.CLIENT_ID, authorizationRequest.getClientId());
+        }
+        var redirectUri = UriBuilder.buildErrorRedirect(authorizationRequest.getRedirectUri(), errorInfo, fragment, extraParams);
+
+        return redirectUri
+                .toString();
+>>>>>>> 52a2137733 (fix: keep app's redirect uri's query params on error (#4544))
     }
 
     private boolean requiresFragment(AuthorizationRequest authorizationRequest) {
@@ -238,28 +247,19 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
     }
 
     private String append(String base, Map<String, String> query, boolean fragment) throws URISyntaxException {
-        // prepare final redirect uri
-        UriBuilder template = UriBuilder.newInstance();
-
         // get URI from the redirect_uri parameter
-        UriBuilder builder = UriBuilder.fromURIString(base);
-        URI redirectUri = builder.build();
+        final URI redirectUri = UriBuilder.fromURIString(base).build();
 
         // create final redirect uri
-        template.scheme(redirectUri.getScheme())
-                .host(redirectUri.getHost())
-                .port(redirectUri.getPort())
-                .userInfo(redirectUri.getUserInfo())
-                .path(redirectUri.getPath())
-                .query(redirectUri.getQuery());
+        final UriBuilder finalRedirectUri = UriBuilder.fromURIString(redirectUri.toString());
 
         // append error parameters in "application/x-www-form-urlencoded" format
         if (fragment) {
-            query.forEach((k, v) -> template.addFragmentParameter(k, UriBuilder.encodeURIComponent(v)));
+            query.forEach((k, v) -> finalRedirectUri.addFragmentParameter(k, UriBuilder.encodeURIComponent(v)));
         } else {
-            query.forEach((k, v) -> template.addParameter(k, UriBuilder.encodeURIComponent(v)));
+            query.forEach((k, v) -> finalRedirectUri.addParameter(k, UriBuilder.encodeURIComponent(v)));
         }
-        return template.build().toString();
+        return finalRedirectUri.build().toString();
     }
 
     private AuthorizationRequest resolveInitialAuthorizeRequest(RoutingContext routingContext) {
@@ -314,9 +314,9 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
         return client != null
                 && client.getAuthorizedGrantTypes() != null
                 && client.getAuthorizedGrantTypes().stream()
-                    .filter(grantType -> !(CLIENT_CREDENTIALS.equals(grantType) || grantType.startsWith(JWT_BEARER)))
-                    .findFirst()
-                    .isEmpty()
+                .filter(grantType -> !(CLIENT_CREDENTIALS.equals(grantType) || grantType.startsWith(JWT_BEARER)))
+                .findFirst()
+                .isEmpty()
                 && redirectURI != null;
     }
 }
