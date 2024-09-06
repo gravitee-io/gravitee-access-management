@@ -48,6 +48,7 @@ import org.springframework.core.env.Environment;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.Map;
 
 import static io.gravitee.am.common.oauth2.GrantType.CLIENT_CREDENTIALS;
@@ -219,9 +220,10 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
 
         boolean fragment = !isDefaultErrorPage(authorizationRequest.getRedirectUri(), errorPath) &&
                 (isImplicitFlow(authorizationRequest.getResponseType()) || isHybridFlow(authorizationRequest.getResponseType()));
-        Map<String,String> extraParams = isDefaultErrorPage(authorizationRequest.getRedirectUri(), errorPath)
-                ? Map.of(Parameters.CLIENT_ID, authorizationRequest.getClientId())
-                : Map.of();
+        Map<String, String> extraParams = new HashMap<>();
+        if (isDefaultErrorPage(authorizationRequest.getRedirectUri(), errorPath)) {
+            extraParams.put(Parameters.CLIENT_ID, authorizationRequest.getClientId());
+        }
         var redirectUri = UriBuilder.buildErrorRedirect(authorizationRequest.getRedirectUri(), errorInfo, fragment, extraParams);
 
         return redirectUri
