@@ -33,21 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-//@RunWith(Parameterized.class)
 public class UriBuilderTest {
-
-<<<<<<< HEAD
-    private final String uri;
-    private final String scheme;
-    private final String host;
-    private final int port;
-    private final String userinfo;
-    private final String path;
-    private final String query;
-    private final String fragment;
-    private final boolean isHttp;
-=======
->>>>>>> 52a2137733 (fix: keep app's redirect uri's query params on error (#4544))
 
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{

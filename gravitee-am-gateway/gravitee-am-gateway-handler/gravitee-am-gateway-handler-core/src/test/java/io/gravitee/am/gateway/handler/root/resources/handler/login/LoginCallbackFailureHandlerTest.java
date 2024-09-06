@@ -39,10 +39,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.MultiMap;
-<<<<<<< HEAD
-=======
 import org.assertj.core.api.Assertions;
->>>>>>> 52a2137733 (fix: keep app's redirect uri's query params on error (#4544))
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
