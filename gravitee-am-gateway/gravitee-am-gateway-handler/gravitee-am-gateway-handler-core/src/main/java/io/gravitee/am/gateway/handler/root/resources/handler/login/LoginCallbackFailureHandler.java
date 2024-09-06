@@ -20,6 +20,7 @@ import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.common.web.ErrorInfo;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
@@ -46,27 +47,15 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Optional;
 
-import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_ISSUING_REASON;
-import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_PROVIDER_ID;
-import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_STATUS;
-import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_TARGET;
-import static io.gravitee.am.common.utils.ConstantKeys.ISSUING_REASON_CLOSE_IDP_SESSION;
-import static io.gravitee.am.common.utils.ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.STATUS_FAILURE;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.LOGGER;
 import static io.gravitee.am.gateway.handler.root.RootProvider.PATH_LOGIN_CALLBACK;
-import static io.gravitee.am.common.utils.ConstantKeys.PROTOCOL_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.RETURN_URL_KEY;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
 
@@ -213,43 +202,22 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
 
         final String protocol = context.session() != null ? context.session().get(ConstantKeys.PROTOCOL_KEY) : null;
         final String samlEndpoint = ConstantKeys.PROTOCOL_VALUE_SAML_REDIRECT.equals(protocol) || ConstantKeys.PROTOCOL_VALUE_SAML_POST.equals(protocol) ? context.session().get(RETURN_URL_KEY) : null;
-        final String spRedirectUri = samlEndpoint != null ? samlEndpoint : (originalParams != null && originalParams.get(Parameters.REDIRECT_URI) != null) ?
+        final String clientRedirectUri = samlEndpoint != null ? samlEndpoint : (originalParams != null && originalParams.get(Parameters.REDIRECT_URI) != null) ?
                 originalParams.get(Parameters.REDIRECT_URI) :
                 client.getRedirectUris().get(0);
 
-        // append error message
-        Map<String, String> query = new LinkedHashMap<>();
-        query.put(ConstantKeys.ERROR_PARAM_KEY, "server_error");
-        query.put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage());
-        if (originalParams != null && originalParams.get(Parameters.STATE) != null) {
-            query.put(Parameters.STATE, originalParams.get(Parameters.STATE));
-        }
+        // create final redirect uri
+        final var error = new ErrorInfo("server_error", null,
+                throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage(),
+                originalParams != null ? originalParams.get(Parameters.STATE): null);
+
         boolean fragment = originalParams != null &&
                 originalParams.get(Parameters.RESPONSE_TYPE) != null &&
                 (isImplicitFlow(originalParams.get(Parameters.RESPONSE_TYPE)) || isHybridFlow(originalParams.get(Parameters.RESPONSE_TYPE)));
 
-        // prepare final redirect uri
-        UriBuilder template = UriBuilder.newInstance();
+        var finalRedirectUri = UriBuilder.buildErrorRedirect(clientRedirectUri, error, fragment);
 
-        // get URI from the redirect_uri parameter
-        UriBuilder builder = UriBuilder.fromURIString(spRedirectUri);
-        URI redirectUri = builder.build();
-
-        // create final redirect uri
-        template.scheme(redirectUri.getScheme())
-                .host(redirectUri.getHost())
-                .port(redirectUri.getPort())
-                .userInfo(redirectUri.getUserInfo())
-                .path(redirectUri.getPath());
-
-        // append error parameters in "application/x-www-form-urlencoded" format
-        if (fragment) {
-            query.forEach((k, v) -> template.addFragmentParameter(k, encodeURIComponent(v)));
-        } else {
-            query.forEach((k, v) -> template.addParameter(k, encodeURIComponent(v)));
-        }
-
-        closeRemoteSessionAndRedirect(context, authentication, template.build().toString());
+        closeRemoteSessionAndRedirect(context, authentication, finalRedirectUri.toString());
     }
 
     private void closeRemoteSessionAndRedirect(RoutingContext context, Authentication authentication, String redirectUrl) {
@@ -284,7 +252,7 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
                                 doRedirect(context, url);
                             },
                             err -> {
-                                LOGGER.error("Session can't be closed on provider '{}': {}", context.get(ConstantKeys.PROVIDER_ID_PARAM_KEY), err);
+                                LOGGER.error("Session can't be closed on provider '{}'", context.get(ConstantKeys.PROVIDER_ID_PARAM_KEY), err);
                                 doRedirect(context, redirectUrl);
                             });
         } else {
