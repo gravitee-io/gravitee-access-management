@@ -20,6 +20,7 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.account.model.UpdateUsername;
 import io.gravitee.am.gateway.handler.account.resources.util.AccountRoutes;
 import io.gravitee.am.gateway.handler.account.resources.util.ContextPathParamUtil;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
@@ -109,7 +110,7 @@ public class AccountEndpointHandler {
     public void changePassword(RoutingContext routingContext) {
         try {
             // update user password value from parameters
-            final JsonObject bodyAsJson = routingContext.getBodyAsJson();
+            final JsonObject bodyAsJson = routingContext.body().asJsonObject();
             if (isNull(bodyAsJson) || bodyAsJson.isEmpty()) {
                 routingContext.fail(new InvalidRequestException("Body is null or empty"));
                 return;
@@ -201,16 +202,28 @@ public class AccountEndpointHandler {
         User updatedUser = mapRequestToUser(user, routingContext);
         if (Objects.equals(user.getId(), updatedUser.getId())) {
             accountService.update(user)
-                    .doOnSuccess(nestedResult -> handleUpdateUserResponse(routingContext))
-                    .doOnError(er -> handleUpdateUserResponse(routingContext, er.getMessage()))
-                    .subscribe();
+                    .subscribe(
+                            nestedResult -> handleUpdateUserResponse(routingContext),
+                            er -> handleUpdateUserResponse(routingContext, er.getMessage())
+                    );
         } else {
             handleUpdateUserResponse(routingContext, "Mismatched user IDs", 401);
         }
     }
 
+    public void updateUsername(RoutingContext routingContext) {
+        final var user = getUserFromContext(routingContext);
+        final var newUsername = routingContext.body().asPojo(UpdateUsername.class);
+
+        accountService.updateUsername(user, newUsername, convertUserToPrincipal(routingContext, user))
+                .subscribe(
+                        nestedResult -> handleUpdateUserResponse(routingContext),
+                        er -> handleUpdateUserResponse(routingContext, er)
+                );
+    }
+
     private User mapRequestToUser(User user, RoutingContext routingContext) {
-        JsonObject bodyAsJson = routingContext.getBodyAsJson();
+        JsonObject bodyAsJson = routingContext.body().asJsonObject();
 
         final var generatedDisplayName = hasGeneratedDisplayName(user);
 

@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "60499cb4-7d51-4b7a-900b-ff8c44c48c09",
+		"_postman_id": "b232f426-3010-4ea9-9e8a-420fee34f15f",
 		"name": "Gravitee.io - AM - Self Account Management - app version",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "31343100"
@@ -271,7 +271,6 @@
 							},
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
 								"value": "application/json",
 								"type": "text"
 							}
@@ -324,14 +323,13 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"type": "text",
-								"value": "Bearer {{token}}"
+								"value": "Bearer {{token}}",
+								"type": "text"
 							},
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -625,12 +623,11 @@
 								"header": [
 									{
 										"key": "Authorization",
-										"type": "text",
-										"value": "Bearer {{access_token}}"
+										"value": "Bearer {{access_token}}",
+										"type": "text"
 									},
 									{
 										"key": "Content-Type",
-										"name": "Content-Type",
 										"value": "application/json",
 										"type": "text"
 									}
@@ -680,12 +677,11 @@
 								"header": [
 									{
 										"key": "Authorization",
-										"type": "text",
-										"value": "Bearer {{access_token}}"
+										"value": "Bearer {{access_token}}",
+										"type": "text"
 									},
 									{
 										"key": "Content-Type",
-										"name": "Content-Type",
 										"value": "application/json",
 										"type": "text"
 									}
@@ -786,12 +782,11 @@
 								"header": [
 									{
 										"key": "Authorization",
-										"type": "text",
-										"value": "Bearer {{access_token}}"
+										"value": "Bearer {{access_token}}",
+										"type": "text"
 									},
 									{
 										"key": "Content-Type",
-										"name": "Content-Type",
 										"value": "application/json",
 										"type": "text"
 									}
@@ -843,12 +838,11 @@
 								"header": [
 									{
 										"key": "Authorization",
-										"type": "text",
-										"value": "Bearer {{access_token}}"
+										"value": "Bearer {{access_token}}",
+										"type": "text"
 									},
 									{
 										"key": "Content-Type",
-										"name": "Content-Type",
 										"value": "application/json",
 										"type": "text"
 									}
@@ -2111,6 +2105,159 @@
 										"{{domain}}",
 										"factors",
 										"{{recoveryCodeFactorId}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Update username",
+					"item": [
+						{
+							"name": "Get Profile",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Has proper response\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('username');",
+											"    pm.environment.set('oldUsername', body.username);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/profile",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"profile"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Username",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Has proper response\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('status');",
+											"    pm.expect(body.status).to.eql('OK');",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"username\": \"updatedusername\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/profile/username",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"profile",
+										"username"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Profile After Update",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Has proper response\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('username');",
+											"    pm.expect(body.username).to.eql('updatedusername');",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/profile",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"profile"
 									]
 								}
 							},

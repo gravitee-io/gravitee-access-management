@@ -93,6 +93,7 @@ public class AccountProvider extends AbstractProtocolProvider {
             final AccountEndpointHandler accountHandler = new AccountEndpointHandler(accountService, domain);
             accountRouter.get(AccountRoutes.PROFILE.getRoute()).handler(accountHandler::getUser).handler(accountHandler::getProfile);
             accountRouter.put(AccountRoutes.PROFILE.getRoute()).handler(BodyHandler.create()).handler(accountHandler::getUser).handler(accountHandler::updateProfile);
+            accountRouter.patch(AccountRoutes.PROFILE_USERNAME.getRoute()).handler(BodyHandler.create()).handler(accountHandler::getUser).handler(accountHandler::updateUsername);
             accountRouter.get(AccountRoutes.ACTIVITIES.getRoute()).handler(accountHandler::getUser).handler(accountHandler::getActivity);
             accountRouter.get(AccountRoutes.CHANGE_PASSWORD.getRoute()).handler(accountHandler::redirectForgotPassword);
             accountRouter.post(AccountRoutes.CHANGE_PASSWORD.getRoute())
