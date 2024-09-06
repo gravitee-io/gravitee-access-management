@@ -51,7 +51,6 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Optional;
 
-<<<<<<< HEAD
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_ISSUING_REASON;
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_PROVIDER_ID;
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_STATUS;
@@ -62,18 +61,13 @@ import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PROTOCOL_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.RETURN_URL_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.STATUS_FAILURE;
-=======
-import static io.gravitee.am.common.utils.ConstantKeys.*;
->>>>>>> 52a2137733 (fix: keep app's redirect uri's query params on error (#4544))
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.LOGGER;
 import static io.gravitee.am.gateway.handler.root.RootProvider.PATH_LOGIN_CALLBACK;
-<<<<<<< HEAD
-=======
+
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
->>>>>>> 52a2137733 (fix: keep app's redirect uri's query params on error (#4544))
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -217,24 +211,7 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
 
         final String protocol = context.session() != null ? context.session().get(ConstantKeys.PROTOCOL_KEY) : null;
         final String samlEndpoint = ConstantKeys.PROTOCOL_VALUE_SAML_REDIRECT.equals(protocol) || ConstantKeys.PROTOCOL_VALUE_SAML_POST.equals(protocol) ? context.session().get(RETURN_URL_KEY) : null;
-<<<<<<< HEAD
-        String spRedirectUri;
-        if (samlEndpoint != null) {
-            spRedirectUri = samlEndpoint;
-        } else if (originalParams != null && originalParams.get(Parameters.REDIRECT_URI) != null) {
-            spRedirectUri = originalParams.get(Parameters.REDIRECT_URI);
-        } else {
-            spRedirectUri = client.getRedirectUris().get(0);
-        }
 
-        // append error message
-        Map<String, String> query = new LinkedHashMap<>();
-        query.put(ConstantKeys.ERROR_PARAM_KEY, "server_error");
-        query.put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage());
-        if (originalParams != null && originalParams.get(Parameters.STATE) != null) {
-            query.put(Parameters.STATE, originalParams.get(Parameters.STATE));
-        }
-=======
         final String clientRedirectUri = samlEndpoint != null ? samlEndpoint : (originalParams != null && originalParams.get(Parameters.REDIRECT_URI) != null) ?
                 originalParams.get(Parameters.REDIRECT_URI) :
                 client.getRedirectUris().get(0);
@@ -247,33 +224,10 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
         boolean fragment = originalParams != null &&
                 originalParams.get(Parameters.RESPONSE_TYPE) != null &&
                 (isImplicitFlow(originalParams.get(Parameters.RESPONSE_TYPE)) || isHybridFlow(originalParams.get(Parameters.RESPONSE_TYPE)));
->>>>>>> 52a2137733 (fix: keep app's redirect uri's query params on error (#4544))
 
         var finalRedirectUri = UriBuilder.buildErrorRedirect(clientRedirectUri, error, fragment);
 
-<<<<<<< HEAD
-        // get URI from the redirect_uri parameter
-        UriBuilder builder = UriBuilder.fromURIString(spRedirectUri);
-        URI redirectUri = builder.build();
-
-        // create final redirect uri
-        template.scheme(redirectUri.getScheme())
-                .host(redirectUri.getHost())
-                .port(redirectUri.getPort())
-                .userInfo(redirectUri.getUserInfo())
-                .path(redirectUri.getPath());
-
-        // append error parameters in "application/x-www-form-urlencoded" format
-        if (requiresFragment(originalParams)) {
-            query.forEach((k, v) -> template.addFragmentParameter(k, encodeURIComponent(v)));
-        } else {
-            query.forEach((k, v) -> template.addParameter(k, encodeURIComponent(v)));
-        }
-
-        closeRemoteSessionAndRedirect(context, authentication, template.build().toString());
-=======
         closeRemoteSessionAndRedirect(context, authentication, finalRedirectUri.toString());
->>>>>>> 52a2137733 (fix: keep app's redirect uri's query params on error (#4544))
     }
 
     private void closeRemoteSessionAndRedirect(RoutingContext context, Authentication authentication, String redirectUrl) {

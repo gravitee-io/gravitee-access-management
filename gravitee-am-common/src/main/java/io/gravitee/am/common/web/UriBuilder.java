@@ -15,12 +15,9 @@
  */
 package io.gravitee.am.common.web;
 
-<<<<<<< HEAD
-=======
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 
->>>>>>> 52a2137733 (fix: keep app's redirect uri's query params on error (#4544))
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
@@ -144,25 +141,15 @@ public class UriBuilder {
      * Convert a String to the application/x-www-form-urlencoded MIME format
      */
     public static String encodeURIComponent(String s) {
-<<<<<<< HEAD
-        String result;
-        result = URLEncoder.encode(s, StandardCharsets.UTF_8);
-        return result;
-=======
         if (s == null) {
             return null;
         }
         return URLEncoder.encode(s, StandardCharsets.UTF_8);
->>>>>>> 52a2137733 (fix: keep app's redirect uri's query params on error (#4544))
     }
 
     public static String decodeURIComponent(String s) {
         try {
-<<<<<<< HEAD
-            result = URLDecoder.decode(s, StandardCharsets.UTF_8);
-=======
             return URLDecoder.decode(s, StandardCharsets.UTF_8);
->>>>>>> 52a2137733 (fix: keep app's redirect uri's query params on error (#4544))
         } catch (Exception e) {
             return s;
         }

@@ -19,13 +19,10 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestObjectException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.exception.oauth2.RedirectMismatchException;
 import io.gravitee.am.common.oauth2.Parameters;
-<<<<<<< HEAD
+
 import io.gravitee.am.common.oauth2.ResponseMode;
 import io.gravitee.am.common.utils.ConstantKeys;
-=======
-import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.ErrorInfo;
->>>>>>> 52a2137733 (fix: keep app's redirect uri's query params on error (#4544))
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
@@ -224,10 +221,7 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
 
         var errorInfo = new ErrorInfo(error, null, errorDescription, authorizationRequest.getState());
 
-<<<<<<< HEAD
-        boolean fragment = !isDefaultErrorPage(authorizationRequest.getRedirectUri(), errorPath) && requiresFragment(authorizationRequest);
-        return append(authorizationRequest.getRedirectUri(), query, fragment);
-=======
+
         boolean fragment = !isDefaultErrorPage(authorizationRequest.getRedirectUri(), errorPath) &&
                 (isImplicitFlow(authorizationRequest.getResponseType()) || isHybridFlow(authorizationRequest.getResponseType()));
         Map<String, String> extraParams = new HashMap<>();
@@ -238,7 +232,6 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
 
         return redirectUri
                 .toString();
->>>>>>> 52a2137733 (fix: keep app's redirect uri's query params on error (#4544))
     }
 
     private boolean requiresFragment(AuthorizationRequest authorizationRequest) {
