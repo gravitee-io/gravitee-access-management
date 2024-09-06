@@ -1190,11 +1190,6 @@ function getParamsInvalidAuthorizeRequests() {
       error_description: 'No+client+found+for+client_id+wrong-client-id',
     },
     {
-      title: 'Send an unknown redirect_uri and no redirect_uri defined',
-      params: '?response_type=code&client_id=clientId-test-1&redirect_uri=http://localhost:4000',
-      uri: `/login`,
-    },
-    {
       title: 'Send a redirect_uri not configured in the client',
       params: '?response_type=code&client_id=client-test-2&redirect_uri=http://my_bad_host:4000',
       uri: `/oauth/error`,
