@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.account.model.UpdateUsername;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
@@ -27,6 +28,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.exception.InvalidUserException;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
@@ -71,6 +73,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class AccountEndpointHandlerTest extends RxWebTestBase {
     private static final String REQUEST_PATH = "/account/api/profile";
+    private static final String USERNAME_REQUEST_PATH = REQUEST_PATH + "/username";
     private static final String CHANGE_PWD_REQUEST_PATH = "/account/api/changePassword";
 
     public static final int TOKEN_AGE_IN_SEC = 600;
@@ -519,5 +522,67 @@ public class AccountEndpointHandlerTest extends RxWebTestBase {
             equals &= (args.getDisplayName().equals(existingUser.getDisplayName()));
             return equals;
         }));
+    }
+
+    @Test
+    public void should_execute_update_username() throws Exception {
+        final var input = new UpdateUsername();
+        input.setUsername(UUID.randomUUID().toString());
+
+        final var updatedUser = new User();
+        updatedUser.setId(input.getUsername());
+        when(accountService.updateUsername(any(), any(), any())).thenReturn(Single.just(new User()));
+
+        router.route(USERNAME_REQUEST_PATH)
+                .handler(accountEndpointHandler::updateUsername)
+                .handler(rc -> rc.response().end());
+
+        testRequest(HttpMethod.PUT,
+                USERNAME_REQUEST_PATH,
+                req -> req
+                        .putHeader("content-type", "application/json")
+                        .send(Json.encode(input)),
+                res -> {
+                    res.bodyHandler(h -> {
+                        String body = h.toString();
+                        var jsonObject = (JsonObject)Json.decodeValue(body);
+                        assertNotNull(jsonObject);
+                    });
+                },
+                200,
+                "OK", null);
+
+        verify(accountService).updateUsername(any(), any(), any());
+    }
+
+    @Test
+    public void should_propagate_update_username_error() throws Exception {
+        final var input = new UpdateUsername();
+        input.setUsername(UUID.randomUUID().toString());
+
+        final var updatedUser = new User();
+        updatedUser.setId(input.getUsername());
+        when(accountService.updateUsername(any(), any(), any())).thenReturn(Single.error(new InvalidUserException("")));
+
+        router.route(USERNAME_REQUEST_PATH)
+                .handler(accountEndpointHandler::updateUsername)
+                .handler(rc -> rc.response().end());
+
+        testRequest(HttpMethod.PUT,
+                USERNAME_REQUEST_PATH,
+                req -> req
+                        .putHeader("content-type", "application/json")
+                        .send(Json.encode(input)),
+                res -> {
+                    res.bodyHandler(h -> {
+                        String body = h.toString();
+                        var jsonObject = (JsonObject)Json.decodeValue(body);
+                        assertNotNull(jsonObject);
+                    });
+                },
+                400,
+                "Bad Request", null);
+
+        verify(accountService).updateUsername(any(), any(), any());
     }
 }

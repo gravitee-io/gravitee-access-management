@@ -741,6 +741,8 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
         user.setUsername(USERNAME);
+        user.setReferenceId(domain.getId());
+        user.setReferenceType(DOMAIN);
 
         when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
                 .thenReturn(Single.just(user));
@@ -764,6 +766,8 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
         user.setUsername(USERNAME);
+        user.setReferenceId(domain.getId());
+        user.setReferenceType(DOMAIN);
 
         when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
                 .thenReturn(Single.just(user));
@@ -788,6 +792,8 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
         user.setUsername(USERNAME);
+        user.setReferenceId(domain.getId());
+        user.setReferenceType(DOMAIN);
 
         when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
                 .thenReturn(Single.just(user));
@@ -814,6 +820,8 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
         user.setUsername(USERNAME);
+        user.setReferenceId(domain.getId());
+        user.setReferenceType(DOMAIN);
 
         when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
                 .thenReturn(Single.just(user));
@@ -846,6 +854,8 @@ public class UserServiceTest {
         user.setSource("idp-id");
         user.setUsername(USERNAME);
         user.setFactors(List.of());
+        user.setReferenceId(domain.getId());
+        user.setReferenceType(DOMAIN);
 
         when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
                 .thenReturn(Single.just(user));
@@ -893,6 +903,8 @@ public class UserServiceTest {
         user.setSource("idp-id");
         user.setUsername(USERNAME);
         user.setFactors(List.of());
+        user.setReferenceId(domain.getId());
+        user.setReferenceType(DOMAIN);
 
         when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
                 .thenReturn(Single.just(user));
@@ -938,6 +950,8 @@ public class UserServiceTest {
         user.setSource("idp-id");
         user.setUsername(USERNAME);
         user.setFactors(List.of());
+        user.setReferenceId(domain.getId());
+        user.setReferenceType(DOMAIN);
 
         when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
                 .thenReturn(Single.just(user));
@@ -996,6 +1010,8 @@ public class UserServiceTest {
         user.setSource("idp-id");
         user.setUsername(USERNAME);
         user.setFactors(List.of(enrolledFactor));
+        user.setReferenceId(domain.getId());
+        user.setReferenceType(DOMAIN);
 
         when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
                 .thenReturn(Single.just(user));
@@ -1192,6 +1208,8 @@ public class UserServiceTest {
         user.setAccountLockedAt(new Date());
         user.setAccountLockedUntil(new Date());
         user.setAccountNonLocked(false);
+        user.setReferenceId(domain.getId());
+        user.setReferenceType(DOMAIN);
 
         when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
                 .thenReturn(Single.just(user));

@@ -16,7 +16,10 @@
 package io.gravitee.am.gateway.handler.account.resources;
 
 import io.gravitee.am.model.User;
+import io.gravitee.am.service.exception.AbstractNotFoundException;
+import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
@@ -48,6 +51,17 @@ public class AccountResponseHandler {
 
     public static void handleUpdateUserResponse(RoutingContext routingContext, String message) {
         handleUpdateUserResponse(routingContext, message, 500);
+    }
+
+    public static void handleUpdateUserResponse(RoutingContext routingContext, Throwable error) {
+        var status = HttpStatusCode.INTERNAL_SERVER_ERROR_500;
+        if (error instanceof AbstractNotFoundException) {
+            status = HttpStatusCode.NOT_FOUND_404;
+        }
+        if (error instanceof InvalidUserException) {
+            status = HttpStatusCode.BAD_REQUEST_400;
+        }
+        handleUpdateUserResponse(routingContext, error.getMessage(), status);
     }
 
     public static void handleUpdateUserResponse(RoutingContext routingContext, String message, Integer statusCode) {
