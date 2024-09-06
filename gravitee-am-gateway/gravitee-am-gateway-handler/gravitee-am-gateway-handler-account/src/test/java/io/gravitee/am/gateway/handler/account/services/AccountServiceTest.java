@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.account.services;
 
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.gateway.handler.account.model.UpdateUsername;
 import io.gravitee.am.gateway.handler.account.services.impl.AccountServiceImpl;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
@@ -35,6 +36,7 @@ import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.InvalidPasswordException;
+import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -357,5 +359,18 @@ public class AccountServiceTest {
                         userUpdate.getPhoneNumber().equals(idpUser.getAdditionalInformation().get(StandardClaims.PHONE_NUMBER))
         ));
         verify(userRepository).update(any());
+    }
+
+    @Test
+    public void should_reject_missing_username() {
+        execUpdateUsername(null);
+        execUpdateUsername(new UpdateUsername());
+    }
+
+    private void execUpdateUsername(UpdateUsername newUsername) {
+        accountService.updateUsername(new io.gravitee.am.model.User(), newUsername, new DefaultUser())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidUserException.class);
     }
 }

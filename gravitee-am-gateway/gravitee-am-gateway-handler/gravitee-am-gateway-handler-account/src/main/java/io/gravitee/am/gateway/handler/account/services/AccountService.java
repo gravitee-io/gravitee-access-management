@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.account.services;
 
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.handler.account.model.UpdateUsername;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Factor;
@@ -46,6 +47,8 @@ public interface AccountService {
     Single<Page<Audit>> getActivity(User user, AuditReportableCriteria criteria, int page, int size);
 
     Single<User> update(User user);
+
+    Single<User> updateUsername(User user, UpdateUsername newUsername, io.gravitee.am.identityprovider.api.User principal);
 
     Single<ResetPasswordResponse> resetPassword(User user, Client client, String password, io.gravitee.am.identityprovider.api.User principal, Optional<String> oldPassword);
 

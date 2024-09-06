@@ -15,10 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.account.services.impl;
 
+import io.gravitee.am.business.UpdateUsernameRule;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.gateway.handler.account.model.UpdateUsername;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -41,11 +43,13 @@ import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.FactorService;
+import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.InvalidPasswordException;
+import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.am.service.exception.ScopeApprovalNotFoundException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -67,6 +71,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+
+import static org.springframework.util.StringUtils.hasLength;
 
 /**
  * @author Donald Courtney (donald.courtney at graviteesource.com)
@@ -109,6 +115,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Autowired
     private ScopeApprovalService scopeApprovalService;
+    @Autowired
+    private LoginAttemptService loginAttemptService;
 
     @Autowired
     private AuditService auditService;
@@ -169,6 +177,22 @@ public class AccountServiceImpl implements AccountService {
                     return Single.error(ex);
                 }));
 
+    }
+
+    @Override
+    public Single<User> updateUsername(User user, UpdateUsername newUsername, io.gravitee.am.identityprovider.api.User principal) {
+        if (newUsername == null || !hasLength(newUsername.getUsername())) {
+            return Single.error(new InvalidUserException("Username is required") );
+        }
+        return new UpdateUsernameRule(userValidator,
+                userService,
+                auditService,
+                credentialService,
+                loginAttemptService).updateUsername(
+                        newUsername.getUsername(),
+                        principal,
+                        (User u) -> identityProviderManager.getUserProvider(u.getSource()).switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(u.getSource()))),
+                        () -> Single.just(user));
     }
 
     @Override
