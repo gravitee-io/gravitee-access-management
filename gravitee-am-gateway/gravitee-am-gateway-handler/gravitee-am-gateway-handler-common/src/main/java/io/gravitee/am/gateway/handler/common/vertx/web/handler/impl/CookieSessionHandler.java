@@ -28,7 +28,7 @@ import io.gravitee.am.model.CookieSettings;
 import io.gravitee.am.model.SessionSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
-import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.http.Cookie;
@@ -62,8 +62,8 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
 
     private final JWTService jwtService;
     private final CertificateManager certificateManager;
-    private final UserService userService;
     private final SubjectManager subjectManager;
+    private final UserEnhancer userEnhancer;
 
     @Value("${http.cookie.session.name:" + DEFAULT_SESSION_COOKIE_NAME + "}")
     private String cookieName;
@@ -76,21 +76,21 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
 
     public CookieSessionHandler(JWTService jwtService,
                                 CertificateManager certificateManager,
-                                UserService userService,
+                                UserEnhancer userGroupEnhancer,
                                 SubjectManager subjectManager) {
         this.jwtService = jwtService;
         this.certificateManager = certificateManager;
-        this.userService = userService;
+        this.userEnhancer = userGroupEnhancer;
         this.subjectManager = subjectManager;
     }
 
     public CookieSessionHandler(JWTService jwtService,
                                 CertificateManager certificateManager,
-                                UserService userService,
                                 SubjectManager subjectManager,
+                                UserEnhancer userGroupEnhancer,
                                 String cookieName,
                                 long timeout) {
-        this(jwtService, certificateManager, userService, subjectManager);
+        this(jwtService, certificateManager, userGroupEnhancer, subjectManager);
         this.cookieName = cookieName;
         this.timeout = timeout;
     }
@@ -122,7 +122,7 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
                             jwt.setInternalSub(userSub);
                             return subjectManager.findUserBySub(jwt)
                                     .doOnSuccess(user -> context.getDelegate().setUser(new User(user)))
-                                    .flatMap(user -> userService.enhance(user).toMaybe())
+                                    .flatMap(user -> userEnhancer.enhance(user).toMaybe())
                                     .map(user -> currentSession)
                                     .switchIfEmpty(cleanupSession(currentSession))
                                     .onErrorResumeNext(exception -> cleanupSession(currentSession));

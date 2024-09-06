@@ -16,7 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.RateLimit;
-import io.gravitee.am.repository.management.api.RateLimitRepository;
+import io.gravitee.am.repository.gateway.api.RateLimitRepository;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.RateLimiterServiceImpl;
 import io.reactivex.rxjava3.core.Maybe;

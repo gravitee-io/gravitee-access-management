@@ -177,7 +177,7 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
     }
 
     @Test
-    public void shouldDeleteByDomainIdClientIdAndUserId() {
+    public void shouldDeleteByDomainIdClientIdAndAndUserId() {
         AccessToken token1 = new AccessToken();
         token1.setId("my-token");
         token1.setToken("my-token");

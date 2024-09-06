@@ -26,7 +26,7 @@ data:
         secure: {{ .Values.gateway.http.cookie.secure | default false }}
         sameSite: {{ .Values.gateway.http.cookie.sameSite | default "Lax" }}
         {{- if .Values.gateway.http.cookie.session }}
-        session: 
+        session:
           name: {{ .Values.gateway.http.cookie.session.name | default "GRAVITEE_IO_AM_SESSION" }}
           timeout: {{ .Values.gateway.http.cookie.session.timeout | default 1800000 }}
         {{- end }}
@@ -70,6 +70,15 @@ data:
           {{- end }}
           path: {{ .Values.gateway.ssl.keystore.path }}
           password: {{ .Values.gateway.ssl.keystore.password | quote }}
+          {{- if .Values.gateway.ssl.keystore.kubernetes }}
+          kubernetes: {{ .Values.gateway.ssl.keystore.kubernetes }}
+          {{- end }}
+          {{- if .Values.gateway.ssl.keystore.secret }}
+          secret: {{ .Values.gateway.ssl.keystore.secret }}
+          {{- end }}
+          {{- if hasKey .Values.gateway.ssl.keystore "watch" }}
+          watch: {{ .Values.gateway.ssl.keystore.watch }}
+          {{- end }}
         clientAuth: {{ .Values.gateway.ssl.clientAuth }}
         tlsProtocols: {{ .Values.gateway.ssl.tlsProtocols }}
         {{- if .Values.gateway.ssl.ciphers }}
@@ -82,6 +91,12 @@ data:
           {{- end }}
           path: {{ .Values.gateway.ssl.truststore.path }}
           password: {{ .Values.gateway.ssl.truststore.password | quote }}
+          {{- if .Values.gateway.ssl.truststore.secret }}
+          secret: {{ .Values.gateway.ssl.truststore.secret }}
+          {{- end }}
+          {{- if hasKey .Values.gateway.ssl.truststore "watch" }}
+          watch: {{ .Values.gateway.ssl.truststore.watch }}
+          {{- end }}
         {{- end }}
         {{- if .Values.gateway.ssl.mtls_aliases }}
         mtls_aliases:
@@ -316,6 +331,72 @@ data:
     {{- else }}
       url: https://{{index .Values.gateway.ingress.hosts 0 }}{{ .Values.gateway.ingress.path }}
     {{- end }}
+      type: {{ .Values.gateway.type | default "mongodb" }}
+      {{- if or (eq .Values.gateway.type "mongodb") (kindIs "invalid" .Values.gateway.type) }}
+      mongodb:
+        sslEnabled: {{ .Values.mongo.sslEnabled }}
+        {{- if .Values.mongo.keystore }}
+        keystore:
+          {{ toYaml .Values.mongo.keystore | nindent 10 | trim -}}
+        {{- end }}
+        {{- if .Values.mongo.truststore }}
+        truststore:
+          {{ toYaml .Values.mongo.truststore | nindent 10 | trim -}}
+        {{- end }}
+        socketKeepAlive: {{ .Values.mongo.socketKeepAlive }}
+        {{- if .Values.mongo.uri }}
+        uri: {{ .Values.mongo.uri }}
+        {{- else if .Values.mongo.servers }}
+        servers:
+          {{- .Values.mongo.servers | nindent 10 }}
+        dbname: {{ .Values.mongo.dbname }}
+        {{- if (eq .Values.mongo.auth.enabled true) }}
+        username: {{ .Values.mongo.auth.username }}
+        {{- if .Values.mongo.auth.password }}
+        password: {{ .Values.mongo.auth.password }}
+        {{- end }}
+        {{- if .Values.mongo.auth.source }}
+        authSource: {{ .Values.mongo.auth.source }}
+        {{- end }}
+        {{- end }}
+        {{- else }}
+        uri: mongodb://{{- if (eq .Values.mongo.auth.enabled true) }}{{ .Values.mongo.auth.username }}:{{ .Values.mongo.auth.password }}@{{- end }}{{ .Values.mongo.dbhost }}:{{ .Values.mongo.dbport }}/{{ .Values.mongo.dbname }}?{{- if .Values.mongo.rsEnabled }}&replicaSet={{ .Values.mongo.rs }}{{- end }}{{- if (eq .Values.mongo.auth.enabled true) }}&authSource={{ .Values.mongo.auth.source }}{{- end }}{{- if .Values.mongo.connectTimeoutMS }}&connectTimeoutMS={{ .Values.mongo.connectTimeoutMS }}{{- end }}
+        {{- end }}
+      {{- else if (eq .Values.gateway.type "jdbc") }}
+      jdbc:
+        driver: {{ .Values.jdbc.driver }}
+        host: {{ .Values.jdbc.host }}
+        port: {{ .Values.jdbc.port }}
+        database: {{ .Values.jdbc.database }}
+        {{- if .Values.jdbc.username }}
+        username: {{ .Values.jdbc.username }}
+        {{- end }}
+        {{- if .Values.jdbc.password }}
+        password: {{ .Values.jdbc.password }}
+        {{- end }}
+        {{- if .Values.jdbc.pool }}
+        {{ toYaml .Values.jdbc.pool | nindent 8 | trim -}}
+        {{- end }}
+        {{- if .Values.jdbc.sslEnabled }}
+        sslEnabled: {{ .Values.jdbc.sslEnabled }}
+        {{- end }}
+        {{- if .Values.jdbc.sslMode }}
+        sslMode: {{ .Values.jdbc.sslMode }}
+        {{- end }}
+        {{- if .Values.jdbc.sslServerCert }}
+        sslServerCert: {{ .Values.jdbc.sslServerCert }}
+        {{- end }}
+        {{- if .Values.jdbc.trustServerCertificate }}
+        trustServerCertificate: {{ .Values.jdbc.trustServerCertificate }}
+        {{- end }}
+        {{- if .Values.jdbc.disableSslHostnameVerification }}
+        disableSslHostnameVerification: {{ .Values.jdbc.disableSslHostnameVerification }}
+        {{- end }}
+        {{- if .Values.jdbc.trustStore }}
+        trustStore:
+          {{ toYaml .Values.jdbc.trustStore | nindent 10 | trim -}}
+        {{- end }}
+      {{- end }}
 
   {{- if .Values.gateway.consent }}
     consent:

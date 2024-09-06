@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.jdbc.provider.impl;
 
-import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.jdbc.provider.R2DBCConnectionConfiguration;
 import io.gravitee.am.repository.jdbc.provider.R2DBCSpringBeanAccessor;
 import io.gravitee.am.repository.provider.ClientWrapper;
@@ -23,7 +22,6 @@ import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.r2dbc.spi.ConnectionFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
@@ -37,6 +35,10 @@ import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.ReactiveTransactionManager;
 
+import static io.gravitee.am.repository.Scope.GATEWAY;
+import static io.gravitee.am.repository.Scope.MANAGEMENT;
+import static io.gravitee.am.repository.Scope.OAUTH2;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -47,15 +49,14 @@ import org.springframework.transaction.ReactiveTransactionManager;
 @org.springframework.context.annotation.Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
 public class R2DBCConnectionProvider implements ConnectionProvider<ConnectionFactory, R2DBCConnectionConfiguration>, InitializingBean, R2DBCSpringBeanAccessor {
 
-    @Value("${oauth2.use-management-settings:true}")
-    private boolean useManagementSettings;
-
     @Autowired
     private Environment environment;
 
     private ClientWrapper<ConnectionFactory> commonConnectionFactory;
 
     private ClientWrapper<ConnectionFactory> oauthConnectionFactory;
+
+    private ClientWrapper<ConnectionFactory> gatewayConnectionFactory;
 
     @Autowired
     @Lazy
@@ -88,6 +89,9 @@ public class R2DBCConnectionProvider implements ConnectionProvider<ConnectionFac
     @Autowired
     @Lazy
     private ReactiveTransactionManager transactionManager;
+
+    private boolean notUseMngSettingsForOauth2;
+    private boolean notUseMngSettingsForGateway;
 
     @Override
     public DatabaseClient databaseClient() {
@@ -131,12 +135,18 @@ public class R2DBCConnectionProvider implements ConnectionProvider<ConnectionFac
 
     @Override
     public ClientWrapper<ConnectionFactory> getClientWrapper() {
-        return getClientWrapper(Scope.MANAGEMENT.getName());
+        return getClientWrapper(MANAGEMENT.getName());
     }
 
     @Override
     public ClientWrapper getClientWrapper(String name) {
-        return Scope.OAUTH2.getName().equals(name) && !this.useManagementSettings ? this.oauthConnectionFactory : this.commonConnectionFactory;
+        if (OAUTH2.getName().equals(name) && notUseMngSettingsForOauth2) {
+            return oauthConnectionFactory;
+        } else if (GATEWAY.getName().equals(name) && notUseMngSettingsForGateway) {
+            return gatewayConnectionFactory;
+        } else {
+            return commonConnectionFactory;
+        }
     }
 
     @Override
@@ -146,21 +156,31 @@ public class R2DBCConnectionProvider implements ConnectionProvider<ConnectionFac
 
     @Override
     public ConnectionProvider stop() throws Exception {
-        if (this.commonConnectionFactory != null) {
-            ((R2DBCPoolWrapper) this.commonConnectionFactory).shutdown();
+        if (commonConnectionFactory != null) {
+            ((R2DBCPoolWrapper) commonConnectionFactory).shutdown();
         }
-        if (this.oauthConnectionFactory != null) {
-            ((R2DBCPoolWrapper) this.oauthConnectionFactory).shutdown();
+        if (oauthConnectionFactory != null) {
+            ((R2DBCPoolWrapper) oauthConnectionFactory).shutdown();
+        }
+        if (gatewayConnectionFactory != null) {
+            ((R2DBCPoolWrapper) gatewayConnectionFactory).shutdown();
         }
         return this;
     }
 
     @Override
     public void afterPropertiesSet() throws Exception {
+        final var useMngSettingsForOauth2 = environment.getProperty("oauth2.use-management-settings", Boolean.class, true);
+        final var useMngSettingsForGateway = environment.getProperty("gateway.use-management-settings", Boolean.class, true);
+        notUseMngSettingsForOauth2 = !useMngSettingsForOauth2;
+        notUseMngSettingsForGateway = !useMngSettingsForGateway;
         // create the connection pool just after the bean Initialization to guaranty the uniqueness
-        this.commonConnectionFactory = new R2DBCPoolWrapper(new ConnectionFactoryProvider(this.environment, Scope.MANAGEMENT.getName()));
-        if (!useManagementSettings) {
-            this.oauthConnectionFactory = new R2DBCPoolWrapper(new ConnectionFactoryProvider(this.environment, Scope.OAUTH2.getName()));
+        commonConnectionFactory = new R2DBCPoolWrapper(new ConnectionFactoryProvider(environment, MANAGEMENT.getName()));
+        if (notUseMngSettingsForGateway) {
+            gatewayConnectionFactory = new R2DBCPoolWrapper(new ConnectionFactoryProvider(environment, GATEWAY.getName()));
+        }
+        if (notUseMngSettingsForOauth2) {
+            oauthConnectionFactory = new R2DBCPoolWrapper(new ConnectionFactoryProvider(environment, OAUTH2.getName()));
         }
     }
 
@@ -168,6 +188,4 @@ public class R2DBCConnectionProvider implements ConnectionProvider<ConnectionFac
     public boolean canHandle(String backendType) {
         return BACKEND_TYPE_RDBMS.equals(backendType);
     }
-
-
 }

@@ -17,7 +17,6 @@ package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
@@ -34,6 +33,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -48,13 +48,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.service.utils.UserProfileUtils.buildDisplayName;
@@ -85,7 +81,7 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
     protected GroupService groupService;
 
     protected abstract T getUserRepository();
-
+    protected abstract UserEnhancer getUserEnhancer();
     @Override
     public Flowable<User> findByIdIn(List<String> ids) {
         String userIds = String.join(",", ids);
@@ -210,7 +206,9 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
                         user.setAdditionalInformation(newUser.getAdditionalInformation());
                         user.setCreatedAt(new Date());
                         user.setUpdatedAt(user.getCreatedAt());
-                        return create(user);
+                        return create(user)
+                                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).user(user1)))
+                                .doOnError(err -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).throwable(err)));
                     }
                 })
                 .onErrorResumeNext(ex -> {
@@ -233,7 +231,6 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
         user.setUpdatedAt(user.getCreatedAt());
         return userValidator.validate(user)
                 .andThen(getUserRepository().create(user))
-                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).user(user1)))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
@@ -310,46 +307,7 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
 
     @Override
     public Single<User> enhance(User user) {
-        LOGGER.debug("Enhance user {}", user.getId());
-
-        // fetch user groups
-        return groupService.findByMember(user.getId())
-                .toList()
-                .flatMap(groups -> {
-                    Set<String> roles = new HashSet<>();
-                    if (groups != null && !groups.isEmpty()) {
-                        // set groups
-                        user.setGroups(groups.stream().map(Group::getName).collect(Collectors.toList()));
-                        // set groups roles
-                        roles.addAll(groups
-                                .stream()
-                                .filter(group -> group.getRoles() != null && !group.getRoles().isEmpty())
-                                .flatMap(group -> group.getRoles().stream())
-                                .collect(Collectors.toSet()));
-                    }
-                    // get user roles
-                    if (user.getRoles() != null && !user.getRoles().isEmpty()) {
-                        roles.addAll(user.getRoles());
-                    }
-                    if (user.getDynamicRoles() != null && !user.getDynamicRoles().isEmpty()) {
-                        roles.addAll(user.getDynamicRoles());
-                    }
-                    // fetch roles information and enhance user data
-                    if (!roles.isEmpty()) {
-                        return roleService.findByIdIn(new ArrayList<>(roles)).map(foundRoles -> {
-                            user.setRolesPermissions(foundRoles);
-                            return user;
-                        });
-                    }
-                    return Single.just(user);
-                })
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
-                    }
-                    LOGGER.error("An error occurs while trying to enhance user {}", user.getId(), ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to enhance user %s", user.getId()), ex));
-                });
+        return getUserEnhancer().enhance(user);
     }
 
 }

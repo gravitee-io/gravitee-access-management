@@ -64,6 +64,7 @@ public class FilterUtils {
             filteredAuditEntity.setDisplayName(auditEntity.getDisplayName());
             filteredAuditEntity.setReferenceType(auditEntity.getReferenceType());
             filteredAuditEntity.setReferenceId(auditEntity.getReferenceId());
+            filteredAuditEntity.setAttributes(auditEntity.getAttributes());
         }
 
         return filteredAuditEntity;

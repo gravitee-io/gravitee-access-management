@@ -16,8 +16,13 @@
 package io.gravitee.am.gateway.handler.common.role;
 
 
-import io.gravitee.common.service.Service;
+import io.gravitee.am.model.Role;
+import io.reactivex.rxjava3.core.Flowable;
 
-public interface RoleManager extends Service {
+import java.util.List;
+
+public interface RoleManager {
+
+    Flowable<Role> findByIdIn(List<String> roles);
 
 }

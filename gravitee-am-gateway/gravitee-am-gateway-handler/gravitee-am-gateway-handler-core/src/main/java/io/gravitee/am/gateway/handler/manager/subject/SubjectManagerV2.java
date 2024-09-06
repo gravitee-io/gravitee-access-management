@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.gravitee.am.gateway.handler.manager.subject;
 
 
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImplV2;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
@@ -29,9 +30,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
+import java.util.UUID;
+
+import static io.gravitee.am.gateway.handler.common.user.impl.UserServiceImplV2.SEPARATOR;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -41,34 +42,36 @@ import java.util.HexFormat;
 @AllArgsConstructor
 public class SubjectManagerV2 implements SubjectManager {
 
-    private static final String SUB_PREFIX = "h_";
-    private static final String SEPARATOR = ":";
-
     private UserService userService;
+
+    private ClientManager clientManager;
 
     private Domain domain;
 
     @Override
     public String generateSubFrom(User user) {
-        final var gisub = generateInternalSubFrom(user);
-        try {
-            var rawhash = MessageDigest.getInstance("SHA-256").digest(gisub.getBytes(StandardCharsets.UTF_8));
-            return SUB_PREFIX + HexFormat.of().formatHex(rawhash);
-        } catch (NoSuchAlgorithmException e) {
-            log.warn("Error while generating subject from user", e);
-            return gisub;
-        }
+        return UUID.nameUUIDFromBytes(generateInternalSubFrom(user).getBytes(StandardCharsets.UTF_8)).toString();
     }
 
     @Override
     public String generateInternalSubFrom(User user) {
-        return user.getSource() + SEPARATOR + user.getExternalId();
+        return UserServiceImplV2.generateInternalSubFrom(user.getSource(), user.getExternalId());
     }
 
     @Override
     public void updateJWT(JWT jwt, User user) {
-        jwt.setInternalSub(generateInternalSubFrom(user));
-        jwt.setSub(generateSubFrom(user));
+        if (user.getSource() == null ) {
+            // This is for extension grant because we cannot do distinguish between service and user profile
+            // in the ExtensionGrant implementation for V2 domain,
+            // if Create or Verify Account is enabled the source will be present
+            // as we are playing user profile
+            // otherwise we just want to generate a token
+            // based on the assertion, in that cas we only set the sub equals to the userId
+            jwt.setSub(user.getId());
+        } else {
+            jwt.setInternalSub(generateInternalSubFrom(user));
+            jwt.setSub(generateSubFrom(user));
+        }
     }
 
     @Override
@@ -80,7 +83,7 @@ public class SubjectManagerV2 implements SubjectManager {
 
         final var internalSub = token.getInternalSub();
         final var source = internalSub.substring(0, internalSub.indexOf(SEPARATOR));
-        final var extId = internalSub.substring(internalSub.indexOf(SEPARATOR)+1);
+        final var extId = internalSub.substring(internalSub.indexOf(SEPARATOR) + 1);
         return userService.findByDomainAndExternalIdAndSource(domain.getId(), extId, source);
     }
 
@@ -102,5 +105,15 @@ public class SubjectManagerV2 implements SubjectManager {
         }
         return findUserBySub(sub)
                 .map(DefaultUser::new);
+    }
+
+    @Override
+    public String extractUserId(String gis) {
+        return gis.substring(gis.indexOf(SEPARATOR) + 1);
+    }
+
+    @Override
+    public String extractSourceId(String gis) {
+        return gis.substring(0, gis.indexOf(SEPARATOR));
     }
 }

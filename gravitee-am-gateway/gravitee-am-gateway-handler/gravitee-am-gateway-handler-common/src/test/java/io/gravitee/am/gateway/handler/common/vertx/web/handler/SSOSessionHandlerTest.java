@@ -32,7 +32,7 @@ import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.LoginAttemptService;
-import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -69,7 +69,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
     private CertificateManager certificateManager;
 
     @Mock
-    private UserService userService;
+    private UserEnhancer userEnhancer;
 
     @Mock
     private SubjectManager subjectManager;
@@ -90,7 +90,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         when(jwtService.encode(any(JWT.class), (CertificateProvider) eq(null))).thenReturn(Single.just("token"));
 
         router.route("/login")
-                .handler(new CookieSessionHandler(jwtService, certificateManager, userService, subjectManager, "am-cookie", 30 * 60 * 60))
+                .handler(new CookieSessionHandler(jwtService, certificateManager, subjectManager, userEnhancer, "am-cookie", 30 * 60 * 60))
                 .handler(new SSOSessionHandler(clientSyncService, authenticationFlowContextService, loginAttemptService, domain))
                 .handler(rc -> {
                     if (rc.session().isDestroyed()) {
@@ -220,10 +220,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldInvoke_differentClient_sameIdp() throws Exception {
-        User user = new User();
-        user.setId("user-id");
-        user.setClient("test-client");
-        user.setSource("idp-1");
+        User user = userFromTestClient();
 
         Client client = new Client();
         client.setId("client-id");
@@ -263,10 +260,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldInvoke_differentClient_sameIdp_using_UserIdentities() throws Exception {
-        User user = new User();
-        user.setId("user-id");
-        user.setClient("test-client");
-        user.setSource("idp-1");
+        User user = userFromTestClient();
         UserIdentity userIdentity = new UserIdentity();
         userIdentity.setProviderId("idp-2");
         user.setIdentities(List.of(userIdentity));
@@ -308,10 +302,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldInvoke_differentClient_sameIdp_UserBlocked() throws Exception {
-        User user = new User();
-        user.setId("user-id");
-        user.setClient("test-client");
-        user.setSource("idp-1");
+        User user = userFromTestClient();
 
         Client client = new Client();
         client.setId("client-id");
@@ -363,13 +354,19 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
                 HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
     }
 
-
-    @Test
-    public void shouldInvoke_differentClient_sameIdp_UserNotBlocked() throws Exception {
+    private static User userFromTestClient() {
         User user = new User();
         user.setId("user-id");
         user.setClient("test-client");
         user.setSource("idp-1");
+        user.setExternalId("idp1-user-id");
+        return user;
+    }
+
+
+    @Test
+    public void shouldInvoke_differentClient_sameIdp_UserNotBlocked() throws Exception {
+        User user = userFromTestClient();
 
         Client client = new Client();
         client.setId("client-id");
@@ -423,10 +420,8 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldInvoke_differentClient_differentIdp() throws Exception {
-        User user = new User();
-        user.setId("user-id");
-        user.setClient("test-client");
-        user.setSource("idp-1");
+        User user = userFromTestClient();
+
 
         Client client = new Client();
         client.setId("client-id");

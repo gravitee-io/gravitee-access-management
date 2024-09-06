@@ -174,6 +174,15 @@ management:
 # All services are enabled by default. To stop one of them, you have to add the property 'enabled: false' (See the
 # 'local' service for an example).
 services:
+#  # sync process
+#  sync:
+#    enabled: true
+#    # frequency on which new events are checked
+#    cron: "*/5 * * * * *"
+#    # should we manage groups & roles in memory
+#    # by using sync process to update them
+#    permissions: false
+
   core:
     http:
       enabled: true
@@ -187,6 +196,7 @@ services:
         type: basic
         users:
           admin: adminadmin
+
 
   # Metrics service
   metrics:
@@ -249,6 +259,13 @@ email:
 
 # User management configuration
 user:
+#  # keep user profile during authentication flow
+#  # into a cache to limit read access to the Database
+#  # when the Gateway is looking for the profile linked to the session
+#  cache:
+#    enabled: false
+#    # retention duration in seconds
+#    ttl: 3600
 #  activity:
 #    enabled: true # default is false
 #    anon: #used to anonymize the user activity
@@ -340,6 +357,12 @@ handlers:
 # Gateway entry point used in emails
 gateway:
   url: http://localhost:8092
+  type: ${management.type}
+  use-management-settings: true
+  mongodb:
+    dbname: ${ds.mongodb.dbname}
+    host: ${ds.mongodb.host}
+    port: ${ds.mongodb.port}
 
 # global configuration of the http client
 #httpClient:
@@ -415,6 +438,46 @@ gateway:
 #      cache:
 #        capacity: 8200  #if null defaults to 4096
 
+## enabled resilience mode
+## this option is useful for domain created
+## starting from AM 4.5.0, domains created
+## in previous version can't use this option
+## WARNING: this option if enable may have some side effect
+##          Please read carefully the documentation fof v4.5.0 before using it
+#resilience:
+#  enabled: false
+
+# Configure cache implementation
+#cache:
+#  type: redis
+#  redis:
+#    host: localhost
+#    port: 6379
+#    password: ***
+#    ssl: false
+#    ## Sentinel mode settings (optional)
+#    # sentinel:
+#    #   master: mymaster
+#    #   password: ***
+#    #   nodes:
+#    #     host: host
+#    #     port: 6379
+#    ## SSL options  (optional if ssl is false)
+#    #hostnameVerificationAlgorithm: NONE
+#    #trustAll: false
+#    #keystore:
+#    #  type: PKCS12
+#    #  path: /path/to/pkcs.12
+#    #  password: ***
+#    #  keyPassword: ***
+#    #  alias: certalias
+#    #truststore:
+#    #  type: PKCS12
+#    #  path: /path/to/pkcs.12
+#    #  password: ***
+#    #  alias: certalias
+
+
 # Referenced properties
 ds:
   mongodb:
@@ -477,7 +540,10 @@ liquibase:
 #    algorithm: None
 #    properties:
 #      rounds: 10
-# synchronized roles by event manager to reduce db calls from gateway
+
+# synchronized roles and groups by event manager to reduce db calls from gateway
 sync:
+  groups:
+    enabled: false
   roles:
     enabled: false

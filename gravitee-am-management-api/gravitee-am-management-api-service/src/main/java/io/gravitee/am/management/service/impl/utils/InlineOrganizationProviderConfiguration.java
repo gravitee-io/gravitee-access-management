@@ -23,6 +23,7 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.RoleService;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
@@ -91,20 +92,26 @@ public class InlineOrganizationProviderConfiguration extends OrganizationProvide
     }
 
     @Override
-    public IdentityProvider buildIdentityProvider() {
-        IdentityProvider provider = new IdentityProvider();
-        provider.setId(MEMORY_TYPE);
+    public Single<IdentityProvider> buildIdentityProvider() {
+        return Single.fromSupplier(() -> {
+            IdentityProvider provider = new IdentityProvider();
+            provider.setId(MEMORY_TYPE);
 
-        provider.setConfiguration(generateConfiguration());
+            provider.setConfiguration(generateConfiguration());
 
-        provider.setExternal(false);
-        provider.setType("inline-am-idp");// use the inline provider implementation as InMemory provider
-        provider.setName(getName());
-        provider.setSystem(false);
-        provider.setReferenceId(Organization.DEFAULT);
-        provider.setReferenceType(ReferenceType.ORGANIZATION);
-        provider.setRoleMapper(generateRoleMapper());
-        return provider;
+            provider.setExternal(false);
+            provider.setType("inline-am-idp"); // use the inline provider implementation as InMemory provider
+            provider.setName(getName());
+            provider.setSystem(false);
+            provider.setReferenceId(Organization.DEFAULT);
+            provider.setReferenceType(ReferenceType.ORGANIZATION);
+            return provider;
+        }).flatMap(identityProvider -> {
+            return generateRoleMapper().map(roleMapper -> {
+                identityProvider.setRoleMapper(roleMapper);
+                return identityProvider;
+            });
+        });
     }
 
     private String generateConfiguration() {
@@ -126,34 +133,33 @@ public class InlineOrganizationProviderConfiguration extends OrganizationProvide
         return json.encode();
     }
 
-    private Map<String, String[]> generateRoleMapper() {
-        Map<String, String[]> result = new HashMap<>();
-
-        final List<String> roleNames = Arrays.asList(
+    private Single<Map<String, String[]>> generateRoleMapper() {
+        final var roleNames = Arrays.asList(
                 SystemRole.ORGANIZATION_PRIMARY_OWNER.name(),
                 ORGANIZATION_OWNER.name(),
                 ORGANIZATION_USER.name());
 
-        final Map<String, Role> organizationRoles = Flowable.merge(
+        return Flowable.merge(
                 roleService.findRolesByName(ReferenceType.PLATFORM, Platform.DEFAULT, ReferenceType.ORGANIZATION, roleNames),
                 roleService.findRolesByName(ReferenceType.ORGANIZATION, Organization.DEFAULT, ReferenceType.ORGANIZATION, roleNames))
-                .collect(HashMap<String, Role>::new, (acc, role) -> acc.put(role.getName(), role)).blockingGet();
-
-        users.forEach((username, def) -> {
-            Role role = organizationRoles.get(def.getRole());
-            if (role != null) {
-                String[] rules = result.get(role.getId());
-                if (rules == null) {
-                    rules = new String[1];
-                } else {
-                    rules = Arrays.copyOf(rules, rules.length + 1);
-                }
-                rules[rules.length - 1] = "username=" + username;
-                result.put(role.getId(), rules);
-            }
-        });
-
-        return result;
+                .collect(HashMap<String, Role>::new, (acc, role) -> acc.put(role.getName(), role))
+                .map(organizationRoles -> {
+                    final var result = new HashMap<String, String[]>();
+                    users.forEach((username, def) -> {
+                        Role role = organizationRoles.get(def.getRole());
+                        if (role != null) {
+                            var rules = result.get(role.getId());
+                            if (rules == null) {
+                                rules = new String[1];
+                            } else {
+                                rules = Arrays.copyOf(rules, rules.length + 1);
+                            }
+                            rules[rules.length - 1] = "username=" + username;
+                            result.put(role.getId(), rules);
+                        }
+                    });
+                    return result;
+                });
     }
 
     public String getPasswordEncoder() {

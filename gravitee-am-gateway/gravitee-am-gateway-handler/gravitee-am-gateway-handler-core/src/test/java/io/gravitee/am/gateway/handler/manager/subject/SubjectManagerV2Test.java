@@ -18,10 +18,12 @@ package io.gravitee.am.gateway.handler.manager.subject;
 
 
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.jupiter.api.Assertions;
@@ -33,9 +35,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static io.gravitee.am.common.jwt.Claims.GIO_INTERNAL_SUB;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -55,11 +60,14 @@ public class SubjectManagerV2Test {
     @Mock
     private UserService userService;
 
+    @Mock
+    private ClientManager clientManager;
+
     private SubjectManager cut;
 
     @BeforeEach
     protected void setup() {
-        cut = new SubjectManagerV2(userService, domain);
+        cut = new SubjectManagerV2(userService, clientManager, domain);
     }
 
     @Test
@@ -69,7 +77,7 @@ public class SubjectManagerV2Test {
         user.setSource(UUID.randomUUID().toString());
 
         Assertions.assertEquals(user.getSource() + ":" + user.getExternalId(), cut.generateInternalSubFrom(user));
-        Assertions.assertTrue(cut.generateSubFrom(user).startsWith("h_"));
+        Assertions.assertEquals(3, UUID.fromString(cut.generateSubFrom(user)).version());
     }
 
     @Test
@@ -126,4 +134,18 @@ public class SubjectManagerV2Test {
 
         verify(userService, never()).findByDomainAndExternalIdAndSource(any(), any(), any());
     }
+
+    @Test
+    public void should_not_add_gis_when_user_is_service(){
+        final User user = new User();
+        user.setId("client-id");
+        final var token = new JWT();
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        cut.updateJWT(token, user);
+
+        Assertions.assertNull(token.getInternalSub());
+    }
+
 }

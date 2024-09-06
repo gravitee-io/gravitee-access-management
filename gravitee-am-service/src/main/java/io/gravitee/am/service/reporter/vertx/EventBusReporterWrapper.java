@@ -148,7 +148,9 @@ public class EventBusReporterWrapper<R extends Reportable,C extends ReportableCr
     }
 
     public void unregister() {
-        messageConsumer.unregister();
+        if (messageConsumer != null) {
+            messageConsumer.unregister();
+        }
     }
 
     public void updateReferences(ChildReporterAction referenceChange) {

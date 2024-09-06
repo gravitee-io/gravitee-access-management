@@ -19,6 +19,9 @@ import io.gravitee.am.model.User;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.HashMap;
+import java.util.Map;
+
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -27,7 +30,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class UserEntity extends User {
-
     private ApplicationEntity applicationEntity;
 
     private String sourceId;
@@ -62,7 +64,7 @@ public class UserEntity extends User {
         setRoles(user.getRoles());
         setDynamicRoles(user.getDynamicRoles());
         setRolesPermissions(user.getRolesPermissions());
-        setAdditionalInformation(user.getAdditionalInformation());
+        setAdditionalInformation(filterSensitiveInfo(user.getAdditionalInformation()));
         setCreatedAt(user.getCreatedAt());
         setUpdatedAt(user.getUpdatedAt());
         setLastPasswordReset(user.getLastPasswordReset());
@@ -71,4 +73,15 @@ public class UserEntity extends User {
         setServiceAccount(user.getServiceAccount());
         this.sourceId = user.getSource();
     }
+
+    private Map<String, Object> filterSensitiveInfo(Map<String, Object> additionalInformation) {
+        if (additionalInformation == null) {
+            return null;
+        }
+        return additionalInformation.entrySet()
+                .stream()
+                .map(e -> SENSITIVE_ADDITIONAL_PROPERTIES.contains(e.getKey()) ? Map.entry(e.getKey(), SENSITIVE_PROPERTY_PLACEHOLDER) : e)
+                .collect(HashMap::new, (map, e) -> map.put(e.getKey(), e.getValue()), HashMap::putAll);
+    }
+
 }

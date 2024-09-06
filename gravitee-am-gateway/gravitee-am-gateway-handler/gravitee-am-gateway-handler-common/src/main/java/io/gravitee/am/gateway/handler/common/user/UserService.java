@@ -92,19 +92,31 @@ public interface UserService {
 
     /**
      * Add an MFA factor to an end-user
+     *
+     * @Deprecated use upsertFactor instead
      * @param userId the end-user id
      * @param enrolledFactor the factor to enroll
      * @param principal the user who has performed this action
      * @return
      */
-    Single<User> addFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal);
+    @Deprecated(since = "4.5.0", forRemoval = true)
+    default Single<User> addFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal) {
+        return upsertFactor(userId, enrolledFactor, principal);
+    }
 
     /**
      * Update an MFA factor to an end-user
+     *
+     * @Deprecated use upsertFactor instead
      * @param userId the end-user id
      * @param enrolledFactor the factor to enroll
      * @param principal the user who has performed this action
      * @return
      */
-    Single<User> updateFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal);
+    @Deprecated(since = "4.5.0", forRemoval = true)
+    default Single<User> updateFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal) {
+        return upsertFactor(userId, enrolledFactor, principal);
+    }
+
+    Single<User> upsertFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal);
 }

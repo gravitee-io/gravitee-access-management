@@ -201,7 +201,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Single<User> upsertFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal) {
-        return userService.upsertFactor(userId, enrolledFactor, principal);
+        return gatewayUserService.upsertFactor(userId, enrolledFactor, principal);
     }
 
     @Override

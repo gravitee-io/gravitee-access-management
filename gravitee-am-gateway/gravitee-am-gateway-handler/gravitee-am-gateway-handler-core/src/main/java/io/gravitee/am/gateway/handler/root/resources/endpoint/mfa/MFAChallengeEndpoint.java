@@ -36,6 +36,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.VerifyAttempt;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
@@ -46,7 +47,6 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.DeviceService;
-import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.FactorNotFoundException;
@@ -135,7 +135,6 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
     private final DeviceService deviceService;
     private final Domain domain;
     private final CredentialService credentialService;
-    private final FactorService factorService;
     private final RateLimiterService rateLimiterService;
     private final VerifyAttemptService verifyAttemptService;
     private final EmailService emailService;
@@ -148,7 +147,6 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                                 ApplicationContext applicationContext,
                                 Domain domain,
                                 CredentialService credentialService,
-                                FactorService factorService,
                                 RateLimiterService rateLimiterService,
                                 VerifyAttemptService verifyAttemptService,
                                 EmailService emailService,
@@ -160,7 +158,6 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         this.deviceService = deviceService;
         this.domain = domain;
         this.credentialService = credentialService;
-        this.factorService = factorService;
         this.rateLimiterService = rateLimiterService;
         this.verifyAttemptService = verifyAttemptService;
         this.emailService = emailService;
@@ -391,7 +388,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                 redirectToAuthorize(routingContext, client, endUser);
             } else {
                 final String fidoFactorId = routingContext.session().get(ENROLLED_FACTOR_ID_KEY);
-                factorService.enrollFactor(endUser, createEnrolledFactor(fidoFactorId, credentialId))
+                userService.upsertFactor(endUser.getId(), createEnrolledFactor(fidoFactorId, credentialId), new DefaultUser(endUser))
                         .ignoreElement()
                         .subscribe(
                                 () -> {
@@ -414,7 +411,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         var rememberDeviceSettings = getRememberDeviceSettings(client);
         boolean rememberDeviceConsent = REMEMBER_DEVICE_CONSENT_ON.equalsIgnoreCase(routingContext.request().getParam(REMEMBER_DEVICE_CONSENT));
         if (rememberDeviceSettings.isActive() && rememberDeviceConsent) {
-            saveDeviceAndRedirect(routingContext, client, user.getId(), rememberDeviceSettings, returnURL);
+            saveDeviceAndRedirect(routingContext, client, user.getFullId(), rememberDeviceSettings, returnURL);
         } else {
             doRedirect(routingContext.request().response(), returnURL);
         }
@@ -449,7 +446,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
     }
 
     private void saveFactor(User user, Single<EnrolledFactor> enrolledFactor, Handler<AsyncResult<User>> handler) {
-        enrolledFactor.flatMap(factor -> userService.addFactor(user.getId(), factor, new DefaultUser(user)))
+        enrolledFactor.flatMap(factor -> userService.upsertFactor(user.getId(), factor, new DefaultUser(user)))
                 .subscribe(
                         user1 -> handler.handle(Future.succeededFuture(user1)),
                         error -> handler.handle(Future.failedFuture(error))
@@ -478,7 +475,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
             rateLimiterService.tryConsume(endUser.getId(), factor.getId(), endUser.getClient(), client.getDomain())
                     .subscribe(allowRequest -> {
                                 if (allowRequest) {
-                                    sendChallenge(routingContext, factorProvider, factorContext,endUser, client, factor, handler);
+                                    sendChallenge(routingContext, factorProvider, factorContext, endUser, client, factor, handler);
                                 } else {
                                     updateAuditLog(routingContext, MFA_RATE_LIMIT_REACHED, endUser, client, factor, factorContext, new Throwable("MFA rate limit reached"));
                                     handleException(routingContext, RATE_LIMIT_ERROR_PARAM_KEY, "mfa_request_limit_exceed");
@@ -662,7 +659,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                 .orElse(new RememberDeviceSettings());
     }
 
-    private void saveDeviceAndRedirect(RoutingContext routingContext, Client client, String userId, RememberDeviceSettings settings, String redirectUrl) {
+    private void saveDeviceAndRedirect(RoutingContext routingContext, Client client, UserId userId, RememberDeviceSettings settings, String redirectUrl) {
         var deviceId = routingContext.session().<String>get(DEVICE_ID);
         var rememberDeviceId = settings.getDeviceIdentifierId();
         if (isNullOrEmpty(deviceId)) {

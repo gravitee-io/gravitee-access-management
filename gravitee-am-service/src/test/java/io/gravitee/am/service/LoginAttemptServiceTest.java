@@ -17,7 +17,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.model.LoginAttempt;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.repository.management.api.LoginAttemptRepository;
+import io.gravitee.am.repository.gateway.api.LoginAttemptRepository;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.impl.LoginAttemptServiceImpl;
 import io.reactivex.rxjava3.core.Maybe;

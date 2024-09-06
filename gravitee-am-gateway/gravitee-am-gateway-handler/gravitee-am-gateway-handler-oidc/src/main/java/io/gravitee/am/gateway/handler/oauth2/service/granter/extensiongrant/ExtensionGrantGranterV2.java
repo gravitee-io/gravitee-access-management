@@ -27,9 +27,11 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.gateway.api.Request;
 import io.reactivex.rxjava3.core.Maybe;
 import lombok.extern.slf4j.Slf4j;
 
@@ -66,8 +68,12 @@ public class ExtensionGrantGranterV2 extends ExtensionGrantGranter {
     }
 
     @Override
-    protected Maybe<User> manageUserConnect(Client client, io.gravitee.am.identityprovider.api.User endUser) {
-        return super.manageUserConnect(client, endUser).map(connectedUser -> {
+    protected Maybe<User> manageUserConnect(Client client, io.gravitee.am.identityprovider.api.User endUser, Request request) {
+        String gis = (String) endUser.getAdditionalInformation().get(Claims.GIO_INTERNAL_SUB);
+        if (gis != null) {
+            ((DefaultUser) endUser).setId(subjectManager.extractUserId(gis));
+        }
+        return super.manageUserConnect(client, endUser, request).map(connectedUser -> {
             connectedUser.setSource(retrieveSourceFrom(getExtensionGrant()));
             return connectedUser;
         });
@@ -75,10 +81,18 @@ public class ExtensionGrantGranterV2 extends ExtensionGrantGranter {
 
     @Override
     protected Maybe<User> forgeUserProfile(io.gravitee.am.identityprovider.api.User endUser) {
-        return super.forgeUserProfile(endUser).map(user -> {
-            user.setSource(retrieveSourceFrom(getExtensionGrant()));
-            return user;
-        });
+        User user = new User();
+        // we do not router AM user, user id is the idp user id
+        user.setId(endUser.getId());
+        user.setUsername(endUser.getUsername());
+        user.setAdditionalInformation(endUser.getAdditionalInformation());
+
+        String gis = (String) endUser.getAdditionalInformation().get(Claims.GIO_INTERNAL_SUB);
+        if (gis != null) {
+            user.setExternalId(subjectManager.extractUserId(gis));
+            user.setSource(subjectManager.extractSourceId(gis));
+        }
+        return Maybe.just(user);
     }
 
     protected Maybe<User> manageUserValidation(TokenRequest tokenRequest, io.gravitee.am.identityprovider.api.User endUser) {
@@ -93,7 +107,7 @@ public class ExtensionGrantGranterV2 extends ExtensionGrantGranter {
                                 final var jwt = new JWT();
                                 jwt.setSub(endUser.getUsername());
                                 if (endUser.getAdditionalInformation().containsKey(Claims.GIO_INTERNAL_SUB)) {
-                                    jwt.setInternalSub((String)endUser.getAdditionalInformation().get(Claims.GIO_INTERNAL_SUB));
+                                    jwt.setInternalSub((String) endUser.getAdditionalInformation().get(Claims.GIO_INTERNAL_SUB));
                                 }
                                 return subjectManager.findUserBySub(jwt)
                                         .onErrorResumeNext(e -> {

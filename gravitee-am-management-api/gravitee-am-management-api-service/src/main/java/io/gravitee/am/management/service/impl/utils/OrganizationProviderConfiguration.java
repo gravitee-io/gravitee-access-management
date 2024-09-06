@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service.impl.utils;
 
 import io.gravitee.am.model.IdentityProvider;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
@@ -41,7 +42,7 @@ public abstract class OrganizationProviderConfiguration {
         return "security.providers[" + index + "].";
     }
 
-    public abstract IdentityProvider buildIdentityProvider();
+    public abstract Single<IdentityProvider> buildIdentityProvider();
 
     public String getName() {
         return name;

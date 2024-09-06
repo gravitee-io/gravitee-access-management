@@ -43,6 +43,11 @@ public interface SubjectManager {
 
     default Maybe<io.gravitee.am.identityprovider.api.User> getPrincipal(JWT token) {
         return findUserBySub(token)
-                .map(principal -> new DefaultUser(principal));
+                .map(DefaultUser::new);
     }
+
+    String extractUserId(String gis);
+
+    String extractSourceId(String gis);
+
 }

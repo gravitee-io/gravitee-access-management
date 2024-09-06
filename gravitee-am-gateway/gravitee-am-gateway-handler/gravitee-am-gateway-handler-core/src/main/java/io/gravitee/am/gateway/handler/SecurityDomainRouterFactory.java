@@ -24,8 +24,10 @@ import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.gateway.handler.common.email.EmailManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.flow.FlowManager;
+import io.gravitee.am.gateway.handler.common.group.impl.InMemoryGroupManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
-import io.gravitee.am.gateway.handler.common.role.RoleManager;
+import io.gravitee.am.gateway.handler.common.role.impl.InMemoryRoleManager;
+import io.gravitee.am.gateway.handler.common.utils.ConfigurationHelper;
 import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
@@ -126,8 +128,9 @@ public class SecurityDomainRouterFactory {
         components.add(ThemeManager.class);
         components.add(PasswordPolicyManager.class);
 
-        if (environment.getProperty("sync.roles.enabled", Boolean.class, false)) {
-            components.add(RoleManager.class);
+        if (ConfigurationHelper.useInMemoryRoleAndGroupManager(environment)) {
+            components.add(InMemoryRoleManager.class);
+            components.add(InMemoryGroupManager.class);
         }
 
         components.forEach(componentClass -> {

@@ -15,16 +15,16 @@
  */
 package io.gravitee.am.management.services.purge;
 
-import io.gravitee.am.repository.management.api.AuthenticationFlowContextRepository;
+import io.gravitee.am.repository.gateway.api.AuthenticationFlowContextRepository;
+import io.gravitee.am.repository.gateway.api.LoginAttemptRepository;
+import io.gravitee.am.repository.gateway.api.ScopeApprovalRepository;
 import io.gravitee.am.repository.management.api.DeviceRepository;
-import io.gravitee.am.repository.management.api.LoginAttemptRepository;
 import io.gravitee.am.repository.management.api.PermissionTicketRepository;
 import io.gravitee.am.repository.management.api.UserActivityRepository;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
 import io.gravitee.am.repository.oauth2.api.PushedAuthorizationRequestRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
-import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
 import io.gravitee.am.repository.oidc.api.CibaAuthRequestRepository;
 import io.gravitee.am.repository.oidc.api.RequestObjectRepository;
 import org.slf4j.Logger;

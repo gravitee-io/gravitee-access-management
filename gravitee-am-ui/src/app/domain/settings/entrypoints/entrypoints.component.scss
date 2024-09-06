@@ -32,11 +32,10 @@ mat-icon {
 }
 
 .warning {
-  mat-icon {
-    margin-right: 20px;
-  }
+  align-items: center;
 
   p {
+    margin-left: 20px;
     margin-block-end: 0;
   }
 }

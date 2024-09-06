@@ -16,6 +16,7 @@
 package io.gravitee.am.model;
 
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
@@ -42,6 +43,12 @@ import java.util.stream.Collectors;
 @Setter
 public class User implements IUser {
 
+
+    public static final Set<String> SENSITIVE_ADDITIONAL_PROPERTIES = Set.of(
+            ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY,
+            ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY
+    );
+    public static final String SENSITIVE_PROPERTY_PLACEHOLDER = "●●●●●●●●";
     private String id;
 
     private String externalId;
@@ -238,6 +245,9 @@ public class User implements IUser {
         this.forceResetPassword = other.forceResetPassword;
     }
 
+    public UserId getFullId() {
+        return new UserId(id, externalId, source);
+    }
 
     public String getEmail() {
         if (email == null && getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.EMAIL) != null) {
@@ -272,9 +282,9 @@ public class User implements IUser {
 
     public String getFirstName() {
         if (firstName == null && getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.GIVEN_NAME) != null) {
-                // fall back to OIDC standard claims
-                firstName = (String) getAdditionalInformation().get(StandardClaims.GIVEN_NAME);
-            }
+            // fall back to OIDC standard claims
+            firstName = (String) getAdditionalInformation().get(StandardClaims.GIVEN_NAME);
+        }
 
         return firstName;
     }
@@ -292,9 +302,9 @@ public class User implements IUser {
 
     public String getLastName() {
         if (lastName == null && getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.FAMILY_NAME) != null) {
-                // fall back to OIDC standard claims
-                lastName = (String) getAdditionalInformation().get(StandardClaims.FAMILY_NAME);
-            }
+            // fall back to OIDC standard claims
+            lastName = (String) getAdditionalInformation().get(StandardClaims.FAMILY_NAME);
+        }
 
         return lastName;
     }
@@ -319,6 +329,7 @@ public class User implements IUser {
     public Boolean isAccountNonExpired() {
         return accountNonExpired;
     }
+
     public Boolean isAccountNonLocked() {
         return accountNonLocked;
     }
@@ -346,7 +357,6 @@ public class User implements IUser {
     public Boolean isNewsletter() {
         return newsletter;
     }
-
 
 
     public String getLastIdentityUsed() {
@@ -394,6 +404,67 @@ public class User implements IUser {
         return null;
     }
 
+    public void setAdditionalInformation(Map<String, Object> additionalInformation) {
+        if (additionalInformation == null) {
+            this.additionalInformation = null;
+            return;
+        }
+        this.additionalInformation = additionalInformation
+                .entrySet()
+                .stream()
+                .map(e -> {
+                    var isHiddenSensitiveValue = SENSITIVE_ADDITIONAL_PROPERTIES.contains(e.getKey()) && SENSITIVE_PROPERTY_PLACEHOLDER.equals(e.getValue());
+                    var propertyExistedBefore = this.additionalInformation != null && this.additionalInformation.containsKey(e.getKey());
+                    if (isHiddenSensitiveValue && propertyExistedBefore) {
+                        // the value existed before and is not being updated right now - keep old value
+                        return Map.entry(e.getKey(), this.additionalInformation.get(e.getKey()));
+                    } else {
+                        return e;
+                    }
+                })
+                // Collectors.toMap() doesn't work if there's any null values, and we don't have a guarantee there aren't any
+                .collect(HashMap<String, Object>::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()), HashMap::putAll);
+    }
+
+    public Date getLastPasswordReset() {
+        return lastPasswordReset;
+    }
+
+    public void setLastPasswordReset(Date lastPasswordReset) {
+        this.lastPasswordReset = lastPasswordReset;
+    }
+
+    public Date getLastUsernameReset() {
+        return lastUsernameReset;
+    }
+
+    public void setLastUsernameReset(Date lastUsernameReset) {
+        this.lastUsernameReset = lastUsernameReset;
+    }
+
+    public Date getLastLogoutAt() {
+        return lastLogoutAt;
+    }
+
+    public void setLastLogoutAt(Date lastLogoutAt) {
+        this.lastLogoutAt = lastLogoutAt;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 
     public Boolean isInactive() {
         return isPreRegistration() && !isRegistrationCompleted();

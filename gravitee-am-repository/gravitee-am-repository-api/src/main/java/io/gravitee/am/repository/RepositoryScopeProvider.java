@@ -27,6 +27,6 @@ public class RepositoryScopeProvider implements io.gravitee.platform.repository.
 
     public Scope[] getHandledScopes() {
 
-        return new Scope[]{Scope.MANAGEMENT, Scope.OAUTH2};
+        return new Scope[]{Scope.MANAGEMENT, Scope.OAUTH2, Scope.GATEWAY};
     }
 }

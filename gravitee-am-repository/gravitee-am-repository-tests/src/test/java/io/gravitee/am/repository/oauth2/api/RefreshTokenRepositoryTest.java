@@ -80,7 +80,7 @@ public class RefreshTokenRepositoryTest extends AbstractOAuthTest {
     }
 
     @Test
-    public void shouldDeleteByDomainIdClientIdAndUserId() {
+    public void shouldDeleteByDomainIdClientIdAndAndUserId() {
         RefreshToken token1 = new RefreshToken();
         token1.setId("my-token");
         token1.setToken("my-token");

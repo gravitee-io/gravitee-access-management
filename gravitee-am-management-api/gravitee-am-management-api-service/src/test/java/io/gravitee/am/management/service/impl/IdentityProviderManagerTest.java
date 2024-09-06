@@ -86,8 +86,8 @@ public class IdentityProviderManagerTest {
 
         when(roleService.findRolesByName(any(), any(), any(), any())).thenReturn(Flowable.just(role));
         when(idpPluginManager.create(eq("gravitee-am-idp"), any(), any())).thenReturn(Single.just(Optional.of(mock(UserProvider.class))));
-
-        cut.loadIdentityProviders();
+        when(idpPluginManager.create(eq("inline-am-idp"), any(), any())).thenReturn(Single.just(Optional.empty()));
+        cut.loadIdentityProviders().blockingAwait();
 
         verify(listener, times(2)).registerAuthenticationProvider(any());
 
@@ -112,7 +112,7 @@ public class IdentityProviderManagerTest {
 
         when(idpPluginManager.create(eq("gravitee-am-idp"), any(), any())).thenReturn(Single.just(Optional.of(mock(UserProvider.class))));
 
-        cut.loadIdentityProviders();
+        cut.loadIdentityProviders().blockingAwait();
 
         verify(listener).registerAuthenticationProvider(argThat(idp -> {
             return ReferenceType.ORGANIZATION.equals(idp.getReferenceType()) &&

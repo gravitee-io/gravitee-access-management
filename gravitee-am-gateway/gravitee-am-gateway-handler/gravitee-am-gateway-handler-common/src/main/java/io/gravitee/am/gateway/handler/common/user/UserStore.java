@@ -16,6 +16,8 @@
 package io.gravitee.am.gateway.handler.common.user;
 
 import io.gravitee.am.model.User;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -23,11 +25,15 @@ import io.gravitee.am.model.User;
  */
 public interface UserStore {
 
-    void add(User user);
+    Maybe<User> add(User user);
 
-    void remove(String userId);
+    Completable remove(String userId);
 
-    User get(String userId);
+    Maybe<User> get(String userId);
 
-    void clear();
+    Completable removeByInternalSub(String gis);
+
+    Maybe<User> getByInternalSub(String gis);
+
+    Completable clear();
 }
