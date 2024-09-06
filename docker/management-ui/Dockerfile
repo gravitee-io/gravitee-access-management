@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM graviteeio/nginx-noconfd:1.25.1
+FROM graviteeio/nginx:1.26.2
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
