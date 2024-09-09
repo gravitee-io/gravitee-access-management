@@ -22,6 +22,7 @@ import io.gravitee.am.common.exception.authentication.AccountPasswordExpiredExce
 import io.gravitee.am.common.exception.authentication.AuthenticationException;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.common.web.ErrorInfo;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.utils.StaticEnvironmentProvider;
@@ -40,15 +41,12 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
 import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Optional;
 
-import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.PROTOCOL_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.RETURN_URL_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
+import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
 import static java.util.Objects.nonNull;
 
 /**
@@ -73,8 +71,7 @@ public class LoginFailureHandler extends LoginAbstractHandler {
     public void handle(RoutingContext routingContext) {
         if (routingContext.failed()) {
             Throwable throwable = routingContext.failure();
-            if (throwable instanceof PolicyChainException) {
-                PolicyChainException policyChainException = (PolicyChainException) throwable;
+            if (throwable instanceof PolicyChainException policyChainException) {
                 handlePolicyChainException(routingContext, policyChainException.key(), policyChainException.getMessage());
             } else if (throwable instanceof AccountPasswordExpiredException) {
                 handleException(routingContext, ((AccountPasswordExpiredException) throwable).getErrorCode(), throwable.getMessage());
@@ -116,37 +113,17 @@ public class LoginFailureHandler extends LoginAbstractHandler {
                 originalParams.get(io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI) :
                 client.getRedirectUris().get(0);
 
-        // append error message
-        final Map<String, String> query = new LinkedHashMap<>();
-        query.put(ConstantKeys.ERROR_PARAM_KEY, "login_failed");
-        query.put(ConstantKeys.ERROR_CODE_PARAM_KEY, errorCode);
-        query.put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
-        if (originalParams != null && originalParams.get(io.gravitee.am.common.oauth2.Parameters.STATE) != null) {
-            query.put(io.gravitee.am.common.oauth2.Parameters.STATE, originalParams.get(io.gravitee.am.common.oauth2.Parameters.STATE));
-        }
 
-        // prepare final redirect uri
-        final UriBuilder template = UriBuilder.newInstance();
+        final var error = new ErrorInfo("login_failed", errorCode, errorDescription, originalParams == null ? null : originalParams.get(io.gravitee.am.common.oauth2.Parameters.STATE));
+        final boolean fragment = originalParams != null &&
+                originalParams.get(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE) != null &&
+                (isImplicitFlow(originalParams.get(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE)) || isHybridFlow(originalParams.get(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE)));
 
         // get URI from the redirect_uri parameter
-        final UriBuilder builder = UriBuilder.fromURIString(clientRedirectUri);
         try {
-            final URI redirectUri = builder.build();
 
-            // create final redirect uri
-            template.scheme(redirectUri.getScheme())
-                    .host(redirectUri.getHost())
-                    .port(redirectUri.getPort())
-                    .userInfo(redirectUri.getUserInfo())
-                    .path(redirectUri.getPath());
-
-            // append error parameters in "application/x-www-form-urlencoded" format
-            if (requiresFragment(originalParams)) {
-                query.forEach((k, v) -> template.addFragmentParameter(k, UriBuilder.encodeURIComponent(v)));
-            } else {
-                query.forEach((k, v) -> template.addParameter(k, UriBuilder.encodeURIComponent(v)));
-            }
-            doRedirect(context, template.build().toString());
+            final var finalRedirectUri = UriBuilder.buildErrorRedirect(clientRedirectUri, error, fragment);
+            doRedirect(context, finalRedirectUri.toString());
         } catch (Exception ex) {
             LOGGER.error("An error has occurred while redirecting to the login page", ex);
             context
