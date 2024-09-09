@@ -21,6 +21,7 @@ import io.gravitee.am.common.exception.mfa.InvalidFactorAttributeException;
 import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImpl;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
@@ -38,6 +39,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -54,10 +56,11 @@ public class UserServiceTest {
     private io.gravitee.am.service.UserService commonLayerUserService;
 
     @Mock
-    private AuditService auditService;
+    private UserStore userStore;
 
     @Mock
-    private UserStore userStore;
+    private AuditService auditService;
+
 
     @InjectMocks
     private UserServiceImpl cut = new UserServiceImpl();
@@ -71,20 +74,20 @@ public class UserServiceTest {
         observer.assertValueCount(1);
 
         verify(userStore).get(any());
-        verify(commonLayerUserService, never()).findById(any());
+        verify(commonLayerUserService, never()).findById(any(UserId.class));
     }
 
     @Test
     public void shouldFindById_into_Database() throws Exception {
         when(userStore.get(any())).thenReturn(Maybe.empty());
-        when(commonLayerUserService.findById(any())).thenReturn(Maybe.just(new User()));
+        when(commonLayerUserService.findById(anyString())).thenReturn(Maybe.just(new User()));
 
         TestObserver<User> observer = cut.findById(UUID.randomUUID().toString()).test();
         observer.await(5,TimeUnit.SECONDS);
         observer.assertValueCount(1);
 
         verify(userStore).get(any());
-        verify(commonLayerUserService).findById(any());
+        verify(commonLayerUserService).findById(anyString());
     }
 
     @Test

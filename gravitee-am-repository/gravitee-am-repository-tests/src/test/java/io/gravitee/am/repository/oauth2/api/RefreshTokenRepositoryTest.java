@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.oauth2.api;
 
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.oauth2.AbstractOAuthTest;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.reactivex.rxjava3.core.Completable;
@@ -53,7 +54,7 @@ public class RefreshTokenRepositoryTest extends AbstractOAuthTest {
         token.setToken("my-token");
 
         TestObserver<RefreshToken> observer = Completable.fromSingle(refreshTokenRepository
-                .create(token))
+                        .create(token))
                 .andThen(refreshTokenRepository.findByToken("my-token"))
                 .test();
 
@@ -71,7 +72,7 @@ public class RefreshTokenRepositoryTest extends AbstractOAuthTest {
         token.setToken("my-token");
 
         TestObserver<RefreshToken> testObserver = Completable.fromSingle(refreshTokenRepository
-                .create(token))
+                        .create(token))
                 .andThen(refreshTokenRepository.delete("my-token"))
                 .andThen(refreshTokenRepository.findByToken("my-token"))
                 .test();
@@ -97,7 +98,7 @@ public class RefreshTokenRepositoryTest extends AbstractOAuthTest {
 
         TestObserver<RefreshToken> testObserver = refreshTokenRepository.create(token1).ignoreElement()
                 .andThen(refreshTokenRepository.create(token2).ignoreElement())
-                .andThen(refreshTokenRepository.deleteByDomainIdClientIdAndUserId("domain-id", "client-id", "user-id"))
+                .andThen(refreshTokenRepository.deleteByDomainIdClientIdAndUserId("domain-id", "client-id", UserId.internal("user-id")))
                 .andThen(refreshTokenRepository.findByToken("my-token"))
                 .test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -125,7 +126,7 @@ public class RefreshTokenRepositoryTest extends AbstractOAuthTest {
 
         TestObserver<RefreshToken> testObserver = refreshTokenRepository.create(token1).ignoreElement()
                 .andThen(refreshTokenRepository.create(token2).ignoreElement())
-                .andThen(refreshTokenRepository.deleteByDomainIdAndUserId("domain-id", "user-id"))
+                .andThen(refreshTokenRepository.deleteByDomainIdAndUserId("domain-id", UserId.internal("user-id")))
                 .andThen(refreshTokenRepository.findByToken("my-token"))
                 .test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);

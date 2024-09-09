@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.management.handlers.management.api.spring;
 
+import io.gravitee.am.management.handlers.management.api.adapter.ScopeApprovalAdapter;
+import io.gravitee.am.management.handlers.management.api.adapter.ScopeApprovalAdapterImpl;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.form.FormManager;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.form.impl.FormManagerImpl;
 import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
@@ -22,6 +24,11 @@ import io.gravitee.am.management.handlers.management.api.authentication.service.
 import io.gravitee.am.management.handlers.management.api.preview.PreviewService;
 import io.gravitee.am.management.handlers.management.api.spring.security.SecurityConfiguration;
 import io.gravitee.am.management.handlers.management.api.spring.security.WebMvcConfiguration;
+import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.service.ScopeApprovalService;
+import io.gravitee.am.service.ScopeService;
+import io.gravitee.am.service.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
@@ -47,5 +54,14 @@ public class ManagementConfiguration {
     @Bean
     public PreviewService previewService() {
         return new PreviewService();
+    }
+
+    @Bean
+    ScopeApprovalAdapter scopeApprovalAdapter(DomainService domainService,
+ScopeApprovalService scopeApprovalService,
+        ApplicationService applicationService,
+        ScopeService scopeService,
+        UserService userService) {
+        return new ScopeApprovalAdapterImpl(domainService, scopeApprovalService, applicationService, scopeService, userService);
     }
 }

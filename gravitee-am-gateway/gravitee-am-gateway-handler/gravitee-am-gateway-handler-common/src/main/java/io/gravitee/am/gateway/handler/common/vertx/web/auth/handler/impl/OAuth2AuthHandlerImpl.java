@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthResponse;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.AsyncResult;
@@ -105,7 +106,7 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
                     context.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                 }
 
-                var single = Single.just(token.getSub());
+                var single = Single.just(UserId.internal(token.getSub()));
                 if (selfResource && isSelfResourceAUser) {
                     single = this.subjectManager.findUserIdBySub(token)
                             .switchIfEmpty(single);
@@ -118,7 +119,7 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
                         // since Domain V2, sub claim is not the userId anymore
                         // we have to check if userId provided as resourceId match the userId internal ID found using the sub claim
                         // and we also have to if the resourceId match the
-                        boolean isUserValid = isSelfResourceAUser && resourceId != null && resourceId.equals(userId);
+                        boolean isUserValid = isSelfResourceAUser && resourceId != null && resourceId.equals(userId.id());
                         boolean isResourceIdValid = resourceId != null && (resourceId.equals(token.getSub()) || resourceId.equals(token.getInternalSub()));
                         boolean hasRequiredScope = resourceRequiredScope == null || token.hasScope(resourceRequiredScope);
 

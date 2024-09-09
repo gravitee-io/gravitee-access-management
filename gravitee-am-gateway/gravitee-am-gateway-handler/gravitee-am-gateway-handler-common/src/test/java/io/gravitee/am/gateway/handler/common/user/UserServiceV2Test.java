@@ -30,6 +30,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -41,6 +42,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -59,13 +61,10 @@ public class UserServiceV2Test {
     @Mock
     private UserStore userStore;
 
-    @Mock
-    private AuditService auditService;
-
     @InjectMocks
     private UserServiceImplV2 cut = new UserServiceImplV2();
 
-    @Before
+    @BeforeEach
     public void init() {
         ReflectionTestUtils.setField(cut, "resilientMode", false);
     }
@@ -79,20 +78,20 @@ public class UserServiceV2Test {
         observer.assertValueCount(1);
 
         verify(userStore).get(any());
-        verify(commonLayerUserService, never()).findById(any());
+        verify(commonLayerUserService, never()).findById(anyString());
     }
 
     @Test
     public void shouldFindById_into_Database() throws Exception {
         when(userStore.get(any())).thenReturn(Maybe.empty());
-        when(commonLayerUserService.findById(any())).thenReturn(Maybe.just(new User()));
+        when(commonLayerUserService.findById(anyString())).thenReturn(Maybe.just(new User()));
 
         TestObserver<User> observer = cut.findById(UUID.randomUUID().toString()).test();
         observer.await(5,TimeUnit.SECONDS);
         observer.assertValueCount(1);
 
         verify(userStore).get(any());
-        verify(commonLayerUserService).findById(any());
+        verify(commonLayerUserService).findById(anyString());
     }
 
     @Test

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.oauth2.api;
 
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -29,6 +30,7 @@ import io.reactivex.rxjava3.core.Single;
 public interface AccessTokenRepository {
     /**
      * Find access token by id
+     *
      * @param token access token's id
      * @return Access token if any
      */
@@ -36,6 +38,7 @@ public interface AccessTokenRepository {
 
     /**
      * Create an access token
+     *
      * @param accessToken access token to store
      * @return th created access token
      */
@@ -43,6 +46,7 @@ public interface AccessTokenRepository {
 
     /**
      * Delete token by its id
+     *
      * @param token token's id
      * @return acknowledge of the operation
      */
@@ -52,7 +56,7 @@ public interface AccessTokenRepository {
      * Retrieve access tokens stored against the provided client id.
      *
      * @param clientId the client id to search
-     * @param subject the end-user technical identifier
+     * @param subject  the end-user technical identifier
      * @return a collection of access tokens
      */
     Observable<AccessToken> findByClientIdAndSubject(String clientId, String subject);
@@ -83,6 +87,7 @@ public interface AccessTokenRepository {
 
     /**
      * Delete access tokens by user id
+     *
      * @param userId end-user
      * @return acknowledge of the operation
      */
@@ -91,13 +96,14 @@ public interface AccessTokenRepository {
     /**
      * Delete access token by domainId, clientId and userId.
      */
-    Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, String userId);
+    Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, UserId userId);
 
-    Completable deleteByDomainIdAndUserId(String domainId, String userId);
+    Completable deleteByDomainIdAndUserId(String domainId, UserId userId);
 
     Completable deleteByDomainIdAndClientId(String domainId, String clientId);
 
     default Completable purgeExpiredData() {
         return Completable.complete();
     }
+
 }

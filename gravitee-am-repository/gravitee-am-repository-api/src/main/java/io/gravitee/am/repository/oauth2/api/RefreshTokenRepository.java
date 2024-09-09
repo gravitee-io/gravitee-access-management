@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.oauth2.api;
 
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.CompletableSource;
@@ -35,9 +36,9 @@ public interface RefreshTokenRepository {
 
     Completable deleteByUserId(String userId);
 
-    Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, String userId);
+    Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, UserId userId);
 
-    Completable deleteByDomainIdAndUserId(String domainId, String userId);
+    Completable deleteByDomainIdAndUserId(String domainId, UserId userId);
 
     CompletableSource deleteByDomainIdAndClientId(String domainId, String clientId);
 

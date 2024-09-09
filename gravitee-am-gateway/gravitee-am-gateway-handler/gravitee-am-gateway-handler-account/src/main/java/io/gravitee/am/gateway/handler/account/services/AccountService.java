@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordRespons
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oauth2.ScopeApproval;
@@ -69,5 +70,5 @@ public interface AccountService {
 
     Single<ScopeApproval> getConsent(String id);
 
-    Completable removeConsent(String userId, String consentId, io.gravitee.am.identityprovider.api.User principal);
+    Completable removeConsent(UserId userId, String consentId, io.gravitee.am.identityprovider.api.User principal);
 }

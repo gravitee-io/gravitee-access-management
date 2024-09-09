@@ -31,6 +31,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oauth2.ScopeApproval;
@@ -262,7 +263,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Single<List<ScopeApproval>> getConsentList(User user, Client client) {
-        return scopeApprovalService.findByDomainAndUserAndClient(domain.getId(),  user.getId(), client.getClientId()).toList();
+        return scopeApprovalService.findByDomainAndUserAndClient(domain.getId(), user.getFullId(), client.getClientId()).toList();
     }
 
     @Override
@@ -272,7 +273,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Completable removeConsent(String userId, String consentId, io.gravitee.am.identityprovider.api.User principal) {
+    public Completable removeConsent(UserId userId, String consentId, io.gravitee.am.identityprovider.api.User principal) {
         return scopeApprovalService.revokeByConsent(domain.getId(), userId, consentId, principal);
     }
 

@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Completable;
@@ -33,31 +34,19 @@ public interface ScopeApprovalService {
 
     Maybe<ScopeApproval> findById(String id);
 
-    Flowable<ScopeApproval> findByDomainAndUser(String domain, String user);
+    Flowable<ScopeApproval> findByDomainAndUser(String domain, UserId userId);
 
-    Flowable<ScopeApproval> findByDomainAndUserAndClient(String domain, String user, String client);
+    Flowable<ScopeApproval> findByDomainAndUserAndClient(String domain, UserId userId, String client);
 
     Single<List<ScopeApproval>> saveConsent(String domain, Client client, List<ScopeApproval> approvals, User principal);
 
-    Completable revokeByConsent(String domain, String userId, String consentId, User principal);
+    Completable revokeByConsent(String domain, UserId userId, String consentId, User principal);
 
-    Completable revokeByUser(String domain, String user, User principal);
+    Completable revokeByUser(String domain, UserId userId, User principal);
 
-    Completable revokeByUserAndClient(String domain, String user, String clientId, User principal);
+    Completable revokeByUserAndClient(String domain, UserId userId, String clientId, User principal);
 
-    default Single<List<ScopeApproval>> saveConsent(String domain, Client client, List<ScopeApproval> approvals) {
-        return saveConsent(domain, client, approvals, null);
-    }
-
-    default Completable revokeByConsent(String domain, String userId, String consentId) {
+    default Completable revokeByConsent(String domain, UserId userId, String consentId) {
         return revokeByConsent(domain, userId, consentId, null);
-    }
-
-    default Completable revokeByUser(String domain, String userId) {
-        return revokeByUser(domain, userId, null);
-    }
-
-    default Completable revokeByUserAndClient(String domain, String userId, String clientId) {
-        return revokeByUserAndClient(domain, userId, clientId, null);
     }
 }

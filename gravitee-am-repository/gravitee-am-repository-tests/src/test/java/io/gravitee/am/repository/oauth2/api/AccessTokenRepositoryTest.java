@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.oauth2.api;
 
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.oauth2.AbstractOAuthTest;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.reactivex.rxjava3.core.Completable;
@@ -53,7 +54,7 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
         token.setToken("my-token");
 
         TestObserver<AccessToken> observer = Completable.fromSingle(accessTokenRepository
-                .create(token))
+                        .create(token))
                 .andThen(accessTokenRepository.findByToken("my-token"))
                 .test();
 
@@ -71,7 +72,7 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
         token.setToken("my-token-todelete");
 
         TestObserver<AccessToken> observer = Completable.fromSingle(accessTokenRepository
-                .create(token))
+                        .create(token))
                 .andThen(accessTokenRepository.findByToken(token.getToken()))
                 .test();
 
@@ -94,7 +95,7 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
         token.setAuthorizationCode("some-auth-code");
 
         TestObserver<AccessToken> observer = Completable.fromSingle(accessTokenRepository
-                .create(token))
+                        .create(token))
                 .andThen(accessTokenRepository.findByAuthorizationCode(token.getAuthorizationCode()))
                 .test();
 
@@ -104,6 +105,7 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
         observer.assertValueCount(1);
         observer.assertNoErrors();
     }
+
     @Test
     public void shouldNotFindByUnknownAuthorizationCode() {
         AccessToken token = new AccessToken();
@@ -112,7 +114,7 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
         token.setAuthorizationCode("some-auth-code");
 
         TestObserver<AccessToken> observer = Completable.fromSingle(accessTokenRepository
-                .create(token))
+                        .create(token))
                 .andThen(accessTokenRepository.findByAuthorizationCode("unknown"))
                 .test();
 
@@ -194,7 +196,7 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
 
         TestObserver<AccessToken> testObserver = accessTokenRepository.create(token1).ignoreElement()
                 .andThen(accessTokenRepository.create(token2).ignoreElement())
-                .andThen(accessTokenRepository.deleteByDomainIdClientIdAndUserId("domain-id", "client-id", "user-id"))
+                .andThen(accessTokenRepository.deleteByDomainIdClientIdAndUserId("domain-id", "client-id", UserId.internal("user-id")))
                 .andThen(accessTokenRepository.findByToken("my-token"))
                 .test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -221,7 +223,7 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
 
         TestObserver<AccessToken> testObservable = accessTokenRepository.create(token1).ignoreElement()
                 .andThen(accessTokenRepository.create(token2).ignoreElement())
-                .andThen(accessTokenRepository.deleteByDomainIdAndUserId("domain-id", "user-id"))
+                .andThen(accessTokenRepository.deleteByDomainIdAndUserId("domain-id", UserId.internal("user-id")))
                 .andThen(accessTokenRepository.findByToken("my-token"))
                 .test();
         testObservable.awaitDone(10, TimeUnit.SECONDS);

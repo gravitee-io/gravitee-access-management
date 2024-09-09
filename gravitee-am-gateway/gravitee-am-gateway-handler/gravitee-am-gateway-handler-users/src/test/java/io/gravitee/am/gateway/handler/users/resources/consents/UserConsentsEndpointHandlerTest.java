@@ -23,9 +23,10 @@ import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
-import io.gravitee.am.gateway.handler.users.service.UserService;
+import io.gravitee.am.gateway.handler.users.service.DomainUserConsentService;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Completable;
@@ -36,15 +37,14 @@ import io.vertx.core.http.HttpMethod;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -55,25 +55,20 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class UserConsentsEndpointHandlerTest extends RxWebTestBase {
 
-    @Mock
-    private UserService userService;
+    private final DomainUserConsentService userService = mock();
 
-    @Mock
-    private ClientSyncService clientService;
+    private final ClientSyncService clientService = mock();
 
-    @Mock
-    private Domain domain;
+    private final Domain domain = new Domain();
+
+
+    private final SubjectManager subjectManager = mock();
 
     @Mock
     private OAuth2AuthProvider oAuth2AuthProvider;
 
-    @Mock
-    private SubjectManager subjectManager;
-
-    @InjectMocks
-    private UserConsentsEndpointHandler userConsentsEndpointHandler = new UserConsentsEndpointHandler(userService, clientService, domain, subjectManager);
-
-    private OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider);
+    private final UserConsentsEndpointHandler userConsentsEndpointHandler = new UserConsentsEndpointHandler(userService, clientService, domain, subjectManager);
+    private final OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider);
 
     @Override
     public void setUp() throws Exception {
@@ -111,10 +106,16 @@ public class UserConsentsEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldListConsents() throws Exception {
-        when(userService.consents(anyString())).thenReturn(Single.just(Collections.singleton(new ScopeApproval())));
-        when(subjectManager.findUserIdBySub(any())).thenReturn(Maybe.just("user-id"));
+        when(userService.consents(any())).thenReturn(Single.just(Collections.singleton(new ScopeApproval())));
+        when(subjectManager.findUserIdBySub(any())).thenReturn(Maybe.just(UserId.internal("user-id")));
 
         router.route("/users/:userId/consents")
+                .handler(rc -> {
+                    JWT token = new JWT();
+                    token.setSub("sub");
+                    rc.put(ConstantKeys.TOKEN_CONTEXT_KEY, token);
+                    rc.next();
+                })
                 .handler(userConsentsEndpointHandler::list)
                 .failureHandler(new ErrorHandler());
 
@@ -129,8 +130,8 @@ public class UserConsentsEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRevokeConsents() throws Exception {
         when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(new io.gravitee.am.model.User()));
-        when(subjectManager.findUserIdBySub(any())).thenReturn(Maybe.just("user-id"));
-        when(userService.revokeConsents(anyString(), any(User.class))).thenReturn(Completable.complete());
+        when(subjectManager.findUserIdBySub(any())).thenReturn(Maybe.just(UserId.internal("user-id")));
+        when(userService.revokeConsents(any(), any(User.class))).thenReturn(Completable.complete());
 
         router.route("/users/:userId/consents")
                 .handler(rc -> {
@@ -150,7 +151,7 @@ public class UserConsentsEndpointHandlerTest extends RxWebTestBase {
 
         verify(subjectManager).findUserBySub(any());
         verify(subjectManager).findUserIdBySub(any());
-        verify(userService).revokeConsents(eq("user-id"), any(User.class));
+        verify(userService).revokeConsents(eq(UserId.internal("user-id")), any(User.class));
     }
 
     @Test
@@ -158,8 +159,8 @@ public class UserConsentsEndpointHandlerTest extends RxWebTestBase {
         io.gravitee.am.model.User user = new io.gravitee.am.model.User();
         user.setId("user-id");
         when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(user));
-        when(subjectManager.findUserIdBySub(any())).thenReturn(Maybe.just(user.getId()));
-        when(userService.revokeConsents(anyString(), any(User.class))).thenReturn(Completable.complete());
+        when(subjectManager.findUserIdBySub(any())).thenReturn(Maybe.just(UserId.internal(user.getId())));
+        when(userService.revokeConsents(any(), any(User.class))).thenReturn(Completable.complete());
 
         router.route("/users/:userId/consents")
                 .handler(rc -> {
@@ -179,6 +180,6 @@ public class UserConsentsEndpointHandlerTest extends RxWebTestBase {
 
         verify(subjectManager).findUserBySub(any());
         verify(subjectManager).findUserIdBySub(any());
-        verify(userService).revokeConsents(eq("user-id"), any(User.class));
+        verify(userService).revokeConsents(eq(UserId.internal("user-id")), any(User.class));
     }
 }

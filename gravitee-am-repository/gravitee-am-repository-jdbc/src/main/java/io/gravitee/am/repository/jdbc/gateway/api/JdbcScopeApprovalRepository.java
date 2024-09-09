@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.jdbc.gateway.api;
 
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.gateway.api.ScopeApprovalRepository;
 import io.gravitee.am.repository.jdbc.gateway.api.model.JdbcScopeApproval;
@@ -25,7 +26,9 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
 
@@ -35,7 +38,9 @@ import java.util.Optional;
 
 import static java.time.ZoneOffset.UTC;
 import static org.springframework.data.relational.core.query.Criteria.where;
+import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToMaybe;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
@@ -43,49 +48,71 @@ import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
  * @author GraviteeSource Team
  */
 @Repository
+@Slf4j
 public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implements ScopeApprovalRepository {
 
     public static final String DOMAIN = "domain";
     @Autowired
     private SpringScopeApprovalRepository scopeApprovalRepository;
 
-    protected ScopeApproval toEntity(JdbcScopeApproval entity) {
-        return mapper.map(entity, ScopeApproval.class);
+    protected ScopeApproval toEntity(JdbcScopeApproval dbEntity) {
+        return dbEntity.toEntity();
     }
 
     protected JdbcScopeApproval toJdbcEntity(ScopeApproval entity) {
-        return mapper.map(entity, JdbcScopeApproval.class);
+        return JdbcScopeApproval.of(entity);
     }
 
     @Override
-    public Flowable<ScopeApproval> findByDomainAndUserAndClient(String domain, String userId, String clientId) {
+    public Flowable<ScopeApproval> findByDomainAndUserAndClient(String domain, UserId userId, String clientId) {
         LOGGER.debug("findByDomainAndUserAndClient({}, {}, {})", domain, userId, clientId);
         LocalDateTime now = LocalDateTime.now(UTC);
-        return scopeApprovalRepository.findByDomainAndUserAndClient(domain, userId, clientId)
+            return findAll(Query.query(userIdMatches(userId)
+                .and(client(clientId))
+                .and(domain(domain))))
                 .filter(bean -> bean.getExpiresAt() == null || bean.getExpiresAt().isAfter(now))
                 .map(this::toEntity);
     }
 
+    private Flowable<JdbcScopeApproval> findAll(Query query) {
+        return fluxToFlowable(getTemplate().select(JdbcScopeApproval.class)
+                .matching(query).all());
+    }
+
+    private Criteria client(String clientId) {
+        return where("client_id").is(clientId);
+    }
+
+    private Criteria scope(String scope) {
+        return where("scope").is(scope);
+    }
+
+    private Criteria domain(String domain) {
+        return where("domain").is(domain);
+    }
+
     @Override
-    public Flowable<ScopeApproval> findByDomainAndUser(String domain, String user) {
-        LOGGER.debug("findByDomainAndUser({}, {}, {})", domain, user);
+    public Flowable<ScopeApproval> findByDomainAndUser(String domain, UserId userId) {
+        LOGGER.debug("findByDomainAndUser({}, {})", domain, userId);
         LocalDateTime now = LocalDateTime.now(UTC);
-        return scopeApprovalRepository.findByDomainAndUser(domain, user)
+        return findAll(Query.query(userIdMatches(userId).and(domain(domain))))
                 .filter(bean -> bean.getExpiresAt() == null || bean.getExpiresAt().isAfter(now))
                 .map(this::toEntity);
     }
 
     @Override
     public Single<ScopeApproval> upsert(ScopeApproval scopeApproval) {
-        return scopeApprovalRepository.findByDomainAndUserAndClientAndScope(scopeApproval.getDomain(),
-                scopeApproval.getUserId(),
-                scopeApproval.getClientId(),
-                scopeApproval.getScope())
+        return monoToMaybe(getTemplate().select(JdbcScopeApproval.class)
+                .matching(Query.query(userIdMatches(scopeApproval.getUserId())
+                        .and(client(scopeApproval.getClientId())
+                                .and(scope(scopeApproval.getScope()))
+                                .and(domain(scopeApproval.getDomain())))
+                )).first())
                 .map(this::toEntity)
                 .map(Optional::of)
                 .defaultIfEmpty(Optional.empty())
                 .flatMap(optionalApproval -> {
-                    if (!optionalApproval.isPresent()) {
+                    if (optionalApproval.isEmpty()) {
                         scopeApproval.setCreatedAt(new Date());
                         scopeApproval.setUpdatedAt(scopeApproval.getCreatedAt());
                         return create(scopeApproval);
@@ -106,20 +133,24 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
     }
 
     @Override
-    public Completable deleteByDomainAndUserAndClient(String domain, String user, String client) {
-        LOGGER.debug("deleteByDomainAndUserAndClient({}, {}, {})", domain, user, client);
+    public Completable deleteByDomainAndUserAndClient(String domain, UserId userId, String client) {
+        LOGGER.debug("deleteByDomainAndUserAndClient({}, {}, {})", domain, userId, client);
         return monoToCompletable(getTemplate().delete(JdbcScopeApproval.class)
-                .matching(Query.query(where(DOMAIN).is(domain)
-                        .and(where("user_id").is(user)
-                        .and(where("client_id").is(client))))).all());
+                .matching(Query.query(domain(domain)
+                        .and(userIdMatches(userId))
+                        .and(client(client))))
+                .all()
+                .doOnNext(rows -> log.warn("deleteByDomainAndUserAndClient({},{},{}): {} deleted", domain, userId, client, rows)));
     }
 
     @Override
-    public Completable deleteByDomainAndUser(String domain, String user) {
-        LOGGER.debug("deleteByDomainAndUser({}, {})", domain, user);
+    public Completable deleteByDomainAndUser(String domain, UserId userId) {
+        LOGGER.debug("deleteByDomainAndUser({}, {})", domain, userId);
+
         return monoToCompletable(getTemplate().delete(JdbcScopeApproval.class)
-                .matching(Query.query(where(DOMAIN).is(domain)
-                        .and(where("user_id").is(user)))).all());
+                .matching(Query.query(domain(domain)
+                        .and(userIdMatches(userId))))
+                .all());
     }
 
     @Override
