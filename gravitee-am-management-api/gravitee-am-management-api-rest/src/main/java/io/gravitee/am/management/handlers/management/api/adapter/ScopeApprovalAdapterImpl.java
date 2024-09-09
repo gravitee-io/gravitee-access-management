@@ -71,14 +71,15 @@ public class ScopeApprovalAdapterImpl implements ScopeApprovalAdapter {
                 .toList();
     }
 
-    public Completable revokeUserConsents(String domain, UserId user, String clientId, User authenticatedUser) {
+    public Completable revokeUserConsents(String domain, String rawUserId, String clientId, User authenticatedUser) {
+        var userId = UserId.internal(rawUserId);
         return domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                 .flatMapCompletable(__ -> {
                     if (clientId == null || clientId.isEmpty()) {
-                        return scopeApprovalService.revokeByUser(domain, user, authenticatedUser);
+                        return scopeApprovalService.revokeByUser(domain, userId, authenticatedUser);
                     }
-                    return scopeApprovalService.revokeByUserAndClient(domain, user, clientId, authenticatedUser);
+                    return scopeApprovalService.revokeByUserAndClient(domain, userId, clientId, authenticatedUser);
                 });
     }
 

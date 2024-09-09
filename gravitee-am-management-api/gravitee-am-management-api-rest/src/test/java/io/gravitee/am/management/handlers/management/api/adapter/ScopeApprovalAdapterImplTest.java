@@ -100,7 +100,7 @@ class ScopeApprovalAdapterImplTest {
         if (!created) {
             Assertions.fail("creating test data failed");
         }
-        underTest.revokeUserConsents(TEST_DOMAIN, UserId.internal("internal-user-id"), "client-id", null)
+        underTest.revokeUserConsents(TEST_DOMAIN, "internal-user-id", "client-id", null)
                 .test()
                 .awaitDone(5, TimeUnit.SECONDS)
                 .assertComplete();

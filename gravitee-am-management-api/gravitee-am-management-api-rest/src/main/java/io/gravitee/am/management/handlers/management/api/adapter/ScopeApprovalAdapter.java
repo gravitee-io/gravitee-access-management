@@ -17,7 +17,6 @@ package io.gravitee.am.management.handlers.management.api.adapter;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.ScopeApprovalEntity;
-import io.gravitee.am.model.UserId;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 
@@ -27,5 +26,5 @@ public interface ScopeApprovalAdapter {
 
     Single<List<ScopeApprovalEntity>> getUserConsents(String domain, String userId, String clientId);
 
-    Completable revokeUserConsents(String domain, UserId user, String clientId, User authenticatedUser);
+    Completable revokeUserConsents(String domain, String userId, String clientId, User authenticatedUser);
 }

@@ -627,7 +627,10 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
     @Override
     public Criteria userIdMatches(UserId userId) {
-        return userIdMatches(userId, USER_ID_FIELDS);
+        if (userId.id() == null) {
+            throw new IllegalArgumentException("Internal user id must not be null");
+        }
+        return Criteria.where(USER_COL_ID).is(userId.id());
     }
 
     private Single<Map<Object, Object>> usersStatusRepartition(AnalyticsQuery query) {

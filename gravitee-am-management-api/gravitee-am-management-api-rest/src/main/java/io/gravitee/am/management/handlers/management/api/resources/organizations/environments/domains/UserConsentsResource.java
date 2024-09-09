@@ -20,7 +20,6 @@ import io.gravitee.am.management.handlers.management.api.adapter.ScopeApprovalAd
 import io.gravitee.am.management.handlers.management.api.model.ScopeApprovalEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.common.http.MediaType;
 import io.swagger.v3.oas.annotations.Operation;
@@ -95,7 +94,7 @@ public class UserConsentsResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.UPDATE)
-                .andThen(approvalAdapter.revokeUserConsents(domain, UserId.internal(user), clientId, authenticatedUser))
+                .andThen(approvalAdapter.revokeUserConsents(domain, user, clientId, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
