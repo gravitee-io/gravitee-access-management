@@ -18,6 +18,7 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
@@ -95,6 +96,16 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
 
     @Override
     public Maybe<User> findById(String id) {
+        return userRepository.findById(id)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find a user using its ID {}", id, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a user using its ID: %s", id), ex));
+                });
+    }
+
+    @Override
+    public Maybe<User> findById(UserId id) {
         LOGGER.debug("Find user by id : {}", id);
         return userRepository.findById(id)
                 .onErrorResumeNext(ex -> {

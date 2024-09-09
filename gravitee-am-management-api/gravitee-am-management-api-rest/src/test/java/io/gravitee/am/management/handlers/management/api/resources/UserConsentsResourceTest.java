@@ -19,6 +19,7 @@ import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -57,7 +58,7 @@ public class UserConsentsResourceTest extends JerseySpringTest {
         mockScope.setKey("scope");
 
         final ScopeApproval scopeApproval = new ScopeApproval();
-        scopeApproval.setUserId("user-id-1");
+        scopeApproval.setUserId(UserId.internal("user-id-1"));
         scopeApproval.setClientId("clientId");
         scopeApproval.setScope("scope");
         scopeApproval.setDomain(domainId);
@@ -66,7 +67,7 @@ public class UserConsentsResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockClient)).when(applicationService).findByDomainAndClientId(domainId, scopeApproval.getClientId());
         doReturn(Maybe.just(mockScope)).when(scopeService).findByDomainAndKey(domainId, scopeApproval.getScope());
-        doReturn(Flowable.just(scopeApproval)).when(scopeApprovalService).findByDomainAndUser(domainId, mockUser.getId());
+        doReturn(Flowable.just(scopeApproval)).when(scopeApprovalService).findByDomainAndUser(domainId, mockUser.getFullId());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -103,7 +104,7 @@ public class UserConsentsResourceTest extends JerseySpringTest {
         mockUser.setId("user-id-1");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Completable.complete()).when(scopeApprovalService).revokeByUser(eq(domainId), eq(mockUser.getId()), any());
+        doReturn(Completable.complete()).when(scopeApprovalService).revokeByUser(eq(domainId), eq(mockUser.getFullId()), any());
 
         final Response response = target("domains")
                 .path(domainId)

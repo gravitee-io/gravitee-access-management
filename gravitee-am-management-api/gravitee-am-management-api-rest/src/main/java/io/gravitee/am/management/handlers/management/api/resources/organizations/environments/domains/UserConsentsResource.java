@@ -16,20 +16,12 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.model.ApplicationEntity;
+import io.gravitee.am.management.handlers.management.api.adapter.ScopeApprovalAdapter;
 import io.gravitee.am.management.handlers.management.api.model.ScopeApprovalEntity;
-import io.gravitee.am.management.handlers.management.api.model.ScopeEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.management.service.DomainService;
-import io.gravitee.am.service.ScopeApprovalService;
-import io.gravitee.am.service.ScopeService;
-import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -54,21 +46,11 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class UserConsentsResource extends AbstractResource {
 
-    public static final String UNKNOWN_ID = "unknown-id";
     @Context
     private ResourceContext resourceContext;
 
     @Autowired
-    private DomainService domainService;
-
-    @Autowired
-    private ScopeApprovalService scopeApprovalService;
-
-    @Autowired
-    private ApplicationService applicationService;
-
-    @Autowired
-    private ScopeService scopeService;
+    private ScopeApprovalAdapter approvalAdapter;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -90,23 +72,7 @@ public class UserConsentsResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.READ)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapPublisher(__ -> {
-                            if (clientId == null || clientId.isEmpty()) {
-                                return scopeApprovalService.findByDomainAndUser(domain, user);
-                            }
-                            return scopeApprovalService.findByDomainAndUserAndClient(domain, user, clientId);
-                        })
-                        .flatMapSingle(scopeApproval ->
-                                getClient(scopeApproval.getDomain(), scopeApproval.getClientId())
-                                        .zipWith(getScope(scopeApproval.getDomain(), scopeApproval.getScope()), ((clientEntity, scopeEntity) -> {
-                                            ScopeApprovalEntity scopeApprovalEntity = new ScopeApprovalEntity(scopeApproval);
-                                            scopeApprovalEntity.setClientEntity(clientEntity);
-                                            scopeApprovalEntity.setScopeEntity(scopeEntity);
-                                            return scopeApprovalEntity;
-                                        })))
-                        .toList())
+                .andThen(approvalAdapter.getUserConsents(domain, user, clientId))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -128,43 +94,12 @@ public class UserConsentsResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.UPDATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapCompletable(__ -> {
-                            if (clientId == null || clientId.isEmpty()) {
-                                return scopeApprovalService.revokeByUser(domain, user, authenticatedUser);
-                            }
-                            return scopeApprovalService.revokeByUserAndClient(domain, user, clientId, authenticatedUser);
-                        }))
+                .andThen(approvalAdapter.revokeUserConsents(domain, user, clientId, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
     @Path("{consent}")
     public UserConsentResource getUserConsentResource() {
         return resourceContext.getResource(UserConsentResource.class);
-    }
-
-    private Single<ApplicationEntity> getClient(String domain, String clientId) {
-        return applicationService.findByDomainAndClientId(domain, clientId)
-                .map(ApplicationEntity::new)
-                .defaultIfEmpty(new ApplicationEntity(UNKNOWN_ID, clientId, "unknown-client-name"))
-                .cache();
-    }
-
-    private Single<ScopeEntity> getScope(String domain, String scopeKey) {
-        return scopeService.findByDomainAndKey(domain, scopeKey)
-                .switchIfEmpty(scopeService.findByDomainAndKey(domain, getScopeBase(scopeKey)).map(entity -> {
-                    // set the right scopeKey since the one returned by the service contains the scope definition without parameter
-                    entity.setId(UNKNOWN_ID);
-                    entity.setKey(scopeKey);
-                    return entity;
-                }))
-                .map(ScopeEntity::new)
-                .defaultIfEmpty(new ScopeEntity(UNKNOWN_ID, scopeKey, "unknown-scope-name", "unknown-scope-description"))
-                .cache();
-    }
-
-    private String getScopeBase(String scope) {
-        return scope.contains(":") ? scope.substring(0, scope.indexOf(':')) : scope;
     }
 }

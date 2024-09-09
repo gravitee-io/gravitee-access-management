@@ -16,11 +16,14 @@
 package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
+import io.gravitee.am.repository.common.UserIdFields;
 import io.gravitee.am.repository.jdbc.common.dialect.ScimSearch;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcOrganizationUser;
@@ -40,6 +43,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.util.StreamUtils;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -193,6 +197,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
     );
     public static final String REF_ID = "refId";
     public static final String REF_TYPE = "refType";
+    private static final UserIdFields USER_ID_FIELDS = new UserIdFields(USER_COL_ID, USER_COL_SOURCE, USER_COL_EXTERNAL_ID);
 
 
     private static short concurrentFlatmap = 1;
@@ -365,9 +370,11 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
     }
 
     @Override
-    public Maybe<User> findById(ReferenceType referenceType, String referenceId, String userId) {
-        LOGGER.debug("findById({},{},{})", referenceType, referenceId, userId);
-        return userRepository.findById(referenceType.name(), referenceId, userId)
+    public Maybe<User> findById(Reference reference, UserId userId) {
+        Criteria criteria = userIdMatches(userId)
+                .and(referenceMatches(reference));
+        LOGGER.debug("findById({},{})", reference, userId);
+        return findOne(Query.query(criteria), JdbcOrganizationUser.class)
                 .map(this::toEntity)
                 .flatMap(user -> completeUser(user).toMaybe());
     }
@@ -515,6 +522,15 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         TransactionalOperator trx = TransactionalOperator.create(tm);
         Mono<Long> delete = getTemplate().getDatabaseClient().sql("DELETE FROM organization_users WHERE reference_type = :refType AND reference_id = :refId").bind(REF_TYPE, referenceType.name()).bind(REF_ID, referenceId).fetch().rowsUpdated();
         return monoToCompletable(deleteChildEntitiesByRef(referenceType.name(), referenceId).then(delete).as(trx::transactional));
+    }
+
+    @Override
+    public Criteria userIdMatches(UserId userId) {
+        if (userId.id() == null) {
+            // where().is() doesn't accept nulls
+            throw new IllegalArgumentException("Internal user id must not be null");
+        }
+        return Criteria.where(USER_COL_ID).is(userId.id());
     }
 
     private Mono<Long> deleteChildEntitiesByRef(String refType, String refId) {

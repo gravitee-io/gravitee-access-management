@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.repository;
+package io.gravitee.am.repository.junit.management;
 
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
+import io.gravitee.am.repository.junit.MemoryRepository;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.reactivex.rxjava3.core.Flowable;
 

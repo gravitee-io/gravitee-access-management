@@ -20,6 +20,7 @@ import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.model.AccountAccessToken;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Platform;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
@@ -137,7 +138,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<Organizatio
         user.setUpdatedAt(new Date());
         return userValidator.validate(user).andThen(getUserRepository()
                 .findByUsernameAndSource(ORGANIZATION, user.getReferenceId(), user.getUsername(), user.getSource())
-                .switchIfEmpty(getUserRepository().findById(ORGANIZATION, user.getReferenceId(), user.getId()))
+                .switchIfEmpty(getUserRepository().findById(Reference.organization(user.getReferenceId()), user.getFullId()))
                 .switchIfEmpty(Single.error(new UserNotFoundException(user.getId())))
                 .flatMap(oldUser -> {
 
