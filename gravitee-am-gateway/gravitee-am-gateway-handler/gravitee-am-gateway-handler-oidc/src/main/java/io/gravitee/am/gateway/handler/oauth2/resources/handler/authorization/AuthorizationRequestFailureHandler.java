@@ -230,22 +230,6 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
                 .toString();
     }
 
-    private String append(String base, Map<String, String> query, boolean fragment) throws URISyntaxException {
-        // get URI from the redirect_uri parameter
-        final URI redirectUri = UriBuilder.fromURIString(base).build();
-
-        // create final redirect uri
-        final UriBuilder finalRedirectUri = UriBuilder.fromURIString(redirectUri.toString());
-
-        // append error parameters in "application/x-www-form-urlencoded" format
-        if (fragment) {
-            query.forEach((k, v) -> finalRedirectUri.addFragmentParameter(k, UriBuilder.encodeURIComponent(v)));
-        } else {
-            query.forEach((k, v) -> finalRedirectUri.addParameter(k, UriBuilder.encodeURIComponent(v)));
-        }
-        return finalRedirectUri.build().toString();
-    }
-
     private AuthorizationRequest resolveInitialAuthorizeRequest(RoutingContext routingContext) {
         AuthorizationRequest authorizationRequest = routingContext.get(ConstantKeys.AUTHORIZATION_REQUEST_CONTEXT_KEY);
         // we have the authorization request in session if we come from the approval user page
