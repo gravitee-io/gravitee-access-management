@@ -65,6 +65,7 @@ public class UserProperties {
     private List<Address> addresses;
     private List<UserIdentity> identities;
     private String lastIdentityUsed;
+    private List<EnrolledFactorProperties> factors;
 
     public UserProperties() {
     }
@@ -121,6 +122,10 @@ public class UserProperties {
         this.rolesPermissions = ofNullable(user.getRolesPermissions())
                 .map(roles -> roles.stream().map(RoleProperties::from).collect(Collectors.toSet()))
                 .orElse(Set.of());
+
+        this.factors = ofNullable(user.getFactors())
+                .map(factors -> factors.stream().map(EnrolledFactorProperties::new).collect(Collectors.toList()))
+                .orElse(List.of());
     }
 
     private void removeSensitiveClaims(Map claimsToClean) {
