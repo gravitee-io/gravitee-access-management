@@ -222,8 +222,7 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
         var errorInfo = new ErrorInfo(error, null, errorDescription, authorizationRequest.getState());
 
 
-        boolean fragment = !isDefaultErrorPage(authorizationRequest.getRedirectUri(), errorPath) &&
-                (isImplicitFlow(authorizationRequest.getResponseType()) || isHybridFlow(authorizationRequest.getResponseType()));
+        boolean fragment = !isDefaultErrorPage(authorizationRequest.getRedirectUri(), errorPath) && requiresFragment(authorizationRequest);
         Map<String, String> extraParams = new HashMap<>();
         if (isDefaultErrorPage(authorizationRequest.getRedirectUri(), errorPath)) {
             extraParams.put(Parameters.CLIENT_ID, authorizationRequest.getClientId());
@@ -239,21 +238,6 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
                 || ResponseMode.FRAGMENT.equals(authorizationRequest.getResponseMode());
     }
 
-    private String append(String base, Map<String, String> query, boolean fragment) throws URISyntaxException {
-        // get URI from the redirect_uri parameter
-        final URI redirectUri = UriBuilder.fromURIString(base).build();
-
-        // create final redirect uri
-        final UriBuilder finalRedirectUri = UriBuilder.fromURIString(redirectUri.toString());
-
-        // append error parameters in "application/x-www-form-urlencoded" format
-        if (fragment) {
-            query.forEach((k, v) -> finalRedirectUri.addFragmentParameter(k, UriBuilder.encodeURIComponent(v)));
-        } else {
-            query.forEach((k, v) -> finalRedirectUri.addParameter(k, UriBuilder.encodeURIComponent(v)));
-        }
-        return finalRedirectUri.build().toString();
-    }
 
     private AuthorizationRequest resolveInitialAuthorizeRequest(RoutingContext routingContext) {
         AuthorizationRequest authorizationRequest = routingContext.get(ConstantKeys.AUTHORIZATION_REQUEST_CONTEXT_KEY);
