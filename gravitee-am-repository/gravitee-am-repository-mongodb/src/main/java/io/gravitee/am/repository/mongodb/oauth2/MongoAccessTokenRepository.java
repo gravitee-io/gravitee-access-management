@@ -127,7 +127,7 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
 
     @Override
     public Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, UserId userId) {
-        return Completable.fromPublisher(accessTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_CLIENT, clientId), eq(FIELD_SUBJECT, userId.lookupSubject()))));
+        return Completable.fromPublisher(accessTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_CLIENT, clientId), eq(FIELD_SUBJECT, userId.id()))));
     }
 
     @Override
@@ -137,7 +137,7 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
 
     @Override
     public Completable deleteByDomainIdAndUserId(String domainId, UserId userId) {
-        return Completable.fromPublisher(accessTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_SUBJECT, userId.lookupSubject()))));
+        return Completable.fromPublisher(accessTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_SUBJECT, userId.id()))));
     }
 
     private AccessTokenMongo convert(AccessToken accessToken) {

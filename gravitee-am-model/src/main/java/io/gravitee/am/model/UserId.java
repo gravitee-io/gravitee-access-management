@@ -16,11 +16,6 @@
 package io.gravitee.am.model;
 
 public record UserId(String id, String externalId, String source) {
-
-    public String lookupSubject() {
-        return id != null ? id :  (source + ":" + externalId);
-    }
-
     /**
      * Create a new UserId without source information
      */

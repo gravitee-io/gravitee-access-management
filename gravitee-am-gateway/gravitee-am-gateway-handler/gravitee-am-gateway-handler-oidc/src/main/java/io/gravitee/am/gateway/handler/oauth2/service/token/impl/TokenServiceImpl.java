@@ -264,7 +264,7 @@ public class TokenServiceImpl implements TokenService {
         newToken.setDomain(sourceToken.getDomain());
         newToken.setClient(sourceToken.getAud());
         // keep reference to userId in the storage, only outside world has to see the sub which maybe based on source+extId
-        newToken.setSubject(user == null ? sourceToken.getSub() : user.getFullId().lookupSubject());
+        newToken.setSubject(user == null ? sourceToken.getSub() : user.getId());
         newToken.setCreatedAt(new Date(sourceToken.getIat() * 1000));
         newToken.setExpireAt(new Date(sourceToken.getExp() * 1000));
         return newToken;
