@@ -674,7 +674,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         user.setRolesPermissions(new HashSet<>(Arrays.asList(role1, role2)));
         user.setGroups(Arrays.asList("group-1", "group-2"));
         when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(user));
-        when(subjectManager.generateSubFrom(any())).thenReturn(user.getId());
+        when(subjectManager.generateSubFrom(any(User.class))).thenReturn(user.getId());
         when(userEnhancer.enhance(user)).thenReturn(Single.just(user));
 
         testRequest(

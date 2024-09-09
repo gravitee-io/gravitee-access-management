@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.service.exception;
 
+import io.gravitee.am.model.UserId;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -34,6 +36,10 @@ public class UserNotFoundException extends AbstractNotFoundException {
         this.username = null;
     }
 
+    public UserNotFoundException(UserId userId) {
+        this.id = userId.toString();
+    }
+
     public UserNotFoundException(String domain, String username) {
         this.domain = domain;
         this.username = username;
@@ -45,7 +51,7 @@ public class UserNotFoundException extends AbstractNotFoundException {
         if (id != null) {
             return "User [" + id + "] can not be found.";
         } else if (username != null) {
-            return  "User [" + username + "] can not be found for domain[" + domain + "].";
+            return "User [" + username + "] can not be found for domain[" + domain + "].";
         } else {
             return "No user found";
         }

@@ -15,15 +15,19 @@
  */
 package io.gravitee.am.model.oauth2;
 
+import io.gravitee.am.model.UserId;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
 import java.util.Date;
+import java.util.Objects;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Data
 public class ScopeApproval {
 
     public enum ApprovalStatus {
@@ -35,7 +39,7 @@ public class ScopeApproval {
 
     private String transactionId;
 
-    private String userId;
+    private UserId userId;
 
     private String clientId;
 
@@ -54,100 +58,16 @@ public class ScopeApproval {
     @Schema(type = "java.lang.Long")
     private Date updatedAt;
 
-    public ScopeApproval() {}
+    public ScopeApproval() {
+    }
 
-    public ScopeApproval(String transactionId, String userId, String clientId, String domain, String scope, ApprovalStatus status) {
+    public ScopeApproval(String transactionId, UserId userId, String clientId, String domain, String scope, ApprovalStatus status) {
         this.transactionId = transactionId;
         this.userId = userId;
         this.clientId = clientId;
         this.domain = domain;
         this.scope = scope;
         this.status = status;
-    }
-
-    public ScopeApproval(String transactionId, String userId, String clientId, String domain, String scope, ApprovalStatus status, Date expiresAt) {
-        this(transactionId, userId, clientId, domain, scope, status);
-        this.expiresAt = expiresAt;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getTransactionId() {
-        return transactionId;
-    }
-
-    public void setTransactionId(String transactionId) {
-        this.transactionId = transactionId;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    public String getClientId() {
-        return clientId;
-    }
-
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    public String getDomain() {
-        return domain;
-    }
-
-    public void setDomain(String domain) {
-        this.domain = domain;
-    }
-
-    public String getScope() {
-        return scope;
-    }
-
-    public void setScope(String scope) {
-        this.scope = scope;
-    }
-
-    public ApprovalStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(ApprovalStatus status) {
-        this.status = status;
-    }
-
-    public Date getExpiresAt() {
-        return expiresAt;
-    }
-
-    public void setExpiresAt(Date expiresAt) {
-        this.expiresAt = expiresAt;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Date getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Date updatedAt) {
-        this.updatedAt = updatedAt;
     }
 
     @Override
@@ -156,17 +76,13 @@ public class ScopeApproval {
         if (o == null || getClass() != o.getClass()) return false;
 
         ScopeApproval that = (ScopeApproval) o;
-
-        if (!userId.equals(that.userId)) return false;
-        if (!clientId.equals(that.clientId)) return false;
-        return scope.equals(that.scope);
+        return Objects.equals(userId, that.userId)
+                && Objects.equals(clientId, that.clientId)
+                && Objects.equals(scope, that.scope);
     }
 
     @Override
     public int hashCode() {
-        int result = userId.hashCode();
-        result = 31 * result + clientId.hashCode();
-        result = 31 * result + scope.hashCode();
-        return result;
+        return Objects.hash(userId, clientId, scope);
     }
 }

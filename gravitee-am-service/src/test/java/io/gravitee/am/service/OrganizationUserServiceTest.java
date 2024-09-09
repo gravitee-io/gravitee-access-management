@@ -18,8 +18,10 @@ package io.gravitee.am.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.model.AccountAccessToken;
 import io.gravitee.am.model.Credential;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.AccountAccessTokenRepository;
 import io.gravitee.am.repository.management.api.OrganizationUserRepository;
@@ -202,7 +204,7 @@ public class OrganizationUserServiceTest {
         user.setReferenceType(ReferenceType.ORGANIZATION);
         user.setReferenceId(ORG);
 
-        when(userRepository.findById(ReferenceType.ORGANIZATION, ORG, user.getId())).thenReturn(Maybe.just(user));
+        when(userRepository.findById(Reference.organization(ORG), user.getFullId())).thenReturn(Maybe.just(user));
         when(userRepository.findByUsernameAndSource(eq(ReferenceType.ORGANIZATION), eq(ORG), any(), any())).thenReturn(Maybe.just(user));
         when(userRepository.update(any(User.class))).thenReturn(Single.just(user));
 
@@ -212,7 +214,7 @@ public class OrganizationUserServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(userRepository, times(2)).findById(ReferenceType.ORGANIZATION, ORG, user.getId());
+        verify(userRepository, times(2)).findById(Reference.organization(ORG), user.getFullId());
         verify(userRepository, times(1)).update(any(User.class));
     }
 
@@ -226,7 +228,7 @@ public class OrganizationUserServiceTest {
         UpdateUser updateUser = new UpdateUser();
         updateUser.setEmail("invalid");
         when(userRepository.findByUsernameAndSource(eq(ReferenceType.ORGANIZATION), eq(ORG), any(), any())).thenReturn(Maybe.just(user));
-        when(userRepository.findById(ReferenceType.ORGANIZATION, ORG, user.getId())).thenReturn(Maybe.just(user));
+        when(userRepository.findById(Reference.organization(ORG), user.getFullId())).thenReturn(Maybe.just(user));
 
         TestObserver<User> testObserver = userService.update(ReferenceType.ORGANIZATION, ORG, "my-user", updateUser).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -244,7 +246,7 @@ public class OrganizationUserServiceTest {
         UpdateUser updateUser = new UpdateUser();
         updateUser.setFirstName("$$^^^^¨¨¨)");
         when(userRepository.findByUsernameAndSource(eq(ReferenceType.ORGANIZATION), eq(ORG), any(), any())).thenReturn(Maybe.just(user));
-        when(userRepository.findById(ReferenceType.ORGANIZATION, ORG, user.getId())).thenReturn(Maybe.just(user));
+        when(userRepository.findById(Reference.organization(ORG), user.getFullId())).thenReturn(Maybe.just(user));
 
         TestObserver<User> testObserver = userService.update(ReferenceType.ORGANIZATION, ORG, "my-user", updateUser).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -255,7 +257,7 @@ public class OrganizationUserServiceTest {
     @Test
     public void shouldUpdate_technicalException() {
         UpdateUser updateUser = Mockito.mock(UpdateUser.class);
-        when(userRepository.findById(ReferenceType.ORGANIZATION, ORG, "my-user")).thenReturn(Maybe.just(new User()));
+        when(userRepository.findById(Reference.organization(ORG), UserId.internal("my-user"))).thenReturn(Maybe.just(new User()));
 
         TestObserver testObserver = new TestObserver();
         userService.update(ReferenceType.ORGANIZATION, ORG, "my-user", updateUser).subscribe(testObserver);
@@ -267,7 +269,7 @@ public class OrganizationUserServiceTest {
     @Test
     public void shouldUpdate_userNotFound() {
         UpdateUser updateUser = Mockito.mock(UpdateUser.class);
-        when(userRepository.findById(ReferenceType.ORGANIZATION, ORG, "my-user")).thenReturn(Maybe.empty());
+        when(userRepository.findById(Reference.organization(ORG), UserId.internal("my-user"))).thenReturn(Maybe.empty());
 
         TestObserver testObserver = new TestObserver();
         userService.update(ReferenceType.ORGANIZATION, ORG, "my-user", updateUser).subscribe(testObserver);

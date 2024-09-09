@@ -20,8 +20,10 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Updates;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
@@ -201,8 +203,8 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         return Observable.fromPublisher(withMaxTime(
                         usersCollection
                                 .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_USERNAME, username), eq(FIELD_SOURCE, source))))
-                                .limit(1)
-                                .first())
+                        .limit(1)
+                        .first())
                 .firstElement()
                 .map(this::convert);
     }
@@ -212,8 +214,8 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         return Observable.fromPublisher(withMaxTime(
                         usersCollection
                                 .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_EXTERNAL_ID, externalId), eq(FIELD_SOURCE, source))))
-                                .limit(1)
-                                .first())
+                        .limit(1)
+                        .first())
                 .firstElement()
                 .map(this::convert);
     }
@@ -224,8 +226,8 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
     }
 
     @Override
-    public Maybe<User> findById(ReferenceType referenceType, String referenceId, String userId) {
-        return Observable.fromPublisher(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, userId))).first()).firstElement().map(this::convert);
+    public Maybe<User> findById(Reference reference, UserId userId) {
+        return Observable.fromPublisher(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id()), userIdMatches(userId))).first()).firstElement().map(this::convert);
     }
 
     @Override
@@ -338,6 +340,15 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
     @Override
     public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
         return Completable.fromPublisher(usersCollection.deleteMany(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))));
+    }
+
+    @Override
+    protected Bson userIdMatches(UserId user) {
+        if (user.id() == null) {
+            // for consistency with JDBC counterpart
+            throw new IllegalArgumentException("Internal user id must not be null");
+        }
+        return eq(FIELD_ID, user.id());
     }
 
     protected User convert(T userMongo) {

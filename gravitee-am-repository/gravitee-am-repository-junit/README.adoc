@@ -1,0 +1,17 @@
+= Test repositories
+
+This module contains in-memory implementations of repositories to be used in AM's unit tests.
+The goal is to have for each repository a working implementation that does not require using an actual database.
+
+This is not a plugin; don't attempt to use it for any production code.
+To use in a modules' test, add it as a test dependency:
+
+[source,xml]
+----
+<dependency>
+    <groupId>io.gravitee.am.repository</groupId>
+    <artifactId>gravitee-am-repository-junit</artifactId>
+    <version>${project.version}</version>
+    <scope>test</scope>
+</dependency>
+----

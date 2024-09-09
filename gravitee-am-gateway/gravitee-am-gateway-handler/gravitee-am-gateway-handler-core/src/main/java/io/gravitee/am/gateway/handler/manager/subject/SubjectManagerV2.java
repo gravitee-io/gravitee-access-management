@@ -24,6 +24,8 @@ import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImplV2;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,13 +51,13 @@ public class SubjectManagerV2 implements SubjectManager {
     private Domain domain;
 
     @Override
-    public String generateSubFrom(User user) {
-        return UUID.nameUUIDFromBytes(generateInternalSubFrom(user).getBytes(StandardCharsets.UTF_8)).toString();
+    public String generateSubFrom(UserId userId) {
+        return UUID.nameUUIDFromBytes(generateInternalSubFrom(userId).getBytes(StandardCharsets.UTF_8)).toString();
     }
 
     @Override
-    public String generateInternalSubFrom(User user) {
-        return UserServiceImplV2.generateInternalSubFrom(user.getSource(), user.getExternalId());
+    public String generateInternalSubFrom(UserId user) {
+        return UserServiceImplV2.generateInternalSubFrom(user.source(), user.externalId());
     }
 
     @Override
@@ -69,8 +71,8 @@ public class SubjectManagerV2 implements SubjectManager {
             // based on the assertion, in that cas we only set the sub equals to the userId
             jwt.setSub(user.getId());
         } else {
-            jwt.setInternalSub(generateInternalSubFrom(user));
-            jwt.setSub(generateSubFrom(user));
+            jwt.setInternalSub(generateInternalSubFrom(user.getFullId()));
+            jwt.setSub(generateSubFrom(user.getFullId()));
         }
     }
 
@@ -92,8 +94,8 @@ public class SubjectManagerV2 implements SubjectManager {
     }
 
     @Override
-    public Maybe<String> findUserIdBySub(JWT sub) {
-        return this.findUserBySub(sub).map(User::getId);
+    public Maybe<UserId> findUserIdBySub(JWT sub) {
+        return this.findUserBySub(sub).map(User::getFullId);
     }
 
     @Override

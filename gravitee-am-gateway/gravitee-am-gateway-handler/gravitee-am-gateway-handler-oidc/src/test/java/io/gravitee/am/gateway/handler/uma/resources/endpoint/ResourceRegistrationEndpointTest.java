@@ -20,6 +20,7 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.service.ResourceService;
@@ -40,13 +41,18 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -55,17 +61,9 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class ResourceRegistrationEndpointTest {
 
-    @Mock
-    private Domain domain;
-
-    @Mock
-    private ResourceService service;
-
-    @Mock
-    private JWT jwt;
-
-    @Mock
-    private Client client;
+    private final Domain domain = Domain.builder().id(DOMAIN_ID).build();
+    private final ResourceService service = mock();
+    private final SubjectManager subjectManager = mock();
 
     @Mock
     private RoutingContext context;
@@ -76,10 +74,7 @@ public class ResourceRegistrationEndpointTest {
     @Mock
     private HttpServerRequest request;
 
-    @Mock
-    private SubjectManager subjectManager;
 
-    @InjectMocks
     private ResourceRegistrationEndpoint endpoint = new ResourceRegistrationEndpoint(domain, service, subjectManager);
 
     private static final String DOMAIN_PATH = "/domain";
@@ -93,16 +88,14 @@ public class ResourceRegistrationEndpointTest {
 
     @Before
     public void setUp() {
-        when(domain.getId()).thenReturn(DOMAIN_ID);
-        when(client.getId()).thenReturn(CLIENT_ID);
-        when(context.get(ConstantKeys.TOKEN_CONTEXT_KEY)).thenReturn(jwt);
-        when(context.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
+        when(context.get(ConstantKeys.TOKEN_CONTEXT_KEY)).thenReturn(new JWT());
+        when(context.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(Client.builder().id(CLIENT_ID).build());
         when(context.response()).thenReturn(response);
-        when(response.putHeader(anyString(),anyString())).thenReturn(response);
+        when(response.putHeader(anyString(), anyString())).thenReturn(response);
         when(response.setStatusCode(anyInt())).thenReturn(response);
         when(context.request()).thenReturn(request);
         when(request.getParam("resource_id")).thenReturn(RESOURCE_ID);
-        when(subjectManager.findUserIdBySub(any())).thenReturn(Maybe.just(USER_ID));
+        when(subjectManager.findUserIdBySub(any())).thenReturn(Maybe.just(UserId.internal(USER_ID)));
     }
 
     @Test
@@ -119,7 +112,7 @@ public class ResourceRegistrationEndpointTest {
         endpoint.handle(context);
         verify(response, times(1)).putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
         verify(response, times(1)).setStatusCode(intCaptor.capture());
-        Assert.assertEquals("Should be no content status",204, intCaptor.getValue().intValue());
+        Assert.assertEquals("Should be no content status", 204, intCaptor.getValue().intValue());
     }
 
     @Test
@@ -128,7 +121,7 @@ public class ResourceRegistrationEndpointTest {
         endpoint.handle(context);
         verify(response, times(1)).putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
         verify(response, times(1)).setStatusCode(intCaptor.capture());
-        Assert.assertEquals("Should be ok",200, intCaptor.getValue().intValue());
+        Assert.assertEquals("Should be ok", 200, intCaptor.getValue().intValue());
     }
 
 
@@ -143,7 +136,7 @@ public class ResourceRegistrationEndpointTest {
     @Test
     public void create_noResource() {
         when(context.getBodyAsJson()).thenReturn(new JsonObject("{\"id\":\"rs_id\",\"resource_scopes\":[\"scope\"]}"));
-        when(service.create(any() , eq(DOMAIN_ID), eq(CLIENT_ID), eq(USER_ID))).thenReturn(Single.error(new ResourceNotFoundException(RESOURCE_ID)));
+        when(service.create(any(), eq(DOMAIN_ID), eq(CLIENT_ID), eq(USER_ID))).thenReturn(Single.error(new ResourceNotFoundException(RESOURCE_ID)));
         endpoint.create(context);
         verify(context).fail(errCaptor.capture());
         Assert.assertTrue(errCaptor.getValue() instanceof ResourceNotFoundException);
@@ -154,15 +147,15 @@ public class ResourceRegistrationEndpointTest {
         ArgumentCaptor<String> strCaptor = ArgumentCaptor.forClass(String.class);
         when(context.get(CONTEXT_PATH)).thenReturn(DOMAIN_PATH);
         when(context.getBodyAsJson()).thenReturn(new JsonObject("{\"id\":\"rs_id\",\"resource_scopes\":[\"scope\"]}"));
-        when(service.create(any() , eq(DOMAIN_ID), eq(CLIENT_ID), eq(USER_ID))).thenReturn(Single.just(new Resource().setId(RESOURCE_ID)));
+        when(service.create(any(), eq(DOMAIN_ID), eq(CLIENT_ID), eq(USER_ID))).thenReturn(Single.just(new Resource().setId(RESOURCE_ID)));
         when(request.host()).thenReturn("host");
         when(request.scheme()).thenReturn("http");
         endpoint.create(context);
         verify(response, times(1)).putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-        verify(response, times(1)).putHeader(eq(HttpHeaders.LOCATION),strCaptor.capture());
+        verify(response, times(1)).putHeader(eq(HttpHeaders.LOCATION), strCaptor.capture());
         verify(response, times(1)).setStatusCode(intCaptor.capture());
-        Assert.assertEquals("Should be created",201, intCaptor.getValue().intValue());
-        Assert.assertEquals("Location", "http://host"+DOMAIN_PATH+"/uma/protection/resource_set/"+RESOURCE_ID, strCaptor.getValue());
+        Assert.assertEquals("Should be created", 201, intCaptor.getValue().intValue());
+        Assert.assertEquals("Location", "http://host" + DOMAIN_PATH + "/uma/protection/resource_set/" + RESOURCE_ID, strCaptor.getValue());
     }
 
     @Test
@@ -179,7 +172,7 @@ public class ResourceRegistrationEndpointTest {
         endpoint.get(context);
         verify(response, times(1)).putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
         verify(response, times(1)).setStatusCode(intCaptor.capture());
-        Assert.assertEquals("Should be ok",200, intCaptor.getValue().intValue());
+        Assert.assertEquals("Should be ok", 200, intCaptor.getValue().intValue());
     }
 
     @Test
@@ -193,7 +186,7 @@ public class ResourceRegistrationEndpointTest {
     @Test
     public void update_noResource() {
         when(context.getBodyAsJson()).thenReturn(new JsonObject("{\"id\":\"rs_id\",\"resource_scopes\":[\"scope\"]}"));
-        when(service.update(any() , eq(DOMAIN_ID), eq(CLIENT_ID), eq(USER_ID), eq(RESOURCE_ID))).thenReturn(Single.error(new ResourceNotFoundException(RESOURCE_ID)));
+        when(service.update(any(), eq(DOMAIN_ID), eq(CLIENT_ID), eq(USER_ID), eq(RESOURCE_ID))).thenReturn(Single.error(new ResourceNotFoundException(RESOURCE_ID)));
         endpoint.update(context);
         verify(context).fail(errCaptor.capture());
         Assert.assertTrue(errCaptor.getValue() instanceof ResourceNotFoundException);
@@ -202,11 +195,11 @@ public class ResourceRegistrationEndpointTest {
     @Test
     public void update_withResource() {
         when(context.getBodyAsJson()).thenReturn(new JsonObject("{\"id\":\"rs_id\",\"resource_scopes\":[\"scope\"]}"));
-        when(service.update(any() , eq(DOMAIN_ID), eq(CLIENT_ID), eq(USER_ID), eq(RESOURCE_ID))).thenReturn(Single.just(new Resource()));
+        when(service.update(any(), eq(DOMAIN_ID), eq(CLIENT_ID), eq(USER_ID), eq(RESOURCE_ID))).thenReturn(Single.just(new Resource()));
         endpoint.update(context);
         verify(response, times(1)).putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
         verify(response, times(1)).setStatusCode(intCaptor.capture());
-        Assert.assertEquals("Should be ok",200, intCaptor.getValue().intValue());
+        Assert.assertEquals("Should be ok", 200, intCaptor.getValue().intValue());
     }
 
     @Test
@@ -223,6 +216,6 @@ public class ResourceRegistrationEndpointTest {
         endpoint.delete(context);
         verify(response, times(1)).putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
         verify(response, times(1)).setStatusCode(intCaptor.capture());
-        Assert.assertEquals("Should be no content status",204, intCaptor.getValue().intValue());
+        Assert.assertEquals("Should be no content status", 204, intCaptor.getValue().intValue());
     }
 }

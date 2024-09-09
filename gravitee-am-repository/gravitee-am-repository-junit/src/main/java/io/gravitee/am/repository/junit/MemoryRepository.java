@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.repository;
+package io.gravitee.am.repository.junit;
 
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.rxjava3.core.Completable;
@@ -49,8 +49,8 @@ public abstract class MemoryRepository<T, ID> implements CrudRepository<T, ID> {
      */
     protected abstract ID generateAndSetId(T item);
 
-    protected Single<T> findOne(Predicate<T> predicate) {
-        return Single.just(storage.values().stream().filter(predicate).findFirst().get());
+    protected Maybe<T> findOne(Predicate<T> predicate) {
+        return Maybe.fromOptional(storage.values().stream().filter(predicate).findFirst());
     }
 
     protected Flowable<T> findMany(Predicate<T> predicate) {

@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.model.NewUser;
@@ -45,7 +47,11 @@ public interface CommonUserService {
 
     Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source);
 
+    /** @deprecated prefer findById(Reference, UserId) for new code
+     */
     Single<User> findById(ReferenceType referenceType, String referenceId, String id);
+
+    Single<User> findById(Reference reference, UserId userId);
 
     Maybe<User> findByExternalIdAndSource(ReferenceType referenceType, String referenceId, String externalId, String source);
 

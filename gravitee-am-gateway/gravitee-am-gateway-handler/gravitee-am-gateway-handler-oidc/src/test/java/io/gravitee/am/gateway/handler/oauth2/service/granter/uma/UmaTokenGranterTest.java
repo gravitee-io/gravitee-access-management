@@ -188,7 +188,7 @@ public class UmaTokenGranterTest {
         ));
         when(tokenService.create(oauth2RequestCaptor.capture(), eq(client), any())).thenReturn(Single.just(new AccessToken("success")));
         when(resourceService.findAccessPoliciesByResources(anyList())).thenReturn(Flowable.empty());
-        when(subjectManager.generateSubFrom(any())).thenReturn(USER_ID);
+        when(subjectManager.generateSubFrom(any(User.class))).thenReturn(USER_ID);
     }
 
     @Test
