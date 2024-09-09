@@ -44,6 +44,7 @@ import io.gravitee.am.model.factor.EnrolledFactorChannel.Type;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.safe.EnrolledFactorProperties;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.DeviceService;
@@ -99,6 +100,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_TYPE;
 import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ACTION_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ENABLE_KEY;
@@ -233,8 +235,12 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                     routingContext.fail(resChallenge.cause());
                     return;
                 }
-                // render the mfa challenge page
-                this.renderPage(routingContext, generateData(routingContext, domain, client), client, logger, "Unable to render MFA challenge page");
+
+                Map<String, Object> templateData = generateData(routingContext, domain, client);
+                if (resChallenge.result() != null) {
+                    templateData.put(ENROLLED_FACTOR_KEY, new EnrolledFactorProperties(resChallenge.result()));
+                }
+                this.renderPage(routingContext, templateData, client, logger, "Unable to render MFA challenge page");
             });
         } catch (Exception ex) {
             logger.error("An error has occurred when rendering MFA challenge page", ex);
@@ -453,23 +459,23 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                 );
     }
 
-    private void sendChallenge(FactorProvider factorProvider, RoutingContext routingContext, Factor factor, User endUser, Handler<AsyncResult<Void>> handler) {
-        if (!factorProvider.needChallengeSending() || routingContext.get(ConstantKeys.ERROR_PARAM_KEY) != null
-                || routingContext.get(RATE_LIMIT_ERROR_PARAM_KEY) != null || routingContext.get(VERIFY_ATTEMPT_ERROR_PARAM_KEY) != null) {
-            // do not send challenge in case of error param to avoid useless code generation
-            handler.handle(Future.succeededFuture());
-            return;
-        }
-
+    private void sendChallenge(FactorProvider factorProvider, RoutingContext routingContext, Factor factor, User endUser, Handler<AsyncResult<EnrolledFactor>> handler) {
         // create factor context
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final FactorContext factorContext = new FactorContext(applicationContext, new HashMap<>());
-        final EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factorProvider, factor, endUser, factorContext);
         factorContext.getData().putAll(getEvaluableAttributes(routingContext));
         factorContext.registerData(FactorContext.KEY_CLIENT, client);
         factorContext.registerData(KEY_USER, endUser);
         factorContext.registerData(FactorContext.KEY_REQUEST, new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())));
+        final EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factorProvider, factor, endUser, factorContext);
         factorContext.registerData(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor);
+
+        if (!factorProvider.needChallengeSending() || routingContext.get(ConstantKeys.ERROR_PARAM_KEY) != null
+                || routingContext.get(RATE_LIMIT_ERROR_PARAM_KEY) != null || routingContext.get(VERIFY_ATTEMPT_ERROR_PARAM_KEY) != null) {
+            // do not send challenge in case of error param to avoid useless code generation
+            handler.handle(Future.succeededFuture(enrolledFactor));
+            return;
+        }
 
         if (rateLimiterService.isRateLimitEnabled()) {
             rateLimiterService.tryConsume(endUser.getId(), factor.getId(), endUser.getClient(), client.getDomain())
@@ -488,14 +494,14 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         }
     }
 
-    private void sendChallenge(RoutingContext routingContext, FactorProvider factorProvider, FactorContext factorContext, User endUser, Client client, Factor factor, Handler<AsyncResult<Void>> handler) {
+    private void sendChallenge(RoutingContext routingContext, FactorProvider factorProvider, FactorContext factorContext, User endUser, Client client, Factor factor, Handler<AsyncResult<EnrolledFactor>> handler) {
         factorProvider.sendChallenge(factorContext)
                 .doOnComplete(() -> logger.debug("Challenge sent to user {}", factorContext.getUser().getId()))
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         () -> {
                             updateAuditLog(routingContext, MFA_CHALLENGE_SENT, endUser, client, factor, factorContext, null);
-                            handler.handle(Future.succeededFuture());
+                            handler.handle(Future.succeededFuture((EnrolledFactor)factorContext.getData().get(FactorContext.KEY_ENROLLED_FACTOR)));
                         },
                         error -> {
                             updateAuditLog(routingContext, MFA_CHALLENGE_SENT, endUser, client, factor, factorContext, error);
