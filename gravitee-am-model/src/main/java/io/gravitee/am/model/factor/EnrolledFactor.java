@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model.factor;
 
+import io.gravitee.am.model.safe.EnrolledFactorProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Date;
@@ -124,4 +125,5 @@ public class EnrolledFactor {
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
     }
+
 }
