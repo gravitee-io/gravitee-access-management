@@ -39,6 +39,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.MultiMap;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -230,8 +231,9 @@ public class LoginCallbackFailureHandlerTest extends RxWebTestBase {
                 null,
                 resp -> {
                     String location = resp.headers().get("location");
-                    assertNotNull(location);
-                    assertTrue(location.equals("https://sp-app/callback?error=server_error&error_description=policy_exception&state=12345"));
+                    Assertions.assertThat(location)
+                            .isNotNull()
+                            .isEqualTo("https://sp-app/callback?error=server_error&error_description=policy_exception&state=12345");
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }

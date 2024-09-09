@@ -15,12 +15,17 @@
  */
 package io.gravitee.am.common.web;
 
+import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.utils.ConstantKeys;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -60,14 +65,14 @@ public class UriBuilder {
             "^" + HTTP_REGEX + "(//(" + USERINFO_REGEX + "@)?" + HOST_REGEX + "(:" + PORT_REGEX +
                     ")?" + ")?" + PATH_REGEX + "(\\?" + QUERY_REGEX + ")?" + "(#" + LAST_REGEX + ")?");
 
-    private static final Pattern HTTP_PATTERN = Pattern.compile(HTTP_REGEX.replace(":",""));
+    private static final Pattern HTTP_PATTERN = Pattern.compile(HTTP_REGEX.replace(":", ""));
 
     private static final String LOCALHOST_HOST_REGEX = "^localhost$";
     private static final String LOCALHOST_IPV4_REGEX = "^127(?:\\.[0-9]+){0,2}\\.[0-9]+$";
     private static final String LOCALHOST_IPV6_REGEX = "^(?:0*\\:)*?:?0*1$";
 
     private static final Pattern LOCALHOST_PATTERN = Pattern.compile(
-            LOCALHOST_HOST_REGEX +"|"+ LOCALHOST_IPV4_REGEX +"|"+ LOCALHOST_IPV6_REGEX);
+            LOCALHOST_HOST_REGEX + "|" + LOCALHOST_IPV4_REGEX + "|" + LOCALHOST_IPV6_REGEX);
 
     private String scheme;
     private String host;
@@ -102,8 +107,7 @@ public class UriBuilder {
             builder.query(query);
             builder.fragment(fragment);
             return builder;
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("[" + uri + "] is not a valid URI");
         }
     }
@@ -128,8 +132,7 @@ public class UriBuilder {
             builder.query(matcher.group(10));
             builder.fragment(matcher.group(12));
             return builder;
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("[" + httpUrl + "] is not a valid HTTP URL");
         }
     }
@@ -138,19 +141,18 @@ public class UriBuilder {
      * Convert a String to the application/x-www-form-urlencoded MIME format
      */
     public static String encodeURIComponent(String s) {
-        String result;
-        result = URLEncoder.encode(s, StandardCharsets.UTF_8);
-        return result;
+        if (s == null) {
+            return null;
+        }
+        return URLEncoder.encode(s, StandardCharsets.UTF_8);
     }
 
     public static String decodeURIComponent(String s) {
-        String result;
         try {
-            result = URLDecoder.decode(s, StandardCharsets.UTF_8);
+            return URLDecoder.decode(s, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            result = s;
+            return s;
         }
-        return result;
     }
 
     public UriBuilder scheme(String scheme) {
@@ -211,6 +213,27 @@ public class UriBuilder {
         }
         query += parameter + "=" + value;
         return this;
+    }
+
+    /**
+     * Add a query param if the value isn't null, otherwise return this builder unmodified
+     */
+    public UriBuilder addNotNullParameter(String parameter, String value) {
+        if (value == null) {
+            return this;
+        }
+        return addParameter(parameter, value);
+
+    }
+
+    /**
+     * Add a param to the fragment if the value isn't null, otherwise return this builder unmodified
+     */
+    public UriBuilder addNotNullFragmentParameter(String parameter, String value) {
+        if (value == null) {
+            return this;
+        }
+        return addFragmentParameter(parameter, value);
     }
 
     /**
@@ -287,5 +310,28 @@ public class UriBuilder {
 
     public static boolean isLocalhost(String host) {
         return LOCALHOST_PATTERN.matcher(host.toLowerCase()).matches();
+    }
+
+
+    public static URI buildErrorRedirect(String baseRedirectUri, ErrorInfo error, boolean fragment, Map<String, String> extraParams) throws URISyntaxException {
+        final URI redirectUri = UriBuilder.fromURIString(baseRedirectUri).build();
+
+        var parameters = new TreeMap<String, String>();
+        parameters.put(ConstantKeys.ERROR_PARAM_KEY, error.error());
+        parameters.put(ConstantKeys.ERROR_CODE_PARAM_KEY, error.code());
+        parameters.put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, error.description());
+        parameters.put(Parameters.STATE, error.state());
+        parameters.putAll(extraParams);
+
+        // create final redirect uri
+        final UriBuilder finalRedirectUri = UriBuilder.fromURIString(redirectUri.toString());
+        BiConsumer<String, String> addParameter = fragment
+                ? (k,v) -> finalRedirectUri.addNotNullFragmentParameter(k, encodeURIComponent(v))
+                : (k,v) -> finalRedirectUri.addNotNullParameter(k, encodeURIComponent(v));
+        parameters.forEach(addParameter);
+        return finalRedirectUri.build();
+    }
+    public static URI buildErrorRedirect(String baseRedirectUri, ErrorInfo error, boolean fragment) throws URISyntaxException {
+       return buildErrorRedirect(baseRedirectUri, error, fragment, Map.of());
     }
 }
