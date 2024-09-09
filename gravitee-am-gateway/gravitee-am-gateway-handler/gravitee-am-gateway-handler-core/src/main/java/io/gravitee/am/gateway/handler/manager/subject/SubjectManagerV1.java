@@ -75,4 +75,9 @@ public class SubjectManagerV1 implements SubjectManager {
     public String extractUserId(String gis) {
         return gis;
     }
+
+    @Override
+    public String extractSourceId(String gis) {
+        throw new IllegalStateException("extractSourceId shouldn't be call for SubjectManagerV1");
+    }
 }
