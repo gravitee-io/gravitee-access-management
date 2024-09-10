@@ -23,7 +23,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.ReporterServiceImpl;
 import io.gravitee.am.service.model.NewReporter;
 import io.gravitee.am.service.model.UpdateReporter;
-import io.gravitee.am.service.repository.MemoryReporterRepository;
+import io.gravitee.am.repository.junit.management.MemoryReporterRepository;
 import io.reactivex.rxjava3.core.Single;
 import org.apache.commons.text.RandomStringGenerator;
 import org.junit.jupiter.api.Test;

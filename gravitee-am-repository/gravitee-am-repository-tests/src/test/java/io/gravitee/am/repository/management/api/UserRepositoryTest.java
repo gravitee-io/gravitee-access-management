@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.common.analytics.Field;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserIdentity;
@@ -501,7 +502,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         User userCreated = userRepository.create(user).blockingGet();
 
         // fetch user
-        TestObserver<User> testObserver = userRepository.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, userCreated.getId()).test();
+        TestObserver<User> testObserver = userRepository.findById(Reference.organization(ORGANIZATION_ID), userCreated.getFullId()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();

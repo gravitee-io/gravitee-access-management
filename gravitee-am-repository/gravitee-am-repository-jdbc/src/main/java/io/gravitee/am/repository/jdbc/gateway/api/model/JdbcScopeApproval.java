@@ -15,6 +15,14 @@
  */
 package io.gravitee.am.repository.jdbc.gateway.api.model;
 
+import io.gravitee.am.model.UserId;
+import io.gravitee.am.model.oauth2.ScopeApproval;
+import io.gravitee.am.repository.jdbc.DateHelper;
+import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -26,6 +34,10 @@ import java.time.LocalDateTime;
  * @author GraviteeSource Team
  */
 @Table("scope_approvals")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class JdbcScopeApproval {
     @Id
     private String id;
@@ -33,6 +45,10 @@ public class JdbcScopeApproval {
     private String transactionId;
     @Column("user_id")
     private String userId;
+    @Column(AbstractJdbcRepository.USER_EXTERNAL_ID_FIELD)
+    private String userExternalId;
+    @Column(AbstractJdbcRepository.USER_SOURCE_FIELD)
+    private String userSource;
     @Column("client_id")
     private String clientId;
     private String domain;
@@ -45,83 +61,36 @@ public class JdbcScopeApproval {
     @Column("updated_at")
     private LocalDateTime updatedAt;
 
-    public String getId() {
-        return id;
+    public static JdbcScopeApproval of(ScopeApproval entity) {
+        var approval = new JdbcScopeApproval();
+        approval.setId(entity.getId());
+        approval.setTransactionId(entity.getTransactionId());
+        approval.setUserId(entity.getUserId().id());
+        approval.setUserSource(entity.getUserId().source());
+        approval.setUserExternalId(entity.getUserId().externalId());
+        approval.setClientId(entity.getClientId());
+        approval.setDomain(entity.getDomain());
+        approval.setScope(entity.getScope());
+        approval.setStatus(entity.getStatus().name());
+        approval.setExpiresAt(DateHelper.toLocalDateTime(entity.getExpiresAt()));
+        approval.setCreatedAt(DateHelper.toLocalDateTime(entity.getCreatedAt()));
+        approval.setUpdatedAt(DateHelper.toLocalDateTime(entity.getUpdatedAt()));
+        return approval;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public ScopeApproval toEntity() {
+        var approval = new ScopeApproval();
+        approval.setId(id);
+        approval.setTransactionId(transactionId);
+        approval.setUserId(new UserId(userId, userExternalId, userSource));
+        approval.setClientId(clientId);
+        approval.setDomain(domain);
+        approval.setScope(scope);
+        approval.setStatus(ScopeApproval.ApprovalStatus.valueOf(status));
+        approval.setExpiresAt(DateHelper.toDate(expiresAt));
+        approval.setCreatedAt(DateHelper.toDate(createdAt));
+        approval.setUpdatedAt(DateHelper.toDate(updatedAt));
+        return approval;
     }
 
-    public String getTransactionId() {
-        return transactionId;
-    }
-
-    public void setTransactionId(String transactionId) {
-        this.transactionId = transactionId;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    public String getClientId() {
-        return clientId;
-    }
-
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    public String getDomain() {
-        return domain;
-    }
-
-    public void setDomain(String domain) {
-        this.domain = domain;
-    }
-
-    public String getScope() {
-        return scope;
-    }
-
-    public void setScope(String scope) {
-        this.scope = scope;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public LocalDateTime getExpiresAt() {
-        return expiresAt;
-    }
-
-    public void setExpiresAt(LocalDateTime expiresAt) {
-        this.expiresAt = expiresAt;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
 }

@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.5.0-scope-approval-external-user-id
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+      changes:
+        - addColumn:
+            tableName: scope_approvals
+            columns:
+              - column:
+                  name: user_external_id
+                  type: nvarchar(255)
+              - column:
+                  name: user_source
+                  type: nvarchar(64)
+        - createIndex:
+            indexName: idx_scope_approvals_user_ext_id
+            tableName: scope_approvals
+            columns:
+              - column:
+                  name: user_source
+              - column:
+                  name: user_external_id

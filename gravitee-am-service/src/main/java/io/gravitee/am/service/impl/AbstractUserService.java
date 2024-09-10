@@ -17,8 +17,10 @@ package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.CommonUserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
@@ -141,14 +143,20 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
 
     @Override
     public Single<User> findById(ReferenceType referenceType, String referenceId, String id) {
-        LOGGER.debug("Find user by id : {}", id);
-        return getUserRepository().findById(referenceType, referenceId, id)
+        return findById(new Reference(referenceType, referenceId), UserId.internal(id));
+    }
+
+    @Override
+    public Single<User> findById(Reference reference, UserId userId) {
+        LOGGER.debug("Find user by id : {}", userId);
+        return getUserRepository().findById(reference, userId)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a user using its ID {}", id, ex);
+                    LOGGER.error("An error occurs while trying to find a user using its ID {}", userId, ex);
                     return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a user using its ID: %s", id), ex));
+                            String.format("An error occurs while trying to find a user using its ID: %s", userId), ex));
                 })
-                .switchIfEmpty(Single.error(new UserNotFoundException(id)));
+                .switchIfEmpty(Single.error(new UserNotFoundException(userId)));
+
     }
 
     @Override
@@ -244,7 +252,7 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
     public Single<User> update(ReferenceType referenceType, String referenceId, String id, UpdateUser updateUser) {
         LOGGER.debug("Update a user {} for {} {}", id, referenceType, referenceId);
 
-        return getUserRepository().findById(referenceType, referenceId, id)
+        return getUserRepository().findById(new Reference(referenceType, referenceId), UserId.internal(id))
                 .switchIfEmpty(Single.error(new UserNotFoundException(id)))
                 .flatMap(oldUser -> {
                     User tmpUser = new User();

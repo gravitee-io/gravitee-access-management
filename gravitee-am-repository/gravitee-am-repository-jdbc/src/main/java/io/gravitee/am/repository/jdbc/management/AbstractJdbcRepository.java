@@ -17,9 +17,14 @@ package io.gravitee.am.repository.jdbc.management;
 
 import com.github.dozermapper.core.DozerBeanMapperBuilder;
 import com.github.dozermapper.core.Mapper;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.UserId;
+import io.gravitee.am.repository.common.UserIdFields;
+import io.gravitee.am.repository.jdbc.DateHelper;
 import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.management.api.model.mapper.LocalDateConverter;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,12 +32,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.query.CriteriaDefinition;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.transaction.ReactiveTransactionManager;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +46,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
+import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToMaybe;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -49,6 +57,9 @@ public abstract class AbstractJdbcRepository {
     public static final String USER_ID_FIELD = "user_id";
     public static final String USER_EXTERNAL_ID_FIELD = "user_external_id";
     public static final String USER_SOURCE_FIELD = "user_source";
+
+    protected static final UserIdFields DEFAULT_USER_ID_FIELDS = new UserIdFields(USER_ID_FIELD, USER_SOURCE_FIELD, USER_EXTERNAL_ID_FIELD);
+
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
     @Autowired
     @Getter
@@ -79,7 +90,7 @@ public abstract class AbstractJdbcRepository {
     protected String createInsertStatement(String table, List<String> columns) {
         return "INSERT INTO " + table + " (" +
                 columns.stream().map(SqlIdentifier::quoted).map(databaseDialectHelper::toSql).collect(Collectors.joining(","))
-                + ") VALUES (:" + columns.stream().collect(Collectors.joining(",:")) + ")";
+                + ") VALUES (:" + String.join(",:", columns) + ")";
     }
 
     protected String createUpdateStatement(String table, List<String> columns, List<String> whereClauseColumns) {
@@ -107,28 +118,57 @@ public abstract class AbstractJdbcRepository {
         return builder.toString();
     }
 
+    /**
+     * @deprecated Use {@link DateHelper#toLocalDateTime} instead
+     */
+    @Deprecated(since = "4.5.0", forRemoval = true)
     protected LocalDateTime toLocalDateTime(Date date) {
-        if (date == null) {
-            return null;
-        }
-        return date.toInstant().atOffset(ZoneOffset.UTC).toLocalDateTime();
+        return DateHelper.toLocalDateTime(date);
     }
 
+    /**
+     * @deprecated Use {@link DateHelper#toDate} instead
+     */
+    @Deprecated(since = "4.5.0", forRemoval = true)
     protected Date toDate(LocalDateTime localDateTime) {
-        return Date.from(localDateTime.toInstant(ZoneOffset.UTC));
+        return DateHelper.toDate(localDateTime);
+    }
+
+    protected <T> Flowable<T> findAll(Query query, Class<T> type) {
+        return fluxToFlowable(getTemplate().select(type)
+                .matching(query).all());
+    }
+
+    protected <T> Maybe<T> findOne(Query query, Class<T> type) {
+        return monoToMaybe(getTemplate().select(type)
+                .matching(query).one());
     }
 
 
-    protected Criteria userMatches(UserId userId, String userIdField, String userExternalIdField, String userSourceField) {
-        if (userId.hasExternal()) {
-            return where(userIdField).is(userId.id()).or(where(userExternalIdField).is(userId.externalId()).and(userSourceField).is(userId.source()));
+    protected final Criteria userIdMatches(UserId userId, UserIdFields userIdFields) {
+        var idColumn = userIdFields.idField();
+        var extIdColumn = userIdFields.externalIdField();
+        var sourceColumn = userIdFields.sourceField();
+        if (userId.id() != null && userId.hasExternal()) {
+            var actualQuery = where(idColumn).is(userId.id()).or(where(extIdColumn).is(userId.externalId()).and(sourceColumn).is(userId.source()));
+            // this somewhat silly workaround is required to force correct parentheses placement in the final query
+            return Criteria.empty().and(actualQuery);
+        } else if (userId.hasExternal()) {
+            return where(extIdColumn).is(userId.externalId()).and(sourceColumn).is(userId.source());
+        } else if (userId.id() != null){
+            return where(idColumn).is(userId.id());
         } else {
-            return where(userIdField).is(userId.id());
+            throw new IllegalArgumentException("attempt to search by an empty UserId");
         }
     }
 
-    protected Criteria userMatches(UserId user) {
-        return userMatches(user, USER_ID_FIELD, USER_EXTERNAL_ID_FIELD, USER_SOURCE_FIELD);
+
+    protected Criteria userIdMatches(UserId user) {
+        return userIdMatches(user, DEFAULT_USER_ID_FIELDS);
+    }
+
+    protected CriteriaDefinition referenceMatches(Reference reference) {
+        return where("reference_type").is(reference.type()).and("reference_id").is(reference.id());
     }
 
     /**

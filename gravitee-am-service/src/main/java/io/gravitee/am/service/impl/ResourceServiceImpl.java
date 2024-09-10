@@ -69,7 +69,7 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Lazy
     @Autowired
-    private AccessPolicyRepository accessPolicyRepository;
+    private AccessPolicyRepository  accessPolicyRepository;
 
     @Autowired
     private ScopeService scopeService;

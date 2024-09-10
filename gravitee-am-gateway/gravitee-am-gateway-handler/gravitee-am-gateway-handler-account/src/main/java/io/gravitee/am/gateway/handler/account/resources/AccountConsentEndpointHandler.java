@@ -28,7 +28,7 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
  */
 public class AccountConsentEndpointHandler {
 
-    private AccountService accountService;
+    private final AccountService accountService;
 
     public AccountConsentEndpointHandler(AccountService accountService) {
         this.accountService = accountService;
@@ -43,10 +43,10 @@ public class AccountConsentEndpointHandler {
         final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         accountService.getConsentList(user, client)
-                        .subscribe(
-                                consentList -> AccountResponseHandler.handleDefaultResponse(routingContext, consentList),
-                                routingContext::fail
-                        );
+                .subscribe(
+                        consentList -> AccountResponseHandler.handleDefaultResponse(routingContext, consentList),
+                        routingContext::fail
+                );
     }
 
     /**
@@ -73,7 +73,7 @@ public class AccountConsentEndpointHandler {
         final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
         final String consentId = routingContext.request().getParam("consentId");
 
-        accountService.removeConsent(user.getId(), consentId, new DefaultUser(user))
+        accountService.removeConsent(user.getFullId(), consentId, new DefaultUser(user))
                 .subscribe(
                         () -> AccountResponseHandler.handleNoBodyResponse(routingContext),
                         routingContext::fail

@@ -15,33 +15,44 @@
  */
 package io.gravitee.am.gateway.handler.users.resources.consents;
 
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
-import io.gravitee.am.gateway.handler.users.service.UserService;
+import io.gravitee.am.gateway.handler.users.service.DomainUserConsentService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.ScopeApprovalNotFoundException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.rxjava3.ext.web.handler.SessionHandler;
+import io.vertx.rxjava3.ext.web.sstore.LocalSessionStore;
+import org.assertj.core.api.Assertions;
+import org.assertj.core.api.AssertionsForInterfaceTypes;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.concurrent.TimeUnit;
+
+import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_IP_LOCATION;
+import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_USER_AGENT;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
@@ -52,25 +63,21 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class UserConsentEndpointHandlerTest extends RxWebTestBase {
 
-    @Mock
-    private UserService userService;
 
-    @Mock
-    private ClientSyncService clientService;
+    private final DomainUserConsentService userService = mock();
 
-    @Mock
-    private Domain domain;
+    private final ClientSyncService clientService = mock();
 
-    @Mock
-    private SubjectManager subjectManager;
+    private final SubjectManager subjectManager = mock();
 
-    @InjectMocks
-    private UserConsentEndpointHandler userConsentEndpointHandler = new UserConsentEndpointHandler(userService, clientService, domain, subjectManager);
+    private final Domain domain = new Domain();
+
+    private UserConsentEndpointHandler underTest = new UserConsentEndpointHandler(userService, clientService, domain, subjectManager);
 
     @Mock
     private OAuth2AuthProvider oAuth2AuthProvider;
 
-    private OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider);
+    private final OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider);
 
     @Override
     public void setUp() throws Exception {
@@ -81,7 +88,7 @@ public class UserConsentEndpointHandlerTest extends RxWebTestBase {
     public void shouldNotGetConsent_no_token() throws Exception {
         router.route("/users/:userId/consents/:consentId")
                 .handler(oAuth2AuthHandler)
-                .handler(userConsentEndpointHandler::get)
+                .handler(underTest::get)
                 .failureHandler(new ErrorHandler());
 
         testRequest(
@@ -94,12 +101,9 @@ public class UserConsentEndpointHandlerTest extends RxWebTestBase {
     @Test
     @Ignore
     public void shouldNotGetConsent_invalid_token() throws Exception {
-        JWT jwt = new JWT();
-        jwt.setAud("client-id");
-
         router.route("/users/:userId/consents/:consentId")
                 .handler(oAuth2AuthHandler)
-                .handler(userConsentEndpointHandler::get)
+                .handler(underTest::get)
                 .failureHandler(new ErrorHandler());
 
         testRequest(
@@ -111,13 +115,10 @@ public class UserConsentEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldNotGetConsent_notFound() throws Exception {
-        JWT jwt = new JWT();
-        jwt.setAud("client-id");
-
         when(userService.consent(anyString())).thenReturn(Maybe.error(new ScopeApprovalNotFoundException("consentId")));
 
         router.route("/users/:userId/consents/:consentId")
-                .handler(userConsentEndpointHandler::get)
+                .handler(underTest::get)
                 .failureHandler(new ErrorHandler());
 
         testRequest(
@@ -130,13 +131,10 @@ public class UserConsentEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldGetConsent() throws Exception {
-        JWT jwt = new JWT();
-        jwt.setAud("client-id");
-
         when(userService.consent(anyString())).thenReturn(Maybe.just(new ScopeApproval()));
 
         router.route("/users/:userId/consents/:consentId")
-                .handler(userConsentEndpointHandler::get)
+                .handler(underTest::get)
                 .failureHandler(new ErrorHandler());
 
         testRequest(
@@ -150,17 +148,12 @@ public class UserConsentEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRevokeConsent() throws Exception {
         when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(new User()));
-        when(subjectManager.findUserIdBySub(any())).thenReturn(Maybe.just("user-id"));
-        when(userService.revokeConsent(anyString(), anyString(), any())).thenReturn(Completable.complete());
+        when(subjectManager.findUserIdBySub(any())).thenReturn(Maybe.just(UserId.internal("user-id")));
+        when(userService.revokeConsent(any(), any(), any())).thenReturn(Completable.complete());
 
         router.route("/users/:userId/consents/:consentId")
-                .handler(rc -> {
-                    JWT token = new JWT();
-                    token.setSub("sub");
-                    rc.put(ConstantKeys.TOKEN_CONTEXT_KEY, token);
-                    rc.next();
-                })
-                .handler(userConsentEndpointHandler::revoke)
+                .handler(givenContextHas(ConstantKeys.TOKEN_CONTEXT_KEY, token("sub", null)))
+                .handler(underTest::revoke)
                 .failureHandler(new ErrorHandler());
 
         testRequest(
@@ -169,4 +162,160 @@ public class UserConsentEndpointHandlerTest extends RxWebTestBase {
                 204,
                 "No Content", null);
     }
+
+
+    // for sonar branch coverage mostly
+    @Test
+    public void revokeConsent_shouldStoreIp() throws Exception {
+        when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(new User()));
+        router.route("/users/:userId/consents/:consentId")
+                .handler(SessionHandler.create(LocalSessionStore.create(vertx)))
+                .handler(rc -> {
+                    rc.session().put(USER_CONSENT_IP_LOCATION, true).put(USER_CONSENT_USER_AGENT, true);
+                    rc.next();
+                })
+                .handler(givenContextHas(ConstantKeys.TOKEN_CONTEXT_KEY, token("sub", null)))
+                .handler(rc -> {
+                    var principal = underTest.getPrincipal(rc)
+                            .test()
+                            .awaitDone(1, TimeUnit.SECONDS)
+                            .assertValueCount(1)
+                            .values()
+                            .get(0);
+                    AssertionsForInterfaceTypes.assertThat(principal.getAdditionalInformation())
+                            .containsKey(Claims.IP_ADDRESS)
+                            .containsKey(Claims.USER_AGENT);
+                    rc.response().setStatusCode(204).setStatusMessage("No Content").end();
+                })
+                .failureHandler(new ErrorHandler());
+
+        testRequest(
+                HttpMethod.DELETE, "/users/user-id/consents/consent-id",
+                req -> req.putHeader(HttpHeaders.AUTHORIZATION.toString(), "Bearer token"),
+                204,
+                "No Content", null);
+    }
+
+    // for sonar branch coverage mostly
+    @Test
+    public void revokeConsent_byAud_shouldStoreIp() throws Exception {
+        when(clientService.findByClientId(any())).thenReturn(Maybe.just(new Client()));
+
+        router.route("/users/:userId/consents/:consentId")
+                .handler(SessionHandler.create(LocalSessionStore.create(vertx)))
+                .handler(rc -> {
+                    rc.session().put(USER_CONSENT_IP_LOCATION, true).put(USER_CONSENT_USER_AGENT, true);
+                    rc.next();
+                })
+                .handler(givenContextHas(ConstantKeys.TOKEN_CONTEXT_KEY, token("test", "test")))
+                .handler(rc -> {
+                    var principal = underTest.getPrincipal(rc)
+                            .test()
+                            .awaitDone(1, TimeUnit.SECONDS)
+                            .assertValueCount(1)
+                            .values()
+                            .get(0);
+                    AssertionsForInterfaceTypes.assertThat(principal.getAdditionalInformation())
+                            .containsKey(Claims.IP_ADDRESS)
+                            .containsKey(Claims.USER_AGENT);
+                    rc.response().setStatusCode(204).setStatusMessage("No Content").end();
+                })
+                .failureHandler(new ErrorHandler());
+
+        testRequest(
+                HttpMethod.DELETE, "/users/user-id/consents/consent-id",
+                req -> req.putHeader(HttpHeaders.AUTHORIZATION.toString(), "Bearer token"),
+                204,
+                "No Content", null);
+    }
+
+    // for sonar branch coverage mostly
+    @Test
+    public void shouldRevokeConsent_byAud() throws Exception {
+        when(subjectManager.findUserIdBySub(any())).thenReturn(Maybe.just(UserId.internal("user-id")));
+        when(userService.revokeConsent(any(), any(), any())).thenReturn(Completable.complete());
+        when(clientService.findByClientId(any())).thenReturn(Maybe.just(new Client()));
+
+        router.route("/users/:userId/consents/:consentId")
+                .handler(givenContextHas(ConstantKeys.TOKEN_CONTEXT_KEY, token("sub", "sub")))
+                .handler(underTest::revoke)
+                .failureHandler(new ErrorHandler());
+
+        testRequest(
+                HttpMethod.DELETE, "/users/user-id/consents/consent-id",
+                req -> req.putHeader(HttpHeaders.AUTHORIZATION.toString(), "Bearer token"),
+                204,
+                "No Content", null);
+    }
+
+    @Test
+    public void tokenWithoutSub() throws Exception {
+        router.route("/users/:userId/consents/:consentId")
+                .handler(givenContextHas(ConstantKeys.TOKEN_CONTEXT_KEY, token(null, "aud")))
+                .handler(rc -> {
+                    underTest.getPrincipal(rc)
+                            .test().awaitDone(5, TimeUnit.SECONDS)
+                            .assertValue(u -> u.getUsername().equals("unknown-user"));
+                    rc.next();
+                })
+                .failureHandler(new ErrorHandler());
+
+        testRequest(
+                HttpMethod.DELETE, "/users/user-id/consents/consent-id",
+                req -> req.putHeader(HttpHeaders.AUTHORIZATION.toString(), "Bearer token"),
+                404,
+                "Not Found", null);
+    }
+
+    @Test
+    public void subjectManager_illegalArgumentException_ignored() {
+        when(subjectManager.findUserIdBySub(any())).thenReturn(Maybe.error(new IllegalArgumentException()));
+
+        underTest.getUserIdFromSub(token("sub", "aud"))
+                .test()
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertValue(id -> id.id().equals("sub"));
+    }
+
+    @Test
+    public void subjectManager_otherException_passedOn() {
+        when(subjectManager.findUserIdBySub(any())).thenReturn(Maybe.error(new RuntimeException("some random error")));
+
+        underTest.getUserIdFromSub(token("sub", "aud"))
+                .test()
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertError(RuntimeException.class);
+    }
+
+    @Test
+    public void idMatch() {
+        when(subjectManager.generateInternalSubFrom(any(UserId.class))).thenAnswer(inv->{
+            var id = (UserId) inv.getArguments()[0];
+
+            return  id.hasExternal() ? (id.source() + ":" + id.externalId()) : id.id();
+        });
+
+        var internalTestId = UserId.internal("test");
+        var fullTestId = new UserId("test", "a", "idp-1");
+        var externalId = new UserId(null, "a", "idp-1");
+
+        Assertions.assertThat(underTest.userIdParamMatchTokenIdentity(internalTestId,"test", token("test",null))).isTrue();
+
+        Assertions.assertThat(underTest.userIdParamMatchTokenIdentity(fullTestId,"test", token("test",null))).isTrue();
+        Assertions.assertThat(underTest.userIdParamMatchTokenIdentity(fullTestId,"idp-1:a", token("test",null))).isTrue();
+        Assertions.assertThat(underTest.userIdParamMatchTokenIdentity(fullTestId, "idp-1:b", token("something-else", "some-aud"))).isFalse();
+
+        Assertions.assertThat(underTest.userIdParamMatchTokenIdentity(externalId,"idp-1:a", token("md5(gis)",null))).isTrue();
+        Assertions.assertThat(underTest.userIdParamMatchTokenIdentity(externalId,"test", token("md5(gis)",null))).isFalse();
+
+
+    }
+
+    private JWT token(String sub, String aud) {
+        JWT token = new JWT();
+        if (sub != null) token.setSub(sub);
+        if (aud != null) token.setAud(aud);
+        return token;
+    }
+
 }

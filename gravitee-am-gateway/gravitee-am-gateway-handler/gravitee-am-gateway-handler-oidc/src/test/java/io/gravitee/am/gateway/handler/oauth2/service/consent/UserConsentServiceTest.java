@@ -29,11 +29,6 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import javassist.NotFoundException;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,6 +36,12 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.model.oauth2.ScopeApproval.ApprovalStatus.APPROVED;
 import static io.gravitee.am.model.oauth2.ScopeApproval.ApprovalStatus.DENIED;
@@ -126,7 +127,7 @@ public class UserConsentServiceTest {
                 List.of(
                         getScopeSettings("openid", true, 10000),
                         getScopeSettings("email", false, -1),
-                        getScopeSettings("browser", false,  null),
+                        getScopeSettings("browser", false, null),
                         getScopeSettings("phone", false, null)
                 )
         );
@@ -175,10 +176,12 @@ public class UserConsentServiceTest {
         var observer = userConsentService.getConsentInformation(consent).test();
 
         observer.assertComplete()
-                .assertValue(set -> set.size() == 2 &&  set.stream().map(Scope::getKey).allMatch(consent::contains));
+                .assertValue(set -> set.size() == 2 && set.stream().map(Scope::getKey).allMatch(consent::contains));
     }
 
     private ScopeApproval getScopeApproval(User user, Client client, String phone, ApprovalStatus denied, Date expires) {
-        return new ScopeApproval(UUID.randomUUID().toString(), user.getId(), client.getClientId(), domain.getName(), phone, denied, expires);
+        var approval = new ScopeApproval(UUID.randomUUID().toString(), user.getFullId(), client.getClientId(), domain.getName(), phone, denied);
+        approval.setExpiresAt(expires);
+        return approval;
     }
 }

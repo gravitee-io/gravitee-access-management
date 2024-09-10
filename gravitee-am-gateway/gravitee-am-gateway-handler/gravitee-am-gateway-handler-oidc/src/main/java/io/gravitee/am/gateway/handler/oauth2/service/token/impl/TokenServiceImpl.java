@@ -246,15 +246,7 @@ public class TokenServiceImpl implements TokenService {
     }
 
     private io.gravitee.am.repository.oauth2.model.AccessToken convert(JWT token, JWT refreshToken, OAuth2Request oAuth2Request, User user) {
-        io.gravitee.am.repository.oauth2.model.AccessToken accessToken = new io.gravitee.am.repository.oauth2.model.AccessToken();
-        accessToken.setId(RandomString.generate());
-        accessToken.setToken(token.getJti());
-        accessToken.setDomain(token.getDomain());
-        accessToken.setClient(token.getAud());
-        // keep reference to userId in the storage, only outside world has to see the sub which maybe based on source+extId
-        accessToken.setSubject(user == null ? token.getSub() : user.getId());
-        accessToken.setCreatedAt(new Date(token.getIat() * 1000));
-        accessToken.setExpireAt(new Date(token.getExp() * 1000));
+        io.gravitee.am.repository.oauth2.model.AccessToken accessToken = convertCommon(new io.gravitee.am.repository.oauth2.model.AccessToken(), token, user);
         // set authorization code
         accessToken.setAuthorizationCode(oAuth2Request.parameters() != null ? oAuth2Request.parameters().getFirst(io.gravitee.am.common.oauth2.Parameters.CODE) : null);
         // set refresh token
@@ -263,16 +255,19 @@ public class TokenServiceImpl implements TokenService {
     }
 
     private io.gravitee.am.repository.oauth2.model.RefreshToken convert(JWT token, User user) {
-        io.gravitee.am.repository.oauth2.model.RefreshToken refreshToken = new io.gravitee.am.repository.oauth2.model.RefreshToken();
-        refreshToken.setId(RandomString.generate());
-        refreshToken.setToken(token.getJti());
-        refreshToken.setDomain(token.getDomain());
-        refreshToken.setClient(token.getAud());
+        return convertCommon(new io.gravitee.am.repository.oauth2.model.RefreshToken(), token, user);
+    }
+
+    private <T extends io.gravitee.am.repository.oauth2.model.Token> T convertCommon(T newToken, JWT sourceToken, User user) {
+        newToken.setId(RandomString.generate());
+        newToken.setToken(sourceToken.getJti());
+        newToken.setDomain(sourceToken.getDomain());
+        newToken.setClient(sourceToken.getAud());
         // keep reference to userId in the storage, only outside world has to see the sub which maybe based on source+extId
-        refreshToken.setSubject(user == null ? token.getSub() : user.getId());
-        refreshToken.setCreatedAt(new Date(token.getIat() * 1000));
-        refreshToken.setExpireAt(new Date(token.getExp() * 1000));
-        return refreshToken;
+        newToken.setSubject(user == null ? sourceToken.getSub() : user.getId());
+        newToken.setCreatedAt(new Date(sourceToken.getIat() * 1000));
+        newToken.setExpireAt(new Date(sourceToken.getExp() * 1000));
+        return newToken;
     }
 
     /**
@@ -326,8 +321,8 @@ public class TokenServiceImpl implements TokenService {
         token.setClientId(jwt.getAud());
         token.setSubject(jwt.getSub());
         token.setScope(jwt.getScope());
-        token.setCreatedAt(new Date(jwt.getIat() * 1000l));
-        token.setExpireAt(new Date(jwt.getExp() * 1000l));
+        token.setCreatedAt(new Date(jwt.getIat() * 1000L));
+        token.setExpireAt(new Date(jwt.getExp() * 1000L));
         token.setExpiresIn(token.getExpireAt() != null ? Long.valueOf((token.getExpireAt().getTime() - System.currentTimeMillis()) / 1000L) : 0);
         token.setAdditionalInformation(jwt);
         return token;

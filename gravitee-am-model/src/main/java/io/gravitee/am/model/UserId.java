@@ -16,7 +16,6 @@
 package io.gravitee.am.model;
 
 public record UserId(String id, String externalId, String source) {
-
     /**
      * Create a new UserId without source information
      */
@@ -26,5 +25,14 @@ public record UserId(String id, String externalId, String source) {
 
     public boolean hasExternal() {
         return source != null && externalId != null;
+    }
+
+    @Override
+    public String toString() {
+        if (hasExternal()) {
+            return "%s [%s:%s]".formatted(id, source, externalId);
+        } else {
+            return id;
+        }
     }
 }

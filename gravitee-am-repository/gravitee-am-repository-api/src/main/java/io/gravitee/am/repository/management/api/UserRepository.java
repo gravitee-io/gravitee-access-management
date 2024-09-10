@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
@@ -32,6 +34,8 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 public interface UserRepository extends CommonUserRepository {
+
+    Maybe<User> findById(UserId id);
 
     Flowable<User> findAll(ReferenceType referenceType, String referenceId);
 
@@ -53,7 +57,7 @@ public interface UserRepository extends CommonUserRepository {
 
     Flowable<User> findByIdIn(List<String> ids);
 
-    Maybe<User> findById(ReferenceType referenceType, String referenceId, String userId);
+    Maybe<User> findById(Reference reference, UserId userId);
 
     Single<Long> countByReference(ReferenceType referenceType, String referenceId);
 

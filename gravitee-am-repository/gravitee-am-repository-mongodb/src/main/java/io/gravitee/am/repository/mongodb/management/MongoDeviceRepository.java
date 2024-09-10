@@ -30,7 +30,6 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
-import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -40,7 +39,6 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gte;
-import static com.mongodb.client.model.Filters.or;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -54,8 +52,6 @@ public class MongoDeviceRepository extends AbstractManagementMongoRepository imp
     private static final String FIELD_EXPIRES_AT = "expires_at";
     public static final String DEVICE_IDENTIFIER_ID = "deviceIdentifierId";
     public static final String DEVICE_ID = "deviceId";
-    private static final String FIELD_USER_EXTERNAL_ID = "userExternalId";
-    public static final String FIELD_USER_SOURCE = "userSource";
     private MongoCollection<DeviceMongo> rememberDeviceMongoCollection;
 
 
@@ -77,14 +73,6 @@ public class MongoDeviceRepository extends AbstractManagementMongoRepository imp
         var devicePublisher = rememberDeviceMongoCollection.find(query);
         return Flowable.fromPublisher(devicePublisher).map(this::convert);
 
-    }
-
-    private Bson userIdMatches(UserId user) {
-        if (user.hasExternal()) {
-            return or(eq(FIELD_USER_ID, user.id()), and(eq(FIELD_USER_EXTERNAL_ID, user.externalId()), eq(FIELD_USER_SOURCE, user.source())));
-        } else {
-            return eq(FIELD_USER_ID, user.id());
-        }
     }
 
     @Override
