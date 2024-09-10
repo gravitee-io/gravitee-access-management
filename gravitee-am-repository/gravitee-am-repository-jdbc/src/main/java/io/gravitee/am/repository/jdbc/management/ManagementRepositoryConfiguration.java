@@ -73,7 +73,7 @@ public class ManagementRepositoryConfiguration extends AbstractRepositoryConfigu
     @Override
     @Bean
     public DatabaseDialectHelper databaseDialectHelper(R2dbcDialect dialect) {
-        String collation = environment.getProperty("management.jdbc.collation");
+        String collation = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.collation");
         if (getDriver().equals(POSTGRESQL_DRIVER)) {
             return instantiateDialectHelper(DIALECT_HELPER_POSTGRESQL, dialect, collation);
         }
@@ -91,7 +91,7 @@ public class ManagementRepositoryConfiguration extends AbstractRepositoryConfigu
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        initializeDatabaseSchema(getManagementPool(), environment, Scope.MANAGEMENT.getName() + ".jdbc.");
+        initializeDatabaseSchema(getManagementPool(), environment, Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.");
     }
 
 }

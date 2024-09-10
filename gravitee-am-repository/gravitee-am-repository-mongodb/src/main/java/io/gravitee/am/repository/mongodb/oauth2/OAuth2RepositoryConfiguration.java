@@ -50,8 +50,8 @@ public class OAuth2RepositoryConfiguration extends AbstractRepositoryConfigurati
     }
 
     private String getDatabaseName() {
-        boolean useManagementSettings = environment.getProperty(Scope.OAUTH2.getName() + ".use-management-settings", Boolean.class, true);
-        String propertyPrefix = useManagementSettings ? Scope.MANAGEMENT.getName() : Scope.OAUTH2.getName();
+        boolean useManagementSettings = environment.getProperty(Scope.OAUTH2.getRepositoryPropertyKey() + ".use-management-settings", Boolean.class, true);
+        String propertyPrefix = useManagementSettings ? Scope.MANAGEMENT.getRepositoryPropertyKey() : Scope.OAUTH2.getRepositoryPropertyKey();
         String uri = environment.getProperty(propertyPrefix + ".mongodb.uri");
         if (uri != null && !uri.isEmpty()) {
             final String path = URI.create(uri).getPath();

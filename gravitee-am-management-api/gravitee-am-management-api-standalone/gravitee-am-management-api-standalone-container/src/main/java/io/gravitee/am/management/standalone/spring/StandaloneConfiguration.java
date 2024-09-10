@@ -16,6 +16,7 @@
 package io.gravitee.am.management.standalone.spring;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.management.service.spring.ServiceConfiguration;
 import io.gravitee.am.management.standalone.node.ManagementNode;
 import io.gravitee.am.management.standalone.node.ManagementNodeMetadataResolver;
@@ -123,7 +124,14 @@ public class StandaloneConfiguration {
     }
 
     @Bean
-    public GatewayTypeBeanFactoryFallbackPostProcessor gatewayTypeBeanFactoryFallbackPostProcessor(Environment environment, ApplicationContext applicationContext) {
-        return new GatewayTypeBeanFactoryFallbackPostProcessor(environment, applicationContext);
+    public PropertySourceFallbackConfigurer propertySourceFallbackConfigurer(Environment environment, ApplicationContext applicationContext) {
+        return new PropertySourceFallbackConfigurer(environment, applicationContext);
     }
+
+    @Bean
+    @Qualifier("EnvironmentWithFallback")
+    public RepositoriesEnvironment repositoriesEnvironment(Environment environment){
+        return new RepositoriesEnvironment(environment);
+    }
+
 }

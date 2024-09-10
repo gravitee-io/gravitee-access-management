@@ -18,6 +18,7 @@ package io.gravitee.am.service.impl;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
@@ -28,6 +29,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
@@ -79,13 +81,13 @@ public class ReporterServiceImpl implements ReporterService {
     private static final String REPORTER_AM_JDBC = "reporter-am-jdbc";
     private static final String REPORTER_AM_FILE = "reporter-am-file";
     private static final String REPORTER_CONFIG_FILENAME = "filename";
-    public static final String MANAGEMENT_TYPE = "management.type";
+    public static final String MANAGEMENT_TYPE = Scope.MANAGEMENT.getRepositoryPropertyKey() + ".type";
     public static final String MONGODB = "mongodb";
     // Regex as defined into the Reporter plugin schema in order to apply the same validation rule
     // when a REST call is performed and not only check on the UI
     private final Pattern filenamePattern = Pattern.compile("^([A-Za-z0-9][A-Za-z0-9\\-_.]*)$");
 
-    private Environment environment;
+    private RepositoriesEnvironment environment;
 
     private ReporterRepository reporterRepository;
 
@@ -93,7 +95,7 @@ public class ReporterServiceImpl implements ReporterService {
 
     private AuditService auditService;
 
-    public ReporterServiceImpl(Environment environment, @Lazy ReporterRepository reporterRepository, EventService eventService, AuditService auditService) {
+    public ReporterServiceImpl(RepositoriesEnvironment environment, @Lazy ReporterRepository reporterRepository, EventService eventService, AuditService auditService) {
         this.environment = environment;
         this.reporterRepository = reporterRepository;
         this.eventService = eventService;
@@ -326,12 +328,12 @@ public class ReporterServiceImpl implements ReporterService {
             String mongoHost = null;
             String mongoPort = null;
             if (mongoServers.isEmpty()) {
-                mongoHost = environment.getProperty("management.mongodb.host", "localhost");
-                mongoPort = environment.getProperty("management.mongodb.port", "27017");
+                mongoHost = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.host", "localhost");
+                mongoPort = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.port", "27017");
             }
 
-            final String username = environment.getProperty("management.mongodb.username");
-            final String password = environment.getProperty("management.mongodb.password");
+            final String username = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.username");
+            final String password = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.password");
             String mongoDBName = getMongoDatabaseName(environment);
 
             String defaultMongoUri = "mongodb://";
@@ -339,7 +341,7 @@ public class ReporterServiceImpl implements ReporterService {
                 defaultMongoUri += username + ":" + password + "@";
             }
             defaultMongoUri += mongoServers.orElse(mongoHost + ":" + mongoPort) + "/" + mongoDBName;
-            String mongoUri = environment.getProperty("management.mongodb.uri", addOptionsToURI(environment, defaultMongoUri));
+            String mongoUri = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.uri", addOptionsToURI(environment, defaultMongoUri));
 
             var collectionSuffix = (reference == null || reference.matches(ReferenceType.ORGANIZATION, Organization.DEFAULT))
                     ? ""
@@ -351,12 +353,12 @@ public class ReporterServiceImpl implements ReporterService {
                     + "\",\"reportableCollection\":\"reporter_audits" + collectionSuffix
                     + "\",\"bulkActions\":1000,\"flushInterval\":5}";
         } else if (useJdbcReporter()) {
-            String jdbcHost = environment.getProperty("management.jdbc.host");
-            String jdbcPort = environment.getProperty("management.jdbc.port");
-            String jdbcDatabase = environment.getProperty("management.jdbc.database");
-            String jdbcDriver = environment.getProperty("management.jdbc.driver");
-            String jdbcUser = environment.getProperty("management.jdbc.username");
-            String jdbcPwd = environment.getProperty("management.jdbc.password");
+            String jdbcHost = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.host");
+            String jdbcPort = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.port");
+            String jdbcDatabase = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.database");
+            String jdbcDriver = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.driver");
+            String jdbcUser = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.username");
+            String jdbcPwd = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.password");
 
             reporterConfig = "{\"host\":\"" + jdbcHost + "\"," +
                     "\"port\":" + jdbcPort + "," +
@@ -406,13 +408,13 @@ public class ReporterServiceImpl implements ReporterService {
         }
     }
 
-    private String addOptionsToURI(Environment environment, String mongoUri) {
-        Integer connectTimeout = environment.getProperty("management.mongodb.connectTimeout", Integer.class, 1000);
-        Integer socketTimeout = environment.getProperty("management.mongodb.socketTimeout", Integer.class, 1000);
-        Integer maxConnectionIdleTime = environment.getProperty("management.mongodb.maxConnectionIdleTime", Integer.class);
-        Integer heartbeatFrequency = environment.getProperty("management.mongodb.heartbeatFrequency", Integer.class);
-        Boolean sslEnabled = environment.getProperty("management.mongodb.sslEnabled", Boolean.class);
-        String authSource = environment.getProperty("management.mongodb.authSource", String.class);
+    private String addOptionsToURI(RepositoriesEnvironment environment, String mongoUri) {
+        Integer connectTimeout = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.connectTimeout", Integer.class, 1000);
+        Integer socketTimeout = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.socketTimeout", Integer.class, 1000);
+        Integer maxConnectionIdleTime = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.maxConnectionIdleTime", Integer.class);
+        Integer heartbeatFrequency = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.heartbeatFrequency", Integer.class);
+        Boolean sslEnabled = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.sslEnabled", Boolean.class);
+        String authSource = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.authSource", String.class);
 
         mongoUri += "?connectTimeoutMS=" + connectTimeout + "&socketTimeoutMS=" + socketTimeout;
         if (authSource != null) {
@@ -431,15 +433,15 @@ public class ReporterServiceImpl implements ReporterService {
         return mongoUri;
     }
 
-    private Optional<String> getMongoServers(Environment env) {
+    private Optional<String> getMongoServers(RepositoriesEnvironment env) {
         LOGGER.debug("Looking for MongoDB server configuration...");
         boolean found = true;
         int idx = 0;
         List<String> endpoints = new ArrayList<>();
 
         while (found) {
-            String serverHost = env.getProperty("management.mongodb.servers[" + (idx++) + "].host");
-            int serverPort = env.getProperty("management.mongodb.servers[" + (idx++) + "].port", int.class, 27017);
+            String serverHost = env.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.servers[" + (idx++) + "].host");
+            int serverPort = env.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.servers[" + (idx++) + "].port", int.class, 27017);
             found = (serverHost != null);
             if (found) {
                 endpoints.add(serverHost + ":" + serverPort);

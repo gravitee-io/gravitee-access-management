@@ -73,7 +73,7 @@ public class OAuth2RepositoryConfiguration extends AbstractRepositoryConfigurati
     @Override
     @Bean
     public DatabaseDialectHelper databaseDialectHelper(R2dbcDialect dialect) {
-        String collation = environment.getProperty("management.jdbc.collation");
+        String collation = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.collation");
         if (getDriver().equals(POSTGRESQL_DRIVER)) {
             return instantiateDialectHelper(DIALECT_HELPER_POSTGRESQL, dialect, collation);
         }
@@ -91,7 +91,7 @@ public class OAuth2RepositoryConfiguration extends AbstractRepositoryConfigurati
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        initializeDatabaseSchema(getOauth2Pool(), environment, Scope.OAUTH2.getName()+ ".jdbc.");
+        initializeDatabaseSchema(getOauth2Pool(), environment, Scope.OAUTH2.getRepositoryPropertyKey() + ".jdbc.");
     }
 
 }

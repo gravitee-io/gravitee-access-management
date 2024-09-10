@@ -26,7 +26,7 @@ import { createTestApp } from '@utils-commands/application-commands';
 
 global.fetch = fetch;
 
-const jdbc = process.env.GRAVITEE_MANAGEMENT_TYPE;
+const jdbc = process.env.GRAVITEE_REPOSITORIES_MANAGEMENT_TYPE;
 
 let accessToken;
 let domain;

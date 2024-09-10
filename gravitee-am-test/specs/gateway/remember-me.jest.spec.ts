@@ -27,7 +27,7 @@ import * as faker from 'faker';
 
 global.fetch = fetch;
 
-const jdbc = process.env.GRAVITEE_MANAGEMENT_TYPE;
+const jdbc = process.env.GRAVITEE_REPOSITORIES_MANAGEMENT_TYPE;
 
 let accessToken;
 let domain;

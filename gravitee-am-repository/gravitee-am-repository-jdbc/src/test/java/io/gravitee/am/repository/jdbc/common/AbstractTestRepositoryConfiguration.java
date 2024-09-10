@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.jdbc.common;
 
+import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.exceptions.RepositoryInitializationException;
 import io.gravitee.am.repository.jdbc.management.ManagementRepositoryConfiguration;
@@ -61,7 +62,7 @@ public abstract class AbstractTestRepositoryConfiguration extends AbstractReposi
         initializeDatabaseSchema(provider.getDatabaseContainer().getOptions(), environment);
     }
 
-    protected void initializeDatabaseSchema(ConnectionFactoryOptions options, Environment env) throws SQLException {
+    protected void initializeDatabaseSchema(ConnectionFactoryOptions options, RepositoriesEnvironment env) throws SQLException {
         Boolean enabled = env.getProperty("liquibase.enabled", Boolean.class, true);
         if (enabled) {
             final String jdbcUrl = container.getJdbcUrl();
@@ -129,6 +130,11 @@ public abstract class AbstractTestRepositoryConfiguration extends AbstractReposi
                 .option(PROTOCOL,(String) options.getValue(DRIVER))
                 .build();
         return ConnectionFactories.get(options);
+    }
+
+    @Bean
+    public RepositoriesEnvironment repositoriesEnvironment(Environment environment) {
+        return new RepositoriesEnvironment(environment);
     }
 
 }

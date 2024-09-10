@@ -27,6 +27,7 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
+import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
 import io.gravitee.am.repository.mongodb.provider.metrics.MongoMetricsConnectionPoolListener;
 import io.gravitee.node.monitoring.metrics.Metrics;
@@ -67,11 +68,11 @@ public class MongoFactory implements FactoryBean<MongoClient> {
 
     private final Logger logger = LoggerFactory.getLogger(MongoFactory.class);
 
-    private final Environment environment;
+    private final RepositoriesEnvironment environment;
 
     private final String propertyPrefix;
 
-    public MongoFactory(Environment environment, String propertyPrefix) {
+    public MongoFactory(RepositoriesEnvironment environment, String propertyPrefix) {
         this.environment = environment;
         this.propertyPrefix = propertyPrefix + ".mongodb.";
     }
