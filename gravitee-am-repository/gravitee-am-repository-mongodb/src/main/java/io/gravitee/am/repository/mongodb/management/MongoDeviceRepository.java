@@ -30,6 +30,7 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -116,7 +117,7 @@ public class MongoDeviceRepository extends AbstractManagementMongoRepository imp
                 .setReferenceId(device.getReferenceId())
                 .setReferenceType(ReferenceType.valueOf(device.getReferenceType()))
                 .setClient(device.getClient())
-                .setUserId(new UserId(device.getUserId(), device.getUserExternalId(), device.getUserSource()))
+                .setUserId(UserId.internal(device.getUserId()))
                 .setDeviceIdentifierId(device.getDeviceIdentifierId())
                 .setDeviceId(device.getDeviceId())
                 .setCreatedAt(device.getCreatedAt())
@@ -132,8 +133,6 @@ public class MongoDeviceRepository extends AbstractManagementMongoRepository imp
                 .setReferenceId(device.getReferenceId())
                 .setClient(device.getClient())
                 .setUserId(device.getUserId().id())
-                .setUserExternalId(device.getUserId().externalId())
-                .setUserSource(device.getUserId().source())
                 .setDeviceIdentifierId(device.getDeviceIdentifierId())
                 .setDeviceId(device.getDeviceId())
                 .setCreatedAt(device.getCreatedAt())
