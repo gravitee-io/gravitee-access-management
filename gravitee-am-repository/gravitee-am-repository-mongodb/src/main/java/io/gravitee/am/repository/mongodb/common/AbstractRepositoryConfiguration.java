@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.repository.mongodb.common;
 
+import io.gravitee.am.common.env.RepositoriesEnvironment;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 
 /**
@@ -26,5 +28,10 @@ public abstract class AbstractRepositoryConfiguration {
 
     @Autowired
     protected Environment environment;
+
+    @Bean
+    public RepositoriesEnvironment repositoriesEnvironment(Environment environment){
+        return new RepositoriesEnvironment(environment);
+    }
 
 }

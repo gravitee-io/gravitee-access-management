@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.jdbc.provider.impl;
 
+import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.repository.jdbc.provider.R2DBCConnectionConfiguration;
 import io.gravitee.am.repository.jdbc.provider.R2DBCSpringBeanAccessor;
 import io.gravitee.am.repository.provider.ClientWrapper;
@@ -50,7 +51,7 @@ import static io.gravitee.am.repository.Scope.OAUTH2;
 public class R2DBCConnectionProvider implements ConnectionProvider<ConnectionFactory, R2DBCConnectionConfiguration>, InitializingBean, R2DBCSpringBeanAccessor {
 
     @Autowired
-    private Environment environment;
+    private RepositoriesEnvironment environment;
 
     private ClientWrapper<ConnectionFactory> commonConnectionFactory;
 
@@ -170,17 +171,17 @@ public class R2DBCConnectionProvider implements ConnectionProvider<ConnectionFac
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        final var useMngSettingsForOauth2 = environment.getProperty("oauth2.use-management-settings", Boolean.class, true);
-        final var useMngSettingsForGateway = environment.getProperty("gateway.use-management-settings", Boolean.class, true);
+        final var useMngSettingsForOauth2 = environment.getProperty(OAUTH2.getRepositoryPropertyKey() +".use-management-settings", Boolean.class, true);
+        final var useMngSettingsForGateway = environment.getProperty(GATEWAY.getRepositoryPropertyKey() +".use-management-settings", Boolean.class, true);
         notUseMngSettingsForOauth2 = !useMngSettingsForOauth2;
         notUseMngSettingsForGateway = !useMngSettingsForGateway;
         // create the connection pool just after the bean Initialization to guaranty the uniqueness
-        commonConnectionFactory = new R2DBCPoolWrapper(new ConnectionFactoryProvider(environment, MANAGEMENT.getName()));
+        commonConnectionFactory = new R2DBCPoolWrapper(new ConnectionFactoryProvider(environment, MANAGEMENT.getRepositoryPropertyKey()));
         if (notUseMngSettingsForGateway) {
-            gatewayConnectionFactory = new R2DBCPoolWrapper(new ConnectionFactoryProvider(environment, GATEWAY.getName()));
+            gatewayConnectionFactory = new R2DBCPoolWrapper(new ConnectionFactoryProvider(environment, GATEWAY.getRepositoryPropertyKey()));
         }
         if (notUseMngSettingsForOauth2) {
-            oauthConnectionFactory = new R2DBCPoolWrapper(new ConnectionFactoryProvider(environment, OAUTH2.getName()));
+            oauthConnectionFactory = new R2DBCPoolWrapper(new ConnectionFactoryProvider(environment, OAUTH2.getRepositoryPropertyKey()));
         }
     }
 

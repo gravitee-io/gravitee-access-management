@@ -47,7 +47,7 @@ public class ManagementRepositoryConfiguration extends AbstractRepositoryConfigu
     }
 
     private String getDatabaseName() {
-        String uri = environment.getProperty("management.mongodb.uri");
+        String uri = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.uri");
         if (uri != null && !uri.isEmpty()) {
             final String path = URI.create(uri).getPath();
             if (path != null && path.length() > 1) {
@@ -55,6 +55,6 @@ public class ManagementRepositoryConfiguration extends AbstractRepositoryConfigu
             }
         }
 
-        return environment.getProperty("management.mongodb.dbname", "gravitee-am");
+        return environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.dbname", "gravitee-am");
     }
 }

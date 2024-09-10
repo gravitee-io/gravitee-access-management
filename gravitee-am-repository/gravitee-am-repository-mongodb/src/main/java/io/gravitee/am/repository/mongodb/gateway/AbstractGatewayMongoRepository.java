@@ -18,6 +18,8 @@ package io.gravitee.am.repository.mongodb.gateway;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoDatabase;
+import io.gravitee.am.common.env.RepositoriesEnvironment;
+import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.common.AbstractMongoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -34,7 +36,7 @@ public abstract class AbstractGatewayMongoRepository extends AbstractMongoReposi
     protected MongoDatabase mongoOperations;
 
     @Autowired
-    private Environment environment;
+    private RepositoriesEnvironment environment;
 
     protected final <TResult> AggregatePublisher<TResult> withMaxTime(AggregatePublisher<TResult> query) {
         return query.maxTime(getMaxTimeInMs(), TimeUnit.MILLISECONDS);
@@ -45,12 +47,12 @@ public abstract class AbstractGatewayMongoRepository extends AbstractMongoReposi
     }
 
     protected boolean getEnsureIndexOnStart() {
-        var ensureIndexOnStartOld = environment.getProperty("management.mongodb.ensureIndexOnStart", Boolean.class, true);
-        return environment.getProperty("gateway.mongodb.ensureIndexOnStart", Boolean.class, ensureIndexOnStartOld);
+        var ensureIndexOnStartOld = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.ensureIndexOnStart", Boolean.class, true);
+        return environment.getProperty(Scope.GATEWAY.getRepositoryPropertyKey() + ".mongodb.ensureIndexOnStart", Boolean.class, ensureIndexOnStartOld);
     }
 
     protected Integer getMaxTimeInMs() {
-        var approvalExpirySecondsOld = environment.getProperty("management.mongodb.cursorMaxTime", Integer.class, 60000);
-        return environment.getProperty("gateway.mongodb.cursorMaxTime", Integer.class, approvalExpirySecondsOld);
+        var approvalExpirySecondsOld = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.cursorMaxTime", Integer.class, 60000);
+        return environment.getProperty(Scope.GATEWAY.getRepositoryPropertyKey() + ".mongodb.cursorMaxTime", Integer.class, approvalExpirySecondsOld);
     }
 }

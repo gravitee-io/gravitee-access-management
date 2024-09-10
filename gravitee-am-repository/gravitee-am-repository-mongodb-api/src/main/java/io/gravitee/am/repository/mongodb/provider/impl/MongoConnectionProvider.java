@@ -16,11 +16,14 @@
 package io.gravitee.am.repository.mongodb.provider.impl;
 
 import com.mongodb.reactivestreams.client.MongoClient;
+import io.gravitee.am.common.env.RepositoriesEnvironment;
+import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -38,7 +41,7 @@ import static io.gravitee.am.repository.Scope.OAUTH2;
 public class MongoConnectionProvider implements ConnectionProvider<MongoClient, MongoConnectionConfiguration>, InitializingBean {
 
     @Autowired
-    private Environment environment;
+    private RepositoriesEnvironment environment;
 
     private ClientWrapper<MongoClient> commonMongoClient;
     private ClientWrapper<MongoClient> oauthMongoClient;
@@ -49,17 +52,17 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        final var useMngSettingsForOauth2 = environment.getProperty("oauth2.use-management-settings", Boolean.class, true);
-        final var notUseGatewaySettings = environment.getProperty("gateway.use-management-settings", Boolean.class, true);
+        final var useMngSettingsForOauth2 = environment.getProperty(OAUTH2.getRepositoryPropertyKey() + ".use-management-settings", Boolean.class, true);
+        final var notUseGatewaySettings = environment.getProperty(Scope.GATEWAY.getRepositoryPropertyKey() + ".use-management-settings", Boolean.class, true);
         notUseMngSettingsForOauth2 = !useMngSettingsForOauth2;
         notUseMngSettingsForGateway = !notUseGatewaySettings;
         // create the common client just after the bean Initialization to guaranty the uniqueness
-        commonMongoClient = new MongoClientWrapper(new MongoFactory(environment, MANAGEMENT.getName()).getObject());
+        commonMongoClient = new MongoClientWrapper(new MongoFactory(environment, MANAGEMENT.getRepositoryPropertyKey()).getObject());
         if (notUseMngSettingsForOauth2) {
-            oauthMongoClient = new MongoClientWrapper(new MongoFactory(environment, OAUTH2.getName()).getObject());
+            oauthMongoClient = new MongoClientWrapper(new MongoFactory(environment, OAUTH2.getRepositoryPropertyKey()).getObject());
         }
         if (notUseMngSettingsForGateway) {
-            gatewayMongoClient = new MongoClientWrapper(new MongoFactory(environment, GATEWAY.getName()).getObject());
+            gatewayMongoClient = new MongoClientWrapper(new MongoFactory(environment, GATEWAY.getRepositoryPropertyKey()).getObject());
         }
     }
 

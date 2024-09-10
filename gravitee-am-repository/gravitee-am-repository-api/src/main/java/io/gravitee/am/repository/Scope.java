@@ -34,4 +34,9 @@ public enum Scope {
     public String getName() {
         return this.name;
     }
+
+    public String getRepositoryPropertyKey() {
+        return "repositories." + name;
+    }
+
 }

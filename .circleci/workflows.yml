@@ -579,27 +579,27 @@ jobs:
             export GRAVITEE_MFA_RATE_TIMEUNIT=Minutes
             
             # EXPORT env var to start AM using PSQL
-            export GRAVITEE_MANAGEMENT_TYPE=jdbc
-            export GRAVITEE_MANAGEMENT_JDBC_DRIVER=postgresql
-            export GRAVITEE_MANAGEMENT_JDBC_HOST=localhost
-            export GRAVITEE_MANAGEMENT_JDBC_PORT=5432
-            export GRAVITEE_MANAGEMENT_JDBC_DATABASE=postgres
-            export GRAVITEE_MANAGEMENT_JDBC_USERNAME=postgres
-            export GRAVITEE_MANAGEMENT_JDBC_PASSWORD=T0pS3cr3t
-            export GRAVITEE_OAUTH2_TYPE=jdbc
-            export GRAVITEE_OAUTH2_JDBC_DRIVER=postgresql
-            export GRAVITEE_OAUTH2_JDBC_HOST=localhost
-            export GRAVITEE_OAUTH2_JDBC_PORT=5432
-            export GRAVITEE_OAUTH2_JDBC_DATABASE=postgres
-            export GRAVITEE_OAUTH2_JDBC_USERNAME=postgres
-            export GRAVITEE_OAUTH2_JDBC_PASSWORD=T0pS3cr3t
-            export GRAVITEE_GATEWAY_TYPE=jdbc
-            export GRAVITEE_GATEWAY_JDBC_DRIVER=postgresql
-            export GRAVITEE_GATEWAY_JDBC_HOST=localhost
-            export GRAVITEE_GATEWAY_JDBC_PORT=5432
-            export GRAVITEE_GATEWAY_JDBC_DATABASE=postgres
-            export GRAVITEE_GATEWAY_JDBC_USERNAME=postgres
-            export GRAVITEE_GATEWAY_JDBC_PASSWORD=T0pS3cr3t
+            export GRAVITEE_REPOSITORIES_MANAGEMENT_TYPE=jdbc
+            export GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_DRIVER=postgresql
+            export GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_HOST=localhost
+            export GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_PORT=5432
+            export GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_DATABASE=postgres
+            export GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_USERNAME=postgres
+            export GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_PASSWORD=T0pS3cr3t
+            export GRAVITEE_REPOSITORIES_OAUTH2_TYPE=jdbc
+            export GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DRIVER=postgresql
+            export GRAVITEE_REPOSITORIES_OAUTH2_JDBC_HOST=localhost
+            export GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PORT=5432
+            export GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DATABASE=postgres
+            export GRAVITEE_REPOSITORIES_OAUTH2_JDBC_USERNAME=postgres
+            export GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PASSWORD=T0pS3cr3t
+            export GRAVITEE_REPOSITORIES_GATEWAY_TYPE=jdbc
+            export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DRIVER=postgresql
+            export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_HOST=localhost
+            export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PORT=5432
+            export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DATABASE=postgres
+            export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_USERNAME=postgres
+            export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PASSWORD=T0pS3cr3t
             
             # Reduce the sync frequency to avoid flaky test due to synchronization delay  
             export gravitee_services_sync_cron="*/2 * * * * *"
@@ -752,27 +752,27 @@ jobs:
             cp r2dbc-postgresql.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
             cp r2dbc-postgresql.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
             # EXPORT env vart to start AM using PSQL
-            export GRAVITEE_MANAGEMENT_TYPE=jdbc
-            export GRAVITEE_MANAGEMENT_JDBC_DRIVER=postgresql
-            export GRAVITEE_MANAGEMENT_JDBC_HOST=localhost
-            export GRAVITEE_MANAGEMENT_JDBC_PORT=5432
-            export GRAVITEE_MANAGEMENT_JDBC_DATABASE=postgres
-            export GRAVITEE_MANAGEMENT_JDBC_USERNAME=postgres
-            export GRAVITEE_MANAGEMENT_JDBC_PASSWORD=T0pS3cr3t
-            export GRAVITEE_OAUTH2_TYPE=jdbc
-            export GRAVITEE_OAUTH2_JDBC_DRIVER=postgresql
-            export GRAVITEE_OAUTH2_JDBC_HOST=localhost
-            export GRAVITEE_OAUTH2_JDBC_PORT=5432
-            export GRAVITEE_OAUTH2_JDBC_DATABASE=postgres
-            export GRAVITEE_OAUTH2_JDBC_USERNAME=postgres
-            export GRAVITEE_OAUTH2_JDBC_PASSWORD=T0pS3cr3t
-            export GRAVITEE_GATEWAY_TYPE=jdbc
-            export GRAVITEE_GATEWAY_JDBC_DRIVER=postgresql
-            export GRAVITEE_GATEWAY_JDBC_HOST=localhost
-            export GRAVITEE_GATEWAY_JDBC_PORT=5432
-            export GRAVITEE_GATEWAY_JDBC_DATABASE=postgres
-            export GRAVITEE_GATEWAY_JDBC_USERNAME=postgres
-            export GRAVITEE_GATEWAY_JDBC_PASSWORD=T0pS3cr3t
+            export GRAVITEE_REPOSITORIES_MANAGEMENT_TYPE=jdbc
+            export GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_DRIVER=postgresql
+            export GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_HOST=localhost
+            export GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_PORT=5432
+            export GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_DATABASE=postgres
+            export GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_USERNAME=postgres
+            export GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_PASSWORD=T0pS3cr3t
+            export GRAVITEE_REPOSITORIES_OAUTH2_TYPE=jdbc
+            export GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DRIVER=postgresql
+            export GRAVITEE_REPOSITORIES_OAUTH2_JDBC_HOST=localhost
+            export GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PORT=5432
+            export GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DATABASE=postgres
+            export GRAVITEE_REPOSITORIES_OAUTH2_JDBC_USERNAME=postgres
+            export GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PASSWORD=T0pS3cr3t
+            export GRAVITEE_REPOSITORIES_GATEWAY_TYPE=jdbc
+            export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DRIVER=postgresql
+            export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_HOST=localhost
+            export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PORT=5432
+            export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DATABASE=postgres
+            export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_USERNAME=postgres
+            export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PASSWORD=T0pS3cr3t
             
             # Reduce the sync frequency to avoid flaky test due to synchronization delay
             export gravitee_services_sync_cron="*/2 * * * * *"
