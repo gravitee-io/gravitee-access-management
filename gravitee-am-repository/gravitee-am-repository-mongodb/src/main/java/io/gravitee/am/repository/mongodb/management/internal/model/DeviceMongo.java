@@ -39,8 +39,6 @@ public class DeviceMongo {
 
     private String client;
     private String userId;
-    private String userExternalId;
-    private String userSource;
     private String deviceIdentifierId;
     private String deviceId;
 

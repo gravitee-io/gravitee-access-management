@@ -144,8 +144,6 @@ databaseChangeLog:
   - include:
       - file: liquibase/changelogs/v4_5_0/4.5.0-external-id-resized.yml
   - include:
-      - file: liquibase/changelogs/v4_5_0/4.5.0-device-external-user-id.yml
-  - include:
       - file: liquibase/changelogs/v4_5_0/4.5.0-scope-approval-external-user-id.yml
   - include:
       - file: liquibase/changelogs/v4_5_0/4.5.0-identity-group-mapper.yml
