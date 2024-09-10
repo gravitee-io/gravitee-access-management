@@ -22,6 +22,7 @@ import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
 
@@ -41,11 +42,15 @@ public class WebClientBuilder {
     private static final String HTTPS_SCHEME = "https";
     private static final Pattern WILDCARD_PATTERN = Pattern.compile("\\*\\.");
 
-    private final Environment environment;
+    @Autowired
+    private Environment environment;
+
+    public WebClientBuilder() {}
 
     public WebClientBuilder(Environment environment) {
         this.environment = environment;
     }
+
     public WebClient createWebClient(Vertx vertx, URL url) {
 
         final int port = url.getPort() != -1 ? url.getPort() : (HTTPS_SCHEME.equals(url.getProtocol()) ? 443 : 80);
