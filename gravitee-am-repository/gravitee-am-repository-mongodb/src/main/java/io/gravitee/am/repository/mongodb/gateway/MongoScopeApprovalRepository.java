@@ -17,9 +17,11 @@ package io.gravitee.am.repository.mongodb.gateway;
 
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
+import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.gateway.api.ScopeApprovalRepository;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.ScopeApprovalMongo;
 import io.reactivex.rxjava3.core.Completable;
@@ -57,7 +59,7 @@ public class MongoScopeApprovalRepository extends AbstractGatewayMongoRepository
     private static final String FIELD_SCOPE = "scope";
     private MongoCollection<ScopeApprovalMongo> scopeApprovalsCollection;
     @Autowired
-    protected Environment environment;
+    protected RepositoriesEnvironment environment;
 
     @PostConstruct
     public void init() {
@@ -86,8 +88,8 @@ public class MongoScopeApprovalRepository extends AbstractGatewayMongoRepository
 
     @Override
     protected boolean getEnsureIndexOnStart() {
-        var ensureIndexOnStartOAuth2Old = environment.getProperty("oauth2.mongodb.ensureIndexOnStart", Boolean.class, true);
-        return environment.getProperty("gateway.mongodb.ensureIndexOnStart", Boolean.class, ensureIndexOnStartOAuth2Old);
+        var ensureIndexOnStartOAuth2Old = environment.getProperty(Scope.OAUTH2.getRepositoryPropertyKey() + ".mongodb.ensureIndexOnStart", Boolean.class, true);
+        return environment.getProperty(Scope.GATEWAY.getRepositoryPropertyKey() + ".mongodb.ensureIndexOnStart", Boolean.class, ensureIndexOnStartOAuth2Old);
     }
 
     @Override

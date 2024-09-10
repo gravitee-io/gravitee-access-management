@@ -36,6 +36,7 @@ import io.gravitee.am.reporter.jdbc.dialect.DialectHelper;
 import io.gravitee.am.reporter.jdbc.dialect.SearchQuery;
 import io.gravitee.am.reporter.jdbc.spring.JdbcReporterSpringConfiguration;
 import io.gravitee.am.reporter.jdbc.utils.JSONMapper;
+import io.gravitee.am.repository.Scope;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.reporter.api.Reportable;
 import io.gravitee.reporter.api.Reporter;
@@ -97,7 +98,7 @@ import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 public class JdbcAuditReporter extends AbstractService<Reporter> implements AuditReporter, InitializingBean {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JdbcAuditReporter.class);
-    public static final String REPORTER_AUTO_PROVISIONING = "management.jdbc.reporter.provisioning";
+    public static final String REPORTER_AUTO_PROVISIONING = Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.reporter.provisioning";
     public static final String AUDIT_FIELD_ACTOR = "actor";
     public static final String AUDIT_FIELD_TARGET = "target";
     public static final String NOT_BOOTSTRAPPED = "Reporter not yet bootstrapped";

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl;
 
+import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoderOptions;
@@ -57,7 +58,7 @@ public class DefaultIdentityProviderServiceTest {
 
     @BeforeEach
     public void setup() {
-        cut = new DefaultIdentityProviderServiceImpl(identityProviderService, environment);
+        cut = new DefaultIdentityProviderServiceImpl(identityProviderService, new RepositoriesEnvironment(environment));
     }
 
     @Test
@@ -81,7 +82,7 @@ public class DefaultIdentityProviderServiceTest {
     @Test
     public void createDefaultJDBCProvider() {
         String domainId = "domain";
-        environment.setProperty("management.type", "jdbc");
+        environment.setProperty("repositories.management.type", "jdbc");
         ArgumentCaptor<NewIdentityProvider> newIdentityProviderArgumentCaptor = ArgumentCaptor.forClass(NewIdentityProvider.class);
         when(identityProviderService.create(any(), eq(domainId), newIdentityProviderArgumentCaptor.capture(), isNull(), anyBoolean())).thenReturn(Single.just(new IdentityProvider()));
 
@@ -100,7 +101,7 @@ public class DefaultIdentityProviderServiceTest {
     @Test
     public void shouldComputeShorterId() {
         String domainId = "domaindomaindomaindomaindomaindomaindomaindomaindomaindomaindomaindomaindomaindomaindomaindomaindomain";
-        environment.setProperty("management.type", "jdbc");
+        environment.setProperty("repositories.management.type", "jdbc");
         ArgumentCaptor<NewIdentityProvider> newIdentityProviderArgumentCaptor = ArgumentCaptor.forClass(NewIdentityProvider.class);
         when(identityProviderService.create(any(), eq(domainId), newIdentityProviderArgumentCaptor.capture(), isNull(), anyBoolean())).thenReturn(Single.just(new IdentityProvider()));
 

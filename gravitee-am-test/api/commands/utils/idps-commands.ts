@@ -30,8 +30,12 @@ export const createMongoIdp = async (domainId, accessToken) => {
 
 export const createJdbcIdp = async (domainId, accessToken) => {
   console.log('creating jdbc idp');
-  const password = process.env.GRAVITEE_OAUTH2_JDBC_PASSWORD ? process.env.GRAVITEE_OAUTH2_JDBC_PASSWORD : 'p@ssw0rd';
-  const database = process.env.GRAVITEE_OAUTH2_JDBC_DATABASE ? process.env.GRAVITEE_OAUTH2_JDBC_DATABASE : 'gravitee-am';
+  const password = process.env.GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PASSWORD
+    ? process.env.GRAVITEE_REPOSITORIES_OAUTH2_JDBC_PASSWORD
+    : 'p@ssw0rd';
+  const database = process.env.GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DATABASE
+    ? process.env.GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DATABASE
+    : 'gravitee-am';
 
   return await createIdp(domainId, accessToken, {
     external: false,

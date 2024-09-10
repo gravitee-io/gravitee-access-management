@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.jdbc.common;
 
+import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.exceptions.RepositoryInitializationException;
 import io.gravitee.am.repository.jdbc.provider.impl.R2DBCPoolWrapper;
@@ -61,7 +62,7 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
 
     @Autowired
-    protected Environment environment;
+    protected RepositoriesEnvironment environment;
 
     protected abstract Optional<Converter> jsonConverter();
 
@@ -102,7 +103,7 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
         return new R2dbcTransactionManager(connectionFactory);
     }
 
-    protected final void initializeDatabaseSchema(R2DBCPoolWrapper poolWrapper, Environment environment, String prefix) throws Exception {
+    protected final void initializeDatabaseSchema(R2DBCPoolWrapper poolWrapper, RepositoriesEnvironment environment, String prefix) throws Exception {
         Boolean enabled = environment.getProperty("liquibase.enabled", Boolean.class, true);
         if (enabled) {
             final String jdbcPort = poolWrapper.getJdbcPort();

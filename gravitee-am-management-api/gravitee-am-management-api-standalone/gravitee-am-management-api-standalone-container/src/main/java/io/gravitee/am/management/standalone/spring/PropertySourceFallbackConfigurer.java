@@ -13,10 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.spring;
+package io.gravitee.am.management.standalone.spring;
 
-import io.gravitee.node.container.spring.env.AbstractGraviteePropertySource;
+import io.gravitee.am.common.env.RepositoriesEnvironment;
+import io.gravitee.am.management.handlers.management.api.provider.ThrowableMapper;
+import io.gravitee.am.repository.Scope;
 import io.gravitee.node.container.spring.env.GraviteeYamlPropertySource;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -24,39 +29,36 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.core.Ordered;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.PropertySource;
 
 import java.util.Map;
 
-public class GatewayTypeBeanFactoryFallbackPostProcessor implements BeanFactoryPostProcessor, Ordered {
-    private final static String GATEWAY_TYPE_PROPERTY = "gateway.type";
-    private final static String GATEWAY_TYPE_DEFAULT_VALUE = "${management.type}";
+@RequiredArgsConstructor
+public class PropertySourceFallbackConfigurer implements BeanFactoryPostProcessor, Ordered {
+    private static Logger LOGGER = LoggerFactory.getLogger(PropertySourceFallbackConfigurer.class);
 
     private final Environment env;
     private final ApplicationContext applicationContext;
 
-    // The purpose of adding this processor is to ensure compatibility between the Gateway and older versions of gravitee.yml.
-    // If gateway.type is not specified, then ${management.type} will be used as a fallback.
-
-    public GatewayTypeBeanFactoryFallbackPostProcessor(Environment environment, ApplicationContext applicationContext) {
-        this.env = environment;
-        this.applicationContext = applicationContext;
-    }
-
     @Override
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
-        GraviteeYamlPropertySource source = new GraviteeYamlPropertySource(
-                "gatewayTypeFallbackPropertySource",
-                Map.of(GATEWAY_TYPE_PROPERTY, GATEWAY_TYPE_DEFAULT_VALUE),
-                this.applicationContext);
-        registerSource((ConfigurableEnvironment) this.env, source);
+        registerSource(gatewayTypePropertyFallback());
     }
 
-    private void registerSource(ConfigurableEnvironment env, AbstractGraviteePropertySource source) {
-        env.getPropertySources().addLast(source);
+    private void registerSource(PropertySource<?> source) {
+        ConfigurableEnvironment cfgEnv = (ConfigurableEnvironment) env;
+        cfgEnv.getPropertySources().addLast(source);
     }
 
     @Override
     public int getOrder() {
         return Ordered.LOWEST_PRECEDENCE;
+    }
+
+    private PropertySource<?> gatewayTypePropertyFallback() {
+        return new GraviteeYamlPropertySource(
+                "gatewayTypeFallbackPropertySource",
+                Map.of("gateway.type", "${management.type}"),
+                this.applicationContext);
     }
 }
