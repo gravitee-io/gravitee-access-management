@@ -41,7 +41,7 @@
     "@gravitee/ui-components": "4.2.4",
     "@gravitee/ui-particles-angular": "12.9.0",
     "@ngx-formly/core": "6.3.5",
-    "@ngx-formly/material": "6.3.5",
+    "@ngx-formly/material": "6.3.7",
     "@swimlane/ngx-datatable": "20.1.0",
     "@types/hammerjs": "2.0.45",
     "ajv": "8.12.0",
