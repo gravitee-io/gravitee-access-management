@@ -33,6 +33,8 @@ import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import java.util.Optional;
 
 import static io.gravitee.am.repository.Scope.GATEWAY;
+import static io.gravitee.am.repository.Scope.MANAGEMENT;
+import static io.gravitee.am.repository.Scope.OAUTH2;
 
 @Configuration
 @ComponentScan({
@@ -69,8 +71,8 @@ public class GatewayRepositoryConfiguration extends AbstractRepositoryConfigurat
     @Override
     @Bean
     public DatabaseDialectHelper databaseDialectHelper(R2dbcDialect dialect) {
-        String collationManagement = environment.getProperty("management.jdbc.collation", "");
-        String collation = environment.getProperty("gateway.jdbc.collation", collationManagement);
+        String collationManagement = environment.getProperty(MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.collation", "");
+        String collation = environment.getProperty(GATEWAY.getRepositoryPropertyKey() +".jdbc.collation", collationManagement);
         if (getDriver().equals(POSTGRESQL_DRIVER)) {
             return instantiateDialectHelper(DIALECT_HELPER_POSTGRESQL, dialect, collation);
         }
@@ -88,7 +90,7 @@ public class GatewayRepositoryConfiguration extends AbstractRepositoryConfigurat
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        initializeDatabaseSchema(getGatewayPool(), environment, GATEWAY.getName() + ".jdbc.");
+        initializeDatabaseSchema(getGatewayPool(), environment, GATEWAY.getRepositoryPropertyKey() + ".jdbc.");
     }
 
 }

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.reporter.jdbc.audit;
 
+import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.reporter.jdbc.JdbcReporterConfiguration;
 import io.gravitee.am.reporter.jdbc.spring.JdbcReporterSpringConfiguration;
 import io.gravitee.am.reporter.jdbc.tool.R2dbcDatabaseContainer;
@@ -27,6 +28,7 @@ import io.r2dbc.spi.ConnectionFactoryOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
@@ -157,5 +159,10 @@ public class JdbcReporterJUnitConfiguration extends JdbcReporterSpringConfigurat
     @Override
     public R2dbcCustomConversions r2dbcCustomConversions() {
         return new R2dbcCustomConversions(getStoreConversions(), getCustomConverters());
+    }
+
+    @Bean
+    public RepositoriesEnvironment repositoriesEnvironment(Environment env){
+        return new RepositoriesEnvironment(env);
     }
 }

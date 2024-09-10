@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.jdbc.provider.impl;
 
 import com.google.common.base.Strings;
+import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.repository.jdbc.provider.R2DBCConnectionConfiguration;
 import io.gravitee.am.repository.jdbc.provider.metrics.R2DBCConnectionMetrics;
 import io.gravitee.am.repository.jdbc.provider.utils.ObjectUtils;
@@ -66,10 +67,10 @@ public class ConnectionFactoryProvider {
     public static final long DEFAULT_SETTINGS_MAX_ACQUIRE_TIME = 3000;
     public static final long DEFAULT_SETTINGS_MAX_CREATE_CNX_TIME = 5000;
 
-    private final Environment environment;
+    private final RepositoriesEnvironment environment;
     private final String prefix;
 
-    public ConnectionFactoryProvider(Environment environment, String prefix) {
+    public ConnectionFactoryProvider(RepositoriesEnvironment environment, String prefix) {
         this.prefix = prefix + ".jdbc.";
         this.environment = environment;
     }

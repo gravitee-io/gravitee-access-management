@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.management.api.ReporterRepository;
@@ -62,7 +63,7 @@ class ReporterServiceTest {
     private final MockEnvironment environment = new MockEnvironment();
 
     @InjectMocks
-    private ReporterService reporterService = new ReporterServiceImpl(environment, reporterRepository, null, null);
+    private ReporterService reporterService = new ReporterServiceImpl(new RepositoriesEnvironment(environment), reporterRepository, null, null);
 
 
     @Test
@@ -131,11 +132,11 @@ class ReporterServiceTest {
 
     @Test
     void shouldCreateDefaultForOrganization() {
-        environment.setProperty("management.type", "mongodb");
-        environment.setProperty("management.mongodb.host", "doesnt-exist.local");
-        environment.setProperty("management.mongodb.port", "12345");
-        environment.setProperty("management.mongodb.username","invalid");
-        environment.setProperty("management.mongodb.password","credentials");
+        environment.setProperty("repositories.management.type", "mongodb");
+        environment.setProperty("repositories.management.mongodb.host", "doesnt-exist.local");
+        environment.setProperty("repositories.management.mongodb.port", "12345");
+        environment.setProperty("repositories.management.mongodb.username","invalid");
+        environment.setProperty("repositories.management.mongodb.password","credentials");
 
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 

@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.service.utils;
 
+import io.gravitee.am.common.env.RepositoriesEnvironment;
+import io.gravitee.am.repository.Scope;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.springframework.core.env.Environment;
@@ -28,8 +30,8 @@ import java.net.URI;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class BackendConfigurationUtils {
 
-    public static String getMongoDatabaseName(Environment environment) {
-        String uri = environment.getProperty("management.mongodb.uri");
+    public static String getMongoDatabaseName(RepositoriesEnvironment environment) {
+        String uri = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.uri");
         if (uri != null && ! uri.isEmpty()) {
             final String path = URI.create(uri).getPath();
             if (path != null && path.length() > 1) {
@@ -37,6 +39,6 @@ public class BackendConfigurationUtils {
             }
         }
 
-        return environment.getProperty("management.mongodb.dbname", "gravitee-am");
+        return environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.dbname", "gravitee-am");
     }
 }

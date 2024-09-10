@@ -18,9 +18,11 @@ package io.gravitee.am.management.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.BaseEncoding;
+import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.repository.Scope;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoderOptions;
 import io.gravitee.am.service.model.NewIdentityProvider;
@@ -58,11 +60,11 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
 
     private final IdentityProviderService identityProviderService;
 
-    private final Environment environment;
+    private final RepositoriesEnvironment environment;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public DefaultIdentityProviderServiceImpl(IdentityProviderService identityProviderService, Environment environment) {
+    public DefaultIdentityProviderServiceImpl(IdentityProviderService identityProviderService, RepositoriesEnvironment environment) {
         this.identityProviderService = identityProviderService;
         this.environment = environment;
     }
@@ -101,12 +103,12 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
             String mongoHost = null;
             String mongoPort = null;
             if (mongoServers.isEmpty()) {
-                mongoHost = environment.getProperty("management.mongodb.host", "localhost");
-                mongoPort = environment.getProperty("management.mongodb.port", "27017");
+                mongoHost = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.host", "localhost");
+                mongoPort = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.port", "27017");
             }
 
-            final String username = environment.getProperty("management.mongodb.username");
-            final String password = environment.getProperty("management.mongodb.password");
+            final String username = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.username");
+            final String password = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.password");
             final String mongoDBName = getMongoDatabaseName(environment);
 
             String defaultMongoUri = "mongodb://";
@@ -115,7 +117,7 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
             }
             defaultMongoUri += addOptionsToURI(mongoServers.orElse(mongoHost + ":" + mongoPort));
 
-            String mongoUri = environment.getProperty("management.mongodb.uri", defaultMongoUri);
+            String mongoUri = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.uri", defaultMongoUri);
 
             configMap.put("uri", mongoUri);
             configMap.put("host", (mongoHost != null) ? mongoHost : "");
@@ -166,12 +168,12 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
     }
 
     public String addOptionsToURI(String mongoUri) {
-        Integer connectTimeout = environment.getProperty("management.mongodb.connectTimeout", Integer.class, 1000);
-        Integer socketTimeout = environment.getProperty("management.mongodb.socketTimeout", Integer.class, 1000);
-        Integer maxConnectionIdleTime = environment.getProperty("management.mongodb.maxConnectionIdleTime", Integer.class);
-        Integer heartbeatFrequency = environment.getProperty("management.mongodb.heartbeatFrequency", Integer.class);
-        Boolean sslEnabled = environment.getProperty("management.mongodb.sslEnabled", Boolean.class);
-        String authSource = environment.getProperty("management.mongodb.authSource", String.class);
+        Integer connectTimeout = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.connectTimeout", Integer.class, 1000);
+        Integer socketTimeout = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.socketTimeout", Integer.class, 1000);
+        Integer maxConnectionIdleTime = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.maxConnectionIdleTime", Integer.class);
+        Integer heartbeatFrequency = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.heartbeatFrequency", Integer.class);
+        Boolean sslEnabled = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.sslEnabled", Boolean.class);
+        String authSource = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.authSource", String.class);
 
         mongoUri += mongoUri.endsWith("/") ? "" : "/";
         mongoUri += "?connectTimeoutMS=" + connectTimeout + "&socketTimeoutMS=" + socketTimeout;
@@ -227,8 +229,8 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
         List<String> endpoints = new ArrayList<>();
 
         while (found) {
-            String serverHost = environment.getProperty("management.mongodb.servers[" + (idx++) + "].host");
-            int serverPort = environment.getProperty("management.mongodb.servers[" + (idx++) + "].port", int.class, 27017);
+            String serverHost = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.servers[" + (idx++) + "].host");
+            int serverPort = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.servers[" + (idx++) + "].port", int.class, 27017);
             found = (serverHost != null);
             if (found) {
                 endpoints.add(serverHost + ":" + serverPort);
@@ -239,33 +241,33 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
     }
 
     private String managementBackend() {
-        return environment.getProperty("management.type", "mongodb");
+        return environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".type", "mongodb");
     }
     private String jdbcHost() {
-        return environment.getProperty("management.jdbc.host", "localhost");
+        return environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.host", "localhost");
     }
 
     private String jdbcPort() {
-        return environment.getProperty("management.jdbc.port");
+        return environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.port");
     }
 
     private String jdbcDriver() {
-        return environment.getProperty("management.jdbc.driver", "postgresql");
+        return environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.driver", "postgresql");
     }
 
     private String jdbcDatabase() {
-        return environment.getProperty("management.jdbc.database", "gravitee_am");
+        return environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.database", "gravitee_am");
     }
 
     private String jdbcUser() {
-        return environment.getProperty("management.jdbc.username", "postgres");
+        return environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.username", "postgres");
     }
 
     private String jdbcPassword() {
-        return environment.getProperty("management.jdbc.password");
+        return environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.password");
     }
 
     private boolean idpProvisioning() {
-        return environment.getProperty("management.jdbc.identityProvider.provisioning", Boolean.class, true);
+        return environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.identityProvider.provisioning", Boolean.class, true);
     }
 }

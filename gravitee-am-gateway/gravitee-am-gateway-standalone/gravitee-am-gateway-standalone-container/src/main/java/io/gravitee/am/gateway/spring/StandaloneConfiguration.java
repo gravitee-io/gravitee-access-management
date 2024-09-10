@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.spring;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.gateway.configuration.ConfigurationChecker;
 import io.gravitee.am.gateway.event.EventManagerImpl;
@@ -47,6 +48,7 @@ import io.gravitee.platform.repository.api.RepositoryScopeProvider;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.jackson.DatabindCodec;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -128,7 +130,13 @@ public class StandaloneConfiguration {
     }
 
     @Bean
-    public GatewayTypeBeanFactoryFallbackPostProcessor gatewayTypeBeanFactoryFallbackPostProcessor(Environment environment, ApplicationContext applicationContext) {
-        return new GatewayTypeBeanFactoryFallbackPostProcessor(environment, applicationContext);
+    public PropertySourceFallbackConfigurer propertySourceFallbackConfigurer(Environment environment, ApplicationContext applicationContext) {
+        return new PropertySourceFallbackConfigurer(environment, applicationContext);
+    }
+
+    @Bean
+    @Qualifier("EnvironmentWithFallback")
+    public RepositoriesEnvironment repositoriesEnvironment(Environment environment){
+        return new RepositoriesEnvironment(environment);
     }
 }
