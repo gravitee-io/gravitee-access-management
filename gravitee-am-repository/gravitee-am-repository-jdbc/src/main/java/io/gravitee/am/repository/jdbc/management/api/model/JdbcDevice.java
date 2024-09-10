@@ -51,10 +51,6 @@ public class JdbcDevice {
     private String client;
     @Column("user_id")
     private String userId;
-    @Column("user_external_id")
-    private String userExternalId;
-    @Column("user_source")
-    private String userSource;
     @Column("device_identifier_id")
     private String deviceIdentifierId;
     @Column("device_id")
@@ -75,8 +71,6 @@ public class JdbcDevice {
                 .referenceId(device.getReferenceId())
                 .client(device.getClient())
                 .userId(device.getUserId().id())
-                .userExternalId(device.getUserId().externalId())
-                .userSource(device.getUserId().source())
                 .deviceIdentifierId(device.getDeviceIdentifierId())
                 .deviceId(device.getDeviceId())
                 .type(device.getType())
@@ -96,6 +90,6 @@ public class JdbcDevice {
                 .setReferenceId(this.referenceId)
                 .setDeviceIdentifierId(this.deviceIdentifierId)
                 .setType(this.type)
-                .setUserId(new UserId(this.userId, this.userExternalId, this.userSource));
+                .setUserId(UserId.internal(this.userId));
     }
 }
