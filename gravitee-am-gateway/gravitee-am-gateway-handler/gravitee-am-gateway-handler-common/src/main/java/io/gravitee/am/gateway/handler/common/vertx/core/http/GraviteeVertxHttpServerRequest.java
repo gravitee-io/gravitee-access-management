@@ -17,21 +17,27 @@ package io.gravitee.am.gateway.handler.common.vertx.core.http;
 
 import io.gravitee.gateway.api.Request;
 import io.netty.handler.codec.DecoderResult;
-import io.netty.handler.codec.http.HttpHeaderNames;
 import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.*;
+import io.vertx.core.http.Cookie;
+import io.vertx.core.http.HttpConnection;
+import io.vertx.core.http.HttpFrame;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServerFileUpload;
+import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.http.HttpVersion;
+import io.vertx.core.http.ServerWebSocket;
+import io.vertx.core.http.StreamPriority;
 import io.vertx.core.net.HostAndPort;
 import io.vertx.core.net.NetSocket;
 import io.vertx.core.net.impl.HostAndPortImpl;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.security.cert.X509Certificate;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Set;
 
 /**
@@ -278,4 +284,8 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
         return null;
     }
 
+    @Override
+    public MultiMap params(boolean b) {
+        return this.params();
+    }
 }
