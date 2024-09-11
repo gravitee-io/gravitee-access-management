@@ -56,6 +56,7 @@ public class MongoNodeMonitoringRepository extends AbstractManagementMongoReposi
         collection = mongoOperations.getCollection("node_monitoring", MonitoringMongo.class);
         super.init(collection);
         super.createIndex(collection, Map.of(new Document(FIELD_UPDATED_AT, 1), new IndexOptions().name("u1")));
+        super.createIndex(collection, Map.of(new Document(FIELD_NODE_ID, 1).append(FIELD_TYPE, 1), new IndexOptions().name("n1t1")));
     }
 
     @Override
