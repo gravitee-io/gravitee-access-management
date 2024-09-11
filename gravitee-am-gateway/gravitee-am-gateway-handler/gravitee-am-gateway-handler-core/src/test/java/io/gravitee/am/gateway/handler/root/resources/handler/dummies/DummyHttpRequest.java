@@ -380,4 +380,9 @@ public class DummyHttpRequest implements HttpServerRequest {
     public HttpServerRequest routed(String route) {
         return HttpServerRequest.super.routed(route);
     }
+
+    @Override
+    public MultiMap params(boolean semicolonIsNormalChar) {
+        return this.params();
+    }
 }
