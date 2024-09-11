@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.5.0-add-node-monitoring-index
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+      changes:
+        - createIndex:
+            indexName: idx_monitoring_node_id_type
+            tableName: node_monitoring
+            columns:
+              - column:
+                  name: node_id
+              - column:
+                  name: type
