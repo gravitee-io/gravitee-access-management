@@ -17,7 +17,10 @@ package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
+import com.mongodb.client.result.UpdateResult;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Reference;
@@ -41,6 +44,8 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.core.SingleSource;
+import io.reactivex.rxjava3.functions.Function;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
@@ -249,16 +254,27 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
     @Override
     public Single<User> update(User item) {
         UserMongo user = convert(item);
-        return Single.fromPublisher(usersCollection.replaceOne(eq(FIELD_ID, user.getId()), (T) user))
-                .flatMap(updateResult -> Single.just(item));
+        return Single.fromPublisher(usersCollection.replaceOne(eq(FIELD_ID, user.getId()), (T) user, new ReplaceOptions().upsert(acceptUpsert())))
+                .flatMap(checkUpdatedRows(item));
     }
 
     @Override
     public Single<User> update(User item, UpdateActions actions) {
         ArrayList<Bson> updateFields = generateUserUpdates(item, actions);
         Bson updates = Updates.combine(updateFields);
-        return Single.fromPublisher(usersCollection.updateOne(eq(FIELD_ID, item.getId()), updates))
-                .flatMap(updateResult -> Single.just(item));
+        return Single.fromPublisher(usersCollection.updateOne(eq(FIELD_ID, item.getId()), updates, new UpdateOptions().upsert(acceptUpsert())))
+                .flatMap(checkUpdatedRows(item));
+    }
+
+    protected abstract boolean acceptUpsert();
+
+    private Function<UpdateResult, SingleSource<? extends User>> checkUpdatedRows(User item) {
+        return updateResult -> {
+            if (!acceptUpsert() && updateResult.getMatchedCount() == 0) {
+                return Single.error(new TechnicalException("Update query on unknown user with id '" + item.getId() + "'"));
+            }
+            return Single.just(item);
+        };
     }
 
     protected ArrayList<Bson> generateUserUpdates(User item, UpdateActions actions) {

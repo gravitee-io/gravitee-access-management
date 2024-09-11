@@ -43,6 +43,7 @@ import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserRepos
 import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserRoleRepository;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
+import io.r2dbc.spi.R2dbcTransientException;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -52,7 +53,9 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.SingleSource;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.dao.NonTransientDataAccessResourceException;
+import org.springframework.dao.TransientDataAccessException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.relational.core.query.Criteria;
@@ -266,9 +269,16 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     @Autowired
     protected SpringUserIdentitiesRepository identitiesRepository;
 
+    @Autowired
+    protected Environment environment;
+
     private final EnrolledFactorsConverter enrolledFactorsConverter = new EnrolledFactorsConverter();
     private final MapToStringConverter mapToStringConverter = new MapToStringConverter();
     private final X509Converter x509Converter = new X509Converter();
+
+    protected boolean acceptUpsert() {
+        return environment.getProperty("resilience.enabled", Boolean.class, false);
+    }
 
     protected User toEntity(JdbcUser entity) {
         var result = new User();
@@ -609,8 +619,23 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         return Maybe.error(error);
     }
 
-    private SingleSource<? extends User> mapExceptionAsSingle(Throwable error) {
+    private SingleSource<? extends User> mapExceptionAsSingle(Throwable error, User user, boolean fromUpdate) {
+        if (fromUpdate && acceptUpsert() && isTransientDataException(error)) {
+            // when resilient mode is enabled, we may have some edge case
+            // where a user who was in cache need to be updated but is missing from the CP
+            // so in this case, we are falling back to an insert
+            return this.create(user).onErrorResumeNext(createError -> {
+                LOGGER.warn("Upsert fails for user {} due to : {}", user.getId(), error.getMessage());
+                return Single.error(error); // continue with the original error
+            });
+        }
         return Single.fromMaybe(mapException(error));
+    }
+
+    private boolean isTransientDataException(Throwable error) {
+        return error instanceof TransientDataAccessException ||
+                error instanceof R2dbcTransientException ||
+                error.getCause() instanceof R2dbcTransientException;
     }
 
     @Override
@@ -758,7 +783,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
         return monoToSingle(insertAction.as(trx::transactional))
                 .flatMap((i) -> Single.just(item))
-                .onErrorResumeNext(this::mapExceptionAsSingle);
+                .onErrorResumeNext(err -> mapExceptionAsSingle(err, item, false));
     }
 
     @Override
@@ -825,7 +850,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
         return monoToSingle(action.as(trx::transactional))
                 .flatMap((i) -> Single.just(item))
-                .onErrorResumeNext(this::mapExceptionAsSingle);
+                .onErrorResumeNext(err -> mapExceptionAsSingle(err, item, true));
     }
 
     @Override

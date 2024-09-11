@@ -75,4 +75,9 @@ public class MongoOrganizationUserRepository extends AbstractUserRepository<Orga
         }
         return updates;
     }
+
+    @Override
+    protected boolean acceptUpsert() {
+        return false;
+    }
 }
