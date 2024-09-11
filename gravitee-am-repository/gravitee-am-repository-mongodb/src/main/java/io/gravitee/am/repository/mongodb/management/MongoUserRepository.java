@@ -40,6 +40,8 @@ import io.reactivex.rxjava3.core.SingleSource;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -71,6 +73,9 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
     private static final String DOLLAR_COND = "$cond";
 
     private static final UserIdFields USER_ID_FIELDS = new UserIdFields(FIELD_ID, FIELD_EXTERNAL_ID, FIELD_SOURCE);
+
+    @Autowired
+    private Environment environment;
 
     @PostConstruct
     public void init() {
@@ -245,5 +250,10 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
     @Override
     protected Bson userIdMatches(UserId user) {
         return super.userIdMatches(user, USER_ID_FIELDS);
+    }
+
+    @Override
+    protected boolean acceptUpsert() {
+        return environment != null && environment.getProperty("resilience.enabled", Boolean.class, false);
     }
 }
