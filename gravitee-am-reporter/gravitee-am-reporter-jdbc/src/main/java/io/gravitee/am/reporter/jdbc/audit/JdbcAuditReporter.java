@@ -624,7 +624,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                     .flatMap(JdbcAuditReporter.this::bulk)
                     .doOnError(error -> LOGGER.error("An error occurs while indexing data into report_audits_{} table of {} database",
                             configuration.getTableSuffix(), configuration.getDatabase(), error))
-                    .onErrorResumeNext(err -> bulkProcessor)
+                    .retry()
                     .subscribe();
 
             ready = true;
