@@ -149,3 +149,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_5_0/4.5.0-scope-approval-external-user-id.yml
   - include:
       - file: liquibase/changelogs/v4_5_0/4.5.0-identity-group-mapper.yml
+  - include:
+      - file: liquibase/changelogs/v4_5_0/4.5.0-add-node-monitoring-index.yml

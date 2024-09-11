@@ -575,6 +575,7 @@ if (listOfCollections.includes("node_monitoring")) {
     db.node_monitoring.dropIndexes();
     db.node_monitoring.createIndex({"_id": 1}, {"name": "_id1"}, "majority");
     db.node_monitoring.createIndex({"updatedAt": 1}, {"name": "u1"}, "majority");
+    db.node_monitoring.createIndex({"nodeId": 1, "type": 1}, {"name": "n1t1"}, "majority");
 }
 
 // "notification_acknowledgements" collection
