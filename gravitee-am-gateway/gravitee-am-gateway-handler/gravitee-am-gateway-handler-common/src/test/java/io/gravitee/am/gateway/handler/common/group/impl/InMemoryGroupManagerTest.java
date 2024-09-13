@@ -27,6 +27,7 @@ import io.gravitee.am.repository.management.api.GroupRepository;
 import io.gravitee.common.event.impl.SimpleEvent;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,8 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.when;
 
@@ -61,7 +64,7 @@ class InMemoryGroupManagerTest {
     }
 
     @Test
-    public void shouldCreateNewGroup() {
+    public void shouldCreateNewGroup() throws Exception {
         // when
         String groupId = "gr1";
         Group group = new Group();
@@ -74,6 +77,38 @@ class InMemoryGroupManagerTest {
         TestObserver<Group> observer = maybe.test();
         observer.assertComplete();
         Assertions.assertTrue(groupManager.groups.containsKey(groupId));
+        // if group has no member, this method should pass with empty list
+        TestSubscriber<Group> testSubscriber = groupManager.findByMember(UUID.randomUUID().toString()).test();
+        testSubscriber.await(10, TimeUnit.SECONDS);
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(0);
+    }
+
+    @Test
+    public void shouldFindByIds() throws Exception {
+        final String groupId = "gr1";
+
+        TestSubscriber<Group> test = groupManager.findByIds(List.of(groupId)).test();
+        test.assertComplete();
+        test.assertNoErrors();
+        test.assertValueCount(0);
+
+        // when
+        Group group = new Group();
+        group.setId(groupId);
+        Maybe<Group> maybe = Maybe.just(group);
+        when(groupRepository.findById(groupId)).thenReturn(maybe);
+        Payload payload = new Payload(groupId, new Reference(ReferenceType.DOMAIN, "id"), Action.CREATE);
+        groupManager.onEvent(new SimpleEvent<>(GroupEvent.DEPLOY, payload));
+
+        TestObserver<Group> observer = maybe.test();
+        observer.assertComplete();
+        Assertions.assertTrue(groupManager.groups.containsKey(groupId));
+
+        test = groupManager.findByIds(List.of(groupId)).test();
+        test.assertComplete();
+        test.assertNoErrors();
+        test.assertValueCount(1);
     }
 
     @Test
