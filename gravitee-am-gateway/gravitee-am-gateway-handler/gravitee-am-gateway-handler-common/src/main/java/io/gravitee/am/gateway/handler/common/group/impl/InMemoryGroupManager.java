@@ -34,8 +34,11 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import static org.springframework.util.CollectionUtils.isEmpty;
 
 public class InMemoryGroupManager extends AbstractService implements Service, InitializingBean, GroupManager, EventListener<GroupEvent, Payload> {
     private static final Logger LOGGER = LoggerFactory.getLogger(InMemoryGroupManager.class);
@@ -96,12 +99,14 @@ public class InMemoryGroupManager extends AbstractService implements Service, In
     @Override
     public Flowable<Group> findByMember(String userId) {
         return Flowable.fromIterable(groups.values())
-                .filter(g -> g.getMembers().contains(userId));
+                .filter(g -> !isEmpty(g.getMembers()) && g.getMembers().contains(userId));
     }
 
     @Override
     public Flowable<Group> findByIds(List<String> ids) {
         return Flowable.fromIterable(ids)
-                .map(groups::get);
+                .map(id -> Optional.ofNullable(groups.get(id)))
+                .filter(Optional::isPresent)
+                .map(Optional::get);
     }
 }
