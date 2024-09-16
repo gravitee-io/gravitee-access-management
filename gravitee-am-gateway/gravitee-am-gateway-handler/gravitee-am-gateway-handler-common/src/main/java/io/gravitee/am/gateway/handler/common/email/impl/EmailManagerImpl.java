@@ -69,7 +69,7 @@ public class EmailManagerImpl extends AbstractService implements EmailManager, I
     @Value("${email.subject:[Gravitee.io] %s}")
     private String subject;
 
-    @Value("${email.from}")
+    @Value("${email.from:#{null}}")
     private String defaultFrom;
 
     @Override
