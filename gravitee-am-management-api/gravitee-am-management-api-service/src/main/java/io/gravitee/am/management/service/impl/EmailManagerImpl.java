@@ -54,7 +54,7 @@ public class EmailManagerImpl extends AbstractService<EmailManager> implements E
     private static final String TEMPLATE_SUFFIX = ".html";
     private ConcurrentMap<String, Email> emailTemplates = new ConcurrentHashMap<>();
 
-    @Value("${email.from}")
+    @Value("${email.from:#{null}}")
     private String defaultFrom;
 
     @Value("${email.subject:[Gravitee.io] %s}")
