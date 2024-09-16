@@ -6,7 +6,7 @@ orbs:
   gh: circleci/github-cli@2.2.0
   aws-s3: circleci/aws-s3@3.0.0
   helm: circleci/helm@2.0.1
-  aquasec: gravitee-io/aquasec@1.0.0
+  aquasec: gravitee-io/aquasec@1.0.2
 
 executors:
   ubuntu:
@@ -846,6 +846,7 @@ jobs:
 
             # create a latest tag for the given branch to avoid flooding AquaSec project
             export TAG_LATEST=$(echo "${CIRCLE_BRANCH}-latest")
+            
             echo "export TAG_LATEST=$TAG_LATEST" >> $BASH_ENV
       - create_docker_context
       - run:
@@ -855,7 +856,8 @@ jobs:
             export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-api:${TAG}
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-management-api:${TAG_LATEST}
-            echo "export MAPI_IMAGE_TAG_LATEST=$IMAGE_TAG_LATEST" >> $BASH_ENV
+            
+            echo $IMAGE_TAG_LATEST > /tmp/built-docker-images.txt
             
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
@@ -866,7 +868,8 @@ jobs:
             export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-gateway:${TAG}
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-gateway:${TAG_LATEST}
-            echo "export GW_IMAGE_TAG_LATEST=$IMAGE_TAG_LATEST" >> $BASH_ENV
+            
+            echo $IMAGE_TAG_LATEST >> /tmp/built-docker-images.txt
             
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
@@ -878,56 +881,16 @@ jobs:
             export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-ui:${TAG}
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-management-ui:${TAG_LATEST}
-            echo "export UI_IMAGE_TAG_LATEST=$IMAGE_TAG_LATEST" >> $BASH_ENV
+
+            echo $IMAGE_TAG_LATEST >> /tmp/built-docker-images.txt
             
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
-      - when:
-          condition:
-            matches: { pattern: "^(\\d+\\.\\d+\\.x)|master$", value: << pipeline.git.branch >> }
-          steps:
-            - keeper/env-export:
-                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
-                var-name: AQUA_KEY
-            - keeper/env-export:
-                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/Secret
-                var-name: AQUA_SECRET
-            - keeper/env-export:
-                secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/login
-                var-name: AQUA_USERNAME
-            - keeper/env-export:
-                secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/password
-                var-name: AQUA_PASSWORD
-            - keeper/env-export:
-                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/ScannerToken
-                var-name: SCANNER_TOKEN
-            - keeper/env-export:
-                secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
-                var-name: GITHUB_TOKEN
-            - aquasec/install_billy
-            - aquasec/pull_aqua_scanner_image
-            - aquasec/register_artifact:
-                artifact_to_register: ${GW_IMAGE_TAG_LATEST}
-                debug: true
-            - aquasec/scan_docker_image:
-                docker_image_to_scan: ${GW_IMAGE_TAG_LATEST}
-                scanner_url: https://82fb8f75da.cloud.aquasec.com
-            - aquasec/register_artifact:
-                artifact_to_register: ${MAPI_IMAGE_TAG_LATEST}
-                debug: true
-            - aquasec/scan_docker_image:
-                docker_image_to_scan: ${MAPI_IMAGE_TAG_LATEST}
-                scanner_url: https://82fb8f75da.cloud.aquasec.com
-            - aquasec/register_artifact:
-                artifact_to_register: ${UI_IMAGE_TAG_LATEST}
-                debug: true
-            - aquasec/scan_docker_image:
-                docker_image_to_scan: ${UI_IMAGE_TAG_LATEST}
-                scanner_url: https://82fb8f75da.cloud.aquasec.com
       - persist_to_workspace:
           root: /tmp
           paths:
             - ./docker-tag.txt
+            - ./built-docker-images.txt
 
   deploy-on-aks:
     docker:
@@ -1624,6 +1587,7 @@ jobs:
           var-name: GITHUB_TOKEN
       - aquasec/install_billy
       - aquasec/pull_aqua_scanner_image
+      - setup_remote_docker
       - aquasec/register_artifact:
           artifact_to_register: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>
           debug: true
@@ -1836,6 +1800,11 @@ workflows:
             - cicd-orchestrator
           requires:
             - setup
+          filters:
+            branches:
+              ignore:
+                - master
+                - /^[0-999].[0-999].x/
           pre-steps:
             - keeper/env-export:
                 secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
@@ -1929,6 +1898,7 @@ workflows:
               only:
                 - master
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+
       - deploy-snapshot-on-nexus:
           context: cicd-orchestrator
           requires:
@@ -1963,6 +1933,100 @@ workflows:
                 var-name: AZURE_APPLICATION_SECRET
           requires:
             - publish-images-azure-registry
+          filters:
+            branches:
+              only:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+
+      - aquasec/docker_image_scan:
+          context: cicd-orchestrator
+          pre-steps:
+            - keeper/env-export:
+                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
+                var-name: AQUA_KEY
+            - keeper/env-export:
+                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/Secret
+                var-name: AQUA_SECRET
+            - keeper/env-export:
+                secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/login
+                var-name: AQUA_USERNAME
+            - keeper/env-export:
+                secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/password
+                var-name: AQUA_PASSWORD
+            - keeper/env-export:
+                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/ScannerToken
+                var-name: SCANNER_TOKEN
+            - keeper/env-export:
+                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/login
+                var-name: AZURE_DOCKER_REGISTRY_USERNAME
+            - keeper/env-export:
+                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/password
+                var-name: AZURE_DOCKER_REGISTRY_PASSWORD
+            - keeper/env-export:
+                secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
+                var-name: GITHUB_TOKEN
+            - attach_workspace:
+                at: /tmp
+            - setup_remote_docker
+            - run:
+                name: Connect to Azure registry
+                command: |
+                  echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
+                  while IFS="" read -r line || [ -n "$line" ]
+                  do
+                    echo "Pull ${line}"
+                    docker pull "${line}"
+                  done < /tmp/built-docker-images.txt
+          requires:
+            - publish-images-azure-registry
+          scanner_url: https://82fb8f75da.cloud.aquasec.com
+          built_docker_image_file: /tmp/built-docker-images.txt
+          skip_remote_docker_step: true
+          filters:
+            branches:
+              only:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+
+      - aquasec/register_artifact:
+          context: cicd-orchestrator
+          pre-steps:
+            - keeper/env-export:
+                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
+                var-name: AQUA_KEY
+            - keeper/env-export:
+                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/Secret
+                var-name: AQUA_SECRET
+            - keeper/env-export:
+                secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/login
+                var-name: AQUA_USERNAME
+            - keeper/env-export:
+                secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/password
+                var-name: AQUA_PASSWORD
+            - keeper/env-export:
+                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/ScannerToken
+                var-name: SCANNER_TOKEN
+            - keeper/env-export:
+                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/login
+                var-name: AZURE_DOCKER_REGISTRY_USERNAME
+            - keeper/env-export:
+                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/password
+                var-name: AZURE_DOCKER_REGISTRY_PASSWORD
+            - keeper/env-export:
+                secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
+                var-name: GITHUB_TOKEN
+            - attach_workspace:
+                at: /tmp
+            - setup_remote_docker
+            - run:
+                name: Connect to Azure registry
+                command: |
+                  echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
+          requires:
+            - publish-images-azure-registry
+          built_docker_image_file: /tmp/built-docker-images.txt
+          debug: true
           filters:
             branches:
               only:
