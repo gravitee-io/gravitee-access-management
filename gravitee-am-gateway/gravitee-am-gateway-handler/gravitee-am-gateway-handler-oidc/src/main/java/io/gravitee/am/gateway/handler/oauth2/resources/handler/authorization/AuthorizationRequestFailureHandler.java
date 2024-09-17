@@ -224,10 +224,7 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
         if (isDefaultErrorPage(authorizationRequest.getRedirectUri(), errorPath)) {
             extraParams.put(Parameters.CLIENT_ID, authorizationRequest.getClientId());
         }
-        var redirectUri = UriBuilder.buildErrorRedirect(authorizationRequest.getRedirectUri(), errorInfo, fragment, extraParams);
-
-        return redirectUri
-                .toString();
+        return UriBuilder.buildErrorRedirect(authorizationRequest.getRedirectUri(), errorInfo, fragment, extraParams);
     }
 
     private String append(String base, Map<String, String> query, boolean fragment) throws URISyntaxException {
