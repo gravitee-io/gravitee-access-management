@@ -33,6 +33,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+import static java.util.Optional.ofNullable;
+import static org.springframework.util.CollectionUtils.isEmpty;
+
 /**
  * Override default event manager to enable concurrent access
  *
@@ -78,6 +81,13 @@ public class EventManagerImpl implements EventManager {
         }
         List<EventListenerWrapper> listeners = getEventListeners(event.type().getClass(), domain);
         List<EventListenerWrapper> safeConcurrentListeners = Lists.newArrayList(listeners.iterator());
+
+        if (isEmpty(safeConcurrentListeners)) {
+            LOGGER.warn("Event received but no listeners available (Domain: {}, contentClass: {}, eventType: {})",
+                    domain,
+                    ofNullable(event.content()).map(obj -> obj.getClass().getSimpleName()).orElse("null content"),
+                    event.type());
+        }
 
         for(EventListenerWrapper listener : safeConcurrentListeners) {
             listener.eventListener().onEvent(event);
