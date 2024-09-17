@@ -121,7 +121,7 @@ public class LoginFailureHandler extends LoginAbstractHandler {
         // get URI from the redirect_uri parameter
         try {
             final var finalRedirectUri = UriBuilder.buildErrorRedirect(clientRedirectUri, error, fragment);
-            doRedirect(context, finalRedirectUri.toString());
+            doRedirect(context, finalRedirectUri);
         } catch (Exception ex) {
             LOGGER.error("An error has occurred while redirecting to the login page", ex);
             context
