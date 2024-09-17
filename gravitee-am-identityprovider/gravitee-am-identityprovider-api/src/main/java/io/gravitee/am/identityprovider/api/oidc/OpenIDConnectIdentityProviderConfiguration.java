@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.api.oidc;
 
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
+import io.gravitee.am.common.oauth2.CodeChallengeMethod;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.identityprovider.api.oidc.jwt.KeyResolver;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfiguration;
@@ -39,5 +40,14 @@ public interface OpenIDConnectIdentityProviderConfiguration extends SocialIdenti
 
     default String getClientAuthenticationMethod() {
         return ClientAuthenticationMethod.CLIENT_SECRET_POST;
+    }
+
+    /**
+     * Type of challenge used for PKCE. null means PKCE shouldn't be used
+     */
+    CodeChallengeMethod getCodeChallengeMethod();
+
+    default boolean usePkce() {
+        return getCodeChallengeMethod() != null;
     }
 }

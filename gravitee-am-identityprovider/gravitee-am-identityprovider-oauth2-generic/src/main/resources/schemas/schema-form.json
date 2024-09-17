@@ -159,6 +159,12 @@
       "type" : "boolean",
       "default" : false,
       "title": "Store original tokens"
+    },
+    "codeChallengeMethod": {
+      "type": "string",
+      "default": null,
+      "enum": ["plain", "S256"],
+      "description": "Type of challenge for PKCE. Leave 'None' to opt out of using PKCE"
     }
   },
   "required": [

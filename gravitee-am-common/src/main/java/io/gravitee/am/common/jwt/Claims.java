@@ -118,6 +118,11 @@ public interface Claims {
      */
     String UPDATED_AT = "updated_at";
 
+    /**
+     * Encrypted code verifier for PKCE with social IDP
+     */
+    String ECV = "ecv";
+
     static List<String> getAllClaims() {
         return Arrays.asList(ISS, SUB, AUD, EXP, NBF, IAT, AUTH_TIME, UPDATED_AT,
                 JTI, DOMAIN, CLAIMS, IP_ADDRESS, USER_AGENT, SCOPE, CNF);

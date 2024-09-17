@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -43,6 +44,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.stream.Collectors;
 
@@ -178,22 +180,19 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
                     // Generate a state containing provider id and current query parameter string. This state will be sent back to AM after social authentication.
                     final JWT stateJwt = prepareState(identityProviderId, context);
 
-                    return jwtService.encode(stateJwt, certificateManager.defaultCertificateProvider())
-                            .flatMapMaybe(state -> {
-                                String redirectUri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login/callback");
-                                Maybe<Request> signInURL = ((SocialAuthenticationProvider) authenticationProvider).asyncSignInUrl(redirectUri, state);
+                    String redirectUri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login/callback");
+                    Maybe<Request> signInURL = ((SocialAuthenticationProvider) authenticationProvider).asyncSignInUrl(redirectUri, stateJwt, jwt -> jwtService.encode(jwt, certificateManager.defaultCertificateProvider(), Set.of(Claims.ECV)));
 
-                                return signInURL.map(request -> {
-                                    if (HttpMethod.GET.equals(request.getMethod())) {
-                                        return request.getUri();
-                                    } else {
-                                        // Extract body to convert it to query parameters and use POST form.
-                                        final Map<String, String> queryParams = getParams(request.getBody());
-                                        queryParams.put(ACTION_KEY, request.getUri());
-                                        return UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login/SSO/POST", queryParams);
-                                    }
-                                });
-                            });
+                    return signInURL.map(request -> {
+                        if (HttpMethod.GET.equals(request.getMethod())) {
+                            return request.getUri();
+                        } else {
+                            // Extract body to convert it to query parameters and use POST form.
+                            final Map<String, String> queryParams = getParams(request.getBody());
+                            queryParams.put(ACTION_KEY, request.getUri());
+                            return UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login/SSO/POST", queryParams);
+                        }
+                    });
                 });
     }
 
@@ -208,7 +207,7 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
             stateJwt.put(PROTOCOL_KEY, protocol);
             stateJwt.put(RETURN_URL_KEY, context.session().get(RETURN_URL_KEY));
             if (PROTOCOL_VALUE_SAML_POST.equals(protocol)) {
-              stateJwt.put(TRANSACTION_ID_KEY, context.session().get(TRANSACTION_ID_KEY));
+                stateJwt.put(TRANSACTION_ID_KEY, context.session().get(TRANSACTION_ID_KEY));
             }
         }
         stateJwt.put(CLAIM_PROVIDER_ID, identityProviderId);

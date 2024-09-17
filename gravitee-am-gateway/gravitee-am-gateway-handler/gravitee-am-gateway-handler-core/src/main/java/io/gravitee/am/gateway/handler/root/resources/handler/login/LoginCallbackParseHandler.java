@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
+import io.gravitee.am.common.crypto.CryptoUtils;
 import io.gravitee.am.common.exception.oauth2.BadClientCredentialsException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.Parameters;
@@ -34,6 +35,9 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
+
+import java.security.Key;
+import java.util.Base64;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_ISSUING_REASON;
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_PROVIDER_ID;
@@ -132,13 +136,25 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
             handler.handle(Future.failedFuture(new InvalidRequestException("Missing state query param")));
             return;
         }
-
-        jwtService.decodeAndVerify(state, certificateManager.defaultCertificateProvider(), STATE)
+        var stateJwtCertProvider = certificateManager.defaultCertificateProvider();
+         jwtService.decodeAndVerify(state, stateJwtCertProvider, STATE)
                 .doOnSuccess(stateJwt -> {
                     final MultiMap initialQueryParams = RequestUtils.getQueryParams((String) stateJwt.getOrDefault(CLAIM_QUERY_PARAM, ""), false);
                     context.put(ConstantKeys.PARAM_CONTEXT_KEY, initialQueryParams);
                     context.put(ConstantKeys.PROVIDER_ID_PARAM_KEY, stateJwt.get(CLAIM_PROVIDER_ID));
                     context.put(ConstantKeys.REMEMBER_ME_PARAM_KEY, stateJwt.get(CLAIM_REMEMBER_ME));
+
+                    // TODO MRE PKCE-IDP make a constant, don't block
+
+                    stateJwtCertProvider.getProvider()
+                            .key()
+                            .map(k -> {
+                                var ecv = new String(Base64.getUrlDecoder().decode((String) stateJwt.get("ecv")));
+                                return CryptoUtils.decrypt(ecv, (Key) k.getValue());
+                            })
+                            .doOnSuccess(codeVerifier -> context.put("idp_code_verifier", codeVerifier))
+                            .ignoreElement()
+                            .blockingSubscribe();
 
                     if (ISSUING_REASON_CLOSE_IDP_SESSION.equals(stateJwt.get(CLAIM_ISSUING_REASON))) {
                         context.put(ConstantKeys.CONTINUE_CALLBACK_PROCESSING, false);
@@ -150,7 +166,7 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
                     final String protocol = (String) stateJwt.get(PROTOCOL_KEY);
                     if (StringUtils.hasLength(protocol)) {
                         // SAML flow, need to restore these session attributes
-                        // in order to redirect the process to the SAML Handler and
+                        // in order to redirect th§e process to the SAML Handler and
                         // not onto OAuth2 flow
                         context.session().put(PROTOCOL_KEY, protocol);
                         context.session().put(RETURN_URL_KEY, stateJwt.get(RETURN_URL_KEY));

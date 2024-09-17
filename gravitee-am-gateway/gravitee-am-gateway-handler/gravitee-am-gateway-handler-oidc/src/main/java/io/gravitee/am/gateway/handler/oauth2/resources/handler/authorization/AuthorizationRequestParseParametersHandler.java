@@ -149,9 +149,10 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
                 // It must be plain or S256
                 // For FAPI, only S256 is allowed for PKCE
                 // https://openid.net/specs/openid-financial-api-part-2-1_0.html#authorization-server (point 18)
-                if (((this.domain.usePlainFapiProfile() || client.isForceS256CodeChallengeMethod()) && !CodeChallengeMethod.S256.equalsIgnoreCase(codeChallengeMethod)) ||
-                        (!CodeChallengeMethod.S256.equalsIgnoreCase(codeChallengeMethod) &&
-                                !CodeChallengeMethod.PLAIN.equalsIgnoreCase(codeChallengeMethod))) {
+                var requireS256Challenge = (this.domain.usePlainFapiProfile() || client.isForceS256CodeChallengeMethod());
+                var challengeMethod = CodeChallengeMethod.fromUriParam(codeChallengeMethod);
+                if ((requireS256Challenge && challengeMethod != CodeChallengeMethod.S256) ||
+                        challengeMethod == null) {
                     throw new InvalidRequestException("Invalid parameter: code_challenge_method");
                 }
 
@@ -165,7 +166,7 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
 
                 // https://tools.ietf.org/html/rfc7636#section-4.3
                 // Default code challenge is plain
-                context.request().params().set(io.gravitee.am.common.oauth2.Parameters.CODE_CHALLENGE_METHOD, CodeChallengeMethod.PLAIN);
+                context.request().params().set(io.gravitee.am.common.oauth2.Parameters.CODE_CHALLENGE_METHOD, CodeChallengeMethod.PLAIN.getUriValue());
             }
 
             // Check that code challenge is valid

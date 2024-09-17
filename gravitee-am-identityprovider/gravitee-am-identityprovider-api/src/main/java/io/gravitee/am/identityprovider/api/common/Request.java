@@ -17,11 +17,15 @@ package io.gravitee.am.identityprovider.api.common;
 
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpMethod;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public class Request {
 
     private HttpMethod method;
@@ -32,35 +36,10 @@ public class Request {
 
     private String body;
 
-    public HttpMethod getMethod() {
-        return method;
-    }
-
-    public void setMethod(HttpMethod method) {
-        this.method = method;
-    }
-
-    public HttpHeaders getHeaders() {
-        return headers;
-    }
-
-    public void setHeaders(HttpHeaders headers) {
-        this.headers = headers;
-    }
-
-    public String getUri() {
-        return uri;
-    }
-
-    public void setUri(String uri) {
-        this.uri = uri;
-    }
-
-    public String getBody() {
-        return body;
-    }
-
-    public void setBody(String body) {
-        this.body = body;
+    public static Request get(String uri) {
+        var request = new Request();
+        request.method = HttpMethod.GET;
+        request.uri = uri;
+        return request;
     }
 }

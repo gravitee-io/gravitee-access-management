@@ -19,7 +19,9 @@ import com.google.common.base.Strings;
 import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
+import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.AuthenticationFlow;
@@ -46,9 +48,9 @@ import io.gravitee.am.identityprovider.common.oauth2.utils.URLEncodedUtils;
 import io.gravitee.am.model.http.BasicNameValuePair;
 import io.gravitee.am.model.http.NameValuePair;
 import io.gravitee.common.http.HttpHeaders;
-import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.client.HttpRequest;
@@ -56,13 +58,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
@@ -76,6 +79,7 @@ import static java.util.function.Predicate.not;
  */
 public abstract class AbstractOpenIDConnectAuthenticationProvider extends AbstractSocialAuthenticationProvider implements OpenIDConnectAuthenticationProvider, InitializingBean {
 
+    public static final String ENCRYPTED_CODE_VERIFIER = "ecv";
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
 
     public static final String HASH_VALUE_PARAMETER = "urlHash";
@@ -110,16 +114,16 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
     }
 
     @Override
-    public Request signInUrl(String redirectUri, String state) {
+    public Maybe<Request> asyncSignInUrl(String redirectUri, JWT state, Function<JWT, Single<String>> prepareJwt) {
         try {
             if (getConfiguration().getUserAuthorizationUri() == null) {
                 LOGGER.warn("Social Provider {} can't provide signInUrl, userAuthorizationUri is null", this.getClass().getSimpleName());
                 return null;
             }
 
-            UriBuilder builder = UriBuilder.fromHttpUrl(getConfiguration().getUserAuthorizationUri());
-            builder.addParameter(Parameters.CLIENT_ID, getConfiguration().getClientId());
-            builder.addParameter(Parameters.RESPONSE_TYPE, getConfiguration().getResponseType());
+            UriBuilder builder = UriBuilder.fromHttpUrl(getConfiguration().getUserAuthorizationUri())
+                    .addParameter(Parameters.CLIENT_ID, getConfiguration().getClientId())
+                    .addParameter(Parameters.RESPONSE_TYPE, getConfiguration().getResponseType());
             // append scopes
             if (getConfiguration().getScopes() != null && !getConfiguration().getScopes().isEmpty()) {
                 builder.addParameter(Parameters.SCOPE, String.join(SCOPE_DELIMITER, getConfiguration().getScopes()));
@@ -128,18 +132,29 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
             if (!io.gravitee.am.common.oauth2.ResponseType.CODE.equals(getConfiguration().getResponseType())) {
                 builder.addParameter(io.gravitee.am.common.oidc.Parameters.NONCE, SecureRandomString.generate());
             }
-            // add state if provided.
-            if (StringUtils.hasText(state)) {
-                builder.addParameter(Parameters.STATE, state);
+            // PKCE
+            if (getConfiguration().usePkce()) {
+                var codeVerifier = SecureRandomString.generate();
+                //TODO MRE PKCE-IDP: encrypt the verifier in state here? For now it's assumed prepareJWT does all the required handling
+                if (state == null) {
+                    state = new JWT();
+                }
+                state.put(ENCRYPTED_CODE_VERIFIER, codeVerifier);
+                builder.addParameter(Parameters.CODE_CHALLENGE, getConfiguration().getCodeChallengeMethod().getChallenge(codeVerifier));
+                builder.addParameter(Parameters.CODE_CHALLENGE_METHOD, getConfiguration().getCodeChallengeMethod().getUriValue());
             }
-
-            // append redirect_uri
             builder.addParameter(Parameters.REDIRECT_URI, getConfiguration().isEncodeRedirectUri() ? encodeURIComponent(redirectUri) : redirectUri);
 
-            Request request = new Request();
-            request.setMethod(HttpMethod.GET);
-            request.setUri(builder.buildString());
-            return request;
+
+            if (state == null || state.isEmpty()) {
+                return Maybe.just(Request.get(builder.buildString()));
+            }
+
+            return prepareJwt.apply(state)
+                    .flatMapMaybe(encodedState -> {
+                        builder.addParameter(Parameters.STATE, encodedState);
+                        return Maybe.just(Request.get(builder.buildString()));
+                    });
         } catch (Exception e) {
             LOGGER.error("An error has occurred while building OpenID Connect Sign In URL", e);
             return null;
@@ -194,7 +209,12 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
         urlParameters.add(new BasicNameValuePair(Parameters.CLIENT_ID, getConfiguration().getClientId()));
         urlParameters.add(new BasicNameValuePair(Parameters.REDIRECT_URI, String.valueOf(authentication.getContext().get(Parameters.REDIRECT_URI))));
         urlParameters.add(new BasicNameValuePair(Parameters.CODE, authorizationCode));
-        urlParameters.add(new BasicNameValuePair(Parameters.GRANT_TYPE, "authorization_code"));
+        urlParameters.add(new BasicNameValuePair(Parameters.GRANT_TYPE, GrantType.AUTHORIZATION_CODE));
+        if (getConfiguration().usePkce()) {
+            Optional.ofNullable((String) authentication.getContext().get("idp_code_verifier"))
+                    .ifPresent(codeVerifier -> urlParameters.add(new BasicNameValuePair(Parameters.CODE_VERIFIER, codeVerifier)));
+        }
+
         String bodyRequest = URLEncodedUtils.format(urlParameters);
 
 
@@ -212,8 +232,8 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
                     String accessToken = response.getString(ACCESS_TOKEN_PARAMETER);
                     // We store the token is option is enabled
                     if (getConfiguration().isStoreOriginalTokens() && !Strings.isNullOrEmpty(accessToken)) {
-                            authentication.getContext().set(ACCESS_TOKEN_PARAMETER, accessToken);
-                        }
+                        authentication.getContext().set(ACCESS_TOKEN_PARAMETER, accessToken);
+                    }
 
                     // ID Token is always stored for SSO
                     String idToken = response.getString(ID_TOKEN_PARAMETER);
@@ -314,13 +334,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
     }
 
     private Map<String, String> getParams(String query) {
-        Map<String, String> query_pairs = new LinkedHashMap<>();
-        String[] pairs = query.split("&");
-        for (String pair : pairs) {
-            int idx = pair.indexOf("=");
-            query_pairs.put(pair.substring(0, idx), pair.substring(idx + 1));
-        }
-        return query_pairs;
+        return URLEncodedUtils.format(query);
     }
 
 }
