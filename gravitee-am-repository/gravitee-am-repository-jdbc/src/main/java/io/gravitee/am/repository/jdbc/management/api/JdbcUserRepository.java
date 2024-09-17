@@ -74,6 +74,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -794,8 +795,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     @Override
     public Single<User> update(User item, UpdateActions updateActions) {
         LOGGER.debug("Update User with id {}", item.getId());
+        Objects.requireNonNull(item.getId());
         TransactionalOperator trx = TransactionalOperator.create(tm);
-
         DatabaseClient.GenericExecuteSpec update = getTemplate().getDatabaseClient().sql(updateUserStatement);
 
         update = addQuotedField(update, USER_COL_ID, item.getId(), String.class);
@@ -842,14 +843,19 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
         Mono<Long> action = update.fetch().rowsUpdated();
 
-
         if (updateActions.updateRequire()) {
             action = deleteChildEntities(item.getId(), updateActions).then(action);
             action = persistChildEntities(action, item, updateActions);
         }
 
         return monoToSingle(action.as(trx::transactional))
-                .flatMap((i) -> Single.just(item))
+                .flatMap((i) -> {
+                    if(acceptUpsert() && i == 0){
+                        return this.create(item);
+                    } else {
+                        return Single.just(item);
+                    }
+                })
                 .onErrorResumeNext(err -> mapExceptionAsSingle(err, item, true));
     }
 
