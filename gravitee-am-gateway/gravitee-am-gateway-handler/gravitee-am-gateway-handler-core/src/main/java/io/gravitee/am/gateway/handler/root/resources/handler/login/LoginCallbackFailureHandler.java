@@ -216,7 +216,7 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
 
         var finalRedirectUri = UriBuilder.buildErrorRedirect(clientRedirectUri, error, fragment);
 
-        closeRemoteSessionAndRedirect(context, authentication, finalRedirectUri.toString());
+        closeRemoteSessionAndRedirect(context, authentication, finalRedirectUri);
     }
 
     private void closeRemoteSessionAndRedirect(RoutingContext context, Authentication authentication, String redirectUrl) {
