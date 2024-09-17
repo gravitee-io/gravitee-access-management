@@ -97,9 +97,9 @@ public class UriBuilderTest {
 
     @Test
     public void errorKeepsQueryParams() throws Exception {
-        var mockError = new ErrorInfo("test", "T01", "test failed", null);
+        var mockError = new ErrorInfo("test", "T01", "{test failed}", null);
         var uri = UriBuilder.buildErrorRedirect("https://redirect.example.com?test=1", mockError, false);
-        assertThat(uri.getQuery().split("&")).hasSize(4)
+        assertThat(uri.split("\\?")[1].split("&")).hasSize(4)
 
                 .containsExactlyInAnyOrder(
                         "error=" + uriEncoded(mockError.error()),
