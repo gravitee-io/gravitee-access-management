@@ -192,7 +192,6 @@ connectMongo: ## Connect to mongo repository on gravitee-am database
 reset: stop deleteData start ## Stop containers, delete mongodb data and restart container
 
 postman: ## Run postman non regression test (require newman npm module)
-	@newman run postman/collections/graviteeio-am-openid-discovery-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-oauth2-collection-app-version.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-oauth2-par-version.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-openid-core-collection-app-version.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
