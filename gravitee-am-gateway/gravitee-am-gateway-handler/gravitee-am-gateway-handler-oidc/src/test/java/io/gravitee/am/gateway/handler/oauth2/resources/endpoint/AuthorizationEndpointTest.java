@@ -274,7 +274,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("http://localhost:9999/callback?error=invalid_scope&error_description=Invalid+scope%2528s%2529%253A+unknown", location);
+                    assertEquals("http://localhost:9999/callback?error=invalid_scope&error_description=Invalid+scope%28s%29%3A+unknown", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -325,7 +325,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.contains("/test/oauth/error?client_id=client-id&error=invalid_request&error_description=Unable+to+find+suitable+redirect_uri%252C+a+redirect_uri+must+be+supplied"));
+                    assertTrue(location.contains("/test/oauth/error?client_id=client-id&error=invalid_request&error_description=Unable+to+find+suitable+redirect_uri%2C+a+redirect_uri+must+be+supplied"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -352,7 +352,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.contains("/test/oauth/error?client_id=client-id&error=redirect_uri_mismatch&error_description=The+redirect_uri+%255B+http%253A%252F%252Flocalhost%253A9999%252Fwrong%252Fcallback+%255D+MUST+match+the+registered+callback+URL+for+this+application"));
+                    assertTrue(location.contains("/test/oauth/error?client_id=client-id&error=redirect_uri_mismatch&error_description=The+redirect_uri+%5B+http%3A%2F%2Flocalhost%3A9999%2Fwrong%2Fcallback+%5D+MUST+match+the+registered+callback+URL+for+this+application"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -380,7 +380,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.contains("/test/oauth/error?client_id=client-id&error=redirect_uri_mismatch&error_description=The+redirect_uri+%255B+http%253A%252F%252Flocalhost%253A9999%252Fauthorize%252Fcallback%253Fparam%253Dparam1+%255D+MUST+match+the+registered+callback+URL+for+this+application"));
+                    assertTrue(location.contains("/test/oauth/error?client_id=client-id&error=redirect_uri_mismatch&error_description=The+redirect_uri+%5B+http%3A%2F%2Flocalhost%3A9999%2Fauthorize%2Fcallback%3Fparam%3Dparam1+%5D+MUST+match+the+registered+callback+URL+for+this+application"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -439,7 +439,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.contains("/test/oauth/error?client_id=client-id&error=invalid_request&error_description=Parameter+%255Bresponse_type%255D+is+included+more+than+once"));
+                    assertTrue(location.contains("/test/oauth/error?client_id=client-id&error=invalid_request&error_description=Parameter+%5Bresponse_type%5D+is+included+more+than+once"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -752,7 +752,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("http://localhost:9999/callback?error=invalid_request&error_description=Missing+parameter%253A+code_challenge", location);
+                    assertEquals("http://localhost:9999/callback?error=invalid_request&error_description=Missing+parameter%3A+code_challenge", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -778,7 +778,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("http://localhost:9999/callback?error=invalid_request&error_description=Invalid+parameter%253A+code_challenge_method", location);
+                    assertEquals("http://localhost:9999/callback?error=invalid_request&error_description=Invalid+parameter%3A+code_challenge_method", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -804,7 +804,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("http://localhost:9999/callback?error=invalid_request&error_description=Invalid+parameter%253A+code_challenge", location);
+                    assertEquals("http://localhost:9999/callback?error=invalid_request&error_description=Invalid+parameter%3A+code_challenge", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -1086,7 +1086,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.contains("error=invalid_request&error_description=Missing+parameter%253A+nonce+is+required+for+Implicit+and+Hybrid+Flow"));
+                    assertTrue(location.contains("error=invalid_request&error_description=Missing+parameter%3A+nonce+is+required+for+Implicit+and+Hybrid+Flow"));
                     },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -1107,7 +1107,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.contains("error=invalid_request&error_description=Missing+parameter%253A+nonce+is+required+for+Implicit+and+Hybrid+Flow"));
+                    assertTrue(location.contains("error=invalid_request&error_description=Missing+parameter%3A+nonce+is+required+for+Implicit+and+Hybrid+Flow"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -1382,7 +1382,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertEquals("http://localhost:9999/callback?error=invalid_request&error_description=Missing+parameter%253A+code_challenge", location);
+                    assertEquals("http://localhost:9999/callback?error=invalid_request&error_description=Missing+parameter%3A+code_challenge", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -1402,8 +1402,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
                     org.assertj.core.api.Assertions.assertThat(location)
-                            .endsWith("/test/oauth/error?client_id=client-id&error=invalid_request&error_description=Parameter+%255Bresponse_type%255D+is+included+more+than+once");
-//                    assertTrue(location.endsWith("/test/oauth/error?client_id=client-id&error=invalid_request&error_description=Parameter+%255Bresponse_type%255D+is+included+more+than+once"));
+                            .endsWith("/test/oauth/error?client_id=client-id&error=invalid_request&error_description=Parameter+%5Bresponse_type%5D+is+included+more+than+once");
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -1428,7 +1427,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.endsWith("/test/oauth/error?client_id=client-id&error=invalid_request&error_description=Missing+parameter%253A+response_type"));
+                    assertTrue(location.endsWith("/test/oauth/error?client_id=client-id&error=invalid_request&error_description=Missing+parameter%3A+response_type"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -1453,7 +1452,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.endsWith("/test/oauth/error?client_id=client-id&error=invalid_request&error_description=Missing+parameter%253A+response_type"));
+                    assertTrue(location.endsWith("/test/oauth/error?client_id=client-id&error=invalid_request&error_description=Missing+parameter%3A+response_type"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -1478,7 +1477,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.endsWith("/test/oauth/error?client_id=client-id&error=invalid_request&error_description=Missing+parameter%253A+response_type"));
+                    assertTrue(location.endsWith("/test/oauth/error?client_id=client-id&error=invalid_request&error_description=Missing+parameter%3A+response_type"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }

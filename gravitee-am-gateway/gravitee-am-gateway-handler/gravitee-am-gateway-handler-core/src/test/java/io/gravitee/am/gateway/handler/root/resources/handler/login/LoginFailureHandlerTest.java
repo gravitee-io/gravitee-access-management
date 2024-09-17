@@ -104,7 +104,7 @@ public class LoginFailureHandlerTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.contains("http://myhost/login/callback?error=login_failed&error_code=CALLOUT_EXIT_ON_ERROR&error_description=%257B%2522errorTest%2522%253A+%2522Test+Error%2522%257D"));
+                    assertTrue(location.contains("http://myhost/login/callback?error=login_failed&error_code=CALLOUT_EXIT_ON_ERROR&error_description=%7B%22errorTest%22%3A+%22Test+Error%22%7D"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
