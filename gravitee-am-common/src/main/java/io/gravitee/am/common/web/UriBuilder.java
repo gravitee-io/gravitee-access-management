@@ -315,7 +315,7 @@ public class UriBuilder {
     }
 
 
-    public static URI buildErrorRedirect(String baseRedirectUri, ErrorInfo error, boolean fragment, Map<String, String> extraParams) throws URISyntaxException {
+    public static String buildErrorRedirect(String baseRedirectUri, ErrorInfo error, boolean fragment, Map<String, String> extraParams) throws URISyntaxException {
         final URI redirectUri = UriBuilder.fromURIString(baseRedirectUri).build();
 
         var parameters = new TreeMap<String, String>();
@@ -331,9 +331,9 @@ public class UriBuilder {
                 ? (k,v) -> finalRedirectUri.addNotNullFragmentParameter(k, encodeURIComponent(v))
                 : (k,v) -> finalRedirectUri.addNotNullParameter(k, encodeURIComponent(v));
         parameters.forEach(addParameter);
-        return finalRedirectUri.build();
+        return finalRedirectUri.buildString();
     }
-    public static URI buildErrorRedirect(String baseRedirectUri, ErrorInfo error, boolean fragment) throws URISyntaxException {
+    public static String buildErrorRedirect(String baseRedirectUri, ErrorInfo error, boolean fragment) throws URISyntaxException {
        return buildErrorRedirect(baseRedirectUri, error, fragment, Map.of());
     }
 }
