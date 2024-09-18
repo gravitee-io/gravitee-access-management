@@ -56,10 +56,10 @@ public class JWTServiceTest {
     @Before
     public void setUp() {
 
-        var rs256CertProvider = mockCertProvider(constantJwtBuilder("token_rs_256"));
-        var rs512CertProvider = mockCertProvider(constantJwtBuilder("token_rs_512"));
-        var defaultCertProvider = mockCertProvider(constantJwtBuilder("token_default"));
-        var noneAlgCertProvider = mockCertProvider(constantJwtBuilder("not_signed_jwt"));
+        var rs256CertProvider = mockCertProvider(mockJwtBuilder("token_rs_256"));
+        var rs512CertProvider = mockCertProvider(mockJwtBuilder("token_rs_512"));
+        var defaultCertProvider = mockCertProvider(mockJwtBuilder("token_default"));
+        var noneAlgCertProvider = mockCertProvider(mockJwtBuilder("not_signed_jwt"));
 
         when(certificateManager.findByAlgorithm("unknown")).thenReturn(Maybe.empty());
         when(certificateManager.findByAlgorithm("RS512")).thenReturn(Maybe.just(rs512CertProvider));
@@ -70,7 +70,7 @@ public class JWTServiceTest {
         when(certificateManager.noneAlgorithmCertificateProvider()).thenReturn(noneAlgCertProvider);
     }
 
-    private JWTBuilder constantJwtBuilder(String theSignedValue) {
+    private JWTBuilder mockJwtBuilder(String theSignedValue) {
         return x -> theSignedValue;
     }
 
@@ -109,7 +109,7 @@ public class JWTServiceTest {
         var key = generateKey("HMACSHA256");
         var jwt = new JWT(Map.of("ecv", "to-encrypt",
                 "normalclaim", "lorem-ipsum"));
-        jwtService.encode(jwt, mockCertProvider(constantJwtBuilder("with-encryption"), key))
+        jwtService.encode(jwt, mockCertProvider(mockJwtBuilder("with-encryption"), key))
                 .test()
                 .assertComplete()
                 .assertValue("with-encryption");
@@ -118,9 +118,9 @@ public class JWTServiceTest {
     @Test
     public void encode_withEncryption_rsaKeyPair() {
         var key = generateKeyPair("RSA");
-        var jwt = new JWT(Map.of("ecv", "to-encrypte",
+        var jwt = new JWT(Map.of("ecv", "value-to-encrypt",
                 "normalclaim", "lorem-ipsum"));
-        jwtService.encode(jwt, mockCertProvider(constantJwtBuilder("with-encryption"), key))
+        jwtService.encode(jwt, mockCertProvider(mockJwtBuilder("with-encryption"), key))
                 .test()
                 .assertComplete()
                 .assertValue("with-encryption");

@@ -45,7 +45,9 @@ public interface OpenIDConnectIdentityProviderConfiguration extends SocialIdenti
     /**
      * Type of challenge used for PKCE. null means PKCE shouldn't be used
      */
-    CodeChallengeMethod getCodeChallengeMethod();
+    default CodeChallengeMethod getCodeChallengeMethod() {
+        return null;
+    }
 
     default boolean usePkce() {
         return getCodeChallengeMethod() != null;

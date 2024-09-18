@@ -181,7 +181,7 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
                     final JWT stateJwt = prepareState(identityProviderId, context);
 
                     String redirectUri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login/callback");
-                    Maybe<Request> signInURL = ((SocialAuthenticationProvider) authenticationProvider).asyncSignInUrl(redirectUri, stateJwt, jwt -> jwtService.encode(jwt, certificateManager.defaultCertificateProvider(), Set.of(Claims.ECV)));
+                    Maybe<Request> signInURL = ((SocialAuthenticationProvider) authenticationProvider).asyncSignInUrl(redirectUri, stateJwt, jwt -> jwtService.encode(jwt, certificateManager.defaultCertificateProvider(), Set.of(Claims.ENCRYPTED_CODE_VERIFIER)));
 
                     return signInURL.map(request -> {
                         if (HttpMethod.GET.equals(request.getMethod())) {

@@ -117,11 +117,10 @@ public interface Claims {
      * Time the End-User's information was last updated.
      */
     String UPDATED_AT = "updated_at";
-
     /**
      * Encrypted code verifier for PKCE with social IDP
      */
-    String ECV = "ecv";
+    String ENCRYPTED_CODE_VERIFIER = "ecv";
 
     static List<String> getAllClaims() {
         return Arrays.asList(ISS, SUB, AUD, EXP, NBF, IAT, AUTH_TIME, UPDATED_AT,

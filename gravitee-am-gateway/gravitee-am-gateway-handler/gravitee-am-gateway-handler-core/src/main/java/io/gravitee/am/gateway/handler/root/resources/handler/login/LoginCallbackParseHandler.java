@@ -18,8 +18,11 @@ package io.gravitee.am.gateway.handler.root.resources.handler.login;
 import io.gravitee.am.common.crypto.CryptoUtils;
 import io.gravitee.am.common.exception.oauth2.BadClientCredentialsException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
@@ -27,6 +30,7 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -137,24 +141,17 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
             return;
         }
         var stateJwtCertProvider = certificateManager.defaultCertificateProvider();
-         jwtService.decodeAndVerify(state, stateJwtCertProvider, STATE)
+        jwtService.decodeAndVerify(state, stateJwtCertProvider, STATE)
+                .flatMap(stateJwt -> extractIdpCodeVerifier(stateJwt, stateJwtCertProvider)
+                        .map(codeVerifier -> {
+                            context.put(ConstantKeys.IDP_CODE_VERIFIER, codeVerifier);
+                            return stateJwt;
+                        }))
                 .doOnSuccess(stateJwt -> {
                     final MultiMap initialQueryParams = RequestUtils.getQueryParams((String) stateJwt.getOrDefault(CLAIM_QUERY_PARAM, ""), false);
                     context.put(ConstantKeys.PARAM_CONTEXT_KEY, initialQueryParams);
                     context.put(ConstantKeys.PROVIDER_ID_PARAM_KEY, stateJwt.get(CLAIM_PROVIDER_ID));
                     context.put(ConstantKeys.REMEMBER_ME_PARAM_KEY, stateJwt.get(CLAIM_REMEMBER_ME));
-
-                    // TODO MRE PKCE-IDP make a constant, don't block
-
-                    stateJwtCertProvider.getProvider()
-                            .key()
-                            .map(k -> {
-                                var ecv = new String(Base64.getUrlDecoder().decode((String) stateJwt.get("ecv")));
-                                return CryptoUtils.decrypt(ecv, (Key) k.getValue());
-                            })
-                            .doOnSuccess(codeVerifier -> context.put("idp_code_verifier", codeVerifier))
-                            .ignoreElement()
-                            .blockingSubscribe();
 
                     if (ISSUING_REASON_CLOSE_IDP_SESSION.equals(stateJwt.get(CLAIM_ISSUING_REASON))) {
                         context.put(ConstantKeys.CONTINUE_CALLBACK_PROCESSING, false);
@@ -181,6 +178,15 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
                             logger.error("An error occurs verifying state on login callback", ex);
                             handler.handle(Future.failedFuture(new BadClientCredentialsException()));
                         });
+    }
+
+    private Single<String> extractIdpCodeVerifier(JWT stateJwt, CertificateProvider stateJwtCertProvider) {
+        return stateJwtCertProvider.getProvider()
+                .key()
+                .map(k -> {
+                    var ecv = new String(Base64.getUrlDecoder().decode((String) stateJwt.get(Claims.ENCRYPTED_CODE_VERIFIER)));
+                    return CryptoUtils.decrypt(ecv, (Key) k.getValue());
+                });
     }
 
     private void parseClient(RoutingContext context, Handler<AsyncResult<Client>> handler) {

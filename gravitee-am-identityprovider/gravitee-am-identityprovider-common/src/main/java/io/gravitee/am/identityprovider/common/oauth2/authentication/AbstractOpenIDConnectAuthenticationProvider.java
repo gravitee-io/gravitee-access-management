@@ -19,6 +19,7 @@ import com.google.common.base.Strings;
 import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.common.oauth2.GrantType;
@@ -28,6 +29,7 @@ import io.gravitee.am.common.oidc.AuthenticationFlow;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.Authentication;
@@ -79,7 +81,6 @@ import static java.util.function.Predicate.not;
  */
 public abstract class AbstractOpenIDConnectAuthenticationProvider extends AbstractSocialAuthenticationProvider implements OpenIDConnectAuthenticationProvider, InitializingBean {
 
-    public static final String ENCRYPTED_CODE_VERIFIER = "ecv";
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
 
     public static final String HASH_VALUE_PARAMETER = "urlHash";
@@ -116,6 +117,9 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
     public Request signInUrl(String redirectUri, String state) {
         try {
             var builder = prepareSignInUrl(redirectUri);
+            if (builder == null) {
+                return null;
+            }
             if (StringUtils.hasText(state)) {
                 builder.addParameter(Parameters.STATE, state);
             }
@@ -130,21 +134,22 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
     public Maybe<Request> asyncSignInUrl(String redirectUri, JWT state, Function<JWT, Single<String>> prepareJwt) {
         try {
             var builder = prepareSignInUrl(redirectUri);
-
-            if (state == null || state.isEmpty()) {
-                return Maybe.just(Request.get(builder.buildString()));
+            if (builder == null) {
+                return null;
             }
-
             // PKCE
             if (getConfiguration().usePkce()) {
                 var codeVerifier = SecureRandomString.generate();
-                //TODO MRE PKCE-IDP: encrypt the verifier in state here? For now it's assumed prepareJWT does all the required handling
                 if (state == null) {
                     state = new JWT();
                 }
-                state.put(ENCRYPTED_CODE_VERIFIER, codeVerifier);
+                state.put(Claims.ENCRYPTED_CODE_VERIFIER, codeVerifier);
                 builder.addParameter(Parameters.CODE_CHALLENGE, getConfiguration().getCodeChallengeMethod().getChallenge(codeVerifier));
                 builder.addParameter(Parameters.CODE_CHALLENGE_METHOD, getConfiguration().getCodeChallengeMethod().getUriValue());
+            }
+
+            if (state == null || state.isEmpty()) {
+                return Maybe.just(Request.get(builder.buildString()));
             }
 
             return prepareJwt.apply(state)
@@ -230,7 +235,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
         urlParameters.add(new BasicNameValuePair(Parameters.CODE, authorizationCode));
         urlParameters.add(new BasicNameValuePair(Parameters.GRANT_TYPE, GrantType.AUTHORIZATION_CODE));
         if (getConfiguration().usePkce()) {
-            Optional.ofNullable((String) authentication.getContext().get("idp_code_verifier"))
+            Optional.ofNullable((String) authentication.getContext().get(ConstantKeys.IDP_CODE_VERIFIER))
                     .ifPresent(codeVerifier -> urlParameters.add(new BasicNameValuePair(Parameters.CODE_VERIFIER, codeVerifier)));
         }
 

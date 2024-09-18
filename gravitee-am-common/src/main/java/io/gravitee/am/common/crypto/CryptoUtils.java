@@ -51,9 +51,9 @@ public class CryptoUtils {
         var pbkdfSalt = new byte[16];
         new SecureRandom().nextBytes(pbkdfSalt);
         var key = deriveKey(sourceSecret, pbkdfSalt);
-        var iv = generateIv();
-        var cipherText = doEncrypt(data, key, iv);
-        return encodeBase64(pbkdfSalt) + "$" + encodeBase64(iv.getIV()) + "$" + encodeBase64(cipherText);
+
+        var encrypted = doEncrypt(data, key);
+        return encodeBase64(pbkdfSalt) + "$" + encodeBase64(encrypted.iv()) + "$" + encodeBase64(encrypted.ciphertext());
     }
 
     /**
@@ -77,20 +77,27 @@ public class CryptoUtils {
             return new String(decrypted);
         } catch (NoSuchPaddingException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException |
                  NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
-            // essentially an issue with config
             throw new IllegalStateException("Unable to decrypt data", e);
         } catch (Exception ex) {
+            // something broke
             var errorId = UUID.randomUUID().toString();
             log.error("Error decrypting data (errorId={})", errorId, ex);
             throw new RuntimeException("[errorId=%s] Error decrypting data".formatted(errorId));
         }
     }
 
-    private static byte[] doEncrypt(String data, SecretKey key, GCMParameterSpec iv) {
+    private record EncryptedData(byte[] iv, byte[] ciphertext) {}
+
+    private static EncryptedData doEncrypt(String data, SecretKey key) {
         try {
+            var iv = new byte[16];
+            new SecureRandom().nextBytes(iv);
+            var gcmParams =  new GCMParameterSpec(GCM_TAG_BITS, iv);
+
             var cipher = Cipher.getInstance(CIPHER);
-            cipher.init(Cipher.ENCRYPT_MODE, key, iv);
-            return cipher.doFinal(data.getBytes());
+            cipher.init(Cipher.ENCRYPT_MODE, key, gcmParams);
+            var cipherText = cipher.doFinal(data.getBytes());
+            return new EncryptedData(iv, cipherText);
         } catch (NoSuchPaddingException | IllegalBlockSizeException | NoSuchAlgorithmException |
                  InvalidAlgorithmParameterException | BadPaddingException | InvalidKeyException e) {
             throw new IllegalStateException("Unable to encrypt data", e);
@@ -99,12 +106,6 @@ public class CryptoUtils {
             log.error("Error decrypting data (errorId={})", errorId, ex);
             throw new RuntimeException("[errorId=%s] Error decrypting data".formatted(errorId));
         }
-    }
-
-    private static GCMParameterSpec generateIv() {
-        var iv = new byte[16];
-        new SecureRandom().nextBytes(iv);
-        return new GCMParameterSpec(GCM_TAG_BITS, iv);
     }
 
     private static SecretKey deriveKey(Key sourceSecret, byte[] pbkdfSalt) {
