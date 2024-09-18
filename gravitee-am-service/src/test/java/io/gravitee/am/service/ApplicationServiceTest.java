@@ -63,6 +63,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -72,7 +73,10 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.util.ReflectionUtils;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -168,6 +172,11 @@ public class ApplicationServiceTest {
     private TokenService tokenService;
 
     private final static String DOMAIN = "domain1";
+
+    @Before
+    public void init() {
+        ReflectionTestUtils.setField(applicationService, "redirectUrisOptional", false);
+    }
 
     @Test
     public void shouldFindById() {
@@ -524,6 +533,32 @@ public class ApplicationServiceTest {
         verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, null);
         verify(applicationRepository, never()).create(any(Application.class));
         verify(membershipService, never()).addOrUpdate(eq(ORGANIZATION_ID), any());
+    }
+
+    @Test
+    public void shouldCreate_AppWithoutRedirectUri_legacyOptionActivate() {
+        NewApplication newClient = prepareCreateApp(false);
+        ReflectionTestUtils.setField(applicationService, "redirectUrisOptional", true);
+        DefaultUser user = new DefaultUser("username");
+        user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
+
+        final Certificate defaultCert = new Certificate();
+        defaultCert.setId("default");
+        defaultCert.setSystem(true);
+        defaultCert.setName("Default");
+        defaultCert.setCreatedAt(new Date());
+
+        when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.just(defaultCert));
+
+        TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, null);
+        verify(applicationRepository, times(1)).create(any(Application.class));
+        verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
     }
 
     @Test
