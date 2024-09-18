@@ -82,6 +82,7 @@ import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -155,6 +156,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Autowired
     private CertificateService certificateService;
+
+    @Value("${legacy.openid.application.redirectUrisOptional:false}")
+    private boolean redirectUrisOptional;
 
     @Override
     public Single<Page<Application>> findAll(int page, int size) {
@@ -770,7 +774,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 return Single.error(new InvalidRedirectUriException("redirect_uri : " + redirectUri + " is malformed"));
                             }
                         }
-                    } else if (application.getType() != ApplicationType.SERVICE && !updateTypeOnly) {
+                    } else if (application.getType() != ApplicationType.SERVICE && !updateTypeOnly && !redirectUrisOptional) {
                         return Single.error(new InvalidRedirectUriException("At least one redirect_uri is required"));
                     }
                     return Single.just(application);
