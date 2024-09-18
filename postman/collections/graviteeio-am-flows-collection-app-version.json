@@ -413,12 +413,13 @@
 									"});",
 									"",
 									"pm.test(\"Should be a redirection to login page\", function() {",
-									"    var location = postman.getResponseHeader('Location');",
+									"    var location = pm.response.headers.get('Location');",
 									"    let domain = pm.environment.get(\"domainHrid\");",
 									"    ",
-									"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId'));",
+                                    "    pm.expect(location).to.include(pm.environment.get('gateway_url') + '/' + domain + '/login')",
+                                    "    pm.expect(location).to.include('client_id=' + pm.environment.get('clientId'))",
 									"    ",
-									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+									"    pm.environment.set('redirection', pm.response.headers.get('Location'));",
 									"});"
 								],
 								"type": "text/javascript"
@@ -489,6 +490,7 @@
 									"    pm.response.to.be.ok;",
 									"    ",
 									"    // Extract the XSRF token to send it with the next request.",
+									"    var cheerio = require('cheerio');",
 									"    var responseHTML = cheerio.load(pm.response.text());",
 									"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
 									"    const action = responseHTML('form').attr('action');",
@@ -537,10 +539,11 @@
 									"    pm.response.to.be.redirection;",
 									"    pm.response.to.have.header('Location');",
 									"",
-									"    var location = postman.getResponseHeader(\"Location\");",
+									"    var location = pm.response.headers.get('Location');",
 									"    console.log(\"location : \" + location);",
 									"    pm.environment.set('redirection', location);",
-									"    tests['Redirect to Authorization Endpoint'] = location.includes('/oauth/authorize');",
+                                    "    ",
+                                    "    pm.expect(location).to.include('/oauth/authorize');",
 									"});"
 								],
 								"type": "text/javascript"
@@ -614,9 +617,9 @@
 									"    pm.response.to.be.redirection;",
 									"    pm.response.to.have.header('Location');",
 									"",
-									"    var location = postman.getResponseHeader(\"Location\");",
+									"    var location = pm.response.headers.get('Location');",
 									"    pm.environment.set('redirection', location);",
-									"    tests['Redirect to User Consent'] = location.includes('/oauth/consent');",
+                                    "    pm.expect(location).to.include('/oauth/consent');",
 									"});"
 								],
 								"type": "text/javascript"
@@ -660,11 +663,11 @@
 									"    pm.response.to.be.redirection;",
 									"    pm.response.to.have.header('Location');",
 									"",
-									"    var location = postman.getResponseHeader(\"Location\");",
+									"    var location = pm.response.headers.get('Location');",
 									"    pm.environment.set('redirection', location);",
 									"",
-									"    tests['Redirect to login'] = location.includes('/login?response_type=code&client_id='+ pm.environment.get('clientId') + '&redirect_uri=https%3A%2F%2Fauth-nightly.gravitee.io%2FmyApp%2Fcallback&state=1234-5678-9876&scope=openid&error=user_consent_failed&error_code=CALLOUT_EXIT_ON_ERROR&error_description=pre-consent-failed');",
-									"});"
+                                    "    pm.expect(location).to.include('/login?response_type=code&client_id=' + pm.environment.get('clientId') + '&redirect_uri=https%3A%2F%2Fauth-nightly.gravitee.io%2FmyApp%2Fcallback&state=1234-5678-9876&scope=openid&error=user_consent_failed&error_code=CALLOUT_EXIT_ON_ERROR&error_description=pre-consent-failed');",
+                                    "});"
 								],
 								"type": "text/javascript"
 							}
@@ -707,7 +710,7 @@
 									"    pm.response.to.be.redirection;",
 									"    pm.response.to.have.header('Location');",
 									"    ",
-									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+									"    pm.environment.set('redirection', pm.response.headers.get('Location'));",
 									"});"
 								],
 								"type": "text/javascript"
@@ -814,12 +817,13 @@
 									"});",
 									"",
 									"pm.test(\"Should be a redirection to login page\", function() {",
-									"    var location = postman.getResponseHeader('Location');",
+									"    var location = pm.response.headers.get('Location');",
 									"    let domain = pm.environment.get(\"domainHrid\");",
 									"    ",
-									"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId'));",
+                                    "    pm.expect(location).to.include(pm.environment.get('gateway_url') + '/' + domain + '/login');",
+                                    "    pm.expect(location).to.include('client_id=' + pm.environment.get('clientId'));",
 									"    ",
-									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+									"    pm.environment.set('redirection', pm.response.headers.get('Location'));",
 									"});"
 								],
 								"type": "text/javascript"
@@ -890,6 +894,7 @@
 									"    pm.response.to.be.ok;",
 									"    ",
 									"    // Extract the XSRF token to send it with the next request.",
+                                    "    var cheerio = require('cheerio');",
 									"    var responseHTML = cheerio.load(pm.response.text());",
 									"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
 									"    const action = responseHTML('form').attr('action');",
@@ -938,9 +943,9 @@
 									"    pm.response.to.be.redirection;",
 									"    pm.response.to.have.header('Location');",
 									"",
-									"    var location = postman.getResponseHeader(\"Location\");",
+									"    var location = pm.response.headers.get('Location');",
 									"    pm.environment.set('redirection', location);",
-									"    tests['Redirect to authorize page'] = location.includes('/oauth/authorize');",
+                                    "    pm.expect(location).to.include('/oauth/authorize');",
 									"});"
 								],
 								"type": "text/javascript"
@@ -1014,9 +1019,9 @@
 									"    pm.response.to.be.redirection;",
 									"    pm.response.to.have.header('Location');",
 									"",
-									"    var location = postman.getResponseHeader(\"Location\");",
+									"    var location = pm.response.headers.get('Location');",
 									"    pm.environment.set('redirection', location);",
-									"    tests['Redirect to Authorization Endpoint'] = location.includes('/oauth/consent');",
+                                    "    pm.expect(location).to.include('/oauth/consent');",
 									"});"
 								],
 								"type": "text/javascript"
@@ -1060,7 +1065,7 @@
 									"    pm.response.to.be.redirection;",
 									"    pm.response.to.have.header('Location');",
 									"    ",
-									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+									"    pm.environment.set('redirection', pm.response.headers.get('Location'));",
 									"});"
 								],
 								"type": "text/javascript"
@@ -1175,12 +1180,13 @@
 									"});",
 									"",
 									"pm.test(\"Should be a redirection to login page\", function() {",
-									"    var location = postman.getResponseHeader('Location');",
+									"    var location = pm.response.headers.get('Location');",
 									"    let domain = pm.environment.get(\"domainHrid\");",
 									"    ",
-									"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId'));",
+                                    "    pm.expect(location).to.include(pm.environment.get('gateway_url') + '/' + domain + '/login');",
+                                    "    pm.expect(location).to.include('client_id=' + pm.environment.get('clientId'));",
 									"    ",
-									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+									"    pm.environment.set('redirection', pm.response.headers.get('Location'));",
 									"});"
 								],
 								"type": "text/javascript"
@@ -1247,14 +1253,15 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"pm.test(\"Response Time is less than 3 seconds\", function () {",
-									"     tests['Response Time is less than 3 seconds'] = pm.response.responseTime < 3000;",
-									"});",
+                                    "pm.test(\"Response Time is less than 3 seconds\", function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(3000);",
+                                    "});",
 									"",
 									"pm.test(\"Should be ok\", function () {",
 									"    pm.response.to.be.ok;",
 									"    ",
 									"    // Extract the XSRF token to send it with the next request.",
+                                    "    var cheerio = require('cheerio');",
 									"    var responseHTML = cheerio.load(pm.response.text());",
 									"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
 									"    const action = responseHTML('form').attr('action');",
@@ -1356,13 +1363,15 @@
 									"    pm.response.to.have.status(302);",
 									"});",
 									"",
-									"pm.test(\"Should be a redirection to login page\", function() {",
-									"    var location = postman.getResponseHeader('Location');",
+									"pm.test(\"Should be a redirection to login page with client_id\", function() {",
+									"    var location = pm.response.headers.get('Location');",
 									"    let domain = pm.environment.get(\"domainHrid\");",
 									"    ",
-									"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId'));",
+                                    "    pm.expect(location).to.include(pm.environment.get('gateway_url') + '/' + domain + '/login');",
+                                    "",
+                                    "    pm.expect(location).to.include('client_id=' + pm.environment.get('clientId'));",
 									"    ",
-									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+									"    pm.environment.set('redirection', pm.response.headers.get('Location'));",
 									"});"
 								],
 								"type": "text/javascript"
@@ -1430,13 +1439,14 @@
 									"});",
 									"",
 									"pm.test(\"Response Time is greater than than 3 seconds\", function () {",
-									"     tests['Response Time is greater than than 3 seconds'] = pm.response.responseTime > 3000;",
+									"     pm.expect(pm.response.responseTime).to.be.above(3000);",
 									"});",
 									"",
 									"pm.test(\"Should be ok\", function () {",
 									"    pm.response.to.be.ok;",
 									"    ",
 									"    // Extract the XSRF token to send it with the next request.",
+                                    "    var cheerio = require('cheerio');",
 									"    var responseHTML = cheerio.load(pm.response.text());",
 									"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
 									"    const action = responseHTML('form').attr('action');",
@@ -1485,7 +1495,7 @@
 									"    pm.response.to.be.redirection;",
 									"    pm.response.to.have.header('Location');",
 									"    ",
-									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+									"    pm.environment.set('redirection', pm.response.headers.get('Location'));",
 									"});"
 								],
 								"type": "text/javascript"

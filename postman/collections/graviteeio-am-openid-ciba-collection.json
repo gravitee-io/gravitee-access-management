@@ -339,7 +339,7 @@
 							"script": {
 								"exec": [
 									" ",
-									"if (responseCode.code === 201)",
+									"if (pm.response.code === 201)",
 									"{",
 									"    var data = JSON.parse(responseBody);",
 									"    if (data!==null)",
@@ -347,7 +347,7 @@
 									"        console.log(\"creation ok\");",
 									"        }",
 									"}else{",
-									"    pm.expect(responseCode.code).to.be.below(201,\"creation failed\");",
+									"    pm.expect(pm.response.code).to.be.below(201,\"creation failed\");",
 									"        throw new Error(\"creation failed\");",
 									"}"
 								],
@@ -1544,12 +1544,13 @@
 													"});",
 													"",
 													"pm.test(\"Should be a redirection to login page\", function() {",
-													"    var location = postman.getResponseHeader('Location');",
+													"    var location = pm.response.headers.get('Location');",
 													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('cibaClientId'));",
+                                                    "    pm.expect(location).to.include(pm.environment.get('gateway_url') + '/' + domain + '/login');",
+                                                    "    pm.expect(location).to.include('client_id=' + pm.environment.get('cibaClientId'));",
 													"    ",
-													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"    pm.environment.set('redirection', pm.response.headers.get('Location'));",
 													"});"
 												],
 												"type": "text/javascript"
@@ -1620,7 +1621,8 @@
 													"    pm.response.to.be.ok;",
 													"    ",
 													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var cheerio = require('cheerio');",
+									                "    var responseHTML = cheerio.load(pm.response.text());",
 													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
 													"    const action = responseHTML('form').attr('action');",
 													"    pm.environment.set('xsrf', xsrfToken);",
@@ -1667,7 +1669,7 @@
 													"    pm.response.to.be.redirection;",
 													"    pm.response.to.have.header('Location');",
 													"",
-													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"    pm.environment.set('redirection', pm.response.headers.get('Location'));",
 													"});"
 												],
 												"type": "text/javascript"
@@ -1746,12 +1748,12 @@
 													"});",
 													"",
 													"pm.test(\"Should be redirected to consent page\", function() {",
-													"    var location = postman.getResponseHeader('Location');",
+													"    var location = pm.response.headers.get('Location');",
 													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
-													"    tests['Redirect to consent page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/consent');",
+													"    pm.expect(location).to.include(pm.environment.get('gateway_url') + '/' + domain + '/oauth/consent');",
 													"    ",
-													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"    pm.environment.set('redirection', pm.response.headers.get('Location'));",
 													"});"
 												],
 												"type": "text/javascript"
@@ -1795,7 +1797,8 @@
 													"    pm.response.to.be.ok;",
 													"    ",
 													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var cheerio = require('cheerio');",
+									                "    var responseHTML = cheerio.load(pm.response.text());",
 													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
 													"    const action = responseHTML('form').attr('action');",
 													"    pm.environment.set('xsrf', xsrfToken);",
@@ -1843,7 +1846,7 @@
 													"    pm.response.to.be.redirection;",
 													"    pm.response.to.have.header('Location');",
 													"    ",
-													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"    pm.environment.set('redirection', pm.response.headers.get('Location'));",
 													"});"
 												],
 												"type": "text/javascript"
@@ -1914,10 +1917,9 @@
 													"});",
 													"",
 													"pm.test(\"Should be a redirection to redirect_uri with authorization_code\", function() {",
-													"    var location = postman.getResponseHeader('Location');",
-													"    tests['Redirect to redirect_uri'] = location.includes('https://callback#');",
-													"    ",
-													"    tests['Contains an id_token param'] = location.includes('id_token=');",
+													"    var location = pm.response.headers.get('Location');",
+                                                    "    pm.expect(location).to.include('https://callback#');",
+                                                    "    pm.expect(location).to.include('id_token=');",
 													"",
 													"    var fragment = location.substr(location.indexOf('#') + 1);",
 													"    var idToken = fragment.split('&').filter(kv => kv.startsWith(\"id_token\")).map(kv => kv.split('=')[1])[0]",
@@ -2155,7 +2157,7 @@
 													"    pm.response.to.be.redirection;",
 													"    pm.response.to.have.header('Location');",
 													"    ",
-													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"    pm.environment.set('redirection', pm.response.headers.get('Location'));",
 													"});"
 												],
 												"type": "text/javascript"
