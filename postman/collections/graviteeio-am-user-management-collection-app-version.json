@@ -1778,8 +1778,10 @@
 													"",
 													"    pm.test(\"Should be a redirection to confirm registration page\", function() {",
 													"        pm.response.to.be.ok;",
+                                                    "        var cheerio = require('cheerio');",
 													"        var responseHTML = cheerio(pm.response.text());",
-													"        tests['Redirect to confirm registration page'] = responseHTML.find('span').text().includes('Thanks for signing up, please complete the form to activate your account');",
+                                                    "        var spanText = responseHTML.find('span').text();",
+                                                    "        pm.expect(spanText).to.include('Thanks for signing up, please complete the form to activate your account');",
 													"    })",
 													"});",
 													""
@@ -3052,7 +3054,7 @@
 													"",
 													"pm.test(\"UM - update group - member found\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.members).to.eql([environment[\"userUM\"]]);",
+													"    pm.expect(jsonData.members).to.eql([pm.environment.get(\"userUM\")]);",
 													"});"
 												],
 												"type": "text/javascript"
@@ -4402,10 +4404,10 @@
 					"            var tries = parseInt(that.pm.environment.get(\"collection_tries\"), 10);",
 					"            that.pm.environment.set(\"collection_tries\", tries + 1);",
 					"            Utils.wait(that, sleepBetweenTries, maxNumberOfTries);",
-					"            that.postman.setNextRequest(that.request.name);",
+					"            that.pm.execution.setNextRequest(that.request.name);",
 					"        } else {",
 					"            if(businessRetryConditionCallBack()){",
-					"                that.postman.setNextRequest(null);",
+					"                that.pm.execution.setNextRequest(null);",
 					"            }",
 					"",
 					"            that.pm.environment.unset(\"collection_tries\");",

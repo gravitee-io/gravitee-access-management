@@ -1382,7 +1382,7 @@
 											"    ",
 											"    pm.expect(body.iss).to.eql(pm.environment.get('issuer'));",
 											"    pm.expect(body.aud).to.eql(pm.environment.get('ro_client_id'));",
-											"    tests['Contains a valid uri'] = body.request_uri.startsWith('urn:ros:');",
+                                            "    pm.expect(body.request_uri.startsWith('urn:ros:')).to.be.true",
 											"    ",
 											"    pm.environment.set('request_uri', body.request_uri);",
 											"});"
@@ -1459,14 +1459,15 @@
 											"});",
 											"",
 											"pm.test(\"Should be a location error\", function() {",
-											"    var location = postman.getResponseHeader('Location');",
+											"    var location = pm.response.headers.get('Location');",
 											"    let domain = pm.environment.get(\"domainHrid\");",
 											"    ",
-											"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('ro_client_id'));",
+                                            "    pm.expect(location).to.include(pm.environment.get('gateway_url') + '/' + domain + '/login');",
+                                            "    pm.expect(location).to.include('client_id=' + pm.environment.get('ro_client_id'));",
 											"    ",
 											"    // Non overridable field",
-											"    tests['Contains the state'] = location.includes('state=1234-5678-9876');",
-											"    tests['Contains the nonce'] = location.includes('nonce=n-0S6_WzA2Mj');",
+                                            "    pm.expect(location).to.include('state=1234-5678-9876');",
+                                            "    pm.expect(location).to.include('nonce=n-0S6_WzA2Mj');",
 											"});"
 										],
 										"type": "text/javascript"
@@ -1545,11 +1546,11 @@
 											"});",
 											"",
 											"pm.test(\"Should be a location error\", function() {",
-											"    var location = postman.getResponseHeader('Location');",
+											"    var location = pm.response.headers.get('Location');",
 											"    let domain = pm.environment.get(\"domainHrid\");",
 											"    ",
-											"    tests['Redirect to redirect_uri'] = location.startsWith(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
-											"    tests['Contains an error query-parameter'] = location.includes('error=invalid_request_object');",
+                                            "    pm.expect(location).to.include(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
+                                            "    pm.expect(location).to.include('error=invalid_request_object');",
 											"});"
 										],
 										"type": "text/javascript"
