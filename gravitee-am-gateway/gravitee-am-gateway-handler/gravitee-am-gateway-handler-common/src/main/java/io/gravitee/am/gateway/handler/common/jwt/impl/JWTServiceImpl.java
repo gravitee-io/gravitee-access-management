@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.common.jwt.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JWSAlgorithm;
-import io.gravitee.am.certificate.api.Key;
 import io.gravitee.am.common.crypto.CryptoUtils;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.JWT;
@@ -31,6 +30,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.nio.charset.StandardCharsets;
+import java.security.Key;
+import java.security.KeyPair;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
@@ -56,15 +57,21 @@ public class JWTServiceImpl implements JWTService {
         Objects.requireNonNull(certificateProvider, "Certificate provider is required to sign JWT");
         return certificateProvider.getProvider()
                 .key()
-                .map(Key::getValue)
-                .map(theKey -> {
-                    if (theKey instanceof java.security.Key key) {
-                        claimsToEncrypt.forEach(claim -> encryptClaim(jwt, claim, key));
+                .toMaybe()
+                .map(key -> {
+                    if (key.getValue() instanceof Key singleKey) {
+                        return singleKey;
+                    } else if (key.getValue() instanceof KeyPair keyPair) {
+                        return keyPair.getPrivate();
                     } else {
-                        logger.debug("Unexpected key type: {}", theKey.getClass().getName());
+                        throw new IllegalArgumentException("Invalid key type: " + key.getValue().getClass());
                     }
+                })
+                .map(key -> {
+                    claimsToEncrypt.forEach(claim -> encryptClaim(jwt, claim, key));
                     return jwt;
-                }).flatMap(token -> sign(certificateProvider, token));
+                }).flatMapSingle(token -> sign(certificateProvider, token))
+                .switchIfEmpty(Single.defer(() -> sign(certificateProvider, jwt)));
 
     }
 

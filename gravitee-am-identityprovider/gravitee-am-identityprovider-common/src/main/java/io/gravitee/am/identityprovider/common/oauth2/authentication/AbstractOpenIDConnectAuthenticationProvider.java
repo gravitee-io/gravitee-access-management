@@ -58,10 +58,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -113,25 +113,28 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
                 .map(jwtClaimsSet -> createUser(authContext, jwtClaimsSet.getClaims()));
     }
 
+    public Request signInUrl(String redirectUri, String state) {
+        try {
+            var builder = prepareSignInUrl(redirectUri);
+            if (StringUtils.hasText(state)) {
+                builder.addParameter(Parameters.STATE, state);
+            }
+            return Request.get(builder.buildString());
+        } catch (Exception e) {
+            LOGGER.error("An error has occurred while building OpenID Connect Sign In URL", e);
+            return null;
+        }
+    }
+
     @Override
     public Maybe<Request> asyncSignInUrl(String redirectUri, JWT state, Function<JWT, Single<String>> prepareJwt) {
         try {
-            if (getConfiguration().getUserAuthorizationUri() == null) {
-                LOGGER.warn("Social Provider {} can't provide signInUrl, userAuthorizationUri is null", this.getClass().getSimpleName());
-                return null;
+            var builder = prepareSignInUrl(redirectUri);
+
+            if (state == null || state.isEmpty()) {
+                return Maybe.just(Request.get(builder.buildString()));
             }
 
-            UriBuilder builder = UriBuilder.fromHttpUrl(getConfiguration().getUserAuthorizationUri())
-                    .addParameter(Parameters.CLIENT_ID, getConfiguration().getClientId())
-                    .addParameter(Parameters.RESPONSE_TYPE, getConfiguration().getResponseType());
-            // append scopes
-            if (getConfiguration().getScopes() != null && !getConfiguration().getScopes().isEmpty()) {
-                builder.addParameter(Parameters.SCOPE, String.join(SCOPE_DELIMITER, getConfiguration().getScopes()));
-            }
-            // nonce parameter is required for implicit/hybrid flow
-            if (!io.gravitee.am.common.oauth2.ResponseType.CODE.equals(getConfiguration().getResponseType())) {
-                builder.addParameter(io.gravitee.am.common.oidc.Parameters.NONCE, SecureRandomString.generate());
-            }
             // PKCE
             if (getConfiguration().usePkce()) {
                 var codeVerifier = SecureRandomString.generate();
@@ -143,12 +146,6 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
                 builder.addParameter(Parameters.CODE_CHALLENGE, getConfiguration().getCodeChallengeMethod().getChallenge(codeVerifier));
                 builder.addParameter(Parameters.CODE_CHALLENGE_METHOD, getConfiguration().getCodeChallengeMethod().getUriValue());
             }
-            builder.addParameter(Parameters.REDIRECT_URI, getConfiguration().isEncodeRedirectUri() ? encodeURIComponent(redirectUri) : redirectUri);
-
-
-            if (state == null || state.isEmpty()) {
-                return Maybe.just(Request.get(builder.buildString()));
-            }
 
             return prepareJwt.apply(state)
                     .flatMapMaybe(encodedState -> {
@@ -159,6 +156,28 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
             LOGGER.error("An error has occurred while building OpenID Connect Sign In URL", e);
             return null;
         }
+    }
+
+    private UriBuilder prepareSignInUrl(String redirectUri) {
+        if (getConfiguration().getUserAuthorizationUri() == null) {
+            LOGGER.warn("Social Provider {} can't provide signInUrl, userAuthorizationUri is null", this.getClass().getSimpleName());
+            return null;
+        }
+
+        UriBuilder builder = UriBuilder.fromHttpUrl(getConfiguration().getUserAuthorizationUri())
+                .addParameter(Parameters.CLIENT_ID, getConfiguration().getClientId())
+                .addParameter(Parameters.RESPONSE_TYPE, getConfiguration().getResponseType());
+        // append scopes
+        if (getConfiguration().getScopes() != null && !getConfiguration().getScopes().isEmpty()) {
+            builder.addParameter(Parameters.SCOPE, String.join(SCOPE_DELIMITER, getConfiguration().getScopes()));
+        }
+        // nonce parameter is required for implicit/hybrid flow
+        if (!io.gravitee.am.common.oauth2.ResponseType.CODE.equals(getConfiguration().getResponseType())) {
+            builder.addParameter(io.gravitee.am.common.oidc.Parameters.NONCE, SecureRandomString.generate());
+        }
+
+        builder.addParameter(Parameters.REDIRECT_URI, getConfiguration().isEncodeRedirectUri() ? encodeURIComponent(redirectUri) : redirectUri);
+        return builder;
     }
 
     protected Maybe<Token> authenticate(Authentication authentication) {
