@@ -192,7 +192,11 @@ public class SyncManager implements InitializingBean {
             lastRefreshAt = nextLastRefreshAt;
             lastDelay = System.currentTimeMillis() - nextLastRefreshAt;
         } catch (Exception ex) {
-            logger.error("An error has occurred during synchronization", ex);
+            if (logger.isDebugEnabled()) {
+                logger.error("Synchronization failed", ex);
+            } else {
+                logger.error("Synchronization failed, ex={}", ex.toString());
+            }
         }
     }
 
