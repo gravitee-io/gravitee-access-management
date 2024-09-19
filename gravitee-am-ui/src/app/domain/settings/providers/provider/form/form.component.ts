@@ -52,8 +52,7 @@ export class ProviderFormComponent implements OnChanges {
   }
 
   applyPasswordInputToSensitiveFields(schema: any) {
-    console.log('Setting to schema:', schema);
-    if (typeof schema !== 'object') {
+      if (typeof schema !== 'object') {
       return schema;
     }
     for (const key in schema) {
