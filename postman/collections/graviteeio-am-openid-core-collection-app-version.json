@@ -3455,7 +3455,7 @@
 													"    ",
 													"    tests['Redirect to error page'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
 													"    tests['Contains an error query-parameter'] = location.includes('?error=invalid_request');",
-													"    tests['Contains an error description query-parameter'] = location.includes('error_description=Missing+parameter%253A+client_id');",
+													"    tests['Contains an error description query-parameter'] = location.includes('error_description=Missing+parameter%3A+client_id');",
 													"});"
 												],
 												"type": "text/javascript"
@@ -3512,7 +3512,7 @@
 													"    ",
 													"    tests['Redirect to error page'] = location.includes('http://localhost:4000');",
 													"    tests['Contains an error fragment-parameter'] = location.includes('error=invalid_request');",
-													"    tests['Contains an error description fragment-parameter'] = location.includes('error_description=Missing+parameter%253A+nonce+is+required+for+Implicit+and+Hybrid+Flow');",
+													"    tests['Contains an error description fragment-parameter'] = location.includes('error_description=Missing+parameter%3A+nonce+is+required+for+Implicit+and+Hybrid+Flow');",
 													"});"
 												],
 												"type": "text/javascript"
@@ -5551,7 +5551,7 @@
 													"pm.test(\"Should be a location error\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
 													"    tests['Contains an error query-parameter'] = location.includes('?error=invalid_request');",
-													"    tests['Contains an error description query-parameter'] = location.includes('error_description=Missing+parameter%253A+client_id');",
+													"    tests['Contains an error description query-parameter'] = location.includes('error_description=Missing+parameter%3A+client_id');",
 													"});"
 												],
 												"type": "text/javascript"
