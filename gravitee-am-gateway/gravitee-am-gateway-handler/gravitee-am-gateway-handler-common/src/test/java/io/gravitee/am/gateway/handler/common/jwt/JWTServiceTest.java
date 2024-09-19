@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.jwt;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.certificate.api.DefaultKey;
 import io.gravitee.am.certificate.api.Key;
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
@@ -101,7 +102,7 @@ public class JWTServiceTest {
         var keyPairGen = KeyPairGenerator.getInstance(algorithm);
         keyPairGen.initialize(2048);
         var rsaKeyPair = keyPairGen.generateKeyPair();
-        return new DefaultKey("rsa-test", rsaKeyPair.getPrivate());
+        return new DefaultKey("rsa-test", rsaKeyPair);
     }
 
     @Test
@@ -116,9 +117,19 @@ public class JWTServiceTest {
     }
 
     @Test
+    public void encode_withEncryption_notRealKey() {
+        var key = new DefaultKey("not-a-key", 2137);
+        var jwt = new JWT(Map.of("ecv", "to-encrypt",
+                "normalclaim", "lorem-ipsum"));
+        jwtService.encode(jwt, mockCertProvider(mockJwtBuilder("with-encryption"), key))
+                .test()
+                .assertError(IllegalArgumentException.class);
+    }
+
+    @Test
     public void encode_withEncryption_rsaKeyPair() {
         var key = generateKeyPair("RSA");
-        var jwt = new JWT(Map.of("ecv", "value-to-encrypt",
+        var jwt = new JWT(Map.of(Claims.ENCRYPTED_CODE_VERIFIER, "value-to-encrypt",
                 "normalclaim", "lorem-ipsum"));
         jwtService.encode(jwt, mockCertProvider(mockJwtBuilder("with-encryption"), key))
                 .test()

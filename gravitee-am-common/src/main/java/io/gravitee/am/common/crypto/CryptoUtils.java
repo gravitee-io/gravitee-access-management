@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.common.crypto;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.BadPaddingException;
@@ -53,7 +54,7 @@ public class CryptoUtils {
         var key = deriveKey(sourceSecret, pbkdfSalt);
 
         var encrypted = doEncrypt(data, key);
-        return encodeBase64(pbkdfSalt) + "$" + encodeBase64(encrypted.iv()) + "$" + encodeBase64(encrypted.ciphertext());
+        return encodeBase64(pbkdfSalt) + "$" + encodeBase64(encrypted.iv) + "$" + encodeBase64(encrypted.ciphertext);
     }
 
     /**
@@ -86,7 +87,11 @@ public class CryptoUtils {
         }
     }
 
-    private record EncryptedData(byte[] iv, byte[] ciphertext) {}
+    @RequiredArgsConstructor
+    private final static class EncryptedData {
+        private final byte[] iv;
+        private final byte[] ciphertext;
+    }
 
     private static EncryptedData doEncrypt(String data, SecretKey key) {
         try {
