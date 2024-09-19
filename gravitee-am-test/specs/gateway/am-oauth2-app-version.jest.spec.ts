@@ -287,7 +287,7 @@ describe('OAuth2 - App version', () => {
 
         expect(errorRedirect.headers['location']).toBeDefined();
         expect(errorRedirect.headers['location']).toContain(`error=invalid_scope`);
-        expect(errorRedirect.headers['location']).toContain(`error_description=Invalid+scope%2528s%2529%253A+unknown-scope`);
+        expect(errorRedirect.headers['location']).toContain(`error_description=Invalid+scope%28s%29%3A+unknown-scope`);
 
         await logoutUser(openIdConfiguration.end_session_endpoint, postLogin)
           .then((_) => deleteApplication(masterDomain.id, accessToken, application3.id))
@@ -1166,21 +1166,21 @@ function getParamsInvalidAuthorizeRequests() {
       params: '?response_type=unknown_response_type',
       uri: '/oauth/error',
       error: 'unsupported_response_type',
-      error_description: 'Unsupported+response+type%253A+unknown_response_type',
+      error_description: 'Unsupported+response+type%3A+unknown_response_type',
     },
     {
       title: 'Duplicated query params',
       params: '?response_type=unknown_response_type&response_type=unknown_response_type',
       uri: '/oauth/error',
       error: 'invalid_request',
-      error_description: 'Parameter+%255Bresponse_type%255D+is+included+more+than+once',
+      error_description: 'Parameter+%5Bresponse_type%5D+is+included+more+than+once',
     },
     {
       title: 'Missing client id',
       params: '?response_type=code',
       uri: '/oauth/error',
       error: 'invalid_request',
-      error_description: 'Missing+parameter%253A+client_id',
+      error_description: 'Missing+parameter%3A+client_id',
     },
     {
       title: 'Invalid client id',
