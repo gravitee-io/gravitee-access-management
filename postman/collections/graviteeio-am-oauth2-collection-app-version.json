@@ -2411,7 +2411,7 @@
 													"pm.test(\"Should be a location error\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
 													"    tests['Contains an error query-parameter'] = location.includes('error=invalid_scope');",
-													"    tests['Contains an error description query-parameter'] = location.includes('error_description=Invalid+scope%2528s%2529%253A+unknown-scope');",
+													"    tests['Contains an error description query-parameter'] = location.includes('error_description=Invalid+scope%28s%29%3A+unknown-scope');",
 													"});"
 												],
 												"type": "text/javascript"
@@ -8272,7 +8272,7 @@
 													"    ",
 													"    tests['Redirect to error page'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
 													"    tests['Contains an error query-parameter'] = location.includes('error=unsupported_response_type');",
-													"    tests['Contains an error description query-parameter'] = location.includes('error_description=Unsupported+response+type%253A+unknown_response_type');",
+													"    tests['Contains an error description query-parameter'] = location.includes('error_description=Unsupported+response+type%3A+unknown_response_type');",
 													"});"
 												],
 												"type": "text/javascript"
@@ -8334,7 +8334,7 @@
 													"    ",
 													"    tests['Redirect to error page'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
 													"    tests['Contains an error query-parameter'] = location.includes('error=invalid_request');",
-													"    tests['Contains an error description query-parameter'] = location.includes('error_description=Parameter+%255Bresponse_type%255D+is+included+more+than+once');",
+													"    tests['Contains an error description query-parameter'] = location.includes('error_description=Parameter+%5Bresponse_type%5D+is+included+more+than+once');",
 													"});"
 												],
 												"type": "text/javascript"
@@ -8400,7 +8400,7 @@
 													"    ",
 													"    tests['Redirect to error page'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
 													"    tests['Contains an error query-parameter'] = location.includes('?error=invalid_request');",
-													"    tests['Contains an error description query-parameter'] = location.includes('error_description=Missing+parameter%253A+client_id');",
+													"    tests['Contains an error description query-parameter'] = location.includes('error_description=Missing+parameter%3A+client_id');",
 													"});"
 												],
 												"type": "text/javascript"
@@ -8759,7 +8759,7 @@
 													"pm.test(\"Should be a location error\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
 													"    tests['Contains an error query-parameter'] = location.includes('error=redirect_uri_mismatch');",
-													"    tests['Contains an error description query-parameter'] = location.includes('error_description=The+redirect_uri+%255B+http%253A%252F%252Fmy_bad_host%253A4000+%255D+MUST+match+the+registered+callback+URL+for+this+application');",
+													"    tests['Contains an error description query-parameter'] = location.includes('error_description=The+redirect_uri+%5B+http%3A%2F%2Fmy_bad_host%3A4000+%5D+MUST+match+the+registered+callback+URL+for+this+application');",
 													"});"
 												],
 												"type": "text/javascript"
@@ -8870,7 +8870,7 @@
 													"pm.test(\"Should be a location error\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
 													"    tests['Contains an error query-parameter'] = location.includes('error=redirect_uri_mismatch');",
-													"    tests['Contains an error description query-parameter'] = location.includes('error_description=The+redirect_uri+%255B+http%253A%252F%252Flocalhost%253A4000%253FextraParam%253Dtest+%255D+MUST+match+the+registered+callback+URL+for+this+application');",
+													"    tests['Contains an error description query-parameter'] = location.includes('error_description=The+redirect_uri+%5B+http%3A%2F%2Flocalhost%3A4000%3FextraParam%3Dtest+%5D+MUST+match+the+registered+callback+URL+for+this+application');",
 													"});"
 												],
 												"type": "text/javascript"
@@ -8933,7 +8933,7 @@
 													"pm.test(\"Should be a location error\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
 													"    tests['Contains an error query-parameter'] = location.includes('error=redirect_uri_mismatch');",
-													"    tests['Contains an error description query-parameter'] = location.includes('error_description=The+redirect_uri+%255B+http%253A%252F%252Fmy_bad_host%253A4000+%255D+MUST+match+the+registered+callback+URL+for+this+application');",
+													"    tests['Contains an error description query-parameter'] = location.includes('error_description=The+redirect_uri+%5B+http%3A%2F%2Fmy_bad_host%3A4000+%5D+MUST+match+the+registered+callback+URL+for+this+application');",
 													"    tests['Contains the initial state parameter'] = location.includes('state=xxx-yyy-zzz');",
 													"});"
 												],
@@ -9262,7 +9262,7 @@
 													"    ",
 													"    tests['Redirect to error page'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
 													"    tests['Contains an error query-parameter'] = location.includes('?error=invalid_request');",
-													"    tests['Contains an error description query-parameter'] = location.includes('error_description=Missing+parameter%253A+client_id');",
+													"    tests['Contains an error description query-parameter'] = location.includes('error_description=Missing+parameter%3A+client_id');",
 													"});"
 												],
 												"type": "text/javascript"
@@ -9513,7 +9513,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    tests['Contains an error fragment-parameter'] = location.includes('#');",
 													"    tests['Contains an error fragment-error-parameter'] = location.includes('error=invalid_scope');",
-													"    tests['Contains an error description fragment-parameter'] = location.includes('error_description=Invalid+scope%2528s%2529%253A+unknown-scope');",
+													"    tests['Contains an error description fragment-parameter'] = location.includes('error_description=Invalid+scope%28s%29%3A+unknown-scope');",
 													"});"
 												],
 												"type": "text/javascript"
