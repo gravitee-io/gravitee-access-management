@@ -236,7 +236,8 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
         urlParameters.add(new BasicNameValuePair(Parameters.GRANT_TYPE, GrantType.AUTHORIZATION_CODE));
         if (getConfiguration().usePkce()) {
             Optional.ofNullable((String) authentication.getContext().get(ConstantKeys.IDP_CODE_VERIFIER))
-                    .ifPresent(codeVerifier -> urlParameters.add(new BasicNameValuePair(Parameters.CODE_VERIFIER, codeVerifier)));
+                    .ifPresentOrElse(codeVerifier -> urlParameters.add(new BasicNameValuePair(Parameters.CODE_VERIFIER, codeVerifier)),
+                            () -> LOGGER.warn("PKCE is enabled, but there's no code verifier available for the request"));
         }
 
         String bodyRequest = URLEncodedUtils.format(urlParameters);

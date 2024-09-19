@@ -163,7 +163,7 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
                     final String protocol = (String) stateJwt.get(PROTOCOL_KEY);
                     if (StringUtils.hasLength(protocol)) {
                         // SAML flow, need to restore these session attributes
-                        // in order to redirect th§e process to the SAML Handler and
+                        // in order to redirect the process to the SAML Handler and
                         // not onto OAuth2 flow
                         context.session().put(PROTOCOL_KEY, protocol);
                         context.session().put(RETURN_URL_KEY, stateJwt.get(RETURN_URL_KEY));
