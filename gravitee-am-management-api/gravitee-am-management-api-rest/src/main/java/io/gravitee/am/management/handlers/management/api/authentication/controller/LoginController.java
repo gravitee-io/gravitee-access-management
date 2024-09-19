@@ -18,8 +18,7 @@ package io.gravitee.am.management.handlers.management.api.authentication.control
 import io.gravitee.am.common.crypto.CryptoUtils;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.idtoken.Claims;
-import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.identityprovider.api.common.Request;
+import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.idp.IdentityProviderManager;
@@ -27,7 +26,6 @@ import io.gravitee.am.management.handlers.management.api.utils.RedirectUtils;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.ReCaptchaService;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -42,7 +40,8 @@ import org.springframework.web.servlet.ModelAndView;
 
 import java.io.IOException;
 import java.security.Key;
-import java.util.Collections;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,19 +65,16 @@ public class LoginController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LoginController.class);
     private static final String LOGIN_VIEW = "login";
-    private static final Map<String, String> socialProviderTypes;
-
-    static {
-        Map<String, String> sMap = new HashMap<>();
-        sMap.put("github-am-idp", "github");
-        sMap.put("google-am-idp", "google");
-        sMap.put("twitter-am-idp", "twitter");
-        sMap.put("facebook-am-idp", "facebook");
-        sMap.put("franceconnect-am-idp", "franceconnect");
-        sMap.put("azure-ad-am-idp", "microsoft");
-        sMap.put("linkedin-am-idp", "linkedin");
-        socialProviderTypes = Collections.unmodifiableMap(sMap);
-    }
+    private static final Duration SOCIAL_IDP_STATE_EXPIRES_AFTER = Duration.ofMinutes(5);
+    private static final Map<String, String> socialProviderTypes = Map.of(
+            "github-am-idp", "github",
+            "google-am-idp", "google",
+            "twitter-am-idp", "twitter",
+            "facebook-am-idp", "facebook",
+            "franceconnect-am-idp", "franceconnect",
+            "azure-ad-am-idp", "microsoft",
+            "linkedin-am-idp", "linkedin"
+    );
 
     @Autowired
     private OrganizationService organizationService;
@@ -129,8 +125,14 @@ public class LoginController {
                 String identityId = identity.getId();
                 SocialAuthenticationProvider socialAuthenticationProvider = (SocialAuthenticationProvider) identityProviderManager.get(identityId);
                 if (socialAuthenticationProvider != null) {
-                    final Maybe<Optional<Request>> maybe = socialAuthenticationProvider.asyncSignInUrl(buildRedirectUri(request, identityId), new JWT(), this::processState).map(Optional::ofNullable);
-                    maybe.blockingGet()
+                    var now = Instant.now();
+                    var state = new JWT(Map.of(
+                            Claims.NONCE, SecureRandomString.generate(),
+                            Claims.IAT, now.getEpochSecond(),
+                            Claims.EXP, now.plus(SOCIAL_IDP_STATE_EXPIRES_AFTER).getEpochSecond()));
+                    socialAuthenticationProvider.asyncSignInUrl(buildRedirectUri(request, identityId), state, this::processState)
+                            .map(Optional::ofNullable)
+                            .blockingGet()
                             .ifPresent(idpAuthzRequest -> authorizeUrls.put(identityId, idpAuthzRequest.getUri()));
                 }
             });
@@ -148,11 +150,10 @@ public class LoginController {
     }
 
     private Single<String> processState(JWT jwt) {
-        jwt.put(Claims.NONCE, RandomString.generate());
-         for (var claim: io.gravitee.am.common.jwt.Claims.requireEncryption())
-        if (jwt.containsKey(claim)) {
-            jwt.put(claim, CryptoUtils.encrypt((String) jwt.get(claim), key));
-        }
+        for (var claim : io.gravitee.am.common.jwt.Claims.requireEncryption())
+            if (jwt.containsKey(claim)) {
+                jwt.put(claim, CryptoUtils.encrypt((String) jwt.get(claim), key));
+            }
         return Single.just(jwtBuilder.sign(jwt));
     }
 

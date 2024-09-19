@@ -52,10 +52,10 @@ import io.gravitee.am.model.http.NameValuePair;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.client.HttpRequest;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -66,7 +66,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
@@ -119,7 +118,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
             if (builder == null) {
                 return null;
             }
-            if (StringUtils.hasText(state)) {
+            if (StringUtils.isNotBlank(state)) {
                 builder.addParameter(Parameters.STATE, state);
             }
             return Request.get(builder.buildString());
@@ -130,7 +129,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
     }
 
     @Override
-    public Maybe<Request> asyncSignInUrl(String redirectUri, JWT state, Function<JWT, Single<String>> prepareJwt) {
+    public Maybe<Request> asyncSignInUrl(String redirectUri, JWT state, StateEncoder stateEncoder) {
         try {
             var builder = prepareSignInUrl(redirectUri);
             if (builder == null) {
@@ -151,7 +150,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
                 return Maybe.just(Request.get(builder.buildString()));
             }
 
-            return prepareJwt.apply(state)
+            return stateEncoder.encode(state)
                     .flatMapMaybe(encodedState -> {
                         builder.addParameter(Parameters.STATE, encodedState);
                         return Maybe.just(Request.get(builder.buildString()));
