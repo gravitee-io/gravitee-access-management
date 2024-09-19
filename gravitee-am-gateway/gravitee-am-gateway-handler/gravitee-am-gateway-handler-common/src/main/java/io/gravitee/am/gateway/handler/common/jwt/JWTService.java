@@ -20,8 +20,6 @@ import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 
-import java.util.Set;
-
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -45,19 +43,7 @@ public interface JWTService {
      * @param certificateProvider certificate provider used to sign the token
      * @return JWT signed string representation
      */
-    default Single<String> encode(JWT jwt, CertificateProvider certificateProvider) {
-        return encode(jwt, certificateProvider, Set.of());
-    }
-
-    /**
-     * Encode raw JWT to JWT signed string representation, encrypting values of claimsToEncrypt using a key derived from
-     * certificateProvider's key
-     * @param jwt JWT to encode
-     * @param certificateProvider certificate provider used to sign the token
-     * @return JWT signed string representation
-     */
-    Single<String> encode(JWT jwt, CertificateProvider certificateProvider, Set<String> claimsToEncrypt);
-
+    Single<String> encode(JWT jwt, CertificateProvider certificateProvider);
 
     /**
      * Encode raw JWT to JWT signed string representation

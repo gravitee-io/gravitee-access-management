@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JWSAlgorithm;
 import io.gravitee.am.common.crypto.CryptoUtils;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
@@ -35,7 +36,6 @@ import java.security.KeyPair;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -53,11 +53,14 @@ public class JWTServiceImpl implements JWTService {
     private ObjectMapper objectMapper;
 
     @Override
-    public Single<String> encode(JWT jwt, CertificateProvider certificateProvider, Set<String> claimsToEncrypt) {
+    public Single<String> encode(JWT jwt, CertificateProvider certificateProvider) {
         Objects.requireNonNull(certificateProvider, "Certificate provider is required to sign JWT");
+        var claimsToEncrypt = Claims.requireEncryption();
+        if (claimsToEncrypt.stream().noneMatch(jwt::containsKey)) {
+            return sign(certificateProvider, jwt);
+        }
         return certificateProvider.getProvider()
                 .key()
-                .toMaybe()
                 .map(key -> {
                     if (key.getValue() instanceof Key singleKey) {
                         return singleKey;
@@ -70,9 +73,7 @@ public class JWTServiceImpl implements JWTService {
                 .map(key -> {
                     claimsToEncrypt.forEach(claim -> encryptClaim(jwt, claim, key));
                     return jwt;
-                }).flatMapSingle(token -> sign(certificateProvider, token))
-                .switchIfEmpty(Single.defer(() -> sign(certificateProvider, jwt)));
-
+                }).flatMap(token -> sign(certificateProvider, token));
     }
 
     private void encryptClaim(JWT jwt, String claim, java.security.Key key) {

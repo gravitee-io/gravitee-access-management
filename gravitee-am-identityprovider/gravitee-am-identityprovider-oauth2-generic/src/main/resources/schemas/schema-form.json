@@ -162,8 +162,8 @@
     },
     "codeChallengeMethod": {
       "type": "string",
-      "default": null,
       "enum": ["plain", "S256"],
+      "title": "Code challenge method",
       "description": "Type of challenge for PKCE. Leave 'None' to opt out of using PKCE"
     }
   },

@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
-import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -44,7 +43,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.stream.Collectors;
 
@@ -181,7 +179,7 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
                     final JWT stateJwt = prepareState(identityProviderId, context);
 
                     String redirectUri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login/callback");
-                    Maybe<Request> signInURL = ((SocialAuthenticationProvider) authenticationProvider).asyncSignInUrl(redirectUri, stateJwt, jwt -> jwtService.encode(jwt, certificateManager.defaultCertificateProvider(), Set.of(Claims.ENCRYPTED_CODE_VERIFIER)));
+                    Maybe<Request> signInURL = ((SocialAuthenticationProvider) authenticationProvider).asyncSignInUrl(redirectUri, stateJwt, jwt -> jwtService.encode(jwt, certificateManager.defaultCertificateProvider()));
 
                     return signInURL.map(request -> {
                         if (HttpMethod.GET.equals(request.getMethod())) {
