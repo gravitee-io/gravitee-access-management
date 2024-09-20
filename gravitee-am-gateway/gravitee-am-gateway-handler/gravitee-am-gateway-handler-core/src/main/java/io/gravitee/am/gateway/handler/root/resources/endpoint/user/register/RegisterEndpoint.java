@@ -20,6 +20,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
+import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.gateway.handler.root.service.user.UserRegistrationIdpResolver;
 import io.gravitee.am.model.Domain;
@@ -60,12 +61,15 @@ public class RegisterEndpoint extends AbstractEndpoint implements Handler<Routin
     private final BotDetectionManager botDetectionManager;
     private final PasswordPolicyManager passwordPolicyManager;
     private final IdentityProviderManager identityProviderManager;
-    public RegisterEndpoint(TemplateEngine engine, Domain domain, BotDetectionManager botDetectionManager, PasswordPolicyManager passwordPolicyManager, IdentityProviderManager identityProviderManager) {
+    private final DeviceIdentifierManager deviceIdentifierManager;
+
+    public RegisterEndpoint(TemplateEngine engine, Domain domain, BotDetectionManager botDetectionManager, PasswordPolicyManager passwordPolicyManager, IdentityProviderManager identityProviderManager, DeviceIdentifierManager deviceIdentifierManager) {
         super(engine);
         this.domain = domain;
         this.botDetectionManager = botDetectionManager;
         this.passwordPolicyManager = passwordPolicyManager;
         this.identityProviderManager = identityProviderManager;
+        this.deviceIdentifierManager = deviceIdentifierManager;
     }
 
     @Override
@@ -107,7 +111,7 @@ public class RegisterEndpoint extends AbstractEndpoint implements Handler<Routin
 
         final Map<String, Object> data = generateData(routingContext, domain, client);
         data.putAll(botDetectionManager.getTemplateVariables(domain, client));
-
+        data.putAll(deviceIdentifierManager.getTemplateVariables(client));
         // render the registration confirmation page
         this.renderPage(routingContext, data, client, logger, TEMPLATE_ERROR_MESSAGE);
     }
