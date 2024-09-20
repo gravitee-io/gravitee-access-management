@@ -47,7 +47,7 @@ public class UserStoreImplV2 implements UserStore {
         final var valueMapper = new UserValueMapper(mapper);
         this.idCache = cacheManager.getOrCreateCache("userStoreById", valueMapper);
         this.gisCache = cacheManager.getOrCreateCache("userStoreByGis", valueMapper);
-        this.ttl = environment.getProperty("http.cookie.session.cache.ttl", Integer.class, 36000);
+        this.ttl = environment.getProperty("user.cache.ttl", Integer.class, 36000);
     }
 
     @Override

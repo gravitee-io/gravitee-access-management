@@ -43,7 +43,7 @@ public class UserStoreImpl implements UserStore {
     public UserStoreImpl(CacheManager cacheManager, Environment environment) {
         final var mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         this.idCache = cacheManager.getOrCreateCache("userStoreById", new UserValueMapper(mapper));
-        this.ttlInSec = environment.getProperty("http.cookie.session.cache.ttl", Integer.class, 36000);
+        this.ttlInSec = environment.getProperty("user.cache.ttl", Integer.class, 36000);
     }
 
     @Override

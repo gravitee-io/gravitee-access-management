@@ -32,7 +32,7 @@ public class ConfigurationHelper {
     }
 
     public static boolean useUserStore(Environment environment) {
-        final boolean sessionCache = environment.getProperty("http.cookie.session.cache.enabled", Boolean.class, false);
+        final boolean sessionCache = environment.getProperty("user.cache.enabled", Boolean.class, false);
         final boolean resilienceMode = environment.getProperty("resilience.enabled", Boolean.class, false);
         return resilienceMode || sessionCache;
     }
