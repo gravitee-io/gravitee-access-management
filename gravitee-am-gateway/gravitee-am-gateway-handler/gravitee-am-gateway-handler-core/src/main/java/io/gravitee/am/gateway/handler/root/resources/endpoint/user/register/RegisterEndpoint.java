@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
+import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PasswordSettings;
@@ -54,11 +55,13 @@ public class RegisterEndpoint extends AbstractEndpoint implements Handler<Routin
 
     private final Domain domain;
     private final BotDetectionManager botDetectionManager;
+    private final DeviceIdentifierManager deviceIdentifierManager;
 
-    public RegisterEndpoint(TemplateEngine engine, Domain domain, BotDetectionManager botDetectionManager) {
+    public RegisterEndpoint(TemplateEngine engine, Domain domain, BotDetectionManager botDetectionManager, DeviceIdentifierManager deviceIdentifierManager) {
         super(engine);
         this.domain = domain;
         this.botDetectionManager = botDetectionManager;
+        this.deviceIdentifierManager = deviceIdentifierManager;
     }
 
     @Override
@@ -99,7 +102,7 @@ public class RegisterEndpoint extends AbstractEndpoint implements Handler<Routin
 
         final Map<String, Object> data = generateData(routingContext, domain, client);
         data.putAll(botDetectionManager.getTemplateVariables(domain, client));
-
+        data.putAll(deviceIdentifierManager.getTemplateVariables(client));
         // render the registration confirmation page
         this.renderPage(routingContext, data, client, logger, TEMPLATE_ERROR_MESSAGE);
     }

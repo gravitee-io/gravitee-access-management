@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PasswordSettings;
@@ -49,9 +50,12 @@ public class ResetPasswordEndpoint extends AbstractEndpoint implements Handler<R
 
     private final Domain domain;
 
-    public ResetPasswordEndpoint(TemplateEngine engine, Domain domain) {
+    private final DeviceIdentifierManager deviceIdentifierManager;
+
+    public ResetPasswordEndpoint(TemplateEngine engine, Domain domain, DeviceIdentifierManager deviceIdentifierManager) {
         super(engine);
         this.domain = domain;
+        this.deviceIdentifierManager = deviceIdentifierManager;
     }
 
     @Override
@@ -84,7 +88,9 @@ public class ResetPasswordEndpoint extends AbstractEndpoint implements Handler<R
         routingContext.put(PASSWORD_VALIDATION, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/passwordValidation", actionParams, true));
 
         // render the reset password page
-        this.renderPage(routingContext, generateData(routingContext, domain, client), client, logger, "Unable to render reset password page");
+        final var data = generateData(routingContext, domain, client);
+        data.putAll(deviceIdentifierManager.getTemplateVariables(client));
+        this.renderPage(routingContext, data, client, logger, "Unable to render reset password page");
     }
 
 
