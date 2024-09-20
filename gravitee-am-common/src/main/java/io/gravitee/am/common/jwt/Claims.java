@@ -17,6 +17,7 @@ package io.gravitee.am.common.jwt;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * JWT Registered Claim Names
@@ -117,10 +118,18 @@ public interface Claims {
      * Time the End-User's information was last updated.
      */
     String UPDATED_AT = "updated_at";
+    /**
+     * Encrypted code verifier for PKCE with social IDP
+     */
+    String ENCRYPTED_CODE_VERIFIER = "ecv";
 
     static List<String> getAllClaims() {
         return Arrays.asList(ISS, SUB, AUD, EXP, NBF, IAT, AUTH_TIME, UPDATED_AT,
                 JTI, DOMAIN, CLAIMS, IP_ADDRESS, USER_AGENT, SCOPE, CNF);
+    }
+
+    static Set<String> requireEncryption() {
+        return Set.of(ENCRYPTED_CODE_VERIFIER);
     }
 
 }

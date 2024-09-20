@@ -69,11 +69,7 @@ public abstract class AbstractSocialAuthenticationProvider<T extends SocialIdent
             if (StringUtils.hasText(state)) {
                 builder.addParameter(Parameters.STATE, state);
             }
-
-            Request request = new Request();
-            request.setMethod(HttpMethod.GET);
-            request.setUri(builder.build().toString());
-            return request;
+            return Request.get(builder.build().toString());
         } catch (Exception e) {
             log.error("An error occurs while building Sign In URL", e);
             return null;

@@ -34,7 +34,7 @@ public interface JWTService {
         REFRESH_TOKEN,
         SESSION,
         JARM,
-        STATE;
+        STATE
     }
 
     /**
