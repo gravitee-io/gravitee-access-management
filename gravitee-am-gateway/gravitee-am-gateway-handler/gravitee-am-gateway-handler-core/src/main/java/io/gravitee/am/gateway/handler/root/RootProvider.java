@@ -555,7 +555,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_REGISTER))
                 .handler(localeHandler)
-                .handler(new RegisterEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
+                .handler(new RegisterEndpoint(thymeleafTemplateEngine, domain, botDetectionManager, deviceIdentifierManager));
         rootRouter.route(HttpMethod.POST, PATH_REGISTER)
                 .handler(new RegisterSubmissionRequestParseHandler())
                 .handler(clientRequestParseHandlerOptional)
@@ -563,6 +563,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(registerAccessHandler)
                 .handler(passwordPolicyRequestParseHandler)
                 .handler(new RegisterProcessHandler(userService, domain))
+                .handler(deviceIdentifierHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_REGISTER))
                 .handler(new RegisterSubmissionEndpoint(environment));
         rootRouter.route(PATH_REGISTER)
@@ -573,11 +574,12 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(clientRequestParseHandlerOptional)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_REGISTRATION_CONFIRMATION))
                 .handler(localeHandler)
-                .handler(new RegisterConfirmationEndpoint(thymeleafTemplateEngine, domain));
+                .handler(new RegisterConfirmationEndpoint(thymeleafTemplateEngine, domain, deviceIdentifierManager));
         rootRouter.route(HttpMethod.POST, PATH_CONFIRM_REGISTRATION)
                 .handler(new RegisterConfirmationSubmissionRequestParseHandler())
                 .handler(userTokenRequestParseHandler)
                 .handler(passwordPolicyRequestParseHandler)
+                .handler(deviceIdentifierHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_REGISTRATION_CONFIRMATION))
                 .handler(new RegisterConfirmationSubmissionEndpoint(userService, environment));
 
@@ -614,12 +616,13 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(new ResetPasswordOneTimeTokenHandler())
                 .handler(localeHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_RESET_PASSWORD))
-                .handler(new ResetPasswordEndpoint(thymeleafTemplateEngine, domain));
+                .handler(new ResetPasswordEndpoint(thymeleafTemplateEngine, domain, deviceIdentifierManager));
         rootRouter.route(HttpMethod.POST, PATH_RESET_PASSWORD)
                 .handler(new ResetPasswordSubmissionRequestParseHandler())
                 .handler(userTokenRequestParseHandler)
                 .handler(new ResetPasswordOneTimeTokenHandler())
                 .handler(passwordPolicyRequestParseHandler)
+                .handler(deviceIdentifierHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_RESET_PASSWORD))
                 .handler(new ResetPasswordSubmissionEndpoint(userService, environment));
         rootRouter.route(PATH_RESET_PASSWORD)
