@@ -16,10 +16,12 @@
 package io.gravitee.am.repository.management.test.config;
 
 import com.mongodb.reactivestreams.client.MongoDatabase;
+import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.repository.mongodb.MongodbProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -36,5 +38,10 @@ public class ManagementTestConfigurationLoader {
     @Bean(name = "managementMongoTemplate")
     public MongoDatabase mongoOperations() {
         return embeddedClient().mongoDatabase();
+    }
+
+    @Bean
+    public RepositoriesEnvironment repositoriesEnvironment(Environment environment) {
+        return new RepositoriesEnvironment(environment);
     }
 }

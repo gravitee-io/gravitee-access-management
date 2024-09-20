@@ -27,11 +27,6 @@ import org.springframework.core.env.Environment;
 public abstract class AbstractRepositoryConfiguration {
 
     @Autowired
-    protected Environment environment;
-
-    @Bean
-    public RepositoriesEnvironment repositoriesEnvironment(Environment environment){
-        return new RepositoriesEnvironment(environment);
-    }
+    protected RepositoriesEnvironment environment;
 
 }

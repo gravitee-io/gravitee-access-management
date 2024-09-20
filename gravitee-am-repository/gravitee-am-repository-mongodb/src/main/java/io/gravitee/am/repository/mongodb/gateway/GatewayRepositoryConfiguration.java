@@ -46,8 +46,7 @@ public class GatewayRepositoryConfiguration extends AbstractRepositoryConfigurat
     private String getDatabaseName() {
         boolean useManagementSettings = environment.getProperty(Scope.GATEWAY.getRepositoryPropertyKey() + ".use-management-settings", Boolean.class, true);
         String propertyPrefix = useManagementSettings ? Scope.MANAGEMENT.getRepositoryPropertyKey() : Scope.GATEWAY.getRepositoryPropertyKey();
-        String uriOld = environment.getProperty(propertyPrefix + ".mongodb.uri", "");
-        String uri = environment.getProperty(propertyPrefix + ".mongodb.uri", uriOld);
+        String uri = environment.getProperty(propertyPrefix + ".mongodb.uri", "");
         if (!uri.isEmpty()) {
             final String path = URI.create(uri).getPath();
             if (path != null && path.length() > 1) {
