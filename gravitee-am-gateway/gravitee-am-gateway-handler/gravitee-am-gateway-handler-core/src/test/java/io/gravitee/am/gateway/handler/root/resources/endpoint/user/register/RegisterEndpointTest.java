@@ -19,6 +19,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
+import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.account.AccountSettings;
@@ -62,13 +63,16 @@ public class RegisterEndpointTest {
     private PasswordPolicyManager passwordPolicyManager;
     @Mock
     private IdentityProviderManager identityProviderManager;
+    @Mock
+    private DeviceIdentifierManager deviceIdentifierManager;
+
     private RegisterEndpoint registerEndpoint;
     private SpyRoutingContext context;
 
     @BeforeEach
     public void setup() {
         when(botDetectionManager.getTemplateVariables(any(), any())).thenReturn(Map.of());
-        registerEndpoint = new RegisterEndpoint(templateEngine, domain, botDetectionManager, passwordPolicyManager, identityProviderManager);
+        registerEndpoint = new RegisterEndpoint(templateEngine, domain, botDetectionManager, passwordPolicyManager, identityProviderManager, deviceIdentifierManager);
         context = new SpyRoutingContext();
         context.setMethod(HttpMethod.GET);
     }
