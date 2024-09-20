@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
@@ -51,10 +52,12 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
 
     private final ThymeleafTemplateEngine engine;
     private final Domain domain;
+    private final DeviceIdentifierManager deviceIdentifierManager;
 
-    public RegisterConfirmationEndpoint(ThymeleafTemplateEngine thymeleafTemplateEngine, Domain domain) {
+    public RegisterConfirmationEndpoint(ThymeleafTemplateEngine thymeleafTemplateEngine, Domain domain, DeviceIdentifierManager deviceIdentifierManager) {
         this.engine = thymeleafTemplateEngine;
         this.domain = domain;
+        this.deviceIdentifierManager = deviceIdentifierManager;
     }
 
     @Override
@@ -97,7 +100,9 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
         routingContext.put(PASSWORD_VALIDATION, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/passwordValidation", actionParams, true));
 
         // render the registration confirmation page
-        engine.render(generateData(routingContext, domain, client), getTemplateFileName(client))
+        final var data = generateData(routingContext, domain, client);
+        data.putAll(deviceIdentifierManager.getTemplateVariables(client));
+        engine.render(data, getTemplateFileName(client))
                 .subscribe(
                         buffer -> {
                             routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);

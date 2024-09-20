@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.endpoints.user;
 
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
+import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ResetPasswordEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.model.Domain;
@@ -46,6 +47,8 @@ import static org.mockito.Mockito.when;
  */
 public class ResetPasswordEndpointTest {
 
+    private final DeviceIdentifierManager deviceIdentifierManager = mock(DeviceIdentifierManager.class);
+
     @Test
     public void must_render_engine_with_encoded_client_id() {
         final Domain domain = new Domain();
@@ -56,7 +59,7 @@ public class ResetPasswordEndpointTest {
         when(engine.render(anyMap(), anyString())).thenReturn(Single.just(buffer));
         final PasswordPolicyManager passwordPolicyManager = mock(PasswordPolicyManager.class);
         final IdentityProviderManager identityProviderManager = mock(IdentityProviderManager.class);
-        var resetPassword = new ResetPasswordEndpoint(engine, domain, passwordPolicyManager, identityProviderManager);
+        var resetPassword = new ResetPasswordEndpoint(engine, domain, passwordPolicyManager, identityProviderManager, deviceIdentifierManager);
 
         final SpyRoutingContext ctx = new SpyRoutingContext();
         ctx.setMethod(HttpMethod.GET);
@@ -81,9 +84,10 @@ public class ResetPasswordEndpointTest {
         final Buffer buffer = mock(Buffer.class);
         final ThymeleafTemplateEngine engine = mock(ThymeleafTemplateEngine.class);
         when(engine.render(anyMap(), anyString())).thenReturn(Single.just(buffer));
+
         final PasswordPolicyManager passwordPolicyManager = mock(PasswordPolicyManager.class);
         final IdentityProviderManager identityProviderManager = mock(IdentityProviderManager.class);
-        var resetPassword = new ResetPasswordEndpoint(engine, domain, passwordPolicyManager, identityProviderManager);
+        var resetPassword = new ResetPasswordEndpoint(engine, domain, passwordPolicyManager, identityProviderManager, deviceIdentifierManager);
 
         final SpyRoutingContext ctx = new SpyRoutingContext();
         ctx.setMethod(HttpMethod.GET);
