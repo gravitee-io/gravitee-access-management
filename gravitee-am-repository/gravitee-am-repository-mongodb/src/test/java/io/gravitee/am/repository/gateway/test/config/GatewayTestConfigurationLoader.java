@@ -16,10 +16,12 @@
 package io.gravitee.am.repository.gateway.test.config;
 
 import com.mongodb.reactivestreams.client.MongoDatabase;
+import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.repository.mongodb.MongodbProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 @Configuration
 @ComponentScan({"io.gravitee.am.repository.mongodb.gateway", "io.gravitee.am.repository.mongodb.common", "io.gravitee.am.repository.mongodb.provider"})
@@ -32,5 +34,10 @@ public class GatewayTestConfigurationLoader {
     @Bean(name = "gatewayMongoTemplate")
     public MongoDatabase mongoOperations() {
         return embeddedClient().mongoDatabase();
+    }
+
+    @Bean
+    public RepositoriesEnvironment repositoriesEnvironment(Environment environment) {
+        return new RepositoriesEnvironment(environment);
     }
 }
