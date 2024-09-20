@@ -267,4 +267,5 @@ public interface ConstantKeys {
     String PROTOCOL_KEY = "protocol";
     String PROTOCOL_VALUE_SAML_REDIRECT = "SAML/HTTP-Redirect";
     String PROTOCOL_VALUE_SAML_POST = "SAML/HTTP-POST";
+    String IDP_CODE_VERIFIER = "idp_code_verifier";
 }

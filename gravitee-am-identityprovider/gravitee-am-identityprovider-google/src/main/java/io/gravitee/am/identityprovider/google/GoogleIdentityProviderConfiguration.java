@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.google;
 
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
+import io.gravitee.am.common.oauth2.CodeChallengeMethod;
 import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.api.oidc.jwt.KeyResolver;
 
@@ -76,6 +77,11 @@ public class GoogleIdentityProviderConfiguration implements OpenIDConnectIdentit
 
     public boolean isEncodeRedirectUri() {
         return encodeRedirectUri;
+    }
+
+    @Override
+    public CodeChallengeMethod getCodeChallengeMethod() {
+        return null;
     }
 
     public void setEncodeRedirectUri(boolean encodeRedirectUri) {

@@ -15,10 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
+import io.gravitee.am.common.crypto.CryptoUtils;
 import io.gravitee.am.common.exception.oauth2.BadClientCredentialsException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
@@ -26,6 +30,7 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -34,6 +39,9 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
+
+import java.security.Key;
+import java.util.Base64;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_ISSUING_REASON;
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_PROVIDER_ID;
@@ -132,8 +140,13 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
             handler.handle(Future.failedFuture(new InvalidRequestException("Missing state query param")));
             return;
         }
-
-        jwtService.decodeAndVerify(state, certificateManager.defaultCertificateProvider(), STATE)
+        var stateJwtCertProvider = certificateManager.defaultCertificateProvider();
+        jwtService.decodeAndVerify(state, stateJwtCertProvider, STATE)
+                .flatMap(stateJwt -> extractIdpCodeVerifier(stateJwt, stateJwtCertProvider)
+                        .map(codeVerifier -> {
+                            context.put(ConstantKeys.IDP_CODE_VERIFIER, codeVerifier);
+                            return stateJwt;
+                        }))
                 .doOnSuccess(stateJwt -> {
                     final MultiMap initialQueryParams = RequestUtils.getQueryParams((String) stateJwt.getOrDefault(CLAIM_QUERY_PARAM, ""), false);
                     context.put(ConstantKeys.PARAM_CONTEXT_KEY, initialQueryParams);
@@ -165,6 +178,15 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
                             logger.error("An error occurs verifying state on login callback", ex);
                             handler.handle(Future.failedFuture(new BadClientCredentialsException()));
                         });
+    }
+
+    private Single<String> extractIdpCodeVerifier(JWT stateJwt, CertificateProvider stateJwtCertProvider) {
+        return stateJwtCertProvider.getProvider()
+                .key()
+                .map(k -> {
+                    var ecv = new String(Base64.getUrlDecoder().decode((String) stateJwt.get(Claims.ENCRYPTED_CODE_VERIFIER)));
+                    return CryptoUtils.decrypt(ecv, (Key) k.getValue());
+                });
     }
 
     private void parseClient(RoutingContext context, Handler<AsyncResult<Client>> handler) {

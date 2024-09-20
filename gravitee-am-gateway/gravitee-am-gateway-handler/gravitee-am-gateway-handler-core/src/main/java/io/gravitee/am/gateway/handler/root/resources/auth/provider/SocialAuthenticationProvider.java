@@ -19,11 +19,13 @@ import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.exception.authentication.LoginCallbackFailedException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
 import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
@@ -80,7 +82,9 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
     public SocialAuthenticationProvider(UserAuthenticationManager userAuthenticationManager,
                                         EventManager eventManager,
                                         IdentityProviderManager identityProviderManager,
-                                        Domain domain, GatewayMetricProvider gatewayMetricProvider) {
+                                        Domain domain,
+                                        GatewayMetricProvider gatewayMetricProvider,
+                                        CertificateManager certificateManager) {
         this.userAuthenticationManager = userAuthenticationManager;
         this.eventManager = eventManager;
         this.identityProviderManager = identityProviderManager;

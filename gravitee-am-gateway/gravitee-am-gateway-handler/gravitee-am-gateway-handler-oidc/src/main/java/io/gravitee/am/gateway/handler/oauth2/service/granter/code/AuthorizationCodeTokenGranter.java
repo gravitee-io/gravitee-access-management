@@ -43,6 +43,7 @@ import org.springframework.core.env.Environment;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Implementation of the Authorization Code Grant Flow
@@ -128,7 +129,7 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
     @Override
     protected Maybe<User> resolveResourceOwner(TokenRequest tokenRequest, Client client) {
         return userAuthenticationManager.loadPreAuthenticatedUser(tokenRequest.getSubject(), tokenRequest)
-                .onErrorResumeNext(ex -> { return Maybe.error(new InvalidGrantException()); });
+                .onErrorResumeNext(ex -> Maybe.error(new InvalidGrantException()));
     }
 
     @Override
@@ -164,36 +165,36 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
         MultiValueMap<String, String> parameters = authorizationCode.getRequestParameters();
 
         String codeChallenge = parameters.getFirst(Parameters.CODE_CHALLENGE);
-        String codeChallengeMethod = parameters.getFirst(Parameters.CODE_CHALLENGE_METHOD);
+        // By default, assume a plain code_challenge_method
+        var codeChallengeMethod = Objects.requireNonNullElse(CodeChallengeMethod.fromUriParam(parameters.getFirst(Parameters.CODE_CHALLENGE_METHOD)), CodeChallengeMethod.PLAIN);
 
         if (codeChallenge != null && codeVerifier == null) {
             logger.debug("PKCE code_verifier parameter is missing, even if a code_challenge was initially defined");
             throw new InvalidGrantException("Missing parameter: code_verifier");
         }
 
-        if (codeChallenge != null) {
-            // Check that code challenge is valid
-            if (!PKCEUtils.validCodeVerifier(codeVerifier)) {
-                logger.debug("PKCE code_verifier is not valid");
-                throw new InvalidGrantException("Invalid parameter: code_verifier");
-            }
+        if (codeChallenge == null) {
+            return;
+        }
 
-            // By default, assume a plain code_challenge_method
-            String encodedCodeVerifier = codeVerifier;
+        // Check that code challenge is valid
+        if (!PKCEUtils.validCodeVerifier(codeVerifier)) {
+            logger.debug("PKCE code_verifier is not valid");
+            throw new InvalidGrantException("Invalid parameter: code_verifier");
+        }
+        var encodedCodeVerifier = getCodeChallenge(codeChallengeMethod, codeVerifier);
+        if (! codeChallenge.equals(encodedCodeVerifier)) {
+            throw new InvalidGrantException("Invalid code_verifier");
+        }
+    }
 
-            // Otherwise, generate is using s256
-            if (CodeChallengeMethod.S256.equalsIgnoreCase(codeChallengeMethod)) {
-                try {
-                    encodedCodeVerifier = PKCEUtils.getS256CodeChallenge(codeVerifier);
-                } catch (Exception ex) {
-                    logger.error("Not able to generate the codeChallenge from the given code verifier according to S256 algorithm");
-                    throw new InvalidGrantException("Not supported algorithm");
-                }
-            }
+    private String getCodeChallenge(CodeChallengeMethod codeChallengeMethod, String codeVerifier) {
+        try {
+            return codeChallengeMethod.getChallenge(codeVerifier);
 
-            if (! codeChallenge.equals(encodedCodeVerifier)) {
-                throw new InvalidGrantException("Invalid code_verifier");
-            }
+        } catch (Exception ex) {
+            logger.error("Not able to generate the codeChallenge from the given code verifier according to {} algorithm", codeChallengeMethod, ex);
+            throw new InvalidGrantException("Not supported algorithm");
         }
     }
 }
