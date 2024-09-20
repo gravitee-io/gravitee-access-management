@@ -30,7 +30,7 @@
         </div>
     </div>
     <div class="section">
-        <form role="form" class="form" th:action="${action}" method="post">
+        <form role="form" id="form" class="form" th:action="${action}" method="post">
             <div class="form-field">
                 <input class="input-field" type="password" id="password" name="password" th:placeholder="#{registration_confirmation.password.placeholder}" required/>
                 <button type="button" class="icon-button icon-input-field toggle-password">
@@ -132,5 +132,36 @@
     const passwordValidation = /*[[${passwordValidation}]]*/ null;
     const passwordHistory = /*[[${passwordHistory}]]*/ null;
 </script>
+
+
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Pro'}"
+        th:src="@{assets/js/remember-device/fingerprintjs-v3-pro.js}"></script>
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Pro'}" th:attr="nonce=${script_inline_nonce}">
+    $(document).ready(function () {
+        loadFingerprintJsV3Pro("[[${fingerprint_js_v3_pro_browser_token}]]", "[[${fingerprint_js_v3_pro_region}]]", fp => {
+            if (fp.visitorId) {
+                $("#form")
+                    .append('<input type="hidden" name="deviceId" value="' + fp.visitorId + '"/>')
+            }
+        });
+    });
+</script>
+
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Community'}"
+        th:src="@{assets/js/remember-device/fingerprintjs-v3.js}"></script>
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Community'}" th:attr="nonce=${script_inline_nonce}">
+    $(document).ready(function () {
+        loadFingerprintJsV3(fp => {
+            if (fp.visitorId) {
+                $("#form")
+                    .append('<input type="hidden" name="deviceId" value="' + fp.visitorId + '"/>')
+            }
+            if (fp.components && fp.components.platform && fp.components.platform.value) {
+                $("#form").append('<input type="hidden" name="deviceType" value="' + fp.components.platform.value + '"/>');
+            }
+        });
+    });
+</script>
+
 </body>
 </html>
