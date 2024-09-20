@@ -84,7 +84,6 @@
                 <span th:case="invalid_email" th:text="#{registration.error.invalid.email}"/>
                 <span th:case="*" th:text="#{registration.error.information.missing}"/>
             </div>
-
             <button type="submit" id="submitBtn" class="button primary" th:text="#{registration.button.submit}"></button>
         </form>
     </div>
@@ -146,13 +145,13 @@
 
         $("#submitBtn").on('click', function (event){
             /*[# th:if="${bot_detection_plugin == 'google-recaptcha-v3-am-bot-detection'}"]*/
-                event.preventDefault();
-                grecaptcha.ready(function() {
-                  grecaptcha.execute(/*[[${bot_detection_configuration.siteKey}]]*/, {action: 'submit'}).then(function(token) {
+            event.preventDefault();
+            grecaptcha.ready(function() {
+                grecaptcha.execute(/*[[${bot_detection_configuration.siteKey}]]*/, {action: 'submit'}).then(function(token) {
                     $("#"+ /*[[${bot_detection_configuration.get('tokenParameterName')}]]*/ "no-name").val(token);
                     $("#form").unbind('submit').submit();
-                  });
                 });
+            });
             /*[/]*/
 
         });
@@ -174,5 +173,37 @@
     const passwordSettings = /*[[${passwordSettings}]]*/ null;
 </script>
 <script th:if="${error == null && success == null}" th:src="@{assets/js/password-validation-v3.js}"></script>
+
+
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Pro'}"
+        th:src="@{assets/js/remember-device/fingerprintjs-v3-pro.js}"></script>
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Pro'}" th:attr="nonce=${script_inline_nonce}">
+    $(document).ready(function () {
+        loadFingerprintJsV3Pro("[[${fingerprint_js_v3_pro_browser_token}]]", "[[${fingerprint_js_v3_pro_region}]]", fp => {
+            if (fp.visitorId) {
+                $("#form")
+                    .append('<input type="hidden" name="deviceId" value="' + fp.visitorId + '"/>')
+            }
+        });
+    });
+</script>
+
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Community'}"
+        th:src="@{assets/js/remember-device/fingerprintjs-v3.js}"></script>
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Community'}" th:attr="nonce=${script_inline_nonce}">
+    $(document).ready(function () {
+        loadFingerprintJsV3(fp => {
+            if (fp.visitorId) {
+                $("#form")
+                    .append('<input type="hidden" name="deviceId" value="' + fp.visitorId + '"/>')
+            }
+            if (fp.components && fp.components.platform && fp.components.platform.value) {
+                $("#form").append('<input type="hidden" name="deviceType" value="' + fp.components.platform.value + '"/>');
+            }
+        });
+    });
+</script>
+
+
 </body>
 </html>
