@@ -20,6 +20,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
@@ -53,12 +54,14 @@ public class ResetPasswordEndpoint extends AbstractEndpoint implements Handler<R
 
     private final IdentityProviderManager identityProviderManager;
     private final PasswordPolicyManager passwordPolicyManager;
+    private final DeviceIdentifierManager deviceIdentifierManager;
 
-    public ResetPasswordEndpoint(TemplateEngine engine, Domain domain, PasswordPolicyManager passwordPolicyManager, IdentityProviderManager providerManager) {
+    public ResetPasswordEndpoint(TemplateEngine engine, Domain domain, PasswordPolicyManager passwordPolicyManager, IdentityProviderManager providerManager, DeviceIdentifierManager deviceIdentifierManager) {
         super(engine);
         this.domain = domain;
         this.passwordPolicyManager = passwordPolicyManager;
         this.identityProviderManager = providerManager;
+        this.deviceIdentifierManager = deviceIdentifierManager;
     }
 
     @Override
@@ -96,7 +99,9 @@ public class ResetPasswordEndpoint extends AbstractEndpoint implements Handler<R
         routingContext.put(PASSWORD_VALIDATION, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/passwordValidation", actionParams, true));
 
         // render the reset password page
-        this.renderPage(routingContext, generateData(routingContext, domain, client), client, logger, "Unable to render reset password page");
+        final var data = generateData(routingContext, domain, client);
+        data.putAll(deviceIdentifierManager.getTemplateVariables(client));
+        this.renderPage(routingContext, data, client, logger, "Unable to render reset password page");
     }
 
 
