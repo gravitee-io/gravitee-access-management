@@ -6,7 +6,7 @@ orbs:
   gh: circleci/github-cli@2.2.0
   aws-s3: circleci/aws-s3@3.0
   helm: circleci/helm@2.0.1
-  snyk: snyk/snyk@1.7.0
+  aquasec: gravitee-io/aquasec@1.0.2
 
 executors:
   ubuntu:
@@ -301,27 +301,6 @@ commands:
             ./build.sh -v << parameters.graviteeio_version >>
             
             docker run --rm -v "${GIT_GRAVITEE_PACKAGES_REPO}/am/${MAJOR_VERSION_NUMBER}.x:/packages" -e PACKAGECLOUD_TOKEN=${GIO_PACKAGECLOUD_TOKEN} digitalocean/packagecloud push --yes --skip-errors --verbose graviteeio/rpms/el/7 /packages/*.rpm
-  add-docker-image-in-snyk:
-    parameters:
-      docker-image-name:
-        type: string
-      version:
-        type: string
-    steps:
-      - run:
-          name: Add << parameters.docker-image-name >> << parameters.version >> to Snyk
-          command: |
-            curl --fail \
-                 --include \
-                 --request POST \
-                 --header "Content-Type: application/json; charset=utf-8" \
-                 --header "Authorization: token ${SNYK_API_TOKEN}" \
-                 --data-binary "{
-              \"target\": {
-                \"name\": \"<< parameters.docker-image-name >>:<< parameters.version >>\"
-              }
-            }" \
-            "https://api.snyk.io/api/v1/org/6a75be52-cf2f-40d4-8673-1d9c426f3bdb/integrations/${SNYK_INTEGRATION_ID}/import"
 
   cmd-helm-tests:
     description: execute the unit tests of the helm chart
@@ -810,8 +789,9 @@ jobs:
             echo "export TAG=$TAG" >> $BASH_ENV
             echo $TAG > /tmp/docker-tag.txt
 
-            # create a latest tag for the given branch to avoid flooding SNYK project
+            # create a latest tag for the given branch to avoid flooding AquaSec project
             export TAG_LATEST=$(echo "${CIRCLE_BRANCH}-latest")
+            
             echo "export TAG_LATEST=$TAG_LATEST" >> $BASH_ENV
       - create_docker_context
       - run:
@@ -822,21 +802,10 @@ jobs:
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-api:${TAG}
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-management-api:${TAG_LATEST}
             
+            echo $IMAGE_TAG_LATEST > /tmp/built-docker-images.txt
+            
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
-      - when:
-          condition:
-            matches: { pattern: "^(\\d+\\.\\d+\\.x)|master$", value: << pipeline.git.branch >> }
-          steps:
-            - keeper/env-export:
-                secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_org_api_token
-                var-name: SNYK_API_TOKEN
-            - keeper/env-export:
-                secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_acr_integration_id
-                var-name: SNYK_INTEGRATION_ID
-            - add-docker-image-in-snyk:
-                docker-image-name: am-management-api
-                version: ${TAG_LATEST}
       - run:
           name: Build Gateway Docker Image to Azure Registry
           when: always
@@ -845,21 +814,10 @@ jobs:
             export IMAGE_TAG=graviteeio.azurecr.io/am-gateway:${TAG}
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-gateway:${TAG_LATEST}
             
+            echo $IMAGE_TAG_LATEST >> /tmp/built-docker-images.txt
+            
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
-      - when:
-          condition:
-            matches: { pattern: "^(\\d+\\.\\d+\\.x)|master$", value: << pipeline.git.branch >> }
-          steps:
-            - keeper/env-export:
-                secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_org_api_token
-                var-name: SNYK_API_TOKEN
-            - keeper/env-export:
-                secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_acr_integration_id
-                var-name: SNYK_INTEGRATION_ID
-            - add-docker-image-in-snyk:
-                docker-image-name: am-gateway
-                version: ${TAG_LATEST}
       - run:
           name: Build Web UI Docker Image to Azure Registry
           when: always
@@ -868,26 +826,16 @@ jobs:
             export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-ui:${TAG}
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-management-ui:${TAG_LATEST}
+
+            echo $IMAGE_TAG_LATEST >> /tmp/built-docker-images.txt
             
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
-      - when:
-          condition:
-            matches: { pattern: "^(\\d+\\.\\d+\\.x)|master$", value: << pipeline.git.branch >> }
-          steps:
-            - keeper/env-export:
-                secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_org_api_token
-                var-name: SNYK_API_TOKEN
-            - keeper/env-export:
-                secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_acr_integration_id
-                var-name: SNYK_INTEGRATION_ID
-            - add-docker-image-in-snyk:
-                docker-image-name: am-management-ui
-                version: ${TAG_LATEST}
       - persist_to_workspace:
           root: /tmp
           paths:
             - ./docker-tag.txt
+            - ./built-docker-images.txt
 
   deploy-on-aks:
     docker:
@@ -1559,45 +1507,50 @@ jobs:
                     ]
                   }
 
-  add-docker-images-in-snyk:
+  add-docker-images-in-aqua:
     docker:
       - image: cimg/base:stable
     resource_class: small
     steps:
       - keeper/env-export:
-          secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_org_api_token
-          var-name: SNYK_API_TOKEN
+          secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
+          var-name: AQUA_KEY
       - keeper/env-export:
-          secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_dockerhub_integration_id
-          var-name: SNYK_INTEGRATION_ID
-      - add-docker-image-in-snyk:
-          docker-image-name: graviteeio/am-gateway
-          version: << pipeline.parameters.graviteeio_version >>
-      - add-docker-image-in-snyk:
-          docker-image-name: graviteeio/am-management-api
-          version: << pipeline.parameters.graviteeio_version >>
-      - add-docker-image-in-snyk:
-          docker-image-name: graviteeio/am-management-ui
-          version: << pipeline.parameters.graviteeio_version >>
-
-  job-snyk-am-charts:
-    docker:
-      - image: cimg/base:stable
-    resource_class: small
-    steps:
-      - checkout
+          secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/Secret
+          var-name: AQUA_SECRET
       - keeper/env-export:
-          secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_org_api_token
-          var-name: SNYK_TOKEN
-      - helm/install-helm-client
-      - snyk/install
-      - run:
-          name: "build the Charts output and scan"
-          working_directory: "./helm"
-          command: |
-            helm dependency update
-            helm template . --output-dir ./output
-            snyk iac test ./output --report --target-reference="${CIRCLE_BRANCH}" --project-tags=version=${CIRCLE_BRANCH} --severity-threshold=high
+          secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/login
+          var-name: AQUA_USERNAME
+      - keeper/env-export:
+          secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/password
+          var-name: AQUA_PASSWORD
+      - keeper/env-export:
+          secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/ScannerToken
+          var-name: SCANNER_TOKEN
+      - keeper/env-export:
+          secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
+          var-name: GITHUB_TOKEN
+      - aquasec/install_billy
+      - aquasec/pull_aqua_scanner_image
+      - setup_remote_docker
+      - aquasec/register_artifact:
+          artifact_to_register: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>
+          debug: true
+      - aquasec/scan_docker_image:
+          docker_image_to_scan: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>
+          scanner_url: https://82fb8f75da.cloud.aquasec.com
+      - aquasec/register_artifact:
+          artifact_to_register: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>
+          debug: true
+      - aquasec/scan_docker_image:
+          docker_image_to_scan: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>
+          scanner_url: https://82fb8f75da.cloud.aquasec.com
+      - aquasec/register_artifact:
+          artifact_to_register: graviteeio/am-management-ui:<< pipeline.parameters.graviteeio_version >>
+          debug: true
+      - aquasec/scan_docker_image:
+          docker_image_to_scan: graviteeio/am-management-ui:<< pipeline.parameters.graviteeio_version >>
+          scanner_url: https://82fb8f75da.cloud.aquasec.com
 
   job-test-am-charts:
     docker:
@@ -1696,8 +1649,8 @@ workflows:
           tag_latest_support: << pipeline.parameters.tag_latest_support >>
           requires:
             - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
-      - add-docker-images-in-snyk:
-          name: add docker images to Snyk
+      - add-docker-images-in-aqua:
+          name: add docker images to AquaSec
           context: cicd-orchestrator
           requires:
             - publish docker images
@@ -1753,20 +1706,11 @@ workflows:
           tag_latest_support: false
           requires:
             - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
-      - add-docker-images-in-snyk:
-          name: add docker images to Snyk
+      - add-docker-images-in-aqua:
+          name: add docker images to AquaSec
           context: cicd-orchestrator
           requires:
             - publish docker images
-      - job-test-am-charts:
-          name: helm tests
-          requires:
-            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
-      - job-release_helm:
-          name: publish helm charts
-          context: cicd-orchestrator
-          requires:
-            - helm tests
       - publish_maven_packages_to_maven_central:
           name: publish maven packages
           context: cicd-orchestrator
@@ -1796,16 +1740,26 @@ workflows:
           name: Test Helm chart
           requires:
             - setup
-      - job-snyk-am-charts:
-          name: scan snyk Helm chart
-          context: cicd-orchestrator
+      - aquasec/fs_scan:
+          context:
+            - cicd-orchestrator
           requires:
-            - Test Helm chart
+            - setup
           filters:
             branches:
-              only:
+              ignore:
                 - master
-                - /^\d+\.\d+\.x$/
+                - /^[0-999].[0-999].x/
+          pre-steps:
+            - keeper/env-export:
+                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
+                var-name: AQUA_KEY
+            - keeper/env-export:
+                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/Secret
+                var-name: AQUA_SECRET
+            - keeper/env-export:
+                secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
+                var-name: GITHUB_TOKEN
       - run_postman_tests_mongo:
           context: cicd-orchestrator
           requires:
@@ -1917,6 +1871,100 @@ workflows:
                 - master
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
 
+      - aquasec/docker_image_scan:
+          context: cicd-orchestrator
+          pre-steps:
+            - keeper/env-export:
+                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
+                var-name: AQUA_KEY
+            - keeper/env-export:
+                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/Secret
+                var-name: AQUA_SECRET
+            - keeper/env-export:
+                secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/login
+                var-name: AQUA_USERNAME
+            - keeper/env-export:
+                secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/password
+                var-name: AQUA_PASSWORD
+            - keeper/env-export:
+                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/ScannerToken
+                var-name: SCANNER_TOKEN
+            - keeper/env-export:
+                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/login
+                var-name: AZURE_DOCKER_REGISTRY_USERNAME
+            - keeper/env-export:
+                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/password
+                var-name: AZURE_DOCKER_REGISTRY_PASSWORD
+            - keeper/env-export:
+                secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
+                var-name: GITHUB_TOKEN
+            - attach_workspace:
+                at: /tmp
+            - setup_remote_docker
+            - run:
+                name: Connect to Azure registry
+                command: |
+                  echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
+                  while IFS="" read -r line || [ -n "$line" ]
+                  do
+                    echo "Pull ${line}"
+                    docker pull "${line}"
+                  done < /tmp/built-docker-images.txt
+          requires:
+            - publish-images-azure-registry
+          scanner_url: https://82fb8f75da.cloud.aquasec.com
+          built_docker_image_file: /tmp/built-docker-images.txt
+          skip_remote_docker_step: true
+          filters:
+            branches:
+              only:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+
+      - aquasec/register_artifact:
+          context: cicd-orchestrator
+          pre-steps:
+            - keeper/env-export:
+                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
+                var-name: AQUA_KEY
+            - keeper/env-export:
+                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/Secret
+                var-name: AQUA_SECRET
+            - keeper/env-export:
+                secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/login
+                var-name: AQUA_USERNAME
+            - keeper/env-export:
+                secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/password
+                var-name: AQUA_PASSWORD
+            - keeper/env-export:
+                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/ScannerToken
+                var-name: SCANNER_TOKEN
+            - keeper/env-export:
+                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/login
+                var-name: AZURE_DOCKER_REGISTRY_USERNAME
+            - keeper/env-export:
+                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/password
+                var-name: AZURE_DOCKER_REGISTRY_PASSWORD
+            - keeper/env-export:
+                secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
+                var-name: GITHUB_TOKEN
+            - attach_workspace:
+                at: /tmp
+            - setup_remote_docker
+            - run:
+                name: Connect to Azure registry
+                command: |
+                  echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
+          requires:
+            - publish-images-azure-registry
+          built_docker_image_file: /tmp/built-docker-images.txt
+          debug: true
+          filters:
+            branches:
+              only:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+
   release:
     when:
       and:
@@ -1964,7 +2012,7 @@ workflows:
           dry_run: << pipeline.parameters.dry_run >>
           tag_latest: << pipeline.parameters.tag_latest >>
           tag_latest_support: << pipeline.parameters.tag_latest_support >>
-      - add-docker-images-in-snyk:
+      - add-docker-images-in-aqua:
           context: cicd-orchestrator
           requires:
             - build_n_push_am_ce_job
