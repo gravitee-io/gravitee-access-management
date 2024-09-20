@@ -59,6 +59,8 @@ import static java.util.Optional.ofNullable;
 import java.util.Set;
 import java.util.stream.Collectors;
 import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
+import static org.springframework.util.StringUtils.hasText;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -138,15 +140,8 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                 // put factors in context
                 routingContext.put("factors", factorsToRender(h.result(), routingContext.session()));
 
-                if (endUser.getPhoneNumbers() != null && !endUser.getPhoneNumbers().isEmpty()) {
-                    routingContext.put("phoneNumber", endUser.getPhoneNumbers().stream()
-                            .filter(attribute -> Boolean.TRUE.equals(attribute.isPrimary()))
-                            .findFirst()
-                            .orElse(endUser.getPhoneNumbers().get(0)).getValue());
-                }
-                if (endUser.getEmail() != null && !endUser.getEmail().isEmpty()) {
-                    routingContext.put("emailAddress", endUser.getEmail());
-                }
+                addPhoneNumberToRoutingContext(routingContext, endUser);
+                addEmailAddressToRoutingContext(routingContext, endUser);
 
                 routingContext.put(ConstantKeys.MFA_FORCE_ENROLLMENT, isForceMfaActive(client));
                 routingContext.put(ConstantKeys.ACTION_KEY, action);
@@ -156,6 +151,23 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         } catch (Exception ex) {
             logger.error("An error occurs while rendering MFA enroll page", ex);
             routingContext.fail(503);
+        }
+    }
+
+    private void addPhoneNumberToRoutingContext(RoutingContext routingContext, User endUser) {
+        if (hasText(endUser.getPhoneNumber())){
+            routingContext.put("phoneNumber", endUser.getPhoneNumber());
+        } else if (endUser.getPhoneNumbers() != null && !endUser.getPhoneNumbers().isEmpty()) {
+            routingContext.put("phoneNumber", endUser.getPhoneNumbers().stream()
+                    .filter(attribute -> Boolean.TRUE.equals(attribute.isPrimary()))
+                    .findFirst()
+                    .orElse(endUser.getPhoneNumbers().get(0)).getValue());
+        }
+    }
+
+    private void addEmailAddressToRoutingContext(RoutingContext routingContext, User endUser) {
+        if (endUser.getEmail() != null && !endUser.getEmail().isEmpty()) {
+            routingContext.put("emailAddress", endUser.getEmail());
         }
     }
 
