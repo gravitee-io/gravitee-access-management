@@ -54,6 +54,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -134,8 +135,8 @@ public class GoogleAuthenticationProviderTest {
         Request request = provider.signInUrl("https://gravitee.io", state);
 
         Assert.assertNotNull(request);
-        assertEquals(HttpMethod.GET, request.getMethod());
-        assertEquals(GoogleIdentityProviderConfiguration.AUTHORIZATION_URL + "?client_id=testClientId&response_type=code&scope=openid profile email&state=" + state + "&redirect_uri=https://gravitee.io", request.getUri());
+        assertThat(request.getMethod()).isEqualTo(HttpMethod.GET);
+        assertThat(request.getUri()).isEqualTo(GoogleIdentityProviderConfiguration.AUTHORIZATION_URL + "?client_id=testClientId&response_type=code&scope=openid profile email&redirect_uri=https://gravitee.io&state=" + state);
         assertNull(request.getHeaders());
     }
 
@@ -147,11 +148,11 @@ public class GoogleAuthenticationProviderTest {
         when(configuration.getClientId()).thenReturn("testClientId");
 
         final String state = RandomString.generate();
-        Request request = (Request) provider.asyncSignInUrl("https://gravitee.io", state).blockingGet();
+        Request request = provider.asyncSignInUrl("https://gravitee.io", state).blockingGet();
 
         Assert.assertNotNull(request);
-        assertEquals(HttpMethod.GET, request.getMethod());
-        assertEquals(GoogleIdentityProviderConfiguration.AUTHORIZATION_URL + "?client_id=testClientId&response_type=code&scope=openid profile email&state=" + state + "&redirect_uri=https://gravitee.io", request.getUri());
+        assertThat(request.getMethod()).isEqualTo(HttpMethod.GET);
+        assertThat(request.getUri()).isEqualTo(GoogleIdentityProviderConfiguration.AUTHORIZATION_URL + "?client_id=testClientId&response_type=code&scope=openid profile email&redirect_uri=https://gravitee.io&state=" + state);
         assertNull(request.getHeaders());
     }
 
@@ -171,8 +172,8 @@ public class GoogleAuthenticationProviderTest {
         Request request = provider.signInUrl("https://gravitee.io", state);
 
         Assert.assertNotNull(request);
-        assertEquals(HttpMethod.GET, request.getMethod());
-        assertEquals(GoogleIdentityProviderConfiguration.AUTHORIZATION_URL + "?client_id=testClientId&response_type=code&scope=other_scope other_scope2 openid profile email&state=" + state + "&redirect_uri=https://gravitee.io", request.getUri());
+        assertThat(request.getMethod()).isEqualTo(HttpMethod.GET);
+        assertThat(request.getUri()).isEqualTo(GoogleIdentityProviderConfiguration.AUTHORIZATION_URL + "?client_id=testClientId&response_type=code&scope=other_scope other_scope2 openid profile email&redirect_uri=https://gravitee.io&state=" + state);
         assertNull(request.getHeaders());
     }
 
