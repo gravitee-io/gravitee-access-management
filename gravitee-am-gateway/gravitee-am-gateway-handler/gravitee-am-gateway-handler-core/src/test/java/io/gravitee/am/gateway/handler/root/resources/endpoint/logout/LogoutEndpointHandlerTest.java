@@ -154,7 +154,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
     }
 
     @Test
-    public void shouldInvokeLogoutEndpoint_targetUrl_alloaw_atDomainLevel_appUrls_not_defined_emptyList() throws Exception {
+    public void shouldInvokeLogoutEndpoint_targetUrl_allow_atDomainLevel_appUrls_not_defined_emptyList() throws Exception {
         Client client = new Client();
         client.setClientId("123");
         // no redirectUris registered for logout at App Level
@@ -451,6 +451,40 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
                     assertTrue(location.endsWith("/error?post_logout_redirect_uri=https%3A%2F%2Ftest&id_token_hint=idToken&client_id=client-id&error=invalid_request&error_description=The+post_logout_redirect_uri+MUST+match+the+registered+callback+URLs"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldInvokeLogoutEndpoint_targetUrl_client_id_authorize_redirect_uri_client_id() throws Exception {
+        Client clientParam = new Client();
+        clientParam.setClientId("client-id-param");
+        clientParam.setPostLogoutRedirectUris(Arrays.asList("https://test"));
+
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setPostLogoutRedirectUris(Arrays.asList("https://dev"));
+
+        User endUser = new User();
+        endUser.setId("user-id");
+        endUser.setClient("client-id");
+
+        when(userService.extractSessionFromIdToken("idToken")).thenReturn(Single.just(new UserToken(endUser, client)));
+        when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, clientParam);
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/logout?post_logout_redirect_uri=https%3A%2F%2Ftest&id_token_hint=idToken&client_id=client-id-param",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.startsWith("https://test"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }

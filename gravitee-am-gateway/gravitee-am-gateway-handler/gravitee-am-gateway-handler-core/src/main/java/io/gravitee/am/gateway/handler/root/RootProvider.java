@@ -423,6 +423,7 @@ public class RootProvider extends AbstractProtocolProvider {
 
         // logout route
         rootRouter.route(PATH_LOGOUT)
+                .handler(new ClientRequestParseHandler(clientSyncService).setRequired(false).setContinueOnError(true))
                 .handler(new UserRememberMeResponseHandler(rememberMeCookieName))
                 .handler(new LogoutEndpoint(domain, clientSyncService, jwtService, userService, authenticationFlowContextService, identityProviderManager, certificateManager, webClient));
         rootRouter.route(PATH_LOGOUT_CALLBACK)
