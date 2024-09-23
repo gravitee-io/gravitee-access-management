@@ -396,7 +396,7 @@ repositories:
   #      type:                      # Type of the truststore, supports jks, pem, pkcs12 (when sslEnabled is true, default null)
   #      password:                  # Truststore password (when sslEnabled is true, default null)
   gateway:
-    type: ${repositories.management.type}
+    type: mongodb
     use-management-settings: true
     mongodb:
       dbname: ${ds.mongodb.dbname}
