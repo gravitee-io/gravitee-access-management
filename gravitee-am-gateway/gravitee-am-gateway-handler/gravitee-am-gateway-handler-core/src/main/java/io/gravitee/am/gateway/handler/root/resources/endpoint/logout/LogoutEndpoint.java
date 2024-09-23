@@ -55,7 +55,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import java.util.Objects;
+
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static java.util.Objects.isNull;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -103,9 +106,13 @@ public class LogoutEndpoint extends AbstractLogoutEndpoint {
         restoreCurrentSession(routingContext, sessionHandler -> {
             final UserToken currentSession = sessionHandler.result();
 
+
             if (currentSession != null) {
                 // put current session in context for later use
-                if (currentSession.getClient() != null) {
+                // note that the client coming from the session is used only
+                // if the client_id is missing from the context (ie. missing from the request param)
+                final var isClientMissing = isNull(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY));
+                if (currentSession.getClient() != null && isClientMissing) {
                     Client safeClient = new Client(currentSession.getClient());
                     safeClient.setClientSecret(null);
                     routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, safeClient);
