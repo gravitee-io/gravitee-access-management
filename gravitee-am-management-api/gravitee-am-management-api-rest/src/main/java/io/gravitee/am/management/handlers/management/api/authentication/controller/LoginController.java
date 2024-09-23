@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -65,7 +66,6 @@ public class LoginController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LoginController.class);
     private static final String LOGIN_VIEW = "login";
-    private static final Duration SOCIAL_IDP_STATE_EXPIRES_AFTER = Duration.ofMinutes(5);
     private static final Map<String, String> socialProviderTypes = Map.of(
             "github-am-idp", "github",
             "google-am-idp", "google",
@@ -92,6 +92,16 @@ public class LoginController {
     @Autowired
     @Qualifier("managementSecretKey")
     private Key key;
+
+    /**
+     * How long the state JWT generated for social providers remains valid
+     */
+    @Value("${security.socialProviderStateExpirationSeconds:900}")
+    private int socialIdpStateExpirationSeconds;
+
+    private Duration getSocialIdpStateExpiration() {
+        return Duration.ofSeconds(socialIdpStateExpirationSeconds);
+    }
 
     @RequestMapping(value = "/login")
     public ModelAndView login(HttpServletRequest request, @RequestParam(value = ORGANIZATION_PARAMETER_NAME, defaultValue = "DEFAULT") String organizationId) {
@@ -129,7 +139,7 @@ public class LoginController {
                     var state = new JWT(Map.of(
                             Claims.NONCE, SecureRandomString.generate(),
                             Claims.IAT, now.getEpochSecond(),
-                            Claims.EXP, now.plus(SOCIAL_IDP_STATE_EXPIRES_AFTER).getEpochSecond()));
+                            Claims.EXP, now.plus(getSocialIdpStateExpiration()).getEpochSecond()));
                     socialAuthenticationProvider.asyncSignInUrl(buildRedirectUri(request, identityId), state, this::processState)
                             .map(Optional::ofNullable)
                             .blockingGet()
