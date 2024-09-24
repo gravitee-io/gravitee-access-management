@@ -15,13 +15,16 @@
  */
 package io.gravitee.am.management.handlers.management.api.authentication.filter;
 
+import io.gravitee.am.common.crypto.CryptoUtils;
+import io.gravitee.am.common.exception.jwt.JWTException;
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.management.handlers.management.api.authentication.http.JettyHttpServerRequest;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.idp.IdentityProviderManager;
-import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.JWTGenerator;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.EndUserAuthentication;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
@@ -31,6 +34,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationEventPublisher;
@@ -49,6 +53,7 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationFa
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.security.Key;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -73,10 +78,15 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
     private IdentityProviderManager identityProviderManager;
 
     @Autowired
-    private JWTGenerator jwtGenerator;
+    private AuthenticationSuccessHandler successHandler;
 
     @Autowired
-    private AuthenticationSuccessHandler successHandler;
+    @Qualifier("managementJwtParser")
+    private JWTParser parser;
+    @Autowired
+    @Qualifier("managementSecretKey")
+    private Key managementKey;
+    
 
     public SocialAuthenticationFilter(String defaultFilterProcessesUrl) {
         super(defaultFilterProcessesUrl);
@@ -97,9 +107,9 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
         if (authenticationProvider == null || identityProvider == null || identityProvider.getReferenceType() != ReferenceType.ORGANIZATION) {
             throw new ProviderNotFoundException("Social Provider " + providerId + " not found");
         }
-
         SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(new JettyHttpServerRequest(request));
         authenticationContext.set(REDIRECT_URI, buildRedirectUri(request));
+        authenticationContext.set(ConstantKeys.IDP_CODE_VERIFIER, getIdpCodeVerifier(request));
         EndUserAuthentication provAuthentication = new EndUserAuthentication("__social__", "__social__", authenticationContext);
 
         try {
@@ -119,6 +129,23 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
         } catch (Exception ex) {
             log.error("Unable to authenticate with oauth2 provider {}", providerId, ex);
             throw new BadCredentialsException(ex.getMessage(), ex);
+        }
+    }
+
+    private String getIdpCodeVerifier(HttpServletRequest request) {
+        var state = request.getParameter("state");
+        if (state == null) {
+            return null;
+        }
+        try {
+            var jwt = parser.parse(state);
+            var ecv = (String) jwt.get(Claims.ENCRYPTED_CODE_VERIFIER);
+            if (ecv == null) {
+                return null;
+            }
+            return CryptoUtils.decrypt(ecv, managementKey);
+        } catch (JWTException e) {
+            return null;
         }
     }
 
@@ -150,6 +177,7 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
 
     /**
      * Determines if a user is already authenticated.
+     *
      * @return
      */
     private boolean authenticated() {

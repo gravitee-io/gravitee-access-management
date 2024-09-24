@@ -244,6 +244,8 @@ security:
       settings:
         ## BCrypt rounds. Default: 10
         rounds: 10
+  # How long the state passed to a social identity providers for organisational users remains valid (default: 15min)
+  # socialProviderStateExpirationSeconds: 900
   ## authentication providers
   ## currently, only "in memory" provider is supported
   providers:
