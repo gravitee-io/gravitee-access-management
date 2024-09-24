@@ -22,13 +22,16 @@ import io.gravitee.am.identityprovider.api.common.Request;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
-import java.util.function.Function;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface SocialAuthenticationProvider extends AuthenticationProvider {
+
+    @FunctionalInterface
+    interface StateEncoder {
+        Single<String> encode(JWT jwt);
+    }
 
     /**
      * Generate the signIn Url.
@@ -45,8 +48,8 @@ public interface SocialAuthenticationProvider extends AuthenticationProvider {
      * Generate the signIn Url in asynchronous way
      * Allows introspecting and modifying the state JWT; the state MUST be encoded using the provided stateEncoder
      */
-    default Maybe<Request> asyncSignInUrl(String redirectUri, JWT state, Function<JWT, Single<String>> stateEncoder) {
-        return stateEncoder.apply(state)
+    default Maybe<Request> asyncSignInUrl(String redirectUri, JWT state, StateEncoder stateEncoder) {
+        return stateEncoder.encode(state)
                 .flatMapMaybe(encodedState -> asyncSignInUrl(redirectUri, encodedState));
     }
 
