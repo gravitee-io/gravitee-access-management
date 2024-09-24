@@ -184,7 +184,7 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
         return stateJwtCertProvider.getProvider()
                 .key()
                 .map(k -> {
-                    var ecv = new String(Base64.getUrlDecoder().decode((String) stateJwt.get(Claims.ENCRYPTED_CODE_VERIFIER)));
+                    var ecv = (String) stateJwt.get(Claims.ENCRYPTED_CODE_VERIFIER);
                     return CryptoUtils.decrypt(ecv, (Key) k.getValue());
                 });
     }
