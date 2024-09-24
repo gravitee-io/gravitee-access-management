@@ -51,10 +51,17 @@ class CodeChallengeMethodTest {
         assertThat(CodeChallengeMethod.PLAIN.getChallenge(verifier)).isEqualTo(verifier);
     }
 
-    @Test
-    void s256_challengeMeetsSpec() {
-        var verifier = "5uper-secre7-v3rifier";
-        var expectedChallenge = "lDzwTM99eiiW1qFHE5fhagGz2rKnSZ4iMxWKo29c6ZE"; // = base64url_nopadding(sha256(verifier)))
+    @ParameterizedTest
+    // challenges generated using the following command:
+    // $ python3 -c 'import base64,hashlib,sys; print(str(base64.urlsafe_b64encode(hashlib.sha256(sys.argv[1].encode("ascii")).digest()).replace(b"=",b""),"ascii"))' "<VERIFIER>"
+    @CsvSource(textBlock = """
+            5uper-secre7-v3rifier,lDzwTM99eiiW1qFHE5fhagGz2rKnSZ4iMxWKo29c6ZE
+            lorem ipsum dolor sed amet,YOw3BJFqChrlp9vhd6EEK_IDA1UIbT2by1DRq_C8Qhc
+            ' ',Nqnn8clbgv-5l0PgxcTOldg8mkMKrFn4TvPL-rYUUGg
+            '',47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU
+            ",ijMf3ecDLzOnHhsuJX2AFm40jgD8sXkU9IvbV6HGMAc
+            """)
+    void s256_challengeMeetsSpec(String verifier, String expectedChallenge) {
         assertThat(CodeChallengeMethod.S256.getChallenge(verifier)).isEqualTo(expectedChallenge);
     }
 

@@ -17,6 +17,7 @@
 package io.gravitee.am.plugins.handlers.api.core.impl;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
 import org.slf4j.Logger;
@@ -33,7 +34,8 @@ public class ConfigurationFactoryImpl<CONFIGURATION> implements ConfigurationFac
     private final static Logger logger = LoggerFactory.getLogger(ConfigurationFactoryImpl.class);
 
     private final ObjectMapper objectMapper = new ObjectMapper()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true);
 
     @Override
     public <T extends CONFIGURATION> T create(Class<T> clazz, String content) {
