@@ -32,7 +32,6 @@ import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -69,17 +68,23 @@ public class MongoScopeApprovalRepository extends AbstractGatewayMongoRepository
         final var indexes = new HashMap<Document, IndexOptions>();
         indexes.put(new Document(FIELD_TRANSACTION_ID, 1), new IndexOptions().name("t1"));
         indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_USER_ID, 1), new IndexOptions().name("d1u1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1), new IndexOptions().name("d1c1u1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1).append(FIELD_SCOPE, 1), new IndexOptions().name("d1c1u1s1"));
         indexes.put(new Document(FIELD_DOMAIN, 1)
-                .append(FIELD_CLIENT_ID, 1)
                 .append(FIELD_USER_ID, 1)
-                .append(FIELD_USER_SOURCE, 1)
-                .append(FIELD_USER_EXTERNAL_ID, 1), new IndexOptions().name("d1c1u1"));
-        indexes.put(new Document(FIELD_DOMAIN, 1)
-                .append(FIELD_CLIENT_ID, 1)
-                .append(FIELD_USER_ID, 1)
-                .append(FIELD_USER_SOURCE, 1)
                 .append(FIELD_USER_EXTERNAL_ID, 1)
-                .append(FIELD_SCOPE, 1), new IndexOptions().name("d1c1u1s1"));
+                .append(FIELD_USER_SOURCE, 1), new IndexOptions().name("d1u1ue1us1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1)
+                .append(FIELD_CLIENT_ID, 1)
+                .append(FIELD_USER_ID, 1)
+                .append(FIELD_USER_EXTERNAL_ID, 1)
+                .append(FIELD_USER_SOURCE, 1), new IndexOptions().name("d1c1u1ue1us1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1)
+                .append(FIELD_CLIENT_ID, 1)
+                .append(FIELD_USER_ID, 1)
+                .append(FIELD_USER_EXTERNAL_ID, 1)
+                .append(FIELD_USER_SOURCE, 1)
+                .append(FIELD_SCOPE, 1), new IndexOptions().name("d1c1u1ue1us1s1"));
         // expire after index
         indexes.put(new Document(FIELD_EXPIRES_AT, 1), new IndexOptions().name("e1").expireAfter(0L, TimeUnit.SECONDS));
 
