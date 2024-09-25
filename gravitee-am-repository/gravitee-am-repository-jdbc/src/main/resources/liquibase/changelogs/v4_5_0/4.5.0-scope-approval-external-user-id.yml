@@ -23,3 +23,35 @@ databaseChangeLog:
                   name: user_source
               - column:
                   name: user_external_id
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: user_id
+              - column:
+                  name: user_source
+              - column:
+                  name: user_external_id
+            indexName: idx_scope_approvals_domain_user_id_extid
+            tableName: scope_approvals
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: client_id
+              - column:
+                  name: user_id
+              - column:
+                  name: user_source
+              - column:
+                  name: user_external_id
+              - column:
+                  name: scope
+            indexName: idx_scope_approvals_domain_client_user_id_extid_scope
+            tableName: scope_approvals
+            unique: false
