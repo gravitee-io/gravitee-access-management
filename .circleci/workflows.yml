@@ -1102,6 +1102,7 @@ jobs:
     environment:
       DRY_RUN: << parameters.dry_run >>
       RC_REQUESTED: << parameters.rc_requested >>
+      GIO_VERSION: << parameters.graviteeio_version >>
     steps:
       - checkout
       - restore-maven-job-cache:
@@ -1136,6 +1137,11 @@ jobs:
             
               export MVN_PRJ_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}"
               echo "${MVN_PRJ_VERSION}" > /tmp/gio.maven.project.release.version
+            fi;
+            
+            if [ "${MVN_PRJ_VERSION}" != "${GIO_VERSION}" ]; then
+              echo "Project version ${MVN_PRJ_VERSION} does not match with provided gio_version param ${GIO_VERSION}"
+              exit 1
             fi;
 
             # 2./ and then we can run the [mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=1.3.1 -DgenerateBackupPoms=false]
@@ -1979,6 +1985,7 @@ workflows:
             - setup
           dry_run: << pipeline.parameters.dry_run >>
           rc_requested: << pipeline.parameters.rc_requested >>
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
 
   publish_maven_central:
     when:
