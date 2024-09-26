@@ -344,7 +344,12 @@ public class TokenServiceImpl implements TokenService {
             jwt.setClaimsRequestParameter(requestParameters.getFirst(Parameters.CLAIMS));
         }
 
-        // set custom claims
+        //set custom claims from extension grant
+        if (request.getCustomClaims() != null) {
+            jwt.putAll(request.getCustomClaims());
+        }
+
+        // set custom claims from client
         enhanceJWT(jwt, client.getTokenCustomClaims(), TokenTypeHint.ACCESS_TOKEN, executionContext);
 
         return jwt;

@@ -125,6 +125,8 @@ public class OAuth2Request extends BaseRequest {
 
     private MultiValueMap<String, String> pathParameters = null;
 
+    private Map<String, String> customClaims = null;
+
     /**
      * REQUIRED for <a href=" https://datatracker.ietf.org/doc/html/rfc8705#section-3.1">Certificate Bound Access Token</a>
      */
@@ -146,6 +148,7 @@ public class OAuth2Request extends BaseRequest {
         this.permissions = other.permissions;
         this.pathParameters = other.pathParameters;
         this.confirmationMethodX5S256 = other.confirmationMethodX5S256;
+        this.customClaims = other.customClaims;
 
         //BaseRequest
         this.setId(other.getId());
@@ -165,6 +168,7 @@ public class OAuth2Request extends BaseRequest {
         this.setSslSession(other.getSslSession());
         this.setHttpResponse(other.getHttpResponse());
         this.setHost(other.host());
+        this.setCustomClaims(other.getCustomClaims());
     }
 
     public OAuth2Request() {
@@ -285,6 +289,15 @@ public class OAuth2Request extends BaseRequest {
     public void setConfirmationMethodX5S256(String confirmationMethodX5S256) {
         this.confirmationMethodX5S256 = confirmationMethodX5S256;
     }
+
+    public Map<String, String> getCustomClaims() {
+        return customClaims;
+    }
+
+    public void setCustomClaims(Map<String, String> customClaims) {
+        this.customClaims = customClaims;
+    }
+
 
     public boolean shouldGenerateIDToken() {
         if (getResponseType() != null && ResponseType.CODE_TOKEN.equals(getResponseType())) {

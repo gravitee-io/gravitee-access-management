@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.granter;
 
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
@@ -29,6 +30,8 @@ import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -168,6 +171,11 @@ public class AbstractTokenGranter implements TokenGranter {
                 .map(oAuth2Request -> {
                     if (endUser != null) {
                         oAuth2Request.setSubject(endUser.getId());
+                        if (endUser.getAdditionalInformation() != null) {
+                            Map<String, String> additionalParameters = new HashMap<>();
+                            endUser.getAdditionalInformation().entrySet().stream().filter(es -> !Claims.getAllClaims().contains(es.getKey())).forEach(e -> additionalParameters.put(e.getKey(), (String) e.getValue()));
+                            oAuth2Request.setCustomClaims(additionalParameters);
+                        }
                     }
                     oAuth2Request.setSupportRefreshToken(isSupportRefreshToken(client));
                     return oAuth2Request;
