@@ -87,7 +87,8 @@ public class GroupServiceTest {
 
         io.gravitee.am.model.Group createdGroup = mock(io.gravitee.am.model.Group.class);
         when(createdGroup.getName()).thenReturn("my-group");
-
+        when(createdGroup.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
+        when(createdGroup.getReferenceId()).thenReturn("id");
         when(domain.getId()).thenReturn(domainId);
         when(groupRepository.findByName(ReferenceType.DOMAIN, domain.getId(), newGroup.getDisplayName())).thenReturn(Maybe.empty());
         when(groupRepository.create(any())).thenReturn(Single.just(createdGroup));
@@ -115,6 +116,8 @@ public class GroupServiceTest {
 
         io.gravitee.am.model.Group createdGroup = mock(io.gravitee.am.model.Group.class);
         when(createdGroup.getName()).thenReturn("my-group");
+        when(createdGroup.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
+        when(createdGroup.getReferenceId()).thenReturn("id");
 
         when(domain.getId()).thenReturn(domainId);
         when(groupRepository.findByName(ReferenceType.DOMAIN, domain.getId(), newGroup.getDisplayName())).thenReturn(Maybe.empty());
@@ -170,7 +173,10 @@ public class GroupServiceTest {
         when(domain.getName()).thenReturn(domainName);
         when(objectMapper.convertValue(any(), eq(ObjectNode.class))).thenReturn(groupNode);
         when(objectMapper.treeToValue(groupNode, Group.class)).thenReturn(patchGroup);
-        when(groupRepository.findById(groupId)).thenReturn(Maybe.just(new io.gravitee.am.model.Group()));
+        io.gravitee.am.model.Group group = new io.gravitee.am.model.Group();
+        group.setReferenceType(ReferenceType.DOMAIN);
+        group.setReferenceId("id");
+        when(groupRepository.findById(groupId)).thenReturn(Maybe.just(group));
         when(groupRepository.findByName(eq(ReferenceType.DOMAIN), anyString(), anyString())).thenReturn(Maybe.empty());
         doAnswer(invocation -> {
             io.gravitee.am.model.Group groupToUpdate = invocation.getArgument(0);

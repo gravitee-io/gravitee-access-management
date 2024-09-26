@@ -19,6 +19,7 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -189,7 +190,6 @@ public class FlowServiceImpl implements FlowService {
     @Override
     public Single<Flow> update(ReferenceType referenceType, String referenceId, String id, Flow flow, User principal) {
         log.debug("Update a flow {} ", flow);
-
         return flowRepository.findById(referenceType, referenceId, id)
                 .switchIfEmpty(Single.error(new FlowNotFoundException(id)))
                 .flatMap(oldFlow -> {
@@ -227,7 +227,7 @@ public class FlowServiceImpl implements FlowService {
                                 return eventService.create(event).flatMap(__ -> Single.just(flow1));
                             })
                             .doOnSuccess(flow1 -> auditService.report(AuditBuilder.builder(FlowAuditBuilder.class).principal(principal).type(EventType.FLOW_UPDATED).oldValue(oldFlow).flow(flow1)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(FlowAuditBuilder.class).principal(principal).type(EventType.FLOW_UPDATED).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(FlowAuditBuilder.class).principal(principal).reference( new Reference(referenceType, referenceId)).type(EventType.FLOW_UPDATED).throwable(throwable)));
 
                 })
                 .onErrorResumeNext(ex -> {
@@ -267,7 +267,7 @@ public class FlowServiceImpl implements FlowService {
                             .andThen(eventService.create(event))
                             .ignoreElement()
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(FlowAuditBuilder.class).principal(principal).type(EventType.FLOW_DELETED).flow(flow)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(FlowAuditBuilder.class).principal(principal).type(EventType.FLOW_DELETED).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(FlowAuditBuilder.class).reference(new Reference(flow.getReferenceType(), flow.getReferenceId())).principal(principal).type(EventType.FLOW_DELETED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -395,7 +395,7 @@ public class FlowServiceImpl implements FlowService {
                     return Single.error(new TechnicalManagementException("An error has occurred while trying to create a flow", ex));
                 })
                 .doOnSuccess(flow1 -> auditService.report(AuditBuilder.builder(FlowAuditBuilder.class).principal(principal).type(EventType.FLOW_CREATED).flow(flow1)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(FlowAuditBuilder.class).principal(principal).type(EventType.FLOW_CREATED).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(FlowAuditBuilder.class).principal(principal).reference(new Reference(referenceType, referenceId)).type(EventType.FLOW_CREATED).throwable(throwable)));
     }
 
     private Flow buildFlow(Type type, ReferenceType referenceType, String referenceId) {

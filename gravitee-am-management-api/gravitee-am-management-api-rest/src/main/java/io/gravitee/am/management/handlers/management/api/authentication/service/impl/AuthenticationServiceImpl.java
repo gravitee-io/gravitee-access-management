@@ -26,6 +26,7 @@ import io.gravitee.am.management.handlers.management.api.authentication.provider
 import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Organization;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.service.AuditService;
@@ -124,7 +125,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                             newUser.setAdditionalInformation(principal.getAdditionalInformation());
                             return userService.create(newUser)
                                     .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).user(user1)))
-                                    .doOnError(err -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).throwable(err)))
+                                    .doOnError(err -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).reference(Reference.organization(organizationId)).throwable(err)))
                                     .flatMap(user -> userService.setRoles(principal, user).andThen(Single.just(user)));
                         }
                         return Single.error(ex);
@@ -132,8 +133,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     .flatMap(userService::enhance)
                     .doOnSuccess(user -> auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class)
                             .principal(authentication)
-                            .referenceType(ReferenceType.ORGANIZATION)
-                            .referenceId(organizationId).user(user)
+                            .reference(Reference.organization(organizationId))
+                            .user(user)
                             .ipAddress(details.get(IP_ADDRESS_KEY))
                             .userAgent(details.get(USER_AGENT_KEY)))
                     );

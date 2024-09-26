@@ -24,6 +24,7 @@ import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.management.service.CommonUserService;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.membership.MemberType;
@@ -133,7 +134,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                 .flatMap(user -> updateWithProviderIfNecessary(updateUser, user))
                 .flatMap(user -> getUserService().update(referenceType, referenceId, id, user)
                         .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).oldValue(user).user(user1)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).throwable(throwable))));
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).reference(new Reference(referenceType, referenceId)).throwable(throwable))));
     }
 
     private Single<UpdateUser> updateWithProviderIfNecessary(UpdateUser updateUser, User user) {
@@ -170,7 +171,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                     return getUserService().update(user);
                 })
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).user(user1)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
     }
 
     @Override
@@ -224,7 +225,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                         .andThen(passwordHistoryService.deleteByUser(userId))
                         .toSingleDefault(user))
                         .doOnSuccess(u -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(u)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).throwable(throwable)));
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
     }
 
     protected io.gravitee.am.identityprovider.api.User convert(AbstractNewUser newUser) {

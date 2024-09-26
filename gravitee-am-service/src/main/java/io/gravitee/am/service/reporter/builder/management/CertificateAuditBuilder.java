@@ -18,6 +18,7 @@ package io.gravitee.am.service.reporter.builder.management;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 
 /**
@@ -35,7 +36,7 @@ public class CertificateAuditBuilder extends ManagementAuditBuilder<CertificateA
             if (EventType.CERTIFICATE_CREATED.equals(getType()) || EventType.CERTIFICATE_UPDATED.equals(getType())) {
                 setNewValue(certificate);
             }
-            domain(certificate.getDomain());
+            reference(Reference.domain(certificate.getDomain()));
             setTarget(certificate.getId(), EntityType.CERTIFICATE, null, certificate.getName(), ReferenceType.DOMAIN, certificate.getDomain());
         }
         return this;

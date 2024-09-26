@@ -25,6 +25,7 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordPolicy;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.Template;
@@ -207,8 +208,9 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                                                 return Single.error(InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value"));
                                                             }
                                                             return Single.just(transform);
-                                                        }).flatMapCompletable(user -> userValidator.validate(user))
-                                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)))
+                                                        })
+                                                        .flatMapCompletable(user -> userValidator.validate(user))
+                                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).reference(Reference.domain(domain.getId())).throwable(throwable)))
                                                         .andThen(Single.defer(() -> userProvider.create(convert(newUser))))
                                                         .map(idpUser -> {
                                                             // AM 'users' collection is not made for authentication (but only management stuff)
@@ -259,7 +261,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                                                    .toSingle()
                                                                    .flatMap(user -> userService.create(user)
                                                                     .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
-                                                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)))))
+                                                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).reference(Reference.domain(domain.getId())).throwable(throwable)))))
                                                         .flatMap(user -> {
                                                             // end pre-registration user if required
                                                             AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
@@ -383,7 +385,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                         } else {
                                             emailService.send(domain1, optClient.orElse(null), template, user)
                                                     .doOnSuccess(__ -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(resoleEventType(template)).user(user)))
-                                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(resoleEventType(template)).throwable(throwable)))
+                                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(resoleEventType(template)).reference(Reference.domain(domainId)).throwable(throwable)))
                                                     .subscribe();
                                         }
                                     })
@@ -415,7 +417,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                             });
                 })
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_LOCKED).user(user1)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_LOCKED).throwable(throwable)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_LOCKED).reference(new Reference(referenceType, referenceId)).throwable(throwable)))
                 .ignoreElement();
     }
 
@@ -436,7 +438,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                     return loginAttemptService.reset(criteria).andThen(userService.update(user));
                 })
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UNLOCKED).user(user1)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UNLOCKED).throwable(throwable)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UNLOCKED).reference(new Reference(referenceType, referenceId)).throwable(throwable)))
                 .ignoreElement();
     }
 
@@ -459,7 +461,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                     userToUpdate.setFactors(factors);
                     return userService.update(userToUpdate)
                             .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).user(user1).oldValue(oldUser)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).user(userToUpdate).throwable(throwable)));
                 });
     }
 
@@ -504,7 +506,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                             // and update the user
                             .andThen(Single.defer(() -> userService.update(userToUpdate)))
                             .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_ROLES_ASSIGNED).oldValue(oldUser).user(user1)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_ROLES_ASSIGNED).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_ROLES_ASSIGNED).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
                 });
     }
 

@@ -36,6 +36,7 @@ import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
@@ -229,7 +230,12 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                     }
                     return Single.just(user);
                 })
-                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_LOCKED).domain(criteria.domain()).client(criteria.client()).principal(null).user(user1)))
+                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
+                        .type(EventType.USER_LOCKED)
+                        .reference(Reference.domain(criteria.domain()))
+                        .client(criteria.client())
+                        .principal(null)
+                        .user(user1)))
                 .ignoreElement();
     }
 

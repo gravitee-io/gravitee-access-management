@@ -110,6 +110,8 @@ public class DefaultOrganizationUpgraderTest {
 
         User adminUser = new User();
         adminUser.setId("admin-id");
+        adminUser.setReferenceId(Organization.DEFAULT);
+        adminUser.setReferenceType(ReferenceType.ORGANIZATION);
 
         final Organization organization = new Organization();
         when(organizationService.createDefault()).thenReturn(Maybe.just(organization));
@@ -207,6 +209,8 @@ public class DefaultOrganizationUpgraderTest {
 
         User adminUser = new User();
         adminUser.setId("admin-id");
+        adminUser.setReferenceId(Organization.DEFAULT);
+        adminUser.setReferenceType(ReferenceType.ORGANIZATION);
 
         Organization defaultOrganization = new Organization();
         defaultOrganization.setId(Organization.DEFAULT);

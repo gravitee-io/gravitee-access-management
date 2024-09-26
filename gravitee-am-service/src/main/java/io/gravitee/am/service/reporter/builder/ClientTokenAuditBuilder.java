@@ -18,6 +18,7 @@ package io.gravitee.am.service.reporter.builder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
@@ -82,7 +83,10 @@ public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAudi
         if (client != null) {
             setActor(client.getId(), EntityType.APPLICATION, client.getClientName(), client.getClientName(), ReferenceType.DOMAIN, client.getDomain());
             super.client(client);
-            super.domain(client.getDomain());
+            if(client.getDomain() != null){
+                reference(Reference.domain(client.getDomain()));
+            }
+
         }
         return this;
     }
@@ -91,7 +95,8 @@ public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAudi
         if (user != null) {
             setActor(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId(), user.getExternalId(), user.getSource());
             if (ReferenceType.DOMAIN.equals(user.getReferenceType())) {
-                super.domain(user.getReferenceId());
+                reference(Reference.domain(user.getReferenceId()));
+
             }
         }
         return this;
@@ -101,7 +106,7 @@ public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAudi
         if (user != null) {
             setTarget(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId(), user.getExternalId(), user.getSource());
             if (ReferenceType.DOMAIN.equals(user.getReferenceType())) {
-                super.domain(user.getReferenceId());
+                reference(Reference.domain(user.getReferenceId()));
             }
         }
         return this;

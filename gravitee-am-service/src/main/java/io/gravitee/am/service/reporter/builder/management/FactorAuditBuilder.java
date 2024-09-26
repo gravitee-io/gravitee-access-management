@@ -18,6 +18,7 @@ package io.gravitee.am.service.reporter.builder.management;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Factor;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 
 /**
@@ -35,7 +36,7 @@ public class FactorAuditBuilder extends ManagementAuditBuilder<FactorAuditBuilde
             if (EventType.FACTOR_CREATED.equals(getType()) || EventType.FACTOR_UPDATED.equals(getType())) {
                 setNewValue(factor);
             }
-            domain(factor.getDomain());
+            reference(Reference.domain(factor.getDomain()));
             setTarget(factor.getId(), EntityType.FACTOR, null, factor.getName(), ReferenceType.DOMAIN, factor.getDomain());
         }
         return this;

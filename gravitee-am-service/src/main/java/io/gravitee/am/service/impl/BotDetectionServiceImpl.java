@@ -21,6 +21,7 @@ import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.BotDetection;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -170,8 +171,15 @@ public class BotDetectionServiceImpl implements BotDetectionService {
                     Event event = new Event(Type.BOT_DETECTION, new Payload(botDetectionId, ReferenceType.DOMAIN, domainId, Action.DELETE));
                     return Completable.fromSingle(botDetectionRepository.delete(botDetectionId)
                             .andThen(eventService.create(event)))
-                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class).principal(principal).type(EventType.BOT_DETECTION_DELETED).botDetection(botDetection)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class).principal(principal).type(EventType.BOT_DETECTION_DELETED).throwable(throwable)));
+                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class)
+                                    .principal(principal)
+                                    .type(EventType.BOT_DETECTION_DELETED)
+                                    .botDetection(botDetection)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class)
+                                    .principal(principal)
+                                    .type(EventType.BOT_DETECTION_DELETED)
+                                    .reference(new Reference(botDetection.getReferenceType(), botDetection.getReferenceId()))
+                                    .throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

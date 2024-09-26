@@ -18,6 +18,7 @@ package io.gravitee.am.service.reporter.builder.management;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Group;
+import io.gravitee.am.model.Reference;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -37,9 +38,7 @@ public class GroupAuditBuilder extends ManagementAuditBuilder<GroupAuditBuilder>
                 setNewValue(group);
             }
 
-            referenceType(group.getReferenceType());
-            referenceId(group.getReferenceId());
-
+            reference(new Reference(group.getReferenceType(), group.getReferenceId()));
             setTarget(group.getId(), EntityType.GROUP, null, group.getName(), group.getReferenceType(), group.getReferenceId());
         }
         return this;

@@ -216,7 +216,7 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
                         user.setUpdatedAt(user.getCreatedAt());
                         return create(user)
                                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).user(user1)))
-                                .doOnError(err -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).throwable(err)));
+                                .doOnError(err -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).reference(new Reference(referenceType, referenceId)).throwable(err)));
                     }
                 })
                 .onErrorResumeNext(ex -> {

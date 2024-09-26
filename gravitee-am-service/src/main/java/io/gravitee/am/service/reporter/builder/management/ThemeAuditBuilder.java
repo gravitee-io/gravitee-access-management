@@ -17,6 +17,7 @@ package io.gravitee.am.service.reporter.builder.management;
 
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Theme;
 
 /**
@@ -24,10 +25,6 @@ import io.gravitee.am.model.Theme;
  * @author GraviteeSource Team
  */
 public class ThemeAuditBuilder extends ManagementAuditBuilder<ThemeAuditBuilder> {
-
-    public ThemeAuditBuilder() {
-        super();
-    }
 
     public ThemeAuditBuilder theme(Theme theme) {
         if (theme != null) {
@@ -37,9 +34,7 @@ public class ThemeAuditBuilder extends ManagementAuditBuilder<ThemeAuditBuilder>
                 setNewValue(theme);
             }
 
-            referenceType(theme.getReferenceType());
-            referenceId(theme.getReferenceId());
-
+            reference(new Reference(theme.getReferenceType(), theme.getReferenceId()));
             setTarget(theme.getId(), EntityType.THEME, null, null, theme.getReferenceType(), theme.getReferenceId());
         }
         return this;

@@ -21,6 +21,7 @@ import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.DeviceIdentifier;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -114,7 +115,7 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a device identifier", ex));
                 })
                 .doOnSuccess(detection -> auditService.report(AuditBuilder.builder(DeviceIdentifierAuditBuilder.class).principal(principal).type(EventType.DEVICE_IDENTIFIER_CREATED).deviceIdentifier(detection)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(DeviceIdentifierAuditBuilder.class).principal(principal).type(EventType.DEVICE_IDENTIFIER_CREATED).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(DeviceIdentifierAuditBuilder.class).principal(principal).type(EventType.DEVICE_IDENTIFIER_CREATED).reference(Reference.domain(domain)).throwable(throwable)));
     }
 
     @Override
@@ -129,14 +130,14 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
                     deviceIdentifierToUpdate.setConfiguration(updateDeviceIdentifier.getConfiguration());
                     deviceIdentifierToUpdate.setUpdatedAt(new Date());
 
-                    return  deviceIdentifierRepository.update(deviceIdentifierToUpdate)
+                    return deviceIdentifierRepository.update(deviceIdentifierToUpdate)
                             .flatMap(detection -> {
                                 // create event for sync process
                                 Event event = new Event(Type.DEVICE_IDENTIFIER, new Payload(detection.getId(), detection.getReferenceType(), detection.getReferenceId(), Action.UPDATE));
                                 return eventService.create(event).flatMap(__ -> Single.just(detection));
                             })
                             .doOnSuccess(detection -> auditService.report(AuditBuilder.builder(DeviceIdentifierAuditBuilder.class).principal(principal).type(EventType.DEVICE_IDENTIFIER_UPDATED).oldValue(oldDeviceIdentifier).deviceIdentifier(detection)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(DeviceIdentifierAuditBuilder.class).principal(principal).type(EventType.DEVICE_IDENTIFIER_UPDATED).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(DeviceIdentifierAuditBuilder.class).principal(principal).type(EventType.DEVICE_IDENTIFIER_UPDATED).reference(new Reference(deviceIdentifierToUpdate.getReferenceType(), deviceIdentifierToUpdate.getReferenceId())).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -161,7 +162,7 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
                             .andThen(eventService.create(event))
                             .ignoreElement()
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(DeviceIdentifierAuditBuilder.class).principal(principal).type(EventType.DEVICE_IDENTIFIER_DELETED).deviceIdentifier(toDelete)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(DeviceIdentifierAuditBuilder.class).principal(principal).type(EventType.DEVICE_IDENTIFIER_DELETED).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(DeviceIdentifierAuditBuilder.class).principal(principal).type(EventType.DEVICE_IDENTIFIER_DELETED).reference(new Reference(toDelete.getReferenceType(), toDelete.getReferenceId())).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

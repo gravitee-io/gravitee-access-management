@@ -91,6 +91,7 @@ public class MembershipServiceTest {
     public void shouldCreate_userMembership() {
 
         Membership membership = new Membership();
+        membership.setDomain(DOMAIN_ID);
         membership.setReferenceId(DOMAIN_ID);
         membership.setReferenceType(ReferenceType.DOMAIN);
         membership.setMemberId("user-id");
@@ -110,7 +111,7 @@ public class MembershipServiceTest {
         when(userService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(user));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
-        when(membershipRepository.create(any())).thenReturn(Single.just(new Membership()));
+        when(membershipRepository.create(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
@@ -145,7 +146,7 @@ public class MembershipServiceTest {
         when(userService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(user));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
-        when(membershipRepository.create(any())).thenReturn(Single.just(new Membership()));
+        when(membershipRepository.create(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(membershipRepository.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), argThat(criteria -> criteria.getRoleId().isPresent()))).thenReturn(Flowable.empty());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -165,6 +166,7 @@ public class MembershipServiceTest {
         membership.setMemberId("group-id");
         membership.setMemberType(MemberType.GROUP);
         membership.setRoleId("role-id");
+        membership.setDomain(DOMAIN_ID);
 
         Role role = new Role();
         role.setId("role-id");
@@ -179,7 +181,7 @@ public class MembershipServiceTest {
         when(groupService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(group));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
-        when(membershipRepository.create(any())).thenReturn(Single.just(new Membership()));
+        when(membershipRepository.create(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
@@ -464,7 +466,7 @@ public class MembershipServiceTest {
 
         when(membershipRepository.findByCriteria(eq(ReferenceType.ENVIRONMENT), eq("env#1"), any(MembershipCriteria.class))).thenReturn(Flowable.empty());
         when(roleService.findDefaultRole("orga#1", DefaultRole.ENVIRONMENT_USER, ReferenceType.ENVIRONMENT)).thenReturn(Maybe.just(environmentUserRole));
-        when(membershipRepository.create(any())).thenReturn(Single.just(new Membership()));
+        when(membershipRepository.create(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver<Void> completable = membershipService.addEnvironmentUserRoleIfNecessary("orga#1", "env#1", membership, principal).test();
@@ -522,7 +524,7 @@ public class MembershipServiceTest {
 
         when(membershipRepository.findByCriteria(eq(ReferenceType.DOMAIN), eq("domain#1"), any(MembershipCriteria.class))).thenReturn(Flowable.empty());
         when(roleService.findDefaultRole("orga#1", DefaultRole.DOMAIN_USER, ReferenceType.DOMAIN)).thenReturn(Maybe.just(environmentUserRole));
-        when(membershipRepository.create(any())).thenReturn(Single.just(new Membership()));
+        when(membershipRepository.create(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(membershipRepository.findByCriteria(eq(ReferenceType.ENVIRONMENT), eq("env#1"), any(MembershipCriteria.class))).thenReturn(Flowable.empty());
         when(roleService.findDefaultRole("orga#1", DefaultRole.ENVIRONMENT_USER, ReferenceType.ENVIRONMENT)).thenReturn(Maybe.just(environmentUserRole));

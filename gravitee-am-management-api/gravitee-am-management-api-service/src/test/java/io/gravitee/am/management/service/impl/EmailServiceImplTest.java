@@ -32,6 +32,7 @@ import io.gravitee.am.management.service.impl.utils.MimeMessageParser;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
@@ -222,6 +223,8 @@ public class EmailServiceImplTest {
         user.setLastName("Doe");
         user.setPreferredLanguage(en);
         user.setEmail("john.doe@unittest.com");
+        user.setReferenceId("id");
+        user.setReferenceType(ReferenceType.DOMAIN);
         return user;
     }
 }

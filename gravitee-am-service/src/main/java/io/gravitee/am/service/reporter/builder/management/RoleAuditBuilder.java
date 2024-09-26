@@ -17,6 +17,7 @@ package io.gravitee.am.service.reporter.builder.management;
 
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Role;
 
 /**
@@ -35,9 +36,7 @@ public class RoleAuditBuilder extends ManagementAuditBuilder<RoleAuditBuilder> {
                 setNewValue(role);
             }
 
-            referenceType(role.getReferenceType());
-            referenceId(role.getReferenceId());
-
+            reference(new Reference(role.getReferenceType(), role.getReferenceId()));
             setTarget(role.getId(), EntityType.ROLE, null, role.getName(), role.getReferenceType(), role.getReferenceId());
         }
         return this;

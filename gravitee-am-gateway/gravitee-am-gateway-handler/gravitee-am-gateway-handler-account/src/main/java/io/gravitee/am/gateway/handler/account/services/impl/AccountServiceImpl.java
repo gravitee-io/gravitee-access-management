@@ -31,6 +31,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
@@ -264,7 +265,7 @@ public class AccountServiceImpl implements AccountService {
                     }
                     return credentialService.delete(id)
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(CredentialAuditBuilder.class).principal(principal).type(EventType.CREDENTIAL_DELETED).credential(credential)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(CredentialAuditBuilder.class).principal(principal).type(EventType.CREDENTIAL_DELETED).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(CredentialAuditBuilder.class).principal(principal).type(EventType.CREDENTIAL_DELETED).reference(new Reference(credential.getReferenceType(), credential.getReferenceId())).throwable(throwable)));
                 });
     }
 
@@ -281,7 +282,7 @@ public class AccountServiceImpl implements AccountService {
                     credential.setUpdatedAt(new Date());
                     return credentialService.update(credential)
                             .doOnSuccess(credential1 -> auditService.report(AuditBuilder.builder(CredentialAuditBuilder.class).principal(principal).type(EventType.CREDENTIAL_UPDATED).oldValue(credential).credential(credential1)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(CredentialAuditBuilder.class).principal(principal).type(EventType.CREDENTIAL_UPDATED).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(CredentialAuditBuilder.class).principal(principal).type(EventType.CREDENTIAL_UPDATED).reference(new Reference(credential.getReferenceType(), credential.getReferenceId())).throwable(throwable)));
                 });
     }
 

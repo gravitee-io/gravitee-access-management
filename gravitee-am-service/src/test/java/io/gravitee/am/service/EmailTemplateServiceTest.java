@@ -120,7 +120,7 @@ public class EmailTemplateServiceTest {
         NewEmail newEmail = Mockito.mock(NewEmail.class);
         when(newEmail.getTemplate()).thenReturn(Template.REGISTRATION);
         when(emailRepository.findByTemplate(eq(ReferenceType.DOMAIN), eq(DOMAIN), anyString())).thenReturn(Maybe.empty());
-        when(emailRepository.create(any(Email.class))).thenReturn(Single.just(new Email()));
+        when(emailRepository.create(any(Email.class))).thenAnswer(e -> Single.just(e.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = emailTemplateService.create(DOMAIN, newEmail).test();
@@ -166,9 +166,13 @@ public class EmailTemplateServiceTest {
     @Test
     public void shouldUpdate() {
         UpdateEmail updateEmail = Mockito.mock(UpdateEmail.class);
-        when(emailRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-email")).thenReturn(Maybe.just(new Email()));
-        when(emailRepository.update(any(Email.class))).thenReturn(Single.just(new Email()));
+        Email email = new Email();
+        email.setReferenceId(DOMAIN);
+        email.setReferenceType(ReferenceType.DOMAIN);
+        when(emailRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-email")).thenReturn(Maybe.just(email));
+        when(emailRepository.update(any(Email.class))).thenAnswer(e -> Single.just(e.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
 
         TestObserver testObserver = emailTemplateService.update(DOMAIN, "my-email", updateEmail).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);

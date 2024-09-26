@@ -18,6 +18,7 @@ package io.gravitee.am.service.reporter.builder;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.model.Factor;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.oidc.Client;
@@ -78,7 +79,7 @@ public class MFAAuditBuilder extends GatewayAuditBuilder<MFAAuditBuilder> {
 
     public MFAAuditBuilder domainFrom(Client client) {
         if (client != null) {
-            super.domain(client.getDomain());
+            reference(Reference.domain(client.getDomain()));
         }
         return this;
     }

@@ -19,6 +19,7 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.Organization;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.repository.management.api.EntrypointRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EntrypointService;
@@ -155,7 +156,7 @@ public class EntrypointServiceImpl implements EntrypointService {
                     return validate(toUpdate, oldEntrypoint)
                             .andThen(entrypointRepository.update(toUpdate)
                                     .doOnSuccess(updated -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).principal(principal).type(EventType.ENTRYPOINT_UPDATED).entrypoint(updated).oldValue(oldEntrypoint)))
-                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).principal(principal).type(EventType.ENTRYPOINT_UPDATED).throwable(throwable))));
+                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).principal(principal).type(EventType.ENTRYPOINT_UPDATED).entrypoint(toUpdate).throwable(throwable))));
                 });
     }
 
@@ -198,7 +199,7 @@ public class EntrypointServiceImpl implements EntrypointService {
         return validate(toCreate)
                 .andThen(entrypointRepository.create(toCreate)
                         .doOnSuccess(entrypoint -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).entrypoint(entrypoint).principal(principal).type(EventType.ENTRYPOINT_CREATED)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).referenceId(toCreate.getOrganizationId()).principal(principal).type(EventType.ENTRYPOINT_CREATED).throwable(throwable))));
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).entrypoint(toCreate).principal(principal).type(EventType.ENTRYPOINT_CREATED).throwable(throwable))));
     }
 
     private Completable validate(Entrypoint entrypoint) {

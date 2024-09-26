@@ -19,6 +19,7 @@ import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
 import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.AuthenticationAuditBuilder;
@@ -64,7 +65,7 @@ public class AuthenticationEventListener extends AbstractService<AuthenticationE
     private void onAuthenticationSuccess(AuthenticationDetails authenticationDetails) {
         auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class)
                 .principal(authenticationDetails.getPrincipal())
-                .domain(authenticationDetails.getDomain().getId())
+                .reference(Reference.domain(authenticationDetails.getDomain().getId()))
                 .client(authenticationDetails.getClient())
                 .user(authenticationDetails.getUser()));
     }
@@ -72,7 +73,7 @@ public class AuthenticationEventListener extends AbstractService<AuthenticationE
     private void onAuthenticationFailure(AuthenticationDetails authenticationDetails) {
         auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class)
                 .principal(authenticationDetails.getPrincipal())
-                .domain(authenticationDetails.getDomain().getId())
+                .reference(Reference.domain(authenticationDetails.getDomain().getId()))
                 .client(authenticationDetails.getClient())
                 .throwable(authenticationDetails.getThrowable()));
     }
