@@ -17,9 +17,10 @@ package io.gravitee.am.gateway.handler.root.resources.auth.provider;
 
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.exception.authentication.LoginCallbackFailedException;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.gateway.certificate.CertificateProvider;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
 import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -114,6 +115,14 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
         }
         if (canSaveUserAgent(context)) {
             endUserAuthentication.getContext().set(Claims.USER_AGENT, RequestUtils.userAgent(context.request()));
+        }
+
+        if (context.queryParams().contains(ConstantKeys.ERROR_PARAM_KEY)) {
+            var error = context.queryParams().get(ConstantKeys.ERROR_PARAM_KEY);
+            var description = context.queryParams().get(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY);
+            var message = error + (description != null ? ":" + description : "");
+            context.fail(new InvalidRequestException(message));
+            return;
         }
 
         // authenticate the user via the social provider
