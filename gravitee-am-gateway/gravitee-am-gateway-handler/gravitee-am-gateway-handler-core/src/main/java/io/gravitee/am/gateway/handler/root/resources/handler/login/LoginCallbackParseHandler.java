@@ -30,7 +30,7 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
-import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -41,7 +41,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.security.Key;
-import java.util.Base64;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_ISSUING_REASON;
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_PROVIDER_ID;
@@ -78,7 +77,6 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
-
         // First, restore the initial query parameters (those provided when accessing /oauth/authorize on AM side).
         restoreInitialQueryParams(context, next -> {
 
@@ -146,7 +144,7 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
                         .map(codeVerifier -> {
                             context.put(ConstantKeys.IDP_CODE_VERIFIER, codeVerifier);
                             return stateJwt;
-                        }))
+                        }).defaultIfEmpty(stateJwt))
                 .doOnSuccess(stateJwt -> {
                     final MultiMap initialQueryParams = RequestUtils.getQueryParams((String) stateJwt.getOrDefault(CLAIM_QUERY_PARAM, ""), false);
                     context.put(ConstantKeys.PARAM_CONTEXT_KEY, initialQueryParams);
@@ -180,12 +178,15 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
                         });
     }
 
-    private Single<String> extractIdpCodeVerifier(JWT stateJwt, CertificateProvider stateJwtCertProvider) {
+    private Maybe<String> extractIdpCodeVerifier(JWT stateJwt, CertificateProvider stateJwtCertProvider) {
         return stateJwtCertProvider.getProvider()
                 .key()
-                .map(k -> {
+                .flatMapMaybe(k -> {
                     var ecv = (String) stateJwt.get(Claims.ENCRYPTED_CODE_VERIFIER);
-                    return CryptoUtils.decrypt(ecv, (Key) k.getValue());
+                    if (!StringUtils.hasText(ecv)) {
+                        return Maybe.empty();
+                    }
+                    return Maybe.just(CryptoUtils.decrypt(ecv, (Key) k.getValue()));
                 });
     }
 
