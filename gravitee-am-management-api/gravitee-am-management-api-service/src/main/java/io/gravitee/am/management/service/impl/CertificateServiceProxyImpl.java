@@ -157,9 +157,16 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
     @Override
     public Single<Certificate> create(String domain, NewCertificate newCertificate, User principal) {
         return certificateService.create(domain, newCertificate, principal, false)
-                .flatMap(this::filterSensitiveData)
-                .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_CREATED).certificate(certificate)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_CREATED).throwable(throwable)));
+                .flatMap(cert -> filterSensitiveData(cert)
+                    .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
+                            .principal(principal)
+                            .type(EventType.CERTIFICATE_CREATED)
+                            .certificate(certificate)))
+                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
+                            .principal(principal)
+                            .type(EventType.CERTIFICATE_CREATED)
+                            .reference(Reference.domain(cert.getDomain()))
+                            .throwable(throwable))));
     }
 
     @Override
@@ -169,10 +176,18 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
                 .flatMap(oldCertificate -> filterSensitiveData(oldCertificate)
                         .flatMap(safeOldCert -> updateSensitiveData(updateCertificate, oldCertificate)
                                 .flatMap(certificateToUpdate -> certificateService.update(domain, id, certificateToUpdate, principal))
-                                .flatMap(this::filterSensitiveData)
-                                .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_UPDATED).oldValue(safeOldCert).certificate(certificate)))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_UPDATED).throwable(throwable))))
-                );
+                                .flatMap(cert -> filterSensitiveData(cert)
+                                    .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
+                                            .principal(principal)
+                                            .type(EventType.CERTIFICATE_UPDATED)
+                                            .oldValue(safeOldCert)
+                                            .certificate(certificate)))
+                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
+                                            .principal(principal)
+                                            .type(EventType.CERTIFICATE_UPDATED)
+                                            .reference(Reference.domain(cert.getDomain()))
+                                            .throwable(throwable))))
+                ));
     }
 
     @Override

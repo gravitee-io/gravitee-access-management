@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.common.email.impl.EmailServiceImpl;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
@@ -122,7 +123,7 @@ public class EmailServiceImplTest {
         final Email email = buildEmail();
 
         var templateLoader = Mockito.mock(TemplateLoader.class);
-
+        when(domain.getId()).thenReturn("id");
         final DictionaryProvider mockDictionaryProvider = Mockito.mock(DictionaryProvider.class);
         when(this.emailService.getDictionaryProvider()).thenReturn(mockDictionaryProvider);
         when(mockDictionaryProvider.getDictionaryFor(any())).thenReturn(new Properties());
@@ -188,6 +189,7 @@ public class EmailServiceImplTest {
         when(emailManager.getEmail(anyString(), any(), anyInt())).thenReturn(email);
 
         when(jwtBuilder.sign(any())).thenReturn("TOKEN");
+        when(domain.getId()).thenReturn("id");
 
         final Client client = new Client();
         client.setClientId(email.getClient());

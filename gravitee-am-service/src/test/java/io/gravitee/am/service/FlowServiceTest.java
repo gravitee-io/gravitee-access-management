@@ -201,8 +201,10 @@ public class FlowServiceTest {
 
     @Test
     public void shouldCreate() {
-        Flow newFlow = mock(Flow.class);
-        when(flowRepository.create(any(Flow.class))).thenReturn(Single.just(new Flow()));
+        Flow newFlow = new Flow();
+        newFlow.setReferenceType(ReferenceType.DOMAIN);
+        newFlow.setReferenceId(DOMAIN);
+        when(flowRepository.create(any(Flow.class))).thenReturn(Single.just(newFlow));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = flowService.create(ReferenceType.DOMAIN, DOMAIN, newFlow).test();
@@ -231,12 +233,16 @@ public class FlowServiceTest {
 
     @Test
     public void shouldUpdate() {
-        Flow updateFlow = Mockito.mock(Flow.class);
-        when(updateFlow.getType()).thenReturn(Type.ROOT);
+        Flow updateFlow = new Flow();
+        updateFlow.setType(Type.ROOT);
+        updateFlow.setReferenceType(ReferenceType.DOMAIN);
+        updateFlow.setReferenceId(DOMAIN);
         Flow existingFlow = new Flow();
         existingFlow.setType(Type.ROOT);
+        existingFlow.setReferenceType(ReferenceType.DOMAIN);
+        existingFlow.setReferenceId(DOMAIN);
         when(flowRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-flow")).thenReturn(Maybe.just(existingFlow));
-        when(flowRepository.update(any(Flow.class))).thenReturn(Single.just(new Flow()));
+        when(flowRepository.update(any(Flow.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = flowService.update(ReferenceType.DOMAIN, DOMAIN, "my-flow", updateFlow).test();
@@ -275,15 +281,19 @@ public class FlowServiceTest {
         existingFlow.setPre(emptyList());
         existingFlow.setPost(emptyList());
         existingFlow.setType(Type.ROOT);
+        existingFlow.setReferenceType(ReferenceType.DOMAIN);
+        existingFlow.setReferenceId(DOMAIN);
 
         Flow updateFlow = new Flow();
         updateFlow.setPre(Arrays.asList(new Step()));
         updateFlow.setPost(Arrays.asList(new Step()));
         updateFlow.setType(Type.ROOT);
+        updateFlow.setReferenceType(ReferenceType.DOMAIN);
+        updateFlow.setReferenceId(DOMAIN);
 
         when(flowRepository.findById(ReferenceType.DOMAIN, DOMAIN, ID)).thenReturn(Maybe.just(existingFlow));
-        when(flowRepository.update(any(Flow.class))).thenReturn(Single.just(new Flow()));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(flowRepository.update(any(Flow.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
 
         TestObserver testObserver = flowService.update(ReferenceType.DOMAIN, DOMAIN, ID, updateFlow).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -353,7 +363,10 @@ public class FlowServiceTest {
 
     @Test
     public void shouldDelete() {
-        when(flowRepository.findById("my-flow")).thenReturn(Maybe.just(new Flow()));
+        Flow flow = new Flow();
+        flow.setReferenceId(DOMAIN);
+        flow.setReferenceType(ReferenceType.DOMAIN);
+        when(flowRepository.findById("my-flow")).thenReturn(Maybe.just(flow));
         when(flowRepository.delete("my-flow")).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -395,19 +408,26 @@ public class FlowServiceTest {
         updateFlow.setType(Type.ROOT);
         updateFlow.setId("flow1");
         updateFlow.setOrder(0);
+        updateFlow.setReferenceId(DOMAIN);
+        updateFlow.setReferenceType(ReferenceType.DOMAIN);
         Flow existingFlow = new Flow();
         existingFlow.setId("flow1");
         existingFlow.setType(Type.ROOT);
         existingFlow.setOrder(0);
-
+        existingFlow.setReferenceId(DOMAIN);
+        existingFlow.setReferenceType(ReferenceType.DOMAIN);
         Flow updateFlow2 = new Flow();
         updateFlow2.setType(Type.ROOT);
         updateFlow2.setId("flow2");
         updateFlow2.setOrder(0);
+        updateFlow2.setReferenceId(DOMAIN);
+        updateFlow2.setReferenceType(ReferenceType.DOMAIN);
         Flow existingFlow2 = new Flow();
         existingFlow2.setId("flow2");
         existingFlow2.setType(Type.ROOT);
         existingFlow2.setOrder(0);
+        existingFlow2.setReferenceId(DOMAIN);
+        existingFlow2.setReferenceType(ReferenceType.DOMAIN);
 
         when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(existingFlow, existingFlow2));
         when(flowRepository.findById(ReferenceType.DOMAIN, DOMAIN, updateFlow.getId())).thenReturn(Maybe.just(existingFlow));
@@ -432,14 +452,21 @@ public class FlowServiceTest {
         updateFlow.setType(Type.ROOT);
         updateFlow.setId("flow1");
         updateFlow.setOrder(0);
+        updateFlow.setReferenceId(DOMAIN);
+        updateFlow.setReferenceType(ReferenceType.DOMAIN);
+
         Flow existingFlow = new Flow();
         existingFlow.setId("flow1");
         existingFlow.setType(Type.ROOT);
         existingFlow.setOrder(0);
+        existingFlow.setReferenceId(DOMAIN);
+        existingFlow.setReferenceType(ReferenceType.DOMAIN);
 
         Flow updateFlow2 = new Flow();
         updateFlow2.setType(Type.ROOT);
         updateFlow2.setOrder(0);
+        updateFlow2.setReferenceId(DOMAIN);
+        updateFlow2.setReferenceType(ReferenceType.DOMAIN);
 
         when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(existingFlow));
         when(flowRepository.findById(ReferenceType.DOMAIN, DOMAIN, updateFlow.getId())).thenReturn(Maybe.just(existingFlow));
@@ -506,18 +533,23 @@ public class FlowServiceTest {
         Flow existingFlow = new Flow();
         existingFlow.setId("flow1");
         existingFlow.setType(Type.ROOT);
-
+        existingFlow.setReferenceId(DOMAIN);
+        existingFlow.setReferenceType(ReferenceType.DOMAIN);
         Flow updateFlow2 = new Flow();
         updateFlow2.setType(Type.ROOT);
         updateFlow2.setId("flow2");
+        updateFlow2.setReferenceId(DOMAIN);
+        updateFlow2.setReferenceType(ReferenceType.DOMAIN);
         Flow existingFlow2 = new Flow();
         existingFlow2.setId("flow2");
         existingFlow2.setType(Type.ROOT);
+        existingFlow2.setReferenceId(DOMAIN);
+        existingFlow2.setReferenceType(ReferenceType.DOMAIN);
 
         when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(existingFlow, existingFlow2));
         when(flowRepository.findById(ReferenceType.DOMAIN, DOMAIN, existingFlow2.getId())).thenReturn(Maybe.just(existingFlow2));
         when(flowRepository.findById(existingFlow.getId())).thenReturn(Maybe.just(existingFlow));
-        when(flowRepository.update(any(Flow.class))).thenReturn(Single.just(new Flow()));
+        when(flowRepository.update(any(Flow.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(flowRepository.delete(any())).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 

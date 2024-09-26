@@ -38,6 +38,7 @@ import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.EnrollmentSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.PasswordHistory;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
@@ -154,6 +155,7 @@ public class UserServiceTest {
     public void before() {
         doReturn(true).when(emailValidator).validate(anyString());
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
+        when(domain.getId()).thenReturn("id");
     }
 
     @Test
@@ -162,6 +164,8 @@ public class UserServiceTest {
         when(user.getUsername()).thenReturn("username");
         when(user.isInactive()).thenReturn(true);
         when(user.getSource()).thenReturn("default-idp");
+        when(user.getReferenceId()).thenReturn("id");
+        when(user.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
 
@@ -188,6 +192,8 @@ public class UserServiceTest {
         when(user.getUsername()).thenReturn("username");
         when(user.isInactive()).thenReturn(false);
         when(user.getSource()).thenReturn("default-idp");
+        when(user.getReferenceId()).thenReturn("id");
+        when(user.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
         when(idpUser.getId()).thenReturn("idp-id");
@@ -234,6 +240,8 @@ public class UserServiceTest {
         when(user.getUsername()).thenReturn("username");
         when(user.isInactive()).thenReturn(true);
         when(user.getSource()).thenReturn("default-idp");
+        when(user.getReferenceId()).thenReturn("id");
+        when(user.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
         when(idpUser.getId()).thenReturn(IDP_ID);
@@ -268,6 +276,8 @@ public class UserServiceTest {
         when(user.getUsername()).thenReturn("username");
         when(user.isInactive()).thenReturn(false);
         when(user.getSource()).thenReturn("default-idp");
+        when(user.getReferenceId()).thenReturn("id");
+        when(user.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
         when(idpUser.getId()).thenReturn(IDP_ID);
@@ -297,6 +307,8 @@ public class UserServiceTest {
         when(user.getUsername()).thenReturn("username");
         when(user.isInactive()).thenReturn(false);
         when(user.getSource()).thenReturn("default-idp");
+        when(user.getReferenceId()).thenReturn("id");
+        when(user.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
         when(idpUser.getId()).thenReturn(IDP_ID);
@@ -330,6 +342,8 @@ public class UserServiceTest {
         when(user.getUsername()).thenReturn("username");
         when(user.isInactive()).thenReturn(false);
         when(user.getSource()).thenReturn("default-idp");
+        when(user.getReferenceId()).thenReturn("id");
+        when(user.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
         when(idpUser.getId()).thenReturn(IDP_ID);
@@ -948,6 +962,8 @@ public class UserServiceTest {
         when(user.getUsername()).thenReturn("username");
         when(user.isInactive()).thenReturn(false);
         when(user.getSource()).thenReturn("default-idp");
+        when(user.getReferenceId()).thenReturn("id");
+        when(user.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
         when(idpUser.getId()).thenReturn(IDP_ID);
@@ -982,6 +998,8 @@ public class UserServiceTest {
         when(user.getUsername()).thenReturn("username");
         when(user.isInactive()).thenReturn(false);
         when(user.getSource()).thenReturn("default-idp");
+        when(user.getReferenceId()).thenReturn("id");
+        when(user.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
         when(idpUser.getId()).thenReturn(IDP_ID);
@@ -1246,6 +1264,8 @@ public class UserServiceTest {
         final User user = new User();
         user.setId("user-id");
         user.setPreRegistration(true);
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId("id");
 
         final Client client = new Client();
         client.setId("clientId");

@@ -122,7 +122,10 @@ public class DeviceIdentifierServiceTest {
     @Test
     public void shouldCreate() {
         NewDeviceIdentifier newDeviceIdentifier = Mockito.mock(NewDeviceIdentifier.class);
-        when(deviceIdentifierRepository.create(any(DeviceIdentifier.class))).thenReturn(Single.just(new DeviceIdentifier()));
+        DeviceIdentifier deviceIdentifier = new DeviceIdentifier();
+        deviceIdentifier.setReferenceType(ReferenceType.DOMAIN);
+        deviceIdentifier.setReferenceId("id");
+        when(deviceIdentifierRepository.create(any(DeviceIdentifier.class))).thenReturn(Single.just(deviceIdentifier));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = deviceIdentifierService.create(DOMAIN, newDeviceIdentifier).test();
@@ -155,8 +158,11 @@ public class DeviceIdentifierServiceTest {
     public void shouldUpdate() {
         UpdateDeviceIdentifier updateDeviceIdentifier = Mockito.mock(UpdateDeviceIdentifier.class);
         when(updateDeviceIdentifier.getName()).thenReturn("device-identifier");
-        when(deviceIdentifierRepository.findById("device-identifier")).thenReturn(Maybe.just(new DeviceIdentifier()));
-        when(deviceIdentifierRepository.update(any(DeviceIdentifier.class))).thenReturn(Single.just(new DeviceIdentifier()));
+        DeviceIdentifier deviceIdentifier = new DeviceIdentifier();
+        deviceIdentifier.setReferenceType(ReferenceType.DOMAIN);
+        deviceIdentifier.setReferenceId("id");
+        when(deviceIdentifierRepository.findById("device-identifier")).thenReturn(Maybe.just(deviceIdentifier));
+        when(deviceIdentifierRepository.update(any(DeviceIdentifier.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = deviceIdentifierService.update(DOMAIN, "device-identifier", updateDeviceIdentifier).test();
@@ -211,6 +217,8 @@ public class DeviceIdentifierServiceTest {
     public void shouldDelete() {
         DeviceIdentifier detection = new DeviceIdentifier();
         detection.setId("detection-id");
+        detection.setReferenceType(ReferenceType.DOMAIN);
+        detection.setReferenceId("id");
         when(deviceIdentifierRepository.findById(detection.getId())).thenReturn(Maybe.just(detection));
         when(deviceIdentifierRepository.delete(detection.getId())).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));

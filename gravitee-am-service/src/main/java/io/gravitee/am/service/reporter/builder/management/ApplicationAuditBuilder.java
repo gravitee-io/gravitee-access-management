@@ -18,6 +18,7 @@ package io.gravitee.am.service.reporter.builder.management;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 
 import java.util.List;
@@ -37,7 +38,7 @@ public class ApplicationAuditBuilder extends ManagementAuditBuilder<ApplicationA
             if (EventType.APPLICATION_CREATED.equals(getType()) || EventType.APPLICATION_UPDATED.equals(getType())) {
                 setNewValue(application);
             }
-            domain(application.getDomain());
+            reference(Reference.domain(application.getDomain()));
             setTarget(application.getId(), EntityType.APPLICATION, null, application.getName(), ReferenceType.DOMAIN, application.getDomain());
         }
         return this;

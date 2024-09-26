@@ -124,6 +124,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
                 .handler(BodyHandler.create())
                 .handler(mfaChallengeEndpoint)
                 .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
+        when(domain.getId()).thenReturn("id");
     }
 
     @Test

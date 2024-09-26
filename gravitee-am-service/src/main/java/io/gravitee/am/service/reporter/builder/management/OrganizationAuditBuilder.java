@@ -18,6 +18,7 @@ package io.gravitee.am.service.reporter.builder.management;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Organization;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 
 /**
@@ -36,9 +37,7 @@ public class OrganizationAuditBuilder extends ManagementAuditBuilder<Organizatio
                 setNewValue(organization);
             }
 
-            referenceType(ReferenceType.ORGANIZATION);
-            referenceId(organization.getId());
-
+            reference(new Reference(ReferenceType.ORGANIZATION, organization.getId()));
             setTarget(organization.getId(), EntityType.ORGANIZATION, null, organization.getName(), ReferenceType.ORGANIZATION, organization.getId());
         }
         return this;

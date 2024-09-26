@@ -678,10 +678,9 @@ public class ApplicationServiceTest {
 
     private NewApplication prepareCreateServiceApp() {
         NewApplication newClient = Mockito.mock(NewApplication.class);
-        Application createClient = Mockito.mock(Application.class);
         when(newClient.getName()).thenReturn("my-client");
         when(newClient.getType()).thenReturn(ApplicationType.SERVICE);
-        when(applicationRepository.create(any(Application.class))).thenReturn(Single.just(createClient));
+        when(applicationRepository.create(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(domainService.findById(anyString())).thenReturn(Maybe.just(new Domain()));
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
@@ -692,7 +691,6 @@ public class ApplicationServiceTest {
 
     private NewApplication prepareCreateApp(boolean withRedirectUri) {
         NewApplication newClient = Mockito.mock(NewApplication.class);
-        Application createClient = Mockito.mock(Application.class);
         when(newClient.getName()).thenReturn("my-client");
         when(newClient.getType()).thenReturn(Stream.of(ApplicationType.values()).filter(type -> type != ApplicationType.SERVICE).toList().get(new Random().nextInt(0, ApplicationType.values().length - 1)));
         if (withRedirectUri) {
@@ -701,7 +699,7 @@ public class ApplicationServiceTest {
             when(newClient.getRedirectUris()).thenReturn(List.of());
         }
         when(applicationRepository.findByDomainAndClientId(DOMAIN, null)).thenReturn(Maybe.empty());
-        when(applicationRepository.create(any(Application.class))).thenReturn(Single.just(createClient));
+        when(applicationRepository.create(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(domainService.findById(anyString())).thenReturn(Maybe.just(new Domain()));
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
@@ -843,6 +841,7 @@ public class ApplicationServiceTest {
     public void create_generateUuidAsClientId() {
         NewApplication newClient = Mockito.mock(NewApplication.class);
         Application createClient = Mockito.mock(Application.class);
+        when(createClient.getDomain()).thenReturn(DOMAIN);
         when(newClient.getName()).thenReturn("my-client");
         when(newClient.getType()).thenReturn(ApplicationType.SERVICE);
         when(applicationRepository.findByDomainAndClientId(DOMAIN, CLIENT_ID)).thenReturn(Maybe.empty());
@@ -900,7 +899,11 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(toPatch));
         when(identityProviderService.findById("id1")).thenReturn(Maybe.just(idp1));
         when(identityProviderService.findById("id2")).thenReturn(Maybe.just(idp2));
-        when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
+
+        Application updated = new Application();
+        updated.setDomain(DOMAIN);
+        when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(updated));
+
         doReturn(true).when(accountSettingsValidator).validate(any());
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
@@ -1035,7 +1038,7 @@ public class ApplicationServiceTest {
     @Test
     public void update_defaultGrant_ok() {
         when(applicationRepository.findById(any())).thenReturn(Maybe.just(new Application()));
-        when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
+        when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(domainService.findById(any())).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
@@ -1062,7 +1065,7 @@ public class ApplicationServiceTest {
     @Test
     public void update_clientCredentials_ok() {
         when(applicationRepository.findById(any())).thenReturn(Maybe.just(new Application()));
-        when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
+        when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(domainService.findById(any())).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
@@ -1095,10 +1098,11 @@ public class ApplicationServiceTest {
         existingApp.setType(ApplicationType.SERVICE);
         existingApp.setSettings(new ApplicationSettings());
         existingApp.getSettings().setOauth(new ApplicationOAuthSettings());
+        existingApp.setDomain(DOMAIN);
         String clientSecret = "something";
         existingApp.getSettings().getOauth().setClientSecret(clientSecret);
         when(applicationRepository.findById(eq(APP_ID))).thenReturn(Maybe.just(existingApp));
-        when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
+        when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(domainService.findById(any())).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
@@ -1138,7 +1142,7 @@ public class ApplicationServiceTest {
         existingApp.setSettings(existingAppSettings);
 
         when(applicationRepository.findById(any())).thenReturn(Maybe.just(existingApp));
-        when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
+        when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(domainService.findById(any())).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
@@ -1228,7 +1232,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
         when(identityProviderService.findById("id1")).thenReturn(Maybe.just(idp1));
         when(identityProviderService.findById("id2")).thenReturn(Maybe.just(idp2));
-        when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
+        when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(DOMAIN, new ArrayList<>())).thenReturn(Single.just(true));
@@ -1275,7 +1279,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
         when(identityProviderService.findById("id1")).thenReturn(Maybe.just(idp1));
         when(identityProviderService.findById("id2")).thenReturn(Maybe.just(idp2));
-        when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
+        when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(DOMAIN, new ArrayList<>())).thenReturn(Single.just(true));
@@ -1348,7 +1352,7 @@ public class ApplicationServiceTest {
         patchClient.setSettings(Optional.of(patchApplicationSettings));
 
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
-        when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
+        when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(DOMAIN, new ArrayList<>())).thenReturn(Single.just(true));
@@ -1379,7 +1383,7 @@ public class ApplicationServiceTest {
         patchClient.setSettings(Optional.of(patchApplicationSettings));
 
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
-        when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
+        when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(DOMAIN, new ArrayList<>())).thenReturn(Single.just(true));
@@ -1687,7 +1691,7 @@ public class ApplicationServiceTest {
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
-        when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
+        when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(scopeService.validateScope(DOMAIN, Collections.emptyList())).thenReturn(Single.just(true));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
@@ -1895,6 +1899,7 @@ public class ApplicationServiceTest {
     @Test
     public void shouldAddMfaToAppWithLegacyMfaConfiguration() {
         Application client = Application.builder()
+                .domain(DOMAIN)
                 .settings(ApplicationSettings.builder()
                         .mfa(MFASettings.builder()
                                 .factor(new FactorSettings(null, null)) // client's existing config
@@ -1917,7 +1922,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldDisableApplicationAndRemoveTokens() {
-        var client = Application.builder().enabled(true).settings(ApplicationSettings.builder().build()).build();
+        var client = Application.builder().domain(DOMAIN).enabled(true).settings(ApplicationSettings.builder().build()).build();
 
         when(applicationRepository.findById(any())).thenReturn(Maybe.just(client));
         when(applicationRepository.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
@@ -1934,7 +1939,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldDisableApplicationEvenIfTokenRemoveThrowError() {
-        var client = Application.builder().enabled(true).settings(ApplicationSettings.builder().build()).build();
+        var client = Application.builder().domain(DOMAIN).enabled(true).settings(ApplicationSettings.builder().build()).build();
 
         when(applicationRepository.findById(any())).thenReturn(Maybe.just(client));
         when(applicationRepository.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
@@ -1951,7 +1956,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldNotDisableApplicationAndRemoveTokensWhenItIsAlreadyDisabled() {
-        var client = Application.builder().enabled(false).settings(ApplicationSettings.builder().build()).build();
+        var client = Application.builder().domain(DOMAIN).enabled(false).settings(ApplicationSettings.builder().build()).build();
 
         when(applicationRepository.findById(any())).thenReturn(Maybe.just(client));
         when(applicationRepository.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));

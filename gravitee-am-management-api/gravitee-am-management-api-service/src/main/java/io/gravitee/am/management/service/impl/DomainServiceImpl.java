@@ -421,13 +421,11 @@ public class DomainServiceImpl implements DomainService {
                         .principal(principal)
                         .type(EventType.DOMAIN_CREATED)
                         .domain(domain)
-                        .referenceType(ReferenceType.ORGANIZATION)
-                        .referenceId(organizationId)))
+                        .reference(Reference.organization(organizationId))))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
                         .principal(principal)
                         .type(EventType.DOMAIN_CREATED)
-                        .referenceType(ReferenceType.ORGANIZATION)
-                        .referenceId(organizationId)
+                        .reference(Reference.organization(organizationId))
                         .throwable(throwable)));
     }
 
@@ -500,8 +498,7 @@ public class DomainServiceImpl implements DomainService {
                                             .domain(oldDomain)
                                             .type(EventType.DOMAIN_UPDATED)
                                             .throwable(throwable)
-                                            .referenceType(ORGANIZATION)
-                                            .referenceId(graviteeContext.getOrganizationId()));
+                                            .reference(Reference.organization(graviteeContext.getOrganizationId())));
                                 }
                             });
 
@@ -643,14 +640,12 @@ public class DomainServiceImpl implements DomainService {
                                     .principal(principal)
                                     .type(EventType.DOMAIN_DELETED)
                                     .domain(domain)
-                                    .referenceType(ReferenceType.ORGANIZATION)
-                                    .referenceId(graviteeContext.getOrganizationId())))
+                                    .reference(Reference.organization(graviteeContext.getOrganizationId()))))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
                                     .principal(principal)
                                     .type(EventType.DOMAIN_DELETED)
                                     .throwable(throwable)
-                                    .referenceType(ReferenceType.ORGANIZATION)
-                                    .referenceId(graviteeContext.getOrganizationId())));
+                                    .reference(Reference.organization(graviteeContext.getOrganizationId()))));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

@@ -21,6 +21,7 @@ import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Factor;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -144,7 +145,7 @@ public class FactorServiceImpl implements FactorService {
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a factor", ex));
                 })
                 .doOnSuccess(factor1 -> auditService.report(AuditBuilder.builder(FactorAuditBuilder.class).principal(principal).type(EventType.FACTOR_CREATED).factor(factor1)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(FactorAuditBuilder.class).principal(principal).type(EventType.FACTOR_CREATED).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(FactorAuditBuilder.class).principal(principal).reference(Reference.domain(domain)).type(EventType.FACTOR_CREATED).throwable(throwable)));
     }
 
     private Single<Factor> checkFactorConfiguration(Factor factor) {
@@ -185,7 +186,7 @@ public class FactorServiceImpl implements FactorService {
                                 return eventService.create(event).flatMap(__ -> Single.just(factor1));
                             })
                             .doOnSuccess(factor1 -> auditService.report(AuditBuilder.builder(FactorAuditBuilder.class).principal(principal).type(EventType.FACTOR_UPDATED).oldValue(oldFactor).factor(factor1)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(FactorAuditBuilder.class).principal(principal).type(EventType.FACTOR_UPDATED).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(FactorAuditBuilder.class).principal(principal).reference(Reference.domain(domain)).type(EventType.FACTOR_UPDATED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -217,7 +218,7 @@ public class FactorServiceImpl implements FactorService {
                             .andThen(eventService.create(event))
                             .ignoreElement()
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(FactorAuditBuilder.class).principal(principal).type(EventType.FACTOR_DELETED).factor(factor)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(FactorAuditBuilder.class).principal(principal).type(EventType.FACTOR_DELETED).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(FactorAuditBuilder.class).reference(Reference.domain(domain)).principal(principal).type(EventType.FACTOR_DELETED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

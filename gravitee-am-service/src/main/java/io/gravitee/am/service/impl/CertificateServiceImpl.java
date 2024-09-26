@@ -27,6 +27,7 @@ import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -378,7 +379,7 @@ public class CertificateServiceImpl implements CertificateService {
                     return Completable.fromSingle(certificateRepository.delete(certificateId)
                                     .andThen(eventService.create(event)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_DELETED).certificate(certificate)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_DELETED).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_DELETED).reference(Reference.domain(certificate.getDomain())).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     log.error("An error occurs while trying to delete certificate: {}", certificateId, ex);
@@ -478,14 +479,12 @@ public class CertificateServiceImpl implements CertificateService {
                 })
                 .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
                         .principal(principal)
-                        .referenceId(domain)
-                        .referenceType(ReferenceType.DOMAIN)
+                        .reference(Reference.domain(domain))
                         .type(EventType.CERTIFICATE_CREATED)
                         .certificate(certificate)))
                 .doOnError(error -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
                         .principal(principal)
-                        .referenceId(domain)
-                        .referenceType(ReferenceType.DOMAIN)
+                        .reference(Reference.domain(domain))
                         .type(EventType.CERTIFICATE_CREATED).throwable(error)));
     }
 

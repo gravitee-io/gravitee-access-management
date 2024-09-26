@@ -132,7 +132,7 @@ public class FactorServiceTest {
     public void shouldCreate() {
         NewFactor newFactor = Mockito.mock(NewFactor.class);
         when(newFactor.getFactorType()).thenReturn(FactorType.OTP.getType());
-        when(factorRepository.create(any(Factor.class))).thenReturn(Single.just(new Factor()));
+        when(factorRepository.create(any(Factor.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = factorService.create(DOMAIN, newFactor).test();
@@ -151,7 +151,7 @@ public class FactorServiceTest {
         when(newFactor.getFactorType()).thenReturn(FactorType.SMS.getType());
         when(newFactor.getType()).thenReturn("sms-am-factor");
         when(newFactor.getConfiguration()).thenReturn("{\"countryCodes\":\"fr, us\"}");
-        when(factorRepository.create(any(Factor.class))).thenReturn(Single.just(new Factor()));
+        when(factorRepository.create(any(Factor.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = factorService.create(DOMAIN, newFactor).test();
@@ -214,8 +214,10 @@ public class FactorServiceTest {
     public void shouldUpdate() {
         UpdateFactor updateFactor = Mockito.mock(UpdateFactor.class);
         when(updateFactor.getName()).thenReturn("my-factor");
-        when(factorRepository.findById("my-factor")).thenReturn(Maybe.just(new Factor()));
-        when(factorRepository.update(any(Factor.class))).thenReturn(Single.just(new Factor()));
+        Factor factor = new Factor();
+        factor.setDomain(DOMAIN);
+        when(factorRepository.findById("my-factor")).thenReturn(Maybe.just(factor));
+        when(factorRepository.update(any(Factor.class))).thenReturn(Single.just(factor));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = factorService.update(DOMAIN, "my-factor", updateFactor).test();
@@ -298,6 +300,7 @@ public class FactorServiceTest {
     public void shouldDelete() {
         Factor factor = new Factor();
         factor.setId("factor-id");
+        factor.setDomain(DOMAIN);
         when(factorRepository.findById(factor.getId())).thenReturn(Maybe.just(factor));
         when(applicationService.findByFactor(factor.getId())).thenReturn(Flowable.empty());
         when(factorRepository.delete(factor.getId())).thenReturn(Completable.complete());

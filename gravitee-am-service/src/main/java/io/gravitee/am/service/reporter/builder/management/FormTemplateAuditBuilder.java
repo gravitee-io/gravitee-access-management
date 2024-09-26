@@ -18,6 +18,7 @@ package io.gravitee.am.service.reporter.builder.management;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Form;
+import io.gravitee.am.model.Reference;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -35,9 +36,7 @@ public class FormTemplateAuditBuilder extends ManagementAuditBuilder<FormTemplat
                 setNewValue(form);
             }
 
-            referenceType(form.getReferenceType());
-            referenceId(form.getReferenceId());
-
+            reference(new Reference(form.getReferenceType(), form.getReferenceId()));
             setTarget(form.getId(), EntityType.FORM, null, form.getTemplate(), form.getReferenceType(), form.getReferenceId());
         }
         return this;

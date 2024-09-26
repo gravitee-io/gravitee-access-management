@@ -31,6 +31,7 @@ import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.safe.ClientProperties;
@@ -172,9 +173,16 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
                 final var locale = preferredLanguage(user, Locale.ENGLISH);
                 final var emailToSend = processEmailTemplate(email, locale);
                 emailService.send(emailToSend);
-                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(user.getReferenceId()).client(ADMIN_CLIENT).email(email).user(user));
+                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
+                        .reference(Reference.domain(user.getReferenceId()))
+                        .client(ADMIN_CLIENT).email(email)
+                        .user(user));
             } catch (final Exception ex) {
-                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(user.getReferenceId()).client(ADMIN_CLIENT).email(email).throwable(ex));
+                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
+                        .reference(Reference.domain(user.getReferenceId()))
+                        .client(ADMIN_CLIENT)
+                        .email(email)
+                        .throwable(ex));
             }
         }
     }

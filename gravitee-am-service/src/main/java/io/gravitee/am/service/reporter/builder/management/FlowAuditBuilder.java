@@ -17,6 +17,7 @@ package io.gravitee.am.service.reporter.builder.management;
 
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.flow.Flow;
 
 /**
@@ -35,9 +36,7 @@ public class FlowAuditBuilder extends ManagementAuditBuilder<FlowAuditBuilder> {
                 setNewValue(flow);
             }
 
-            referenceType(flow.getReferenceType());
-            referenceId(flow.getReferenceId());
-
+            reference(new Reference(flow.getReferenceType(), flow.getReferenceId()));
             setTarget(flow.getId(), EntityType.FLOW, null, flow.getName(), flow.getReferenceType(), flow.getReferenceId());
         }
         return this;

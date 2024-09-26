@@ -206,7 +206,7 @@ public class ScopeServiceTest {
         when(newScope.getKey()).thenReturn("my-scope");
         when(newScope.getIconUri()).thenReturn("https://gravitee.io/icon");
         when(scopeRepository.findByDomainAndKey(DOMAIN, "my-scope")).thenReturn(Maybe.empty());
-        when(scopeRepository.create(any(Scope.class))).thenReturn(Single.just(new Scope()));
+        when(scopeRepository.create(any(Scope.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = scopeService.create(DOMAIN, newScope).test();
@@ -225,7 +225,7 @@ public class ScopeServiceTest {
         NewScope newScope = Mockito.mock(NewScope.class);
         when(newScope.getKey()).thenReturn("MY-SCOPE");
         when(scopeRepository.findByDomainAndKey(DOMAIN, "MY-SCOPE")).thenReturn(Maybe.empty());
-        when(scopeRepository.create(any(Scope.class))).thenReturn(Single.just(new Scope()));
+        when(scopeRepository.create(any(Scope.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = scopeService.create(DOMAIN, newScope).test();
@@ -249,7 +249,7 @@ public class ScopeServiceTest {
         NewScope newScope = Mockito.mock(NewScope.class);
         when(newScope.getKey()).thenReturn("MY scope");
         when(scopeRepository.findByDomainAndKey(DOMAIN, "MY_scope")).thenReturn(Maybe.empty());
-        when(scopeRepository.create(any(Scope.class))).thenReturn(Single.just(new Scope()));
+        when(scopeRepository.create(any(Scope.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = scopeService.create(DOMAIN, newScope).test();
@@ -329,11 +329,12 @@ public class ScopeServiceTest {
         toPatch.setDiscovery(false);
         toPatch.setName("oldName");
         toPatch.setDescription("oldDescription");
+        toPatch.setDomain(DOMAIN);
 
         ArgumentCaptor<Scope> argument = ArgumentCaptor.forClass(Scope.class);
 
         when(scopeRepository.findById(scopeId)).thenReturn(Maybe.just(toPatch));
-        when(scopeRepository.update(argument.capture())).thenReturn(Single.just(new Scope()));
+        when(scopeRepository.update(argument.capture())).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = scopeService.patch(DOMAIN,scopeId, patch).test();
@@ -361,11 +362,12 @@ public class ScopeServiceTest {
         toPatch.setDiscovery(false);
         toPatch.setName("oldName");
         toPatch.setDescription("oldDescription");
+        toPatch.setDomain(DOMAIN);
 
         ArgumentCaptor<Scope> argument = ArgumentCaptor.forClass(Scope.class);
 
         when(scopeRepository.findById(scopeId)).thenReturn(Maybe.just(toPatch));
-        when(scopeRepository.update(argument.capture())).thenReturn(Single.just(new Scope()));
+        when(scopeRepository.update(argument.capture())).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = scopeService.patch(DOMAIN,scopeId, patch).test();
@@ -437,11 +439,12 @@ public class ScopeServiceTest {
         toUpdate.setDiscovery(false);
         toUpdate.setName("oldName");
         toUpdate.setDescription("oldDescription");
+        toUpdate.setDomain(DOMAIN);
 
         ArgumentCaptor<Scope> argument = ArgumentCaptor.forClass(Scope.class);
 
         when(scopeRepository.findById(scopeId)).thenReturn(Maybe.just(toUpdate));
-        when(scopeRepository.update(argument.capture())).thenReturn(Single.just(new Scope()));
+        when(scopeRepository.update(argument.capture())).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = scopeService.update(DOMAIN,scopeId, updateScope).test();
@@ -468,11 +471,12 @@ public class ScopeServiceTest {
         toUpdate.setDiscovery(true);
         toUpdate.setName("oldName");
         toUpdate.setDescription("oldDescription");
+        toUpdate.setDomain(DOMAIN);
 
         ArgumentCaptor<Scope> argument = ArgumentCaptor.forClass(Scope.class);
 
         when(scopeRepository.findById(scopeId)).thenReturn(Maybe.just(toUpdate));
-        when(scopeRepository.update(argument.capture())).thenReturn(Single.just(new Scope()));
+        when(scopeRepository.update(argument.capture())).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = scopeService.update(DOMAIN,scopeId, updateScope).test();
@@ -500,11 +504,12 @@ public class ScopeServiceTest {
         toUpdate.setDiscovery(false);
         toUpdate.setName("oldName");
         toUpdate.setDescription("oldDescription");
+        toUpdate.setDomain(DOMAIN);
 
         ArgumentCaptor<Scope> argument = ArgumentCaptor.forClass(Scope.class);
 
         when(scopeRepository.findById(scopeId)).thenReturn(Maybe.just(toUpdate));
-        when(scopeRepository.update(argument.capture())).thenReturn(Single.just(new Scope()));
+        when(scopeRepository.update(argument.capture())).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = scopeService.update(DOMAIN,scopeId, updateScope).test();

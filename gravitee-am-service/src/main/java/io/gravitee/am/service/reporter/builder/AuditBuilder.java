@@ -104,11 +104,13 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
         return (T) this;
     }
 
+    @Deprecated
     public T referenceType(ReferenceType referenceType) {
         this.referenceType = referenceType;
         return (T) this;
     }
 
+    @Deprecated
     public T referenceId(String referenceId) {
         this.referenceId = referenceId;
         return (T) this;
@@ -117,13 +119,6 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
     public T reference(Reference reference) {
         return referenceType(reference.type())
                 .referenceId(reference.id());
-    }
-
-    // TODO: to remove when all resources will handle referenceType and referenceId.
-    public T domain(String domain) {
-        this.referenceType = ReferenceType.DOMAIN;
-        this.referenceId = domain;
-        return (T) this;
     }
 
     public T client(String client) {

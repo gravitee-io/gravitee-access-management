@@ -79,6 +79,8 @@ class PasswordHistoryServiceTest {
         user = new User();
         user.setId(userId);
         user.setPassword(password);
+        user.setReferenceId(REFERENCE_ID);
+        user.setReferenceType(DOMAIN);
     }
 
     @Test
@@ -87,9 +89,10 @@ class PasswordHistoryServiceTest {
         PasswordPolicy passwordSettings = getPasswordSettings(5);
 
         given(repository.findUserHistory(DOMAIN, REFERENCE_ID, userId)).willReturn(fromIterable(List.of()));
-        given(repository.create(any(PasswordHistory.class))).willReturn(Single.just(new PasswordHistory()));
+        given(repository.create(any(PasswordHistory.class))).willAnswer(a -> Single.just(a.getArgument(0)));
         final String encrypted_password = "encrypted password";
         given(passwordEncoder.encode(password)).willReturn(encrypted_password);
+
 
         var testObserver = service
                 .addPasswordToHistory(ReferenceType.DOMAIN, REFERENCE_ID, user, password , new DefaultUser(), passwordSettings)
@@ -199,6 +202,8 @@ class PasswordHistoryServiceTest {
         PasswordPolicy passwordSettings = new PasswordPolicy();
         passwordSettings.setPasswordHistoryEnabled(true);
         passwordSettings.setOldPasswords((short) oldPasswords);
+        passwordSettings.setReferenceId(REFERENCE_ID);
+        passwordSettings.setReferenceType(DOMAIN);
         return passwordSettings;
     }
 

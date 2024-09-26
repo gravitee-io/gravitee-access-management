@@ -18,6 +18,7 @@ package io.gravitee.am.service.reporter.builder.management;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.DeviceIdentifier;
+import io.gravitee.am.model.Reference;
 
 import java.util.List;
 
@@ -42,9 +43,7 @@ public class DeviceIdentifierAuditBuilder extends ManagementAuditBuilder<DeviceI
                 setNewValue(deviceIdentifier);
             }
 
-            referenceId(deviceIdentifier.getReferenceId());
-            referenceType(deviceIdentifier.getReferenceType());
-
+            reference(new Reference(deviceIdentifier.getReferenceType(), deviceIdentifier.getReferenceId()));
             setTarget(deviceIdentifier.getId(), EntityType.DEVICE_IDENTIFIER, null, deviceIdentifier.getName(), deviceIdentifier.getReferenceType(), deviceIdentifier.getReferenceId());
         }
         return this;

@@ -30,6 +30,7 @@ import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.utils.FreemarkerDataHelper;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
@@ -189,9 +190,14 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
                 emailToSend.setSubject(subject);
                 emailToSend.setContent(content);
                 emailService.send(emailToSend);
-                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(domain.getId()).email(email));
+                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
+                        .reference(Reference.domain(domain.getId()))
+                        .email(email));
             } catch (Exception ex) {
-                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(domain.getId()).email(email).throwable(ex));
+                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
+                        .reference(Reference.domain(domain.getId()))
+                        .email(email)
+                        .throwable(ex));
             }
         }
     }
@@ -212,9 +218,17 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
             emailToSend.setSubject(subject);
             emailToSend.setContent(content);
             emailService.send(emailToSend);
-            auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(domain.getId()).client(client).email(email).user(user));
+            auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
+                    .reference(Reference.domain(domain.getId()))
+                    .client(client)
+                    .email(email)
+                    .user(user));
         } catch (final Exception ex) {
-            auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(domain.getId()).client(client).email(email).throwable(ex));
+            auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
+                    .reference(Reference.domain(domain.getId()))
+                    .client(client)
+                    .email(email)
+                    .throwable(ex));
         }
     }
 

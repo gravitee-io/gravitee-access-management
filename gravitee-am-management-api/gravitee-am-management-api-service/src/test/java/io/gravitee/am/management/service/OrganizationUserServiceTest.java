@@ -120,6 +120,9 @@ public class OrganizationUserServiceTest {
         User user = new User();
         user.setId(userId);
         user.setSource("source-idp");
+        user.setReferenceId("ud");
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+
         when(commonUserService.findById(any(), any(), any())).thenReturn(Single.just(user));
         when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.empty());
         when(commonUserService.delete(anyString())).thenReturn(Single.just(user));
@@ -145,6 +148,8 @@ public class OrganizationUserServiceTest {
         User user = new User();
         user.setId(userId);
         user.setSource("source-idp");
+        user.setReferenceId("ud");
+        user.setReferenceType(ReferenceType.ORGANIZATION);
 
         Membership m1 = mock(Membership.class);
         when(m1.getId()).thenReturn("m1");
@@ -195,10 +200,12 @@ public class OrganizationUserServiceTest {
         when(provider.create(any())).thenReturn(Single.just(mock(io.gravitee.am.identityprovider.api.User.class)));
 
         doReturn(Completable.complete()).when(userValidator).validate(any());
-        when(commonUserService.create(any())).thenReturn(Single.just(mock(User.class)));
+        when(commonUserService.create(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(commonUserService.setRoles(any())).thenReturn(Completable.complete());
 
-        TestObserver<User> testObserver = organizationUserService.createGraviteeUser(new Organization(), newUser, null).test();
+        Organization organization = new Organization();
+        organization.setId("id");
+        TestObserver<User> testObserver = organizationUserService.createGraviteeUser(organization, newUser, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
 
@@ -477,6 +484,8 @@ public class OrganizationUserServiceTest {
         final User user = new User();
         user.setUsername("username");
         user.setSource("gravitee");
+        user.setReferenceId("ud");
+        user.setReferenceType(ReferenceType.ORGANIZATION);
 
         when(commonUserService.update(any())).thenReturn(Single.just(user));
 

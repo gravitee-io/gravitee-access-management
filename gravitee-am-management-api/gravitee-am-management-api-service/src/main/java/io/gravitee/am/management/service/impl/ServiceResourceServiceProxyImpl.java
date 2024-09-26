@@ -23,6 +23,7 @@ import io.gravitee.am.management.service.AbstractSensitiveProxy;
 import io.gravitee.am.management.service.ResourcePluginService;
 import io.gravitee.am.management.service.ServiceResourceServiceProxy;
 import io.gravitee.am.management.service.exception.ResourcePluginNotFoundException;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.resource.ServiceResource;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.ServiceResourceService;
@@ -74,7 +75,7 @@ public class ServiceResourceServiceProxyImpl extends AbstractSensitiveProxy impl
         return serviceResourceService.create(domain, res, principal)
                 .flatMap(this::filterSensitiveData)
                 .doOnSuccess(serviceResource -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_CREATED).resource(serviceResource)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_CREATED).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_CREATED).reference(Reference.domain(domain)).throwable(throwable)));
     }
 
     @Override
@@ -86,7 +87,7 @@ public class ServiceResourceServiceProxyImpl extends AbstractSensitiveProxy impl
                                 .flatMap(resourceToUpdate -> serviceResourceService.update(domain, id, resourceToUpdate, principal)
                                         .flatMap(this::filterSensitiveData)
                                         .doOnSuccess(serviceResource -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_UPDATED).oldValue(safeOldResource).resource(serviceResource)))
-                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_UPDATED).throwable(throwable)))))
+                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_UPDATED).reference(Reference.domain(domain)).throwable(throwable)))))
                 );
     }
 

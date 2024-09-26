@@ -18,6 +18,7 @@ package io.gravitee.am.service.reporter.builder.management;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 
 /**
@@ -36,11 +37,10 @@ public class MembershipAuditBuilder extends ManagementAuditBuilder<MembershipAud
                 setNewValue(membership);
             }
 
-            if (membership.getReferenceType() == ReferenceType.DOMAIN || membership.getReferenceType() == ReferenceType.APPLICATION) {
-                domain(membership.getDomain());
+            if ((membership.getReferenceType() == ReferenceType.DOMAIN || membership.getReferenceType() == ReferenceType.APPLICATION) && membership.getDomain() != null) {
+                reference(Reference.domain(membership.getDomain()));
             } else {
-                referenceType(membership.getReferenceType());
-                referenceId(membership.getReferenceId());
+                reference(new Reference(membership.getReferenceType(), membership.getReferenceId()));
             }
 
             setTarget(membership.getId(), EntityType.MEMBERSHIP, null, membership.getId(), ReferenceType.DOMAIN, membership.getDomain());

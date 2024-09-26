@@ -70,7 +70,7 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
+        when(domain.getId()).thenReturn("id");
         router.post("/oauth/token")
                 .handler(ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, applicationClientSecretService, null, auditService))
                 .handler(rc -> rc.response().setStatusCode(200).end())
