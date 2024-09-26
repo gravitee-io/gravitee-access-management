@@ -21,6 +21,7 @@ import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.EndUserAuthentication;
 import io.gravitee.am.management.handlers.management.api.authentication.web.WebAuthenticationDetails;
 import io.gravitee.am.management.service.OrganizationUserService;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -79,7 +80,7 @@ public class CustomLogoutSuccessHandler extends SimpleUrlLogoutSuccessHandler {
                 userService.findById(ReferenceType.ORGANIZATION, orgId, userId)
                         .flatMap(user1 -> userService.updateLogoutDate(ReferenceType.ORGANIZATION, orgId, userId))
                         .doOnSuccess(user -> auditService.report(AuditBuilder.builder(LogoutAuditBuilder.class).user(user)
-                                .referenceType(ReferenceType.ORGANIZATION).referenceId(orgId)
+                                .reference(Reference.organization(orgId))
                                 .ipAddress(details.getRemoteAddress())
                                 .userAgent(details.getUserAgent()))
                         )
@@ -87,7 +88,7 @@ public class CustomLogoutSuccessHandler extends SimpleUrlLogoutSuccessHandler {
                             logger.warn("Unable to read user information, trace logout with minimal data", err);
                             auditService.report(AuditBuilder.builder(LogoutAuditBuilder.class)
                                     .principal(new EndUserAuthentication(jwt.get("username"), null, new SimpleAuthenticationContext()))
-                                    .referenceType(ReferenceType.ORGANIZATION).referenceId(orgId)
+                                    .reference(Reference.organization(orgId))
                                     .ipAddress(details.getRemoteAddress())
                                     .userAgent(details.getUserAgent())
                             );

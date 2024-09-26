@@ -17,6 +17,7 @@ package io.gravitee.am.management.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Tag;
 import io.gravitee.am.repository.management.api.TagRepository;
 import io.gravitee.am.service.AuditService;
@@ -114,7 +115,7 @@ public class TagServiceImpl implements TagService {
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a tag", ex));
                 })
                 .doOnSuccess(tag -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).tag(tag).principal(principal).type(EventType.TAG_CREATED)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).referenceId(organizationId).principal(principal).type(EventType.TAG_CREATED).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).reference(Reference.organization(organizationId)).principal(principal).type(EventType.TAG_CREATED).throwable(throwable)));
     }
 
     @Override
@@ -133,7 +134,7 @@ public class TagServiceImpl implements TagService {
 
                     return tagRepository.update(tag)
                             .doOnSuccess(tag1 -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).principal(principal).type(EventType.TAG_UPDATED).tag(tag1).oldValue(oldTag)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).principal(principal).type(EventType.TAG_UPDATED).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).principal(principal).type(EventType.TAG_UPDATED).reference(Reference.organization(organizationId)).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -153,7 +154,7 @@ public class TagServiceImpl implements TagService {
                 .flatMapCompletable(tag -> removeTagsFromDomains(tagId)
                         .andThen(tagRepository.delete(tagId))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).principal(principal).type(EventType.TAG_DELETED).tag(tag)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).principal(principal).type(EventType.TAG_DELETED).throwable(throwable))))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).principal(principal).type(EventType.TAG_DELETED).reference(Reference.organization(organizationId)).throwable(throwable))))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);

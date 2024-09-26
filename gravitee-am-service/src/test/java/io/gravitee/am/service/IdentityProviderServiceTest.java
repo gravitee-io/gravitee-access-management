@@ -363,7 +363,9 @@ public class IdentityProviderServiceTest {
 
     @Test
     public void shouldDelete() {
-        IdentityProvider existingIdentityProvider = mock(IdentityProvider.class);
+        IdentityProvider existingIdentityProvider = new IdentityProvider();
+        existingIdentityProvider.setReferenceType(ReferenceType.DOMAIN);
+        existingIdentityProvider.setReferenceId(DOMAIN);
         when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(existingIdentityProvider));
         when(identityProviderRepository.delete("my-identity-provider")).thenReturn(Completable.complete());
         when(applicationService.findByIdentityProvider("my-identity-provider")).thenReturn(Flowable.empty());

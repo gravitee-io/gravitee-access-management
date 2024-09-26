@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.ClientAuthProvider;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -76,7 +77,7 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
             if (handler.failed()) {
                 Throwable cause = handler.cause();
                 auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class)
-                        .domain(domain.getId())
+                        .reference(Reference.domain(domain.getId()))
                         .ipAddress(routingContext)
                         .userAgent(routingContext)
                         .throwable(cause));
@@ -95,7 +96,7 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                         }
                     }
                     auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class)
-                            .domain(this.domain.getId())// client may be null, we have to provide the domainId
+                            .reference(Reference.domain(domain.getId()))// client may be null, we have to provide the domainId
                             .clientActor(client)
                             .ipAddress(routingContext)
                             .userAgent(routingContext)

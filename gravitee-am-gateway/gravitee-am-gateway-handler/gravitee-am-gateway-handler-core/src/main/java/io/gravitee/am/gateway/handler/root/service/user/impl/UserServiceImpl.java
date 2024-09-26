@@ -45,6 +45,7 @@ import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.PasswordHistory;
 import io.gravitee.am.model.PasswordPolicy;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
@@ -193,12 +194,12 @@ public class UserServiceImpl implements UserService {
             return userService.update(userToken.getUser()).flatMapMaybe(__ -> Maybe.just(userToken));
         }).doOnSuccess(userToken -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
                 .type(EventType.REGISTRATION_VERIFY_ACCOUNT)
-                .domain(domain.getId())
+                .reference(Reference.domain(domain.getId()))
                 .client(userToken.getClient())
                 .user(userToken.getUser()))
         ).doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
                 .type(EventType.REGISTRATION_VERIFY_ACCOUNT)
-                .domain(domain.getId())
+                .reference(Reference.domain(domain.getId()))
                 .throwable(throwable))
         );
     }
@@ -246,12 +247,17 @@ public class UserServiceImpl implements UserService {
                         .flatMap(userService::enhance)
                         .map(enhancedUser -> buildRegistrationResponse(accountSettings, enhancedUser))
                         .doOnSuccess(registrationResponse -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
-                                .domain(domain.getId())
+                                .reference(Reference.domain(domain.getId()))
                                 .client(client)
                                 .principal(reloadPrincipal(principal, registrationResponse.getUser()))
                                 .type(EventType.USER_REGISTERED))
                         )
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_REGISTERED).throwable(throwable))));
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
+                                .reference(Reference.domain(domain.getId()))
+                                .client(user.getClient())
+                                .principal(principal)
+                                .type(EventType.USER_REGISTERED)
+                                .throwable(throwable))));
     }
 
     private static RegistrationResponse buildRegistrationResponse(Optional<AccountSettings> accountSettings, User user) {
@@ -353,8 +359,17 @@ public class UserServiceImpl implements UserService {
                     AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
                     return new RegistrationResponse(user1, accountSettings != null ? accountSettings.getRedirectUriAfterRegistration() : null, accountSettings != null ? accountSettings.isAutoLoginAfterRegistration() : false);
                 })
-                .doOnSuccess(response -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.REGISTRATION_CONFIRMATION)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.REGISTRATION_CONFIRMATION).throwable(throwable)));
+                .doOnSuccess(response -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
+                        .reference(Reference.domain(domain.getId()))
+                        .client(user.getClient())
+                        .principal(principal)
+                        .type(EventType.REGISTRATION_CONFIRMATION)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
+                        .reference(Reference.domain(domain.getId()))
+                        .client(user.getClient())
+                        .principal(principal)
+                        .type(EventType.REGISTRATION_CONFIRMATION)
+                        .throwable(throwable)));
 
     }
 
@@ -455,8 +470,19 @@ public class UserServiceImpl implements UserService {
                 })
                 .flatMap(userService::enhance)
                 .map(user1 -> new ResetPasswordResponse(user1, accountSettings != null ? accountSettings.getRedirectUriAfterResetPassword() : null, accountSettings != null ? accountSettings.isAutoLoginAfterResetPassword() : false))
-                .doOnSuccess(response -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user).throwable(throwable)));
+                .doOnSuccess(response -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
+                        .reference(Reference.domain(domain.getId()))
+                        .client(client)
+                        .principal(principal)
+                        .type(EventType.USER_PASSWORD_RESET)
+                        .user(user)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
+                        .reference(Reference.domain(domain.getId()))
+                        .client(client)
+                        .principal(principal)
+                        .type(EventType.USER_PASSWORD_RESET)
+                        .user(user)
+                        .throwable(throwable)));
     }
 
     @Override
@@ -561,9 +587,18 @@ public class UserServiceImpl implements UserService {
                 .doOnSuccess(user1 -> {
                     // reload principal
                     io.gravitee.am.identityprovider.api.User principal1 = reloadPrincipal(principal, user1);
-                    auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal1).type(EventType.FORGOT_PASSWORD_REQUESTED));
+                    auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
+                            .reference(Reference.domain(domain.getId()))
+                            .client(client)
+                            .principal(principal1)
+                            .type(EventType.FORGOT_PASSWORD_REQUESTED));
                 })
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.FORGOT_PASSWORD_REQUESTED).throwable(throwable)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
+                        .reference(Reference.domain(domain.getId()))
+                        .client(client)
+                        .principal(principal)
+                        .type(EventType.FORGOT_PASSWORD_REQUESTED)
+                        .throwable(throwable)))
                 .ignoreElement();
     }
 
@@ -623,8 +658,17 @@ public class UserServiceImpl implements UserService {
                                 return complete();
                             });
                 })
-                .doOnComplete(() -> auditService.report(AuditBuilder.builder(LogoutAuditBuilder.class).domain(domain.getId()).client(user.getClient()).user(user).type(EventType.USER_LOGOUT)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(LogoutAuditBuilder.class).domain(domain.getId()).client(user.getClient()).user(user).type(EventType.USER_LOGOUT).throwable(throwable)));
+                .doOnComplete(() -> auditService.report(AuditBuilder.builder(LogoutAuditBuilder.class)
+                        .reference(Reference.domain(domain.getId()))
+                        .client(user.getClient())
+                        .user(user)
+                        .type(EventType.USER_LOGOUT)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(LogoutAuditBuilder.class)
+                        .reference(Reference.domain(domain.getId()))
+                        .client(user.getClient())
+                        .user(user)
+                        .type(EventType.USER_LOGOUT)
+                        .throwable(throwable)));
     }
 
     @Override

@@ -18,6 +18,7 @@ package io.gravitee.am.service.reporter.builder.management;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.PasswordPolicy;
+import io.gravitee.am.model.Reference;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -34,8 +35,7 @@ public class PasswordPolicyAuditBuilder extends ManagementAuditBuilder<PasswordP
             if (EventType.PASSWORD_POLICY_CREATED.equals(getType()) || EventType.PASSWORD_POLICY_UPDATED.equals(getType())) {
                 setNewValue(policy);
             }
-            referenceId(policy.getReferenceId());
-            referenceType(policy.getReferenceType());
+            reference(new Reference(policy.getReferenceType(), policy.getReferenceId()));
             setTarget(policy.getId(), EntityType.PASSWORD_POLICY, null, policy.getName(), policy.getReferenceType(), policy.getReferenceId());
         }
         return this;

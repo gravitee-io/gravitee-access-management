@@ -17,6 +17,7 @@ package io.gravitee.am.service.reporter.builder.management;
 
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Tag;
 
@@ -26,19 +27,13 @@ import io.gravitee.am.model.Tag;
  */
 public class TagAuditBuilder extends ManagementAuditBuilder<TagAuditBuilder> {
 
-    public TagAuditBuilder() {
-        // Tags are managed at organization level.
-        referenceType(ReferenceType.ORGANIZATION);
-    }
-
     public TagAuditBuilder tag(Tag tag) {
         if (tag != null) {
             if (EventType.TAG_CREATED.equals(getType()) || EventType.TAG_UPDATED.equals(getType())) {
                 setNewValue(tag);
             }
 
-            referenceId(tag.getOrganizationId());
-
+            reference(new Reference(ReferenceType.ORGANIZATION, tag.getOrganizationId()));
             setTarget(tag.getId(), EntityType.TAG, null, tag.getName(), ReferenceType.ORGANIZATION, tag.getOrganizationId());
         }
         return this;

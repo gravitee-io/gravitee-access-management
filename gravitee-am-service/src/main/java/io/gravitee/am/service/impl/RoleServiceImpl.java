@@ -22,6 +22,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Platform;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.Page;
@@ -227,7 +228,7 @@ public class RoleServiceImpl implements RoleService {
                     return Single.error(new TechnicalManagementException(CREATE_ERROR, ex));
                 })
                 .doOnSuccess(role -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_CREATED).role(role)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_CREATED).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_CREATED).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
     }
 
     @Override
@@ -269,7 +270,7 @@ public class RoleServiceImpl implements RoleService {
                                             return eventService.create(event).flatMap(__ -> Single.just(role));
                                         })
                                         .doOnSuccess(role -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_UPDATED).oldValue(oldRole).role(role)))
-                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_UPDATED).throwable(throwable)));
+                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_UPDATED).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
                             });
                 })
                 .onErrorResumeNext(ex -> {
@@ -302,7 +303,7 @@ public class RoleServiceImpl implements RoleService {
                 .flatMapCompletable(role -> roleRepository.delete(roleId)
                         .andThen(Completable.fromSingle(eventService.create(new Event(Type.ROLE, new Payload(role.getId(), role.getReferenceType(), role.getReferenceId(), Action.DELETE)))))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_DELETED).role(role)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_DELETED).throwable(throwable)))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_DELETED).reference(new Reference(referenceType, referenceId)).throwable(throwable)))
                 )
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -356,7 +357,7 @@ public class RoleServiceImpl implements RoleService {
                                     return Single.error(new TechnicalManagementException(CREATE_ERROR, ex));
                                 })
                                 .doOnSuccess(role1 -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_CREATED).role(role1)))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_CREATED).throwable(throwable))));
+                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_CREATED).reference(new Reference(role.getReferenceType(), role.getReferenceId())).throwable(throwable))));
                     } else {
                         // check if permission set has changed
                         Role currentRole = optRole.get();
@@ -381,7 +382,7 @@ public class RoleServiceImpl implements RoleService {
                                     return Single.error(new TechnicalManagementException(UPDATE_ERROR, ex));
                                 })
                                 .doOnSuccess(role1 -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_UPDATED).oldValue(currentRole).role(role1)))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_UPDATED).throwable(throwable))));
+                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_UPDATED).reference(new Reference(role.getReferenceType(), role.getReferenceId())).throwable(throwable))));
                     }
                 });
 

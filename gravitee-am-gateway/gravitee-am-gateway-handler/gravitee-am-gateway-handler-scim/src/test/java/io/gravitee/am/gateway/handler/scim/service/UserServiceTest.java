@@ -114,8 +114,8 @@ public class UserServiceTest {
     @Mock
     private IdentityProviderManager identityProviderManager;
 
-    @Mock
-    private Domain domain;
+    @Spy
+    private Domain domain = new Domain();
 
     @Mock
     private GroupService groupService;
@@ -144,27 +144,33 @@ public class UserServiceTest {
     @Mock
     private RoleService roleService;
 
+    private final static String DOMAIN_ID = "domain";
+
+
     @Before
     public void setUp() {
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
         when(userRepository.findByExternalIdAndSource(any(), any(), any(), any())).thenReturn(Maybe.empty());
+        domain.setId(DOMAIN_ID);
     }
 
     @Test
     public void shouldCreateUser_no_user_provider() {
-        final String domainId = "domain";
 
         User newUser = mock(User.class);
         when(newUser.getSource()).thenReturn("unknown-idp");
         when(newUser.getUserName()).thenReturn("username");
         when(newUser.getPassword()).thenReturn(null);
-        when(domain.getId()).thenReturn(domainId);
+
         when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
 
         ArgumentCaptor<io.gravitee.am.model.User> newUserDefinition = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
-        when(userRepository.create(newUserDefinition.capture())).thenReturn(Single.just(new io.gravitee.am.model.User()));
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN_ID);
+        when(userRepository.create(newUserDefinition.capture())).thenReturn(Single.just(user));
 
         TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
         testObserver.assertNoErrors();
@@ -183,7 +189,6 @@ public class UserServiceTest {
         when(newUser.getUserName()).thenReturn("username");
         when(newUser.getRoles()).thenReturn(Arrays.asList("role-wrong-1", "role-wrong-2"));
 
-        when(domain.getId()).thenReturn(domainId);
         when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(roleService.findByIdIn(newUser.getRoles())).thenReturn(Single.just(Collections.emptySet()));
 
@@ -223,7 +228,6 @@ public class UserServiceTest {
 
         when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.just(user));
         when(passwordService.isValid(any(), any(), any())).thenReturn(true);
-        when(domain.getId()).thenReturn("domain");
 
         User newUser = mock(User.class);
         when(newUser.getSource()).thenReturn("unknown-idp");
@@ -248,7 +252,6 @@ public class UserServiceTest {
         when(userRepository.findByExternalIdAndSource(any(), any(), any(), any())).thenReturn(Maybe.just(user));
         when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(passwordService.isValid(any(), any(), any())).thenReturn(true);
-        when(domain.getId()).thenReturn("domain");
 
         User newUser = mock(User.class);
         when(newUser.getSource()).thenReturn("unknown-idp");
@@ -264,7 +267,6 @@ public class UserServiceTest {
     }
 
     private void innerCreateUser(String pwd) {
-        final String domainId = "domain";
 
         User newUser = mock(User.class);
         when(newUser.getSource()).thenReturn("unknown-idp");
@@ -281,7 +283,9 @@ public class UserServiceTest {
         UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.create(any())).thenReturn(Single.just(idpUser));
 
-        io.gravitee.am.model.User createdUser = mock(io.gravitee.am.model.User.class);
+        io.gravitee.am.model.User createdUser = new io.gravitee.am.model.User();
+        createdUser.setReferenceId(DOMAIN_ID);
+        createdUser.setReferenceType(ReferenceType.DOMAIN);
 
         Set<Role> roles = new HashSet<>();
         Role role1 = new Role();
@@ -291,7 +295,6 @@ public class UserServiceTest {
         roles.add(role1);
         roles.add(role2);
 
-        when(domain.getId()).thenReturn(domainId);
         when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
@@ -318,6 +321,8 @@ public class UserServiceTest {
         when(existingUser.getId()).thenReturn("user-id");
         when(existingUser.getSource()).thenReturn("user-idp");
         when(existingUser.getUsername()).thenReturn("username");
+        when(existingUser.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
+        when(existingUser.getReferenceId()).thenReturn(DOMAIN_ID);
 
         User scimUser = mock(User.class);
         when(scimUser.getPassword()).thenReturn(PASSWORD);
@@ -327,14 +332,6 @@ public class UserServiceTest {
 
         UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.create(any())).thenReturn(Single.just(idpUser));
-
-        Set<Role> roles = new HashSet<>();
-        Role role1 = new Role();
-        role1.setId("role-1");
-        Role role2 = new Role();
-        role2.setId("role-2");
-        roles.add(role1);
-        roles.add(role2);
 
         when(userRepository.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
@@ -357,14 +354,15 @@ public class UserServiceTest {
 
     @Test
     public void shouldUpdateUser_roles_entitlements() {
-        io.gravitee.am.model.User existingUser = mock(io.gravitee.am.model.User.class);
-        when(existingUser.getId()).thenReturn("user-id");
-        when(existingUser.getSource()).thenReturn("user-idp");
-        when(existingUser.getRoles()).thenReturn(Arrays.asList("r1"));
-        when(existingUser.getEntitlements()).thenReturn(Arrays.asList("e1"));
-        when(existingUser.getSource()).thenReturn("user-idp");
-
-        when(existingUser.getUsername()).thenReturn("username");
+        io.gravitee.am.model.User existingUser = new io.gravitee.am.model.User();
+        existingUser.setId("user-id");
+        existingUser.setSource("user-idp");
+        existingUser.setRoles(Arrays.asList("r1"));
+        existingUser.setEntitlements(Arrays.asList("e1"));
+        existingUser.setSource("user-idp");
+        existingUser.setUsername("username");
+        existingUser.setReferenceType(ReferenceType.DOMAIN);
+        existingUser.setReferenceId(DOMAIN_ID);
 
         User scimUser = mock(User.class);
         when(scimUser.getPassword()).thenReturn(PASSWORD);
@@ -408,6 +406,8 @@ public class UserServiceTest {
         when(existingUser.getSource()).thenReturn("user-idp");
         when(existingUser.getExternalId()).thenReturn("user-extid");
         when(existingUser.getUsername()).thenReturn("username");
+        when(existingUser.getReferenceId()).thenReturn(DOMAIN_ID);
+        when(existingUser.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
         when(existingUser.getAdditionalInformation()).thenReturn(Map.of("attr1", "value-attr1"));
 
         User scimUser = mock(User.class);
@@ -418,14 +418,6 @@ public class UserServiceTest {
 
         UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
-
-        Set<Role> roles = new HashSet<>();
-        Role role1 = new Role();
-        role1.setId("role-1");
-        Role role2 = new Role();
-        role2.setId("role-2");
-        roles.add(role1);
-        roles.add(role2);
 
         when(userRepository.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
@@ -454,6 +446,8 @@ public class UserServiceTest {
         when(existingUser.getSource()).thenReturn("user-idp");
         when(existingUser.getExternalId()).thenReturn("user-extid");
         when(existingUser.getUsername()).thenReturn("username");
+        when(existingUser.getReferenceId()).thenReturn(DOMAIN_ID);
+        when(existingUser.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
 
         User scimUser = mock(User.class);
         when(scimUser.isActive()).thenReturn(true);
@@ -462,14 +456,6 @@ public class UserServiceTest {
 
         UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
-
-        Set<Role> roles = new HashSet<>();
-        Role role1 = new Role();
-        role1.setId("role-1");
-        Role role2 = new Role();
-        role2.setId("role-2");
-        roles.add(role1);
-        roles.add(role2);
 
         when(userRepository.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
@@ -535,6 +521,8 @@ public class UserServiceTest {
         when(patchedUser.getSource()).thenReturn("user-idp");
         when(patchedUser.getUsername()).thenReturn("username");
         when(patchedUser.getDisplayName()).thenReturn("my user 2");
+        when(patchedUser.getReferenceId()).thenReturn(DOMAIN_ID);
+        when(patchedUser.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
         when(patchedUser.getAdditionalInformation()).thenReturn(Map.of("attr1", "value-attr1"));
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
@@ -588,6 +576,8 @@ public class UserServiceTest {
         when(patchedUser.getSource()).thenReturn("user-idp");
         when(patchedUser.getUsername()).thenReturn("username");
         when(patchedUser.getDisplayName()).thenReturn("my user 2");
+        when(patchedUser.getReferenceId()).thenReturn(DOMAIN_ID);
+        when(patchedUser.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
         UserProvider userProvider = mock(UserProvider.class);
@@ -619,6 +609,8 @@ public class UserServiceTest {
         when(endUser.getId()).thenReturn(userId);
         when(endUser.getExternalId()).thenReturn("user-external-id");
         when(endUser.getSource()).thenReturn("user-idp");
+        when(endUser.getReferenceId()).thenReturn(DOMAIN_ID);
+        when(endUser.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
 
         UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.delete(any())).thenReturn(complete());
@@ -647,6 +639,8 @@ public class UserServiceTest {
         io.gravitee.am.model.User endUser = mock(io.gravitee.am.model.User.class);
         when(endUser.getId()).thenReturn(userId);
         when(endUser.getSource()).thenReturn("user-idp");
+        when(endUser.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
+        when(endUser.getReferenceId()).thenReturn(DOMAIN_ID);
 
         UserProvider userProvider = mock(UserProvider.class);
 

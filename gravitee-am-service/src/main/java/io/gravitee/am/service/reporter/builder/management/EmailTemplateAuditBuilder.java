@@ -18,6 +18,7 @@ package io.gravitee.am.service.reporter.builder.management;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.Reference;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -35,8 +36,7 @@ public class EmailTemplateAuditBuilder extends ManagementAuditBuilder<EmailTempl
                 setNewValue(email);
             }
 
-            referenceType(email.getReferenceType());
-            referenceId(email.getReferenceId());
+            reference(new Reference(email.getReferenceType(), email.getReferenceId()));
 
             setTarget(email.getId(), EntityType.EMAIL, null, email.getTemplate(), email.getReferenceType(), email.getReferenceId());
         }

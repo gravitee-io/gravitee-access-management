@@ -19,6 +19,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.AccountAccessToken;
+import io.gravitee.am.model.Device;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.User;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.vertx.core.json.Json;
@@ -57,11 +59,15 @@ public class UserAuditBuilder extends ManagementAuditBuilder<UserAuditBuilder> {
             if (isSensitiveEventType()) {
                 setNewValue(user);
             }
-
-            referenceType(user.getReferenceType());
-            referenceId(user.getReferenceId());
-
+            reference(new Reference(user.getReferenceType(), user.getReferenceId()));
             setTarget(user.getId(), EntityType.USER, user.getUsername(), getDisplayName(user), user.getReferenceType(), user.getReferenceId(), user.getExternalId(), user.getSource());
+        }
+        return this;
+    }
+
+    public UserAuditBuilder deletedDevice(Device device) {
+        if(device != null){
+            setTarget(device.getDeviceId(), EntityType.DEVICE_IDENTIFIER, null, device.getDeviceIdentifierId(), device.getReferenceType(), device.getReferenceId());
         }
         return this;
     }

@@ -98,7 +98,9 @@ public class TagServiceTest {
         NewTag newTag = Mockito.mock(NewTag.class);
         when(newTag.getName()).thenReturn("my-tag");
         when(tagRepository.findById("my-tag", Organization.DEFAULT)).thenReturn(Maybe.empty());
-        when(tagRepository.create(any(Tag.class))).thenReturn(Single.just(new Tag()));
+        Tag tag = new Tag();
+        tag.setOrganizationId("id");
+        when(tagRepository.create(any(Tag.class))).thenReturn(Single.just(tag));
 
         TestObserver testObserver = tagService.create(newTag, Organization.DEFAULT, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -146,8 +148,10 @@ public class TagServiceTest {
         UpdateTag updateTag = Mockito.mock(UpdateTag.class);
         when(updateTag.getName()).thenReturn("my-tag");
         when(updateTag.getDescription()).thenReturn("my-tag-desc");
-        when(tagRepository.findById("my-tag", Organization.DEFAULT)).thenReturn(Maybe.just(new Tag()));
-        when(tagRepository.update(any())).thenReturn(Single.just(new Tag()));
+        Tag tag = new Tag();
+        tag.setOrganizationId("id");
+        when(tagRepository.findById("my-tag", Organization.DEFAULT)).thenReturn(Maybe.just(tag));
+        when(tagRepository.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
 
         TestObserver<Tag> testObserver = new TestObserver<>();
         tagService.update("my-tag", Organization.DEFAULT, updateTag,null).subscribe(testObserver);

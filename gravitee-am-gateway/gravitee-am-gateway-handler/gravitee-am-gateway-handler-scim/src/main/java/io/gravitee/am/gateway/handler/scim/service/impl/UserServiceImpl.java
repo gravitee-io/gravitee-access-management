@@ -37,6 +37,7 @@ import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordHistory;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.Page;
@@ -276,7 +277,12 @@ public class UserServiceImpl implements UserService {
                                     }))
                             .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)));
                 }))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(userModel).domain(domain.getId()).throwable(throwable)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.USER_CREATED)
+                        .user(userModel)
+                        .reference(Reference.domain(domain.getId()))
+                        .throwable(throwable)))
                 .map(user1 -> {
                     //noinspection ReactiveStreamsUnusedPublisher
                     createPasswordHistory(domain, user1, rawPassword, principal, client);
@@ -449,8 +455,16 @@ public class UserServiceImpl implements UserService {
                             .andThen(passwordHistoryService.deleteByUser(userId))
                             .andThen(verifyAttemptService.deleteByUser(user))
                             .andThen(userRepository.delete(userId))
-                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).domain(domain.getId()).type(EventType.USER_DELETED).user(user)))
-                            .doOnError(error -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).domain(domain.getId()).type(EventType.USER_DELETED).throwable(error)));
+                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
+                                    .principal(principal)
+                                    .reference(Reference.domain(domain.getId()))
+                                    .type(EventType.USER_DELETED)
+                                    .user(user)))
+                            .doOnError(error -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
+                                    .principal(principal)
+                                    .reference(Reference.domain(domain.getId()))
+                                    .type(EventType.USER_DELETED)
+                                    .throwable(error)));
                 });
     }
 
