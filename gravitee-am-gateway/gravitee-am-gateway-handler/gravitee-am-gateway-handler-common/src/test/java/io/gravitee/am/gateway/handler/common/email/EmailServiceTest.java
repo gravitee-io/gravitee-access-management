@@ -104,6 +104,7 @@ public class EmailServiceTest {
 
     @Before
     public void init() throws Exception {
+        when(domain.getId()).thenReturn("id");
         freemarkerConfiguration.setLocalizedLookup(false);
         freemarkerConfiguration.setNewBuiltinClassResolver(TemplateClassResolver.SAFER_RESOLVER);
         TemplateConfiguration tcHTML = new TemplateConfiguration();

@@ -18,6 +18,7 @@ package io.gravitee.am.service.reporter.builder.management;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Credential;
+import io.gravitee.am.model.Reference;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -34,8 +35,7 @@ public class CredentialAuditBuilder extends ManagementAuditBuilder<CredentialAud
             if (EventType.CREDENTIAL_CREATED.equals(getType()) || EventType.CREDENTIAL_UPDATED.equals(getType())) {
                 setNewValue(credential);
             }
-            referenceId(credential.getReferenceId());
-            referenceType(credential.getReferenceType());
+            reference(new Reference(credential.getReferenceType(), credential.getReferenceId()));
             setTarget(credential.getId(), EntityType.CREDENTIAL, credential.getAaguid(), credential.getCredentialId(), credential.getReferenceType(), credential.getReferenceId());
         }
         return this;

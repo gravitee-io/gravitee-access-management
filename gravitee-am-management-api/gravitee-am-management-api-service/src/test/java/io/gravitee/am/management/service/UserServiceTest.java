@@ -245,7 +245,10 @@ public class UserServiceTest {
         when(passwordService.isValid(anyString(), eq(null), any())).thenReturn(true);
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
         when(userProvider.create(any())).thenReturn(Single.just(idpUser));
-        when(commonUserService.create(any())).thenReturn(Single.just(new User()));
+        User user = new User();
+        user.setReferenceType(DOMAIN);
+        user.setReferenceId("domain");
+        when(commonUserService.create(any())).thenReturn(Single.just(user));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
 
         userService.create(domain, newUser, null)
@@ -351,6 +354,8 @@ public class UserServiceTest {
         preRegisteredUser.setId("userId");
         preRegisteredUser.setReferenceId("domain");
         preRegisteredUser.setPreRegistration(true);
+        preRegisteredUser.setReferenceType(DOMAIN);
+        preRegisteredUser.setReferenceId("domain");
 
         UserProvider userProvider = mock(UserProvider.class);
         doReturn(Single.just(new DefaultUser(newUser.getUsername()))).when(userProvider).create(any());
@@ -410,7 +415,10 @@ public class UserServiceTest {
         when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
-        when(commonUserService.create(any())).thenReturn(Single.just(new User()));
+        User user = new User();
+        user.setReferenceType(DOMAIN);
+        user.setReferenceId("domain");
+        when(commonUserService.create(any())).thenReturn(Single.just(user));
         when(domainService.buildUrl(any(Domain.class), eq("/confirmRegistration"))).thenReturn("http://localhost:8092/test/confirmRegistration");
         when(emailService.getEmailTemplate(eq(Template.REGISTRATION_CONFIRMATION), any())).thenReturn(Maybe.just(new Email()));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
@@ -462,7 +470,11 @@ public class UserServiceTest {
         when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
-        when(commonUserService.create(any())).thenReturn(Single.just(new User()));
+
+        User user = new User();
+        user.setReferenceId("domain");
+        user.setReferenceType(DOMAIN);
+        when(commonUserService.create(any())).thenReturn(Single.just(user));
         when(domainService.buildUrl(any(Domain.class), eq("/confirmRegistration"))).thenReturn("http://localhost:8092/test/confirmRegistration");
         when(emailService.getEmailTemplate(eq(Template.REGISTRATION_CONFIRMATION), any())).thenReturn(Maybe.just(new Email()));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
@@ -490,6 +502,8 @@ public class UserServiceTest {
         User user = new User();
         user.setId("user-id");
         user.setSource("idp-id");
+        user.setReferenceId("domain");
+        user.setReferenceType(DOMAIN);
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
         when(idpUser.getId()).thenReturn("idp-id");
@@ -524,6 +538,8 @@ public class UserServiceTest {
         User user = new User();
         user.setId("user-id");
         user.setSource("idp-id");
+        user.setReferenceId("domain");
+        user.setReferenceType(DOMAIN);
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
         when(idpUser.getId()).thenReturn("idp-id");
@@ -553,8 +569,10 @@ public class UserServiceTest {
     void shouldAssignRoles() {
         List<String> rolesIds = Arrays.asList("role-1", "role-2");
 
-        User user = mock(User.class);
-        when(user.getId()).thenReturn("user-id");
+        User user = new User();
+        user.setId("user-id");
+        user.setReferenceId("domain");
+        user.setReferenceType(DOMAIN);
 
         Set<Role> roles = new HashSet<>();
         Role role1 = new Role();
@@ -566,7 +584,7 @@ public class UserServiceTest {
 
         when(commonUserService.findById(eq(DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
-        when(commonUserService.update(any())).thenReturn(Single.just(new User()));
+        when(commonUserService.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
 
         userService.assignRoles(DOMAIN, DOMAIN_ID, user.getId(), rolesIds)
                 .test()
@@ -600,6 +618,9 @@ public class UserServiceTest {
         User user = new User();
         user.setId("user-id");
         user.setSource("idp-id");
+        user.setReferenceId("domain");
+        user.setReferenceType(DOMAIN);
+
 
         Set<Role> roles = new HashSet<>();
         Role role1 = new Role();
@@ -611,7 +632,7 @@ public class UserServiceTest {
 
         when(commonUserService.findById(eq(DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
-        when(commonUserService.update(any())).thenReturn(Single.just(new User()));
+        when(commonUserService.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
 
         userService.revokeRoles(DOMAIN, DOMAIN_ID, user.getId(), rolesIds)
                 .test()
@@ -668,6 +689,8 @@ public class UserServiceTest {
         User user = new User();
         user.setId("user-id");
         user.setSource("idp-id");
+        user.setReferenceId("domain");
+        user.setReferenceType(DOMAIN);
 
         when(commonUserService.findById(eq(DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
@@ -688,6 +711,8 @@ public class UserServiceTest {
         User user = new User();
         user.setId("user-id");
         user.setSource("idp-id");
+        user.setReferenceType(DOMAIN);
+        user.setReferenceId("domain");
 
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
         when(passwordService.isValid(eq(PASSWORD), eq(null), any())).thenReturn(true);
@@ -1065,6 +1090,8 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
         user.setUsername(USERNAME);
+        user.setReferenceType(DOMAIN);
+        user.setReferenceId("domain");
 
         var updatedUser = new UpdateUser();
         updatedUser.setFirstName("New firstName");
@@ -1109,6 +1136,8 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
         user.setUsername(USERNAME);
+        user.setReferenceType(DOMAIN);
+        user.setReferenceId("domain");
 
         var updatedUser = new UpdateUser();
         updatedUser.setSource("idp-user-id");
@@ -1141,7 +1170,8 @@ public class UserServiceTest {
         var user = new User();
         user.setId("user-id");
         user.setSource("idp-user-id");
-
+        user.setReferenceType(DOMAIN);
+        user.setReferenceId("domain");
 
         var updatedUser = new UpdateUser();
         updatedUser.setSource("idp-user-id");
@@ -1296,6 +1326,8 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
         user.setIdentities(userIdentities);
+        user.setReferenceId("domain");
+        user.setReferenceType(DOMAIN);
 
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         when(commonUserService.findById(eq("user-id"))).thenReturn(Maybe.just(user));

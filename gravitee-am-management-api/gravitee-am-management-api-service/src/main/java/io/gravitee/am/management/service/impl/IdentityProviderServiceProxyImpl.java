@@ -115,7 +115,7 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
         return identityProviderService.create(referenceType, referenceId, newIdentityProvider, principal, system)
                 .flatMap(this::filterSensitiveData)
                 .doOnSuccess(identityProvider1 -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_CREATED).identityProvider(identityProvider1)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_CREATED).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_CREATED).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
     }
 
     @Override
@@ -127,7 +127,7 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
                                 .flatMap(idpToUpdate -> identityProviderService.update(referenceType, referenceId, id, idpToUpdate, principal, isUpgrader))
                                 .flatMap(this::filterSensitiveData)
                                 .doOnSuccess(identityProvider1 -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_UPDATED).oldValue(safeOldIdp).identityProvider(identityProvider1)))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_UPDATED).throwable(throwable))))
+                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_UPDATED).reference(new Reference(referenceType, referenceId)).throwable(throwable))))
                 );
     }
 

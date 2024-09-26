@@ -20,6 +20,7 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.mfa.InvalidFactorAttributeException;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.gateway.handler.common.user.UserStore;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
@@ -92,7 +93,7 @@ public class UserServiceImpl implements UserService {
     public Single<User> create(User user) {
         return userService.create(user)
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).user(user1)))
-                .doOnError(err -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).throwable(err)))
+                .doOnError(err -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).reference(new Reference(user.getReferenceType(), user.getReferenceId())).throwable(err)))
                 .flatMap(persistedUser -> userStore.add(persistedUser).switchIfEmpty(Single.just(persistedUser)));
     }
 
@@ -131,7 +132,7 @@ public class UserServiceImpl implements UserService {
                                     auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).user(user1).oldValue(oldUser));
                                 }
                             })
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).reference(new Reference(user.getReferenceType(), user.getReferenceId())).throwable(throwable)));
                 });
     }
 

@@ -20,6 +20,7 @@ import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.EndUserAuthentication;
 import io.gravitee.am.model.Organization;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -63,8 +64,7 @@ public class CustomAuthenticationFailureHandler extends SimpleUrlAuthenticationF
         authentication.getContext().set(Claims.ORGANIZATION, organizationId);
 
         // audit event
-        auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class).principal(authentication)
-                .referenceType(ReferenceType.ORGANIZATION).referenceId(organizationId).throwable(exception));
+        auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class).principal(authentication).reference(Reference.organization(organizationId)).throwable(exception));
 
         String redirectUri = defaultFailureUrl;
 

@@ -32,6 +32,7 @@ import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.Template;
@@ -778,7 +779,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                 .type(type)
                 .channel(channel)
                 .client(client)
-                .domain(domain.getId())
+                .reference(Reference.domain(domain.getId()))
                 .ipAddress(routingContext)
                 .userAgent(routingContext)
                 .throwable(cause, channel);

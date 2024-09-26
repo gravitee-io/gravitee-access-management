@@ -17,6 +17,7 @@ package io.gravitee.am.service.reporter.builder.management;
 
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.resource.ServiceResource;
 
 /**
@@ -34,8 +35,7 @@ public class ServiceResourceAuditBuilder extends ManagementAuditBuilder<ServiceR
             if (EventType.RESOURCE_CREATED.equals(getType()) || EventType.RESOURCE_UPDATED.equals(getType())) {
                 setNewValue(resource);
             }
-            this.referenceId(resource.getReferenceId());
-            this.referenceType(resource.getReferenceType());
+            reference(new Reference(resource.getReferenceType(), resource.getReferenceId()));
             setTarget(resource.getId(), EntityType.RESOURCE, null, resource.getName(), resource.getReferenceType(), resource.getReferenceId());
         }
         return this;

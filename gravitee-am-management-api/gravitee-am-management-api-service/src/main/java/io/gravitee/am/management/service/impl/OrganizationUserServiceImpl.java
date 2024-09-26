@@ -22,6 +22,7 @@ import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.model.AccountAccessToken;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Organization;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
@@ -104,7 +105,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                     User user = transform(newUser, referenceType, referenceId);
                     return userService.create(user)
                             .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).user(user1)))
-                            .doOnError(err -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).throwable(err)));
+                            .doOnError(err -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).reference(new Reference(referenceType, referenceId)).throwable(err)));
                 }));
     }
 
@@ -151,7 +152,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                                     userToPersist.setReferenceType(ReferenceType.ORGANIZATION);
 
                                     return userValidator.validate(userToPersist)
-                                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)))
+                                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).reference(Reference.organization(organization.getId())).throwable(throwable)))
                                             .andThen(userProvider.create(convert(newUser))
                                                     .map(idpUser -> {
                                                         // Excepted for GraviteeIDP that manage Organization Users
@@ -168,7 +169,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                                                     .flatMap(newOrgUser -> userService.create(newOrgUser)
                                                             .flatMap(newlyCreatedUser -> userService.setRoles(newlyCreatedUser).andThen(Single.just(newlyCreatedUser)))
                                                             .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
-                                                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)))
+                                                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).reference(Reference.organization(organization.getId())).throwable(throwable)))
                                                     ));
                                 });
 
@@ -192,7 +193,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
         user.setPassword(PWD_ENCODER.encode(password));
         return userService.update(user)
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_RESET).throwable(throwable)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_RESET).reference(Reference.organization(organizationId)).throwable(throwable)))
                 .ignoreElement();
     }
 
@@ -229,6 +230,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                                 .accountToken(token)
                         )))
                 .doOnError(throwable -> auditService.report(createAccountAccessTokenAudit(principal)
+                        .reference(Reference.organization(organizationId))
                         .throwable(throwable)));
     }
 

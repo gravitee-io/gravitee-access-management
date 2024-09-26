@@ -132,7 +132,7 @@ public class ExtensionGrantServiceTest {
         NewExtensionGrant newExtensionGrant = Mockito.mock(NewExtensionGrant.class);
         when(newExtensionGrant.getName()).thenReturn("my-extension-grant");
         when(extensionGrantRepository.findByDomainAndName(DOMAIN, "my-extension-grant")).thenReturn(Maybe.empty());
-        when(extensionGrantRepository.create(any(ExtensionGrant.class))).thenReturn(Single.just(new ExtensionGrant()));
+        when(extensionGrantRepository.create(any(ExtensionGrant.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = extensionGrantService.create(DOMAIN, newExtensionGrant).test();
@@ -195,9 +195,11 @@ public class ExtensionGrantServiceTest {
     public void shouldUpdate() {
         UpdateExtensionGrant updateExtensionGrant = Mockito.mock(UpdateExtensionGrant.class);
         when(updateExtensionGrant.getName()).thenReturn("my-extension-grant");
-        when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.just(new ExtensionGrant()));
+        ExtensionGrant extensionGrant = new ExtensionGrant();
+        extensionGrant.setDomain(DOMAIN);
+        when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.just(extensionGrant));
         when(extensionGrantRepository.findByDomainAndName(DOMAIN, "my-extension-grant")).thenReturn(Maybe.empty());
-        when(extensionGrantRepository.update(any(ExtensionGrant.class))).thenReturn(Single.just(new ExtensionGrant()));
+        when(extensionGrantRepository.update(any(ExtensionGrant.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = extensionGrantService.update(DOMAIN, "my-extension-grant", updateExtensionGrant).test();
@@ -300,11 +302,13 @@ public class ExtensionGrantServiceTest {
         extensionGrant.setId("extension-grant-id");
         extensionGrant.setGrantType("extension-grant-type");
         extensionGrant.setCreatedAt(new Date(System.currentTimeMillis() - 60 * 1000));
+        extensionGrant.setDomain(DOMAIN);
 
         ExtensionGrant extensionGrant2 = new ExtensionGrant();
         extensionGrant2.setId("extension-grant-id-2");
         extensionGrant2.setGrantType("extension-grant-type");
         extensionGrant2.setCreatedAt(new Date());
+        extensionGrant2.setDomain(DOMAIN);
 
         when(extensionGrantRepository.findById(extensionGrant2.getId())).thenReturn(Maybe.just(extensionGrant2));
         when(extensionGrantRepository.delete(extensionGrant2.getId())).thenReturn(Completable.complete());
@@ -337,6 +341,7 @@ public class ExtensionGrantServiceTest {
         ExtensionGrant existingExtensionGrant = Mockito.mock(ExtensionGrant.class);
         when(existingExtensionGrant.getId()).thenReturn("my-extension-grant");
         when(existingExtensionGrant.getGrantType()).thenReturn("my-extension-grant");
+        when(existingExtensionGrant.getDomain()).thenReturn(DOMAIN);
         when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.just(existingExtensionGrant));
         when(extensionGrantRepository.delete("my-extension-grant")).thenReturn(Completable.complete());
         when(extensionGrantRepository.findByDomain(DOMAIN)).thenReturn(Flowable.just(existingExtensionGrant));

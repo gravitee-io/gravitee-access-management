@@ -24,6 +24,7 @@ import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.PasswordSettingsAware;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -119,6 +120,7 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
                         .policy(createdPolicy)))
                 .doOnError(error -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
                         .principal(principal)
+                        .reference(new Reference(policy.getReferenceType(), policy.getReferenceId()))
                         .type(EventType.PASSWORD_POLICY_CREATED).throwable(error)));
     }
 
@@ -146,7 +148,9 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
                 })
                 .doOnError(error -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
                         .principal(principal)
-                        .type(EventType.PASSWORD_POLICY_UPDATED).throwable(error)));
+                        .type(EventType.PASSWORD_POLICY_UPDATED)
+                        .reference(new Reference(referenceType, referenceId))
+                        .throwable(error)));
     }
 
     @Override
@@ -160,10 +164,12 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
                 .doOnSuccess(policy -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
                         .principal(principal)
                         .type(EventType.PASSWORD_POLICY_DELETED)
+                        .policy(policy)
                         .oldValue(policy)))
                 .doOnError(error -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
                         .principal(principal)
                         .type(EventType.PASSWORD_POLICY_DELETED)
+                        .reference(new Reference(referenceType, referenceId))
                         .throwable(error)))
                 .flatMap(policy -> {
                     if (policy.getDefaultPolicy().equals(Boolean.TRUE)) {

@@ -23,6 +23,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Platform;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.event.Event;
@@ -239,7 +240,7 @@ public class MembershipServiceImpl implements MembershipService {
                 .flatMapCompletable(membership -> membershipRepository.delete(membershipId)
                         .andThen(Completable.fromSingle(eventService.create(new Event(Type.MEMBERSHIP, new Payload(membership.getId(), membership.getReferenceType(), membership.getReferenceId(), Action.DELETE)))))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_DELETED).membership(membership)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_DELETED).throwable(throwable)))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_DELETED).reference(new Reference(membership.getReferenceType(), membership.getReferenceId())).throwable(throwable)))
                 )
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -263,6 +264,7 @@ public class MembershipServiceImpl implements MembershipService {
                             domainMembership.setMemberId(newMembership.getMemberId());
                             domainMembership.setMemberType(newMembership.getMemberType());
                             domainMembership.setRoleId(role.getId());
+                            domainMembership.setDomain(domainId);
                             domainMembership.setReferenceId(domainId);
                             domainMembership.setReferenceType(ReferenceType.DOMAIN);
                             return this.createInternal(domainMembership, principal);
@@ -305,7 +307,7 @@ public class MembershipServiceImpl implements MembershipService {
                     return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to create membership %s", membership), ex));
                 })
                 .doOnSuccess(membership1 -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_CREATED).membership(membership1)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_CREATED).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_CREATED).reference(new Reference(membership.getReferenceType(), membership.getReferenceId())).throwable(throwable)));
     }
 
     private Member convert(io.gravitee.am.model.User user) {

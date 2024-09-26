@@ -21,6 +21,7 @@ import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.AuthenticationDeviceNotifier;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -114,8 +115,15 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
                     log.error("An error occurs while trying to create a notifier", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a notifier", ex));
                 })
-                .doOnSuccess(authDeviceNotifier -> auditService.report(AuditBuilder.builder(AuthDeviceNotifierAuditBuilder.class).principal(principal).type(EventType.AUTH_DEVICE_NOTIFIER_CREATED).authDeviceNotifier(authDeviceNotifier)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthDeviceNotifierAuditBuilder.class).principal(principal).type(EventType.AUTH_DEVICE_NOTIFIER_CREATED).throwable(throwable)));
+                .doOnSuccess(authDeviceNotifier -> auditService.report(AuditBuilder.builder(AuthDeviceNotifierAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.AUTH_DEVICE_NOTIFIER_CREATED)
+                        .authDeviceNotifier(authDeviceNotifier)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthDeviceNotifierAuditBuilder.class)
+                        .principal(principal)
+                        .reference(Reference.domain(domain))
+                        .type(EventType.AUTH_DEVICE_NOTIFIER_CREATED)
+                        .throwable(throwable)));
     }
 
     @Override
@@ -136,8 +144,16 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
                                 Event event = new Event(Type.AUTH_DEVICE_NOTIFIER, new Payload(notifier.getId(), notifier.getReferenceType(), notifier.getReferenceId(), Action.UPDATE));
                                 return eventService.create(event).flatMap(__ -> Single.just(notifier));
                             })
-                            .doOnSuccess(notifier -> auditService.report(AuditBuilder.builder(AuthDeviceNotifierAuditBuilder.class).principal(principal).type(EventType.AUTH_DEVICE_NOTIFIER_UPDATED).oldValue(oldNotifier).authDeviceNotifier(notifier)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthDeviceNotifierAuditBuilder.class).principal(principal).type(EventType.AUTH_DEVICE_NOTIFIER_UPDATED).throwable(throwable)));
+                            .doOnSuccess(notifier -> auditService.report(AuditBuilder.builder(AuthDeviceNotifierAuditBuilder.class)
+                                    .principal(principal)
+                                    .type(EventType.AUTH_DEVICE_NOTIFIER_UPDATED)
+                                    .oldValue(oldNotifier)
+                                    .authDeviceNotifier(notifier)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthDeviceNotifierAuditBuilder.class)
+                                    .principal(principal)
+                                    .reference(new Reference(oldNotifier.getReferenceType(), oldNotifier.getReferenceId()))
+                                    .type(EventType.AUTH_DEVICE_NOTIFIER_UPDATED)
+                                    .throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -160,8 +176,15 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
                     Event event = new Event(Type.AUTH_DEVICE_NOTIFIER, new Payload(notifierId, ReferenceType.DOMAIN, domainId, Action.DELETE));
                     return Completable.fromSingle(adNotifierRepository.delete(notifierId)
                             .andThen(eventService.create(event)))
-                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(AuthDeviceNotifierAuditBuilder.class).principal(principal).type(EventType.AUTH_DEVICE_NOTIFIER_DELETED).authDeviceNotifier(notifier)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthDeviceNotifierAuditBuilder.class).principal(principal).type(EventType.AUTH_DEVICE_NOTIFIER_DELETED).throwable(throwable)));
+                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(AuthDeviceNotifierAuditBuilder.class)
+                                    .principal(principal)
+                                    .type(EventType.AUTH_DEVICE_NOTIFIER_DELETED)
+                                    .authDeviceNotifier(notifier)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthDeviceNotifierAuditBuilder.class)
+                                    .principal(principal)
+                                    .reference(new Reference(notifier.getReferenceType(), notifier.getReferenceId()))
+                                    .type(EventType.AUTH_DEVICE_NOTIFIER_DELETED)
+                                    .throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

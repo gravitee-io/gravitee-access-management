@@ -19,6 +19,7 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Device;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.management.api.DeviceRepository;
 import io.gravitee.am.service.AuditService;
@@ -95,21 +96,22 @@ public class DeviceServiceImpl implements DeviceService {
     public Completable delete(String domain, UserId user, String deviceId, User principal) {
         return deviceRepository.findById(deviceId)
                 .switchIfEmpty(Maybe.error(new DeviceNotFoundException(deviceId)))
-                .flatMapCompletable(device -> {
+                .flatMap(device -> {
                     if (DOMAIN.equals(device.getReferenceType()) && device.getReferenceId().equals(domain) && device.getUserId().id().equals(user.id())) {
-                        return deviceRepository.delete(deviceId).andThen(Completable.complete());
+                        return deviceRepository.delete(deviceId).andThen(Maybe.just(device));
                     } else {
-                        return Completable.error(new DeviceNotFoundException(deviceId));
+                        return Maybe.error(new DeviceNotFoundException(deviceId));
                     }
                 }).onErrorResumeNext(ex -> {
                     if (ex instanceof DeviceNotFoundException) {
-                        return Completable.error(ex);
+                        return Maybe.error(ex);
                     }
                     LOGGER.error("An error occurs while trying to delete factor: {}", deviceId, ex);
-                    return Completable.error(new TechnicalManagementException(
+                    return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete factor: %s", deviceId), ex));
                 })
-                .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.DEVICE_DELETED)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.DEVICE_DELETED).throwable(throwable)));
+                .doOnSuccess(device -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.DEVICE_DELETED).reference(Reference.domain(domain)).deletedDevice(device)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.DEVICE_DELETED).reference(Reference.domain(domain)).throwable(throwable)))
+                .ignoreElement();
     }
 }

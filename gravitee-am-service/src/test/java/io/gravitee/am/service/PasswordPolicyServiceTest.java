@@ -652,6 +652,8 @@ public class PasswordPolicyServiceTest {
     public void shouldDeleteAndUpdateIdpPolicyAndUpdateIdp() {
         PasswordPolicy passwordPolicy = new PasswordPolicy();
         passwordPolicy.setId(UUID.randomUUID().toString());
+        passwordPolicy.setReferenceType(ReferenceType.DOMAIN);
+        passwordPolicy.setReferenceId(DOMAIN_ID);
 
         when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.just(passwordPolicy));
         when(identityProviderService.findWithPasswordPolicy(any(), any(), any())).thenReturn(Flowable.just(new IdentityProvider(), new IdentityProvider()));
@@ -674,7 +676,8 @@ public class PasswordPolicyServiceTest {
     public void shouldDeleteAndUpdateIdpPolicy_NoIdp_ToUpdate() {
         PasswordPolicy passwordPolicy = new PasswordPolicy();
         passwordPolicy.setId(UUID.randomUUID().toString());
-
+        passwordPolicy.setReferenceId(DOMAIN_ID);
+        passwordPolicy.setReferenceType(ReferenceType.DOMAIN);
         when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.just(passwordPolicy));
         when(identityProviderService.findWithPasswordPolicy(any(), any(), any())).thenReturn(Flowable.empty());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
@@ -749,10 +752,14 @@ public class PasswordPolicyServiceTest {
         PasswordPolicy somePasswordPolicy = new PasswordPolicy();
         somePasswordPolicy.setId(UUID.randomUUID().toString());
         somePasswordPolicy.setDefaultPolicy(Boolean.FALSE);
+        somePasswordPolicy.setReferenceId(DOMAIN_ID);
+        somePasswordPolicy.setReferenceType(ReferenceType.DOMAIN);
 
         PasswordPolicy passwordPolicy = new PasswordPolicy();
         passwordPolicy.setId(UUID.randomUUID().toString());
         passwordPolicy.setDefaultPolicy(Boolean.TRUE);
+        passwordPolicy.setReferenceId(DOMAIN_ID);
+        passwordPolicy.setReferenceType(ReferenceType.DOMAIN);
 
         when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.just(passwordPolicy));
         when(passwordPolicyRepository.findByOldest(any(), any())).thenReturn(Maybe.just(somePasswordPolicy));
@@ -782,7 +789,6 @@ public class PasswordPolicyServiceTest {
         Assertions.assertEquals(Type.PASSWORD_POLICY, allValues.get(0).getType());
         Assertions.assertEquals(Action.UPDATE, allValues.get(1).getPayload().getAction());
         Assertions.assertEquals(Type.PASSWORD_POLICY, allValues.get(1).getType());
-
-
     }
+
 }

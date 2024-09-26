@@ -17,6 +17,7 @@ package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
@@ -118,8 +119,18 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
         return Observable.fromIterable(approvals)
                 .flatMapSingle(approval -> scopeApprovalRepository.upsert(approval))
                 .toList()
-                .doOnSuccess(__ -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).domain(domain).client(client).principal(principal).type(EventType.USER_CONSENT_CONSENTED).approvals(approvals)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).domain(domain).client(client).principal(principal).type(EventType.USER_CONSENT_CONSENTED).throwable(throwable)))
+                .doOnSuccess(__ -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
+                        .reference(Reference.domain(domain))
+                        .client(client)
+                        .principal(principal)
+                        .type(EventType.USER_CONSENT_CONSENTED)
+                        .approvals(approvals)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
+                        .reference(Reference.domain(domain))
+                        .client(client)
+                        .principal(principal)
+                        .type(EventType.USER_CONSENT_CONSENTED)
+                        .throwable(throwable)))
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to save consent for domain: {}, client: {} and user: {} ", domain, client.getId(), approvals.get(0).getUserId());
                     return Single.error(new TechnicalManagementException(
@@ -135,8 +146,18 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
                 .flatMapCompletable(user -> scopeApprovalRepository.findById(consentId)
                         .switchIfEmpty(Maybe.error(new ScopeApprovalNotFoundException(consentId)))
                         .flatMapCompletable(scopeApproval -> scopeApprovalRepository.delete(consentId)
-                                .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user).approvals(Collections.singleton(scopeApproval))))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user).throwable(throwable)))
+                                .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
+                                        .type(EventType.USER_CONSENT_REVOKED)
+                                        .reference(Reference.domain(domain))
+                                        .principal(principal)
+                                        .user(user)
+                                        .approvals(Collections.singleton(scopeApproval))))
+                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
+                                        .type(EventType.USER_CONSENT_REVOKED)
+                                        .reference(Reference.domain(domain))
+                                        .principal(principal)
+                                        .user(user)
+                                        .throwable(throwable)))
                                 .andThen(Completable.mergeArrayDelayError(accessTokenRepository.deleteByDomainIdClientIdAndUserId(scopeApproval.getDomain(), scopeApproval.getClientId(), scopeApproval.getUserId()),
                                         refreshTokenRepository.deleteByDomainIdClientIdAndUserId(scopeApproval.getDomain(), scopeApproval.getClientId(), scopeApproval.getUserId())))))
                 .onErrorResumeNext(ex -> {
@@ -158,8 +179,18 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
                 .flatMapCompletable(user -> scopeApprovalRepository.findByDomainAndUser(domain, user.getFullId()).collect(HashSet<ScopeApproval>::new, Set::add)
                         .flatMapCompletable(scopeApprovals -> scopeApprovalRepository.deleteByDomainAndUser(domain, user.getFullId())
-                                .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user).approvals(scopeApprovals)))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user).throwable(throwable))))
+                                .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
+                                        .type(EventType.USER_CONSENT_REVOKED)
+                                        .reference(Reference.domain(domain))
+                                        .principal(principal)
+                                        .user(user)
+                                        .approvals(scopeApprovals)))
+                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
+                                        .type(EventType.USER_CONSENT_REVOKED)
+                                        .reference(Reference.domain(domain))
+                                        .principal(principal)
+                                        .user(user)
+                                        .throwable(throwable))))
                         .andThen(Completable.mergeArrayDelayError(accessTokenRepository.deleteByDomainIdAndUserId(domain, userId),
                                 refreshTokenRepository.deleteByDomainIdAndUserId(domain, userId))))
                 .onErrorResumeNext(ex -> {
@@ -181,8 +212,18 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
                 .flatMapCompletable(user -> scopeApprovalRepository.findByDomainAndUserAndClient(domain, user.getFullId(), clientId)
                         .collect(HashSet<ScopeApproval>::new, Set::add)
                         .flatMapCompletable(scopeApprovals -> scopeApprovalRepository.deleteByDomainAndUserAndClient(domain, user.getFullId(), clientId)
-                                .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user).approvals(scopeApprovals)))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user).throwable(throwable))))
+                                .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
+                                        .type(EventType.USER_CONSENT_REVOKED)
+                                        .reference(Reference.domain(domain))
+                                        .principal(principal)
+                                        .user(user)
+                                        .approvals(scopeApprovals)))
+                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
+                                        .type(EventType.USER_CONSENT_REVOKED)
+                                        .reference(Reference.domain(domain))
+                                        .principal(principal)
+                                        .user(user)
+                                        .throwable(throwable))))
                         .andThen(Completable.mergeArrayDelayError(accessTokenRepository.deleteByDomainIdClientIdAndUserId(domain, clientId, userId),
                                 refreshTokenRepository.deleteByDomainIdClientIdAndUserId(domain, clientId, userId))))
                 .onErrorResumeNext(ex -> {

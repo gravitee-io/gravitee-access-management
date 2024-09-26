@@ -20,6 +20,7 @@ package io.gravitee.am.gateway.handler.common.user;
 import io.gravitee.am.common.exception.mfa.InvalidFactorAttributeException;
 import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImpl;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.factor.EnrolledFactor;
@@ -92,10 +93,13 @@ public class UserServiceTest {
 
     @Test
     public void shouldCreate_and_cache_value() throws Exception {
+        User user = new User();
+        user.setReferenceId("id");
+        user.setReferenceType(ReferenceType.DOMAIN);
         when(userStore.add(any())).thenReturn(Maybe.empty());
-        when(commonLayerUserService.create(any())).thenReturn(Single.just(new User()));
+        when(commonLayerUserService.create(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
 
-        TestObserver<User> observer = cut.create(new User()).test();
+        TestObserver<User> observer = cut.create(user).test();
         observer.await(5,TimeUnit.SECONDS);
         observer.assertValueCount(1);
 
@@ -107,7 +111,11 @@ public class UserServiceTest {
     public void shouldSkipCache_if_create_fails_due_to_connection_error() throws Exception {
         when(commonLayerUserService.create(any())).thenReturn(Single.error(new RepositoryConnectionException(new RuntimeException())));
 
-        TestObserver<User> observer = cut.create(new User()).test();
+        User user = new User();
+        user.setReferenceId("id");
+        user.setReferenceType(ReferenceType.DOMAIN);
+
+        TestObserver<User> observer = cut.create(user).test();
         observer.await(5,TimeUnit.SECONDS);
         observer.assertError(RepositoryConnectionException.class);
 

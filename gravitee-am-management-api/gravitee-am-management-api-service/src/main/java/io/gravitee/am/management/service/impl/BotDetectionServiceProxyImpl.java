@@ -24,6 +24,7 @@ import io.gravitee.am.management.service.BotDetectionPluginService;
 import io.gravitee.am.management.service.BotDetectionServiceProxy;
 import io.gravitee.am.management.service.exception.BotDetectionPluginSchemaNotFoundException;
 import io.gravitee.am.model.BotDetection;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.BotDetectionService;
 import io.gravitee.am.service.exception.BotDetectionNotFoundException;
@@ -72,9 +73,16 @@ public class BotDetectionServiceProxyImpl extends AbstractSensitiveProxy impleme
     @Override
     public Single<BotDetection> create(String domain, NewBotDetection botDetection, User principal) {
         return botDetectionService.create(domain, botDetection, principal)
-                .flatMap(this::filterSensitiveData)
-                .doOnSuccess(detection -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class).principal(principal).type(EventType.BOT_DETECTION_CREATED).botDetection(detection)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class).principal(principal).type(EventType.BOT_DETECTION_CREATED).throwable(throwable)));
+                .flatMap(bot -> filterSensitiveData(bot)
+                        .doOnSuccess(detection -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class)
+                                .principal(principal)
+                                .type(EventType.BOT_DETECTION_CREATED)
+                                .botDetection(detection)))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class)
+                                .principal(principal)
+                                .type(EventType.BOT_DETECTION_CREATED)
+                                .reference(new Reference(bot.getReferenceType(), bot.getReferenceId()))
+                                .throwable(throwable))));
     }
 
     @Override
@@ -84,10 +92,18 @@ public class BotDetectionServiceProxyImpl extends AbstractSensitiveProxy impleme
                 .flatMap(oldBotDetection -> filterSensitiveData(oldBotDetection)
                         .flatMap(safeOldBoDetection -> updateSensitiveData(updateBotDetection, oldBotDetection)
                                 .flatMap(botDetectionToUpdate -> botDetectionService.update(domain, id, botDetectionToUpdate, principal))
-                                .flatMap(this::filterSensitiveData)
-                                .doOnSuccess(detection -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class).principal(principal).type(EventType.BOT_DETECTION_UPDATED).oldValue(safeOldBoDetection).botDetection(detection)))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class).principal(principal).type(EventType.BOT_DETECTION_UPDATED).throwable(throwable))))
-                );
+                                .flatMap(bot -> filterSensitiveData(bot)
+                                    .doOnSuccess(detection -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class)
+                                            .principal(principal)
+                                            .type(EventType.BOT_DETECTION_UPDATED)
+                                            .oldValue(safeOldBoDetection)
+                                            .botDetection(detection)))
+                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class)
+                                            .principal(principal)
+                                            .reference(new Reference(bot.getReferenceType(), bot.getReferenceId()))
+                                            .type(EventType.BOT_DETECTION_UPDATED)
+                                            .throwable(throwable))))
+                    ));
     }
 
     @Override

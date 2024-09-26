@@ -18,6 +18,7 @@ package io.gravitee.am.service.reporter.builder.management;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Entrypoint;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 
 /**
@@ -26,10 +27,6 @@ import io.gravitee.am.model.ReferenceType;
  */
 public class EntrypointAuditBuilder extends ManagementAuditBuilder<EntrypointAuditBuilder> {
 
-    public EntrypointAuditBuilder() {
-        // Entrypoints are managed at organization level.
-        referenceType(ReferenceType.ORGANIZATION);
-    }
 
     public EntrypointAuditBuilder entrypoint(Entrypoint entrypoint) {
         if (entrypoint != null) {
@@ -37,8 +34,7 @@ public class EntrypointAuditBuilder extends ManagementAuditBuilder<EntrypointAud
                 setNewValue(entrypoint);
             }
 
-            referenceId(entrypoint.getOrganizationId());
-
+            reference(Reference.organization(entrypoint.getOrganizationId()));
             setTarget(entrypoint.getId(), EntityType.ENTRYPOINT, null, entrypoint.getName(), ReferenceType.ORGANIZATION, entrypoint.getOrganizationId());
         }
         return this;

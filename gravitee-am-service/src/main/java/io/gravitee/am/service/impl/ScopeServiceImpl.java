@@ -20,6 +20,7 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
@@ -160,7 +161,7 @@ public class ScopeServiceImpl implements ScopeService {
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a scope", ex));
                 })
                 .doOnSuccess(scope -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_CREATED).scope(scope)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_CREATED).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_CREATED).reference(Reference.domain(domain)).throwable(throwable)));
     }
 
     @Override
@@ -260,7 +261,7 @@ public class ScopeServiceImpl implements ScopeService {
                     return eventService.create(event).flatMap(__ -> Single.just(scope1));
                 })
                 .doOnSuccess(scope1 -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_UPDATED).oldValue(oldValue).scope(scope1)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_UPDATED).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_UPDATED).reference(Reference.domain(domain)).throwable(throwable)));
     }
 
     @Override
@@ -352,7 +353,7 @@ public class ScopeServiceImpl implements ScopeService {
                                                 eventService.create(new Event(Type.SCOPE, new Payload(scope.getId(), ReferenceType.DOMAIN, scope.getDomain(), Action.DELETE))))
                                 )
                                 .doOnComplete(() -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_DELETED).scope(scope)))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_DELETED).throwable(throwable)))
+                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_DELETED).reference(Reference.domain(scope.getDomain())).throwable(throwable)))
                 )
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

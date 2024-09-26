@@ -28,6 +28,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.UserRepository;
@@ -107,6 +108,8 @@ public class AccountServiceTest {
         final Credential credential = mock(Credential.class);
         when(credential.getId()).thenReturn(credentialId);
         when(credential.getUserId()).thenReturn("user-id");
+        when(credential.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
+        when(credential.getReferenceId()).thenReturn("id");
 
         when(credentialService.findById(credentialId)).thenReturn(Maybe.just(credential));
         when(credentialService.delete(credentialId)).thenReturn(Completable.complete());
@@ -212,6 +215,8 @@ public class AccountServiceTest {
         when(credentialService.findById(credentialId)).thenReturn(Maybe.just(credential));
         ArgumentCaptor<Credential> argumentCaptor = ArgumentCaptor.forClass(Credential.class);
         when(credentialService.update(argumentCaptor.capture())).thenReturn(Single.just(credential));
+        credential.setReferenceType(ReferenceType.DOMAIN);
+        credential.setReferenceId("id");
 
         TestObserver testObserver = accountService.updateWebAuthnCredential(userId, credentialId, deviceName, principal).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
