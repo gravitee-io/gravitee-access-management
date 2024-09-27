@@ -44,7 +44,7 @@ testem.log
 Thumbs.db
 
 # yarn
-yarn.lock
+package-lock.json
 /.angular/
 .pnp.*
 .yarn/*
