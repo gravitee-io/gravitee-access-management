@@ -1,0 +1,34 @@
+suite: Test Gateway configmap section sync
+templates:
+  - "gateway/gateway-configmap.yaml"
+tests:
+  - it: Define sync service values
+    template: gateway/gateway-configmap.yaml
+    set:
+      gateway:
+        services:
+          sync:
+            enabled: true
+            cron: expvalue
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            services:
+              core:
+                http:
+                  enabled: true
+                  port: 18092
+                  host: localhost
+                  authentication:
+                    type: basic
+                    users:
+                      admin: adminadmin
+                  secured: false
+              sync:
+                cron: expvalue
+                enabled: true

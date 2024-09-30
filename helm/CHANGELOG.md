@@ -2,6 +2,12 @@
 
 This file documents all notable changes to [Gravitee.io Access Management 4.x](https://github.com/gravitee-io/gravitee-access-management/tree/master/helm/) Helm Chart. The release numbering uses [semantic versioning](http://semver.org).
 
+### 4.5.0
+
+- Database configuration has evolved to use the new gravitee.yaml organization with the repositories section
+- The synchronization service is now configurable using the values.yaml
+- Cache section has been introduced in the gateway configmap and is configurable using the values.yaml
+
 ### 4.4.0
 
 - BREAKING CHANGE: In gateway ingress controller, change ssl-redirect option from "false" to default. More info [here](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#server-side-https-enforcement-through-redirect)

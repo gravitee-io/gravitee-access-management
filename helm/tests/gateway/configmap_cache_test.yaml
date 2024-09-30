@@ -1,0 +1,62 @@
+suite: Test Gateway configmap section cache
+templates:
+  - "gateway/gateway-configmap.yaml"
+tests:
+  - it: Define cache values
+    template: gateway/gateway-configmap.yaml
+    set:
+      gateway:
+        cache:
+          type: redis
+          redis:
+            host: localhost
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            cache:
+              redis:
+                host: localhost
+              type: redis
+
+  - it: Enable user cache
+    template: gateway/gateway-configmap.yaml
+    set:
+      userManagement:
+        cache:
+          enabled: true
+          ttl: 3600
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            user:
+              cache:
+                enabled: true
+                ttl: 3600
+
+  - it: Enable user resilience mode
+    template: gateway/gateway-configmap.yaml
+    set:
+      gateway:
+        resilience:
+          enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            resilience:
+              enabled: true
+
