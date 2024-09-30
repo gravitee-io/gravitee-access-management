@@ -116,7 +116,7 @@ public class UserEndpoint extends AbstractUserEndpoint {
             final String userId = context.request().getParam("id");
 
             // username is required
-            if (user.getUserName() == null || user.getUserName().isEmpty()) {
+            if (user.getUserName() == null || user.getUserName().isBlank()) {
                 context.fail(new InvalidValueException("Field [userName] is required"));
                 return;
             }
