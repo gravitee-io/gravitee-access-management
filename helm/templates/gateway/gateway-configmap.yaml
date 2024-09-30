@@ -125,9 +125,9 @@ data:
           port: {{ .Values.gateway.services.core.http.port | default "18092" }}
           host: {{ .Values.gateway.services.core.http.host | default "localhost" }}
           authentication:
-           type: {{ .Values.gateway.services.core.http.authentication.type | default "basic" }}
-           users:
-             admin: {{ .Values.gateway.services.core.http.authentication.password | default "adminadmin" }}
+            type: {{ .Values.gateway.services.core.http.authentication.type | default "basic" }}
+            users:
+              admin: {{ .Values.gateway.services.core.http.authentication.password | default "adminadmin" }}
           secured: {{ .Values.gateway.services.core.http.secured | default false }}
           {{- if (eq .Values.gateway.services.core.http.secured true) }}
           ssl:
@@ -138,6 +138,13 @@ data:
               password: {{ .Values.gateway.services.core.http.ssl.keystore.password }}
               {{- end }}
           {{- end }}
+
+  {{- if .Values.gateway.services }}
+    {{- if .Values.gateway.services.sync }}
+      sync:
+{{ toYaml .Values.gateway.services.sync | indent 8 }}
+    {{- end }}
+  {{- end }}
 
       # Gateway monitoring service.
       # This service retrieves metrics like os / process / jvm metrics.
@@ -194,6 +201,16 @@ data:
       {{- else }}
       url: https://{{index .Values.gateway.ingress.hosts 0 }}{{ .Values.gateway.ingress.path }}
       {{- end }}
+
+{{- if .Values.gateway.cache }}
+    cache:
+{{ toYaml .Values.gateway.cache | indent 6}}
+{{- end }}
+
+{{- if .Values.gateway.resilience }}
+    resilience:
+{{ toYaml .Values.gateway.resilience | indent 6}}
+{{- end }}
 
     repositories:
       management:
