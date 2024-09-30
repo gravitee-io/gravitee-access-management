@@ -369,7 +369,16 @@ public class AccountServiceTest {
     @Test
     public void should_reject_missing_username() {
         execUpdateUsername(null);
+
         execUpdateUsername(new UpdateUsername());
+
+        UpdateUsername emptyUsername = new UpdateUsername();
+        emptyUsername.setUsername("");
+        execUpdateUsername(emptyUsername);
+
+        UpdateUsername blankUsername = new UpdateUsername();
+        blankUsername.setUsername("  ");
+        execUpdateUsername(blankUsername);
     }
 
     private void execUpdateUsername(UpdateUsername newUsername) {

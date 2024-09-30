@@ -62,6 +62,7 @@ import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -183,7 +184,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Single<User> updateUsername(User user, UpdateUsername newUsername, io.gravitee.am.identityprovider.api.User principal) {
-        if (newUsername == null || !hasLength(newUsername.getUsername())) {
+        if (newUsername == null || StringUtils.isBlank(newUsername.getUsername())) {
             return Single.error(new InvalidUserException("Username is required") );
         }
         return new UpdateUsernameRule(userValidator,
