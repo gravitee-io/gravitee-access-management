@@ -37,12 +37,14 @@
                       required
                       #username="ngModel"
                       name="username"
+                      pattern="^[^\s].*[^\s]$"
                       [(ngModel)]="user.username"
                       placeholder="Updated Username"
                       [disabled]="!editMode() || !canEdit"
                     />
                     <mat-hint>The username of the user.</mat-hint>
                     <mat-error *ngIf="username.errors?.required">Enter username</mat-error>
+                    <mat-error *ngIf="username.errors?.pattern">Username cannot start or end with whitespace</mat-error>
                   </mat-form-field>
                   <button
                     *ngIf="editMode() && canEdit"
