@@ -246,7 +246,7 @@ export class UserProfileComponent implements OnInit {
           this.snackbarService.open('Username updated');
         }),
       )
-      .subscribe();
+      .subscribe((data) => this.usernameForm.resetForm({ username: data.username }));
   }
 
   private unlockUser(user) {
