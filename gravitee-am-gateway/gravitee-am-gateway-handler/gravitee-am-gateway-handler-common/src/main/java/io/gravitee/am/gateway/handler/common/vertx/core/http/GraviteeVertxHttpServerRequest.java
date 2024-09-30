@@ -278,4 +278,8 @@ public class GraviteeVertxHttpServerRequest implements HttpServerRequest {
         return null;
     }
 
+    @Override
+    public MultiMap params(boolean semicolonIsNormalChar) {
+        return params;
+    }
 }
