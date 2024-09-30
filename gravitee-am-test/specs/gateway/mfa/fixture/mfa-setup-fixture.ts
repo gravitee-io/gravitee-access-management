@@ -20,7 +20,6 @@ import { createResource } from '@management-commands/resource-management-command
 import { createFactor } from '@management-commands/factor-management-commands';
 import { createApplication, patchApplication } from '@management-commands/application-management-commands';
 import { createDevice } from '@management-commands/device-management-commands';
-import * as domain from 'domain';
 
 export interface Domain {
   admin: {
@@ -131,8 +130,7 @@ export async function createMockDevice(ctx: Domain) {
     type: 'fingerprintjs-v3-community-device-identifier',
   };
   const device = await createDevice(ctx.domain.domainId, ctx.admin.accessToken, body);
-  const value = await device.value();
-  return { id: value.id };
+  return { id: device.id };
 }
 
 export async function removeDomain(ctx: Domain) {
