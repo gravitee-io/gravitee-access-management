@@ -200,7 +200,7 @@ public class UserResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> userService.updateUsername(ReferenceType.DOMAIN, domain, userId, username.getUsername(), authenticatedUser)))
+                        .flatMapSingle(irrelevant -> userService.updateUsername(ReferenceType.DOMAIN, domain, userId, username.getUsername().trim(), authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 

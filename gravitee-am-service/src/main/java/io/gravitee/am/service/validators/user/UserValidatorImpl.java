@@ -63,8 +63,8 @@ public class UserValidatorImpl implements UserValidator {
         return this.validate(user, true);
     }
 
-    private boolean isValid(String userInfo, Pattern pattern) {
-        return userInfo == null || pattern.matcher(userInfo).matches();
+    private boolean isValid(String string, Pattern pattern) {
+        return string == null || pattern.matcher(string).matches();
     }
 
     @Override
