@@ -268,7 +268,7 @@ export class UserProfileComponent implements OnInit {
           this.snackbarService.open(`${this.getProfileNameType()} updated`);
         }),
       )
-      .subscribe();
+      .subscribe((data) => this.usernameForm.resetForm({ username: data.username }));
   }
 
   createToken(): void {

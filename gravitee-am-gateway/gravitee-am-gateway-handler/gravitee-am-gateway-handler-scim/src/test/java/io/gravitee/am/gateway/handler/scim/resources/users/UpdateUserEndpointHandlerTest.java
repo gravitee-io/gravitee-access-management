@@ -177,6 +177,52 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
     }
 
     @Test
+    public void shouldReturn400WhenUsernameIsBlank() throws Exception {
+        router.route("/Users").handler(userEndpoint::update);
+
+        testRequest(
+                HttpMethod.PUT,
+                "/Users",
+                req -> {
+                    req.setChunked(true);
+                    User user = getUser();
+                    user.setUserName("   ");
+                    req.write(Json.encode(user));
+                },
+                400,
+                "Bad Request",
+                "{\n" +
+                        "  \"status\" : \"400\",\n" +
+                        "  \"scimType\" : \"invalidValue\",\n" +
+                        "  \"detail\" : \"Field [userName] is required\",\n" +
+                        "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
+                        "}");
+    }
+
+    @Test
+    public void shouldReturn400WhenUsernameIsNull() throws Exception {
+        router.route("/Users").handler(userEndpoint::update);
+
+        testRequest(
+                HttpMethod.PUT,
+                "/Users",
+                req -> {
+                    req.setChunked(true);
+                    User user = getUser();
+                    user.setUserName(null);
+                    req.write(Json.encode(user));
+                },
+                400,
+                "Bad Request",
+                "{\n" +
+                        "  \"status\" : \"400\",\n" +
+                        "  \"scimType\" : \"invalidValue\",\n" +
+                        "  \"detail\" : \"Field [userName] is required\",\n" +
+                        "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
+                        "}");
+    }
+
+    @Test
     public void shouldReturn400WhenEmailFormatInvalidException() throws Exception {
         router.route("/Users").handler(userEndpoint::update);
         when(userService.update(any(), any(), eq(null), anyString(), any(), any())).thenReturn(Single.error(new EmailFormatInvalidException("Invalid email")));

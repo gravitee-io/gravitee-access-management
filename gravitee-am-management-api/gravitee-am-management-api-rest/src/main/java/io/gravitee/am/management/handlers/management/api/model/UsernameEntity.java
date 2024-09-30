@@ -15,17 +15,16 @@
  */
 package io.gravitee.am.management.handlers.management.api.model;
 
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
+
 /**
  * Entity for updating a user's username.
  */
+@Data
 public class UsernameEntity {
+
+    @NotBlank(message = "username must not be blank")
     private String username;
 
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
 }

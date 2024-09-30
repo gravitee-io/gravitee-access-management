@@ -37,12 +37,14 @@
                       required
                       #username="ngModel"
                       name="username"
+                      pattern="^[^\s].*[^\s]$"
                       [(ngModel)]="user.username"
                       placeholder="Update {{ getProfileNameType() }}"
                       [disabled]="!editMode() || !canEdit"
                     />
                     <mat-hint>The name of the {{ getProfileNameType().toLowerCase() }}.</mat-hint>
                     <mat-error *ngIf="username.errors?.required">Enter {{ getProfileNameType() }}</mat-error>
+                    <mat-error *ngIf="username.errors?.pattern">{{ getProfileNameType() }} cannot start or end with whitespace</mat-error>
                   </mat-form-field>
                   <button
                     *ngIf="editMode() && canEdit"
