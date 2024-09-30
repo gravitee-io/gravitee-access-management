@@ -367,7 +367,7 @@ user:
         pattern: ^[^±!£$%^&*§¡€¢¶•ªº«»\\/<>?|=]{0,100}$
   username:
     policy:
-      pattern: ^[^±!£$%^&*§¡€¢¶•ªº«»\\/<>?:;|=,]{1,100}$
+      pattern: ^[^±!£$%^&*§¡€¢¶•ªº«»\\/<>?:;|=, ]{1,100}$
   registration:
     email:
       #subject: New user registration
