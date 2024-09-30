@@ -193,6 +193,11 @@ public class DummyHttpRequest implements HttpServerRequest {
         return params;
     }
 
+    @Override
+    public MultiMap params(boolean semicolonIsNormalChar) {
+        return params;
+    }
+
     public void putParam(String key, Object value) {
         params.add(key, String.valueOf(value));
     }
