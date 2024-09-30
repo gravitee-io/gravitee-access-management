@@ -21,7 +21,7 @@ import { buildRSA512Certificate } from '@api-fixtures/certificates';
 import { createCertificate } from '@management-commands/certificate-management-commands';
 import { getWellKnownOpenIdConfiguration, performGet } from '@gateway-commands/oauth-oidc-commands';
 import { Domain } from 'api/management/models';
-import {delay} from '@utils-commands/misc';
+import { delay } from '@utils-commands/misc';
 
 global.fetch = fetch;
 

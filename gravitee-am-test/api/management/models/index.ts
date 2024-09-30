@@ -63,7 +63,7 @@ export * from './ClientRegistrationSettings';
 export * from './CookieSettings';
 export * from './CorsSettings';
 export * from './Credential';
-export * from './DeviceIdentifiersResource';
+export * from './DeviceIdentifier';
 export * from './DevicesResource';
 export * from './Domain';
 export * from './DomainResource';
