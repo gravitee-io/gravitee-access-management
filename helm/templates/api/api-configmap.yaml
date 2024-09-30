@@ -306,6 +306,12 @@ data:
       {{- end }}
 
   {{- if .Values.api.services }}
+
+    {{- if .Values.api.services.sync }}
+      sync:
+{{ toYaml .Values.api.services.sync | indent 8 }}
+    {{- end }}
+
     {{- if .Values.api.services.notifier }}
       notifier:
 {{ toYaml .Values.api.services.notifier | indent 8 }}
