@@ -1095,6 +1095,10 @@ jobs:
         type: boolean
         default: false
         description: "Do we have to release a RC"
+      graviteeio_version:
+        type: string
+        default: ''
+        description: "Gravitee.io Release version number (semver) ?"
     executor:
       name: openjdk
       class: xlarge
@@ -1644,6 +1648,7 @@ workflows:
           context: cicd-orchestrator
           dry_run: << pipeline.parameters.dry_run >>
           rc_requested: << pipeline.parameters.rc_requested >>
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
           requires:
             - setup
       - build_n_push_am_ce_job:
@@ -1701,6 +1706,7 @@ workflows:
           context: cicd-orchestrator
           dry_run: << pipeline.parameters.dry_run >>
           rc_requested: << pipeline.parameters.rc_requested >>
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
           requires:
             - setup
       - build_n_push_am_ce_job:
