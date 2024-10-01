@@ -164,7 +164,7 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
                 .doOnSuccess(policy -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
                         .principal(principal)
                         .type(EventType.PASSWORD_POLICY_DELETED)
-                        .policy(policy)
+                        .reference(new Reference(referenceType, referenceId))
                         .oldValue(policy)))
                 .doOnError(error -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
                         .principal(principal)

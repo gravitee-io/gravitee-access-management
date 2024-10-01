@@ -101,7 +101,7 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
                                 .flatMap(reporterToUpdate -> reporterService.update(domain, id, reporterToUpdate, principal, isUpgrader))
                                 .flatMap(this::filterSensitiveData)
                                 .doOnSuccess(reporter1 -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_UPDATED).oldValue(safeOldReporter).reporter(reporter1)))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).reference(domain).type(EventType.REPORTER_UPDATED).throwable(throwable))))
+                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).reporter(safeOldReporter).type(EventType.REPORTER_UPDATED).throwable(throwable))))
                 );
     }
 

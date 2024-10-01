@@ -16,6 +16,7 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
@@ -131,6 +132,7 @@ public class TokenServiceImpl implements TokenService {
                             String.format("An error occurs while trying to delete tokens by user: %s", userId), ex));
                 })
                 .doOnEvent(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                                        .reference(new Reference(user.getReferenceType(), user.getReferenceId()))
                                         .tokenActor(user)
                                         .revoked("All tokens are revoked for user: " + userId)
                                         .throwable(error)));
@@ -150,6 +152,7 @@ public class TokenServiceImpl implements TokenService {
                             String.format("An error occurs while trying to delete tokens by client: %s", clientId), ex));
                 })
                 .doOnEvent(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                        .reference(Reference.domain(application.getDomain()))
                         .tokenActor(application.toClient())
                         .revoked("All tokens are revoked for client: " + clientId)
                         .throwable(error)));

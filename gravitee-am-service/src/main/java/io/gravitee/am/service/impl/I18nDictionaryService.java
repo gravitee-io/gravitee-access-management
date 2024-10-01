@@ -20,6 +20,7 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.I18nDictionary;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -111,6 +112,7 @@ public class I18nDictionaryService {
                 .doOnError(throwable -> auditService.report(AuditBuilder
                                                                     .builder(DictionaryAuditBuilder.class)
                                                                     .principal(principal)
+                                                                    .reference(new Reference(referenceType, referenceId))
                                                                     .type(I18N_DICTIONARY_CREATED)
                                                                     .throwable(throwable)));
     }
@@ -178,6 +180,7 @@ public class I18nDictionaryService {
                                                                     .builder(DictionaryAuditBuilder.class)
                                                                     .principal(principal)
                                                                     .type(I18N_DICTIONARY_UPDATED)
+                                                                    .reference(new Reference(referenceType, referenceId))
                                                                     .throwable(throwable)));
     }
 
@@ -213,6 +216,7 @@ public class I18nDictionaryService {
                                                                     .builder(DictionaryAuditBuilder.class)
                                                                     .principal(principal)
                                                                     .type(I18N_DICTIONARY_UPDATED)
+                                                                    .reference(new Reference(referenceType, referenceId))
                                                                     .throwable(throwable)));
     }
 
@@ -255,11 +259,13 @@ public class I18nDictionaryService {
                                                         .builder(DictionaryAuditBuilder.class)
                                                         .principal(principal)
                                                         .type(EventType.I18N_DICTIONARY_DELETED)
-                                                        .dictionary(dictionary)))
+                                                        .reference(new Reference(dictionary.getReferenceType(), dictionary.getReferenceId()))
+                                                        .oldValue(dictionary)))
                                         .doOnError(throwable -> auditService.report(
                                                 AuditBuilder
                                                         .builder(DictionaryAuditBuilder.class)
                                                         .principal(principal)
+                                                        .dictionary(dictionary)
                                                         .type(EventType.I18N_DICTIONARY_DELETED)
                                                         .throwable(throwable)))
                 )
