@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
@@ -37,6 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -213,6 +215,8 @@ public class TokenServiceTest {
         when(refreshTokenRepository.deleteByUserId("userId")).thenReturn(Completable.complete());
         var user = new User();
         user.setId("userId");
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(UUID.randomUUID().toString());
         TestObserver<Void> testObserver = tokenService.deleteByUser(user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();

@@ -20,6 +20,7 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Theme;
 import io.gravitee.am.model.common.event.Event;
@@ -212,6 +213,7 @@ public class ThemeServiceImpl implements ThemeService {
                                 .principal(principal)
                                 .type(EventType.THEME_DELETED)
                                 .theme(null)
+                                .reference(new Reference(theme.getReferenceType(), theme.getReferenceId()))
                                 .oldValue(theme));
                     })
                     .onErrorResumeNext(ex -> {

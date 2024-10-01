@@ -30,6 +30,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
@@ -106,9 +107,6 @@ import static io.gravitee.am.common.web.UriBuilder.isHttp;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static org.springframework.util.CollectionUtils.isEmpty;
-
-import org.springframework.util.StringUtils;
-
 import static org.springframework.util.StringUtils.hasLength;
 import static org.springframework.util.StringUtils.hasText;
 
@@ -482,7 +480,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     return eventService.create(event).flatMap(domain1 -> Single.just(application1));
                 })
                 .doOnSuccess(updatedApplication -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CLIENT_SECRET_RENEWED).application(updatedApplication)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CLIENT_SECRET_RENEWED).throwable(throwable)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).reference(Reference.domain(domain)).type(EventType.APPLICATION_CLIENT_SECRET_RENEWED).throwable(throwable)))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
@@ -524,7 +522,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                                     .flatMapCompletable(membership -> membershipService.delete(membership.getId()))
                             )
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_DELETED).application(application)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_DELETED).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).reference(Reference.domain(application.getDomain())).principal(principal).type(EventType.APPLICATION_DELETED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -670,7 +668,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     return eventService.create(event).flatMap(domain1 -> Single.just(application1));
                 })
                 .doOnSuccess(application1 -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CREATED).application(application1)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CREATED).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).reference(Reference.domain(application.getDomain())).principal(principal).type(EventType.APPLICATION_CREATED).throwable(throwable)));
     }
 
     private Single<Application> innerUpdate(Application currentApplication, Application applicationToUpdate, User principal) {
@@ -694,7 +692,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     return eventService.create(event).flatMap(domain1 -> Single.just(application1));
                 })
                 .doOnSuccess(application -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_UPDATED).oldValue(currentApplication).application(application)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_UPDATED).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).reference(Reference.domain(currentApplication.getDomain())).principal(principal).type(EventType.APPLICATION_UPDATED).throwable(throwable)));
     }
 
     /**

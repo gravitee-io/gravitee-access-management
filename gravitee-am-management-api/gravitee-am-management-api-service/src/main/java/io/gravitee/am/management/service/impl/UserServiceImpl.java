@@ -481,7 +481,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                     userToUpdate.setIdentities(linkedIdentities);
                     return userService.update(userToUpdate)
                             .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).user(user1).oldValue(oldUser)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).reference(new Reference(oldUser.getReferenceType(), oldUser.getId())).type(EventType.USER_UPDATED).throwable(throwable)));
                 });
     }
 
