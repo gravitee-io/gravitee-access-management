@@ -165,7 +165,10 @@ public class I18nDictionaryServiceTest {
 
     @Test
     public void shouldDeleteDictionary() {
-        when(repository.findById(DOMAIN, REFERENCE_ID, ID)).thenReturn(just(new I18nDictionary()));
+        I18nDictionary i18nDictionary = new I18nDictionary();
+        i18nDictionary.setReferenceType(DOMAIN);
+        i18nDictionary.setReferenceId(REFERENCE_ID);
+        when(repository.findById(DOMAIN, REFERENCE_ID, ID)).thenReturn(just(i18nDictionary));
         when(repository.delete(ID)).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 

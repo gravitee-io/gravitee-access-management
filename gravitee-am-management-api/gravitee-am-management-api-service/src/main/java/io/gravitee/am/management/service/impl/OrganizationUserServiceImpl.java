@@ -251,10 +251,12 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                 .doOnSuccess(revoked -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
                         .principal(principal)
                         .type(EventType.ACCOUNT_ACCESS_TOKEN_REVOKED)
+                        .reference(Reference.organization(organizationId))
                         .accountToken(revoked)))
                 .doOnError(x -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
                         .principal(principal)
                         .type(EventType.ACCOUNT_ACCESS_TOKEN_REVOKED)
+                        .reference(Reference.organization(organizationId))
                         .throwable(x)))
                 .ignoreElement();
     }

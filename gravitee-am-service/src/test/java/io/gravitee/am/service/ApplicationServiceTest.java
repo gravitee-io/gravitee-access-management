@@ -797,8 +797,7 @@ public class ApplicationServiceTest {
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(applicationRepository.findByDomainAndClientId(DOMAIN, null)).thenReturn(Maybe.empty());
 
-        Application toCreate = new Application();
-        toCreate.setDomain(DOMAIN);
+        Application toCreate = emptyAppWithDomain();
         ApplicationSettings settings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
         oAuthSettings.setGrantTypes(Arrays.asList("implicit"));
@@ -820,8 +819,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.findByDomainAndClientId(DOMAIN, null)).thenReturn(Maybe.empty());
         when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
 
-        Application toCreate = new Application();
-        toCreate.setDomain(DOMAIN);
+        Application toCreate = emptyAppWithDomain();
         toCreate.setType(ApplicationType.SERVICE);
         ApplicationSettings settings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
@@ -883,8 +881,7 @@ public class ApplicationServiceTest {
         patchApplicationSettings.setPasswordSettings(Optional.empty());
         patchClient.setSettings(Optional.of(patchApplicationSettings));
 
-        Application toPatch = new Application();
-        toPatch.setDomain(DOMAIN);
+        Application toPatch = emptyAppWithDomain();
         ApplicationSettings settings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
         oAuthSettings.setRedirectUris(List.of("https://callback"));
@@ -900,8 +897,7 @@ public class ApplicationServiceTest {
         when(identityProviderService.findById("id1")).thenReturn(Maybe.just(idp1));
         when(identityProviderService.findById("id2")).thenReturn(Maybe.just(idp2));
 
-        Application updated = new Application();
-        updated.setDomain(DOMAIN);
+        Application updated = emptyAppWithDomain();
         when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(updated));
 
         doReturn(true).when(accountSettingsValidator).validate(any());
@@ -1013,11 +1009,11 @@ public class ApplicationServiceTest {
     @Test
     public void update_implicitGrant_invalidRedirectUri() {
 
-        when(applicationRepository.findById(any())).thenReturn(Maybe.just(new Application()));
+        Application app = emptyAppWithDomain();
+        when(applicationRepository.findById(any())).thenReturn(Maybe.just(app));
         when(domainService.findById(any())).thenReturn(Maybe.just(new Domain()));
 
-        Application toPatch = new Application();
-        toPatch.setDomain(DOMAIN);
+        Application toPatch = emptyAppWithDomain();
         ApplicationSettings settings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
         oAuthSettings.setGrantTypes(Arrays.asList("implicit"));
@@ -1043,8 +1039,7 @@ public class ApplicationServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
 
-        Application toPatch = new Application();
-        toPatch.setDomain(DOMAIN);
+        Application toPatch = emptyAppWithDomain();
         ApplicationSettings settings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
         oAuthSettings.setRedirectUris(Arrays.asList("https://callback"));
@@ -1070,8 +1065,7 @@ public class ApplicationServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
 
-        Application toPatch = new Application();
-        toPatch.setDomain(DOMAIN);
+        Application toPatch = emptyAppWithDomain();
         ApplicationSettings settings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
         oAuthSettings.setGrantTypes(Arrays.asList("client_credentials"));
@@ -1130,8 +1124,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void update_tokenEndpointAuthMethod_to_client_secret_jwt_if_app_with_none_hashed_secret() {
-        Application existingApp = new Application();
-        existingApp.setDomain(DOMAIN);
+        Application existingApp = emptyAppWithDomain();
         existingApp.setType(ApplicationType.SERVICE);
         ApplicationSettings existingAppSettings = new ApplicationSettings();
         ApplicationOAuthSettings existingOAuthSettings = new ApplicationOAuthSettings();
@@ -1147,8 +1140,7 @@ public class ApplicationServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
 
-        Application toPatch = new Application();
-        toPatch.setDomain(DOMAIN);
+        Application toPatch = emptyAppWithDomain();
         toPatch.setType(ApplicationType.SERVICE);
         ApplicationSettings settings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
@@ -1171,8 +1163,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shoudNot_update_tokenEndpointAuthMethod_to_client_secret_jwt_if_app_with_bcrypt_hashed_secret() {
-        Application existingApp = new Application();
-        existingApp.setDomain(DOMAIN);
+        Application existingApp = emptyAppWithDomain();
         existingApp.setType(ApplicationType.SERVICE);
         ApplicationSettings existingAppSettings = new ApplicationSettings();
         ApplicationOAuthSettings existingOAuthSettings = new ApplicationOAuthSettings();
@@ -1186,8 +1177,7 @@ public class ApplicationServiceTest {
         when(domainService.findById(any())).thenReturn(Maybe.just(new Domain()));
         when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
 
-        Application toPatch = new Application();
-        toPatch.setDomain(DOMAIN);
+        Application toPatch = emptyAppWithDomain();
         toPatch.setType(ApplicationType.SERVICE);
         ApplicationSettings settings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
@@ -1339,8 +1329,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldPatch_mobileApplication() {
-        Application client = new Application();
-        client.setDomain(DOMAIN);
+        Application client = emptyAppWithDomain();
 
         PatchApplication patchClient = new PatchApplication();
         PatchApplicationSettings patchApplicationSettings = new PatchApplicationSettings();
@@ -1370,8 +1359,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldPatch_mobileApplication_googleCase() {
-        Application client = new Application();
-        client.setDomain(DOMAIN);
+        Application client = emptyAppWithDomain();
 
         PatchApplication patchClient = new PatchApplication();
         PatchApplicationSettings patchApplicationSettings = new PatchApplicationSettings();
@@ -1496,8 +1484,7 @@ public class ApplicationServiceTest {
     public void validateClientMetadata_invalidRedirectUriException_noSchemeUri() {
         PatchApplication patchClient = Mockito.mock(PatchApplication.class);
 
-        Application client = new Application();
-        client.setDomain(DOMAIN);
+        Application client = emptyAppWithDomain();
         ApplicationSettings settings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
         oAuthSettings.setRedirectUris(Arrays.asList("noscheme"));
@@ -1508,7 +1495,8 @@ public class ApplicationServiceTest {
         when(patchClient.patch(any())).thenReturn(client);
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         doReturn(true).when(accountSettingsValidator).validate(any());
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        Application app = emptyAppWithDomain();
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.assertError(InvalidRedirectUriException.class);
@@ -1522,8 +1510,7 @@ public class ApplicationServiceTest {
     public void validateClientMetadata_invalidRedirectUriException_malformedUri() {
         PatchApplication patchClient = Mockito.mock(PatchApplication.class);
 
-        Application client = new Application();
-        client.setDomain(DOMAIN);
+        Application client = emptyAppWithDomain();
         ApplicationSettings settings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
         oAuthSettings.setRedirectUris(Arrays.asList("malformed:uri:exception"));
@@ -1533,7 +1520,8 @@ public class ApplicationServiceTest {
 
         when(patchClient.patch(any())).thenReturn(client);
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        Application app = emptyAppWithDomain();
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
@@ -1548,8 +1536,7 @@ public class ApplicationServiceTest {
     public void validateClientMetadata_invalidRedirectUriException_forbidLocalhost() {
         PatchApplication patchClient = Mockito.mock(PatchApplication.class);
 
-        Application client = new Application();
-        client.setDomain(DOMAIN);
+        Application client = emptyAppWithDomain();
         ApplicationSettings settings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
         oAuthSettings.setRedirectUris(Arrays.asList("http://localhost/callback"));
@@ -1559,7 +1546,8 @@ public class ApplicationServiceTest {
 
         when(patchClient.patch(any())).thenReturn(client);
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        Application app = emptyAppWithDomain();
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
@@ -1574,8 +1562,7 @@ public class ApplicationServiceTest {
     public void validateClientMetadata_invalidRedirectUriException_forbidHttp() {
         PatchApplication patchClient = Mockito.mock(PatchApplication.class);
 
-        Application client = new Application();
-        client.setDomain(DOMAIN);
+        Application client = emptyAppWithDomain();
         ApplicationSettings settings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
         oAuthSettings.setRedirectUris(Arrays.asList("http://gravitee.io/callback"));
@@ -1585,7 +1572,8 @@ public class ApplicationServiceTest {
 
         when(patchClient.patch(any())).thenReturn(client);
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        Application app = emptyAppWithDomain();
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
@@ -1600,8 +1588,7 @@ public class ApplicationServiceTest {
     public void validateClientMetadata_invalidRedirectUriException_forbidWildcard() {
         PatchApplication patchClient = Mockito.mock(PatchApplication.class);
 
-        Application client = new Application();
-        client.setDomain(DOMAIN);
+        Application client = emptyAppWithDomain();
         ApplicationSettings settings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
         oAuthSettings.setRedirectUris(Arrays.asList("https://gravitee.io/*"));
@@ -1611,7 +1598,8 @@ public class ApplicationServiceTest {
 
         when(patchClient.patch(any())).thenReturn(client);
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        Application app = emptyAppWithDomain();
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
@@ -1626,8 +1614,7 @@ public class ApplicationServiceTest {
     public void validateClientMetadata_invalidClientMetadataException_unknownScope() {
         PatchApplication patchClient = Mockito.mock(PatchApplication.class);
 
-        Application client = new Application();
-        client.setDomain(DOMAIN);
+        Application client = emptyAppWithDomain();
         ApplicationSettings settings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
         oAuthSettings.setRedirectUris(Arrays.asList("https://callback"));
@@ -1637,7 +1624,8 @@ public class ApplicationServiceTest {
 
         when(patchClient.patch(any())).thenReturn(client);
         doReturn(true).when(accountSettingsValidator).validate(any());
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        Application app = emptyAppWithDomain();
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.assertError(InvalidClientMetadataException.class);
@@ -1662,7 +1650,8 @@ public class ApplicationServiceTest {
         client.setSettings(settings);
 
         when(patchClient.patch(any())).thenReturn(client);
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        Application app = emptyAppWithDomain();
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
@@ -1677,8 +1666,7 @@ public class ApplicationServiceTest {
     public void validateClientMetadata_validMetadata() {
         PatchApplication patchClient = Mockito.mock(PatchApplication.class);
 
-        Application client = new Application();
-        client.setDomain(DOMAIN);
+        Application client = emptyAppWithDomain();
         ApplicationSettings settings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
         oAuthSettings.setRedirectUris(Arrays.asList("https://gravitee.io/callback"));
@@ -1707,8 +1695,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldRenewSecret() {
-        Application client = new Application();
-        client.setDomain(DOMAIN);
+        Application client = emptyAppWithDomain();
         ApplicationSettings applicationSettings = new ApplicationSettings();
         ApplicationOAuthSettings applicationOAuthSettings = new ApplicationOAuthSettings();
         applicationSettings.setOauth(applicationOAuthSettings);
@@ -1740,8 +1727,7 @@ public class ApplicationServiceTest {
      */
     @Test
     public void shouldRenewSecret_withNone_If_client_secret_jwt_method() {
-        Application client = new Application();
-        client.setDomain(DOMAIN);
+        Application client = emptyAppWithDomain();
         ApplicationSettings applicationSettings = new ApplicationSettings();
         ApplicationOAuthSettings applicationOAuthSettings = new ApplicationOAuthSettings();
         applicationOAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT);
@@ -1803,7 +1789,8 @@ public class ApplicationServiceTest {
 
         when(patchClient.patch(any())).thenReturn(client);
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        Application app = emptyAppWithDomain();
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         doReturn(true).when(accountSettingsValidator).validate(any());
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
 
@@ -1815,6 +1802,12 @@ public class ApplicationServiceTest {
         verify(applicationRepository, never()).update(any(Application.class));
     }
 
+    private static Application emptyAppWithDomain() {
+        Application app = new Application();
+        app.setDomain(DOMAIN);
+        return app;
+    }
+
     @Test
     public void validateClientMetadata_invalidTargetUrlException_noSchemeUri() {
         PatchApplication patchClient = Mockito.mock(PatchApplication.class);
@@ -1823,7 +1816,8 @@ public class ApplicationServiceTest {
         when(patchClient.patch(any())).thenReturn(client);
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         doReturn(true).when(accountSettingsValidator).validate(any());
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        Application app = emptyAppWithDomain();
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
@@ -1841,7 +1835,8 @@ public class ApplicationServiceTest {
 
         when(patchClient.patch(any())).thenReturn(client);
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        Application app = emptyAppWithDomain();
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         doReturn(true).when(accountSettingsValidator).validate(any());
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
 
@@ -1860,7 +1855,8 @@ public class ApplicationServiceTest {
 
         when(patchClient.patch(any())).thenReturn(client);
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        Application app = emptyAppWithDomain();
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         doReturn(true).when(accountSettingsValidator).validate(any());
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
 
@@ -1879,7 +1875,8 @@ public class ApplicationServiceTest {
 
         when(patchClient.patch(any())).thenReturn(client);
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        Application app = emptyAppWithDomain();
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         doReturn(true).when(accountSettingsValidator).validate(any());
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
 
@@ -1988,8 +1985,7 @@ public class ApplicationServiceTest {
     }
 
     private Application createClientWithPostLogoutRedirectUris(String uri){
-        Application client = new Application();
-        client.setDomain(DOMAIN);
+        Application client = emptyAppWithDomain();
         ApplicationSettings settings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
         oAuthSettings.setPostLogoutRedirectUris(Arrays.asList(uri));
