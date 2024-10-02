@@ -1472,30 +1472,6 @@
         },
         "overrides": [
           {
-            "__systemRef": "hideSeriesFrom",
-            "matcher": {
-              "id": "byNames",
-              "options": {
-                "mode": "exclude",
-                "names": [
-                  "conn. 0.0.0.0:8082"
-                ],
-                "prefix": "All except:",
-                "readOnly": true
-              }
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                }
-              }
-            ]
-          },
-          {
             "matcher": {
               "id": "byName",
               "options": "conn. 0.0.0.0:8082"
@@ -1666,10 +1642,10 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum by (kubernetes_pod_name) (rate(http_server_response_time_seconds_sum{application=\"gio-am-gateway\", local=\"0.0.0.0:8092\", cluster=\"$cluster\", kubernetes_namespace=~\"$namespace\", kubernetes_pod_name=~\"$pod\", prometheus!=\"monitoring/prometheus-kube-prometheus-prometheus\"}[$__rate_interval]) / rate(http_server_response_time_seconds_count{application=\"gio-am-gateway\", local=\"0.0.0.0:8092\", cluster=\"$cluster\", kubernetes_namespace=~\"$namespace\", kubernetes_pod_name=~\"$pod\", prometheus!=\"monitoring/prometheus-kube-prometheus-prometheus\"}[$__rate_interval]) * 1000)",
+          "expr": "(rate(http_server_response_time_seconds_sum{application=\"gio-am-gateway\", local=\"0.0.0.0:8092\", cluster=\"$cluster\", kubernetes_namespace=~\"$namespace\", kubernetes_pod_name=~\"$pod\", prometheus!=\"monitoring/prometheus-kube-prometheus-prometheus\"}[$__rate_interval]) / rate(http_server_response_time_seconds_count{application=\"gio-am-gateway\", local=\"0.0.0.0:8092\", cluster=\"$cluster\", kubernetes_namespace=~\"$namespace\", kubernetes_pod_name=~\"$pod\", prometheus!=\"monitoring/prometheus-kube-prometheus-prometheus\"}[$__rate_interval]) * 1000)",
           "instant": false,
           "interval": "",
-          "legendFormat": "{{kubernetes_pod_name}} ",
+          "legendFormat": "{{code}} - {{method}} - {{kubernetes_pod_name}}",
           "refId": "A"
         }
       ],
@@ -2744,6 +2720,235 @@
       ],
       "title": "Gateway jvm total memory usage",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 78
+      },
+      "id": 57,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "jvm_threads_live_threads{application=\"gio-am-gateway\", cluster=\"$cluster\", kubernetes_pod_name=~\"$pod\", kubernetes_namespace=~\"$namespace\", prometheus!=\"monitoring/prometheus-kube-prometheus-prometheus\"}",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Live - {{kubernetes_pod_name}}",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "jvm_threads_daemon_threads{application=\"gio-am-gateway\", cluster=\"$cluster\", kubernetes_pod_name=~\"$pod\", kubernetes_namespace=~\"$namespace\", prometheus!=\"monitoring/prometheus-kube-prometheus-prometheus\"}",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Deamon - {{kubernetes_pod_name}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Threads",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 78
+      },
+      "id": 58,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "jvm_threads_states_threads  {application=\"gio-am-gateway\", cluster=\"$cluster\", kubernetes_pod_name=~\"$pod\", kubernetes_namespace=~\"$namespace\", prometheus!=\"monitoring/prometheus-kube-prometheus-prometheus\", state=\"blocked\"}",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Blocked - {{kubernetes_pod_name}}",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "jvm_threads_states_threads  {application=\"gio-am-gateway\", cluster=\"$cluster\", kubernetes_pod_name=~\"$pod\", kubernetes_namespace=~\"$namespace\", prometheus!=\"monitoring/prometheus-kube-prometheus-prometheus\", state=\"runnable\"}",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Runnable - {{kubernetes_pod_name}}",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "jvm_threads_states_threads  {application=\"gio-am-gateway\", cluster=\"$cluster\", kubernetes_pod_name=~\"$pod\", kubernetes_namespace=~\"$namespace\", prometheus!=\"monitoring/prometheus-kube-prometheus-prometheus\", state=\"waiting\"}",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Waiting - {{kubernetes_pod_name}}",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "Threads State",
+      "type": "timeseries"
     }
   ],
   "refresh": false,
@@ -2763,7 +2968,7 @@
       },
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "performance-test",
           "value": "performance-test"
         },
@@ -2791,14 +2996,12 @@
       },
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": [
-            "am-4-2-perf-gateway-577fb9c47c-cvvfs",
-            "am-4-2-perf-gateway-577fb9c47c-nvvl5"
+            "All"
           ],
           "value": [
-            "am-4-2-perf-gateway-577fb9c47c-cvvfs",
-            "am-4-2-perf-gateway-577fb9c47c-nvvl5"
+            "$__all"
           ]
         },
         "datasource": {
@@ -2816,7 +3019,7 @@
           "query": "label_values(kubernetes_pod_name)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "/.*am.*/",
         "skipUrlSync": false,
         "sort": 0,
@@ -2824,12 +3027,12 @@
       },
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": [
-            "am-4-2-perf"
+            "am-perf-4-5"
           ],
           "value": [
-            "am-4-2-perf"
+            "am-perf-4-5"
           ]
         },
         "datasource": {
@@ -2856,13 +3059,13 @@
     ]
   },
   "time": {
-    "from": "2024-01-05T17:18:40.144Z",
-    "to": "2024-01-05T17:30:58.309Z"
+    "from": "2024-10-01T14:13:37.290Z",
+    "to": "2024-10-01T14:49:50.550Z"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "AM Gateway - Mongo",
   "uid": "am-gateway-mongo-perf",
-  "version": 22,
+  "version": 28,
   "weekStart": "monday"
 }
