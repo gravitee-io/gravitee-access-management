@@ -80,7 +80,7 @@ public class ApplicationClientSecretService {
                     pwdEncoder = new SHAPasswordEncoder(algorithm.getAlgorithm());
                     break;
                 default:
-                    logger.warn("No PasswordEncoder with id '{}' found to decode client secret, fallback to NoOpEncoder", settings.getId());
+                    logger.debug("No PasswordEncoder with id '{}' found to decode client secret, fallback to NoOpEncoder", settings.getId());
             }
             this.encoders.put(settings.getId(), pwdEncoder);
         }
