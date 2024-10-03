@@ -321,14 +321,14 @@ public class UserServiceImpl implements UserService {
                             .andThen(Single.defer(() -> {
                                 io.gravitee.am.model.User userToUpdate = convertUserToUpdate(existingUser, scimUser);
 
+                                // set source
+                                String source = scimUser.getSource() != null ? scimUser.getSource() : (idp != null ? idp : existingUser.getSource());
+                                userToUpdate.setSource(source);
+
                                 // check password
                                 if (isInvalidUserPassword(userToUpdate.getPassword(), userToUpdate, client)) {
                                     return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
                                 }
-
-                                // set source
-                                String source = scimUser.getSource() != null ? scimUser.getSource() : (idp != null ? idp : existingUser.getSource());
-                                userToUpdate.setSource(source);
 
                                 return userValidator.validate(userToUpdate)
                                         .andThen(Single.defer(() -> {
@@ -407,16 +407,22 @@ public class UserServiceImpl implements UserService {
                     ObjectNode node = objectMapper.convertValue(userContainer.getScimUser(), ObjectNode.class);
                     patchOp.getOperations().forEach(operation -> operation.apply(node));
                     boolean isCustomGraviteeUser = GraviteeUser.SCHEMAS.stream().anyMatch(node::has);
-                    User userToPatch = isCustomGraviteeUser ?
+                    User scimUser = isCustomGraviteeUser ?
                             objectMapper.treeToValue(node, GraviteeUser.class) :
                             objectMapper.treeToValue(node, User.class);
 
+                    io.gravitee.am.model.User userToPatch = UserMapper.convert(scimUser);
+
+                    // set source
+                    String source = scimUser.getSource() != null ? scimUser.getSource() : (idp != null ? idp : userContainer.getAmUser().getSource());
+                    userToPatch.setSource(source);
+
                     // check password
-                    if (isInvalidUserPassword(userToPatch.getPassword(), UserMapper.convert(userToPatch), client)) {
+                    if (isInvalidUserPassword(scimUser.getPassword(), userToPatch, client)) {
                         return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
                     }
 
-                    return innerUpdate(userContainer.getAmUser(), userToPatch, idp, baseUrl, principal, client);
+                    return innerUpdate(userContainer.getAmUser(), scimUser, idp, baseUrl, principal, client);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
