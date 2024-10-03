@@ -47,6 +47,7 @@ import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.CertificatePluginSchemaNotFoundException;
 import io.gravitee.am.service.exception.CertificateWithApplicationsException;
 import io.gravitee.am.service.exception.CertificateWithIdpException;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
@@ -62,6 +63,10 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.SingleSource;
 import io.reactivex.rxjava3.functions.Function;
 import lombok.extern.slf4j.Slf4j;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateExpiredException;
+import java.time.Instant;
+import java.util.Map;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.BasicConstraints;
@@ -225,7 +230,16 @@ public class CertificateServiceImpl implements CertificateService {
                     Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), ReferenceType.DOMAIN, certificate.getDomain(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(certificate));
                 })
-                .doOnError(ex -> log.error("An error occurs while trying to create a certificate", ex));
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to create a certificate", ex);
+                    if (ex instanceof CertificateException) {
+                        return Single.error(new InvalidParameterException(ex.getMessage()));
+                    }
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to create a certificate", ex));
+                });
     }
 
     private Certificate getCertificateToCreate(String domain, NewCertificate newCertificate, boolean isSystem, String schema) throws JsonProcessingException, CertificateException {
@@ -307,9 +321,11 @@ public class CertificateServiceImpl implements CertificateService {
                     log.error("An error occurs while trying to update a certificate", ex);
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
-                    } else {
-                        return Single.error(new TechnicalManagementException("An error occurs while trying to update a certificate", ex));
                     }
+                    if (ex instanceof CertificateException) {
+                        return Single.error(new InvalidParameterException(ex.getMessage()));
+                    }
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to update a certificate", ex));
                 });
     }
 
@@ -572,7 +588,7 @@ public class CertificateServiceImpl implements CertificateService {
         var expiryDate = certificateProvider.getExpirationDate().orElse(null);
         if (expiryDate != null) {
             if (Instant.now().isAfter(expiryDate.toInstant())) {
-                throw new CertificateException("The certificate you uploaded has already expired. Please select a different certificate to upload.");
+                throw new CertificateExpiredException("The certificate you uploaded has already expired. Please select a different certificate to upload.");
             }
             if (certificate.getExpiresAt() == null) {
                 certificate.setExpiresAt(expiryDate);
