@@ -72,6 +72,8 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnR
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterPostEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterSuccessEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnResponseEndpoint;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.AmContext;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.AmRequestHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.transactionid.TransactionIdHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.ConditionalBodyHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.LocaleHandler;
@@ -322,6 +324,7 @@ public class RootProvider extends AbstractProtocolProvider {
     @Value("${http.cookie.rememberMe.name:"+ DEFAULT_REMEMBER_ME_COOKIE_NAME +"}")
     private String rememberMeCookieName;
 
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -353,12 +356,12 @@ public class RootProvider extends AbstractProtocolProvider {
 
         // common handler
         Handler<RoutingContext> userTokenRequestParseHandler = new UserTokenRequestParseHandler(userService);
-        Handler<RoutingContext> clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService).setRequired(true);
-        Handler<RoutingContext> clientRequestParseHandlerOptional = new ClientRequestParseHandler(clientSyncService);
+        AmRequestHandler clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService).setRequired(true);
+        AmRequestHandler clientRequestParseHandlerOptional = new ClientRequestParseHandler(clientSyncService);
         Handler<RoutingContext> passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordService, passwordPolicyManager, identityProviderManager, domain);
-        Handler<RoutingContext> botDetectionHandler = new BotDetectionHandler(domain, botDetectionManager);
-        Handler<RoutingContext> dataConsentHandler = new DataConsentHandler(environment);
-        Handler<RoutingContext> geoIpHandler = new GeoIpHandler(userActivityService, vertx.eventBus());
+        AmRequestHandler botDetectionHandler = new BotDetectionHandler(domain, botDetectionManager);
+        AmRequestHandler dataConsentHandler = new DataConsentHandler(environment);
+        AmRequestHandler geoIpHandler = new GeoIpHandler(userActivityService, vertx.eventBus());
         Handler<RoutingContext> loginAttemptHandler = new LoginAttemptHandler(domain, identityProviderManager, loginAttemptService, userActivityService);
         Handler<RoutingContext> rememberDeviceSettingsHandler = new RememberDeviceSettingsHandler();
         Handler<RoutingContext> deviceIdentifierHandler = new DeviceIdentifierHandler(deviceService);
@@ -367,9 +370,12 @@ public class RootProvider extends AbstractProtocolProvider {
         Handler<RoutingContext> loginPostWebAuthnHandler = new LoginPostWebAuthnHandler(webAuthnCookieService);
         Handler<RoutingContext> userRememberMeHandler = new UserRememberMeRequestHandler(jwtService, domain, rememberMeCookieName);
         Handler<RoutingContext> redirectUriValidationHandler = new RedirectUriValidationHandler(domain, userService);
-
         // Root policy chain handler
         rootRouter.route()
+                .handler(ctx -> {
+                    AmContext.prepare(ctx);
+                    ctx.next();
+                })
                 // client_id is useful at root level in order to handle properly the ROOT app flow
                 // but if the client_id is unknown or invalid (not only missing) the rootRouter will throw an error that will prevent to propagate the call to the right route
                 // for instance, the OAuthProvider will not execute the /oauth/authorize and there will have 500 ERROR instead of "missing client_id" OAuth 2.0 error

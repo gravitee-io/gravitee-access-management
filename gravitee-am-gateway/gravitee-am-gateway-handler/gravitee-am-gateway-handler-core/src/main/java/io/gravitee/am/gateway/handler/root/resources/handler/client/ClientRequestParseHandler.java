@@ -19,19 +19,18 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.exception.oauth2.ServerErrorException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.AmContext;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.AmRequestHandler;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.rxjava3.ext.web.RoutingContext;
-
-import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ClientRequestParseHandler implements Handler<RoutingContext> {
+public class ClientRequestParseHandler extends AmRequestHandler {
 
     private final ClientSyncService clientSyncService;
     private boolean required;
@@ -42,7 +41,7 @@ public class ClientRequestParseHandler implements Handler<RoutingContext> {
     }
 
     @Override
-    public void handle(RoutingContext context) {
+    public void handle(AmContext context) {
         final String clientId = context.request().getParam(Parameters.CLIENT_ID);
         if (clientId == null || clientId.isEmpty()) {
             if (required) {
@@ -63,7 +62,7 @@ public class ClientRequestParseHandler implements Handler<RoutingContext> {
                 return;
             }
 
-            context.put(CLIENT_CONTEXT_KEY, authHandler.result().asSafeClient());
+            context.setClient(authHandler.result().asSafeClient());
             context.next();
         });
     }
