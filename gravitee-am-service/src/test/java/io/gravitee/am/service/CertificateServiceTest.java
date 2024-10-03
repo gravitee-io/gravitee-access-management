@@ -28,6 +28,7 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.CertificateWithApplicationsException;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.CertificateServiceImpl;
 import io.gravitee.am.service.model.NewCertificate;
@@ -380,7 +381,7 @@ public class CertificateServiceTest {
 
         TestObserver<Certificate> testObserver = certificateService.create(DOMAIN_NAME, newCertificate, Mockito.mock(User.class)).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
-        testObserver.assertError(error -> error instanceof CertificateException && "The certificate you uploaded has already expired. Please select a different certificate to upload.".equals(error.getMessage()));
+        testObserver.assertError(error -> error instanceof InvalidParameterException && "The certificate you uploaded has already expired. Please select a different certificate to upload.".equals(error.getMessage()));
     }
 
     @Test
@@ -403,7 +404,7 @@ public class CertificateServiceTest {
 
         TestObserver<Certificate> testObserver = certificateService.create(DOMAIN_NAME, newCertificate, Mockito.mock(User.class)).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
-        testObserver.assertError(error -> error instanceof CertificateException && "The configuration details entered are incorrect. Please check those and try again.".equals(error.getMessage()));
+        testObserver.assertError(error -> error instanceof InvalidParameterException && "The configuration details entered are incorrect. Please check those and try again.".equals(error.getMessage()));
     }
 
     @Test
@@ -419,7 +420,7 @@ public class CertificateServiceTest {
         newCertificate.setConfiguration(certificateNode.toString());
         TestObserver<Certificate> testObserver = certificateService.create(DOMAIN_NAME, newCertificate, Mockito.mock(User.class)).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
-        testObserver.assertError(error -> error instanceof CertificateException && "A valid certificate file was not uploaded. Please make sure to attach one.".equals(error.getMessage()));
+        testObserver.assertError(error -> error instanceof InvalidParameterException && "A valid certificate file was not uploaded. Please make sure to attach one.".equals(error.getMessage()));
     }
 
     @Test
