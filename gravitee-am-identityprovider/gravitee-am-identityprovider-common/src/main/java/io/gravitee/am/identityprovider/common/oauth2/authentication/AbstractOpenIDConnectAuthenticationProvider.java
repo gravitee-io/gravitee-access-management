@@ -133,7 +133,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
         try {
             var builder = prepareSignInUrl(redirectUri);
             if (builder == null) {
-                return null;
+                return Maybe.empty();
             }
             // PKCE
             if (getConfiguration().usePkce()) {
@@ -157,7 +157,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
                     });
         } catch (Exception e) {
             LOGGER.error("An error has occurred while building OpenID Connect Sign In URL", e);
-            return null;
+            return Maybe.empty();
         }
     }
 
