@@ -15,7 +15,7 @@
 #
 
 
-FROM graviteeio/java:17
+FROM graviteeio/java:17-alpine-3.20
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEIO_AM_VERSION=0
