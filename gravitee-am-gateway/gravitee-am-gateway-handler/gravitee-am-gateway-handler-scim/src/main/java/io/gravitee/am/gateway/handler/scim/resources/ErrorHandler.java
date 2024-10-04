@@ -15,22 +15,18 @@
  */
 package io.gravitee.am.gateway.handler.scim.resources;
 
-import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
-import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
-import io.gravitee.am.gateway.handler.scim.exception.UnauthorizedException;
 import io.gravitee.am.gateway.handler.scim.model.Error;
-import io.gravitee.am.gateway.handler.scim.model.ScimType;
-import io.gravitee.am.gateway.policy.PolicyChainException;
-import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.rxjava3.core.Completable;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
-import io.vertx.ext.web.handler.HttpException;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 
 /**
  * The SCIM protocol uses the HTTP response status codes defined in
@@ -64,58 +60,37 @@ public class ErrorHandler implements Handler<RoutingContext> {
     @Override
     public void handle(RoutingContext routingContext) {
         if (routingContext.failed()) {
-            Throwable throwable = routingContext.failure();
-            // management exception (resource not found, server error, ...)
-            if (throwable instanceof AbstractManagementException) {
-                AbstractManagementException technicalManagementException = (AbstractManagementException) throwable;
-                handleException(routingContext, technicalManagementException.getHttpStatusCode(), technicalManagementException.getMessage(), null);
-            // oauth2 exception (token invalid exception)
-            } else if (throwable instanceof OAuth2Exception) {
-                OAuth2Exception oAuth2Exception = (OAuth2Exception) throwable;
-                handleException(routingContext, oAuth2Exception.getHttpStatusCode(), oAuth2Exception.getMessage(), null);
-            } else if (throwable instanceof SCIMException) {
-                SCIMException scimException = (SCIMException) throwable;
-                handleException(routingContext, scimException.getHttpStatusCode(), scimException.getMessage(), scimException.getScimType());
-            } else if (throwable instanceof HttpException) {
-                if (401 == ((HttpException) throwable).getStatusCode()) {
-                    UnauthorizedException unauthorizedException = new UnauthorizedException();
-                    handleException(routingContext, unauthorizedException.getHttpStatusCode(), unauthorizedException.getMessage(), null);
-                }
-            } else if (throwable instanceof PolicyChainException) {
-                PolicyChainException policyChainException = (PolicyChainException) throwable;
-                handleException(routingContext, policyChainException.statusCode(), policyChainException.key() + " : " + policyChainException.getMessage(), null);
-            } else {
-                logger.error(throwable.getMessage(), throwable);
-                if (routingContext.statusCode() != -1) {
-                    routingContext
-                            .response()
-                            .setStatusCode(routingContext.statusCode())
-                            .end();
-                } else {
-                    routingContext
-                            .response()
-                            .setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500)
-                            .end();
-                }
-            }
+            final Throwable throwable = routingContext.failure();
+            Optional<Error> knownError = Error.fromThrowable(throwable);
+            knownError
+                    .ifPresentOrElse(error -> handleScimError(routingContext, error),
+                            () -> handleUnknownError(routingContext, throwable));
+
         }
     }
 
-    private void handleException(RoutingContext routingContext, int httpStatusCode, String errorDetail, ScimType scimType) {
-        Error error = new Error();
-        error.setStatus(String.valueOf(httpStatusCode));
-        error.setDetail(errorDetail);
-        if (scimType != null) {
-            error.setScimType(scimType.value());
-        } else if(httpStatusCode == HttpStatusCode.BAD_REQUEST_400) {
-            error.setScimType(ScimType.INVALID_VALUE.value());
-        }
-        routingContext
+    private Completable handleScimError(RoutingContext routingContext, Error error) {
+        return routingContext
                 .response()
                 .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
                 .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                .setStatusCode(httpStatusCode)
+                .setStatusCode(Integer.valueOf(error.getStatus()))
                 .end(Json.encodePrettily(error));
+    }
+
+    private void handleUnknownError(RoutingContext routingContext, Throwable throwable) {
+        logger.error(throwable.getMessage(), throwable);
+        if (routingContext.statusCode() != -1) {
+            routingContext
+                    .response()
+                    .setStatusCode(routingContext.statusCode())
+                    .end();
+        } else {
+            routingContext
+                    .response()
+                    .setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500)
+                    .end();
+        }
     }
 }
