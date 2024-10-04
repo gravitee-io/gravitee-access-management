@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.oauth2;
+package io.gravitee.am.gateway.handler.common.oauth2.impl;
 
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.exception.jwt.JWTException;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionTokenServiceImpl;
+import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -45,10 +45,7 @@ import static org.mockito.Mockito.*;
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
-public class IntrospectionTokenServiceTest {
-
-    @InjectMocks
-    private IntrospectionTokenService introspectionTokenService = new IntrospectionTokenServiceImpl();
+public class IntrospectionAccessTokenServiceTest {
 
     @Mock
     private JWTService jwtService;
@@ -58,6 +55,13 @@ public class IntrospectionTokenServiceTest {
 
     @Mock
     private AccessTokenRepository accessTokenRepository;
+
+    private IntrospectionTokenService introspectionTokenService;
+
+    @Before
+    public void setUp() throws Exception {
+        introspectionTokenService = new IntrospectionAccessTokenService(jwtService, clientService, accessTokenRepository);
+    }
 
     @Test
     public void shouldIntrospect_validToken_offline_verification() {
