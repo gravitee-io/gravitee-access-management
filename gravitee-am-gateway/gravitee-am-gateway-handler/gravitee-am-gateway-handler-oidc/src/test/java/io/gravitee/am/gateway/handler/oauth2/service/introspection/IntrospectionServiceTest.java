@@ -22,7 +22,6 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.model.User;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,7 +33,11 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -58,10 +61,10 @@ public class IntrospectionServiceTest {
         AccessToken accessToken = new AccessToken(token);
         accessToken.setSubject("user");
         accessToken.setClientId("client-id");
-        when(tokenService.introspect("token")).thenReturn(Single.just(accessToken));
+        when(tokenService.introspect("token")).thenReturn(Maybe.just(accessToken));
         when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(new User()));
 
-        IntrospectionRequest introspectionRequest = new IntrospectionRequest(token);
+        IntrospectionRequest introspectionRequest = IntrospectionRequest.withoutHint("token");
         TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -76,9 +79,9 @@ public class IntrospectionServiceTest {
         AccessToken accessToken = new AccessToken(token);
         accessToken.setSubject("client-id");
         accessToken.setClientId("client-id");
-        when(tokenService.introspect("token")).thenReturn(Single.just(accessToken));
+        when(tokenService.introspect("token")).thenReturn(Maybe.just(accessToken));
 
-        IntrospectionRequest introspectionRequest = new IntrospectionRequest(token);
+        IntrospectionRequest introspectionRequest = IntrospectionRequest.withoutHint("token");
         TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -96,9 +99,9 @@ public class IntrospectionServiceTest {
         accessToken.setCreatedAt(new Date());
         accessToken.setExpireAt(new Date());
         accessToken.setAdditionalInformation(Collections.singletonMap("custom-claim", "test"));
-        when(tokenService.introspect(token)).thenReturn(Single.just(accessToken));
+        when(tokenService.introspect("token")).thenReturn(Maybe.just(accessToken));
 
-        IntrospectionRequest introspectionRequest = new IntrospectionRequest(token);
+        IntrospectionRequest introspectionRequest = IntrospectionRequest.withoutHint("token");
         TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -116,9 +119,9 @@ public class IntrospectionServiceTest {
         accessToken.setCreatedAt(new Date());
         accessToken.setExpireAt(new Date());
         accessToken.setAdditionalInformation(Collections.singletonMap(Claims.AUD, "test-aud"));
-        when(tokenService.introspect(token)).thenReturn(Single.just(accessToken));
+        when(tokenService.introspect(token)).thenReturn(Maybe.just(accessToken));
 
-        IntrospectionRequest introspectionRequest = new IntrospectionRequest(token);
+        IntrospectionRequest introspectionRequest = IntrospectionRequest.withoutHint("token");
         TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);

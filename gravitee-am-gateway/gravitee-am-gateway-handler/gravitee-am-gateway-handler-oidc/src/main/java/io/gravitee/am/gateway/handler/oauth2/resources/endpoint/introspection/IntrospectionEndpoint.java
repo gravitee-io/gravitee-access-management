@@ -20,6 +20,7 @@ import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedTokenType;
+import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.par.PushedAuthorizationRequestEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
 import io.gravitee.am.model.oidc.Client;
@@ -28,6 +29,8 @@ import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * OAuth 2.0 Token Introspection Endpoint
@@ -38,6 +41,7 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
  * @author GraviteeSource Team
  */
 public class IntrospectionEndpoint implements Handler<RoutingContext> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(IntrospectionEndpoint.class);
 
     private IntrospectionService introspectionService;
 
@@ -70,23 +74,17 @@ public class IntrospectionEndpoint implements Handler<RoutingContext> {
 
     private static IntrospectionRequest createRequest(RoutingContext context) {
         String token = context.request().getParam(ConstantKeys.TOKEN_PARAM_KEY);
-        String tokenTypeHint = context.request().getParam(ConstantKeys.TOKEN_TYPE_HINT_PARAM_KEY);
-
+        String tokenTypeHintParam = context.request().getParam(ConstantKeys.TOKEN_TYPE_HINT_PARAM_KEY);
         if (token == null) {
             throw new InvalidRequestException();
         }
+        if (tokenTypeHintParam == null) {
+            return IntrospectionRequest.withoutHint(token);
+        } else {
+            return IntrospectionRequest.withHint(token, tokenTypeHintParam);
 
-        IntrospectionRequest introspectionRequest = new IntrospectionRequest(token);
-
-        if (tokenTypeHint != null) {
-            try {
-                introspectionRequest.setHint(TokenTypeHint.from(tokenTypeHint));
-            } catch (IllegalArgumentException iae) {
-                throw new UnsupportedTokenType(tokenTypeHint);
-            }
         }
 
-        return introspectionRequest;
     }
 
     public void setIntrospectionService(IntrospectionService introspectionService) {

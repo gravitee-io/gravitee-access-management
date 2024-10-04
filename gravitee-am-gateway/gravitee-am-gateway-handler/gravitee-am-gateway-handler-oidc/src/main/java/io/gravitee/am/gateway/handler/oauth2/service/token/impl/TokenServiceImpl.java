@@ -26,7 +26,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
-import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
+import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenFacade;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
@@ -107,7 +107,7 @@ public class TokenServiceImpl implements TokenService {
     private TokenManager tokenManager;
 
     @Autowired
-    private IntrospectionTokenService introspectionTokenService;
+    private IntrospectionTokenFacade introspectionTokenFacade;
 
     @Autowired
     private AuditService auditService;
@@ -144,9 +144,24 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Override
-    public Single<Token> introspect(String token) {
-        return introspectionTokenService.introspect(token, false)
-                .map(this::convertAccessToken);
+    public Maybe<Token> introspect(String token) {
+        return introspectionTokenFacade.introspectAccessToken(token)
+                .map(this::convertAccessToken)
+                .switchIfEmpty(introspectionTokenFacade.introspectRefreshToken(token).map(this::convertRefreshToken));
+    }
+
+    @Override
+    public Maybe<Token> introspect(String token, TokenTypeHint hint) {
+        switch (hint) {
+            case REFRESH_TOKEN:
+                return introspectionTokenFacade.introspectRefreshToken(token)
+                        .map(this::convertRefreshToken)
+                        .switchIfEmpty(introspectionTokenFacade.introspectAccessToken(token).map(this::convertAccessToken));
+            case ACCESS_TOKEN:
+                return introspect(token);
+            default:
+                return Maybe.empty();
+        }
     }
 
     @Override
@@ -161,9 +176,9 @@ public class TokenServiceImpl implements TokenService {
                     // encode and sign JWT tokens
                     // and create token response (+ enhance information)
                     return Single.zip(
-                            jwtService.encode(accessToken, client),
-                            (refreshToken != null ? jwtService.encode(refreshToken, client).map(Optional::of) : Single.just(Optional.<String>empty())),
-                            (encodedAccessToken, optionalEncodedRefreshToken) -> convert(accessToken, encodedAccessToken, optionalEncodedRefreshToken.orElse(null), oAuth2Request))
+                                    jwtService.encode(accessToken, client),
+                                    (refreshToken != null ? jwtService.encode(refreshToken, client).map(Optional::of) : Single.just(Optional.<String>empty())),
+                                    (encodedAccessToken, optionalEncodedRefreshToken) -> convert(accessToken, encodedAccessToken, optionalEncodedRefreshToken.orElse(null), oAuth2Request))
                             .flatMap(accessToken1 -> tokenEnhancer.enhance(accessToken1, oAuth2Request, client, endUser, executionContext))
                             .flatMap(enhancedToken -> storeTokens(accessToken, refreshToken, oAuth2Request, endUser).toSingle(() -> enhancedToken))
                             .doOnSuccess(enhancedToken -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
