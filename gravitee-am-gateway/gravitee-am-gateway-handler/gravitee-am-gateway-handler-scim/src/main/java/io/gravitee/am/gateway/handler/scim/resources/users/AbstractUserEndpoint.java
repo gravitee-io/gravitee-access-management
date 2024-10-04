@@ -107,4 +107,8 @@ public class AbstractUserEndpoint {
     protected Maybe<io.gravitee.am.identityprovider.api.User> principal(JWT jwt) {
         return this.subjectManager.getPrincipal(jwt);
     }
+
+    protected Domain getDomain() {
+        return domain;
+    }
 }

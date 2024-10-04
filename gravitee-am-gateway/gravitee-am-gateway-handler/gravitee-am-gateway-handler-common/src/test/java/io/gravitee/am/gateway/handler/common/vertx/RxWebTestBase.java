@@ -59,6 +59,7 @@ public class RxWebTestBase extends RxVertxTestBase {
     protected Router router;
     protected Domain domain;
     private ContextAssertionsHandler contextAssertionsHandler;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();

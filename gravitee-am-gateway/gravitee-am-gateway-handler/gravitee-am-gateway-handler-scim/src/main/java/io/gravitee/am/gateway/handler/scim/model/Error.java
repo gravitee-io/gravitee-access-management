@@ -16,9 +16,17 @@
 package io.gravitee.am.gateway.handler.scim.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
+import io.gravitee.am.gateway.handler.scim.exception.UnauthorizedException;
+import io.gravitee.am.gateway.policy.PolicyChainException;
+import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.common.http.HttpStatusCode;
+import io.vertx.ext.web.handler.HttpException;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * The SCIM protocol uses the HTTP response status codes defined in
@@ -79,5 +87,37 @@ public class Error {
 
     public void setDetail(String detail) {
         this.detail = detail;
+    }
+
+    public static Optional<Error> fromThrowable(Throwable throwable) {
+        Optional<Error> result = Optional.empty();
+        if (throwable instanceof AbstractManagementException technicalManagementException) {
+            result = Optional.of(buildError(technicalManagementException.getHttpStatusCode(), technicalManagementException.getMessage(), null));
+        } else if (throwable instanceof OAuth2Exception oAuth2Exception) {
+            result = Optional.of(buildError(oAuth2Exception.getHttpStatusCode(), oAuth2Exception.getMessage(), null));
+        } else if (throwable instanceof SCIMException scimException) {
+            result = Optional.of(buildError(scimException.getHttpStatusCode(), scimException.getMessage(), scimException.getScimType()));
+        } else if (throwable instanceof HttpException httpException) {
+            if (401 == httpException.getStatusCode()) {
+                UnauthorizedException unauthorizedException = new UnauthorizedException();
+                result = Optional.of(buildError(unauthorizedException.getHttpStatusCode(), unauthorizedException.getMessage(), null));
+            }
+        } else if (throwable instanceof PolicyChainException) {
+            PolicyChainException policyChainException = (PolicyChainException) throwable;
+            result = Optional.of(buildError(policyChainException.statusCode(), policyChainException.key() + " : " + policyChainException.getMessage(), null));
+        }
+        return result;
+    }
+
+    private static Error buildError(int httpStatusCode, String errorDetail, ScimType scimType) {
+        Error error = new Error();
+        error.setStatus(String.valueOf(httpStatusCode));
+        error.setDetail(errorDetail);
+        if (scimType != null) {
+            error.setScimType(scimType.value());
+        } else if(httpStatusCode == HttpStatusCode.BAD_REQUEST_400) {
+            error.setScimType(ScimType.INVALID_VALUE.value());
+        }
+        return error;
     }
 }

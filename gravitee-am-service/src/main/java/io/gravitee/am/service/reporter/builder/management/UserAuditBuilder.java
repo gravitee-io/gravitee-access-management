@@ -54,6 +54,7 @@ public class UserAuditBuilder extends ManagementAuditBuilder<UserAuditBuilder> {
         super();
     }
 
+
     public UserAuditBuilder user(User user) {
         if (user != null) {
             if (isSensitiveEventType()) {
