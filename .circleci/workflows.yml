@@ -6,7 +6,7 @@ orbs:
   gh: circleci/github-cli@2.2.0
   aws-s3: circleci/aws-s3@3.0.0
   helm: circleci/helm@2.0.1
-  aquasec: gravitee-io/aquasec@1.0.2
+  aquasec: gravitee-io/aquasec@1.0.4
 
 executors:
   ubuntu:
