@@ -24,7 +24,7 @@ ADD ./graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}.zip /tmp/
 
 RUN unzip /tmp/graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}.zip -d /tmp/
 
-FROM graviteeio/java:17
+FROM graviteeio/java:17-alpine-3.20
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEIO_AM_VERSION=0
