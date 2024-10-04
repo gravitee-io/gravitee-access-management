@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token;
 
+import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.model.AuthenticationFlowContext;
@@ -35,7 +36,9 @@ public interface TokenService {
 
     Maybe<Token> getRefreshToken(String refreshToken, Client client);
 
-    Single<Token> introspect(String token);
+    Maybe<Token> introspect(String token);
+
+    Maybe<Token> introspect(String token, TokenTypeHint hint);
 
     Single<Token> create(OAuth2Request oAuth2Request, Client client, User endUser);
 
