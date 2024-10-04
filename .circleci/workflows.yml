@@ -64,7 +64,7 @@ executors:
 parameters:
   gio_action:
     type: enum
-    enum: [ release, publish_maven_central, publish_rpms, publish_docker_images, pull_requests, release_notes_am, release_helm , publish-images-azure-registry, release-version, release-alpha-version ]
+    enum: [ release, publish_maven_central, publish_rpms, publish_docker_images, pull_requests, release_notes_am, release_helm , publish-images-azure-registry, release-version, release-alpha-version, release-hotfix-version ]
     default: pull_requests
   gio_product:
     type: enum
@@ -93,6 +93,10 @@ parameters:
     type: boolean
     default: true
     description: "Is this a latest support version of the Product ? (if so minor version tagging docker images). True by default."
+  hotfix_version:
+    type: boolean
+    default: false
+    description: "Is this a hotfix?"
 
 commands:
   create_docker_context:
@@ -1154,6 +1158,10 @@ jobs:
         type: string
         default: ''
         description: "Gravitee.io Release version number (semver) ?"
+      hotfix_version:
+        type: boolean
+        default: false
+        description: "Is this a hotfix?"
     executor:
       name: openjdk
       class: xlarge
@@ -1162,6 +1170,7 @@ jobs:
       DRY_RUN: << parameters.dry_run >>
       RC_REQUESTED: << parameters.rc_requested >>
       GIO_VERSION: << parameters.graviteeio_version >>
+      HOTFIX_VERSION: << parameters.hotfix_version >>
     steps:
       - checkout
       - restore-maven-job-cache:
@@ -1184,6 +1193,7 @@ jobs:
             export MVN_PRJ_VERSION_MINOR=$(cat /tmp/gio.maven.project.release.version | awk -F '.' '{print $2}')
             export MVN_PRJ_VERSION_PATCH=$(cat /tmp/gio.maven.project.release.version | awk -F '.' '{print $3}' | awk -F '-' '{print $1}')
             export MVN_PRJ_VERSION_QUALIFIER=$(cat /tmp/gio.maven.project.release.version | awk -F '-' '{print $2}' | awk -F 'alpha.' '{print $2}')
+            export MVN_PRJ_VERSION_HOTFIX=$(cat /tmp/gio.maven.project.release.version | awk -F '-' '{print $2}' | awk -F 'hotfix.' '{print $2}')
             
             if [ "${RC_REQUESTED}" == "true" ]; then
               if [ "${MVN_PRJ_VERSION_QUALIFIER}x" == "x" ]; then
@@ -1192,6 +1202,15 @@ jobs:
             
               export MVN_PRJ_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}-alpha.${MVN_PRJ_VERSION_QUALIFIER}"
               echo "${MVN_PRJ_VERSION}" > /tmp/gio.maven.project.release.version
+            
+            elif [ "${HOTFIX_VERSION}" == "true" ]; then
+              if [ "${MVN_PRJ_VERSION_HOTFIX}x" == "x" ]; then
+                export MVN_PRJ_VERSION_HOTFIX="1"
+              fi;
+            
+              export MVN_PRJ_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}-hotfix.${MVN_PRJ_VERSION_HOTFIX}"
+              echo "${MVN_PRJ_VERSION}" > /tmp/gio.maven.project.release.version
+            
             else
             
               export MVN_PRJ_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}"
@@ -1239,6 +1258,7 @@ jobs:
             export MVN_PRJ_VERSION_MINOR=$(cat /tmp/gio.maven.project.release.version | awk -F '.' '{print $2}')
             export MVN_PRJ_VERSION_PATCH=$(cat /tmp/gio.maven.project.release.version | awk -F '.' '{print $3}' | awk -F '-' '{print $1}')
             export MVN_PRJ_VERSION_QUALIFIER=$(cat /tmp/gio.maven.project.release.version | awk -F '-' '{print $2}' | awk -F 'alpha.' '{print $2}')
+            export MVN_PRJ_VERSION_HOTFIX=$(cat /tmp/gio.maven.project.release.version | awk -F '-' '{print $2}' | awk -F 'hotfix.' '{print $2}')
 
             export CURRENT_GIT_BRANCH=$(git status | grep 'On branch' | awk '{print $3}')
 
@@ -1251,6 +1271,9 @@ jobs:
             if [ "${RC_REQUESTED}" == "true" ]; then
               export NEXT_QUALIFIER=$((${MVN_PRJ_VERSION_QUALIFIER}+1))
               export NEXT_PATCH_SNAPSHOT_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}-alpha.${NEXT_QUALIFIER}-SNAPSHOT"
+            elif [ "${HOTFIX_VERSION}" == "true" ]; then
+              export NEXT_HOTFIX_PATCH=$((${MVN_PRJ_VERSION_HOTFIX}+1))
+              export NEXT_PATCH_SNAPSHOT_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}-hotfix.${NEXT_HOTFIX_PATCH}-SNAPSHOT"
             else
               export NEXT_PATCH_VERSION=$((${MVN_PRJ_VERSION_PATCH}+1))
               export NEXT_PATCH_SNAPSHOT_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${NEXT_PATCH_VERSION}-SNAPSHOT"
@@ -1283,10 +1306,12 @@ jobs:
             export NEXT_MINOR_VERSION=$((${MVN_PRJ_VERSION_MINOR}+1))
             export NEXT_QUALIFIER_VERSION=$((${MVN_PRJ_VERSION_QUALIFIER}+1))
             export NEXT_PATCH_VERSION=$((${MVN_PRJ_VERSION_PATCH}+1))
+            export NEXT_HOTFIX_VERSION=$((${MVN_PRJ_VERSION_HOTFIX}+1))
             
             export NEXT_SNAPSHOT_VERSION="${MVN_PRJ_VERSION_MAJOR}.${NEXT_MINOR_VERSION}.${MVN_PRJ_VERSION_PATCH}-SNAPSHOT"
             export NEXT_SNAPSHOT_MAINT_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${NEXT_PATCH_VERSION}-SNAPSHOT"
             export NEXT_SNAPSHOT_RC_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}-alpha.${NEXT_QUALIFIER_VERSION}-SNAPSHOT"
+            export NEXT_SNAPSHOT_HOTFIX_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}-hotfix.${NEXT_HOTFIX_VERSION}-SNAPSHOT"
             
             if [ "${RC_REQUESTED}" == "true" -a "${MVN_PRJ_VERSION_PATCH}" == "0" -a "${MVN_PRJ_VERSION_QUALIFIER}" == "1" ]; then
             
@@ -1298,7 +1323,11 @@ jobs:
               echo "# ---- [${MVN_PRJ_VERSION}] is a RC maintenance release, so we increment QUALIFIER VERSION from [${MVN_PRJ_VERSION_QUALIFIER}] to [${NEXT_QUALIFIER_VERSION}], and prepared next version will be [${NEXT_PATCH_SNAPSHOT_VERSION}] "
               echo "resetting version in [pom.xml] to [${NEXT_SNAPSHOT_RC_VERSION}]"
               mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${NEXT_SNAPSHOT_RC_VERSION} -DgenerateBackupPoms=false
+            elif [ "${HOTFIX_VERSION}" == "true" ]; then
             
+              echo "# ---- [${MVN_PRJ_VERSION}] is hotfix version, so we increment version hotfix to [${NEXT_SNAPSHOT_HOTFIX_VERSION}]"
+              mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${NEXT_SNAPSHOT_HOTFIX_VERSION} -DgenerateBackupPoms=false
+
             else
             
               if [ "${MVN_PRJ_VERSION_QUALIFIER}x" != "x" ]; then
@@ -1481,6 +1510,7 @@ jobs:
               docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-ui/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} ${tag_management_ui} docker/management-ui/
             
             fi;
+
   publish_am_rpms:
     description: Runs the commands to build n publish RPM Packages for Gravitee.io AM
     executor: ubuntu
@@ -1497,6 +1527,10 @@ jobs:
         type: string
         default: ""
         description: "The Gravitee.io release version number of Gravitee.io APIM, for which to build and publish all zip bundles"
+      hotfix_version:
+        type: boolean
+        default: false
+        description: "Is this a hotfix?"
     steps:
       - checkout
       - publish_rpms:
@@ -1704,6 +1738,7 @@ workflows:
           dry_run: << pipeline.parameters.dry_run >>
           rc_requested: << pipeline.parameters.rc_requested >>
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          hotfix_version: << pipeline.parameters.hotfix_version >>
           requires:
             - setup
       - build_n_push_am_ce_job:
@@ -1786,7 +1821,45 @@ workflows:
           requires:
             - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
 
-  # -- typically this workflow is executed on pull requests events for Community Edition Gravitee Repositories
+  release-hotfix-version:
+    when:
+      and:
+        - equal: [ release-hotfix-version, << pipeline.parameters.gio_action >> ]
+    jobs:
+      - setup:
+          name: setup
+          context: cicd-orchestrator
+      - release:
+          name: release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
+          context: cicd-orchestrator
+          dry_run: << pipeline.parameters.dry_run >>
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          hotfix_version: << pipeline.parameters.hotfix_version >>
+          requires:
+            - setup
+      - build_n_push_am_ce_job:
+          name: publish docker images
+          context: cicd-orchestrator
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          dry_run: << pipeline.parameters.dry_run >>
+          tag_latest: false
+          tag_latest_support: false
+          requires:
+            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
+      - add-docker-images-in-aqua:
+          name: add docker images to AquaSec
+          context: cicd-orchestrator
+          requires:
+            - publish docker images
+      - publish_maven_packages_to_maven_central:
+          name: publish maven packages
+          context: cicd-orchestrator
+          dry_run: << pipeline.parameters.dry_run >>
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          requires:
+            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
+
+            # -- typically this workflow is executed on pull requests events for Community Edition Gravitee Repositories
   pull_requests:
     when:
       and:
@@ -2060,6 +2133,7 @@ workflows:
           dry_run: << pipeline.parameters.dry_run >>
           rc_requested: << pipeline.parameters.rc_requested >>
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          hotfix_version: << pipeline.parameters.hotfix_version >>
 
   publish_maven_central:
     when:
