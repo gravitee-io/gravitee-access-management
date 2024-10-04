@@ -14,45 +14,45 @@
  * limitations under the License.
  */
 
-import { getDeviceIdentifiersApi } from './service/utils';
 import * as process from 'node:process';
+import { getExtensionApi } from '@management-commands/service/utils';
 
-export const createDevice = (domainId, accessToken, body) =>
-  getDeviceIdentifiersApi(accessToken).createDeviceIdentifier({
+export const createExtensionGrant = (domainId, accessToken, body) =>
+  getExtensionApi(accessToken).createExtensionGrant({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    deviceIdentifier: body,
+    extensionGrant: body,
   });
 
-export const deleteDevice = (domainId, accessToken, deviceId) =>
-  getDeviceIdentifiersApi(accessToken).deleteDeviceIdentifier({
+export const deleteExtensionGrant = (domainId, accessToken, extensionId) =>
+  getExtensionApi(accessToken).deleteExtensionGrant({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    deviceIdentifier: deviceId,
+    extensionGrant: extensionId,
   });
 
-export const getDevice = (domainId, accessToken, deviceId) =>
-  getDeviceIdentifiersApi(accessToken).getDeviceIdentifier({
+export const getExtensionGrant = (domainId, accessToken, extensionId) =>
+  getExtensionApi(accessToken).getExtensionGrant({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    deviceIdentifier: deviceId,
+    extensionGrant: extensionId,
   });
 
-export const listDeviceIdentifiers = (domainId, accessToken) =>
-  getDeviceIdentifiersApi(accessToken).listDeviceIdentifiers({
+export const listExtensionGrant = (domainId, accessToken) =>
+  getExtensionApi(accessToken).listExtensionGrant({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
   });
 
-export const updateDevice = (domainId, accessToken, deviceId, updateDevice) =>
-  getDeviceIdentifiersApi(accessToken).updateDeviceIdentifier({
+export const updateExtensionGrant = (domainId, accessToken, extensionId, updateExtension) =>
+  getExtensionApi(accessToken).updateExtensionGrant({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    deviceIdentifier: deviceId,
-    deviceIdentifier2: updateDevice,
+    extensionGrant: extensionId,
+    tokenGranter: updateExtension,
   });

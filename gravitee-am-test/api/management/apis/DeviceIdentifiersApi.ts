@@ -30,42 +30,43 @@ import * as runtime from '../runtime';
 import {
   BotDetection,
   BotDetectionFromJSON,
+  DeviceIdentifier,
+  DeviceIdentifiersResourceFromJSON,
   NewDeviceIdentifier,
   NewDeviceIdentifierFromJSON,
   NewDeviceIdentifierToJSON,
   UpdateDeviceIdentifier,
-  UpdateDeviceIdentifierFromJSON,
   UpdateDeviceIdentifierToJSON,
 } from '../models';
 
-export interface Create7Request {
+export interface CreateDeviceIdentifierRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
   deviceIdentifier: NewDeviceIdentifier;
 }
 
-export interface Delete10Request {
+export interface DeleteDeviceIdentifierRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
   deviceIdentifier: string;
 }
 
-export interface Get16Request {
+export interface GetDeviceIdentifierRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
   deviceIdentifier: string;
 }
 
-export interface List16Request {
+export interface ListDeviceIdentifierRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
 }
 
-export interface Update7Request {
+export interface UpdateDeviceIdentifierRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
@@ -81,32 +82,35 @@ export class DeviceIdentifiersApi extends runtime.BaseAPI {
    * User must have the DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified organization
    * Create a device identifier
    */
-  async create7Raw(
-    requestParameters: Create7Request,
+  async createDeviceIdentifierRaw(
+    requestParameters: CreateDeviceIdentifierRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<NewDeviceIdentifier>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling create7.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling createDeviceIdentifierRaw.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling create7.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling createDeviceIdentifierRaw.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling create7.');
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling createDeviceIdentifierRaw.',
+      );
     }
 
     if (requestParameters.deviceIdentifier === null || requestParameters.deviceIdentifier === undefined) {
       throw new runtime.RequiredError(
         'deviceIdentifier',
-        'Required parameter requestParameters.deviceIdentifier was null or undefined when calling create7.',
+        'Required parameter requestParameters.deviceIdentifier was null or undefined when calling createDeviceIdentifierRaw.',
       );
     }
 
@@ -141,40 +145,47 @@ export class DeviceIdentifiersApi extends runtime.BaseAPI {
    * User must have the DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified organization
    * Create a device identifier
    */
-  async create7(requestParameters: Create7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.create7Raw(requestParameters, initOverrides);
+  async createDeviceIdentifier(
+    requestParameters: CreateDeviceIdentifierRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<NewDeviceIdentifier> {
+    const device = await this.createDeviceIdentifierRaw(requestParameters, initOverrides);
+    return await device.value();
   }
 
   /**
    * User must have the DOMAIN_DEVICE_IDENTIFIER[DELETE] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[DELETE] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[DELETE] permission on the specified organization
    * Delete a Device identifier
    */
-  async delete10Raw(
-    requestParameters: Delete10Request,
+  async deleteDeviceIdentifierRaw(
+    requestParameters: DeleteDeviceIdentifierRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling delete10.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling deleteDeviceIdentifierRaw.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling delete10.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling deleteDeviceIdentifierRaw.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling delete10.');
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling deleteDeviceIdentifierRaw.',
+      );
     }
 
     if (requestParameters.deviceIdentifier === null || requestParameters.deviceIdentifier === undefined) {
       throw new runtime.RequiredError(
         'deviceIdentifier',
-        'Required parameter requestParameters.deviceIdentifier was null or undefined when calling delete10.',
+        'Required parameter requestParameters.deviceIdentifier was null or undefined when calling deleteDeviceIdentifierRaw.',
       );
     }
 
@@ -207,18 +218,22 @@ export class DeviceIdentifiersApi extends runtime.BaseAPI {
    * User must have the DOMAIN_DEVICE_IDENTIFIER[DELETE] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[DELETE] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[DELETE] permission on the specified organization
    * Delete a Device identifier
    */
-  async delete10(requestParameters: Delete10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.delete10Raw(requestParameters, initOverrides);
+  async deleteDeviceIdentifier(
+    requestParameters: DeleteDeviceIdentifierRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    const apiResponse = await this.deleteDeviceIdentifierRaw(requestParameters, initOverrides);
+    return await apiResponse.value();
   }
 
   /**
    * User must have the DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified organization
    * Get a Device identifier
    */
-  async get16Raw(
-    requestParameters: Get16Request,
+  async getDeviceIdentifierRaw(
+    requestParameters: GetDeviceIdentifierRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<any>> {
+  ): Promise<runtime.ApiResponse<DeviceIdentifier>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
@@ -266,15 +281,18 @@ export class DeviceIdentifiersApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.TextApiResponse(response) as any;
+    return new runtime.JSONApiResponse(response, (jsonValue) => DeviceIdentifiersResourceFromJSON(jsonValue));
   }
 
   /**
    * User must have the DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified organization
    * Get a Device identifier
    */
-  async get16(requestParameters: Get16Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<any> {
-    const response = await this.get16Raw(requestParameters, initOverrides);
+  async getDeviceIdentifier(
+    requestParameters: GetDeviceIdentifierRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<DeviceIdentifier> {
+    const response = await this.getDeviceIdentifierRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -282,8 +300,8 @@ export class DeviceIdentifiersApi extends runtime.BaseAPI {
    * User must have the DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified organization Each returned bot detections is filtered and contains only basic information such as id, name.
    * List registered device identifiers for a security domain
    */
-  async list16Raw(
-    requestParameters: List16Request,
+  async listDeviceIdentifiersRaw(
+    requestParameters: ListDeviceIdentifierRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<Array<BotDetection>>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
@@ -332,8 +350,11 @@ export class DeviceIdentifiersApi extends runtime.BaseAPI {
    * User must have the DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified organization Each returned bot detections is filtered and contains only basic information such as id, name.
    * List registered device identifiers for a security domain
    */
-  async list16(requestParameters: List16Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<BotDetection>> {
-    const response = await this.list16Raw(requestParameters, initOverrides);
+  async listDeviceIdentifiers(
+    requestParameters: ListDeviceIdentifierRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<BotDetection>> {
+    const response = await this.listDeviceIdentifiersRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -341,8 +362,8 @@ export class DeviceIdentifiersApi extends runtime.BaseAPI {
    * User must have the DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified organization
    * Update a Device identifier
    */
-  async update7Raw(
-    requestParameters: Update7Request,
+  async updateDeviceIdentifierRaw(
+    requestParameters: UpdateDeviceIdentifierRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<BotDetection>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
@@ -409,8 +430,11 @@ export class DeviceIdentifiersApi extends runtime.BaseAPI {
    * User must have the DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified organization
    * Update a Device identifier
    */
-  async update7(requestParameters: Update7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<BotDetection> {
-    const response = await this.update7Raw(requestParameters, initOverrides);
+  async updateDeviceIdentifier(
+    requestParameters: UpdateDeviceIdentifierRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<BotDetection> {
+    const response = await this.updateDeviceIdentifierRaw(requestParameters, initOverrides);
     return await response.value();
   }
 }
