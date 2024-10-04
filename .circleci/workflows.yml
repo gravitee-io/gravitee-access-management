@@ -6,7 +6,7 @@ orbs:
   gh: circleci/github-cli@2.2.0
   aws-s3: circleci/aws-s3@3.0
   helm: circleci/helm@2.0.1
-  snyk: snyk/snyk@1.7.0
+  aquasec: gravitee-io/aquasec@1.0.2
 
 executors:
   ubuntu:
@@ -64,7 +64,7 @@ executors:
 parameters:
   gio_action:
     type: enum
-    enum: [ release, publish_maven_central, publish_rpms, publish_docker_images, pull_requests, release_notes_am, release_helm , publish-images-azure-registry, release-version, release-alpha-version ]
+    enum: [ release, publish_maven_central, publish_rpms, publish_docker_images, pull_requests, release_notes_am, release_helm , publish-images-azure-registry, release-version, release-alpha-version, release-hotfix-version ]
     default: pull_requests
   gio_product:
     type: enum
@@ -93,6 +93,10 @@ parameters:
     type: boolean
     default: true
     description: "Is this a latest support version of the Product ? (if so minor version tagging docker images). True by default."
+  hotfix_version:
+    type: boolean
+    default: false
+    description: "Is this a hotfix?"
 
 commands:
   create_docker_context:
@@ -301,27 +305,6 @@ commands:
             ./build.sh -v << parameters.graviteeio_version >>
             
             docker run --rm -v "${GIT_GRAVITEE_PACKAGES_REPO}/am/${MAJOR_VERSION_NUMBER}.x:/packages" -e PACKAGECLOUD_TOKEN=${GIO_PACKAGECLOUD_TOKEN} digitalocean/packagecloud push --yes --skip-errors --verbose graviteeio/rpms/el/7 /packages/*.rpm
-  add-docker-image-in-snyk:
-    parameters:
-      docker-image-name:
-        type: string
-      version:
-        type: string
-    steps:
-      - run:
-          name: Add << parameters.docker-image-name >> << parameters.version >> to Snyk
-          command: |
-            curl --fail \
-                 --include \
-                 --request POST \
-                 --header "Content-Type: application/json; charset=utf-8" \
-                 --header "Authorization: token ${SNYK_API_TOKEN}" \
-                 --data-binary "{
-              \"target\": {
-                \"name\": \"<< parameters.docker-image-name >>:<< parameters.version >>\"
-              }
-            }" \
-            "https://api.snyk.io/api/v1/org/6a75be52-cf2f-40d4-8673-1d9c426f3bdb/integrations/${SNYK_INTEGRATION_ID}/import"
 
   cmd-helm-tests:
     description: execute the unit tests of the helm chart
@@ -397,8 +380,8 @@ jobs:
             - ./gravitee-am-webui-*.zip
   deploy-snapshot-on-nexus:
     docker:
-      - image: cimg/openjdk:17.0.8
-    resource_class: medium
+      - image: cimg/openjdk:17.0.11
+    resource_class: medium+
     steps:
       - attach_workspace:
           at: /tmp
@@ -408,7 +391,7 @@ jobs:
       - run:
           name: "Maven Package and deploy to Nexus Snapshots"
           command: |
-            mvn -s /tmp/.gravitee.settings.xml -Dlicense.skip=true -T2C deploy -DskipTests
+            mvn -s /tmp/.gravitee.settings.xml -Dlicense.skip=true deploy -DskipTests
       - save-maven-job-cache:
           jobName: build_branch_nexus
   run_jest_tests_mongo:
@@ -473,18 +456,21 @@ jobs:
             export GRAVITEE_MFA_RATE_TIMEUNIT=Minutes
             
             # Reduce the sync frequency to avoid flaky test due to synchronization delay
-            export gravitee_services_sync_cron="* * * * * *"
+            export gravitee_services_sync_cron="*/2 * * * * *"
+            export gravitee_services_sync_timeframeBeforeDelay=5000
+            export gravitee_services_sync_timeframeAfterDelay=5000
+            export GIO_MAX_MEM=512m
             
             # Start AM Management
-            gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
+            bash .circleci/scripts/am-service-launcher.sh gravitee-am-management-api-standalone-${AM_VERSION}
+            
             # Start AM Gateway
-            gravitee-am-gateway-standalone-${AM_VERSION}/bin/gravitee &
+            bash .circleci/scripts/am-service-launcher.sh gravitee-am-gateway-standalone-${AM_VERSION}
+            
             # build & start CIBA Delegated Service
             mvn -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            # Wait for AM to be up and running
-            timeout 120s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
-            timeout 120s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
+    
             # Run Jest tests
             npm --prefix gravitee-am-test run ci
       - keeper/env-export:
@@ -586,19 +572,22 @@ jobs:
             export GRAVITEE_OAUTH2_JDBC_USERNAME=postgres
             export GRAVITEE_OAUTH2_JDBC_PASSWORD=T0pS3cr3t
             
-            # Reduce the sync frequency to avoid flaky test due to synchronization delay
-            export gravitee_services_sync_cron="* * * * * *"
+            # Reduce the sync frequency to avoid flaky test due to synchronization delay  
+            export gravitee_services_sync_cron="*/2 * * * * *"
+            export gravitee_services_sync_timeframeBeforeDelay=5000
+            export gravitee_services_sync_timeframeAfterDelay=5000
+            export GIO_MAX_MEM=512m
             
             # Start AM Management
-            gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
+            bash .circleci/scripts/am-service-launcher.sh gravitee-am-management-api-standalone-${AM_VERSION}
+            
             # Start AM Gateway
-            gravitee-am-gateway-standalone-${AM_VERSION}/bin/gravitee &
+            bash .circleci/scripts/am-service-launcher.sh gravitee-am-gateway-standalone-${AM_VERSION}
+            
             # build & start CIBA Delegated Service
             mvn -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            # Wait for AM to be up and running
-            timeout 120s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
-            timeout 120s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
+            
             # Run Jest tests
             npm --prefix gravitee-am-test run ci
       - keeper/env-export:
@@ -645,20 +634,22 @@ jobs:
             cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
             cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
             
-            
             # Reduce the sync frequency to avoid flaky test due to synchronization delay
-            export gravitee_services_sync_cron="* * * * * *"
+            export gravitee_services_sync_cron="*/2 * * * * *"
+            export gravitee_services_sync_timeframeBeforeDelay=5000
+            export gravitee_services_sync_timeframeAfterDelay=5000
+            export GIO_MAX_MEM=512m
             
             # Start AM Management
-            gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
+            bash .circleci/scripts/am-service-launcher.sh gravitee-am-management-api-standalone-${AM_VERSION}
+            
             # Start AM Gateway
-            gravitee-am-gateway-standalone-${AM_VERSION}/bin/gravitee &
+            bash .circleci/scripts/am-service-launcher.sh gravitee-am-gateway-standalone-${AM_VERSION}
+            
             # build & start CIBA Delegated Service
             mvn -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            # Wait for AM to be up and running
-            timeout 120s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
-            timeout 120s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
+            
             # Run Postman tests
             make postman
       - keeper/env-export:
@@ -738,18 +729,21 @@ jobs:
             export GRAVITEE_OAUTH2_JDBC_PASSWORD=T0pS3cr3t
             
             # Reduce the sync frequency to avoid flaky test due to synchronization delay
-            export gravitee_services_sync_cron="* * * * * *"
-
+            export gravitee_services_sync_cron="*/2 * * * * *"
+            export gravitee_services_sync_timeframeBeforeDelay=5000
+            export gravitee_services_sync_timeframeAfterDelay=5000
+            export GIO_MAX_MEM=512m
+            
             # Start AM Management
-            gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
+            bash .circleci/scripts/am-service-launcher.sh gravitee-am-management-api-standalone-${AM_VERSION}
+            
             # Start AM Gateway
-            gravitee-am-gateway-standalone-${AM_VERSION}/bin/gravitee &
+            bash .circleci/scripts/am-service-launcher.sh gravitee-am-gateway-standalone-${AM_VERSION}
+            
             # build & start CIBA Delegated Service
             mvn -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
             java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            # Wait for AM to be up and running
-            timeout 120s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
-            timeout 120s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
+                       
             # Run Postman tests
             make postman
       - keeper/env-export:
@@ -799,8 +793,9 @@ jobs:
             echo "export TAG=$TAG" >> $BASH_ENV
             echo $TAG > /tmp/docker-tag.txt
 
-            # create a latest tag for the given branch to avoid flooding SNYK project
+            # create a latest tag for the given branch to avoid flooding AquaSec project
             export TAG_LATEST=$(echo "${CIRCLE_BRANCH}-latest")
+            
             echo "export TAG_LATEST=$TAG_LATEST" >> $BASH_ENV
       - create_docker_context
       - run:
@@ -811,21 +806,10 @@ jobs:
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-api:${TAG}
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-management-api:${TAG_LATEST}
             
+            echo $IMAGE_TAG_LATEST > /tmp/built-docker-images.txt
+            
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
-      - when:
-          condition:
-            matches: { pattern: "^(\\d+\\.\\d+\\.x)|master$", value: << pipeline.git.branch >> }
-          steps:
-            - keeper/env-export:
-                secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_org_api_token
-                var-name: SNYK_API_TOKEN
-            - keeper/env-export:
-                secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_acr_integration_id
-                var-name: SNYK_INTEGRATION_ID
-            - add-docker-image-in-snyk:
-                docker-image-name: am-management-api
-                version: ${TAG_LATEST}
       - run:
           name: Build Gateway Docker Image to Azure Registry
           when: always
@@ -834,21 +818,10 @@ jobs:
             export IMAGE_TAG=graviteeio.azurecr.io/am-gateway:${TAG}
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-gateway:${TAG_LATEST}
             
+            echo $IMAGE_TAG_LATEST >> /tmp/built-docker-images.txt
+            
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
-      - when:
-          condition:
-            matches: { pattern: "^(\\d+\\.\\d+\\.x)|master$", value: << pipeline.git.branch >> }
-          steps:
-            - keeper/env-export:
-                secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_org_api_token
-                var-name: SNYK_API_TOKEN
-            - keeper/env-export:
-                secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_acr_integration_id
-                var-name: SNYK_INTEGRATION_ID
-            - add-docker-image-in-snyk:
-                docker-image-name: am-gateway
-                version: ${TAG_LATEST}
       - run:
           name: Build Web UI Docker Image to Azure Registry
           when: always
@@ -857,26 +830,16 @@ jobs:
             export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-ui:${TAG}
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-management-ui:${TAG_LATEST}
+
+            echo $IMAGE_TAG_LATEST >> /tmp/built-docker-images.txt
             
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
-      - when:
-          condition:
-            matches: { pattern: "^(\\d+\\.\\d+\\.x)|master$", value: << pipeline.git.branch >> }
-          steps:
-            - keeper/env-export:
-                secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_org_api_token
-                var-name: SNYK_API_TOKEN
-            - keeper/env-export:
-                secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_acr_integration_id
-                var-name: SNYK_INTEGRATION_ID
-            - add-docker-image-in-snyk:
-                docker-image-name: am-management-ui
-                version: ${TAG_LATEST}
       - persist_to_workspace:
           root: /tmp
           paths:
             - ./docker-tag.txt
+            - ./built-docker-images.txt
 
   deploy-on-aks:
     docker:
@@ -914,7 +877,7 @@ jobs:
           name: Helm upgrade and 🚀 Mongo and JDBC instances
           command: |
             export TAG=$(cat /tmp/docker-tag.txt)
-            
+
             az login --service-principal -u $AZURE_APPLICATION_ID --tenant $AZURE_TENANT -p $AZURE_APPLICATION_SECRET
             az aks get-credentials --admin --resource-group Devs-Preprod-Hosted --name gravitee-devs-preprod-aks-cluster
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
@@ -951,12 +914,14 @@ jobs:
                           --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
                           --set "ui.image.tag=${TAG}"
             else
+              export HELM_VERSION=$(echo ${CIRCLE_BRANCH} | sed 's/x/0/')
               # create namespace if not exist (dry-run will generate YAML manifest and apply will create or update the ns using the manifest)
               kubectl create namespace am-${CIRCLE_BRANCH//./-}-dev --dry-run=client -o yaml | kubectl apply -f -
               # replace verison Pattern into generic maint configuration
               sed -i 's#__BRANCH_NAME_SANITIZED__#'${CIRCLE_BRANCH//./-}'#g' ./cloud-am/devs-preprod/values-maint.yaml
               helm upgrade --repo https://helm.gravitee.io \
                                       --install am-${CIRCLE_BRANCH//./-} \
+                                      --version $HELM_VERSION \
                                       -n am-${CIRCLE_BRANCH//./-}-dev \
                                       -f ./cloud-am/devs-preprod/values-maint.yaml am \
                                       --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
@@ -971,6 +936,7 @@ jobs:
               sed -i 's#__BRANCH_NAME_SANITIZED__#'${CIRCLE_BRANCH//./-}'#g' ./cloud-am/devs-preprod/values-ce-maint.yaml
               helm upgrade --repo https://helm.gravitee.io \
                                       --install am-${CIRCLE_BRANCH//./-}-ce \
+                                      --version $HELM_VERSION \
                                       -n am-${CIRCLE_BRANCH//./-}-ce-dev \
                                       -f ./cloud-am/devs-preprod/values-ce-maint.yaml am \
                                       --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
@@ -1136,6 +1102,14 @@ jobs:
         type: boolean
         default: false
         description: "Do we have to release a RC"
+      graviteeio_version:
+        type: string
+        default: ''
+        description: "Gravitee.io Release version number (semver) ?"
+      hotfix_version:
+        type: boolean
+        default: false
+        description: "Is this a hotfix?"
     executor:
       name: openjdk
       class: xlarge
@@ -1143,6 +1117,8 @@ jobs:
     environment:
       DRY_RUN: << parameters.dry_run >>
       RC_REQUESTED: << parameters.rc_requested >>
+      GIO_VERSION: << parameters.graviteeio_version >>
+      HOTFIX_VERSION: << parameters.hotfix_version >>
     steps:
       - checkout
       - restore-maven-job-cache:
@@ -1165,6 +1141,7 @@ jobs:
             export MVN_PRJ_VERSION_MINOR=$(cat /tmp/gio.maven.project.release.version | awk -F '.' '{print $2}')
             export MVN_PRJ_VERSION_PATCH=$(cat /tmp/gio.maven.project.release.version | awk -F '.' '{print $3}' | awk -F '-' '{print $1}')
             export MVN_PRJ_VERSION_QUALIFIER=$(cat /tmp/gio.maven.project.release.version | awk -F '-' '{print $2}' | awk -F 'alpha.' '{print $2}')
+            export MVN_PRJ_VERSION_HOTFIX=$(cat /tmp/gio.maven.project.release.version | awk -F '-' '{print $2}' | awk -F 'hotfix.' '{print $2}')
             
             if [ "${RC_REQUESTED}" == "true" ]; then
               if [ "${MVN_PRJ_VERSION_QUALIFIER}x" == "x" ]; then
@@ -1173,10 +1150,24 @@ jobs:
             
               export MVN_PRJ_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}-alpha.${MVN_PRJ_VERSION_QUALIFIER}"
               echo "${MVN_PRJ_VERSION}" > /tmp/gio.maven.project.release.version
+            
+            elif [ "${HOTFIX_VERSION}" == "true" ]; then
+              if [ "${MVN_PRJ_VERSION_HOTFIX}x" == "x" ]; then
+                export MVN_PRJ_VERSION_HOTFIX="1"
+              fi;
+            
+              export MVN_PRJ_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}-hotfix.${MVN_PRJ_VERSION_HOTFIX}"
+              echo "${MVN_PRJ_VERSION}" > /tmp/gio.maven.project.release.version
+            
             else
             
               export MVN_PRJ_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}"
               echo "${MVN_PRJ_VERSION}" > /tmp/gio.maven.project.release.version
+            fi;
+            
+            if [ "${MVN_PRJ_VERSION}" != "${GIO_VERSION}" ]; then
+              echo "Project version ${MVN_PRJ_VERSION} does not match with provided gio_version param ${GIO_VERSION}"
+              exit 1
             fi;
 
             # 2./ and then we can run the [mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=1.3.1 -DgenerateBackupPoms=false]
@@ -1215,6 +1206,7 @@ jobs:
             export MVN_PRJ_VERSION_MINOR=$(cat /tmp/gio.maven.project.release.version | awk -F '.' '{print $2}')
             export MVN_PRJ_VERSION_PATCH=$(cat /tmp/gio.maven.project.release.version | awk -F '.' '{print $3}' | awk -F '-' '{print $1}')
             export MVN_PRJ_VERSION_QUALIFIER=$(cat /tmp/gio.maven.project.release.version | awk -F '-' '{print $2}' | awk -F 'alpha.' '{print $2}')
+            export MVN_PRJ_VERSION_HOTFIX=$(cat /tmp/gio.maven.project.release.version | awk -F '-' '{print $2}' | awk -F 'hotfix.' '{print $2}')
 
             export CURRENT_GIT_BRANCH=$(git status | grep 'On branch' | awk '{print $3}')
 
@@ -1227,6 +1219,9 @@ jobs:
             if [ "${RC_REQUESTED}" == "true" ]; then
               export NEXT_QUALIFIER=$((${MVN_PRJ_VERSION_QUALIFIER}+1))
               export NEXT_PATCH_SNAPSHOT_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}-alpha.${NEXT_QUALIFIER}-SNAPSHOT"
+            elif [ "${HOTFIX_VERSION}" == "true" ]; then
+              export NEXT_HOTFIX_PATCH=$((${MVN_PRJ_VERSION_HOTFIX}+1))
+              export NEXT_PATCH_SNAPSHOT_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}-hotfix.${NEXT_HOTFIX_PATCH}-SNAPSHOT"
             else
               export NEXT_PATCH_VERSION=$((${MVN_PRJ_VERSION_PATCH}+1))
               export NEXT_PATCH_SNAPSHOT_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${NEXT_PATCH_VERSION}-SNAPSHOT"
@@ -1259,10 +1254,12 @@ jobs:
             export NEXT_MINOR_VERSION=$((${MVN_PRJ_VERSION_MINOR}+1))
             export NEXT_QUALIFIER_VERSION=$((${MVN_PRJ_VERSION_QUALIFIER}+1))
             export NEXT_PATCH_VERSION=$((${MVN_PRJ_VERSION_PATCH}+1))
+            export NEXT_HOTFIX_VERSION=$((${MVN_PRJ_VERSION_HOTFIX}+1))
             
             export NEXT_SNAPSHOT_VERSION="${MVN_PRJ_VERSION_MAJOR}.${NEXT_MINOR_VERSION}.${MVN_PRJ_VERSION_PATCH}-SNAPSHOT"
             export NEXT_SNAPSHOT_MAINT_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${NEXT_PATCH_VERSION}-SNAPSHOT"
             export NEXT_SNAPSHOT_RC_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}-alpha.${NEXT_QUALIFIER_VERSION}-SNAPSHOT"
+            export NEXT_SNAPSHOT_HOTFIX_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}-hotfix.${NEXT_HOTFIX_VERSION}-SNAPSHOT"
             
             if [ "${RC_REQUESTED}" == "true" -a "${MVN_PRJ_VERSION_PATCH}" == "0" -a "${MVN_PRJ_VERSION_QUALIFIER}" == "1" ]; then
             
@@ -1274,7 +1271,11 @@ jobs:
               echo "# ---- [${MVN_PRJ_VERSION}] is a RC maintenance release, so we increment QUALIFIER VERSION from [${MVN_PRJ_VERSION_QUALIFIER}] to [${NEXT_QUALIFIER_VERSION}], and prepared next version will be [${NEXT_PATCH_SNAPSHOT_VERSION}] "
               echo "resetting version in [pom.xml] to [${NEXT_SNAPSHOT_RC_VERSION}]"
               mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${NEXT_SNAPSHOT_RC_VERSION} -DgenerateBackupPoms=false
+            elif [ "${HOTFIX_VERSION}" == "true" ]; then
             
+              echo "# ---- [${MVN_PRJ_VERSION}] is hotfix version, so we increment version hotfix to [${NEXT_SNAPSHOT_HOTFIX_VERSION}]"
+              mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${NEXT_SNAPSHOT_HOTFIX_VERSION} -DgenerateBackupPoms=false
+
             else
             
               if [ "${MVN_PRJ_VERSION_QUALIFIER}x" != "x" ]; then
@@ -1457,6 +1458,7 @@ jobs:
               docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-ui/Dockerfile --build-arg GRAVITEEAM_VERSION=${RELEASE_VERSION} ${tag_management_ui} docker/management-ui/
             
             fi;
+
   publish_am_rpms:
     description: Runs the commands to build n publish RPM Packages for Gravitee.io AM
     executor: ubuntu
@@ -1473,6 +1475,10 @@ jobs:
         type: string
         default: ""
         description: "The Gravitee.io release version number of Gravitee.io APIM, for which to build and publish all zip bundles"
+      hotfix_version:
+        type: boolean
+        default: false
+        description: "Is this a hotfix?"
     steps:
       - checkout
       - publish_rpms:
@@ -1548,45 +1554,50 @@ jobs:
                     ]
                   }
 
-  add-docker-images-in-snyk:
+  add-docker-images-in-aqua:
     docker:
       - image: cimg/base:stable
     resource_class: small
     steps:
       - keeper/env-export:
-          secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_org_api_token
-          var-name: SNYK_API_TOKEN
+          secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
+          var-name: AQUA_KEY
       - keeper/env-export:
-          secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_dockerhub_integration_id
-          var-name: SNYK_INTEGRATION_ID
-      - add-docker-image-in-snyk:
-          docker-image-name: graviteeio/am-gateway
-          version: << pipeline.parameters.graviteeio_version >>
-      - add-docker-image-in-snyk:
-          docker-image-name: graviteeio/am-management-api
-          version: << pipeline.parameters.graviteeio_version >>
-      - add-docker-image-in-snyk:
-          docker-image-name: graviteeio/am-management-ui
-          version: << pipeline.parameters.graviteeio_version >>
-
-  job-snyk-am-charts:
-    docker:
-      - image: cimg/base:stable
-    resource_class: small
-    steps:
-      - checkout
+          secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/Secret
+          var-name: AQUA_SECRET
       - keeper/env-export:
-          secret-url: keeper://s83JmReKpBZWjHdud6ZAlg/custom_field/gravitee_am_org_api_token
-          var-name: SNYK_TOKEN
-      - helm/install-helm-client
-      - snyk/install
-      - run:
-          name: "build the Charts output and scan"
-          working_directory: "./helm"
-          command: |
-            helm dependency update
-            helm template . --output-dir ./output
-            snyk iac test ./output --report --target-reference="${CIRCLE_BRANCH}" --project-tags=version=${CIRCLE_BRANCH} --severity-threshold=high
+          secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/login
+          var-name: AQUA_USERNAME
+      - keeper/env-export:
+          secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/password
+          var-name: AQUA_PASSWORD
+      - keeper/env-export:
+          secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/ScannerToken
+          var-name: SCANNER_TOKEN
+      - keeper/env-export:
+          secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
+          var-name: GITHUB_TOKEN
+      - aquasec/install_billy
+      - aquasec/pull_aqua_scanner_image
+      - setup_remote_docker
+      - aquasec/register_artifact:
+          artifact_to_register: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>
+          debug: true
+      - aquasec/scan_docker_image:
+          docker_image_to_scan: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>
+          scanner_url: https://82fb8f75da.cloud.aquasec.com
+      - aquasec/register_artifact:
+          artifact_to_register: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>
+          debug: true
+      - aquasec/scan_docker_image:
+          docker_image_to_scan: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>
+          scanner_url: https://82fb8f75da.cloud.aquasec.com
+      - aquasec/register_artifact:
+          artifact_to_register: graviteeio/am-management-ui:<< pipeline.parameters.graviteeio_version >>
+          debug: true
+      - aquasec/scan_docker_image:
+          docker_image_to_scan: graviteeio/am-management-ui:<< pipeline.parameters.graviteeio_version >>
+          scanner_url: https://82fb8f75da.cloud.aquasec.com
 
   job-test-am-charts:
     docker:
@@ -1674,6 +1685,8 @@ workflows:
           context: cicd-orchestrator
           dry_run: << pipeline.parameters.dry_run >>
           rc_requested: << pipeline.parameters.rc_requested >>
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          hotfix_version: << pipeline.parameters.hotfix_version >>
           requires:
             - setup
       - build_n_push_am_ce_job:
@@ -1685,8 +1698,8 @@ workflows:
           tag_latest_support: << pipeline.parameters.tag_latest_support >>
           requires:
             - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
-      - add-docker-images-in-snyk:
-          name: add docker images to Snyk
+      - add-docker-images-in-aqua:
+          name: add docker images to AquaSec
           context: cicd-orchestrator
           requires:
             - publish docker images
@@ -1731,6 +1744,7 @@ workflows:
           context: cicd-orchestrator
           dry_run: << pipeline.parameters.dry_run >>
           rc_requested: << pipeline.parameters.rc_requested >>
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
           requires:
             - setup
       - build_n_push_am_ce_job:
@@ -1742,20 +1756,11 @@ workflows:
           tag_latest_support: false
           requires:
             - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
-      - add-docker-images-in-snyk:
-          name: add docker images to Snyk
+      - add-docker-images-in-aqua:
+          name: add docker images to AquaSec
           context: cicd-orchestrator
           requires:
             - publish docker images
-      - job-test-am-charts:
-          name: helm tests
-          requires:
-            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
-      - job-release_helm:
-          name: publish helm charts
-          context: cicd-orchestrator
-          requires:
-            - helm tests
       - publish_maven_packages_to_maven_central:
           name: publish maven packages
           context: cicd-orchestrator
@@ -1764,7 +1769,45 @@ workflows:
           requires:
             - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
 
-  # -- typically this workflow is executed on pull requests events for Community Edition Gravitee Repositories
+  release-hotfix-version:
+    when:
+      and:
+        - equal: [ release-hotfix-version, << pipeline.parameters.gio_action >> ]
+    jobs:
+      - setup:
+          name: setup
+          context: cicd-orchestrator
+      - release:
+          name: release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
+          context: cicd-orchestrator
+          dry_run: << pipeline.parameters.dry_run >>
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          hotfix_version: true
+          requires:
+            - setup
+      - build_n_push_am_ce_job:
+          name: publish docker images
+          context: cicd-orchestrator
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          dry_run: << pipeline.parameters.dry_run >>
+          tag_latest: false
+          tag_latest_support: false
+          requires:
+            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
+      - add-docker-images-in-aqua:
+          name: add docker images to AquaSec
+          context: cicd-orchestrator
+          requires:
+            - publish docker images
+      - publish_maven_packages_to_maven_central:
+          name: publish maven packages
+          context: cicd-orchestrator
+          dry_run: << pipeline.parameters.dry_run >>
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          requires:
+            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
+
+            # -- typically this workflow is executed on pull requests events for Community Edition Gravitee Repositories
   pull_requests:
     when:
       and:
@@ -1785,16 +1828,26 @@ workflows:
           name: Test Helm chart
           requires:
             - setup
-      - job-snyk-am-charts:
-          name: scan snyk Helm chart
-          context: cicd-orchestrator
+      - aquasec/fs_scan:
+          context:
+            - cicd-orchestrator
           requires:
-            - Test Helm chart
+            - setup
           filters:
             branches:
-              only:
+              ignore:
                 - master
-                - /^\d+\.\d+\.x$/
+                - /^[0-999].[0-999].x/
+          pre-steps:
+            - keeper/env-export:
+                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
+                var-name: AQUA_KEY
+            - keeper/env-export:
+                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/Secret
+                var-name: AQUA_SECRET
+            - keeper/env-export:
+                secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
+                var-name: GITHUB_TOKEN
       - run_postman_tests_mongo:
           context: cicd-orchestrator
           requires:
@@ -1906,6 +1959,100 @@ workflows:
                 - master
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
 
+      - aquasec/docker_image_scan:
+          context: cicd-orchestrator
+          pre-steps:
+            - keeper/env-export:
+                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
+                var-name: AQUA_KEY
+            - keeper/env-export:
+                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/Secret
+                var-name: AQUA_SECRET
+            - keeper/env-export:
+                secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/login
+                var-name: AQUA_USERNAME
+            - keeper/env-export:
+                secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/password
+                var-name: AQUA_PASSWORD
+            - keeper/env-export:
+                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/ScannerToken
+                var-name: SCANNER_TOKEN
+            - keeper/env-export:
+                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/login
+                var-name: AZURE_DOCKER_REGISTRY_USERNAME
+            - keeper/env-export:
+                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/password
+                var-name: AZURE_DOCKER_REGISTRY_PASSWORD
+            - keeper/env-export:
+                secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
+                var-name: GITHUB_TOKEN
+            - attach_workspace:
+                at: /tmp
+            - setup_remote_docker
+            - run:
+                name: Connect to Azure registry
+                command: |
+                  echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
+                  while IFS="" read -r line || [ -n "$line" ]
+                  do
+                    echo "Pull ${line}"
+                    docker pull "${line}"
+                  done < /tmp/built-docker-images.txt
+          requires:
+            - publish-images-azure-registry
+          scanner_url: https://82fb8f75da.cloud.aquasec.com
+          built_docker_image_file: /tmp/built-docker-images.txt
+          skip_remote_docker_step: true
+          filters:
+            branches:
+              only:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+
+      - aquasec/register_artifact:
+          context: cicd-orchestrator
+          pre-steps:
+            - keeper/env-export:
+                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
+                var-name: AQUA_KEY
+            - keeper/env-export:
+                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/Secret
+                var-name: AQUA_SECRET
+            - keeper/env-export:
+                secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/login
+                var-name: AQUA_USERNAME
+            - keeper/env-export:
+                secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/password
+                var-name: AQUA_PASSWORD
+            - keeper/env-export:
+                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/ScannerToken
+                var-name: SCANNER_TOKEN
+            - keeper/env-export:
+                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/login
+                var-name: AZURE_DOCKER_REGISTRY_USERNAME
+            - keeper/env-export:
+                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/password
+                var-name: AZURE_DOCKER_REGISTRY_PASSWORD
+            - keeper/env-export:
+                secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
+                var-name: GITHUB_TOKEN
+            - attach_workspace:
+                at: /tmp
+            - setup_remote_docker
+            - run:
+                name: Connect to Azure registry
+                command: |
+                  echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
+          requires:
+            - publish-images-azure-registry
+          built_docker_image_file: /tmp/built-docker-images.txt
+          debug: true
+          filters:
+            branches:
+              only:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+
   release:
     when:
       and:
@@ -1920,6 +2067,8 @@ workflows:
             - setup
           dry_run: << pipeline.parameters.dry_run >>
           rc_requested: << pipeline.parameters.rc_requested >>
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          hotfix_version: << pipeline.parameters.hotfix_version >>
 
   publish_maven_central:
     when:
@@ -1953,7 +2102,7 @@ workflows:
           dry_run: << pipeline.parameters.dry_run >>
           tag_latest: << pipeline.parameters.tag_latest >>
           tag_latest_support: << pipeline.parameters.tag_latest_support >>
-      - add-docker-images-in-snyk:
+      - add-docker-images-in-aqua:
           context: cicd-orchestrator
           requires:
             - build_n_push_am_ce_job
