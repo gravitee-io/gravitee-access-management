@@ -25,7 +25,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
+import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenFacade;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
@@ -99,7 +99,7 @@ public class TokenServiceImpl implements TokenService {
     private TokenManager tokenManager;
 
     @Autowired
-    private IntrospectionTokenService introspectionTokenService;
+    private IntrospectionTokenFacade introspectionTokenFacade;
 
     @Override
     public Maybe<Token> getAccessToken(String token, Client client) {
@@ -126,9 +126,24 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Override
-    public Single<Token> introspect(String token) {
-        return introspectionTokenService.introspect(token, false)
-                .map(this::convertAccessToken);
+    public Maybe<Token> introspect(String token) {
+        return introspectionTokenFacade.introspectAccessToken(token)
+                .map(this::convertAccessToken)
+                .switchIfEmpty(introspectionTokenFacade.introspectRefreshToken(token).map(this::convertRefreshToken));
+    }
+
+    @Override
+    public Maybe<Token> introspect(String token, TokenTypeHint hint) {
+        switch (hint) {
+            case REFRESH_TOKEN:
+                return introspectionTokenFacade.introspectRefreshToken(token)
+                        .map(this::convertRefreshToken)
+                        .switchIfEmpty(introspectionTokenFacade.introspectAccessToken(token).map(this::convertAccessToken));
+            case ACCESS_TOKEN:
+                return introspect(token);
+            default:
+                return Maybe.empty();
+        }
     }
 
     @Override
@@ -143,9 +158,9 @@ public class TokenServiceImpl implements TokenService {
                     // encode and sign JWT tokens
                     // and create token response (+ enhance information)
                     return Single.zip(
-                            jwtService.encode(accessToken, client),
-                            (refreshToken != null ? jwtService.encode(refreshToken, client).map(Optional::of) : Single.just(Optional.<String>empty())),
-                            (encodedAccessToken, optionalEncodedRefreshToken) -> convert(accessToken, encodedAccessToken, optionalEncodedRefreshToken.orElse(null), oAuth2Request))
+                                    jwtService.encode(accessToken, client),
+                                    (refreshToken != null ? jwtService.encode(refreshToken, client).map(Optional::of) : Single.just(Optional.<String>empty())),
+                                    (encodedAccessToken, optionalEncodedRefreshToken) -> convert(accessToken, encodedAccessToken, optionalEncodedRefreshToken.orElse(null), oAuth2Request))
                             .flatMap(accessToken1 -> tokenEnhancer.enhance(accessToken1, oAuth2Request, client, endUser, executionContext))
                             .flatMap(enhancedToken -> storeTokens(accessToken, refreshToken, oAuth2Request).toSingle(() -> enhancedToken));
 
@@ -172,8 +187,8 @@ public class TokenServiceImpl implements TokenService {
                         return Single.error(new InvalidGrantException("Refresh token was issued to another client"));
                     }
                     // Propagate UMA 2.0 permissions
-                    if(refreshToken1.getAdditionalInformation().get("permissions")!=null) {
-                        tokenRequest.setPermissions((List<PermissionRequest>)refreshToken1.getAdditionalInformation().get("permissions"));
+                    if (refreshToken1.getAdditionalInformation().get("permissions") != null) {
+                        tokenRequest.setPermissions((List<PermissionRequest>) refreshToken1.getAdditionalInformation().get("permissions"));
                     }
 
                     // if client has disabled refresh token rotation, do not remove the refresh token
@@ -199,7 +214,7 @@ public class TokenServiceImpl implements TokenService {
 
     private Completable storeTokens(JWT accessToken, JWT refreshToken, OAuth2Request oAuth2Request) {
         // store access token
-        final Completable persistAccessToken = tokenManager.storeAccessToken(convert(accessToken, refreshToken,  oAuth2Request));
+        final Completable persistAccessToken = tokenManager.storeAccessToken(convert(accessToken, refreshToken, oAuth2Request));
         // store refresh token (if exists)
         if (refreshToken != null) {
             return persistAccessToken.andThen(tokenManager.storeRefreshToken(convert(refreshToken)));
@@ -322,7 +337,7 @@ public class TokenServiceImpl implements TokenService {
         jwt.setExp(Instant.ofEpochSecond(jwt.getIat()).plusSeconds(client.getRefreshTokenValiditySeconds()).getEpochSecond());
         // set custom claims from the current access token
         Map<String, Object> customClaims = new HashMap<>(accessToken);
-        Claims.claims().forEach(claim ->  customClaims.remove(claim));
+        Claims.claims().forEach(claim -> customClaims.remove(claim));
         jwt.putAll(customClaims);
 
         return jwt;
@@ -347,8 +362,8 @@ public class TokenServiceImpl implements TokenService {
         // set permissions (UMA 2.0)
         List<PermissionRequest> permissions = oAuth2Request.getPermissions();
 
-        if(permissions!=null && !permissions.isEmpty()) {
-            jwt.put("permissions",permissions);
+        if (permissions != null && !permissions.isEmpty()) {
+            jwt.put("permissions", permissions);
         }
 
         return jwt;
