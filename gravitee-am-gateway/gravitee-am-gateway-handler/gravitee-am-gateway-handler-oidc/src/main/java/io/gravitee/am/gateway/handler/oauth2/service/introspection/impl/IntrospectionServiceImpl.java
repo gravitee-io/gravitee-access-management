@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionResponse;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
+import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.model.User;
@@ -43,46 +44,50 @@ public class IntrospectionServiceImpl implements IntrospectionService {
     private SubjectManager subjectManager;
 
     @Override
-    public Single<IntrospectionResponse> introspect(IntrospectionRequest introspectionRequest) {
-        return tokenService.introspect(introspectionRequest.getToken())
-                .flatMap(token -> {
-                    AccessToken accessToken = (AccessToken) token;
-                    if (accessToken.getSubject() != null && !accessToken.getSubject().equals(accessToken.getClientId())) {
+    public Single<IntrospectionResponse> introspect(IntrospectionRequest request) {
+        return request.getTokenTypeHint()
+                .map(hint -> tokenService.introspect(request.getToken(), hint))
+                .orElseGet(() -> tokenService.introspect(request.getToken()))
+                .flatMapSingle(token -> {
+                    if (token.getSubject() != null && !token.getSubject().equals(token.getClientId())) {
                         return subjectManager
                                 // accessToken additional info is initialized using the decoded JWT
                                 // we can use it to create a temporary instance of JWT
-                                .findUserBySub(new JWT(accessToken.getAdditionalInformation()))
-                                .map(user -> convert(accessToken, user))
-                                .defaultIfEmpty(convert(accessToken, null));
+                                .findUserBySub(new JWT(token.getAdditionalInformation()))
+                                .map(user -> convert(token, user))
+                                .defaultIfEmpty(convert(token, null));
 
                     } else {
-                        return Single.just(convert(accessToken, null));
+                        return Single.just(convert(token, null));
                     }
                 })
+                .switchIfEmpty(Single.just(new IntrospectionResponse(false)))
                 .onErrorResumeNext(exception -> Single.just(new IntrospectionResponse(false)));
     }
 
-    private IntrospectionResponse convert(AccessToken accessToken, User user) {
+    private IntrospectionResponse convert(Token token, User user) {
         IntrospectionResponse introspectionResponse = new IntrospectionResponse();
         introspectionResponse.setActive(true);
-        introspectionResponse.setClientId(accessToken.getClientId());
-        introspectionResponse.setExp(accessToken.getExpireAt().getTime() / 1000);
-        introspectionResponse.setIat(accessToken.getCreatedAt().getTime() / 1000);
-        introspectionResponse.setTokenType(accessToken.getTokenType());
-        introspectionResponse.setSub(accessToken.getSubject());
+        introspectionResponse.setClientId(token.getClientId());
+        introspectionResponse.setExp(token.getExpireAt().getTime() / 1000);
+        introspectionResponse.setIat(token.getCreatedAt().getTime() / 1000);
+        introspectionResponse.setTokenType(token.getTokenType());
+        introspectionResponse.setSub(token.getSubject());
         if (user != null) {
             introspectionResponse.setUsername(user.getUsername());
         }
-        if (accessToken.getScope() != null && !accessToken.getScope().isEmpty()) {
-            introspectionResponse.setScope(accessToken.getScope());
+        if (token.getScope() != null && !token.getScope().isEmpty()) {
+            introspectionResponse.setScope(token.getScope());
         }
-        if (accessToken.getAdditionalInformation() != null && !accessToken.getAdditionalInformation().isEmpty()) {
-            accessToken.getAdditionalInformation().forEach((k, v) -> introspectionResponse.putIfAbsent(k, v));
+        if (token.getAdditionalInformation() != null && !token.getAdditionalInformation().isEmpty()) {
+            token.getAdditionalInformation().forEach((k, v) -> introspectionResponse.putIfAbsent(k, v));
         }
 
-        final Map<String, Object> cnf = accessToken.getConfirmationMethod();
-        if (cnf != null) {
-            introspectionResponse.setConfirmationMethod(cnf);
+        if (token instanceof AccessToken) {
+            final Map<String, Object> cnf = ((AccessToken) token).getConfirmationMethod();
+            if (cnf != null) {
+                introspectionResponse.setConfirmationMethod(cnf);
+            }
         }
 
         // remove "aud" claim due to some backend APIs unable to verify the "aud" value
