@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
+import io.gravitee.am.service.validators.jsonstring.JsonString;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
@@ -31,6 +32,7 @@ public class NewExtensionGrant {
     private String name;
 
     @NotNull
+    @JsonString
     private String configuration;
 
     @NotNull
