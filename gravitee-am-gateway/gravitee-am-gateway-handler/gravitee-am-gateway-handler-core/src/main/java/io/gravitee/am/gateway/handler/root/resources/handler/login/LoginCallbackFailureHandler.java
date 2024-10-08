@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;
@@ -55,6 +56,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_ISSUING_REASON;
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_PROVIDER_ID;
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_STATUS;
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_TARGET;
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
 import static io.gravitee.am.common.utils.ConstantKeys.ISSUING_REASON_CLOSE_IDP_SESSION;
 import static io.gravitee.am.common.utils.ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
@@ -65,7 +67,6 @@ import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.LOGGER;
 import static io.gravitee.am.gateway.handler.root.RootProvider.PATH_LOGIN_CALLBACK;
-
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
 
@@ -219,13 +220,14 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
         // create final redirect uri
         final var error = new ErrorInfo("server_error", null,
                 throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage(),
-                originalParams != null ? originalParams.get(Parameters.STATE): null);
+                originalParams != null ? originalParams.get(Parameters.STATE) : null);
 
         boolean fragment = originalParams != null &&
                 originalParams.get(Parameters.RESPONSE_TYPE) != null &&
                 (isImplicitFlow(originalParams.get(Parameters.RESPONSE_TYPE)) || isHybridFlow(originalParams.get(Parameters.RESPONSE_TYPE)));
 
         var finalRedirectUri = UriBuilder.buildErrorRedirect(clientRedirectUri, error, fragment);
+        addErrorToSession(context, error);
 
         closeRemoteSessionAndRedirect(context, authentication, finalRedirectUri);
     }
@@ -283,7 +285,15 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
         }
         params.set(Parameters.CLIENT_ID, client.getClientId());
         params.set(ConstantKeys.ERROR_PARAM_KEY, "social_authentication_failed");
-        params.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, encodeURIComponent(throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage()));
+        String errorDescription = encodeURIComponent(throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage());
+        params.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
+
+        String toHash = "social_authentication_failed" + "$" + errorDescription;
+        if (context.session() != null) {
+            context.session().put(ERROR_HASH, HashUtil.generateSHA256(toHash));
+        }
+
+
         String uri = getUri(context, params);
         closeRemoteSessionAndRedirect(context, authentication, uri);
     }
@@ -294,5 +304,20 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
         final String replacement = loginSettings != null && loginSettings.isIdentifierFirstEnabled() ? "/identifier" : "";
         final String path = context.request().path().replaceFirst("/callback", replacement);
         return UriBuilderRequest.resolveProxyRequest(context.request(), path, params);
+    }
+
+    private void addErrorToSession(RoutingContext context, ErrorInfo errorInfo) {
+        StringBuilder errorBuilder = new StringBuilder();
+        if (errorInfo.error() != null) {
+            errorBuilder.append(errorInfo.error());
+        }
+        if (errorInfo.description() != null) {
+            errorBuilder.append("$");
+            errorBuilder.append(errorInfo.description());
+        }
+        if (!errorBuilder.isEmpty() && context.session() != null) {
+            context.session().put(ERROR_HASH, HashUtil.generateSHA256(errorBuilder.toString()));
+        }
+
     }
 }

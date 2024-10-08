@@ -19,6 +19,7 @@ import io.gravitee.am.common.exception.mfa.SendChallengeException;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
+import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.gravitee.am.gateway.handler.common.utils.StaticEnvironmentProvider;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.RootProvider;
@@ -29,6 +30,8 @@ import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.extern.slf4j.Slf4j;
 
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_FAILED;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
@@ -61,13 +64,15 @@ public class MFAChallengeFailureHandler extends AbstractErrorHandler {
             logoutUser(context);
             uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login", queryParams, true);
         }
+        String toHash = MFA_CHALLENGE_FAILED + "$" + errorDescription;
+        context.session().put(ERROR_HASH, HashUtil.generateSHA256(toHash));
 
         doRedirect(context.response(), uri);
     }
 
     private MultiMap updateQueryParams(RoutingContext context, String errorDescription) {
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request());
-        queryParams.set(ConstantKeys.ERROR_PARAM_KEY, "mfa_challenge_failed");
+        queryParams.set(ConstantKeys.ERROR_PARAM_KEY, MFA_CHALLENGE_FAILED);
         queryParams.set(ConstantKeys.ERROR_CODE_PARAM_KEY, ERROR_CODE_VALUE);
         queryParams.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
 

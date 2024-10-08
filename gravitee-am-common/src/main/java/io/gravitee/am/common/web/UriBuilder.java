@@ -317,21 +317,30 @@ public class UriBuilder {
         final URI redirectUri = UriBuilder.fromURIString(baseRedirectUri).build();
 
         var parameters = new TreeMap<String, String>();
-        parameters.put(ConstantKeys.ERROR_PARAM_KEY, error.error());
-        parameters.put(ConstantKeys.ERROR_CODE_PARAM_KEY, error.code());
-        parameters.put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, error.description());
-        parameters.put(Parameters.STATE, error.state());
+        if (error.error() != null) {
+            parameters.put(ConstantKeys.ERROR_PARAM_KEY, error.error());
+        }
+        if (error.code() != null) {
+            parameters.put(ConstantKeys.ERROR_CODE_PARAM_KEY, error.code());
+        }
+        if (error.description() != null) {
+            parameters.put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, error.description());
+        }
+        if (error.state() != null) {
+            parameters.put(Parameters.STATE, error.state());
+        }
         parameters.putAll(extraParams);
 
         // create final redirect uri
         final UriBuilder finalRedirectUri = UriBuilder.fromURIString(redirectUri.toString());
         BiConsumer<String, String> addParameter = fragment
-                ? (k,v) -> finalRedirectUri.addNotNullFragmentParameter(k, encodeURIComponent(v))
-                : (k,v) -> finalRedirectUri.addNotNullParameter(k, encodeURIComponent(v));
+                ? (k, v) -> finalRedirectUri.addNotNullFragmentParameter(k, encodeURIComponent(v))
+                : (k, v) -> finalRedirectUri.addNotNullParameter(k, encodeURIComponent(v));
         parameters.forEach(addParameter);
         return finalRedirectUri.buildString();
     }
+
     public static String buildErrorRedirect(String baseRedirectUri, ErrorInfo error, boolean fragment) throws URISyntaxException {
-       return buildErrorRedirect(baseRedirectUri, error, fragment, Map.of());
+        return buildErrorRedirect(baseRedirectUri, error, fragment, Map.of());
     }
 }

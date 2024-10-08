@@ -19,12 +19,12 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestObjectException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.exception.oauth2.RedirectMismatchException;
 import io.gravitee.am.common.oauth2.Parameters;
-
 import io.gravitee.am.common.oauth2.ResponseMode;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.ErrorInfo;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oauth2.exception.JWTOAuth2Exception;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.AuthorizationRequestFactory;
@@ -47,7 +47,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.HashMap;
@@ -55,6 +54,7 @@ import java.util.Map;
 
 import static io.gravitee.am.common.oauth2.GrantType.CLIENT_CREDENTIALS;
 import static io.gravitee.am.common.oauth2.GrantType.JWT_BEARER;
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
@@ -227,6 +227,7 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
         if (isDefaultErrorPage(authorizationRequest.getRedirectUri(), errorPath)) {
             extraParams.put(Parameters.CLIENT_ID, authorizationRequest.getClientId());
         }
+        addErrorToSession(context, errorInfo);
         return UriBuilder.buildErrorRedirect(authorizationRequest.getRedirectUri(), errorInfo, fragment, extraParams);
     }
 
@@ -292,5 +293,20 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
                 .findFirst()
                 .isEmpty()
                 && redirectURI != null;
+    }
+
+    private void addErrorToSession(RoutingContext context, ErrorInfo errorInfo) {
+        StringBuilder errorBuilder = new StringBuilder();
+        if (errorInfo.error() != null) {
+            errorBuilder.append(errorInfo.error());
+        }
+        if (errorInfo.description() != null) {
+            errorBuilder.append("$");
+            errorBuilder.append(errorInfo.description());
+        }
+        if (!errorBuilder.isEmpty()) {
+            context.session().put(ERROR_HASH, HashUtil.generateSHA256(errorBuilder.toString()));
+        }
+
     }
 }

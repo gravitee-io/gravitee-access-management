@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent;
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
@@ -27,6 +28,8 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
+import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_FAILED;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
@@ -59,13 +62,20 @@ public class UserConsentFailureHandler implements Handler<RoutingContext> {
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request());
 
             // add error messages
-            queryParams.set(ConstantKeys.ERROR_PARAM_KEY, "user_consent_failed");
+            StringBuilder error = new StringBuilder(errorDescription);
+            error.append(USER_CONSENT_FAILED);
+            queryParams.set(ConstantKeys.ERROR_PARAM_KEY, USER_CONSENT_FAILED);
             if (errorCode != null) {
                 queryParams.set(ConstantKeys.ERROR_CODE_PARAM_KEY, errorCode);
             }
             if (errorDescription != null) {
                 queryParams.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
+                error.append("$");
+                error.append(errorDescription);
             }
+
+            String hash = HashUtil.generateSHA256(error.toString());
+            context.session().put(ERROR_HASH, hash);
 
             // go back to login page
             String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login", queryParams, true);

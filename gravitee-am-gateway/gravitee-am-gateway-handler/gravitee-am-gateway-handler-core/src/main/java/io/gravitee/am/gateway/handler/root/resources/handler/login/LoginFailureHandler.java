@@ -25,6 +25,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.ErrorInfo;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.gravitee.am.gateway.handler.common.utils.StaticEnvironmentProvider;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;
@@ -44,7 +45,11 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.Optional;
 
-import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
+import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_FAILED;
+import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PROTOCOL_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.RETURN_URL_KEY;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
 import static java.util.Objects.nonNull;
@@ -88,7 +93,7 @@ public class LoginFailureHandler extends LoginAbstractHandler {
         }
     }
 
-    private void handlePolicyChainException(RoutingContext context, String errorCode, String errorDescription)  {
+    private void handlePolicyChainException(RoutingContext context, String errorCode, String errorDescription) {
         final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final long externalIdentities = Optional.ofNullable(client.getIdentityProviders()).stream()
                 .flatMap(Collection::stream)
@@ -142,13 +147,23 @@ public class LoginFailureHandler extends LoginAbstractHandler {
         // redirect to the login page with error message
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(req);
         // add error messages
-        queryParams.set(ConstantKeys.ERROR_PARAM_KEY, "login_failed");
+        queryParams.set(ConstantKeys.ERROR_PARAM_KEY, LOGIN_FAILED);
+        StringBuilder error = new StringBuilder();
+        error.append(LOGIN_FAILED);
         if (errorCode != null) {
             queryParams.set(ConstantKeys.ERROR_CODE_PARAM_KEY, errorCode);
         }
         if (errorDescription != null) {
             queryParams.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
+            error.append("$");
+            error.append(errorDescription);
         }
+
+        if (context.session() != null) {
+            String hash = HashUtil.generateSHA256(error.toString());
+            context.session().put(ERROR_HASH, hash);
+        }
+
         if (nonNull(context.request().getParam(Parameters.LOGIN_HINT)) && nonNull(context.request().getParam(ConstantKeys.USERNAME_PARAM_KEY))) {
             // encode login_hint parameter (to not replace '+' sign by a space ' ')
             queryParams.set(Parameters.LOGIN_HINT, StaticEnvironmentProvider.sanitizeParametersEncoding() ?
@@ -165,7 +180,7 @@ public class LoginFailureHandler extends LoginAbstractHandler {
                 .end();
     }
 
-    private void logoutUser(RoutingContext context){
+    private void logoutUser(RoutingContext context) {
         if (context.user() != null) {
             final String protocol = context.session().get(ConstantKeys.PROTOCOL_KEY);
             if (ConstantKeys.PROTOCOL_VALUE_SAML_REDIRECT.equals(protocol)) {
