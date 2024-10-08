@@ -748,6 +748,10 @@ public class RootProvider extends AbstractProtocolProvider {
         // Registration Verify confirmation
         router.route(PATH_VERIFY_REGISTRATION)
                 .handler(sessionHandler);
+
+        // Error endpoint
+        router.route(PATH_ERROR)
+                .handler(sessionHandler);
     }
 
     private void authFlowContextHandler(Router router) {

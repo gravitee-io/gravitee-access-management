@@ -23,6 +23,7 @@ import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
@@ -72,9 +73,6 @@ import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
-
-import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_KEY;
-import static java.lang.Boolean.TRUE;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -103,6 +101,8 @@ import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_TYPE;
 import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ACTION_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ENABLE_KEY;
@@ -119,6 +119,7 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
 import static io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnHandler.getOrigin;
 import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
 import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
+import static java.lang.Boolean.TRUE;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -505,7 +506,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                 .subscribe(
                         () -> {
                             updateAuditLog(routingContext, MFA_CHALLENGE_SENT, endUser, client, factor, factorContext, null);
-                            handler.handle(Future.succeededFuture((EnrolledFactor)factorContext.getData().get(FactorContext.KEY_ENROLLED_FACTOR)));
+                            handler.handle(Future.succeededFuture((EnrolledFactor) factorContext.getData().get(FactorContext.KEY_ENROLLED_FACTOR)));
                         },
                         error -> {
                             updateAuditLog(routingContext, MFA_CHALLENGE_SENT, endUser, client, factor, factorContext, error);
@@ -660,6 +661,9 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         Map<String, String> parameters = new LinkedHashMap<>();
         parameters.putAll(queryStringDecoder.parameters().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0))));
         parameters.put(errorKey, errorValue);
+        if(context.session() != null){
+            context.session().put(ERROR_HASH, HashUtil.generateSHA256(errorValue));
+        }
         String uri = UriBuilderRequest.resolveProxyRequest(req, req.path(), parameters, true);
         doRedirect(resp, uri);
     }
