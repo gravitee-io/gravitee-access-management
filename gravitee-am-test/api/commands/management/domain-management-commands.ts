@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-import { getDomainApi, getDomainManagerUrl } from './service/utils';
-import { Domain } from '../../management/models';
+import {getDomainApi, getDomainManagerUrl} from './service/utils';
+import {Domain} from '../../management/models';
+import {retryUntil} from '@utils-commands/retry';
+import {getWellKnownOpenIdConfiguration} from '@gateway-commands/oauth-oidc-commands';
 
 const request = require('supertest');
 
@@ -85,5 +87,29 @@ export const updateDomainFlows = (domainId, accessToken, flows) =>
     flows,
   });
 
+export const waitForDomainStart: (domain: Domain) => Promise<{domain:Domain, oidcConfig:any}> = (domain: Domain) => {
+  const start = Date.now();
+  return retryUntil(
+      () => getWellKnownOpenIdConfiguration(domain.hrid) as Promise<any>,
+      (res) => res.status == 200,
+      {
+        timeoutMillis: 10000,
+        onDone: () => console.log(`domain "${domain.hrid}" ready after ${(Date.now() - start) / 1000}s`),
+        onRetry: () => console.debug(`domain "${domain.hrid}" not ready yet`),
+      },
+  ).then(response => ({domain, oidcConfig: response.text}));
+}
+
 export const waitForDomainSync = () => waitFor(10000);
 export const waitFor = (duration) => new Promise((r) => setTimeout(r, duration));
+
+export async function allowHttpLocalhostRedirects(domain: Domain, accessToken: string) {
+  return patchDomain(domain.id, accessToken, {
+    oidc: {
+      clientRegistrationSettings: {
+        allowLocalhostRedirectUri: true,
+        allowHttpSchemeRedirectUri: true,
+      },
+    },
+  });
+}
