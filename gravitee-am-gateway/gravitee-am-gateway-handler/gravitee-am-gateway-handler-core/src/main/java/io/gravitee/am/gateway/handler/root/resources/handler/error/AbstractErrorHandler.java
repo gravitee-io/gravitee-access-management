@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.handler.error;
 
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
@@ -30,6 +31,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
+import static io.gravitee.am.common.utils.ConstantKeys.SERVER_ERROR;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
@@ -66,8 +69,14 @@ public abstract class AbstractErrorHandler implements Handler<RoutingContext> {
                 }
 
                 // append error information
-                parameters.set(ConstantKeys.ERROR_PARAM_KEY, "server_error");
+                parameters.set(ConstantKeys.ERROR_PARAM_KEY, SERVER_ERROR);
                 parameters.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, "Unexpected error occurred");
+
+                String toHash = SERVER_ERROR + "$" + "Unexpected error occurred";
+                String hash = HashUtil.generateSHA256(toHash);
+                if (routingContext.session() != null) {
+                    routingContext.session().put(ERROR_HASH, hash);
+                }
 
                 // redirect
                 String proxiedErrorPage = UriBuilderRequest.resolveProxyRequest(request, errorPageURL, parameters, true);

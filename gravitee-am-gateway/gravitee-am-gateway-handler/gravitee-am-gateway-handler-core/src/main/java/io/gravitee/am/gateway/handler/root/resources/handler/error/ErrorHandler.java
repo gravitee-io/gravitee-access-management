@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.handler.error;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.model.oidc.Client;
@@ -30,6 +31,7 @@ import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
 import static io.gravitee.am.common.utils.ConstantKeys.TOKEN_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static java.util.Objects.isNull;
@@ -73,7 +75,7 @@ public class ErrorHandler extends AbstractErrorHandler {
             } else if (throwable instanceof HttpException) {
                 HttpException httpStatusException = (HttpException) throwable;
                 handleException(routingContext, httpStatusException.getMessage(), httpStatusException.getPayload());
-            }  else if (throwable instanceof AttestationException) {
+            } else if (throwable instanceof AttestationException) {
                 handleException(routingContext, "technical_error", "Invalid WebAuthn attestation, make sure your device is compliant with the platform requirements");
             } else {
                 logger.error("An exception occurs while handling incoming request", throwable);
@@ -82,7 +84,7 @@ public class ErrorHandler extends AbstractErrorHandler {
         }
     }
 
-    private void handleException(RoutingContext routingContext, String errorCode, String errorDetail) {
+    private void handleException(RoutingContext routingContext, String error, String errorDetail) {
 
         String errorPageURL = routingContext.get(CONTEXT_PATH) + errorPage;
 
@@ -97,11 +99,17 @@ public class ErrorHandler extends AbstractErrorHandler {
             } else if (request.getParam(Parameters.CLIENT_ID) != null) {
                 parameters.set(Parameters.CLIENT_ID, (request.getParam(Parameters.CLIENT_ID)));
             }
+            StringBuilder toHash = new StringBuilder();
             // append error information
-            parameters.set(ConstantKeys.ERROR_PARAM_KEY, errorCode);
+            parameters.set(ConstantKeys.ERROR_PARAM_KEY, error);
+            toHash.append(error);
             if (errorDetail != null) {
                 parameters.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDetail);
+                toHash.append("$");
+                toHash.append(errorDetail);
             }
+
+            String errorHash = HashUtil.generateSHA256(toHash.toString());
 
             final String token = request.getParam(TOKEN_CONTEXT_KEY);
             if (isNull(parameters.get(TOKEN_CONTEXT_KEY)) && token != null) {
@@ -110,16 +118,22 @@ public class ErrorHandler extends AbstractErrorHandler {
 
             // redirect
             String proxiedErrorPage = UriBuilderRequest.resolveProxyRequest(request, errorPageURL, parameters, true);
-            doRedirect(routingContext, proxiedErrorPage);
+            doRedirect(routingContext, proxiedErrorPage, errorHash);
         } catch (Exception e) {
             logger.error("Unable to handle root error response", e);
-            doRedirect(routingContext, errorPageURL);
+            doRedirect(routingContext, errorPageURL, null);
         }
     }
 
-    private void doRedirect(RoutingContext context, String url) {
-        if (destroySession && context.session() != null) {
-            context.session().destroy();
+    private void doRedirect(RoutingContext context, String url, String errorHash) {
+
+        if (context.session() != null) {
+            if (destroySession) {
+                context.session().destroy();
+            }
+            if (errorHash != null) {
+                context.session().put(ERROR_HASH, errorHash);
+            }
         }
         doRedirect(context.response(), url);
     }

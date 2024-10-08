@@ -25,7 +25,6 @@ import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.functions.Consumer;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -122,7 +121,7 @@ public class ErrorEndpoint implements Handler<RoutingContext> {
         singlePageRendering.subscribe(
                 params -> render(routingContext, client, params),
                 // single contains an error due to JWT decoding, return the default error page without error details
-                (exception) ->render(routingContext, client, errorParams));
+                (exception) -> render(routingContext, client, errorParams));
 
     }
 
