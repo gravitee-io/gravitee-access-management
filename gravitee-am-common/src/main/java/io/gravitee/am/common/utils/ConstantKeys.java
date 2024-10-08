@@ -43,6 +43,10 @@ public interface ConstantKeys {
     String ID_TOKEN_HINT_KEY = "id_token_hint";
     String EMAIL_PARAM_KEY = "email";
     String ERROR_PARAM_KEY = "error";
+    String SERVER_ERROR = "server_error";
+    String MFA_CHALLENGE_FAILED = "mfa_challenge_failed";
+    String LOGIN_FAILED = "login_failed";
+    String USER_CONSENT_FAILED = "user_consent_failed";
     String RATE_LIMIT_ERROR_PARAM_KEY = "request_limit_error";
     String VERIFY_ATTEMPT_ERROR_PARAM_KEY = "verify_attempt_error";
     String ERROR_CODE_PARAM_KEY = "error_code";
@@ -68,6 +72,8 @@ public interface ConstantKeys {
     String X_XSRF_TOKEN = "X-XSRF-TOKEN";
     String _CSRF = "_csrf";
     String SOCIAL_PROVIDER_CONTEXT_KEY = "socialProviders";
+    String ERROR_HASH = "errorHash";
+
 
     // enrich authentication flow keys
     String AUTH_FLOW_CONTEXT_KEY = "authFlowContext";
