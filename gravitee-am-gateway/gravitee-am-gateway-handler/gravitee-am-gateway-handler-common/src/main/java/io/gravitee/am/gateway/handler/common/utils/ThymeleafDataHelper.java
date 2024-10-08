@@ -23,17 +23,15 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.am.model.safe.UserProperties;
+import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import org.jsoup.internal.StringUtil;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.DOMAIN_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.REQUEST_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -56,11 +54,36 @@ public class ThymeleafDataHelper {
         // entries before the call of this generateData method
         EvaluableRequest evaluableRequest = new EvaluableRequest(new VertxHttpServerRequest(context.request().getDelegate(), true));
         data.putIfAbsent(REQUEST_CONTEXT_KEY, evaluableRequest);
-        final Map<String, Object> parameters = Optional.ofNullable((Map<String, Object>)data.get(PARAM_CONTEXT_KEY)).orElse(new HashMap<>());
+        final Map<String, Object> parameters = Optional.ofNullable((Map<String, Object>) data.get(PARAM_CONTEXT_KEY)).orElse(new HashMap<>());
         for (var entry : evaluableRequest.getParams().toSingleValueMap().entrySet()) {
             parameters.putIfAbsent(entry.getKey(), entry.getValue());
         }
         data.put(PARAM_CONTEXT_KEY, parameters);
+        if (context.session() != null) {
+            String errorHash = context.session().get(ERROR_HASH);
+            if (errorHash != null) {
+                StringBuilder error = new StringBuilder();
+                MultiMap queryParams = context.queryParams();
+                if (queryParams.get(ERROR_PARAM_KEY) != null) {
+                    data.put(ERROR_PARAM_KEY, queryParams.get(ERROR_PARAM_KEY));
+                    error.append(queryParams.get(ERROR_PARAM_KEY));
+                }
+                if (queryParams.get(ERROR_CODE_PARAM_KEY) != null) {
+                    data.put(ERROR_CODE_PARAM_KEY, queryParams.get(ERROR_CODE_PARAM_KEY));
+                }
+                if (queryParams.get(ERROR_DESCRIPTION_PARAM_KEY) != null) {
+                    data.put(ERROR_DESCRIPTION_PARAM_KEY, queryParams.get(ERROR_DESCRIPTION_PARAM_KEY));
+                    error.append("$");
+                    error.append(queryParams.get(ERROR_DESCRIPTION_PARAM_KEY));
+                }
+                if (!StringUtil.isBlank(error.toString()) && !HashUtil.compare(errorHash, error.toString())) {
+                    data.put(ERROR_PARAM_KEY, SERVER_ERROR);
+                    data.put(ERROR_CODE_PARAM_KEY, null);
+                    data.put(ERROR_DESCRIPTION_PARAM_KEY, "Unknown error occurred");
+                }
+            }
+        }
+
 
         return data;
     }
@@ -72,7 +95,7 @@ public class ThymeleafDataHelper {
         if (user instanceof User) {
             authUser = (User) user;
             mayHaveUser = Optional.of(new UserProperties(authUser));
-        } else if (context.user() != null){
+        } else if (context.user() != null) {
             authUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) context.user().getDelegate()).getUser();
             mayHaveUser = Optional.of(new UserProperties(authUser));
         }
