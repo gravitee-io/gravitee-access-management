@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.user.register;
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.AbstractErrorHandler;
@@ -50,6 +51,9 @@ public class RegisterFailureHandler extends AbstractErrorHandler {
         } else {
             logger.error("An error occurs while ending user registration", cause);
             queryParams.set(ConstantKeys.ERROR_PARAM_KEY, "registration_failed");
+            if(context.session()!=null && !context.session().isDestroyed()){
+                context.session().put(ConstantKeys.ERROR_HASH, HashUtil.generateSHA256("registration_failed"));
+            }
         }
         redirectToPage(context, queryParams, cause);
     }
