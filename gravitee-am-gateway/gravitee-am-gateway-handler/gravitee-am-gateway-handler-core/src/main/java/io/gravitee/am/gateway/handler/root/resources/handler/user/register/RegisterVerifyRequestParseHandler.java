@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.handler.user.register;
 import io.gravitee.am.common.exception.jwt.ExpiredJWTException;
 import io.gravitee.am.common.exception.jwt.JWTException;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserTokenRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
@@ -35,6 +36,8 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
+import static io.gravitee.am.common.utils.ConstantKeys.INVALID_TOKEN;
 import static java.util.function.Predicate.not;
 
 /**
@@ -45,7 +48,6 @@ public class RegisterVerifyRequestParseHandler extends UserTokenRequestParseHand
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RegisterVerifyRequestParseHandler.class);
     public static final String REGISTRATION_VERIFY_LINK_EXPIRED = "registration_verify_link_expired";
-    public static final String INVALID_TOKEN = "invalid_token";
     public static final String UNEXPECTED_ERROR = "unexpected_error";
     private final Domain domain;
 
@@ -59,6 +61,9 @@ public class RegisterVerifyRequestParseHandler extends UserTokenRequestParseHand
         return handler -> {
             if (handler.failed()) {
                 final String errorKey = getErrorKey(handler.cause());
+                if(context.session()!=null){
+                    context.session().put(ERROR_HASH, HashUtil.generateSHA256(errorKey));
+                }
                 context.put(ConstantKeys.ERROR_PARAM_KEY, errorKey);
                 if (UNEXPECTED_ERROR.equals(errorKey)) {
                     LOGGER.error("An unexpected error has occurred", handler.cause());

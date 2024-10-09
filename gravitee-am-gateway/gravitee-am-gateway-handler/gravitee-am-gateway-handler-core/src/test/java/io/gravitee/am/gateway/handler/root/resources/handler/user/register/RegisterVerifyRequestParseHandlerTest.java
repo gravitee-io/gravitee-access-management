@@ -21,14 +21,11 @@ import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingC
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.UserAlreadyVerifiedException;
 import io.reactivex.rxjava3.core.Maybe;
-import java.io.IOException;
-import java.util.stream.Stream;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,9 +37,13 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.IOException;
+import java.util.stream.Stream;
+
 import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
-import static io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterVerifyRequestParseHandler.*;
+import static io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterVerifyRequestParseHandler.REGISTRATION_VERIFY_LINK_EXPIRED;
+import static io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterVerifyRequestParseHandler.UNEXPECTED_ERROR;
 import static io.gravitee.am.model.Template.REGISTRATION_VERIFY;
 import static io.gravitee.gateway.api.http.HttpHeaderNames.LOCATION;
 import static org.junit.jupiter.api.Assertions.*;
