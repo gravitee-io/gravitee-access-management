@@ -21,14 +21,11 @@ import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingC
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.UserAlreadyVerifiedException;
 import io.reactivex.rxjava3.core.Maybe;
-import java.io.IOException;
-import java.util.stream.Stream;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,12 +37,24 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static io.gravitee.am.common.utils.ConstantKeys.*;
+import java.io.IOException;
+import java.util.stream.Stream;
+
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.INVALID_TOKEN;
+import static io.gravitee.am.common.utils.ConstantKeys.SUCCESS_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.TOKEN_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.WARNING_PARAM_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
-import static io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterVerifyRequestParseHandler.*;
+import static io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterVerifyRequestParseHandler.REGISTRATION_VERIFY_LINK_EXPIRED;
+import static io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterVerifyRequestParseHandler.UNEXPECTED_ERROR;
 import static io.gravitee.am.model.Template.REGISTRATION_VERIFY;
 import static io.gravitee.gateway.api.http.HttpHeaderNames.LOCATION;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 /**

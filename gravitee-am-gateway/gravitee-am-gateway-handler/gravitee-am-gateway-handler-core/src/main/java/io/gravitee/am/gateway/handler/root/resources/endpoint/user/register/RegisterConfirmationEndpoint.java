@@ -17,9 +17,9 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
-import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
 import static io.gravitee.am.common.utils.ConstantKeys.PASSWORD_VALIDATION;
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
@@ -92,6 +93,9 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
         if (user != null && user.isPreRegistration() && user.isRegistrationCompleted()) {
             MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
             queryParams.set(ConstantKeys.ERROR_PARAM_KEY, "invalid_registration_context");
+            if(routingContext.session() != null){
+                routingContext.session().put(ERROR_HASH, HashUtil.generateSHA256("invalid_registration_context"));
+            }
             redirectToPage(routingContext, queryParams);
             return;
         }
