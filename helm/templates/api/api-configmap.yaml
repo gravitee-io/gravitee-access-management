@@ -396,16 +396,10 @@ data:
       {{- end }}
       # Allows to define if cookie secure only (default false)
       cookie-secure: {{ .Values.api.jwt.cookie.secure | default false }}
+    {{- if .Values.api.security }}
     security:
-      defaultAdmin: {{ .Values.api.security.defaultAdmin | default true }}
-      accountAccessTokens:
-        encoder:
-          settings:
-            rounds: {{ .Values.api.security.accountTokenBcryptRounds | default 10 }}
-      {{- if .Values.api.security.providers }}
-      providers:
-        {{- toYaml .Values.api.security.providers | nindent 8 }}
-      {{- end}}
+      {{- toYaml .Values.api.security | nindent 6 }}
+    {{- end}}
     {{- if .Values.userManagement }}
     user:
 {{ toYaml .Values.userManagement | indent 6 }}

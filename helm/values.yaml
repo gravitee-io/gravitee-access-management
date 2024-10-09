@@ -438,7 +438,10 @@ api:
   # annotations:
   security:
     defaultAdmin: true
-    accountTokenBcryptRounds: 10
+    accountAccessTokens:
+      encoder:
+        settings:
+          rounds: 10
     providers:
       - type: memory
         enabled: false
