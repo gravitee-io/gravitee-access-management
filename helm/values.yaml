@@ -436,6 +436,33 @@ api:
     internalPortName: http
 #    appProtocol: http
   # annotations:
+  security:
+    defaultAdmin: true
+    accountAccessTokens:
+      encoder:
+        settings:
+          rounds: 10
+    providers:
+      - type: memory
+        enabled: false
+        ## Name of IdentityProvider
+        ## If missing the type will be used to create a generic name (ex: Memory users)
+        #name:
+        ## password encoding/hashing algorithm. One of:
+        ## - BCrypt : passwords are hashed with bcrypt (supports only $2a$ algorithm)
+        ## - none : passwords are not hashed/encrypted
+        #default value is BCrypt
+        password-encoding-algo: BCrypt
+        users:
+          - user:
+            username: admin
+            #email:
+            firstname: Administrator
+            lastname: Administrator
+            ## Passwords are encoded using BCrypt
+            ## Password value: adminadmin
+            password: $2a$10$NG5WLbspq8V1yJDzUKfUK.oum94qL/Ne3B5fQCgekw/Y4aOEaoFZq
+            role: ORGANIZATION_OWNER
   securityContext:
     runAsUser: 1001
     runAsNonRoot: true

@@ -396,7 +396,10 @@ data:
       {{- end }}
       # Allows to define if cookie secure only (default false)
       cookie-secure: {{ .Values.api.jwt.cookie.secure | default false }}
-
+    {{- if .Values.api.security }}
+    security:
+      {{- toYaml .Values.api.security | nindent 6 }}
+    {{- end}}
     {{- if .Values.userManagement }}
     user:
 {{ toYaml .Values.userManagement | indent 6 }}
