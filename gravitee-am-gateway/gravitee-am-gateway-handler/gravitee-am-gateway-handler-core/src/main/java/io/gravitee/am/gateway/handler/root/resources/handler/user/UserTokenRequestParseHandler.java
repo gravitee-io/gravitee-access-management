@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.handler.user;
 
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.reactivex.rxjava3.core.Maybe;
@@ -26,6 +27,9 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
+import static io.gravitee.am.common.utils.ConstantKeys.INVALID_TOKEN;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -84,7 +88,10 @@ public class UserTokenRequestParseHandler extends UserRequestHandler {
     protected Handler<AsyncResult<UserToken>> getResultHandler(RoutingContext context, MultiMap queryParams) {
         return handler -> {
             if (handler.failed()) {
-                queryParams.set(ConstantKeys.ERROR_PARAM_KEY, "invalid_token");
+                queryParams.set(ConstantKeys.ERROR_PARAM_KEY, INVALID_TOKEN);
+                if(context.session()!=null){
+                    context.session().put(ERROR_HASH, HashUtil.generateSHA256(INVALID_TOKEN));
+                }
                 redirectToPage(context, queryParams);
                 return;
             }
