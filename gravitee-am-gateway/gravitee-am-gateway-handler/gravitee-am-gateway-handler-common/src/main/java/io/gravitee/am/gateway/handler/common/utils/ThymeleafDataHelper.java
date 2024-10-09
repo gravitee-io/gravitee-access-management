@@ -68,7 +68,7 @@ public class ThymeleafDataHelper {
             parameters.putIfAbsent(entry.getKey(), entry.getValue());
         }
         data.put(PARAM_CONTEXT_KEY, parameters);
-        if (context.session() != null) {
+        if (context.session() != null && context.getDelegate() != null) {
             String errorHash = context.session().get(ERROR_HASH);
             if (errorHash != null) {
                 StringBuilder error = new StringBuilder();
@@ -92,7 +92,6 @@ public class ThymeleafDataHelper {
                 }
             }
         }
-
 
         return data;
     }

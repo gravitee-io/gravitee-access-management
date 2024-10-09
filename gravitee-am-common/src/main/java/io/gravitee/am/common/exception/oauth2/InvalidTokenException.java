@@ -18,6 +18,8 @@ package io.gravitee.am.common.exception.oauth2;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.common.http.HttpStatusCode;
 
+import static io.gravitee.am.common.utils.ConstantKeys.INVALID_TOKEN;
+
 /**
  * invalid_token
  *          The access token provided is expired, revoked, malformed, or
@@ -60,7 +62,7 @@ public class InvalidTokenException extends OAuth2Exception {
 
     @Override
     public String getOAuth2ErrorCode() {
-        return "invalid_token";
+        return INVALID_TOKEN;
     }
 
     @Override
