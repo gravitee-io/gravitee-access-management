@@ -42,12 +42,12 @@ import java.util.stream.Stream;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.INVALID_TOKEN;
 import static io.gravitee.am.common.utils.ConstantKeys.SUCCESS_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.TOKEN_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.WARNING_PARAM_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
-import static io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterVerifyRequestParseHandler.INVALID_TOKEN;
 import static io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterVerifyRequestParseHandler.REGISTRATION_VERIFY_LINK_EXPIRED;
 import static io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterVerifyRequestParseHandler.UNEXPECTED_ERROR;
 import static io.gravitee.am.model.Template.REGISTRATION_VERIFY;
