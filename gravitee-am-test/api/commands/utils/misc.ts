@@ -14,6 +14,28 @@
  * limitations under the License.
  */
 
+import {waitFor} from '@management-commands/domain-management-commands';
+import {expect} from '@jest/globals';
+import {performGet} from '@gateway-commands/oauth-oidc-commands';
+
 export async function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Wait for the promise to resolve, but not longer then `millis` ms
+ */
+export async function timeout<T>(millis: number, promise: Promise<T>): Promise<T | never> {
+  let timeLimit = waitFor(millis).then((_) => {
+    throw Error('timeout');
+  });
+  return Promise.race([timeLimit, promise]);
+}
+
+export type BasicResponse = { status: number; header: { [x: string]: string }, headers: { [x: string]: string } };
+
+export async function followRedirect(redirectResponse: BasicResponse) {
+  expect(redirectResponse.status).toBe(302);
+  const headers = redirectResponse.header['set-cookie'] ? { Cookie: redirectResponse.header['set-cookie'] } : {};
+  return performGet(redirectResponse.header['location'], '', headers);
 }
