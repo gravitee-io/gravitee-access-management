@@ -16,8 +16,9 @@
 
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { expect } from '@jest/globals';
+import {Domain,PatchApplication} from '../../management/models';
 
-export const createTestApp = async (name, domain, accessToken, applicationType = 'web', body = {}) => {
+export const createTestApp = async (name: string, domain: Domain, accessToken: string, applicationType = 'web', body: PatchApplication = {}) => {
     const creatAppSettings =
         applicationType !== 'service'
             ? {
