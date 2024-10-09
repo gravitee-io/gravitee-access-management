@@ -45,6 +45,7 @@ public interface ConstantKeys {
     String EMAIL_PARAM_KEY = "email";
     String ERROR_PARAM_KEY = "error";
     String SERVER_ERROR = "server_error";
+    String INVALID_TOKEN = "invalid_token";
     String MFA_CHALLENGE_FAILED = "mfa_challenge_failed";
     String LOGIN_FAILED = "login_failed";
     String USER_CONSENT_FAILED = "user_consent_failed";
