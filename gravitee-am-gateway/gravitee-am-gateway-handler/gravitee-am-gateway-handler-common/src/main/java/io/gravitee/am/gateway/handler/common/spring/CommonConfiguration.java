@@ -42,8 +42,10 @@ import io.gravitee.am.gateway.handler.common.group.impl.DefaultGroupManager;
 import io.gravitee.am.gateway.handler.common.group.impl.InMemoryGroupManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
+import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenFacade;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
-import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionTokenServiceImpl;
+import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionAccessTokenService;
+import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionRefreshTokenService;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManagerImpl;
 import io.gravitee.am.gateway.handler.common.policy.DefaultRulesEngine;
@@ -75,6 +77,8 @@ import io.gravitee.am.gateway.handler.context.spring.ContextConfiguration;
 import io.gravitee.am.gateway.policy.spring.PolicyConfiguration;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
+import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
+import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.gravitee.node.api.cache.CacheManager;
 import io.vertx.ext.web.client.WebClientOptions;
@@ -93,6 +97,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 
 import java.util.concurrent.TimeUnit;
+
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -213,8 +218,25 @@ public class CommonConfiguration {
     }
 
     @Bean
-    public IntrospectionTokenService introspectiontokenservice() {
-        return new IntrospectionTokenServiceImpl();
+    @Qualifier("AccessTokenIntrospection")
+    public IntrospectionTokenService introspectionAccessTokenService(JWTService jwtService,
+                                                                     ClientSyncService clientSyncService,
+                                                                     AccessTokenRepository accessTokenRepository) {
+        return new IntrospectionAccessTokenService(jwtService, clientSyncService, accessTokenRepository);
+    }
+
+    @Bean
+    @Qualifier("RefreshTokenIntrospection")
+    public IntrospectionTokenService introspectionRefreshTokenService(JWTService jwtService,
+                                                                      ClientSyncService clientSyncService,
+                                                                      RefreshTokenRepository refreshTokenRepository) {
+        return new IntrospectionRefreshTokenService(jwtService, clientSyncService, refreshTokenRepository);
+    }
+
+    @Bean
+    public IntrospectionTokenFacade introspectionTokenFacade(@Qualifier("AccessTokenIntrospection") IntrospectionTokenService accessTokenIntrospectionService,
+                                                             @Qualifier("RefreshTokenIntrospection") IntrospectionTokenService refreshTokenIntrospectionService){
+        return new IntrospectionTokenFacade(accessTokenIntrospectionService, refreshTokenIntrospectionService);
     }
 
     @Bean
