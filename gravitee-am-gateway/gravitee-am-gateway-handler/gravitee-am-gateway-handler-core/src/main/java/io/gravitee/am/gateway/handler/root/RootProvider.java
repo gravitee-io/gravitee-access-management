@@ -584,7 +584,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(clientRequestParseHandlerOptional)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_REGISTRATION_CONFIRMATION))
                 .handler(localeHandler)
-                .handler(new RegisterConfirmationEndpoint(thymeleafTemplateEngine, domain, deviceIdentifierManager));
+                .handler(new RegisterConfirmationEndpoint(thymeleafTemplateEngine, domain, deviceIdentifierManager, passwordPolicyManager, identityProviderManager));
         rootRouter.route(HttpMethod.POST, PATH_CONFIRM_REGISTRATION)
                 .handler(new RegisterConfirmationSubmissionRequestParseHandler())
                 .handler(userTokenRequestParseHandler)
