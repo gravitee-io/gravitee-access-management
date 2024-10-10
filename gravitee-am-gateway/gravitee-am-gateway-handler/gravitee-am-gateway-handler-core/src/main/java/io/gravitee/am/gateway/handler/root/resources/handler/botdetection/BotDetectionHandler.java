@@ -16,6 +16,8 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.botdetection;
 
 import io.gravitee.am.botdetection.api.BotDetectionContext;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.AmContext;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.AmRequestHandler;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.account.AccountSettings;
@@ -37,7 +39,7 @@ import static io.gravitee.common.http.HttpStatusCode.INTERNAL_SERVER_ERROR_500;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class BotDetectionHandler implements Handler<RoutingContext> {
+public class BotDetectionHandler extends AmRequestHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(BotDetectionHandler.class);
     public static final String DEFAULT_ERROR_MSG = "Something goes wrong. Please try again.";
 
@@ -51,8 +53,8 @@ public class BotDetectionHandler implements Handler<RoutingContext> {
     }
 
     @Override
-    public void handle(RoutingContext routingContext) {
-        Client client = routingContext.get(CLIENT_CONTEXT_KEY);
+    public void handle(AmContext routingContext) {
+        Client client = routingContext.getClient();
         AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
 
         if (accountSettings == null || !accountSettings.isUseBotDetection()) {

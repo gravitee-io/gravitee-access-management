@@ -17,6 +17,9 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.geoip;
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.AmContext;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.AmRequestHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.AmSession;
 import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.oidc.Client;
@@ -40,7 +43,7 @@ import static java.util.Optional.ofNullable;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class GeoIpHandler implements Handler<RoutingContext> {
+public class GeoIpHandler extends AmRequestHandler {
 
     private static final String GEOIP_SERVICE = "service:geoip";
     private final Logger logger = LoggerFactory.getLogger(GeoIpHandler.class);
@@ -56,8 +59,8 @@ public class GeoIpHandler implements Handler<RoutingContext> {
     }
 
     @Override
-    public void handle(RoutingContext routingContext) {
-        final Optional<Client> client = ofNullable(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY));
+    public void handle(AmContext routingContext) {
+        final Optional<Client> client = ofNullable(routingContext.getClient());
         var adaptiveRule = client.map(Client::getMfaSettings)
                 .map(MFASettings::getChallenge)
                 .map(ChallengeSettings::getChallengeRule)
@@ -74,9 +77,9 @@ public class GeoIpHandler implements Handler<RoutingContext> {
         }
     }
 
-    private void getGeoIpData(RoutingContext routingContext, String ip) {
+    private void getGeoIpData(AmContext routingContext, String ip) {
         eventBus.<JsonObject>request(GEOIP_SERVICE, ip)
-                .doOnSuccess(jsonObjectMessage -> routingContext.data().put(GEOIP_KEY, jsonObjectMessage.body().getMap()))
+                .doOnSuccess(jsonObjectMessage -> routingContext.setGeoIp(jsonObjectMessage.body().getMap()))
                 .doOnError(error -> logger.debug("Plugin GeoIp is not available, message: {}", error.getMessage()))
                 .onErrorComplete()
                 .doFinally(routingContext::next)
