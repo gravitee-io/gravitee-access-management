@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.common.oauth2;
 
+import java.util.Optional;
+
 /**
  *
  * See <a href="https://tools.ietf.org/html/rfc7009#section-2.1"></a>
@@ -31,4 +33,13 @@ public enum TokenTypeHint {
     public static TokenTypeHint from(String name) throws IllegalArgumentException {
         return TokenTypeHint.valueOf(name.toUpperCase());
     }
+
+    public static Optional<TokenTypeHint> toOptional(String name) {
+        try {
+            return Optional.of(TokenTypeHint.from(name));
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
+
 }

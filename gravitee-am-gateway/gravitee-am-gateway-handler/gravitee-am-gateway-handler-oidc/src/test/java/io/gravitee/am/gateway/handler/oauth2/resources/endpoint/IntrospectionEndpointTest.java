@@ -18,13 +18,18 @@ package io.gravitee.am.gateway.handler.oauth2.resources.endpoint;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.introspection.IntrospectionEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
+import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionResponse;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
+import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
+import io.gravitee.am.gateway.handler.oauth2.service.token.impl.RefreshToken;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /**
@@ -72,5 +77,64 @@ public class IntrospectionEndpointTest extends RxWebTestBase {
                 "/oauth/introspect",
                 HttpStatusCode.BAD_REQUEST_400, "Bad Request");
     }
+
+    @Test
+    public void shouldIntrospectAccessTokenByDefault() throws Exception {
+        io.gravitee.am.model.oidc.Client client = new io.gravitee.am.model.oidc.Client();
+        client.setClientId("my-client-id");
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.next();
+        });
+
+        Mockito.when(introspectionService.introspect(Mockito.argThat(req -> req.getToken().equals("accesstoken"))))
+                        .thenReturn(Single.just(new IntrospectionResponse()));
+
+        testRequest(
+                HttpMethod.POST,
+                "/oauth/introspect?token=accesstoken",
+                HttpStatusCode.OK_200, "OK");
+    }
+
+    @Test
+    public void shouldIntrospectRefreshTokenWhenHintIsProvided() throws Exception {
+        io.gravitee.am.model.oidc.Client client = new io.gravitee.am.model.oidc.Client();
+        client.setClientId("my-client-id");
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.next();
+        });
+
+        Mockito.when(introspectionService.introspect(Mockito.argThat(req -> req.getToken().equals("refreshtoken"))))
+                .thenReturn(Single.just(new IntrospectionResponse()));
+
+        testRequest(
+                HttpMethod.POST,
+                "/oauth/introspect?token=refreshtoken&token_type_hint=refresh_token",
+                HttpStatusCode.OK_200, "OK");
+    }
+
+    @Test
+    public void shouldOmitUnknownTokenHintType() throws Exception {
+        io.gravitee.am.model.oidc.Client client = new io.gravitee.am.model.oidc.Client();
+        client.setClientId("my-client-id");
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.next();
+        });
+
+        Mockito.when(introspectionService.introspect(Mockito.argThat(req -> req.getToken().equals("accesstoken"))))
+                .thenReturn(Single.just(new IntrospectionResponse()));
+
+        testRequest(
+                HttpMethod.POST,
+                "/oauth/introspect?token=accesstoken&token_type_hint=unknown",
+                HttpStatusCode.OK_200, "OK");
+    }
+
+
 
 }

@@ -39,8 +39,10 @@ import io.gravitee.am.gateway.handler.common.flow.FlowManager;
 import io.gravitee.am.gateway.handler.common.flow.impl.FlowManagerImpl;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
+import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenFacade;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
-import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionTokenServiceImpl;
+import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionAccessTokenService;
+import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionRefreshTokenService;
 import io.gravitee.am.gateway.handler.common.policy.DefaultRulesEngine;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
@@ -58,9 +60,12 @@ import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.context.TemplateVariableProviderFactory;
 import io.gravitee.am.gateway.handler.context.spring.ContextConfiguration;
 import io.gravitee.am.gateway.policy.spring.PolicyConfiguration;
+import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
+import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
+
 import java.util.concurrent.TimeUnit;
 
 import jakarta.annotation.PostConstruct;
@@ -72,6 +77,9 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
+
+import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
+import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.REFRESH_TOKEN;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -190,8 +198,25 @@ public class CommonConfiguration {
     }
 
     @Bean
-    public IntrospectionTokenService introspectiontokenservice() {
-        return new IntrospectionTokenServiceImpl();
+    @Qualifier("AccessTokenIntrospection")
+    public IntrospectionTokenService introspectionAccessTokenService(JWTService jwtService,
+                                                                     ClientSyncService clientSyncService,
+                                                                     AccessTokenRepository accessTokenRepository) {
+        return new IntrospectionAccessTokenService(jwtService, clientSyncService, accessTokenRepository);
+    }
+
+    @Bean
+    @Qualifier("RefreshTokenIntrospection")
+    public IntrospectionTokenService introspectionRefreshTokenService(JWTService jwtService,
+                                                                      ClientSyncService clientSyncService,
+                                                                      RefreshTokenRepository refreshTokenRepository) {
+        return new IntrospectionRefreshTokenService(jwtService, clientSyncService, refreshTokenRepository);
+    }
+
+    @Bean
+    public IntrospectionTokenFacade introspectionTokenFacade(@Qualifier("AccessTokenIntrospection") IntrospectionTokenService accessTokenIntrospectionService,
+                                                             @Qualifier("RefreshTokenIntrospection") IntrospectionTokenService refreshTokenIntrospectionService){
+        return new IntrospectionTokenFacade(accessTokenIntrospectionService, refreshTokenIntrospectionService);
     }
 
     @Bean
