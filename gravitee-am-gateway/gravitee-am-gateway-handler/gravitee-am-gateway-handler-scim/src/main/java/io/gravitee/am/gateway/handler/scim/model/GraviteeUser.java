@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.common.scim.Schema;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,6 +32,7 @@ import java.util.Map;
 public class GraviteeUser extends User {
 
     public static final List<String> SCHEMAS = Arrays.asList(Schema.SCHEMA_URI_USER, Schema.SCHEMA_URI_CUSTOM_USER);
+    private static final List<String> FORBIDDEN_PROPERTIES = Arrays.asList("password");
 
     @JsonProperty(Schema.SCHEMA_URI_CUSTOM_USER)
     private Map<String, Object> additionalInformation;
@@ -40,6 +42,8 @@ public class GraviteeUser extends User {
     }
 
     public void setAdditionalInformation(Map<String, Object> additionalInformation) {
-        this.additionalInformation = additionalInformation;
+        Map<String, Object> sanitized = additionalInformation == null ? new HashMap<>() : new HashMap<>(additionalInformation);
+        FORBIDDEN_PROPERTIES.forEach(sanitized::remove);
+        this.additionalInformation = sanitized;
     }
 }
