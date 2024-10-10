@@ -17,11 +17,15 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
+import io.gravitee.am.gateway.handler.root.service.user.UserRegistrationIdpResolver;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
@@ -55,11 +59,19 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
     private final ThymeleafTemplateEngine engine;
     private final Domain domain;
     private final DeviceIdentifierManager deviceIdentifierManager;
+    private final PasswordPolicyManager passwordPolicyManager;
+    private final IdentityProviderManager identityProviderManager;
 
-    public RegisterConfirmationEndpoint(ThymeleafTemplateEngine thymeleafTemplateEngine, Domain domain, DeviceIdentifierManager deviceIdentifierManager) {
+    public RegisterConfirmationEndpoint(ThymeleafTemplateEngine thymeleafTemplateEngine,
+                                        Domain domain,
+                                        DeviceIdentifierManager deviceIdentifierManager,
+                                        PasswordPolicyManager passwordPolicyManager,
+                                        IdentityProviderManager identityProviderManager) {
         this.engine = thymeleafTemplateEngine;
         this.domain = domain;
         this.deviceIdentifierManager = deviceIdentifierManager;
+        this.passwordPolicyManager = passwordPolicyManager;
+        this.identityProviderManager = identityProviderManager;
     }
 
     @Override
@@ -88,6 +100,12 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
 
         // retrieve client (if exists)
         Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+
+        String registrationIdp = UserRegistrationIdpResolver.getRegistrationIdpForUser(domain, client, user);
+        IdentityProvider identityProvider = identityProviderManager.getIdentityProvider(registrationIdp);
+
+        passwordPolicyManager.getPolicy(client, identityProvider)
+                .ifPresent(v -> routingContext.put(ConstantKeys.PASSWORD_SETTINGS_PARAM_KEY, v));
 
         // check if user has already completed its registration
         if (user != null && user.isPreRegistration() && user.isRegistrationCompleted()) {
