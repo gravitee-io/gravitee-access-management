@@ -15,11 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.root.endpoints.user;
 
+import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.RegisterConfirmationEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.User;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
@@ -27,6 +28,8 @@ import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.junit.Test;
 import org.mockito.Mockito;
+
+import java.util.Optional;
 
 import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static org.junit.Assert.*;
@@ -39,6 +42,8 @@ import static org.mockito.Mockito.*;
 public class RegisterConfirmationEndpointTest {
 
     private final DeviceIdentifierManager deviceIdentifierManager = mock(DeviceIdentifierManager.class);
+    private final PasswordPolicyManager passwordPolicyManager = mock(PasswordPolicyManager.class);
+    private final IdentityProviderManager identityProviderManager = mock(IdentityProviderManager.class);
 
     @Test
     public void must_render_engine_with_encoded_client_id() {
@@ -48,7 +53,7 @@ public class RegisterConfirmationEndpointTest {
         final Buffer buffer = mock(Buffer.class);
         final ThymeleafTemplateEngine engine = mock(ThymeleafTemplateEngine.class);
         when(engine.render(anyMap(), anyString())).thenReturn(Single.just(buffer));
-        var registrationConfirmation = new RegisterConfirmationEndpoint(engine, domain, deviceIdentifierManager);
+        var registrationConfirmation = new RegisterConfirmationEndpoint(engine, domain, deviceIdentifierManager, passwordPolicyManager, identityProviderManager);
 
         final SpyRoutingContext ctx = new SpyRoutingContext();
         ctx.setMethod(HttpMethod.POST);
@@ -56,6 +61,7 @@ public class RegisterConfirmationEndpointTest {
         final Client client = new Client();
         client.setClientId("some # clientId");
         routingContext.put(CLIENT_CONTEXT_KEY, client);
+        routingContext.put(USER_CONTEXT_KEY, Mockito.mock(User.class));
         registrationConfirmation.handle(routingContext);
 
 
@@ -71,7 +77,7 @@ public class RegisterConfirmationEndpointTest {
         final Buffer buffer = mock(Buffer.class);
         final ThymeleafTemplateEngine engine = mock(ThymeleafTemplateEngine.class);
         when(engine.render(anyMap(), anyString())).thenReturn(Single.just(buffer));
-        var registrationConfirmation = new RegisterConfirmationEndpoint(engine, domain, deviceIdentifierManager);
+        var registrationConfirmation = new RegisterConfirmationEndpoint(engine, domain, deviceIdentifierManager, passwordPolicyManager, identityProviderManager);
 
         final SpyRoutingContext ctx = new SpyRoutingContext();
         ctx.setMethod(HttpMethod.POST);
@@ -80,6 +86,7 @@ public class RegisterConfirmationEndpointTest {
         final Client client = new Client();
         client.setClientId("some__clientId");
         routingContext.put(CLIENT_CONTEXT_KEY, client);
+        routingContext.put(USER_CONTEXT_KEY, Mockito.mock(User.class));
         registrationConfirmation.handle(routingContext);
 
         assertTrue(routingContext.<String>get(ACTION_KEY).contains("client_id=some__clientId"));
@@ -92,7 +99,7 @@ public class RegisterConfirmationEndpointTest {
         domain.setId("domain-id");
 
         final ThymeleafTemplateEngine engine = mock(ThymeleafTemplateEngine.class);
-        var registrationConfirmation = new RegisterConfirmationEndpoint(engine, domain, deviceIdentifierManager);
+        var registrationConfirmation = new RegisterConfirmationEndpoint(engine, domain, deviceIdentifierManager, passwordPolicyManager, identityProviderManager);
 
         final SpyRoutingContext ctx = new SpyRoutingContext();
         ctx.setMethod(HttpMethod.POST);
@@ -111,5 +118,37 @@ public class RegisterConfirmationEndpointTest {
 
         assertNull(routingContext.<String>get(ACTION_KEY));
         verify(engine, times(0)).render(anyMap(), anyString());
+    }
+
+    @Test
+    public void must_render_password_policy_if_found() {
+        final Domain domain = new Domain();
+        domain.setId("domain-id");
+
+        final Buffer buffer = mock(Buffer.class);
+        final ThymeleafTemplateEngine engine = mock(ThymeleafTemplateEngine.class);
+        when(engine.render(anyMap(), anyString())).thenReturn(Single.just(buffer));
+        var registrationConfirmation = new RegisterConfirmationEndpoint(engine, domain, deviceIdentifierManager, passwordPolicyManager, identityProviderManager);
+
+        final SpyRoutingContext ctx = new SpyRoutingContext();
+        ctx.setMethod(HttpMethod.POST);
+
+        PasswordPolicy pp = new PasswordPolicy();
+        pp.setMinLength(5);
+        pp.setMaxLength(15);
+        Mockito.when(passwordPolicyManager.getPolicy(Mockito.any(), Mockito.any())).thenReturn(Optional.of(pp));
+
+        var routingContext = Mockito.spy(ctx);
+        final Client client = new Client();
+        client.setClientId("some__clientId");
+        routingContext.put(CLIENT_CONTEXT_KEY, client);
+        routingContext.put(USER_CONTEXT_KEY, Mockito.mock(User.class));
+        registrationConfirmation.handle(routingContext);
+
+        assertTrue(routingContext.<String>get(ACTION_KEY).contains("client_id=some__clientId"));
+        int maxLength = routingContext.<PasswordPolicy>get(PASSWORD_SETTINGS_PARAM_KEY).getMaxLength();
+        assertEquals(15, maxLength);
+
+        verify(engine, times(1)).render(anyMap(), anyString());
     }
 }
