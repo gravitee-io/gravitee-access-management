@@ -52,8 +52,7 @@ public abstract class LoginAbstractHandler implements Handler<RoutingContext> {
         }
         try {
             if (identityProvider != null) {
-                IdentityProvider safeIdP = new IdentityProvider(identityProvider);
-                safeIdP.setConfiguration(null);
+                IdentityProvider safeIdP = identityProvider.asSafeIdentityProvider();
                 templateEngine.getTemplateContext().setVariable(ConstantKeys.IDENTITY_PROVIDER_CONTEXT_KEY, safeIdP);
             }
             return templateEngine.getValue(rule.trim(), Boolean.class);

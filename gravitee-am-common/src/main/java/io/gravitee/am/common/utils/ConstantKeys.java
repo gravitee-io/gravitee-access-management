@@ -74,6 +74,7 @@ public interface ConstantKeys {
     String X_XSRF_TOKEN = "X-XSRF-TOKEN";
     String _CSRF = "_csrf";
     String SOCIAL_PROVIDER_CONTEXT_KEY = "socialProviders";
+    String INTERNAL_PROVIDER_CONTEXT_KEY = "identityProviders";
     String ERROR_HASH = "errorHash";
 
 

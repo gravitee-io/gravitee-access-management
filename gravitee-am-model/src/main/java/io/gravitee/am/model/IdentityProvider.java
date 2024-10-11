@@ -98,4 +98,10 @@ public class IdentityProvider {
     public int hashCode() {
         return id != null ? id.hashCode() : 0;
     }
+
+    public IdentityProvider asSafeIdentityProvider() {
+      final var safeClone = new IdentityProvider(this);
+      safeClone.setConfiguration(null);
+      return safeClone;
+    };
 }
