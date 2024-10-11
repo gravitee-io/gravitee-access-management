@@ -101,7 +101,12 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
         // retrieve client (if exists)
         Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
 
-        String registrationIdp = UserRegistrationIdpResolver.getRegistrationIdpForUser(domain, client, user);
+        String registrationIdp;
+        if(user == null){
+            registrationIdp = UserRegistrationIdpResolver.getRegistrationIdp(domain, client);
+        } else {
+            registrationIdp = UserRegistrationIdpResolver.getRegistrationIdpForUser(domain, client, user);
+        }
         IdentityProvider identityProvider = identityProviderManager.getIdentityProvider(registrationIdp);
 
         passwordPolicyManager.getPolicy(client, identityProvider)
