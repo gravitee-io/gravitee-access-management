@@ -72,6 +72,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnR
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterPostEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterSuccessEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnResponseEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginAuthenticationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.transactionid.TransactionIdHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.ConditionalBodyHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.LocaleHandler;
@@ -91,7 +92,6 @@ import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginHideForm
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginNegotiateAuthenticationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginPostWebAuthnHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSelectionRuleHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.loginattempt.LoginAttemptHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.mfa.MFAChallengeUserHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.DeviceIdentifierHandler;
@@ -383,7 +383,7 @@ public class RootProvider extends AbstractProtocolProvider {
         rootRouter.get(PATH_IDENTIFIER_FIRST_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
-                .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
+                .handler(new LoginAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_LOGIN_IDENTIFIER))
                 .handler(localeHandler)
                 .handler(new IdentifierFirstLoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
@@ -392,7 +392,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
                 .handler(botDetectionHandler)
-                .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
+                .handler(new LoginAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(userRememberMeHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN_IDENTIFIER))
                 .handler(new LoginSelectionRuleHandler(true))
@@ -401,7 +401,7 @@ public class RootProvider extends AbstractProtocolProvider {
         // login route
         rootRouter.get(PATH_LOGIN)
                 .handler(clientRequestParseHandler)
-                .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
+                .handler(new LoginAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(redirectUriValidationHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_LOGIN))
                 .handler(new LoginHideFormHandler(domain))
@@ -527,7 +527,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
                 .handler(webAuthnAccessHandler)
-                .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
+                .handler(new LoginAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(localeHandler)
                 .handler(new WebAuthnEnforcePasswordHandler(domain, webAuthnCookieService))
                 .handler(new WebAuthnLoginEndpoint(thymeleafTemplateEngine, domain, deviceIdentifierManager, userActivityService));
@@ -561,7 +561,7 @@ public class RootProvider extends AbstractProtocolProvider {
         rootRouter.route(GET, PATH_REGISTER)
                 .handler(clientRequestParseHandler)
                 .handler(registerAccessHandler)
-                .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
+                .handler(new LoginAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_REGISTER))
                 .handler(localeHandler)
                 .handler(new RegisterEndpoint(thymeleafTemplateEngine, domain, botDetectionManager, passwordPolicyManager, identityProviderManager, deviceIdentifierManager));

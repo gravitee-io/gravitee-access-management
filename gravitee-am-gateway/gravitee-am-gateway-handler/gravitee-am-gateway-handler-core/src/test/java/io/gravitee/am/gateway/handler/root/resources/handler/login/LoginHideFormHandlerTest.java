@@ -76,7 +76,7 @@ public class LoginHideFormHandlerTest extends RxWebTestBase {
                 .handler(rc -> {
                     rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, minimalClient(true));
                     rc.put(ConstantKeys.SOCIAL_PROVIDER_CONTEXT_KEY, List.of(minimalProvider(idpId)));
-                    rc.put(LoginSocialAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idpId, idpUrl));
+                    rc.put(LoginAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idpId, idpUrl));
                     rc.next();
                 });
         testRequest(HttpMethod.GET, RootProvider.PATH_LOGIN, req -> {}, res -> Assertions.assertThat(res.getHeader("Location")).isEqualTo(idpUrl),302, "Found", null);
@@ -91,7 +91,7 @@ public class LoginHideFormHandlerTest extends RxWebTestBase {
                 .handler(rc -> {
                     rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, minimalClient(true));
                     rc.put(ConstantKeys.SOCIAL_PROVIDER_CONTEXT_KEY, List.of(minimalProvider(idpId)));
-                    rc.put(LoginSocialAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idpId, idpUrl));
+                    rc.put(LoginAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idpId, idpUrl));
                     rc.next();
                 });
 
@@ -115,7 +115,7 @@ public class LoginHideFormHandlerTest extends RxWebTestBase {
                 .handler(rc -> {
                     rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, minimalClient(true));
                     rc.put(ConstantKeys.SOCIAL_PROVIDER_CONTEXT_KEY, List.of(minimalProvider(idpId)));
-                    rc.put(LoginSocialAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idpId, idpUrl));
+                    rc.put(LoginAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idpId, idpUrl));
                     rc.next();
                 });
 

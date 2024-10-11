@@ -51,6 +51,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_PROVIDER_ID;
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_QUERY_PARAM;
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_REMEMBER_ME;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.INTERNAL_PROVIDER_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PROTOCOL_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PROTOCOL_VALUE_SAML_POST;
 import static io.gravitee.am.common.utils.ConstantKeys.REMEMBER_ME_PARAM_KEY;
@@ -58,16 +59,19 @@ import static io.gravitee.am.common.utils.ConstantKeys.RETURN_URL_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.SOCIAL_PROVIDER_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.TRANSACTION_ID_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static org.springframework.util.CollectionUtils.isEmpty;
 
 /**
- * Fetch social providers information if client using one of them
+ * Fetch providers information if client using one of them
+ * * if social provider found, the context will contain a SOCIAL_PROVIDER_CONTEXT_KEY key
+ * * if idp provider found, the context will contain a INTERNAL_PROVIDER_CONTEXT_KEY key
  *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class LoginSocialAuthenticationHandler implements Handler<RoutingContext> {
+public class LoginAuthenticationHandler implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(LoginSocialAuthenticationHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(LoginAuthenticationHandler.class);
     private static final Map<String, String> socialProviders;
     public static final String REMEMBER_ME_ON = "on";
 
@@ -90,9 +94,9 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
     private final JWTService jwtService;
     private final CertificateManager certificateManager;
 
-    public LoginSocialAuthenticationHandler(IdentityProviderManager identityProviderManager,
-                                            JWTService jwtService,
-                                            CertificateManager certificateManager) {
+    public LoginAuthenticationHandler(IdentityProviderManager identityProviderManager,
+                                      JWTService jwtService,
+                                      CertificateManager certificateManager) {
         this.identityProviderManager = identityProviderManager;
         this.jwtService = jwtService;
         this.certificateManager = certificateManager;
@@ -109,10 +113,23 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
                 routingContext.fail(new InvalidRequestException("Unable to fetch client social identity providers"));
             }
 
-            List<IdentityProvider> socialIdentityProviders = identityProvidersResultHandler.result();
+            final var providersGroupByExternal = identityProvidersResultHandler.result();
 
-            // no social provider, continue
-            if (socialIdentityProviders == null || socialIdentityProviders.isEmpty()) {
+            // no provider, continue
+            if (isEmpty(providersGroupByExternal)) {
+                routingContext.next();
+                return;
+            }
+
+            final var internalIdentityProviders = providersGroupByExternal.get(false);
+            // internal providers present, add them to the context
+            if (!isEmpty(internalIdentityProviders)) {
+                routingContext.put(INTERNAL_PROVIDER_CONTEXT_KEY, internalIdentityProviders.stream().map(IdentityProvider::asSafeIdentityProvider).toList());
+            }
+
+            final var socialIdentityProviders = providersGroupByExternal.get(true);
+            // no social providers, continue
+            if (isEmpty(socialIdentityProviders)) {
                 routingContext.next();
                 return;
             }
@@ -126,10 +143,10 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
                 }
 
                 // put social providers in context data
-                final List<SocialProviderData> socialProviderData = resultHandler.result();
+                final var socialProviderData = resultHandler.result();
                 if (socialProviderData != null) {
-                    List<SocialProviderData> filteredSocialProviderData = socialProviderData.stream().filter(providerData -> providerData.getIdentityProvider() != null && providerData.getAuthorizeUrl() != null).collect(Collectors.toList());
-                    List<IdentityProvider> providers = filteredSocialProviderData.stream().map(SocialProviderData::getIdentityProvider).collect(Collectors.toList());
+                    final var filteredSocialProviderData = socialProviderData.stream().filter(providerData -> providerData.getIdentityProvider() != null && providerData.getAuthorizeUrl() != null).collect(Collectors.toList());
+                    final var providers = filteredSocialProviderData.stream().map(SocialProviderData::getIdentityProvider).map(IdentityProvider::asSafeIdentityProvider).collect(Collectors.toList());
                     Map<String, String> authorizeUrls = filteredSocialProviderData.stream().collect(Collectors.toMap(o -> o.getIdentityProvider().getId(), SocialProviderData::getAuthorizeUrl));
 
                     // backwards compatibility
@@ -145,15 +162,15 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
 
     }
 
-    private void getSocialIdentityProviders(SortedSet<ApplicationIdentityProvider> identities, Handler<AsyncResult<List<IdentityProvider>>> resultHandler) {
+    private void getSocialIdentityProviders(SortedSet<ApplicationIdentityProvider> identities, Handler<AsyncResult<Map<Boolean, List<IdentityProvider>>>> resultHandler) {
         if (identities == null) {
-            resultHandler.handle(Future.succeededFuture(Collections.emptyList()));
+            resultHandler.handle(Future.succeededFuture(Map.of()));
         } else {
             resultHandler.handle(Future.succeededFuture(identities.stream()
                     .map(ApplicationIdentityProvider::getIdentity)
                     .map(identityProviderManager::getIdentityProvider)
-                    .filter(identityProvider -> identityProvider != null && identityProvider.isExternal())
-                    .collect(Collectors.toList())));
+                    .filter(identityProvider -> identityProvider != null)
+                    .collect(Collectors.groupingBy(IdentityProvider::isExternal))));
         }
     }
 
