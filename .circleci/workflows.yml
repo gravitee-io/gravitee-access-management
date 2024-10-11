@@ -874,7 +874,7 @@ jobs:
           name: Helm upgrade and 🚀 Mongo and JDBC instances
           command: |
             export TAG=$(cat /tmp/docker-tag.txt)
-            
+
             az login --service-principal -u $AZURE_APPLICATION_ID --tenant $AZURE_TENANT -p $AZURE_APPLICATION_SECRET
             az aks get-credentials --admin --resource-group Devs-Preprod-Hosted --name gravitee-devs-preprod-aks-cluster
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
@@ -911,12 +911,14 @@ jobs:
                           --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
                           --set "ui.image.tag=${TAG}"
             else
+              export HELM_VERSION=$(echo ${CIRCLE_BRANCH} | sed 's/x/0/')
               # create namespace if not exist (dry-run will generate YAML manifest and apply will create or update the ns using the manifest)
               kubectl create namespace am-${CIRCLE_BRANCH//./-}-dev --dry-run=client -o yaml | kubectl apply -f -
               # replace verison Pattern into generic maint configuration
               sed -i 's#__BRANCH_NAME_SANITIZED__#'${CIRCLE_BRANCH//./-}'#g' ./cloud-am/devs-preprod/values-maint.yaml
               helm upgrade --repo https://helm.gravitee.io \
                                       --install am-${CIRCLE_BRANCH//./-} \
+                                      --version $HELM_VERSION \
                                       -n am-${CIRCLE_BRANCH//./-}-dev \
                                       -f ./cloud-am/devs-preprod/values-maint.yaml am \
                                       --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
@@ -931,6 +933,7 @@ jobs:
               sed -i 's#__BRANCH_NAME_SANITIZED__#'${CIRCLE_BRANCH//./-}'#g' ./cloud-am/devs-preprod/values-ce-maint.yaml
               helm upgrade --repo https://helm.gravitee.io \
                                       --install am-${CIRCLE_BRANCH//./-}-ce \
+                                      --version $HELM_VERSION \
                                       -n am-${CIRCLE_BRANCH//./-}-ce-dev \
                                       -f ./cloud-am/devs-preprod/values-ce-maint.yaml am \
                                       --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
