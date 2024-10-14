@@ -25,17 +25,21 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
+import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
 import io.gravitee.am.service.AuditService;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -164,6 +168,32 @@ public class UserServiceTest {
         verify(commonLayerUserService).update(argThat(user -> user.getFactors() != null
                 && !user.getFactors().isEmpty()
                 && user.getFactors().get(0).getFactorId().equals(enrolledFactor.getFactorId()) ), any());
+    }
+
+    @Test
+    public void shouldUpsertFactor_SMS_resetMfaSkippedAt() {
+        final var userid = "userid";
+        final var enrolledFactor = new EnrolledFactor();
+        enrolledFactor.setFactorId("factorid");
+        enrolledFactor.setStatus(FactorStatus.ACTIVATED);
+        enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.SMS, "+33606060606"));
+
+        User userProfile = new User();
+        userProfile.setMfaEnrollmentSkippedAt(new Date());
+        when(userStore.get(userid)).thenReturn(Maybe.empty());
+        when(userStore.add(any())).thenAnswer(args -> Maybe.just(args.getArguments()[0]));
+        when(commonLayerUserService.findById(userid)).thenReturn(Maybe.just(userProfile));
+        ArgumentCaptor<User> userArgs = ArgumentCaptor.forClass(User.class);
+        when(commonLayerUserService.update(userArgs.capture(), any())).thenReturn(Single.just(new User()));
+
+        final var observer = cut.upsertFactor(userid, enrolledFactor, new DefaultUser()).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertNoErrors();
+
+        verify(commonLayerUserService).update(argThat(user -> user.getFactors() != null
+                && !user.getFactors().isEmpty()
+                && user.getFactors().get(0).getFactorId().equals(enrolledFactor.getFactorId()) ), any());
+        Assertions.assertNull(userArgs.getValue().getMfaEnrollmentSkippedAt());
     }
 
     @Test
