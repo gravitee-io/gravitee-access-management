@@ -2,6 +2,9 @@
 {{- $initContainers := .Values.initContainers -}}
 {{- $serviceAccount := include "am.serviceAccount" . -}}
 {{- $logbackVolumeName := include "gateway.logbackVolumeName" . -}}
+{{- $computeLivenessProbe := (include "gateway.computeLivenessProbe" . | fromYaml) -}}
+{{- $computeReadinessProbe := (include "gateway.computeReadinessProbe" . | fromYaml) -}}
+{{- $computeStartupProbe := (include "gateway.computeStartupProbe" . | fromYaml) -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -135,30 +138,9 @@ spec:
                 command: {{ .Values.gateway.lifecycle.preStop }}
             {{- end }}
           {{- end }}
-          livenessProbe: {{ toYaml .Values.gateway.livenessProbe | nindent 12 }}
-          readinessProbe:
-            {{- if eq .Values.gateway.readinessProbe.domainSync true }}
-            httpGet:
-              path: /_node/health?probes=security-domain-sync
-              port: {{ .Values.gateway.services.core.http.port | default 18082 }}
-              {{- if eq .Values.gateway.services.core.http.secured true}}
-              scheme: HTTPS
-              {{- end }}
-              {{- if eq .Values.gateway.services.core.http.authentication.type "basic" }}
-              httpHeaders:
-                - name: Authorization
-                  value: {{ print "Basic "}}{{print "admin:" .Values.gateway.services.core.http.authentication.password | b64enc }}
-              {{- end }}
-            initialDelaySeconds: {{ .Values.gateway.readinessProbe.initialDelaySeconds | default 5 }}
-            failureThreshold: {{ .Values.gateway.readinessProbe.failureThreshold | default 3 }}
-            periodSeconds: {{ .Values.gateway.readinessProbe.periodSeconds | default 30 }}
-            {{- else }}
-            {{- $readinessProbe := unset (.Values.gateway.readinessProbe | deepCopy) "domainSync" -}}
-            {{ toYaml $readinessProbe | nindent 12 }}
-            {{- end }}
-          {{- if and (.Values.gateway.startupProbe) (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
-          startupProbe: {{ toYaml .Values.gateway.startupProbe | nindent 12 }}
-          {{- end }}
+          livenessProbe: {{ toYaml $computeLivenessProbe | nindent 12 }}
+          readinessProbe: {{ toYaml $computeReadinessProbe | nindent 12 }}
+          startupProbe: {{ toYaml $computeStartupProbe | nindent 12 }}
           resources: {{ toYaml .Values.gateway.resources | nindent 12 }}
           volumeMounts:
             - name: config
