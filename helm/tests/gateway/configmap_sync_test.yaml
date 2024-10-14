@@ -23,7 +23,7 @@ tests:
                 http:
                   enabled: true
                   port: 18092
-                  host: localhost
+                  host: 0.0.0.0
                   authentication:
                     type: basic
                     users:
