@@ -2,6 +2,9 @@
 {{- $initContainers := .Values.initContainers -}}
 {{- $serviceAccount := include "am.serviceAccount" . -}}
 {{- $logbackVolumeName := include "api.logbackVolumeName" . -}}
+{{- $computeLivenessProbe := (include "api.computeLivenessProbe" . | fromYaml) -}}
+{{- $computeReadinessProbe := (include "api.computeReadinessProbe" . | fromYaml) -}}
+{{- $computeStartupProbe := (include "api.computeStartupProbe" . | fromYaml) -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -159,8 +162,9 @@ spec:
                 command: {{ .Values.api.lifecycle.preStop }}
             {{- end }}
           {{- end }}
-          livenessProbe: {{ toYaml .Values.api.livenessProbe | nindent 12 }}
-          readinessProbe: {{ toYaml .Values.api.readinessProbe | nindent 12 }}
+          livenessProbe: {{ toYaml $computeLivenessProbe | nindent 12 }}
+          readinessProbe: {{ toYaml $computeReadinessProbe | nindent 12 }}
+          startupProbe: {{ toYaml $computeStartupProbe | nindent 12 }}
           resources: {{ toYaml .Values.api.resources | nindent 12 }}
           volumeMounts:
             - name: config
