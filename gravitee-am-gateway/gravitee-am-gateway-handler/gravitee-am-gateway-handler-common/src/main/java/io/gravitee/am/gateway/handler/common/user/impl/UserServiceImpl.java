@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.common.user.impl;
 
 import io.gravitee.am.common.audit.EventType;
-import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.mfa.InvalidFactorAttributeException;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.gateway.handler.common.user.UserStore;
@@ -29,9 +28,6 @@ import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.repository.management.api.CommonUserRepository.UpdateActions;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
-import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.reporter.builder.AuditBuilder;
-import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -120,6 +116,14 @@ public class UserServiceImpl implements UserService {
                         updateUserProfileWithFactorEmail(enrolledFactor, user);
                     } catch (InvalidFactorAttributeException e) {
                         return Single.error(e);
+                    }
+
+                    if (enrolledFactor.getStatus() == FactorStatus.ACTIVATED) {
+                        // reset the MFA skip date if the factor is active
+                        // this is to force the MFA challenge when the user
+                        // skip enrollment during authentication phase
+                        // but enroll using the self account API
+                        user.setMfaEnrollmentSkippedAt(null);
                     }
 
                     return update(user) // update is managing the UserStore usage
