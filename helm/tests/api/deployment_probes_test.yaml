@@ -1,0 +1,400 @@
+suite: "Deployment probes Tests"
+templates:
+  - "api/api-deployment.yaml"
+  - "api/api-configmap.yaml"
+
+tests:
+
+###
+## Startup probe
+###
+
+  - it: "Get default startupProbe values"
+    template: api/api-deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].startupProbe"
+          content:
+            failureThreshold: 29
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /_node/health?probes=jetty-http-server,management-repository
+              port: 18093
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+
+  - it: "Get default startupProbe values with authenticated internal api"
+    template: api/api-deployment.yaml
+    set:
+      api:
+        http:
+          services:
+            core:
+              http:
+                authentication:
+                  password: adminadmin
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].startupProbe"
+          content:
+            failureThreshold: 29
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /_node/health?probes=jetty-http-server,management-repository
+              port: 18093
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+
+  - it: "Get default startupProbe values with unauthenticated internal api"
+    template: api/api-deployment.yaml
+    set:
+      api:
+        http:
+          services:
+            core:
+              http:
+                authentication:
+                  type: none
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].startupProbe"
+          content:
+            failureThreshold: 29
+            httpGet:
+              path: /_node/health?probes=jetty-http-server,management-repository
+              port: 18093
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+
+  - it: "Overwrite default startupProbe values with initialDelaySeconds"
+    template: api/api-deployment.yaml
+    set:
+      api:
+        startupProbe:
+          initialDelaySeconds: 15
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].startupProbe"
+          content:
+            failureThreshold: 29
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /_node/health?probes=jetty-http-server,management-repository
+              port: 18093
+              scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+
+  - it: "Overwrite default startupProbe values with httpGet.path/port"
+    template: api/api-deployment.yaml
+    set:
+      api:
+        startupProbe:
+          httpGet:
+            path: /another/endpoint
+            port: 8082
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].startupProbe"
+          content:
+            failureThreshold: 29
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /another/endpoint
+              port: 8082
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+
+  - it: "Set tcpSocket should overwrite httpGet definition in startupProbe"
+    template: api/api-deployment.yaml
+    set:
+      api:
+        startupProbe:
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          failureThreshold: 10
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isNotSubset:
+          path: "spec.template.spec.containers[0].startupProbe"
+          content:
+            httpGet:
+              path:
+      - isSubset:
+          path: "spec.template.spec.containers[0].startupProbe"
+          content:
+            failureThreshold: 10
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+
+  - it: "Set exec command should overwrite httpGet definition in startupProbe"
+    template: api/api-deployment.yaml
+    set:
+      api:
+        startupProbe:
+          exec:
+            command: "curl -u 'admin:adminadmin' 'http://localhost:18093/_node/health?probes=jetty-http-server'"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isNotSubset:
+          path: "spec.template.spec.containers[0].startupProbe"
+          content:
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /_node/health?probes=jetty-http-server,management-repository
+              port: 18093
+              scheme: HTTP
+      - isSubset:
+          path: "spec.template.spec.containers[0].startupProbe"
+          content:
+            exec:
+              command: "curl -u 'admin:adminadmin' 'http://localhost:18093/_node/health?probes=jetty-http-server'"
+
+###
+## Liveness probe
+###
+
+  - it: "Get default livenessProbe values"
+    template: api/api-deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].livenessProbe"
+          content:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /_node/health?probes=jetty-http-server
+              port: 18093
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+
+  - it: "Overwrite default livenessProbe values with initialDelaySeconds"
+    template: api/api-deployment.yaml
+    set:
+      api:
+        livenessProbe:
+          initialDelaySeconds: 40
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].livenessProbe"
+          content:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /_node/health?probes=jetty-http-server
+              port: 18093
+              scheme: HTTP
+            initialDelaySeconds: 40
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+
+  - it: "Overwrite default livenessProbe values with httpGet.path/port"
+    template: api/api-deployment.yaml
+    set:
+      api:
+        livenessProbe:
+          httpGet:
+            path: /another/endpoint
+            port: 8082
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].livenessProbe"
+          content:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /another/endpoint
+              port: 8082
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+
+  - it: "Set tcpSocket should overwrite httpGet definition in livenessProbe"
+    template: api/api-deployment.yaml
+    set:
+      api:
+        livenessProbe:
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          failureThreshold: 3
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isNotSubset:
+          path: "spec.template.spec.containers[0].livenessProbe"
+          content:
+            httpGet:
+              path:
+      - isSubset:
+          path: "spec.template.spec.containers[0].livenessProbe"
+          content:
+            failureThreshold: 3
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+
+###
+## Readiness probe
+###
+
+  - it: "Get default readinessProbe values"
+    template: api/api-deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].readinessProbe"
+          content:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /_node/health?probes=jetty-http-server
+              port: 18093
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+
+  - it: "Overwrite default readinessProbe values with initialDelaySeconds"
+    template: api/api-deployment.yaml
+    set:
+      api:
+        readinessProbe:
+          initialDelaySeconds: 40
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].readinessProbe"
+          content:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /_node/health?probes=jetty-http-server
+              port: 18093
+              scheme: HTTP
+            initialDelaySeconds: 40
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+
+  - it: "Overwrite default readinessProbe values with httpGet.path/port"
+    template: api/api-deployment.yaml
+    set:
+      api:
+        readinessProbe:
+          httpGet:
+            path: /another/endpoint
+            port: 8082
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].readinessProbe"
+          content:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /another/endpoint
+              port: 8082
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+
+  - it: "Set tcpSocket should overwrite httpGet definition in readinessProbe"
+    template: api/api-deployment.yaml
+    set:
+      api:
+        readinessProbe:
+          domainSync: false
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          failureThreshold: 3
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isNotSubset:
+          path: "spec.template.spec.containers[0].readinessProbe"
+          content:
+            httpGet:
+              path:
+      - isSubset:
+          path: "spec.template.spec.containers[0].readinessProbe"
+          content:
+            failureThreshold: 3
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
