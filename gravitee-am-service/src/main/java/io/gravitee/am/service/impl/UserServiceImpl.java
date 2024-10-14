@@ -286,6 +286,14 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
                             }
                         }
                     }
+
+                    if (enrolledFactor.getStatus() == FactorStatus.ACTIVATED) {
+                        // reset the MFA skip date if the factor is active
+                        // this is to force the MFA challenge when the user
+                        // skip enrollment during authentication phase
+                        // but enroll using the self account API
+                        user.setMfaEnrollmentSkippedAt(null);
+                    }
                     return update(user)
                             .doOnSuccess(user1 -> LOGGER.debug("Factor {} upserted for user {}", enrolledFactor.getFactorId(), user1.getId()))
                             .doOnSuccess(user1 -> {
