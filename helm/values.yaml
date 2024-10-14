@@ -317,19 +317,50 @@ api:
     topologySpreadConstraints: []
     # revisionHistoryLimit: 10
 
-  livenessProbe:
-    tcpSocket:
-      port: http
-    initialDelaySeconds: 30
-    periodSeconds: 30
-    failureThreshold: 3
+  livenessProbe: {}
+  # Default value are below. What you define here will overwrite and merge with default value
+  #    httpGet:
+  #      httpHeaders:
+  #        - name: Authorization
+  #        value: Basic <base64 encoded string with "admin:" + gateway.services.core.http.authentication.password>
+  #      path: /_node/health?probes=jetty-http-server
+  #      port: 18092
+  #      scheme: HTTPS
+  #    initialDelaySeconds: 30
+  #    periodSeconds: 30
+  #    timeoutSeconds: 3
+  #    successThreshold: 1
+  #    failureThreshold: 3
 
-  readinessProbe:
-    tcpSocket:
-      port: http
-    initialDelaySeconds: 30
-    periodSeconds: 30
-    failureThreshold: 3
+  readinessProbe: {}
+  # Default value are below. What you define here will overwrite and merge with default value
+  #    httpGet:
+  #      httpHeaders:
+  #        - name: Authorization
+  #        value: Basic <base64 encoded string with "admin:" + gateway.services.core.http.authentication.password>
+  #      path: /_node/health?probes=jetty-http-server
+  #      port: 18092
+  #      scheme: HTTPS
+  #    initialDelaySeconds: 30
+  #    periodSeconds: 30
+  #    timeoutSeconds: 3
+  #    successThreshold: 1
+  #    failureThreshold: 3
+
+  startupProbe: {}
+  # Default value are below. What you define here will overwrite and merge with default value
+  #    httpGet:
+  #      httpHeaders:
+  #        - name: Authorization
+  #        value: Basic <base64 encoded string with "admin:" + gateway.services.core.http.authentication.password>
+  #      path: /_node/health?probes=jetty-http-server,management-repository
+  #      port: 18092
+  #      scheme: HTTPS
+  #    initialDelaySeconds: 10
+  #    periodSeconds: 10
+  #    timeoutSeconds: 1
+  #    successThreshold: 1
+  #    failureThreshold: 29
 
   pdb:
     enabled: false
@@ -400,7 +431,10 @@ api:
         http:
           enabled: true
           port: 18093
-          host: localhost
+          # We open the technical api to everywhere (inside kube)
+          # to allow kubelet do the healthcheck for default startup/liveness/readiness probes.
+          # if you change this value to localhost or 127.0.0.1, please overwrite the probes definition
+          host: 0.0.0.0
           authentication:
             password: adminadmin
         ingress:
@@ -615,22 +649,56 @@ gateway:
     topologySpreadConstraints: []
     # revisionHistoryLimit: 10
 
-  livenessProbe:
-    tcpSocket:
-      port: http
-    initialDelaySeconds: 30
-    periodSeconds: 30
-    failureThreshold: 3
+  livenessProbe: {}
+    # Default value are below. What you define here will overwrite and merge with default value
+#    httpGet:
+#      httpHeaders:
+#        - name: Authorization
+#        value: Basic <base64 encoded string with "admin:" + gateway.services.core.http.authentication.password>
+#      path: /_node/health?probes=http-server
+#      port: 18092
+#      scheme: HTTPS
+#    initialDelaySeconds: 30
+#    periodSeconds: 30
+#    timeoutSeconds: 3
+#    successThreshold: 1
+#    failureThreshold: 3
 
   readinessProbe:
     # use the node endpoint as readinessProbe to test the domain synchronization
     # in this case, the gateway.services.core.http.host must be defined to the Pod IP or 0.0.0.0
+    # Deprecated: please, rather than using this flag,
+    # overwrite `httpGet.path` with value `/_node/health?probes=http-server,security-domain-sync`
     domainSync: false
-    tcpSocket:
-      port: http
-    initialDelaySeconds: 10
-    periodSeconds: 30
-    failureThreshold: 3
+    # Default value are below. What you define here will overwrite and merge with default value
+    #    httpGet:
+    #      httpHeaders:
+    #        - name: Authorization
+    #        value: Basic <base64 encoded string with "admin:" + gateway.services.core.http.authentication.password>
+    #      path: /_node/health?probes=http-server
+    #      port: 18092
+    #      scheme: HTTPS
+    #    initialDelaySeconds: 30
+    #    periodSeconds: 30
+    #    timeoutSeconds: 3
+    #    successThreshold: 1
+    #    failureThreshold: 3
+
+  startupProbe: {}
+  # Default value are below. What you define here will overwrite and merge with default value
+  #    httpGet:
+  #      httpHeaders:
+  #        - name: Authorization
+  #        value: Basic <base64 encoded string with "admin:" + gateway.services.core.http.authentication.password>
+  #      path: /_node/health?probes=http-server,security-domain-sync
+  #      port: 18092
+  #      scheme: HTTPS
+  #    initialDelaySeconds: 10
+  #    periodSeconds: 10
+  #    timeoutSeconds: 1
+  #    successThreshold: 1
+  #    failureThreshold: 29
+
 
   pdb:
     enabled: false
@@ -679,7 +747,10 @@ gateway:
       http:
         enabled: true
         port: 18092
-        host: localhost
+        # We open the technical api to everywhere (inside kube)
+        # to allow kubelet do the healthcheck for default startup/liveness/readiness probes.
+        # if you change this value to localhost or 127.0.0.1, please overwrite the probes definition
+        host: 0.0.0.0
         authentication:
           type: basic
           password: adminadmin

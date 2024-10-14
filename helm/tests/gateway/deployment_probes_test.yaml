@@ -1,0 +1,477 @@
+suite: "Deployment probes Tests"
+templates:
+  - "gateway/gateway-deployment.yaml"
+  - "gateway/gateway-configmap.yaml"
+
+tests:
+
+###
+## Startup probe
+###
+
+  - it: "Get default startupProbe values"
+    template: gateway/gateway-deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].startupProbe"
+          content:
+            failureThreshold: 29
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /_node/health?probes=http-server,security-domain-sync
+              port: 18092
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+
+  - it: "Get default startupProbe values with authenticated internal api"
+    template: gateway/gateway-deployment.yaml
+    set:
+      gateway:
+        services:
+          core:
+            http:
+              authentication:
+                type: basic
+                password: adminadmin
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].startupProbe"
+          content:
+            failureThreshold: 29
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /_node/health?probes=http-server,security-domain-sync
+              port: 18092
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+
+  - it: "Get default startupProbe values with unauthenticated internal api"
+    template: gateway/gateway-deployment.yaml
+    set:
+      gateway:
+        services:
+          core:
+            http:
+              authentication:
+                type: none
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].startupProbe"
+          content:
+            failureThreshold: 29
+            httpGet:
+              path: /_node/health?probes=http-server,security-domain-sync
+              port: 18092
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+
+  - it: "Get default startupProbe values with secure internal api"
+    template: gateway/gateway-deployment.yaml
+    set:
+      gateway:
+        services:
+          core:
+            http:
+              secured: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].startupProbe"
+          content:
+            failureThreshold: 29
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /_node/health?probes=http-server,security-domain-sync
+              port: 18092
+              scheme: HTTPS
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+
+  - it: "Overwrite default startupProbe values with initialDelaySeconds"
+    template: gateway/gateway-deployment.yaml
+    set:
+      gateway:
+        startupProbe:
+          initialDelaySeconds: 15
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].startupProbe"
+          content:
+            failureThreshold: 29
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /_node/health?probes=http-server,security-domain-sync
+              port: 18092
+              scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+
+  - it: "Overwrite default startupProbe values with httpGet.path/port"
+    template: gateway/gateway-deployment.yaml
+    set:
+      gateway:
+        startupProbe:
+          httpGet:
+            path: /another/endpoint
+            port: 8082
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].startupProbe"
+          content:
+            failureThreshold: 29
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /another/endpoint
+              port: 8082
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+
+  - it: "Set tcpSocket should overwrite httpGet definition in startupProbe"
+    template: gateway/gateway-deployment.yaml
+    set:
+      gateway:
+        startupProbe:
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          failureThreshold: 10
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isNotSubset:
+          path: "spec.template.spec.containers[0].startupProbe"
+          content:
+            httpGet:
+              path:
+      - isSubset:
+          path: "spec.template.spec.containers[0].startupProbe"
+          content:
+            failureThreshold: 10
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+
+  - it: "Set exec command should overwrite httpGet definition in startupProbe"
+    template: gateway/gateway-deployment.yaml
+    set:
+      gateway:
+        startupProbe:
+          exec:
+            command: "curl -u 'admin:adminadmin' 'http://localhost:18093/_node/health?probes=jetty-http-server'"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isNotSubset:
+          path: "spec.template.spec.containers[0].startupProbe"
+          content:
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /_node/health?probes=http-server,security-domain-sync
+              port: 18092
+              scheme: HTTP
+      - isSubset:
+          path: "spec.template.spec.containers[0].startupProbe"
+          content:
+            exec:
+              command: "curl -u 'admin:adminadmin' 'http://localhost:18093/_node/health?probes=jetty-http-server'"
+
+###
+## Liveness probe
+###
+
+  - it: "Get default livenessProbe values"
+    template: gateway/gateway-deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].livenessProbe"
+          content:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /_node/health?probes=http-server
+              port: 18092
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+
+  - it: "Overwrite default livenessProbe values with initialDelaySeconds"
+    template: gateway/gateway-deployment.yaml
+    set:
+      gateway:
+        livenessProbe:
+          initialDelaySeconds: 40
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].livenessProbe"
+          content:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /_node/health?probes=http-server
+              port: 18092
+              scheme: HTTP
+            initialDelaySeconds: 40
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+
+  - it: "Overwrite default livenessProbe values with httpGet.path/port"
+    template: gateway/gateway-deployment.yaml
+    set:
+      gateway:
+        livenessProbe:
+          httpGet:
+            path: /another/endpoint
+            port: 8082
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].livenessProbe"
+          content:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /another/endpoint
+              port: 8082
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+
+  - it: "Set tcpSocket should overwrite httpGet definition in livenessProbe"
+    template: gateway/gateway-deployment.yaml
+    set:
+      gateway:
+        livenessProbe:
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          failureThreshold: 3
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isNotSubset:
+          path: "spec.template.spec.containers[0].livenessProbe"
+          content:
+            httpGet:
+              path:
+      - isSubset:
+          path: "spec.template.spec.containers[0].livenessProbe"
+          content:
+            failureThreshold: 3
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+
+###
+## Readiness probe
+###
+
+  - it: "Get default readinessProbe values"
+    template: gateway/gateway-deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].readinessProbe"
+          content:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /_node/health?probes=http-server
+              port: 18092
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+
+  - it: "Overwrite default readinessProbe values with initialDelaySeconds"
+    template: gateway/gateway-deployment.yaml
+    set:
+      gateway:
+        readinessProbe:
+          initialDelaySeconds: 40
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].readinessProbe"
+          content:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /_node/health?probes=http-server
+              port: 18092
+              scheme: HTTP
+            initialDelaySeconds: 40
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+
+  - it: "Overwrite default readinessProbe values with httpGet.path/port"
+    template: gateway/gateway-deployment.yaml
+    set:
+      gateway:
+        readinessProbe:
+          httpGet:
+            path: /another/endpoint
+            port: 8082
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].readinessProbe"
+          content:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /another/endpoint
+              port: 8082
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+
+  - it: "Backward compatibility with readinessProbe domainSync enable"
+    template: gateway/gateway-deployment.yaml
+    set:
+      gateway:
+        readinessProbe:
+          domainSync: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].readinessProbe"
+          content:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /_node/health?probes=security-domain-sync
+              port: 18092
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+
+  - it: "Backward compatibility with readinessProbe domainSync enable overwriting initialDelaySeconds"
+    template: gateway/gateway-deployment.yaml
+    set:
+      gateway:
+        readinessProbe:
+          domainSync: true
+          initialDelaySeconds: 40
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isSubset:
+          path: "spec.template.spec.containers[0].readinessProbe"
+          content:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders:
+                - name: Authorization
+                  value: Basic YWRtaW46YWRtaW5hZG1pbg==
+              path: /_node/health?probes=security-domain-sync
+              port: 18092
+              scheme: HTTP
+            initialDelaySeconds: 40
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+
+  - it: "Set tcpSocket should overwrite httpGet definition in readinessProbe"
+    template: gateway/gateway-deployment.yaml
+    set:
+      gateway:
+        readinessProbe:
+          domainSync: false
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          failureThreshold: 3
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isNotSubset:
+          path: "spec.template.spec.containers[0].readinessProbe"
+          content:
+            httpGet:
+              path:
+      - isSubset:
+          path: "spec.template.spec.containers[0].readinessProbe"
+          content:
+            failureThreshold: 3
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
