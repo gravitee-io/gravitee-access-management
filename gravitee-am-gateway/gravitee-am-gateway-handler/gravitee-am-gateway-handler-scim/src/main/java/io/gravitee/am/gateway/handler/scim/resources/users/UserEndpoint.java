@@ -17,14 +17,14 @@ package io.gravitee.am.gateway.handler.scim.resources.users;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.common.scim.Schema;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.gateway.handler.scim.business.PatchUserAction;
+import io.gravitee.am.gateway.handler.scim.business.UpdateUserAction;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
-import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
-import io.gravitee.am.gateway.handler.scim.model.PatchOp;
-import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
@@ -34,8 +34,6 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -103,39 +101,27 @@ public class UserEndpoint extends AbstractUserEndpoint {
      */
     public void update(RoutingContext context) {
         try {
+
             final String body = context.body().asString();
             if (body == null) {
                 context.fail(new InvalidSyntaxException("Unable to parse body message"));
                 return;
             }
+
             final Map<String, Object> payload = Json.decodeValue(body, Map.class);
-            final List<String> schemas = (List<String>) Optional.ofNullable(payload.get("schemas")).orElse(Collections.emptyList());
-            final User user = evaluateUser(schemas, body);
+
+            final SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(new VertxHttpServerRequest(context.request().getDelegate()));
+            authenticationContext.attributes().putAll(context.data());
+
             final String userId = context.request().getParam("id");
-
-            // username is required
-            if (user.getUserName() == null || user.getUserName().isBlank()) {
-                context.fail(new InvalidValueException("Field [userName] is required"));
-                return;
-            }
-
-            // schemas field is REQUIRED and MUST contain valid values and MUST not contain duplicate values
-            try {
-                checkSchemas(user.getSchemas(), Schema.supportedSchemas());
-            } catch (Exception ex) {
-                context.fail(ex);
-                return;
-            }
-
-            // handle identity provider source
-            final String source = userSource(context);
 
             final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
             final String baseUrl = location(context.request());
             principal(accessToken)
                     .map(Optional::ofNullable)
                     .switchIfEmpty(Maybe.just(Optional.empty()))
-                    .flatMapSingle(optPrincipal -> userService.update(userId, user, source, baseUrl, optPrincipal.orElse(null), context.get(CLIENT_CONTEXT_KEY)))
+                    .flatMapSingle(optPrincipal -> new UpdateUserAction(userService, getDomain(), context.get(CLIENT_CONTEXT_KEY))
+                            .execute(userId, baseUrl, payload, authenticationContext, optPrincipal.orElse(null)))
                     .subscribe(
                             user1 -> context.response()
                                     .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -176,40 +162,27 @@ public class UserEndpoint extends AbstractUserEndpoint {
      */
     public void patch(RoutingContext context) {
         try {
-            if (context.body() == null) {
+            final String body = context.body().asString();
+            if (body == null) {
                 context.fail(new InvalidSyntaxException("Unable to parse body message"));
                 return;
             }
-            final PatchOp patchOp = context.body().asPojo(PatchOp.class);
-            if (patchOp == null) {
-                context.fail(new InvalidSyntaxException("Unable to parse body message"));
-                return;
-            }
+            final Map<String, Object> payload = Json.decodeValue(body, Map.class);
+
             final String userId = context.request().getParam("id");
 
-            // schemas field is REQUIRED and MUST contain valid values and MUST not contain duplicate values
-            try {
-                checkSchemas(patchOp.getSchemas(), PatchOp.SCHEMAS);
-            } catch (Exception ex) {
-                context.fail(ex);
-                return;
-            }
-
-            // check operations
-            if (patchOp.getOperations() == null || patchOp.getOperations().isEmpty()) {
-                context.fail(new InvalidValueException("Field [Operations] is required"));
-                return;
-            }
-
-            // handle identity provider source
-            final String source = userSource(context);
+            final SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(new VertxHttpServerRequest(context.request().getDelegate()));
+            authenticationContext.attributes().putAll(context.data());
 
             final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
+
             final String baseUrl = location(context.request());
+
             principal(accessToken)
                     .map(Optional::ofNullable)
                     .switchIfEmpty(Maybe.just(Optional.empty()))
-                    .flatMapSingle(optPrincipal -> userService.patch(userId, patchOp, source, baseUrl, optPrincipal.orElse(null), context.get(CLIENT_CONTEXT_KEY)))
+                    .flatMapSingle(optPrincipal -> new PatchUserAction(userService, getDomain(), context.get(CLIENT_CONTEXT_KEY))
+                            .execute(userId, baseUrl, payload, authenticationContext, optPrincipal.orElse(null)))
                     .subscribe(
                             user1 -> context.response()
                                     .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")

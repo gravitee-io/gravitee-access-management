@@ -42,6 +42,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.stream.IntStream;
 
 import static io.gravitee.am.gateway.handler.scim.model.BulkRequest.BULK_REQUEST_SCHEMA;
+import static io.gravitee.common.http.HttpMethod.POST;
 import static java.lang.String.valueOf;
 import static java.util.List.of;
 import static org.mockito.ArgumentMatchers.any;
@@ -114,7 +115,7 @@ public class BulkEndpointTest extends RxWebTestBase {
         when(subjectManager.getPrincipal(any())).thenReturn(Maybe.empty());
         BulkResponse response = new BulkResponse();
         final var operation = new BulkOperation();
-        operation.setMethod(HttpMethod.POST.name());
+        operation.setMethod(POST);
         operation.setBulkId("bulkid123");
         operation.setLocation("https://localhost:8092/domain/Users");
         operation.setStatus(valueOf(HttpStatusCode.CREATED_201));

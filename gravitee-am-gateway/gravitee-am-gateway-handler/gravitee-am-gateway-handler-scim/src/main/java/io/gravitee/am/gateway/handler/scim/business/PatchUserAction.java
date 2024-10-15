@@ -17,14 +17,16 @@
 package io.gravitee.am.gateway.handler.scim.business;
 
 
-import io.gravitee.am.common.scim.Schema;
+import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
+import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
+import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
@@ -34,30 +36,37 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 @Slf4j
-public class CreateUserAction extends AbstractUserAction {
+public class PatchUserAction extends AbstractUserAction {
 
-    public CreateUserAction(UserService userService, Domain domain, Client client) {
+    public PatchUserAction(UserService userService, Domain domain, Client client) {
         super(userService, domain, client);
     }
 
-    public Single<User> execute(String baseUrl, Map<String, Object> payload, AuthenticationContext authenticationContext, io.gravitee.am.identityprovider.api.User principal) {
-        final User user = extractUser(payload);
+    private PatchOp toPatchOp(Map<String, Object> payload) {
+        return new JsonObject(payload).mapTo(PatchOp.class);
+    }
 
-        // username is required
-        if (user.getUserName() == null || user.getUserName().isBlank()) {
-            return Single.error(new InvalidValueException("Field [userName] is required"));
+    public Single<User> execute(String userId, String baseUrl, Map<String, Object> payload, AuthenticationContext authenticationContext, io.gravitee.am.identityprovider.api.User principal) {
+        final PatchOp patchOp = toPatchOp(payload);
+        if (patchOp == null) {
+            return Single.error(new InvalidSyntaxException("Unable to parse body message"));
         }
 
         // schemas field is REQUIRED and MUST contain valid values and MUST not contain duplicate values
         try {
-            checkSchemas(user.getSchemas(), Schema.supportedSchemas());
+            checkSchemas(patchOp.getSchemas(), PatchOp.SCHEMAS);
         } catch (Exception ex) {
             return Single.error(ex);
+        }
+
+        // check operations
+        if (patchOp.getOperations() == null || patchOp.getOperations().isEmpty()) {
+            return Single.error(new InvalidValueException("Field [Operations] is required"));
         }
 
         // handle identity provider source
         return userSource(authenticationContext)
                 .toSingle()
-                .flatMap(optSource -> userService.create(user, optSource.orElse(null), baseUrl, principal, client));
+                .flatMap(optSource -> userService.patch(userId, patchOp, optSource.orElse(null), baseUrl, principal, client));
     }
 }

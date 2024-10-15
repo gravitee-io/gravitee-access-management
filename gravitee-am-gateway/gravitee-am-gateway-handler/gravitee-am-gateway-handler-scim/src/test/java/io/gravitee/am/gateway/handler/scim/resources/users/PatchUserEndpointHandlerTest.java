@@ -88,6 +88,7 @@ public class PatchUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldReturn400WhenInvalidOperations() throws Exception {
         router.route("/Users").handler(userEndpoint::patch);
+        when(subjectManager.getPrincipal(any())).thenReturn(Maybe.just(mock(io.gravitee.am.identityprovider.api.User.class)));
 
         testRequest(
                 HttpMethod.PATCH,

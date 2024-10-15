@@ -51,6 +51,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.util.StringUtils.hasLength;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -86,7 +87,7 @@ public class BulkServiceTest {
     @Test
     public void should_fail_due_to_invalid_operation_missing_path() throws Exception {
         final var bulkId = UUID.randomUUID().toString();
-        final var method = HttpMethod.POST.name();
+        final var method = HttpMethod.POST;
 
         final var bulkRequest = new BulkRequest();
         final var operation = new BulkOperation();
@@ -123,7 +124,7 @@ public class BulkServiceTest {
     @Test
     public void should_fail_due_to_invalid_operation_invalid_path() throws Exception {
         final var bulkId = UUID.randomUUID().toString();
-        final var method = HttpMethod.POST.name();
+        final var method = HttpMethod.POST;
 
         final var bulkRequest = new BulkRequest();
         final var operation = new BulkOperation();
@@ -160,7 +161,7 @@ public class BulkServiceTest {
     @Test
     public void should_fail_due_to_invalid_operation_invalid_method() throws Exception {
         final var bulkId = UUID.randomUUID().toString();
-        final var method = HttpMethod.GET.name();
+        final var method = HttpMethod.GET;
 
         final var bulkRequest = new BulkRequest();
         final var operation = new BulkOperation();
@@ -196,7 +197,7 @@ public class BulkServiceTest {
 
     @Test
     public void should_fail_due_to_invalid_operation_POST_without_bulkId() throws Exception {
-        final var method = HttpMethod.POST.name();
+        final var method = HttpMethod.POST;
 
         final var bulkRequest = new BulkRequest();
         final var operation = new BulkOperation();
@@ -230,8 +231,43 @@ public class BulkServiceTest {
     }
 
     @Test
+    public void should_fail_due_to_invalid_path_with_PUT_operation() throws Exception {
+        final var method = HttpMethod.PUT;
+
+        final var bulkRequest = new BulkRequest();
+        final var operation = new BulkOperation();
+        operation.setMethod(method);
+        operation.setPath("/Users");
+        operation.setData(asMap(new User()));
+        bulkRequest.setOperations(of(operation));
+
+        final var subscriber = bulkService.processBulkRequest(bulkRequest, this.authenticationContext, BASE_BULK_URL, client, null).test();
+
+        subscriber.await(10, TimeUnit.SECONDS);
+        subscriber
+                .assertNoErrors()
+                .assertValue(bulkResponse -> {
+                    assertNotNull(bulkResponse.getSchemas());
+                    assertEquals(1, bulkResponse.getSchemas().size());
+
+                    assertNotNull(bulkResponse.getOperations());
+                    assertEquals(1, bulkResponse.getOperations().size());
+
+                    assertError((Error) bulkResponse.getOperations().get(0).getResponse(), "Bulk operation with PUT or PATCH method requires path with userId", HttpStatusCode.BAD_REQUEST_400);
+
+                    final var processedOperation = bulkResponse.getOperations().get(0);
+                    assertNull(processedOperation.getBulkId());
+                    assertEquals(method, processedOperation.getMethod());
+                    assertEquals(valueOf(HttpStatusCode.BAD_REQUEST_400), processedOperation.getStatus());
+                    assertNull(processedOperation.getPath());
+                    assertNull(processedOperation.getData());
+                    return true;
+                });
+    }
+
+    @Test
     public void should_create_user() throws Exception {
-        final var method = HttpMethod.POST.name();
+        final var method = HttpMethod.POST;
         final var bulkId = UUID.randomUUID().toString();
 
         final var bulkRequest = new BulkRequest();
@@ -261,7 +297,7 @@ public class BulkServiceTest {
 
     @Test
     public void should_create_users_even_if_one_operation_is_invalid() throws Exception {
-        final var method = HttpMethod.POST.name();
+        final var method = HttpMethod.POST;
         final var bulkId = UUID.randomUUID().toString();
 
         final var bulkRequest = new BulkRequest();;
@@ -299,7 +335,94 @@ public class BulkServiceTest {
                 });
     }
 
-    private static void assertUserCreationSuccessful(BulkOperation processedOperation, String method) {
+    @Test
+    public void should_update_user() throws Exception {
+        final var method = HttpMethod.PUT;
+        final var bulkId = UUID.randomUUID().toString();
+
+        final var bulkRequest = new BulkRequest();
+        bulkRequest.setOperations(of(validUpdateUserOperation(method, bulkId)));
+
+
+        User updatedUser = getUser(bulkId);
+        when(userService.update(any(), any(), any(), any(), any(), any())).thenReturn(Single.just(updatedUser));
+
+        final var subscriber = bulkService.processBulkRequest(bulkRequest, this.authenticationContext, BASE_BULK_URL, client, null).test();
+
+        subscriber.await(10, TimeUnit.SECONDS);
+        subscriber
+                .assertNoErrors()
+                .assertValue(bulkResponse -> {
+                    assertNotNull(bulkResponse.getSchemas());
+                    assertEquals(1, bulkResponse.getSchemas().size());
+
+                    assertNotNull(bulkResponse.getOperations());
+                    assertEquals(1, bulkResponse.getOperations().size());
+
+                    final var processedOperation = bulkResponse.getOperations().get(0);
+                    assertUserUpdateSuccessful(processedOperation, method, bulkId);
+                    return true;
+                });
+    }
+
+    @Test
+    public void should_patch_user() throws Exception {
+        final var method = HttpMethod.PATCH;
+        final var bulkId = UUID.randomUUID().toString();
+
+        final var bulkRequest = new BulkRequest();
+        bulkRequest.setOperations(of(patchUserOperation(method, bulkId, "add")));
+
+
+        User updatedUser = getUser(bulkId);
+        when(userService.patch(any(), any(), any(), any(), any(), any())).thenReturn(Single.just(updatedUser));
+
+        final var subscriber = bulkService.processBulkRequest(bulkRequest, this.authenticationContext, BASE_BULK_URL, client, null).test();
+
+        subscriber.await(10, TimeUnit.SECONDS);
+        subscriber
+                .assertNoErrors()
+                .assertValue(bulkResponse -> {
+                    assertNotNull(bulkResponse.getSchemas());
+                    assertEquals(1, bulkResponse.getSchemas().size());
+
+                    assertNotNull(bulkResponse.getOperations());
+                    assertEquals(1, bulkResponse.getOperations().size());
+
+                    final var processedOperation = bulkResponse.getOperations().get(0);
+                    assertUserUpdateSuccessful(processedOperation, method, bulkId);
+                    return true;
+                });
+    }
+
+    @Test
+    public void should_not_patch_user_missing_patch_operation() throws Exception {
+        final var method = HttpMethod.PATCH;
+        final var bulkId = UUID.randomUUID().toString();
+
+        final var bulkRequest = new BulkRequest();
+        bulkRequest.setOperations(of(patchUserOperation(method, bulkId, null)));
+
+        final var subscriber = bulkService.processBulkRequest(bulkRequest, this.authenticationContext, BASE_BULK_URL, client, null).test();
+
+        subscriber.await(10, TimeUnit.SECONDS);
+        subscriber
+                .assertNoErrors()
+                .assertValue(bulkResponse -> {
+                    assertNotNull(bulkResponse.getSchemas());
+                    assertEquals(1, bulkResponse.getSchemas().size());
+
+                    assertNotNull(bulkResponse.getOperations());
+                    assertEquals(1, bulkResponse.getOperations().size());
+
+                    final var processedOperation = bulkResponse.getOperations().get(0);
+                    assertEquals(valueOf(HttpStatusCode.BAD_REQUEST_400) ,processedOperation.getStatus());
+                    assertError((Error)processedOperation.getResponse(), "Field [Operations] is required", HttpStatusCode.BAD_REQUEST_400);
+                    return true;
+                });
+    }
+
+    private static void assertUserCreationSuccessful(BulkOperation processedOperation, HttpMethod method) {
         assertNotNull(processedOperation.getBulkId());
         assertEquals(method, processedOperation.getMethod());
         assertEquals(valueOf(HttpStatusCode.CREATED_201), processedOperation.getStatus());
@@ -310,17 +433,60 @@ public class BulkServiceTest {
         assertNull(processedOperation.getResponse());
     }
 
+    private static void assertUserUpdateSuccessful(BulkOperation processedOperation, HttpMethod method, String bulkId) {
+        assertNotNull(processedOperation.getBulkId());
+        assertEquals(method, processedOperation.getMethod());
+        assertEquals(valueOf(HttpStatusCode.OK_200), processedOperation.getStatus());
+        assertNull(processedOperation.getPath());
+        assertNull(processedOperation.getData());
+
+        assertEquals(adaptLocation(bulkId), processedOperation.getLocation());
+        assertNull(processedOperation.getResponse());
+    }
+
+    private static String adaptLocation(String bulkId) {
+        return META_LOCATION_URL.replace("xyz", "user-" + bulkId);
+    }
+
     private static User getCreatedUser() {
+        return getUser(null);
+    }
+
+    private static User getUser(String userId) {
         User createdUser = new User();
         createdUser.setSchemas(of(Schema.SCHEMA_URI_USER));
         createdUser.setUserName("username");
         Meta meta = new Meta();
-        meta.setLocation(META_LOCATION_URL);
+        meta.setLocation(userId != null ? adaptLocation(userId) : META_LOCATION_URL);
         createdUser.setMeta(meta);
         return createdUser;
     }
 
-    private BulkOperation validCreateUserOperation(String method, String bulkId) {
+    private static Map<String, Object> generatePatchUser(String op) {
+        if (hasLength(op)) {
+            return Json.decodeValue("""
+                    { "schemas":
+                           ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+                         "Operations":[
+                           {
+                            "op":"%s",
+                            "path":"given_name",
+                            "value":"Test"
+                           }
+                         ]
+                       }
+                    """.formatted(op), Map.class);
+        } else {
+            return Json.decodeValue("""
+                    { "schemas":
+                           ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+                         "Operations":[]
+                       }
+                    """, Map.class);
+        }
+    }
+
+    private BulkOperation validCreateUserOperation(HttpMethod method, String bulkId) {
         final var validOperation1 = new BulkOperation();
         validOperation1.setMethod(method);
         validOperation1.setBulkId(bulkId);
@@ -329,6 +495,27 @@ public class BulkServiceTest {
         user.setSchemas(of(Schema.SCHEMA_URI_USER));
         user.setUserName("username");
         validOperation1.setData(asMap(user));
+        return validOperation1;
+    }
+
+    private BulkOperation validUpdateUserOperation(HttpMethod method, String bulkId) {
+        final var validOperation1 = new BulkOperation();
+        validOperation1.setMethod(method);
+        validOperation1.setBulkId(bulkId);
+        validOperation1.setPath("/Users/user-"+bulkId);
+        User user = new User();
+        user.setSchemas(of(Schema.SCHEMA_URI_USER));
+        user.setUserName("username");
+        validOperation1.setData(asMap(user));
+        return validOperation1;
+    }
+
+    private BulkOperation patchUserOperation(HttpMethod method, String bulkId, String op) {
+        final var validOperation1 = new BulkOperation();
+        validOperation1.setMethod(method);
+        validOperation1.setBulkId(bulkId);
+        validOperation1.setPath("/Users/user-"+bulkId);
+        validOperation1.setData(generatePatchUser(op));
         return validOperation1;
     }
 

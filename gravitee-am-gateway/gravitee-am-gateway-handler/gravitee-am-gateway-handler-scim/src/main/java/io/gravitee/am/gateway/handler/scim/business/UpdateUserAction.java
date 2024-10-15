@@ -34,13 +34,13 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 @Slf4j
-public class CreateUserAction extends AbstractUserAction {
+public class UpdateUserAction extends AbstractUserAction {
 
-    public CreateUserAction(UserService userService, Domain domain, Client client) {
+    public UpdateUserAction(UserService userService, Domain domain, Client client) {
         super(userService, domain, client);
     }
 
-    public Single<User> execute(String baseUrl, Map<String, Object> payload, AuthenticationContext authenticationContext, io.gravitee.am.identityprovider.api.User principal) {
+    public Single<User> execute(String userId, String baseUrl, Map<String, Object> payload, AuthenticationContext authenticationContext, io.gravitee.am.identityprovider.api.User principal) {
         final User user = extractUser(payload);
 
         // username is required
@@ -58,6 +58,6 @@ public class CreateUserAction extends AbstractUserAction {
         // handle identity provider source
         return userSource(authenticationContext)
                 .toSingle()
-                .flatMap(optSource -> userService.create(user, optSource.orElse(null), baseUrl, principal, client));
+                .flatMap(optSource -> userService.update(userId, user, optSource.orElse(null), baseUrl, principal, client));
     }
 }

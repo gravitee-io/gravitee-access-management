@@ -18,6 +18,8 @@ package io.gravitee.am.gateway.handler.scim.service.impl;
 
 
 import io.gravitee.am.gateway.handler.scim.business.CreateUserAction;
+import io.gravitee.am.gateway.handler.scim.business.PatchUserAction;
+import io.gravitee.am.gateway.handler.scim.business.UpdateUserAction;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.model.BulkOperation;
 import io.gravitee.am.gateway.handler.scim.model.BulkRequest;
@@ -37,6 +39,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static io.gravitee.common.http.HttpMethod.DELETE;
 import static io.gravitee.common.http.HttpMethod.PATCH;
@@ -44,6 +47,7 @@ import static io.gravitee.common.http.HttpMethod.POST;
 import static io.gravitee.common.http.HttpMethod.PUT;
 import static java.lang.String.valueOf;
 import static org.springframework.util.CollectionUtils.isEmpty;
+import static org.springframework.util.StringUtils.hasLength;
 import static org.springframework.util.StringUtils.hasText;
 
 /**
@@ -53,7 +57,11 @@ import static org.springframework.util.StringUtils.hasText;
 @Slf4j
 @AllArgsConstructor
 public class BulkServiceImpl implements BulkService {
-    public static final Set<String> ALLOWED_METHODS = Set.of(DELETE.name(), POST.name(), PATCH.name(), PUT.name());
+    public static final Set<HttpMethod> ALLOWED_METHODS = Set.of(DELETE, POST, PATCH, PUT);
+
+    private final static String USERS_PATH = "/Users";
+    private final static String BULK_PATH_PATTERN = "/Bulk(/)?";
+    private final static Pattern USER_PATH_PATTERN = Pattern.compile("/Users/(.*)");
 
     private UserService userService;
     private Domain domain;
@@ -63,13 +71,33 @@ public class BulkServiceImpl implements BulkService {
         return Flowable.fromIterable(bulkRequest.getOperations())
                 .flatMapSingle(operation -> checkOperation(operation)
                             .flatMap(validOperation -> {
-                                switch (HttpMethod.valueOf(validOperation.getMethod())) {
+                                switch (validOperation.getMethod()) {
                                     case POST:
                                         return new CreateUserAction(userService, domain, client)
                                                 .execute(updateBaseUrl(baseUrl, validOperation.getPath()), operation.getData(), authenticationContext, principal)
                                                 .map(scimUser -> {
                                                     validOperation.setLocation(scimUser.getMeta().getLocation());
                                                     validOperation.setStatus(valueOf(HttpStatusCode.CREATED_201));
+                                                    // response attribute is not set for successful operation
+                                                    // so no need to provide the scimUser in the operation.response
+                                                    return validOperation.asResponse();
+                                                });
+                                    case PUT:
+                                        return new UpdateUserAction(userService, domain, client)
+                                                .execute(extractUserIdFromPath(validOperation), updateBaseUrl(baseUrl, validOperation.getPath()), operation.getData(), authenticationContext, principal)
+                                                .map(scimUser -> {
+                                                    validOperation.setLocation(scimUser.getMeta().getLocation());
+                                                    validOperation.setStatus(valueOf(HttpStatusCode.OK_200));
+                                                    // response attribute is not set for successful operation
+                                                    // so no need to provide the scimUser in the operation.response
+                                                    return validOperation.asResponse();
+                                                });
+                                    case PATCH:
+                                        return new PatchUserAction(userService, domain, client)
+                                                .execute(extractUserIdFromPath(validOperation), updateBaseUrl(baseUrl, validOperation.getPath()), operation.getData(), authenticationContext, principal)
+                                                .map(scimUser -> {
+                                                    validOperation.setLocation(scimUser.getMeta().getLocation());
+                                                    validOperation.setStatus(valueOf(HttpStatusCode.OK_200));
                                                     // response attribute is not set for successful operation
                                                     // so no need to provide the scimUser in the operation.response
                                                     return validOperation.asResponse();
@@ -104,8 +132,12 @@ public class BulkServiceImpl implements BulkService {
                 });
     }
 
+    private static String extractUserIdFromPath(BulkOperation validOperation) {
+        return validOperation.getPath().substring(validOperation.getPath().lastIndexOf("/") + 1);
+    }
+
     private Single<BulkOperation> checkOperation(BulkOperation operation) {
-        if (!(hasText(operation.getPath()) && operation.getPath().startsWith("/Users"))) {
+        if (!(hasLength(operation.getPath()) && operation.getPath().startsWith(USERS_PATH))) {
             // only Users operations are managed currently
             log.debug("Bulk operation requires path starting with /Users");
             return Single.error(new InvalidValueException("Bulk operation requires path starting with /Users"));
@@ -116,21 +148,28 @@ public class BulkServiceImpl implements BulkService {
             return Single.error(new InvalidValueException("Bulk operation doesn't support method " + operation.getMethod()));
         }
 
-        if (!operation.getMethod().equals(DELETE.name()) && isEmpty(operation.getData())) {
+        if (operation.getMethod() != DELETE && isEmpty(operation.getData())) {
             log.debug("Bulk operation requires data with method {}", operation.getMethod());
             return Single.error(new InvalidValueException("Bulk operation requires data with method " + operation.getMethod()));
         }
 
-        if (operation.getMethod().equals(POST.name()) && !hasText(operation.getBulkId())) {
+        if (operation.getMethod() == POST && !hasText(operation.getBulkId())) {
             log.debug("Bulk operation requires bulkId with method POST");
             return Single.error(new InvalidValueException("Bulk operation requires bulkId with method POST"));
+        }
+
+        if ((operation.getMethod() == POST && USER_PATH_PATTERN.matcher(operation.getPath()).matches())
+                || (operation.getMethod() != POST && !USER_PATH_PATTERN.matcher(operation.getPath()).matches())) {
+            // only Users operations are managed currently
+            log.debug("Bulk operation with PUT or PATCH method requires path with userId");
+            return Single.error(new InvalidValueException("Bulk operation with PUT or PATCH method requires path with userId"));
         }
 
         return Single.just(operation);
     }
 
     private String updateBaseUrl(String baseUrl, String path) {
-       return baseUrl.replaceFirst("/Bulk(/)?", path);
+       return baseUrl.replaceFirst(BULK_PATH_PATTERN, path);
     }
 
 }
