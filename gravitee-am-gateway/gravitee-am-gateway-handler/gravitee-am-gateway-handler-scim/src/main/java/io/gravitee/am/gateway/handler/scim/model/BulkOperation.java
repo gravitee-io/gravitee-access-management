@@ -17,6 +17,7 @@
 package io.gravitee.am.gateway.handler.scim.model;
 
 
+import io.gravitee.common.http.HttpMethod;
 import lombok.Data;
 
 import java.util.Map;
@@ -37,7 +38,7 @@ public class BulkOperation {
      * The HTTP method of the current operation.  Possible values
      *          are "POST", "PUT", "PATCH", or "DELETE".  REQUIRED.
      */
-    private String method;
+    private HttpMethod method;
     /**
      * The transient identifier of a newly created resource,
      *          unique within a bulk request and created by the client.  The
