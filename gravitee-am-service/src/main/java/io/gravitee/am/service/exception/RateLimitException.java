@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.service.exception;
 
+import static io.gravitee.common.http.HttpStatusCode.TOO_MANY_REQUESTS_429;
+
 /**
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
@@ -27,6 +29,6 @@ public class RateLimitException extends AbstractManagementException {
 
     @Override
     public int getHttpStatusCode() {
-        return 0;
+        return TOO_MANY_REQUESTS_429;
     }
 }
