@@ -233,6 +233,10 @@ public class AccountFactorsEndpointHandler {
                     final EnrolledFactor enrolledFactor = eh.result();
                     // send challenge
                     sendChallenge(factorProvider, enrolledFactor, user, routingContext, sh -> {
+                        if(sh.failed()){
+                            routingContext.fail(sh.cause());
+                            return;
+                        }
                         // save enrolled factor
                         accountService.upsertFactor(user.getId(), enrolledFactor, new DefaultUser(user))
                                 .subscribe(
