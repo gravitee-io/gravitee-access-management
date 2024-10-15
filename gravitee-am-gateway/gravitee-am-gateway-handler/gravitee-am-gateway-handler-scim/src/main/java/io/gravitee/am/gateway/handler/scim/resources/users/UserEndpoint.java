@@ -217,7 +217,6 @@ public class UserEndpoint extends AbstractUserEndpoint {
         final String userId = context.request().getParam("id");
         final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
 
-        final String baseUrl = location(context.request());
         principal(accessToken)
                 .map(Optional::ofNullable)
                 .switchIfEmpty(Maybe.just(Optional.empty()))
