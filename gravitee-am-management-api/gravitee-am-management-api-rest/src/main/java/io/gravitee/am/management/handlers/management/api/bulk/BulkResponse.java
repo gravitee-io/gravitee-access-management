@@ -24,12 +24,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Getter
-public class BulkResponse {
-    private final List<BulkOperationResult> results;
+public class BulkResponse<T> {
+    private final List<BulkOperationResult<T>> results;
     @JsonIgnore
     private final Response.Status status;
 
-    public BulkResponse(List<BulkOperationResult> results) {
+    public BulkResponse(List<BulkOperationResult<T>> results) {
         if (CollectionUtils.isEmpty(results)) {
             throw new IllegalArgumentException("BulkResponse must contain at least 1 result");
         }

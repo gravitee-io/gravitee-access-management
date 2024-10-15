@@ -14,27 +14,26 @@
  * limitations under the License.
  */
 
-import { Configuration } from '../../../management/runtime';
-import { managementConf } from './config';
-import { DomainApi } from '@management-apis/DomainApi';
-import { ApplicationApi } from '@management-apis/ApplicationApi';
-import { UserApi } from '@management-apis/UserApi';
-import { RoleApi } from '@management-apis/RoleApi';
-import { GroupApi } from '@management-apis/GroupApi';
-import { IdentityProviderApi } from '@management-apis/IdentityProviderApi';
-import { ScopeApi } from '@management-apis/ScopeApi';
-import { CertificateApi } from '@management-apis/CertificateApi';
-import { DictionaryApi } from '@management-apis/DictionaryApi';
-import { ThemeApi } from '@management-apis/ThemeApi';
-import { FormApi } from '@management-apis/FormApi';
-import { FactorApi } from '@management-apis/FactorApi';
-import { ResourceApi } from '@management-apis/ResourceApi';
-import { DevicesApi } from '@management-apis/DevicesApi';
-import { DeviceIdentifiersApi } from '@management-apis/DeviceIdentifiersApi';
-import { PasswordPolicyApi } from '@management-apis/PasswordPolicyApi';
+import {Configuration} from '../../../management/runtime';
+import {managementConf} from './config';
+import {DomainApi} from '@management-apis/DomainApi';
+import {ApplicationApi} from '@management-apis/ApplicationApi';
+import {UserApi} from '@management-apis/UserApi';
+import {RoleApi} from '@management-apis/RoleApi';
+import {GroupApi} from '@management-apis/GroupApi';
+import {IdentityProviderApi} from '@management-apis/IdentityProviderApi';
+import {ScopeApi} from '@management-apis/ScopeApi';
+import {CertificateApi} from '@management-apis/CertificateApi';
+import {DictionaryApi} from '@management-apis/DictionaryApi';
+import {ThemeApi} from '@management-apis/ThemeApi';
+import {FormApi} from '@management-apis/FormApi';
+import {FactorApi} from '@management-apis/FactorApi';
+import {ResourceApi} from '@management-apis/ResourceApi';
+import {DeviceIdentifiersApi} from '@management-apis/DeviceIdentifiersApi';
+import {PasswordPolicyApi} from '@management-apis/PasswordPolicyApi';
 
 function createAccessTokenConfig(accessToken) {
-  return new Configuration({ ...managementConf, apiKey: 'Bearer ' + accessToken });
+  return new Configuration({ ...managementConf, accessToken});
 }
 
 export const getDomainManagerUrl = (domainId: String) => {

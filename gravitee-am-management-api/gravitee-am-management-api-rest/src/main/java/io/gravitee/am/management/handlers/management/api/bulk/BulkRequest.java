@@ -29,7 +29,7 @@ public record BulkRequest<T>(List<T> items) {
      * Apply the processor to each individual item in this request. There's no guarantees about ordering or concurrency
      * of processing; the response is guaranteed to have results of processing individual items in the input order
      */
-    public Single<Response> processOneByOne(Function<T, Single<BulkOperationResult>> processor) {
+    public <R> Single<Response> processOneByOne(Function<T, Single<BulkOperationResult<R>>> processor) {
         if (CollectionUtils.isEmpty(items)) {
             return Single.just(Response.noContent().build());
         }
@@ -40,8 +40,8 @@ public record BulkRequest<T>(List<T> items) {
                 .map(this::makeResponse);
     }
 
-    private Response makeResponse(List<BulkOperationResult> bulkOperationResults) {
-        var bulkResponse = new BulkResponse(bulkOperationResults);
+    private <R> Response makeResponse(List<BulkOperationResult<R>> bulkOperationResults) {
+        var bulkResponse = new BulkResponse<>(bulkOperationResults);
         return Response.status(bulkResponse.getStatus()).entity(bulkResponse).build();
     }
 }

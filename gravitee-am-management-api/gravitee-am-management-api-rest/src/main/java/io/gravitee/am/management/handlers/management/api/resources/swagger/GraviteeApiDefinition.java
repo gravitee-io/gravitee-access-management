@@ -84,7 +84,7 @@ public class GraviteeApiDefinition implements ReaderListener {
         // sort definitions for better comparisons
         Components components = new Components();
         components.schemas(new TreeMap<>(openAPI.getComponents().getSchemas()));
-        components.addSecuritySchemes(TOKEN_AUTH_SCHEME, new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("basic"));
+        components.addSecuritySchemes(TOKEN_AUTH_SCHEME, new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("Bearer"));
         openAPI.components(components);
         openAPI.addSecurityItem(new SecurityRequirement().addList(TOKEN_AUTH_SCHEME));
     }
