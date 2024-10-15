@@ -29,8 +29,10 @@ import io.gravitee.am.identityprovider.api.DummyAuthenticationContext;
 import io.gravitee.am.identityprovider.api.DummyRequest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.Json;
 import org.junit.jupiter.api.BeforeEach;
@@ -422,6 +424,78 @@ public class BulkServiceTest {
                 });
     }
 
+    @Test
+    public void should_delete_user() throws Exception {
+        final var method = HttpMethod.DELETE;
+        final var bulkId = UUID.randomUUID().toString();
+
+        final var bulkRequest = new BulkRequest();
+        bulkRequest.setOperations(of(validDeleteUserOperation(method, bulkId)));
+
+
+        when(userService.delete(any(), any())).thenReturn(Completable.complete());
+
+        final var subscriber = bulkService.processBulkRequest(bulkRequest, this.authenticationContext, BASE_BULK_URL, client, null).test();
+
+        subscriber.await(10, TimeUnit.SECONDS);
+        subscriber
+                .assertNoErrors()
+                .assertValue(bulkResponse -> {
+                    assertNotNull(bulkResponse.getSchemas());
+                    assertEquals(1, bulkResponse.getSchemas().size());
+
+                    assertNotNull(bulkResponse.getOperations());
+                    assertEquals(1, bulkResponse.getOperations().size());
+
+                    final var processedOperation = bulkResponse.getOperations().get(0);
+
+                    assertNotNull(processedOperation.getBulkId());
+                    assertEquals(method, processedOperation.getMethod());
+                    assertEquals(valueOf(HttpStatusCode.NO_CONTENT_204), processedOperation.getStatus());
+                    assertNull(processedOperation.getPath());
+                    assertNull(processedOperation.getData());
+
+                    assertEquals(adaptLocation(bulkId), processedOperation.getLocation());
+                    return true;
+                });
+    }
+
+    @Test
+    public void should_return_error_on_delete_unknown_user() throws Exception {
+        final var method = HttpMethod.DELETE;
+        final var bulkId = UUID.randomUUID().toString();
+
+        final var bulkRequest = new BulkRequest();
+        bulkRequest.setOperations(of(validDeleteUserOperation(method, bulkId)));
+
+
+        when(userService.delete(any(), any())).thenReturn(Completable.error(new UserNotFoundException()));
+
+        final var subscriber = bulkService.processBulkRequest(bulkRequest, this.authenticationContext, BASE_BULK_URL, client, null).test();
+
+        subscriber.await(10, TimeUnit.SECONDS);
+        subscriber
+                .assertNoErrors()
+                .assertValue(bulkResponse -> {
+                    assertNotNull(bulkResponse.getSchemas());
+                    assertEquals(1, bulkResponse.getSchemas().size());
+
+                    assertNotNull(bulkResponse.getOperations());
+                    assertEquals(1, bulkResponse.getOperations().size());
+
+                    final var processedOperation = bulkResponse.getOperations().get(0);
+
+                    assertNotNull(processedOperation.getBulkId());
+                    assertEquals(method, processedOperation.getMethod());
+                    assertEquals(valueOf(HttpStatusCode.NOT_FOUND_404), processedOperation.getStatus());
+                    assertNull(processedOperation.getPath());
+                    assertNull(processedOperation.getData());
+
+                    assertError((Error)processedOperation.getResponse(), "No user found", HttpStatusCode.NOT_FOUND_404);
+                    return true;
+                });
+    }
+
     private static void assertUserCreationSuccessful(BulkOperation processedOperation, HttpMethod method) {
         assertNotNull(processedOperation.getBulkId());
         assertEquals(method, processedOperation.getMethod());
@@ -507,6 +581,14 @@ public class BulkServiceTest {
         user.setSchemas(of(Schema.SCHEMA_URI_USER));
         user.setUserName("username");
         validOperation1.setData(asMap(user));
+        return validOperation1;
+    }
+
+    private BulkOperation validDeleteUserOperation(HttpMethod method, String bulkId) {
+        final var validOperation1 = new BulkOperation();
+        validOperation1.setMethod(method);
+        validOperation1.setBulkId(bulkId);
+        validOperation1.setPath("/Users/user-"+bulkId);
         return validOperation1;
     }
 
