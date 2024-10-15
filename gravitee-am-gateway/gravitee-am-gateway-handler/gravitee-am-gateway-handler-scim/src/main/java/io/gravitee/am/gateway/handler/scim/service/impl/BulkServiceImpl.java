@@ -102,6 +102,13 @@ public class BulkServiceImpl implements BulkService {
                                                     // so no need to provide the scimUser in the operation.response
                                                     return validOperation.asResponse();
                                                 });
+                                    case DELETE:
+                                        return userService.delete(extractUserIdFromPath(validOperation), principal)
+                                                .andThen(Single.fromSupplier(() -> {
+                                                    validOperation.setStatus(valueOf(HttpStatusCode.NO_CONTENT_204));
+                                                    validOperation.setLocation(updateBaseUrl(baseUrl, validOperation.getPath()));
+                                                    return validOperation.asResponse();
+                                                }));
                                     default:
                                         io.gravitee.am.gateway.handler.scim.model.Error error = new Error();
                                         error.setScimType("invalidSyntax"); // should not happen
