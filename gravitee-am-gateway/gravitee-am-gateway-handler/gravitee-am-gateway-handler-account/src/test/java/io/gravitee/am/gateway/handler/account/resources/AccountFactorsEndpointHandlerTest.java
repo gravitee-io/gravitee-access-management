@@ -60,11 +60,7 @@ import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
@@ -93,6 +89,7 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
 
     private AccountFactorsEndpointHandler accountFactorsEndpointHandler;
     private User user;
+    private Client client;
 
     @Override
     public void setUp() throws Exception {
@@ -101,10 +98,16 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
         user = new User();
         user.setId("xxx-xxx-xxx");
         user.setUsername("username");
+        user.setClient("clientId");
+        client = new Client();
+        client.setId("clientId");
+        client.setDomain("domainId");
+
 
         router.route()
                 .handler(ctx -> {
                     ctx.put(ConstantKeys.USER_CONTEXT_KEY, user);
+                    ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
                 })
                 .handler(BodyHandler.create())
@@ -864,6 +867,84 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
                 }),
                 200,
                 "OK", null);
+    }
+
+    @Test
+    public void shouldReturnRateLimitExceptionOnSendChallenge() throws Exception {
+        Factor factor = mock(Factor.class);
+        when(factor.getId()).thenReturn("factor-id");
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.needChallengeSending()).thenReturn(true);
+        when(accountService.getFactor("factor-id")).thenReturn(Maybe.just(factor));
+        when(factorManager.get("factor-id")).thenReturn(factorProvider);
+        when(factorManager.getFactor(anyString())).thenReturn(factor);
+        when(rateLimiterService.isRateLimitEnabled()).thenReturn(true);
+        when(rateLimiterService.tryConsume(anyString(), anyString(), anyString(), anyString())).thenReturn(Single.just(Boolean.FALSE));
+
+        router.post(AccountRoutes.FACTORS_SEND_CHALLENGE.getRoute())
+                .handler(rc -> {
+                    User user = rc.get(ConstantKeys.USER_CONTEXT_KEY);
+                    EnrolledFactor enrolledFactor = new EnrolledFactor();
+                    enrolledFactor.setFactorId("factor-id");
+                    user.setFactors(Collections.singletonList(enrolledFactor));
+                    rc.next();
+                })
+                .handler(accountFactorsEndpointHandler::sendChallenge)
+                .handler(rc -> rc.response().end());
+
+        testRequest(HttpMethod.POST, "/api/factors/factor-id/sendChallenge",
+                null,
+                res -> res.bodyHandler(h -> assertEquals("{\n" +
+                        "  \"message\" : \"MFA rate limit reached\",\n" +
+                        "  \"http_status\" : 429\n" +
+                        "}", h.toString())),
+                429,
+                "Too Many Requests", null);
+
+
+    }
+
+    @Test
+    public void shouldReturnRateLimitExceptionOnEnrollFactor() throws Exception {
+        Enrollment enrollment = mock(Enrollment.class);
+        when(enrollment.getKey()).thenReturn(SHARED_SECRET);
+        Factor factor = mock(Factor.class);
+        when(factor.getFactorType()).thenReturn(FactorType.EMAIL);
+        when(factor.getId()).thenReturn("factor-id");
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.enroll(any(FactorContext.class))).thenReturn(Single.just(enrollment));
+        when(factorProvider.checkSecurityFactor(any())).thenReturn(true);
+        when(factorProvider.needChallengeSending()).thenReturn(true);
+        when(factorProvider.useVariableFactorSecurity(any())).thenReturn(true);
+        when(accountService.getFactor("factor-id")).thenReturn(Maybe.just(factor));
+        when(factorManager.get("factor-id")).thenReturn(factorProvider);
+        when(factorManager.getFactor(anyString())).thenReturn(factor);
+        when(rateLimiterService.isRateLimitEnabled()).thenReturn(true);
+        when(rateLimiterService.tryConsume(anyString(), anyString(), anyString(), anyString())).thenReturn(Single.just(Boolean.FALSE));
+
+        router.post(AccountRoutes.FACTORS.getRoute())
+                .handler(accountFactorsEndpointHandler::enrollFactor)
+                .handler(rc -> rc.response().end());
+
+        testRequest(HttpMethod.POST, "/api/factors",
+                req -> {
+                    Buffer buffer = Buffer.buffer();
+                    buffer.appendString("{\n" +
+                            "    \"factorId\": \"factor-id\",\n" +
+                            "    \"account\": {\n" +
+                            "        \"email\": \"mail@mail.com\"\n" +
+                            "    }\n" +
+                            "}");
+                    req.headers().set("content-length", String.valueOf(buffer.length()));
+                    req.headers().set("content-type", "application/json");
+                    req.write(buffer);
+                },
+                res -> res.bodyHandler(h -> assertEquals("{\n" +
+                        "  \"message\" : \"MFA rate limit reached\",\n" +
+                        "  \"http_status\" : 429\n" +
+                        "}", h.toString())),
+                429,
+                "Too Many Requests", null);
     }
 
     private void addFactors(User user) {
