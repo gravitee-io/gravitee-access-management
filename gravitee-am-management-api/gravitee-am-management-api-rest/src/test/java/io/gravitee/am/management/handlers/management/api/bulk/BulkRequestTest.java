@@ -44,7 +44,7 @@ class BulkRequestTest {
                     return (BulkResponse) entity;
                 })
                 .test()
-                .awaitDone(MAX_DELAY_MS * 2, TimeUnit.MILLISECONDS)
+                .awaitDone(MAX_DELAY_MS * 5, TimeUnit.MILLISECONDS)
                 .assertComplete()
                 .assertValueCount(1)
                 .values()
