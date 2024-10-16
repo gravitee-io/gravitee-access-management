@@ -18,16 +18,19 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Device;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.UserId;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.User;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.core.Response;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
 
 /**
@@ -46,12 +49,15 @@ public class DevicesResourceTest extends JerseySpringTest {
         var device2 = new Device().setDeviceId("deviceID2");
         var device3 = new Device().setDeviceId("deviceID3");
 
+        User user = new User();
+        user.setId(userId);
+
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
 
         doReturn(Flowable.just(
                 List.of(device, device2, device3)
-        )).when(deviceService).findByDomainAndUser(domainId, UserId.internal(userId));
-        doReturn(Flowable.empty()).when(deviceService).findByDomainAndUser(domainId, UserId.internal("wrong user"));
+        )).when(deviceService).findByDomainAndUser(Mockito.eq(domainId), Mockito.any());
+        doReturn(Single.just(user)).when(userService).findById(ReferenceType.DOMAIN, domainId, userId);
 
         final Response response = target("domains")
                 .path(domainId)

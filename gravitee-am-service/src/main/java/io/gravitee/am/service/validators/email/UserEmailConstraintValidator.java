@@ -32,7 +32,6 @@ class UserEmailConstraintValidator implements ConstraintValidator<UserEmail, Str
         this.emailRequired = environment.getProperty(UserEmail.PROPERTY_USER_EMAIL_REQUIRED, boolean.class, true);
         log.debug("Validating user emails as {}", this.emailRequired ? "required" : "optional");
     }
-
     @Override
     public void initialize(UserEmail constraintAnnotation) {
         // nothing to do

@@ -18,12 +18,12 @@ package io.gravitee.am.management.handlers.management.api.preview;
 import io.gravitee.am.management.handlers.management.api.authentication.view.TemplateResolver;
 import io.gravitee.am.management.handlers.management.api.model.PreviewRequest;
 import io.gravitee.am.management.handlers.management.api.model.PreviewResponse;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Form;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.Theme;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.impl.I18nDictionaryService;
@@ -33,12 +33,12 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.cache.StandardCacheManager;
@@ -54,7 +54,7 @@ import static org.mockito.Mockito.when;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PreviewServiceTest {
     private final static String BASE_URL = "http://am.gravitee.io/management";
     private final static String DOMAIN_ID = "DOMAIN-ID#1";
@@ -78,7 +78,7 @@ public class PreviewServiceTest {
     @Mock
     private FormService formService;
 
-    @Before
+    @BeforeEach
     public void init() throws Exception {
         templateEngine.setCacheManager(new StandardCacheManager());
         templateResolver.setTemplateEngine(templateEngine);

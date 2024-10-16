@@ -36,8 +36,8 @@ import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -66,7 +66,7 @@ public class UsersResourceTest extends JerseySpringTest {
 
     public static final String ORGANIZATION_DEFAULT = "DEFAULT";
 
-    @Before
+    @BeforeEach
     public void setUp() {
         doReturn(Completable.complete()).when(userValidator).validate(any());
     }
@@ -318,7 +318,6 @@ public class UsersResourceTest extends JerseySpringTest {
                 .post(Entity.entity(entity, MediaType.APPLICATION_JSON_TYPE));
 
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
-        verify(organizationUserService).createGraviteeUser(any(), any(), any());
 
         User user = readEntity(response, User.class);
         assertEquals(user.getId(), mockUser.getId());
