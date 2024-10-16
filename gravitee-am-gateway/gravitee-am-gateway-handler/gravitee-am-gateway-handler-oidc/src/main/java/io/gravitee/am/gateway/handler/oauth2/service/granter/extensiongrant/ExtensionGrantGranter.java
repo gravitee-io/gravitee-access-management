@@ -121,7 +121,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                             if (extensionGrant.getIdentityProvider() == null) {
                                 return Maybe.error(new InvalidGrantException("No identity_provider provided"));
                             }
-                            return manageUserValidation(tokenRequest, endUser);
+                            return manageUserValidation(tokenRequest, endUser, client);
                         } else {
                             return forgeUserProfile(endUser);
                         }
@@ -139,7 +139,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
         return Maybe.just(user);
     }
 
-    protected Maybe<User> manageUserValidation(TokenRequest tokenRequest, io.gravitee.am.identityprovider.api.User endUser) {
+    protected Maybe<User> manageUserValidation(TokenRequest tokenRequest, io.gravitee.am.identityprovider.api.User endUser, Client client) {
         return identityProviderManager
                 .get(extensionGrant.getIdentityProvider())
                 .flatMap(prov -> retrieveUserByUsernameFromIdp(prov, tokenRequest, convert(endUser))
