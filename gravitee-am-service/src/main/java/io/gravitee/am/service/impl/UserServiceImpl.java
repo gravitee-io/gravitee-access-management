@@ -231,6 +231,108 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
     }
 
     @Override
+<<<<<<< HEAD
+=======
+    public Single<User> upsertFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal) {
+        return findById(userId)
+                .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
+                .flatMap(oldUser -> {
+                    User user = new User(oldUser);
+                    List<EnrolledFactor> enrolledFactors = user.getFactors();
+                    if (enrolledFactors == null || enrolledFactors.isEmpty()) {
+                        enrolledFactors = Collections.singletonList(enrolledFactor);
+                    } else {
+                        // if current factor is primary, set the others to secondary
+                        if (Boolean.TRUE.equals(enrolledFactor.isPrimary())) {
+                            enrolledFactors.forEach(e -> e.setPrimary(false));
+                        }
+                        // if the Factor already exists, update the target and the security value
+                        var foundFactor = enrolledFactors.stream()
+                                .filter(existingFactor -> existingFactor.getFactorId().equals(enrolledFactor.getFactorId()))
+                                .findFirst();
+                        if (foundFactor.isPresent()) {
+                            var factorToUpdate = new EnrolledFactor(foundFactor.get());
+                            factorToUpdate.setStatus(ofNullable(enrolledFactor.getStatus()).orElse(factorToUpdate.getStatus()));
+                            factorToUpdate.setChannel(ofNullable(enrolledFactor.getChannel()).orElse(factorToUpdate.getChannel()));
+                            factorToUpdate.setSecurity(ofNullable(enrolledFactor.getSecurity()).orElse(factorToUpdate.getSecurity()));
+                            factorToUpdate.setPrimary(ofNullable(enrolledFactor.isPrimary()).orElse(factorToUpdate.isPrimary()));
+                            // update the factor
+                            enrolledFactors.removeIf(ef -> factorToUpdate.getFactorId().equals(ef.getFactorId()));
+                            enrolledFactors.add(factorToUpdate);
+                        } else {
+                            enrolledFactors.add(enrolledFactor);
+                        }
+                    }
+                    user.setFactors(enrolledFactors);
+
+                    if (enrolledFactor.getChannel() != null && EnrolledFactorChannel.Type.SMS.equals(enrolledFactor.getChannel().getType())) {
+                        // MFA SMS currently used, preserve the phone number into the user profile if not yet present
+                        List<Attribute> phoneNumbers = user.getPhoneNumbers();
+                        if (phoneNumbers == null) {
+                            phoneNumbers = new ArrayList<>();
+                            user.setPhoneNumbers(phoneNumbers);
+                        }
+                        String enrolledPhoneNumber = enrolledFactor.getChannel().getTarget();
+                        if (isNullOrEmpty(enrolledPhoneNumber)) {
+                            return Single.error(new InvalidFactorAttributeException("Phone Number required to enroll SMS factor"));
+                        }
+                        if (phoneNumbers.stream().noneMatch(p -> p.getValue().equals(enrolledPhoneNumber))) {
+                            Attribute newPhoneNumber = new Attribute();
+                            newPhoneNumber.setType("mobile");
+                            newPhoneNumber.setPrimary(phoneNumbers.isEmpty());
+                            newPhoneNumber.setValue(enrolledPhoneNumber);
+                            phoneNumbers.add(newPhoneNumber);
+                        }
+                    }
+                    if (enrolledFactor.getChannel() != null && EnrolledFactorChannel.Type.EMAIL.equals(enrolledFactor.getChannel().getType())) {
+                        // MFA EMAIL currently used, preserve the email into the user profile if not yet present
+                        String email = user.getEmail();
+                        String enrolledEmail = enrolledFactor.getChannel().getTarget();
+                        if (isNullOrEmpty(enrolledEmail)) {
+                            return Single.error(new InvalidFactorAttributeException("Email address required to enroll Email factor"));
+                        }
+                        if (email == null) {
+                            user.setEmail(enrolledEmail);
+                        } else if (!email.equals(enrolledEmail)){
+                            // an email is already present but doesn't match the one provided as security factor
+                            // register this email in the user profile.
+                            List<Attribute> emails = user.getEmails();
+                            if (emails == null) {
+                                emails = new ArrayList<>();
+                                user.setEmails(emails);
+                            }
+                            if (emails.stream().noneMatch(p -> p.getValue().equals(enrolledEmail))) {
+                                Attribute additionalEmail = new Attribute();
+                                additionalEmail.setPrimary(false);
+                                additionalEmail.setValue(enrolledEmail);
+                                emails.add(additionalEmail);
+                            }
+                        }
+                    }
+
+                    if (enrolledFactor.getStatus() == FactorStatus.ACTIVATED) {
+                        // reset the MFA skip date if the factor is active
+                        // this is to force the MFA challenge when the user
+                        // skip enrollment during authentication phase
+                        // but enroll using the self account API
+                        user.setMfaEnrollmentSkippedAt(null);
+                    }
+                    return update(user)
+                            .doOnSuccess(user1 -> LOGGER.debug("Factor {} upserted for user {}", enrolledFactor.getFactorId(), user1.getId()))
+                            .doOnSuccess(user1 -> {
+                                if (needToAuditUserFactorsOperation(user1, oldUser)) {
+                                    // remove sensitive data about factors
+                                    removeSensitiveFactorsData(user1.getFactors());
+                                    removeSensitiveFactorsData(oldUser.getFactors());
+                                    auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).user(user1).oldValue(oldUser));
+                                }
+                            })
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).throwable(throwable)));
+                });
+    }
+
+    @Override
+>>>>>>> 8cf61e11af (fix: reset mfaSkippedAt when a factor is enrolled & the code is verified)
     public Completable removeFactor(String userId, String factorId, io.gravitee.am.identityprovider.api.User principal) {
         return findById(userId)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
