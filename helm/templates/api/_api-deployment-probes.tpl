@@ -26,7 +26,7 @@
         "httpGet" (merge (dict
           "path" "/_node/health?probes=jetty-http-server"
           "scheme" "HTTP"
-          "port" (.Values.api.http.services.core.http.port | default 18082)
+          "port" (.Values.api.http.services.core.http.port | default 18093)
         ) $httpHeadersProbes)
     }}
 
@@ -53,7 +53,7 @@
         "httpGet" (merge (dict
           "path" "/_node/health?probes=jetty-http-server"
           "scheme" "HTTP"
-          "port" (.Values.api.http.services.core.http.port | default 18082)
+          "port" (.Values.api.http.services.core.http.port | default 18093)
         ) $httpHeadersProbes)
     }}
 
@@ -80,7 +80,7 @@
         "httpGet" (merge (dict
           "path" "/_node/health?probes=jetty-http-server,management-repository"
           "scheme" "HTTP"
-          "port" (.Values.api.http.services.core.http.port | default 18082)
+          "port" (.Values.api.http.services.core.http.port | default 18093)
         ) $httpHeadersProbes)
     }}
 

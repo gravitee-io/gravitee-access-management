@@ -32,7 +32,7 @@
         "httpGet" (merge (dict
           "path" "/_node/health?probes=http-server"
           "scheme" $gatewayServiceCoreScheme
-          "port" (.Values.gateway.services.core.http.port | default 18082)
+          "port" (.Values.gateway.services.core.http.port | default 18092)
         ) $httpHeadersProbes)
     }}
 
@@ -61,7 +61,7 @@
         "httpGet" (merge (dict
           "path" $httpGetPath
           "scheme" $gatewayServiceCoreScheme
-          "port" (.Values.gateway.services.core.http.port | default 18082)
+          "port" (.Values.gateway.services.core.http.port | default 18092)
         ) $httpHeadersProbes)
     }}
 
@@ -91,7 +91,7 @@
         "httpGet" (merge (dict
           "path" "/_node/health?probes=http-server,security-domain-sync"
           "scheme" $gatewayServiceCoreScheme
-          "port" (.Values.gateway.services.core.http.port | default 18082)
+          "port" (.Values.gateway.services.core.http.port | default 18092)
         ) $httpHeadersProbes)
     }}
 
