@@ -25,12 +25,13 @@ import io.gravitee.am.service.OrganizationService;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 
@@ -47,7 +48,7 @@ import static org.mockito.Mockito.when;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ManagementAuthenticationProviderTest {
 
     @InjectMocks
@@ -59,7 +60,7 @@ public class ManagementAuthenticationProviderTest {
     @Mock
     private OrganizationService organizationService;
 
-    @Before
+    @BeforeEach
     public void init() {
         Organization defaultOrganization = new Organization();
         defaultOrganization.setId(Organization.DEFAULT);
@@ -116,22 +117,25 @@ public class ManagementAuthenticationProviderTest {
         verify(identityProviderManager, times(1)).get("idp2");
     }
 
-    @Test(expected = org.springframework.security.authentication.BadCredentialsException.class)
+    @Test
     public void shouldNotAuthenticate_wrongCredentials() {
-        AuthenticationProvider authenticationProvider = mock(AuthenticationProvider.class);
-        when(authenticationProvider.loadUserByUsername(any(io.gravitee.am.identityprovider.api.Authentication.class))).thenReturn(Maybe.error(new BadCredentialsException()));
-        AuthenticationProvider authenticationProvider2 = mock(AuthenticationProvider.class);
-        when(authenticationProvider2.loadUserByUsername(any(io.gravitee.am.identityprovider.api.Authentication.class))).thenReturn(Maybe.error(new BadCredentialsException()));
-        when(identityProviderManager.getIdentityProvider("idp1")).thenReturn(new IdentityProvider());
-        when(identityProviderManager.getIdentityProvider("idp2")).thenReturn(new IdentityProvider());
-        when(identityProviderManager.get("idp1")).thenReturn(authenticationProvider);
-        when(identityProviderManager.get("idp2")).thenReturn(authenticationProvider2);
+        Assertions.assertThrows(org.springframework.security.authentication.BadCredentialsException.class, () -> {
+            AuthenticationProvider authenticationProvider = mock(AuthenticationProvider.class);
+            when(authenticationProvider.loadUserByUsername(any(io.gravitee.am.identityprovider.api.Authentication.class))).thenReturn(Maybe.error(new BadCredentialsException()));
+            AuthenticationProvider authenticationProvider2 = mock(AuthenticationProvider.class);
+            when(authenticationProvider2.loadUserByUsername(any(io.gravitee.am.identityprovider.api.Authentication.class))).thenReturn(Maybe.error(new BadCredentialsException()));
+            when(identityProviderManager.getIdentityProvider("idp1")).thenReturn(new IdentityProvider());
+            when(identityProviderManager.getIdentityProvider("idp2")).thenReturn(new IdentityProvider());
+            when(identityProviderManager.get("idp1")).thenReturn(authenticationProvider);
+            when(identityProviderManager.get("idp2")).thenReturn(authenticationProvider2);
 
-        Authentication authentication = managementAuthenticationProvider.authenticate(new UsernamePasswordAuthenticationToken("username", "password"));
+            Authentication authentication = managementAuthenticationProvider.authenticate(new UsernamePasswordAuthenticationToken("username", "password"));
 
-        Assert.assertNull(authentication);
-        verify(identityProviderManager, times(1)).get("idp1");
-        verify(identityProviderManager, times(1)).get("idp2");
+            Assert.assertNull(authentication);
+            verify(identityProviderManager, times(1)).get("idp1");
+            verify(identityProviderManager, times(1)).get("idp2");
+        });
+
     }
 
     @Test
