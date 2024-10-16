@@ -114,6 +114,7 @@ public class BulkEndpoint {
         if (isEmpty(bulkRequest.getOperations())) {
             throw new InvalidValueException("Bulk request requires at least one operation");
         }
+        
         if (bulkRequest.getOperations().size() > BULK_MAX_REQUEST_OPERATIONS) {// TODO make this configurable in AM-3572
             throw TooManyOperationException.tooManyOperation(BULK_MAX_REQUEST_OPERATIONS);// TODO make this configurable in AM-3572
         }
