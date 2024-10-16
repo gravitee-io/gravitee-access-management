@@ -39,6 +39,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.List;
 import java.util.stream.IntStream;
 
 import static io.gravitee.am.gateway.handler.scim.model.BulkRequest.BULK_REQUEST_SCHEMA;
@@ -87,7 +88,7 @@ public class BulkEndpointTest extends RxWebTestBase {
     @Test
     public void should_reject_too_many_request() throws Exception {
         final var bulkRequest = new BulkRequest();
-        bulkRequest.setOperations(IntStream.range(0, BulkEndpoint.BULK_MAX_REQUEST_OPERATIONS + 1).mapToObj(i -> new BulkOperation()).toList());
+        bulkRequest.setOperations(IntStream.range(0, BulkEndpoint.BULK_MAX_REQUEST_OPERATIONS + 1).mapToObj(i -> bulkOp(valueOf(i))).toList());
         bulkRequest.setSchemas(of(BULK_REQUEST_SCHEMA));
         testRequest(
                 HttpMethod.POST,
@@ -100,6 +101,29 @@ public class BulkEndpointTest extends RxWebTestBase {
                 "{\n" +
                         "  \"status\" : \"413\",\n" +
                         "  \"detail\" : \"The bulk operation exceeds the maximum number of operations ("+BulkEndpoint.BULK_MAX_REQUEST_OPERATIONS+").\",\n" +
+                        "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
+                        "}");
+
+        verify(bulkService, never()).processBulkRequest(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    public void should_reject_duplicated_bulkId() throws Exception {
+        final var bulkRequest = new BulkRequest();
+        bulkRequest.setOperations(List.of(bulkOp("id"), bulkOp("id")));
+        bulkRequest.setSchemas(of(BULK_REQUEST_SCHEMA));
+        testRequest(
+                HttpMethod.POST,
+                "/Bulk",
+                req -> {
+                    req.end(Json.encode(bulkRequest));
+                },
+                400,
+                "Bad Request",
+                "{\n" +
+                        "  \"status\" : \"400\",\n" +
+                        "  \"scimType\" : \"invalidValue\",\n" +
+                        "  \"detail\" : \"bulkId must be unique across all Operations\",\n" +
                         "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
                         "}");
 
@@ -145,6 +169,12 @@ public class BulkEndpointTest extends RxWebTestBase {
                         "}");
 
         verify(bulkService).processBulkRequest(any(), any(), any(), any(), any());
+    }
+
+    private static BulkOperation bulkOp(String bulkId){
+        BulkOperation operation = new BulkOperation();
+        operation.setBulkId(bulkId);
+        return operation;
     }
 
 }

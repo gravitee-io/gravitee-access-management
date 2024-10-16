@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.TooManyOperationException;
+import io.gravitee.am.gateway.handler.scim.model.BulkOperation;
 import io.gravitee.am.gateway.handler.scim.model.BulkRequest;
 import io.gravitee.am.gateway.handler.scim.service.BulkService;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
@@ -109,6 +110,9 @@ public class BulkEndpoint {
         }
         if (bulkRequest.getOperations().size() > BULK_MAX_REQUEST_OPERATIONS) {// TODO make this configurable in AM-3572
             throw TooManyOperationException.tooManyOperation(BULK_MAX_REQUEST_OPERATIONS);// TODO make this configurable in AM-3572
+        }
+        if (bulkRequest.getOperations().stream().map(BulkOperation::getBulkId).distinct().count() != bulkRequest.getOperations().size()){
+            throw new InvalidValueException("bulkId must be unique across all Operations");
         }
         return bulkRequest;
     }
