@@ -16,9 +16,11 @@
 package io.gravitee.am.management.handlers.management.api;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.adapter.ScopeApprovalAdapter;
 import io.gravitee.am.management.handlers.management.api.authentication.view.TemplateResolver;
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
 import io.gravitee.am.management.handlers.management.api.preview.PreviewService;
@@ -74,9 +76,13 @@ import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.impl.I18nDictionaryService;
+import io.gravitee.am.service.validators.email.UserEmail;
+import io.gravitee.am.service.validators.email.UserEmailConstraintValidator;
 import io.gravitee.am.service.validators.email.resource.EmailTemplateValidator;
 import io.gravitee.am.service.validators.flow.FlowValidator;
+import io.gravitee.am.service.validators.jsonstring.JsonStringValidator;
 import io.gravitee.am.service.validators.user.UserValidator;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.Priority;
 import jakarta.servlet.http.HttpServletRequest;
@@ -90,18 +96,16 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.mock.env.MockEnvironment;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.support.AnnotationConfigContextLoader;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.thymeleaf.TemplateEngine;
 
 import javax.inject.Named;
@@ -117,13 +121,14 @@ import static org.mockito.Mockito.when;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(loader = AnnotationConfigContextLoader.class)
+@SpringJUnitConfig(classes = JerseySpringTest.ContextConfiguration.class)
 public abstract class JerseySpringTest {
 
     protected static final String USER_NAME = "UnitTests";
 
-    protected ObjectMapper objectMapper = new ObjectMapperResolver().getContext(ObjectMapper.class);
+    protected ObjectMapper objectMapper = new ObjectMapperResolver()
+            .getContext(ObjectMapper.class)
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     @Autowired
     @Named("managementOrganizationUserService")
@@ -276,14 +281,32 @@ public abstract class JerseySpringTest {
     @Autowired
     protected PasswordPolicyService passwordPolicyService;
 
-    @Before
+    @Autowired
+    protected ScopeApprovalAdapter scopeApprovalAdapter;
+
+    @BeforeEach
     public void init() {
         when(permissionService.hasPermission(any(User.class), any(PermissionAcls.class))).thenReturn(Single.just(true));
     }
 
     @Configuration
-    @ComponentScan("io.gravitee.am.management.handlers.management.api.resources.enhancer")
     static class ContextConfiguration {
+
+
+        @Bean
+        public ScopeApprovalAdapter scopeApprovalAdapter(){
+            return Mockito.mock(ScopeApprovalAdapter.class);
+        }
+        @Bean
+        public UserEmailConstraintValidator userEmailConstraintValidator(){
+            MockEnvironment mockEnvironment = new MockEnvironment().withProperty(UserEmail.PROPERTY_USER_EMAIL_REQUIRED, "false");
+            return new UserEmailConstraintValidator(mockEnvironment);
+        }
+
+        @Bean
+        public JsonStringValidator jsonStringValidator(){
+            return new JsonStringValidator(new ObjectMapper());
+        }
 
         @Bean
         public OrganizationService organizationService() {
@@ -495,7 +518,9 @@ public abstract class JerseySpringTest {
 
         @Bean
         public EmailTemplateValidator emailResourceValidator() {
-            return mock(EmailTemplateValidator.class);
+            EmailTemplateValidator mock = mock(EmailTemplateValidator.class);
+            when(mock.validate(Mockito.any())).thenReturn(Completable.complete());
+            return mock;
         }
 
         @Bean
@@ -591,12 +616,12 @@ public abstract class JerseySpringTest {
         return _jerseyTest.target(path);
     }
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         _jerseyTest.setUp();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         _jerseyTest.tearDown();
     }

@@ -25,8 +25,8 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.core.Response;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -49,7 +49,7 @@ public class UserRolesResourceTest extends JerseySpringTest {
     private Domain mockDomain;
     private String domainId;
 
-    @Before
+    @BeforeEach
     public void before(){
         domainId = "domain-1";
         mockDomain = new Domain();

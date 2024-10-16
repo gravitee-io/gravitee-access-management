@@ -16,23 +16,23 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
-import io.gravitee.am.model.Application;
+import io.gravitee.am.management.handlers.management.api.model.ScopeApprovalEntity;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
-import io.gravitee.am.model.oauth2.Scope;
-import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.core.Response;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 
 /**
@@ -50,30 +50,22 @@ public class UserConsentsResourceTest extends JerseySpringTest {
         final User mockUser = new User();
         mockUser.setId("user-id-1");
 
-        final Application mockClient = new Application();
-        mockClient.setId("client-id-1");
 
-        final Scope mockScope = new Scope();
-        mockScope.setId("scope-id-1");
-        mockScope.setKey("scope");
-
-        final ScopeApproval scopeApproval = new ScopeApproval();
+        final ScopeApprovalEntity scopeApproval = new ScopeApprovalEntity();
         scopeApproval.setUserId(UserId.internal("user-id-1"));
         scopeApproval.setClientId("clientId");
         scopeApproval.setScope("scope");
         scopeApproval.setDomain(domainId);
 
 
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockClient)).when(applicationService).findByDomainAndClientId(domainId, scopeApproval.getClientId());
-        doReturn(Maybe.just(mockScope)).when(scopeService).findByDomainAndKey(domainId, scopeApproval.getScope());
-        doReturn(Flowable.just(scopeApproval)).when(scopeApprovalService).findByDomainAndUser(domainId, mockUser.getFullId());
+        doReturn(Single.just(List.of(scopeApproval))).when(scopeApprovalAdapter).getUserConsents(anyString(), anyString(), anyString());
 
         final Response response = target("domains")
                 .path(domainId)
                 .path("users")
                 .path(mockUser.getId())
                 .path("consents")
+                .queryParam("clientId", "clientId")
                 .request()
                 .get();
 
@@ -103,14 +95,14 @@ public class UserConsentsResourceTest extends JerseySpringTest {
         final User mockUser = new User();
         mockUser.setId("user-id-1");
 
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Completable.complete()).when(scopeApprovalService).revokeByUser(eq(domainId), eq(mockUser.getFullId()), any());
+        doReturn(Completable.complete()).when(scopeApprovalAdapter).revokeUserConsents(any(), any(),any(), any());
 
         final Response response = target("domains")
                 .path(domainId)
                 .path("users")
                 .path(mockUser.getId())
                 .path("consents")
+                .queryParam("clientId", "clientId")
                 .request()
                 .delete();
 

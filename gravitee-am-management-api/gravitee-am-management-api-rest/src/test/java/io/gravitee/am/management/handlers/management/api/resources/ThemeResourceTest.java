@@ -27,8 +27,8 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Date;
 
@@ -50,7 +50,7 @@ public class ThemeResourceTest extends JerseySpringTest {
     private static final String DOMAIN_ID = "domain-id-1";
     private static final String THEME_ID = "theme-id-1";
 
-    @Before
+    @BeforeEach
     public void initialize() {
         reset(themeService);
     }
