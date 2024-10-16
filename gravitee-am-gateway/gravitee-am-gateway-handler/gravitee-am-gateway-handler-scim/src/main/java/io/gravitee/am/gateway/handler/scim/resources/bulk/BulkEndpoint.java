@@ -41,8 +41,12 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
+import static java.util.List.of;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 /**
@@ -105,6 +109,8 @@ public class BulkEndpoint {
     }
 
     private BulkRequest checkBulkRequest(BulkRequest bulkRequest) {
+        checkSchemas(bulkRequest.getSchemas(), of(BulkRequest.BULK_REQUEST_SCHEMA));
+
         if (isEmpty(bulkRequest.getOperations())) {
             throw new InvalidValueException("Bulk request requires at least one operation");
         }
@@ -126,5 +132,21 @@ public class BulkEndpoint {
 
     protected String location(HttpServerRequest request) {
         return UriBuilderRequest.resolveProxyRequest(request, request.path());
+    }
+
+    protected void checkSchemas(List<String> schemas, List<String> restrictedSchemas) {
+        if (schemas == null || schemas.isEmpty()) {
+            throw new InvalidValueException("Field [schemas] is required");
+        }
+        Set<String> schemaSet = new HashSet<>();
+        // check duplicate and check if values are supported
+        schemas.forEach(schema -> {
+            if (!schemaSet.add(schema)) {
+                throw new InvalidSyntaxException("Duplicate 'schemas' values are forbidden");
+            }
+            if (!restrictedSchemas.contains(schema)) {
+                throw new InvalidSyntaxException("The 'schemas' attribute MUST only contain values defined as 'schema' and 'schemaExtensions' for the resource's defined BulkRequest type");
+            }
+        });
     }
 }
