@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Sets;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.management.handlers.management.api.bulk.BulkRequest;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Organization;
@@ -38,6 +39,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -416,4 +418,32 @@ public class UsersResourceTest extends JerseySpringTest {
         assertTrue(getFilteredElements(data, User::getUsername).containsAll(List.of("service-1", "username-2", "username-3")));
         assertTrue(getFilteredElements(data, User::getPassword).isEmpty());
     }
+
+    @Test
+    public void shouldDeleteBulkOfUsers() {
+        BulkRequest<String> request = new BulkRequest<>(List.of("userId1", "userId2"));
+
+        Mockito.when(organizationUserService.delete(any(),  any(), any(), any())).thenAnswer(a -> Single
+                .just(a.getArgument(2, String.class))
+                .map(id -> {
+                    User user = new User();
+                    user.setId(id);
+                    return user;
+                }));
+
+        final Response response = target("organizations")
+                .path("DEFAULT")
+                .path("users")
+                .path("bulk")
+                .property("jersey.config.client.suppressHttpComplianceValidation", true)
+                .request()
+                .accept("application/json")
+                .method("DELETE", Entity.entity(request, "application/json"));
+
+        Map<String, Object> values = readEntity(response, new TypeReference<>() {});
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        assertEquals(2, ((List) values.get("results")).size());
+    }
+
 }

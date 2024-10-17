@@ -17,6 +17,7 @@
 import fetch from 'cross-fetch';
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import {
+  bulkDeleteOrganisationUsers,
   createOrganisationUser,
   deleteOrganisationUser,
   getCurrentUser,
@@ -57,6 +58,37 @@ describe('when using the users commands', () => {
     expect(organisationUser.lastName).toEqual(payload.lastName);
     expect(organisationUser.username).toEqual(payload.username);
     expect(organisationUser.email).toEqual(payload.email);
+  });
+});
+
+describe('when using the users bulk delete command', () => {
+  let users = [];
+  const notExistingUserId = '0000-0000-0000';
+
+  beforeAll(async () => {
+    const payload1 = {
+      firstName: 'firstName1',
+      lastName: 'lastName2',
+      email: `email1@mail.com`,
+      username: 'organization_username_bulk_1',
+      password: password,
+      preRegistration: false,
+    };
+    const payload2 = {
+      firstName: 'firstName1',
+      lastName: 'lastName2',
+      email: `email1@mail.com`,
+      username: 'organization_username_bulk_2',
+      password: password,
+      preRegistration: false,
+    };
+    await createOrganisationUser(accessToken, payload1).then((res) => users.push(res.id));
+    await createOrganisationUser(accessToken, payload2).then((res) => users.push(res.id));
+  });
+  it('should remove bulk of users', async () => {
+    let response = await bulkDeleteOrganisationUsers(accessToken, [...users, notExistingUserId]);
+    users.forEach((userId, idx) => expect(response.results[idx].success));
+    expect(!response.results[2].success);
   });
 });
 

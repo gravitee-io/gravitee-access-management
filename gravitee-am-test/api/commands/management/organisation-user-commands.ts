@@ -44,4 +44,10 @@ export const deleteOrganisationUser = (accessToken, userId) =>
     user: userId,
   });
 
+export const bulkDeleteOrganisationUsers = (accessToken, userIds) =>
+  getUserApi(accessToken).bulkDeleteOrganizationUsers({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    users: userIds,
+  });
+
 export const getCurrentUser = (accessToken) => getUserApi(accessToken).get();

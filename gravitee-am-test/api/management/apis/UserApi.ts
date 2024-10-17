@@ -30,53 +30,38 @@ import * as runtime from '../runtime';
 import {
   Audit,
   AuditFromJSON,
-  AuditToJSON,
   Credential,
   CredentialFromJSON,
-  CredentialToJSON,
   EmailValue,
-  EmailValueFromJSON,
   EmailValueToJSON,
   EnrolledFactor,
   EnrolledFactorFromJSON,
-  EnrolledFactorToJSON,
   NewUser,
-  NewUserFromJSON,
   NewUserToJSON,
   Page,
   PageFromJSON,
-  PageToJSON,
   PasswordValue,
-  PasswordValueFromJSON,
   PasswordValueToJSON,
   Role,
   RoleFromJSON,
-  RoleToJSON,
   ScopeApprovalEntity,
   ScopeApprovalEntityFromJSON,
-  ScopeApprovalEntityToJSON,
   StatusEntity,
-  StatusEntityFromJSON,
   StatusEntityToJSON,
   UpdateUser,
-  UpdateUserFromJSON,
   UpdateUserToJSON,
   User,
-  UserFromJSON,
-  UserToJSON,
   UserEntity,
   UserEntityFromJSON,
-  UserEntityToJSON,
+  UserFromJSON,
+  UsernameEntity,
+  UsernameEntityToJSON,
   UserNotificationContent,
   UserNotificationContentFromJSON,
-  UserNotificationContentToJSON,
   UserPage,
   UserPageFromJSON,
-  UserPageToJSON,
-  UsernameEntity,
-  UsernameEntityFromJSON,
-  UsernameEntityToJSON,
 } from '../models';
+import { BulkDeleteUsersResponse, BulkDeleteUsersResponseFromJSON } from '../models/BulkDeleteUsersResponse';
 
 export interface DeleteRequest {
   organizationId: string;
@@ -125,6 +110,11 @@ export interface Delete2Request {
 export interface DeleteOrganizationUserRequest {
   organizationId: string;
   user: string;
+}
+
+export interface BulkDeleteOrganizationUsersRequest {
+  organizationId: string;
+  users: string[];
 }
 
 export interface DeleteUserRequest {
@@ -805,6 +795,58 @@ export class UserApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<void> {
     await this.deleteOrganizationUserRaw(requestParameters, initOverrides);
+  }
+
+  async bulkDeleteOrganizationUsersRaw(
+    requestParameters: BulkDeleteOrganizationUsersRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<BulkDeleteUsersResponse>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling deleteOrganizationUser.',
+      );
+    }
+
+    if (requestParameters.users === null || requestParameters.users === undefined) {
+      throw new runtime.RequiredError(
+        'users',
+        'Required parameter requestParameters.user was null or undefined when calling deleteOrganizationUser.',
+      );
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.apiKey) {
+      headerParameters['Authorization'] = this.configuration.apiKey('Authorization'); // gravitee-auth authentication
+    }
+
+    headerParameters['Content-type'] = 'application/json';
+    headerParameters['Accept'] = 'application/json';
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/users/bulk`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'DELETE',
+        headers: headerParameters,
+        body: {
+          items: requestParameters.users,
+        },
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => BulkDeleteUsersResponseFromJSON(jsonValue));
+  }
+
+  async bulkDeleteOrganizationUsers(
+    requestParameters: BulkDeleteOrganizationUsersRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<BulkDeleteUsersResponse> {
+    const response = await this.bulkDeleteOrganizationUsersRaw(requestParameters, initOverrides);
+    return await response.value();
   }
 
   /**
