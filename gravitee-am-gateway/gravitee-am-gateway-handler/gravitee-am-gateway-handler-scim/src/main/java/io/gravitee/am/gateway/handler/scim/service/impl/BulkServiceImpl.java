@@ -69,7 +69,7 @@ public class BulkServiceImpl implements BulkService {
     @Override
     public Single<BulkResponse> processBulkRequest(BulkRequest bulkRequest, AuthenticationContext authenticationContext, String baseUrl, Client client, User principal) {
         return Flowable.fromIterable(bulkRequest.getOperations())
-                .flatMapSingle(operation -> checkOperation(operation)
+                .concatMapSingle(operation -> checkOperation(operation)
                             .flatMap(validOperation -> {
                                 switch (validOperation.getMethod()) {
                                     case POST:
