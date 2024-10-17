@@ -54,11 +54,11 @@ import {
   CertificatesResourceToJSON,
 } from './CertificatesResource';
 import {
-  DeviceIdentifiersResource,
+  DeviceIdentifier,
   DeviceIdentifiersResourceFromJSON,
   DeviceIdentifiersResourceFromJSONTyped,
   DeviceIdentifiersResourceToJSON,
-} from './DeviceIdentifiersResource';
+} from './DeviceIdentifier';
 import { EmailsResource, EmailsResourceFromJSON, EmailsResourceFromJSONTyped, EmailsResourceToJSON } from './EmailsResource';
 import {
   ExtensionGrantsResource,
@@ -223,10 +223,10 @@ export interface DomainResource {
   botDetectionsResource?: BotDetectionsResource;
   /**
    *
-   * @type {DeviceIdentifiersResource}
+   * @type {DeviceIdentifier}
    * @memberof DomainResource
    */
-  deviceIdentifiersResource?: DeviceIdentifiersResource;
+  deviceIdentifiersResource?: DeviceIdentifier;
   /**
    *
    * @type {AuthenticationDeviceNotifiersResource}

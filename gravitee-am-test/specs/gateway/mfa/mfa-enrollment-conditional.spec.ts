@@ -59,14 +59,6 @@ function defaultApplicationSettings() {
   };
 }
 
-const defaultClientSettings = {
-  clientId: 'test-client',
-  name: 'test-client',
-  id: 'test-client',
-  clientSecret: 'test-client',
-  redirectUris: ['https://auth-nightly.gravitee.io/myApp/callback'],
-};
-
 const domain = {
   admin: { username: 'admin', password: 'adminadmin' },
   domain: { domainHrid: 'mfa-test-domain-enroll-conditional' },

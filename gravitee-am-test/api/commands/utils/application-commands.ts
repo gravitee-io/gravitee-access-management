@@ -19,19 +19,19 @@ import { expect } from '@jest/globals';
 import {Domain,PatchApplication} from '../../management/models';
 
 export const createTestApp = async (name: string, domain: Domain, accessToken: string, applicationType = 'web', body: PatchApplication = {}) => {
-    const creatAppSettings =
-        applicationType !== 'service'
-            ? {
-                name: name,
-                type: applicationType,
-                clientId: `${name}-id`,
-                redirectUris: body['settings']?.oauth?.redirectUris,
-            }
-            : {
-                name: name,
-                type: applicationType,
-                clientId: `${name}-id`,
-            };
+  const creatAppSettings =
+    applicationType !== 'service'
+      ? {
+          name: name,
+          type: applicationType,
+          clientId: `${name}-id`,
+          redirectUris: body['settings']?.oauth?.redirectUris,
+        }
+      : {
+          name: name,
+          type: applicationType,
+          clientId: `${name}-id`,
+        };
   const application = await createApplication(domain.id, accessToken, creatAppSettings).then((app) =>
     updateApplication(domain.id, accessToken, body, app.id).then((updatedApp) => {
       // restore the clientSecret coming from the create order

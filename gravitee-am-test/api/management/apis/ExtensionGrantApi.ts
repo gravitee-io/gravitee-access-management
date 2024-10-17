@@ -30,51 +30,44 @@ import * as runtime from '../runtime';
 import {
   ExtensionGrant,
   ExtensionGrantFromJSON,
-  ExtensionGrantToJSON,
   NewExtensionGrant,
-  NewExtensionGrantFromJSON,
   NewExtensionGrantToJSON,
   UpdateExtensionGrant,
-  UpdateExtensionGrantFromJSON,
   UpdateExtensionGrantToJSON,
 } from '../models';
 
-export interface Create2Request {
+export interface CreateExtensionGrantRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
   extensionGrant: NewExtensionGrant;
 }
 
-export interface Delete5Request {
+export interface DeleteExtensionGrantRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
   extensionGrant: string;
 }
 
-export interface Get10Request {
+export interface GetExtensionGrantRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
   extensionGrant: string;
 }
 
-export interface Get28Request {
+export interface GetExtensionGrantRequest {
   extensionGrant: string;
 }
 
-export interface GetSchema2Request {
-  extensionGrant: string;
-}
-
-export interface List11Request {
+export interface ListExtensionGrantRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
 }
 
-export interface Update2Request {
+export interface UpdateExtensionGrantRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
@@ -90,32 +83,35 @@ export class ExtensionGrantApi extends runtime.BaseAPI {
    * User must have the DOMAIN_EXTENSION_GRANT[CREATE] permission on the specified domain or DOMAIN_EXTENSION_GRANT[CREATE] permission on the specified environment or DOMAIN_EXTENSION_GRANT[CREATE] permission on the specified organization
    * Create a extension grant
    */
-  async create2Raw(
-    requestParameters: Create2Request,
+  async createExtensionGrantRaw(
+    requestParameters: CreateExtensionGrantRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
+  ): Promise<runtime.ApiResponse<ExtensionGrant>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling create2.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling createExtensionGrantRaw.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling create2.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling createExtensionGrantRaw.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling create2.');
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling createExtensionGrantRaw.',
+      );
     }
 
     if (requestParameters.extensionGrant === null || requestParameters.extensionGrant === undefined) {
       throw new runtime.RequiredError(
         'extensionGrant',
-        'Required parameter requestParameters.extensionGrant was null or undefined when calling create2.',
+        'Required parameter requestParameters.extensionGrant was null or undefined when calling createExtensionGrantRaw.',
       );
     }
 
@@ -143,47 +139,54 @@ export class ExtensionGrantApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.VoidApiResponse(response);
+    return new runtime.JSONApiResponse(response, (jsonValue) => ExtensionGrantFromJSON(jsonValue));
   }
 
   /**
    * User must have the DOMAIN_EXTENSION_GRANT[CREATE] permission on the specified domain or DOMAIN_EXTENSION_GRANT[CREATE] permission on the specified environment or DOMAIN_EXTENSION_GRANT[CREATE] permission on the specified organization
    * Create a extension grant
    */
-  async create2(requestParameters: Create2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.create2Raw(requestParameters, initOverrides);
+  async createExtensionGrant(
+    requestParameters: CreateExtensionGrantRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<ExtensionGrant> {
+    const extensionGrantApiResponse = await this.createExtensionGrantRaw(requestParameters, initOverrides);
+    return await extensionGrantApiResponse.value();
   }
 
   /**
    * User must have the DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified domain or DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified environment or DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified organization
    * Delete a extension grant
    */
-  async delete5Raw(
-    requestParameters: Delete5Request,
+  async deleteExtensionGrantRaw(
+    requestParameters: DeleteExtensionGrantRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling delete5.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling deleteExtensionGrantRaw.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling delete5.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling deleteExtensionGrantRaw.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling delete5.');
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling deleteExtensionGrantRaw.',
+      );
     }
 
     if (requestParameters.extensionGrant === null || requestParameters.extensionGrant === undefined) {
       throw new runtime.RequiredError(
         'extensionGrant',
-        'Required parameter requestParameters.extensionGrant was null or undefined when calling delete5.',
+        'Required parameter requestParameters.extensionGrant was null or undefined when calling deleteExtensionGrantRaw.',
       );
     }
 
@@ -216,40 +219,46 @@ export class ExtensionGrantApi extends runtime.BaseAPI {
    * User must have the DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified domain or DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified environment or DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified organization
    * Delete a extension grant
    */
-  async delete5(requestParameters: Delete5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.delete5Raw(requestParameters, initOverrides);
+  async deleteExtensionGrant(
+    requestParameters: DeleteExtensionGrantRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.deleteExtensionGrantRaw(requestParameters, initOverrides);
   }
 
   /**
    * User must have the DOMAIN_EXTENSION_GRANT[READ] permission on the specified domain or DOMAIN_EXTENSION_GRANT[READ] permission on the specified environment or DOMAIN_EXTENSION_GRANT[READ] permission on the specified organization
    * Get a extension grant
    */
-  async get10Raw(
-    requestParameters: Get10Request,
+  async getExtensionGrantRaw(
+    requestParameters: GetExtensionGrantRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<ExtensionGrant>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling get10.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getExtensionGrantRaw.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling get10.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling getExtensionGrantRaw.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling get10.');
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling getExtensionGrantRaw.',
+      );
     }
 
     if (requestParameters.extensionGrant === null || requestParameters.extensionGrant === undefined) {
       throw new runtime.RequiredError(
         'extensionGrant',
-        'Required parameter requestParameters.extensionGrant was null or undefined when calling get10.',
+        'Required parameter requestParameters.extensionGrant was null or undefined when calling getExtensionGrantRaw.',
       );
     }
 
@@ -282,129 +291,41 @@ export class ExtensionGrantApi extends runtime.BaseAPI {
    * User must have the DOMAIN_EXTENSION_GRANT[READ] permission on the specified domain or DOMAIN_EXTENSION_GRANT[READ] permission on the specified environment or DOMAIN_EXTENSION_GRANT[READ] permission on the specified organization
    * Get a extension grant
    */
-  async get10(requestParameters: Get10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ExtensionGrant> {
-    const response = await this.get10Raw(requestParameters, initOverrides);
+  async getExtensionGrant(
+    requestParameters: GetExtensionGrantRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<ExtensionGrant> {
+    const response = await this.getExtensionGrantRaw(requestParameters, initOverrides);
     return await response.value();
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * Get an extension grant plugin
-   */
-  async get28Raw(
-    requestParameters: Get28Request,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters.extensionGrant === null || requestParameters.extensionGrant === undefined) {
-      throw new runtime.RequiredError(
-        'extensionGrant',
-        'Required parameter requestParameters.extensionGrant was null or undefined when calling get28.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.apiKey) {
-      headerParameters['Authorization'] = this.configuration.apiKey('Authorization'); // gravitee-auth authentication
-    }
-
-    const response = await this.request(
-      {
-        path: `/platform/plugins/extensionGrants/{extensionGrant}`.replace(
-          `{${'extensionGrant'}}`,
-          encodeURIComponent(String(requestParameters.extensionGrant)),
-        ),
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * Get an extension grant plugin
-   */
-  async get28(requestParameters: Get28Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.get28Raw(requestParameters, initOverrides);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * Get an extension grant plugin\'s schema
-   */
-  async getSchema2Raw(
-    requestParameters: GetSchema2Request,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters.extensionGrant === null || requestParameters.extensionGrant === undefined) {
-      throw new runtime.RequiredError(
-        'extensionGrant',
-        'Required parameter requestParameters.extensionGrant was null or undefined when calling getSchema2.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.apiKey) {
-      headerParameters['Authorization'] = this.configuration.apiKey('Authorization'); // gravitee-auth authentication
-    }
-
-    const response = await this.request(
-      {
-        path: `/platform/plugins/extensionGrants/{extensionGrant}/schema`.replace(
-          `{${'extensionGrant'}}`,
-          encodeURIComponent(String(requestParameters.extensionGrant)),
-        ),
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * Get an extension grant plugin\'s schema
-   */
-  async getSchema2(requestParameters: GetSchema2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.getSchema2Raw(requestParameters, initOverrides);
   }
 
   /**
    * User must have the DOMAIN_EXTENSION_GRANT[LIST] permission on the specified domain or DOMAIN_EXTENSION_GRANT[LIST] permission on the specified environment or DOMAIN_EXTENSION_GRANT[LIST] permission on the specified organization. Each returned extension grant is filtered and contains only basic information such as id, name and type.
    * List registered extension grants for a security domain
    */
-  async list11Raw(
-    requestParameters: List11Request,
+  async listExtensionGrantRaw(
+    requestParameters: ListExtensionGrantRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<Set<ExtensionGrant>>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling list11.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listExtensionGrantRaw.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling list11.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling listExtensionGrantRaw.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling list11.');
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling listExtensionGrantRaw.',
+      );
     }
 
     const queryParameters: any = {};
@@ -435,82 +356,54 @@ export class ExtensionGrantApi extends runtime.BaseAPI {
    * User must have the DOMAIN_EXTENSION_GRANT[LIST] permission on the specified domain or DOMAIN_EXTENSION_GRANT[LIST] permission on the specified environment or DOMAIN_EXTENSION_GRANT[LIST] permission on the specified organization. Each returned extension grant is filtered and contains only basic information such as id, name and type.
    * List registered extension grants for a security domain
    */
-  async list11(requestParameters: List11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Set<ExtensionGrant>> {
-    const response = await this.list11Raw(requestParameters, initOverrides);
+  async listExtensionGrant(
+    requestParameters: ListExtensionGrantRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Set<ExtensionGrant>> {
+    const response = await this.listExtensionGrantRaw(requestParameters, initOverrides);
     return await response.value();
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * List extension grant plugins
-   */
-  async list28Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.apiKey) {
-      headerParameters['Authorization'] = this.configuration.apiKey('Authorization'); // gravitee-auth authentication
-    }
-
-    const response = await this.request(
-      {
-        path: `/platform/plugins/extensionGrants`,
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * List extension grant plugins
-   */
-  async list28(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.list28Raw(initOverrides);
   }
 
   /**
    * User must have the DOMAIN_EXTENSION_GRANT[UPDATE] permission on the specified domain or DOMAIN_EXTENSION_GRANT[UPDATE] permission on the specified environment or DOMAIN_EXTENSION_GRANT[UPDATE] permission on the specified organization
    * Update a extension grant
    */
-  async update2Raw(
-    requestParameters: Update2Request,
+  async updateExtensionGrantRaw(
+    requestParameters: UpdateExtensionGrantRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<ExtensionGrant>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling update2.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling updateExtensionGrantRaw.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling update2.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling updateExtensionGrantRaw.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling update2.');
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling updateExtensionGrantRaw.',
+      );
     }
 
     if (requestParameters.extensionGrant === null || requestParameters.extensionGrant === undefined) {
       throw new runtime.RequiredError(
         'extensionGrant',
-        'Required parameter requestParameters.extensionGrant was null or undefined when calling update2.',
+        'Required parameter requestParameters.extensionGrant was null or undefined when calling updateExtensionGrantRaw.',
       );
     }
 
     if (requestParameters.tokenGranter === null || requestParameters.tokenGranter === undefined) {
       throw new runtime.RequiredError(
         'tokenGranter',
-        'Required parameter requestParameters.tokenGranter was null or undefined when calling update2.',
+        'Required parameter requestParameters.tokenGranter was null or undefined when calling updateExtensionGrantRaw.',
       );
     }
 
@@ -546,8 +439,11 @@ export class ExtensionGrantApi extends runtime.BaseAPI {
    * User must have the DOMAIN_EXTENSION_GRANT[UPDATE] permission on the specified domain or DOMAIN_EXTENSION_GRANT[UPDATE] permission on the specified environment or DOMAIN_EXTENSION_GRANT[UPDATE] permission on the specified organization
    * Update a extension grant
    */
-  async update2(requestParameters: Update2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ExtensionGrant> {
-    const response = await this.update2Raw(requestParameters, initOverrides);
+  async updateExtensionGrant(
+    requestParameters: UpdateExtensionGrantRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<ExtensionGrant> {
+    const response = await this.updateExtensionGrantRaw(requestParameters, initOverrides);
     return await response.value();
   }
 }

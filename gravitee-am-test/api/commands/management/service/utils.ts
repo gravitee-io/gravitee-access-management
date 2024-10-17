@@ -29,9 +29,10 @@ import { ThemeApi } from '@management-apis/ThemeApi';
 import { FormApi } from '@management-apis/FormApi';
 import { FactorApi } from '@management-apis/FactorApi';
 import { ResourceApi } from '@management-apis/ResourceApi';
-import { DevicesApi } from '@management-apis/DevicesApi';
 import { DeviceIdentifiersApi } from '@management-apis/DeviceIdentifiersApi';
 import { PasswordPolicyApi } from '@management-apis/PasswordPolicyApi';
+import { ExtensionGrantApi } from '@management-apis/ExtensionGrantApi';
+import { BotDetectionApi } from '@management-apis/BotDetectionApi';
 
 function createAccessTokenConfig(accessToken) {
   return new Configuration({ ...managementConf, apiKey: 'Bearer ' + accessToken });
@@ -98,10 +99,18 @@ export function getPasswordPolicyApi(accessToken) {
   return new PasswordPolicyApi(createAccessTokenConfig(accessToken));
 }
 
-export function getResourceApi(accessToke) {
-  return new ResourceApi(createAccessTokenConfig(accessToke));
+export function getResourceApi(accessToken) {
+  return new ResourceApi(createAccessTokenConfig(accessToken));
 }
 
 export function getDeviceIdentifiersApi(accessToken) {
   return new DeviceIdentifiersApi(createAccessTokenConfig(accessToken));
+}
+
+export function getExtensionApi(accessToken) {
+  return new ExtensionGrantApi(createAccessTokenConfig(accessToken));
+}
+
+export function getBotDetecionApi(accessToken) {
+  return new BotDetectionApi(createAccessTokenConfig(accessToken));
 }
