@@ -36,7 +36,8 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.InstanceOfAssertFactories;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -256,7 +257,7 @@ public class UserResourceTest extends JerseySpringTest {
 
         final String userId = "userId";
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Completable.complete()).when(userService).delete(eq(ReferenceType.DOMAIN), eq(domainId), eq(userId), any());
+        doReturn(Single.just(Mockito.mock(User.class))).when(userService).delete(eq(ReferenceType.DOMAIN), eq(domainId), eq(userId), any());
         doReturn(Completable.complete()).when(userActivityService).deleteByDomainAndUser(domainId, userId);
 
         final Response response = target("domains").path(domainId).path("users").path(userId).request().delete();
@@ -483,9 +484,9 @@ public class UserResourceTest extends JerseySpringTest {
         var accessToken1 = AccountAccessToken.builder().tokenId("1").build();
         var accessToken2 = AccountAccessToken.builder().tokenId("2").build();
 
-        doReturn(Flowable.just(List.of(accessToken1, accessToken2))).when(organizationUserService).findAccountAccessTokens("DEFAULT", userId);
+        doReturn(Flowable.just(accessToken1, accessToken2)).when(organizationUserService).findAccountAccessTokens("DEFAULT", userId);
 
-        final Response response = target("domains").path(domainId).path("users").path(userId).path("tokens").request().get();
+        final Response response = target("organizations").path("DEFAULT").path("users").path(userId).path("tokens").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final List<AccountAccessToken> tokens = readListEntity(response, AccountAccessToken.class);

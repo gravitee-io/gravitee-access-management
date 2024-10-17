@@ -29,7 +29,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
@@ -94,7 +94,7 @@ public class DeviceIdentifiersResourceTest extends JerseySpringTest {
         var newDeviceIdentifier = new NewDeviceIdentifier();
         newDeviceIdentifier.setName("newDeviceIdentifier-name");
         newDeviceIdentifier.setType("newDeviceIdentifier-type");
-        newDeviceIdentifier.setConfiguration("newDeviceIdentifier-configuration");
+        newDeviceIdentifier.setConfiguration("{}");
 
         DeviceIdentifier deviceIdentifier = new DeviceIdentifier();
         deviceIdentifier.setId("deviceIdentifier-id");

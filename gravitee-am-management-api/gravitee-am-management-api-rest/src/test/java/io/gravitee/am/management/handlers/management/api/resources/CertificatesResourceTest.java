@@ -28,8 +28,9 @@ import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -123,17 +124,20 @@ public class CertificatesResourceTest extends JerseySpringTest {
         mockCertificate4.setId("certificate-4-id");
         mockCertificate4.setName("certificate-4-name");
         mockCertificate4.setDomain(domainId);
-        mockCertificate4.setConfiguration(null);
+        mockCertificate4.setConfiguration("{}");
 
+        Single<List<CertificateEntity>> certs = Flowable.just(mockCertificate, mockCertificate2, mockCertificate3, mockCertificate4)
+                .map(c -> CertificateEntity.forList(c, Duration.ZERO, true, List.of(), List.of()))
+                .toList();
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(List.of(mockCertificate, mockCertificate2, mockCertificate3, mockCertificate4))).when(certificateService).findByDomainAndUse(domainId, null);
+        doReturn(certs).when(certificateService).findByDomainAndUse(domainId, null);
         doReturn(Flowable.empty()).when(applicationService).findByCertificate(anyString());
 
         final Response response = target("domains").path(domainId).path("certificates").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final List<CertificateEntity> responseEntity = readEntity(response, List.class);
+        final List<CertificateEntity> responseEntity = readListEntity(response, CertificateEntity.class);
         assertEquals(4, responseEntity.size());
 
         CertificateEntity responseCert1 = responseEntity.stream().filter(c -> c.id().equals("certificate-1-id"))
@@ -170,7 +174,7 @@ public class CertificatesResourceTest extends JerseySpringTest {
         NewCertificate newCertificate = new NewCertificate();
         newCertificate.setName("certificate-name");
         newCertificate.setType("certificate-type");
-        newCertificate.setConfiguration("certificate-configuration");
+        newCertificate.setConfiguration("{}");
 
         Certificate certificate = new Certificate();
         certificate.setId("certificate-id");

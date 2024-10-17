@@ -20,7 +20,7 @@ import io.gravitee.am.service.model.plugin.AuthenticationDeviceNotifierPlugin;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.core.Response;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 

@@ -28,8 +28,8 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.any;
@@ -73,7 +73,7 @@ public class EmailsResourceTest extends JerseySpringTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void shouldCreate() {
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();

@@ -33,8 +33,8 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
@@ -58,7 +58,7 @@ public class PasswordPolicyResourceTest extends JerseySpringTest {
 
     protected Domain domain;
 
-    @Before
+    @BeforeEach
     public void init() {
         reset(passwordPolicyService);
         this.domain = mock(Domain.class);

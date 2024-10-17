@@ -26,12 +26,13 @@ import io.reactivex.rxjava3.core.Single;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -54,7 +55,7 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class BuiltInAuthenticationFilterTest {
 
     private static final String AUTH_GRAVITEEIO_AM = "Auth-Graviteeio-AM";
@@ -70,7 +71,7 @@ public class BuiltInAuthenticationFilterTest {
     private BearerAuthenticationFilter filter = new BearerAuthenticationFilter(new AntPathRequestMatcher("/**"));
 
 
-    @Before
+    @BeforeEach
     public void setup() {
         setField(filter, "jwtCookiePath", "/");
         setField(filter, "authCookieName", AUTH_GRAVITEEIO_AM);
@@ -78,147 +79,161 @@ public class BuiltInAuthenticationFilterTest {
         setField(filter, "jwtCookieDomain", "");
     }
 
-    @Test(expected = BadCredentialsException.class)
+    @Test
     public void must_throw_bad_credential_exception() {
-        filter.attemptAuthentication(mock(HttpServletRequest.class), mock(HttpServletResponse.class));
+        Assertions.assertThrows(BadCredentialsException.class, () -> {
+            filter.attemptAuthentication(mock(HttpServletRequest.class), mock(HttpServletResponse.class));
+        });
     }
 
-    @Test(expected = BadCredentialsException.class)
+    @Test
     public void must_throw_bad_credential_empty_cookie() {
-        var request = mock(HttpServletRequest.class);
-        when(request.getCookies()).thenReturn(new Cookie[]{mock(Cookie.class)});
-        filter.attemptAuthentication(request, mock(HttpServletResponse.class));
+        Assertions.assertThrows(BadCredentialsException.class, () -> {
+            var request = mock(HttpServletRequest.class);
+            when(request.getCookies()).thenReturn(new Cookie[]{mock(Cookie.class)});
+            filter.attemptAuthentication(request, mock(HttpServletResponse.class));
+        });
     }
 
-    @Test(expected = BadCredentialsException.class)
+    @Test
     public void must_throw_bad_credential_exception_with_non_matching_authorization() {
-        var request = mock(HttpServletRequest.class);
-        when(request.getHeader(AUTHORIZATION)).thenReturn("Something not matching");
-        filter.attemptAuthentication(request, mock(HttpServletResponse.class));
+        Assertions.assertThrows(BadCredentialsException.class, () -> {
+            var request = mock(HttpServletRequest.class);
+            when(request.getHeader(AUTHORIZATION)).thenReturn("Something not matching");
+            filter.attemptAuthentication(request, mock(HttpServletResponse.class));
+        });
     }
 
-    @Test(expected = BadCredentialsException.class)
+    @Test
     public void must_throw_bad_credential_jwt_badly_parse_cookie() {
-        var request = mock(HttpServletRequest.class);
-        when(request.getCookies()).thenReturn(new Cookie[]{mock(Cookie.class)});
-        filter.attemptAuthentication(request, mock(HttpServletResponse.class));
+        Assertions.assertThrows(BadCredentialsException.class, () -> {
+            var request = mock(HttpServletRequest.class);
+            when(request.getCookies()).thenReturn(new Cookie[]{mock(Cookie.class)});
+            filter.attemptAuthentication(request, mock(HttpServletResponse.class));
+        });
     }
 
-    @Test(expected = BadCredentialsException.class)
+    @Test
     public void must_throw_bad_credential_jwt_badly_parse_cookie_not_found_cookie() {
-        var request = mock(HttpServletRequest.class);
-        final Cookie cookieMock = mock(Cookie.class);
-        when(cookieMock.getName()).thenReturn("Unknown-Cookie");
-        when(request.getCookies()).thenReturn(new Cookie[]{cookieMock});
-        filter.attemptAuthentication(request, mock(HttpServletResponse.class));
+        Assertions.assertThrows(BadCredentialsException.class, () -> {
+            var request = mock(HttpServletRequest.class);
+            final Cookie cookieMock = mock(Cookie.class);
+            when(cookieMock.getName()).thenReturn("Unknown-Cookie");
+            when(request.getCookies()).thenReturn(new Cookie[]{cookieMock});
+            filter.attemptAuthentication(request, mock(HttpServletResponse.class));
+        });
     }
 
-    @Test(expected = BadCredentialsException.class)
+    @Test
     public void must_throw_bad_credential_jwt_badly_parse_cookie_not_malformed_cookie_value() {
-        var request = mock(HttpServletRequest.class);
-        final Cookie cookieMock = mock(Cookie.class);
-        when(cookieMock.getName()).thenReturn(AUTH_GRAVITEEIO_AM);
-        when(cookieMock.getName()).thenReturn("Malformed Cookie Value");
-        when(request.getCookies()).thenReturn(new Cookie[]{cookieMock});
-        filter.attemptAuthentication(request, mock(HttpServletResponse.class));
+        Assertions.assertThrows(BadCredentialsException.class, () -> {
+            var request = mock(HttpServletRequest.class);
+            final Cookie cookieMock = mock(Cookie.class);
+            when(cookieMock.getName()).thenReturn(AUTH_GRAVITEEIO_AM);
+            when(cookieMock.getName()).thenReturn("Malformed Cookie Value");
+            when(request.getCookies()).thenReturn(new Cookie[]{cookieMock});
+            filter.attemptAuthentication(request, mock(HttpServletResponse.class));
+        });
     }
 
-    @Test(expected = BadCredentialsException.class)
+    @Test
     public void must_throw_bad_credential_jwt_badly_parse_authorization() {
-        var request = mock(HttpServletRequest.class);
-        final String aWrongBadlyMadeToken = "aWrongBadlyMadeToken";
+        Assertions.assertThrows(BadCredentialsException.class, () -> {
+            var request = mock(HttpServletRequest.class);
+            final String aWrongBadlyMadeToken = "aWrongBadlyMadeToken";
 
-        when(request.getHeader(AUTHORIZATION)).thenReturn(BEARER_PREFIX + aWrongBadlyMadeToken);
-        when(jwtParser.parse(eq(aWrongBadlyMadeToken))).thenThrow(new IllegalArgumentException("Wrongly parsed token"));
+            when(request.getHeader(AUTHORIZATION)).thenReturn(BEARER_PREFIX + aWrongBadlyMadeToken);
 
-        final HttpServletResponse response = mock(HttpServletResponse.class);
-        doNothing().when(response).addCookie(any());
+            final HttpServletResponse response = mock(HttpServletResponse.class);
+            doNothing().when(response).addCookie(any());
 
-        filter.attemptAuthentication(request, response);
+            filter.attemptAuthentication(request, response);
+        });
     }
 
-    @Test(expected = BadCredentialsException.class)
+    @Test
     public void must_throw_bad_credential_jwt_badly_parse_cookie_not_malformed_cookie_token() {
-        var request = mock(HttpServletRequest.class);
-        final Cookie cookieMock = mock(Cookie.class);
+        Assertions.assertThrows(BadCredentialsException.class, () -> {
+            var request = mock(HttpServletRequest.class);
+            final Cookie cookieMock = mock(Cookie.class);
 
-        final String aWrongBadlyMadeToken = "aWrongBadlyMadeToken";
-        when(cookieMock.getName()).thenReturn(AUTH_GRAVITEEIO_AM);
-        when(cookieMock.getValue()).thenReturn(BEARER_PREFIX + aWrongBadlyMadeToken);
-        when(request.getCookies()).thenReturn(new Cookie[]{cookieMock});
+            final String aWrongBadlyMadeToken = "header.body.signature";
+            when(cookieMock.getName()).thenReturn(AUTH_GRAVITEEIO_AM);
+            when(cookieMock.getValue()).thenReturn(BEARER_PREFIX + aWrongBadlyMadeToken);
+            when(request.getCookies()).thenReturn(new Cookie[]{cookieMock});
 
-        when(jwtParser.parse(eq(aWrongBadlyMadeToken))).thenThrow(new IllegalArgumentException("Wrongly parsed token"));
+            when(jwtParser.parse(eq(aWrongBadlyMadeToken))).thenThrow(new IllegalArgumentException("Wrongly parsed token"));
 
-        final HttpServletResponse response = mock(HttpServletResponse.class);
-        doNothing().when(response).addCookie(any());
+            final HttpServletResponse response = mock(HttpServletResponse.class);
+            doNothing().when(response).addCookie(any());
 
-        filter.attemptAuthentication(request, response);
+            filter.attemptAuthentication(request, response);
+        });
     }
 
-    @Test(expected = BadCredentialsException.class)
+    @Test
     public void must_throw_BadCredentialsException_jwt_org_user_not_present_authorization() {
-        var request = mock(HttpServletRequest.class);
-        final String anActualGreatToken = "anActualGreatToken";
+        Assertions.assertThrows(BadCredentialsException.class, () -> {
+            var request = mock(HttpServletRequest.class);
+            final String anActualGreatToken = "anActualGreatToken";
 
-        when(request.getHeader(AUTHORIZATION)).thenReturn(BEARER_PREFIX + anActualGreatToken);
-        when(jwtParser.parse(eq(anActualGreatToken))).thenReturn(new JWT());
+            when(request.getHeader(AUTHORIZATION)).thenReturn(BEARER_PREFIX + anActualGreatToken);
 
-        final HttpServletResponse response = mock(HttpServletResponse.class);
-        doNothing().when(response).addCookie(any());
+            final HttpServletResponse response = mock(HttpServletResponse.class);
+            doNothing().when(response).addCookie(any());
 
-        filter.attemptAuthentication(request, response);
+            filter.attemptAuthentication(request, response);
+        });
     }
 
-    @Test(expected = BadCredentialsException.class)
+    @Test
     public void must_throw_BadCredentialsException_last_logout() {
-        var request = mock(HttpServletRequest.class);
-        final String anActualGreatToken = "anActualGreatToken";
+        Assertions.assertThrows(BadCredentialsException.class, () -> {
+            var request = mock(HttpServletRequest.class);
+            final String anActualGreatToken = "anActualGreatToken";
 
-        when(request.getHeader(AUTHORIZATION)).thenReturn(BEARER_PREFIX + anActualGreatToken);
-        final JWT jwt = new JWT();
-        jwt.setIat(System.currentTimeMillis() / (2L * 1000L));
-        jwt.put("org", "10");
-        jwt.setSub(UUID.randomUUID().toString());
-        when(jwtParser.parse(eq(anActualGreatToken))).thenReturn(jwt);
-        final User user = new User();
-        user.setId(jwt.getSub());
-        user.setLastLogoutAt(new Date());
-        when(organizationUserService.findById(eq(ReferenceType.ORGANIZATION), eq("10"), eq(jwt.getSub())))
-                .thenReturn(Single.just(user));
+            when(request.getHeader(AUTHORIZATION)).thenReturn(BEARER_PREFIX + anActualGreatToken);
+            final JWT jwt = new JWT();
+            jwt.setIat(System.currentTimeMillis() / (2L * 1000L));
+            jwt.put("org", "10");
+            jwt.setSub(UUID.randomUUID().toString());
+            final User user = new User();
+            user.setId(jwt.getSub());
+            user.setLastLogoutAt(new Date());
 
-        final HttpServletResponse response = mock(HttpServletResponse.class);
-        doNothing().when(response).addCookie(any());
+            final HttpServletResponse response = mock(HttpServletResponse.class);
+            doNothing().when(response).addCookie(any());
 
-        filter.attemptAuthentication(request, response);
+            filter.attemptAuthentication(request, response);
+        });
     }
 
-    @Test(expected = BadCredentialsException.class)
+    @Test
     public void must_throw_BadCredentialsException_username_reset() {
-        var request = mock(HttpServletRequest.class);
-        final String anActualGreatToken = "anActualGreatToken";
+        Assertions.assertThrows(BadCredentialsException.class, () -> {
+            var request = mock(HttpServletRequest.class);
+            final String anActualGreatToken = "anActualGreatToken";
 
-        when(request.getHeader(AUTHORIZATION)).thenReturn(BEARER_PREFIX + anActualGreatToken);
-        final JWT jwt = new JWT();
-        jwt.setIat(System.currentTimeMillis() / (2L * 1000L));
-        jwt.put("org", "10");
-        jwt.setSub(UUID.randomUUID().toString());
-        when(jwtParser.parse(eq(anActualGreatToken))).thenReturn(jwt);
-        final User user = new User();
-        user.setId(jwt.getSub());
-        user.setLastUsernameReset(new Date());
-        when(organizationUserService.findById(eq(ReferenceType.ORGANIZATION), eq("10"), eq(jwt.getSub())))
-                .thenReturn(Single.just(user));
+            when(request.getHeader(AUTHORIZATION)).thenReturn(BEARER_PREFIX + anActualGreatToken);
+            final JWT jwt = new JWT();
+            jwt.setIat(System.currentTimeMillis() / (2L * 1000L));
+            jwt.put("org", "10");
+            jwt.setSub(UUID.randomUUID().toString());
+            final User user = new User();
+            user.setId(jwt.getSub());
+            user.setLastUsernameReset(new Date());
 
-        final HttpServletResponse response = mock(HttpServletResponse.class);
-        doNothing().when(response).addCookie(any());
+            final HttpServletResponse response = mock(HttpServletResponse.class);
+            doNothing().when(response).addCookie(any());
 
-        filter.attemptAuthentication(request, response);
+            filter.attemptAuthentication(request, response);
+        });
     }
 
     @Test
     public void must_return_UsernamePasswordAuthenticationToken_without_roles() {
         var request = mock(HttpServletRequest.class);
-        final String anActualGreatToken = "anActualGreatToken";
+        final String anActualGreatToken = "header.body.signature";
 
         when(request.getHeader(AUTHORIZATION)).thenReturn(BEARER_PREFIX + anActualGreatToken);
         final JWT jwt = new JWT();
@@ -241,7 +256,7 @@ public class BuiltInAuthenticationFilterTest {
     @Test
     public void must_return_UsernamePasswordAuthenticationToken_with_roles() {
         var request = mock(HttpServletRequest.class);
-        final String anActualGreatToken = "anActualGreatToken";
+        final String anActualGreatToken = "header.body.signature";
 
         when(request.getHeader(AUTHORIZATION)).thenReturn(BEARER_PREFIX + anActualGreatToken);
         final JWT jwt = new JWT();
@@ -254,11 +269,11 @@ public class BuiltInAuthenticationFilterTest {
         user.setId(jwt.getSub());
         when(organizationUserService.findById(eq(ReferenceType.ORGANIZATION), eq("10"), eq(jwt.getSub())))
                 .thenReturn(Single.just(user));
-
         final HttpServletResponse response = mock(HttpServletResponse.class);
 
         final Authentication authentication = filter.attemptAuthentication(request, response);
         assertNotNull(authentication);
         assertEquals(2, authentication.getAuthorities().size());
     }
+
 }

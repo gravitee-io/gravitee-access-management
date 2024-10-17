@@ -27,8 +27,8 @@ import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Date;
 import java.util.List;
@@ -46,7 +46,7 @@ import static org.mockito.Mockito.reset;
  */
 public class ThemesResourceTest extends JerseySpringTest {
 
-    @Before
+    @BeforeEach
     public void initialize() {
         reset(themeService);
     }

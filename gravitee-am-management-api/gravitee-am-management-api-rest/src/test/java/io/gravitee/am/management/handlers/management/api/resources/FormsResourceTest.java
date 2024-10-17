@@ -28,9 +28,8 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.any;
@@ -45,7 +44,7 @@ public class FormsResourceTest extends JerseySpringTest {
     private final String DOMAIN_ID = "domain-1";
     private Domain mockDomain;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         mockDomain= new Domain();
         mockDomain.setId(DOMAIN_ID);
@@ -114,7 +113,6 @@ public class FormsResourceTest extends JerseySpringTest {
     }
 
     @Test
-    @Ignore
     public void shouldCreate() {
         NewForm newForm = new NewForm();
         newForm.setTemplate(Template.LOGIN);
@@ -129,4 +127,5 @@ public class FormsResourceTest extends JerseySpringTest {
                 .request().post(Entity.json(newForm));
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
     }
+
 }
