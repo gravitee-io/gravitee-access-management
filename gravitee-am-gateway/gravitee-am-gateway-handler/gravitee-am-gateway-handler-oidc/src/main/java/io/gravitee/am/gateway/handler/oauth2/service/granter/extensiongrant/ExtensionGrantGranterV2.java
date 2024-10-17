@@ -95,7 +95,7 @@ public class ExtensionGrantGranterV2 extends ExtensionGrantGranter {
         return Maybe.just(user);
     }
 
-    protected Maybe<User> manageUserValidation(TokenRequest tokenRequest, io.gravitee.am.identityprovider.api.User endUser) {
+    protected Maybe<User> manageUserValidation(TokenRequest tokenRequest, io.gravitee.am.identityprovider.api.User endUser, Client client) {
         return getIdentityProviderManager()
                 .get(getExtensionGrant().getIdentityProvider())
                 .flatMap(prov -> retrieveUserByUsernameFromIdp(prov, tokenRequest, convert(endUser))
@@ -118,7 +118,8 @@ public class ExtensionGrantGranterV2 extends ExtensionGrantGranter {
                                                 return Maybe.error(e);
                                             }
                                         })
-                                        .switchIfEmpty(getUserService().findById(endUser.getUsername()))
+                                        .switchIfEmpty(getUserService().findById(endUser.getUsername())
+                                                .switchIfEmpty(getUserService().findByDomainAndExternalIdAndSource(client.getDomain(), endUser.getUsername(), retrieveSourceFrom(getExtensionGrant()))))
                                         .flatMap(user -> retrieveUserByUsernameFromIdp(prov, tokenRequest, user));
                             }
                             return Maybe.empty();
