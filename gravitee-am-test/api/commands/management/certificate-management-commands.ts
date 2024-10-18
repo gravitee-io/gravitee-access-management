@@ -21,7 +21,7 @@ export const createCertificate = (domainId, accessToken, certificate) =>
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    certificate: certificate,
+    newCertificate: certificate,
   });
 
 export const getCertificate = (domainId, accessToken, certificateId) =>
@@ -61,7 +61,7 @@ export const updateCertificate = (domainId, accessToken, body, certificateId) =>
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     certificate: certificateId,
-    certificate2: body,
+    updateCertificate: body,
   });
 
 export const deleteCertificate = (domainId, accessToken, certificateId) =>

@@ -116,14 +116,14 @@ describe('after creating identity providers', () => {
   it('must find all Identity providers', async () => {
     const idpSet = await getAllIdps(domain.id, accessToken);
 
-    expect(idpSet.size).toEqual(11);
+    expect(idpSet.length).toEqual(11);
   });
 
   it('Must delete Identity Provider', async () => {
     await deleteIdp(domain.id, accessToken, idp.id);
     const idpSet = await getAllIdps(domain.id, accessToken);
 
-    expect(idpSet.size).toEqual(10);
+    expect(idpSet.length).toEqual(10);
   });
 });
 
