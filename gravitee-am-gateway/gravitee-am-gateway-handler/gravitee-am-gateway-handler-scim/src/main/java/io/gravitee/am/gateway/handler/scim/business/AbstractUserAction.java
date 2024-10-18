@@ -56,8 +56,13 @@ public abstract class AbstractUserAction {
 
     protected final User extractUser(Map<String, Object> payload) {
         final List<String> schemas = (List<String>) Optional.ofNullable(payload.get("schemas")).orElse(Collections.emptyList());
-        final User user = evaluateUser(schemas, payload);
-        return user;
+        try {
+            final User user = evaluateUser(schemas, payload);
+            return user;
+        } catch (IllegalArgumentException e) {
+            log.debug("IllegalArgumentException received during scim user deserialization", e);
+            throw new InvalidValueException(e.getMessage());
+        }
     }
 
     private User evaluateUser(List<String> schemas, Map<String, Object> payload) {

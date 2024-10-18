@@ -43,7 +43,12 @@ public class PatchUserAction extends AbstractUserAction {
     }
 
     private PatchOp toPatchOp(Map<String, Object> payload) {
-        return new JsonObject(payload).mapTo(PatchOp.class);
+        try {
+            return new JsonObject(payload).mapTo(PatchOp.class);
+        } catch (IllegalArgumentException e) {
+            log.debug("IllegalArgumentException received during scim PatchOp deserialization", e);
+            throw new InvalidValueException(e.getMessage());
+        }
     }
 
     public Single<User> execute(String userId, String baseUrl, Map<String, Object> payload, AuthenticationContext authenticationContext, io.gravitee.am.identityprovider.api.User principal) {

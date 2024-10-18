@@ -307,8 +307,10 @@ public class BulkServiceTest {
         BulkOperation validOperationUniquenessError = validCreateUserOperation(method, bulkId);
         BulkOperation validOperation2 = validCreateUserOperation(method, bulkId);
         BulkOperation invalidOperation = validCreateUserOperation(method, null);
+        BulkOperation invalidOperationBadUserPayload = validCreateUserOperation(method, bulkId);
+        invalidOperationBadUserPayload.getData().put("UnknownField", "which should make the profile invalid");
         // First operation and last one are valid, second is missing the bulkId, third will reject the user creation due to username uniqueness
-        bulkRequest.setOperations(of(validOperation1, invalidOperation, validOperationUniquenessError, validOperation2));
+        bulkRequest.setOperations(of(validOperation1, invalidOperation, validOperationUniquenessError, validOperation2, invalidOperationBadUserPayload));
 
         User createdUser = getCreatedUser();
         when(userService.create(any(), any(), any(), any(), any())).thenReturn(
@@ -326,11 +328,12 @@ public class BulkServiceTest {
                     assertEquals(1, bulkResponse.getSchemas().size());
 
                     assertNotNull(bulkResponse.getOperations());
-                    assertEquals(4, bulkResponse.getOperations().size());
+                    assertEquals(5, bulkResponse.getOperations().size());
 
                     assertUserCreationSuccessful(bulkResponse.getOperations().get(0), method);
                     assertError((Error)bulkResponse.getOperations().get(1).getResponse(), "Bulk operation requires bulkId with method POST", HttpStatusCode.BAD_REQUEST_400);
                     assertError((Error)bulkResponse.getOperations().get(2).getResponse(), "User with username [username] already exists", HttpStatusCode.CONFLICT_409);
+                    assertError((Error)bulkResponse.getOperations().get(4).getResponse(), null, HttpStatusCode.BAD_REQUEST_400);
                     assertUserCreationSuccessful(bulkResponse.getOperations().get(3), method);
 
                     return true;
@@ -393,6 +396,33 @@ public class BulkServiceTest {
 
                     final var processedOperation = bulkResponse.getOperations().get(0);
                     assertUserUpdateSuccessful(processedOperation, method, bulkId);
+                    return true;
+                });
+    }
+    @Test
+    public void should_not_patch_user_invalid_data() throws Exception {
+        final var method = HttpMethod.PATCH;
+        final var bulkId = UUID.randomUUID().toString();
+
+        final var bulkRequest = new BulkRequest();
+        BulkOperation patchOp = patchUserOperation(method, bulkId, "add");
+        patchOp.getData().put("unknownKey", "useless value");
+        bulkRequest.setOperations(of(patchOp));
+
+        final var subscriber = bulkService.processBulkRequest(bulkRequest, this.authenticationContext, BASE_BULK_URL, client, null).test();
+
+        subscriber.await(10, TimeUnit.SECONDS);
+        subscriber
+                .assertNoErrors()
+                .assertValue(bulkResponse -> {
+                    assertNotNull(bulkResponse.getSchemas());
+                    assertEquals(1, bulkResponse.getSchemas().size());
+
+                    assertNotNull(bulkResponse.getOperations());
+                    assertEquals(1, bulkResponse.getOperations().size());
+
+                    final var processedOperation = bulkResponse.getOperations().get(0);
+                    assertError((Error)processedOperation.getResponse(), null, HttpStatusCode.BAD_REQUEST_400);
                     return true;
                 });
     }
@@ -602,7 +632,9 @@ public class BulkServiceTest {
     }
 
     private void assertError(Error error, String expectedMsg, int expectedCode) {
-        assertEquals(expectedMsg, error.getDetail());
+        if (expectedMsg != null) {
+            assertEquals(expectedMsg, error.getDetail());
+        }
         assertEquals(valueOf(expectedCode), error.getStatus());
     }
 
