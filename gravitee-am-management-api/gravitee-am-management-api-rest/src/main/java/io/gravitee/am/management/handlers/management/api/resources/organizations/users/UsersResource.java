@@ -15,27 +15,31 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.users;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.management.handlers.management.api.bulk.BulkOperationResult;
+import io.gravitee.am.management.handlers.management.api.bulk.BulkRequest;
 import io.gravitee.am.management.handlers.management.api.model.UserEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractUsersResource;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.OrganizationService;
+import io.gravitee.am.service.exception.NotImplementedException;
 import io.gravitee.am.service.model.NewOrganizationUser;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.core.SingleSource;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
@@ -55,6 +59,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -62,7 +67,7 @@ import java.util.Set;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tags({@Tag(name= "user")})
+@Tag(name = "user")
 public class UsersResource extends AbstractUsersResource {
 
     @Context
@@ -73,6 +78,8 @@ public class UsersResource extends AbstractUsersResource {
 
     @Autowired
     private OrganizationService organizationService;
+    @Autowired
+    private ObjectMapper mapper;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -82,11 +89,11 @@ public class UsersResource extends AbstractUsersResource {
             description = "User must have the ORGANIZATION_USER[LIST] permission on the specified organization. " +
                     "Each returned user is filtered and contains only basic information such as id and username and displayname. " +
                     "Last login and identity provider name will be also returned if current user has ORGANIZATION_USER[READ] permission on the organization.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List users of the organization",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Page.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+
+    @ApiResponse(responseCode = "200", description = "List users of the organization",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = Page.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void list(
             @PathParam("organizationId") String organizationId,
             @QueryParam("q") String query,
@@ -116,11 +123,11 @@ public class UsersResource extends AbstractUsersResource {
             operationId = "createOrganisationUser",
             summary = "Create a platform user or Service Account",
             description = "User must have the ORGANIZATION_USER[READ] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "User or Service Account successfully created",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = NewOrganizationUser.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+
+    @ApiResponse(responseCode = "201", description = "User or Service Account successfully created",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = NewOrganizationUser.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void create(
             @PathParam("organizationId") String organizationId,
             @Parameter(name = "user", required = true) @Valid @NotNull final NewOrganizationUser newOrganizationUser,
@@ -136,6 +143,53 @@ public class UsersResource extends AbstractUsersResource {
                                 .entity(new UserEntity(user))
                                 .build()))
                 .subscribe(response::resume, response::resume);
+    }
+
+    @POST
+    @Path("/bulk")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Operation(
+            operationId = "bulkOrganisationUserOperatiom",
+            summary = "Create/update/delete platform users or Service Accounts",
+            description = "User must have the ORGANIZATION_USER[CREATE/UPDATE/DELETE] permission on the specified organization")
+
+    @ApiResponse(responseCode = "201", description = "Users or Service Accounts successfully created",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(oneOf = {BulkCreateOrganizationUser.class})))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
+    public void create(
+            @PathParam("organizationId") String organizationId,
+            @Valid @NotNull final BulkRequest.Generic bulkRequest,
+            @Suspended final AsyncResponse response) {
+
+        final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
+
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, bulkRequest.action().requiredAcl())
+                .andThen(organizationService.findById(organizationId)
+                        .flatMap(organization -> processBulkRequest(bulkRequest, organization, authenticatedUser)))
+                .subscribe(response::resume, response::resume);
+    }
+
+    private static class BulkCreateOrganizationUser extends  BulkRequest<NewOrganizationUser> {
+        public BulkCreateOrganizationUser() {
+            super(Action.CREATE);
+        }
+    }
+
+    private SingleSource<?> processBulkRequest(BulkRequest.Generic bulkRequest, Organization organization, io.gravitee.am.identityprovider.api.User authenticatedUser) {
+        return switch (bulkRequest.action()) {
+            case CREATE -> bulkRequest.processOneByOne(NewOrganizationUser.class, mapper, user ->
+                    organizationUserService.createGraviteeUser(organization, user, authenticatedUser)
+                            .map(BulkOperationResult::created)
+                            .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex)))
+            );
+
+            case UPDATE, DELETE -> Single.error(new NotImplementedException("not implemented"));
+
+        };
+
+
     }
 
     @Path("{user}")

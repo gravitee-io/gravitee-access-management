@@ -15,16 +15,22 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.management.handlers.management.api.bulk.BulkOperationResult;
+import io.gravitee.am.management.handlers.management.api.bulk.BulkRequest;
+import io.gravitee.am.management.handlers.management.api.bulk.BulkResponse;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractUsersResource;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.NotImplementedException;
 import io.gravitee.am.service.model.NewUser;
+import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
@@ -34,7 +40,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -68,10 +73,10 @@ public class UsersResource extends AbstractUsersResource {
     private ResourceContext resourceContext;
 
     @Autowired
-    private DomainService domainService;
+    private IdentityProviderServiceProxy identityProviderService;
 
     @Autowired
-    private IdentityProviderServiceProxy identityProviderService;
+    ObjectMapper objectMapper;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -83,11 +88,11 @@ public class UsersResource extends AbstractUsersResource {
                     "or DOMAIN_USER[LIST] permission on the specified organization. " +
                     "Each returned user is filtered and contains only basic information such as id and username and displayname. " +
                     "Last login and identity provider name will be also returned if current user has DOMAIN_USER[READ] permission on the domain, environment or organization.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List users for a security domain",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = UserPage.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+
+    @ApiResponse(responseCode = "200", description = "List users for a security domain",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = UserPage.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -122,11 +127,10 @@ public class UsersResource extends AbstractUsersResource {
             description = "User must have the DOMAIN_USER[CREATE] permission on the specified domain " +
                     "or DOMAIN_USER[CREATE] permission on the specified environment " +
                     "or DOMAIN_USER[CREATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "User successfully created",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = User.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "201", description = "User successfully created",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = User.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void create(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -146,6 +150,61 @@ public class UsersResource extends AbstractUsersResource {
                                 .entity(user)
                                 .build()))
                 .subscribe(response::resume, response::resume);
+    }
+
+    @POST
+    @Path("/bulk")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Operation(
+            operationId = "bulkUserOperation",
+            summary = "Create/update/delete multiple users on the specified security domain",
+            description = "User must have the DOMAIN_USER[CREATE/UPDATE/DELETE] permission on the specified domain, " +
+                    "the environment, or the organization")
+
+    @ApiResponse(responseCode = "200", description = "Some users got created, inspect each result for details",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = BulkResponse.class)))
+    @ApiResponse(responseCode = "201", description = "All users successfully created",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = BulkResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
+    public void bulkCreate(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domainId,
+            @Parameter(name = "bulkRequest", required = true)
+            @Valid @NotNull @Schema(name = "bulkUserRequest", oneOf = {BulkCreateUser.class, BulkUpdateUser.class}) final BulkRequest.Generic bulkRequest,
+            @Suspended final AsyncResponse response) {
+
+        final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
+        var requiredAcl = bulkRequest.action().requiredAcl();
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, requiredAcl)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapSingle(domain -> processBulkRequest(bulkRequest, domain, authenticatedUser)))
+                .subscribe(response::resume, response::resume);
+    }
+
+    private Single<?> processBulkRequest(BulkRequest.Generic bulkRequest, Domain domain, io.gravitee.am.identityprovider.api.User authenticatedUser) {
+        return switch (bulkRequest.action()) {
+            case CREATE -> bulkRequest.processOneByOne(NewUser.class, objectMapper, newUser -> userService.create(domain, newUser, authenticatedUser)
+                            .map(BulkOperationResult::created)
+                            .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex))));
+            case UPDATE, DELETE -> Single.error(new NotImplementedException());
+        };
+    }
+
+    private static class BulkCreateUser extends BulkRequest<NewUser> {
+        protected BulkCreateUser() {
+            super(Action.CREATE);
+        }
+    }
+
+    private static class BulkUpdateUser extends BulkRequest<UpdateUser> {
+        protected BulkUpdateUser() {
+            super(Action.UPDATE);
+        }
     }
 
     @Path("{user}")
