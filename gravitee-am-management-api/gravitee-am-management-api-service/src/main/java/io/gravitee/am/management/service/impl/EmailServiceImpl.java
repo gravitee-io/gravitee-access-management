@@ -268,7 +268,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
 
         params.put("url", domainService.buildUrl(domain, redirectUri, queryParam));
 
-        params.put("user", new UserProperties(user));
+        params.put("user", new UserProperties(user, false));
         params.put("token", token);
         params.put("expireAfterSeconds", expiresAfter);
         params.put("domain", new DomainProperties(domain));
