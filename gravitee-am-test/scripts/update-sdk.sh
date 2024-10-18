@@ -47,6 +47,7 @@ esac
 echo "[INFO] output path will be: $SDK_OUTPUT_PATH"
 
 npx @openapitools/openapi-generator-cli generate \
+  -t "$SCRIPT_DIR/templates" \
   -i "$HOST_URL/openapi.json" \
   -g typescript-fetch \
   -o "$SDK_OUTPUT_PATH" \

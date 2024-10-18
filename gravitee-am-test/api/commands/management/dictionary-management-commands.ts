@@ -21,7 +21,7 @@ export const createDictionary = (domainId, accessToken, body) =>
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    body: body,
+    newDictionary: body,
   });
 
 export const getDictionary = (domainId, accessToken, dictionaryId) =>
@@ -45,7 +45,7 @@ export const updateDictionary = (domainId, accessToken, dictionaryId, body) =>
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     dictionary: dictionaryId,
-    body: body,
+    updateI18nDictionary: body,
   });
 
 /*
@@ -58,7 +58,7 @@ export const updateDictionaryEntries = (domainId, accessToken, dictionaryId, ent
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     dictionary: dictionaryId,
-    body: entryMap,
+    requestBody: entryMap,
   });
 
 export const deleteDictionary = (domainId, accessToken, dictionaryId) =>

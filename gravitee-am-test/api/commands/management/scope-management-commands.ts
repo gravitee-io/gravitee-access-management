@@ -21,7 +21,7 @@ export const createScope = (domainId, accessToken, scope) =>
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    scope: scope,
+    newScope: scope,
   });
 
 export const getScope = (domainId, accessToken, scopeId: string) =>
@@ -52,7 +52,7 @@ export const updateScope = (domainId, accessToken, scopeId, payload) =>
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     scope: scopeId,
-    scope2: payload,
+    updateScope: payload,
   });
 
 export const patchScope = (domainId, accessToken, scopeId, payload) =>
@@ -61,7 +61,7 @@ export const patchScope = (domainId, accessToken, scopeId, payload) =>
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     scope: scopeId,
-    scope2: payload,
+    patchScope: payload,
   });
 
 export const deleteScope = (domainId, accessToken, scopeId) =>

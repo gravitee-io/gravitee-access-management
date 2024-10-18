@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { getIdpApi, getPasswordPolicyApi } from './service/utils';
+import { getIdpApi, getPasswordPolicyApi,getUserApi } from './service/utils';
 import { UpdatePasswordPolicy } from '../../management/models/UpdatePasswordPolicy';
 import { NewPasswordPolicy } from '../../management/models';
 
@@ -27,15 +27,7 @@ export const createPasswordPolicy = (domainId: string, accessToken: string, body
   });
 
 export const getPasswordPolicy = (domainId: string, accessToken: string, policyId: string) =>
-  getPasswordPolicyApi(accessToken).getPasswordPolicies({
-    organizationId: process.env.AM_DEF_ORG_ID,
-    environmentId: process.env.AM_DEF_ENV_ID,
-    domain: domainId,
-    policy: policyId,
-  });
-
-export const getPasswordPolicyRaw = (domainId: string, accessToken: string, policyId: string) =>
-  getPasswordPolicyApi(accessToken).getPasswordPoliciesRaw({
+  getPasswordPolicyApi(accessToken).getPasswordPolicy({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
@@ -66,7 +58,7 @@ export const updatePasswordPolicy = (domainId: string, accessToken: string, poli
   });
 
 export const setPasswordPolicyDefault = (domainId: string, accessToken: string, policyId: string) =>
-  getPasswordPolicyApi(accessToken).setPasswordPolicyDefault({
+  getPasswordPolicyApi(accessToken).setDefaultPolicy({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
@@ -87,14 +79,14 @@ export const assignPasswordPolicyToIdp = (domainId: string, accessToken: string,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     identity: idpId,
-    policy: policyId,
+    assignPasswordPolicy: {passwordPolicy: policyId},
   });
 
 export const resetUserPassword = (domainId: string, accessToken: string, user: string, password: string) =>
-  getPasswordPolicyApi(accessToken).resetUserPassword({
+  getUserApi(accessToken).resetPassword({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     user: user,
-    password: password,
+    passwordValue: {password},
   });

@@ -15,44 +15,11 @@
  */
 
 import { getDeviceIdentifiersApi } from './service/utils';
-import * as process from 'node:process';
 
 export const createDevice = (domainId, accessToken, body) =>
-  getDeviceIdentifiersApi(accessToken).createDeviceIdentifier({
+  getDeviceIdentifiersApi(accessToken).create4({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    deviceIdentifier: body,
-  });
-
-export const deleteDevice = (domainId, accessToken, deviceId) =>
-  getDeviceIdentifiersApi(accessToken).deleteDeviceIdentifier({
-    organizationId: process.env.AM_DEF_ORG_ID,
-    environmentId: process.env.AM_DEF_ENV_ID,
-    domain: domainId,
-    deviceIdentifier: deviceId,
-  });
-
-export const getDevice = (domainId, accessToken, deviceId) =>
-  getDeviceIdentifiersApi(accessToken).getDeviceIdentifier({
-    organizationId: process.env.AM_DEF_ORG_ID,
-    environmentId: process.env.AM_DEF_ENV_ID,
-    domain: domainId,
-    deviceIdentifier: deviceId,
-  });
-
-export const listDeviceIdentifiers = (domainId, accessToken) =>
-  getDeviceIdentifiersApi(accessToken).listDeviceIdentifiers({
-    organizationId: process.env.AM_DEF_ORG_ID,
-    environmentId: process.env.AM_DEF_ENV_ID,
-    domain: domainId,
-  });
-
-export const updateDevice = (domainId, accessToken, deviceId, updateDevice) =>
-  getDeviceIdentifiersApi(accessToken).updateDeviceIdentifier({
-    organizationId: process.env.AM_DEF_ORG_ID,
-    environmentId: process.env.AM_DEF_ENV_ID,
-    domain: domainId,
-    deviceIdentifier: deviceId,
-    deviceIdentifier2: updateDevice,
+    newDeviceIdentifier: body,
   });

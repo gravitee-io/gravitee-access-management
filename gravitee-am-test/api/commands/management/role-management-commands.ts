@@ -21,7 +21,7 @@ export const createRole = (domainId, accessToken, role) =>
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    role: role,
+    newRole: role,
   });
 
 export const getRole = (domainId, accessToken, roleId) =>
@@ -54,7 +54,7 @@ export const updateRole = (domainId, accessToken, roleId, payload) =>
     // role path param
     role: roleId,
     //role payload
-    role2: payload,
+    updateRole: payload,
   });
 
 export const deleteRole = (domainId, accessToken, roleId) =>

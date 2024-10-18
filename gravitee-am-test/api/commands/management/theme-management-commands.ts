@@ -21,7 +21,7 @@ export const createTheme = (domainId, accessToken, body) =>
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    theme: body,
+    newTheme: body,
   });
 
 export const getTheme = (domainId, accessToken, themeId) =>
@@ -45,7 +45,7 @@ export const updateTheme = (domainId, accessToken, themeId, body) =>
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     themeId: themeId,
-    theme: body,
+    themeEntity: body,
   });
 
 export const deleteTheme = (domainId, accessToken, themeId) =>

@@ -21,7 +21,7 @@ export const createIdp = (domainId, accessToken, idp) =>
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    identity: idp,
+    newIdentityProvider: idp,
   });
 
 export const getIdp = (domainId, accessToken, idpId) =>
@@ -45,7 +45,7 @@ export const updateIdp = (domainId, accessToken, body, idpId) =>
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     identity: idpId,
-    identity2: body,
+    updateIdentityProvider: body,
   });
 
 export const deleteIdp = (domainId, accessToken, idpId) =>
