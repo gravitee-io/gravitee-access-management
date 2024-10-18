@@ -15,75 +15,84 @@
  */
 package io.gravitee.am.management.handlers.management.api.bulk;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import jakarta.ws.rs.core.Response;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.With;
 
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.Map;
 
-public sealed interface BulkOperationResult {
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@EqualsAndHashCode
+public class BulkOperationResult<T> {
 
-    int NO_INDEX = Integer.MIN_VALUE;
+    private static final int NO_INDEX = Integer.MIN_VALUE;
 
-    int index();
+    @With
+    private int index;
+
+    private Response.Status httpStatus;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @Getter
+    private T body;
+    @Getter
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Object errorDetails;
+
+    @JsonProperty
+    public int index() {
+        return index;
+    }
 
     @JsonSerialize(using = ResponseStatusIntSerializer.class)
-    Response.Status httpStatus();
+    public Response.Status httpStatus() {
+        return httpStatus;
+    }
 
     @JsonProperty("success")
-    default boolean success() {
+    public boolean success() {
         return httpStatus().getStatusCode() < 400;
     }
 
-    BulkOperationResult withIndex(int index);
-
-
-    record Success<T>(@With int index, Response.Status httpStatus, T response) implements BulkOperationResult {
-
-    }
-
-    record Error(@With int index, Response.Status httpStatus,
-                 Object errorDetails) implements BulkOperationResult {
-
-    }
-
-
-    static Comparator<BulkOperationResult> byIndex() {
+    static <T> Comparator<BulkOperationResult<T>> byIndex() {
         return Comparator.comparing(BulkOperationResult::index);
     }
 
-    static <R> BulkOperationResult success(Response.Status status, R body) {
-        return new Success<>(NO_INDEX, status, body);
+    public static <R> BulkOperationResult<R> success(Response.Status status, R body) {
+        return new BulkOperationResult<>(NO_INDEX, status, body, null);
     }
 
-    static <R> BulkOperationResult ok(R body) {
-        return new Success<>(NO_INDEX, Response.Status.OK, body);
+    public static <R> BulkOperationResult<R> ok(R body) {
+        return success(Response.Status.OK, body);
     }
 
-    static <R> BulkOperationResult created(R body) {
-        return new Success<>(NO_INDEX, Response.Status.CREATED, body);
+    public static <R> BulkOperationResult<R> created(R body) {
+        return success(Response.Status.CREATED, body);
     }
 
-    static BulkOperationResult error(Response.Status statusCode) {
-        return new Error(NO_INDEX, statusCode, null);
+    public static <R> BulkOperationResult<R> error(Response.Status statusCode, Throwable exception) {
+        var details = exception == null
+                ? "unknown error"
+                : Map.of("error", exception.getClass().getSimpleName(), "message", exception.getMessage());
+        return new BulkOperationResult<>(NO_INDEX, statusCode, null, details);
     }
 
-    static BulkOperationResult error(Response.Status statusCode, Exception exception) {
-        return new Error(NO_INDEX, statusCode, Map.of("error", exception.getClass().getSimpleName(), "error_details", exception.getMessage()));
+    public static <R> BulkOperationResult<R> error(Response.Status statusCode) {
+        return error(statusCode, null);
     }
 
-    static BulkOperationResult error(Response.Status statusCode, Object errorDetails) {
-        return new Error(NO_INDEX, statusCode, errorDetails);
-    }
-
-
-    class ResponseStatusIntSerializer extends StdSerializer<Response.Status> {
+    static class ResponseStatusIntSerializer extends StdSerializer<Response.Status> {
 
         protected ResponseStatusIntSerializer() {
             super(Response.Status.class);

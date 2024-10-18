@@ -15,18 +15,22 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkOperationResult;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkRequest;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkResponse;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractUsersResource;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.NotImplementedException;
 import io.gravitee.am.service.model.NewUser;
+import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
@@ -70,6 +74,9 @@ public class UsersResource extends AbstractUsersResource {
 
     @Autowired
     private IdentityProviderServiceProxy identityProviderService;
+
+    @Autowired
+    ObjectMapper objectMapper;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -145,17 +152,15 @@ public class UsersResource extends AbstractUsersResource {
                 .subscribe(response::resume, response::resume);
     }
 
-
     @POST
     @Path("/bulk")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Operation(
-            operationId = "bulkCreateUser",
-            summary = "Create multiple users on the specified security domain",
-            description = "User must have the DOMAIN_USER[CREATE] permission on the specified domain " +
-                    "or DOMAIN_USER[CREATE] permission on the specified environment " +
-                    "or DOMAIN_USER[CREATE] permission on the specified organization")
+            operationId = "bulkUserOperation",
+            summary = "Create/update/delete multiple users on the specified security domain",
+            description = "User must have the DOMAIN_USER[CREATE/UPDATE/DELETE] permission on the specified domain, " +
+                    "the environment, or the organization")
 
     @ApiResponse(responseCode = "200", description = "Some users got created, inspect each result for details",
             content = @Content(mediaType = "application/json",
@@ -168,21 +173,38 @@ public class UsersResource extends AbstractUsersResource {
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
-            @Parameter(name = "user", required = true)
-            @Valid @NotNull final BulkRequest<NewUser> newUsers,
+            @Parameter(name = "bulkRequest", required = true)
+            @Valid @NotNull @Schema(name = "bulkUserRequest", oneOf = {BulkCreateUser.class, BulkUpdateUser.class}) final BulkRequest.Generic bulkRequest,
             @Suspended final AsyncResponse response) {
 
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
-
-        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.CREATE)
+        var requiredAcl = bulkRequest.action().requiredAcl();
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, requiredAcl)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                        .flatMapSingle(domain ->
-                                newUsers.processOneByOne(newUser -> userService.create(domain, newUser, authenticatedUser)
-                                        .map(BulkOperationResult::created)
-                                        .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex))))
-                        ))
+                        .flatMapSingle(domain -> processBulkRequest(bulkRequest, domain, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
+    }
+
+    private Single<?> processBulkRequest(BulkRequest.Generic bulkRequest, Domain domain, io.gravitee.am.identityprovider.api.User authenticatedUser) {
+        return switch (bulkRequest.action()) {
+            case CREATE -> bulkRequest.processOneByOne(NewUser.class, objectMapper, newUser -> userService.create(domain, newUser, authenticatedUser)
+                            .map(BulkOperationResult::created)
+                            .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex))));
+            case UPDATE, DELETE -> Single.error(new NotImplementedException());
+        };
+    }
+
+    private static class BulkCreateUser extends BulkRequest<NewUser> {
+        protected BulkCreateUser() {
+            super(Action.CREATE);
+        }
+    }
+
+    private static class BulkUpdateUser extends BulkRequest<UpdateUser> {
+        protected BulkUpdateUser() {
+            super(Action.UPDATE);
+        }
     }
 
     @Path("{user}")

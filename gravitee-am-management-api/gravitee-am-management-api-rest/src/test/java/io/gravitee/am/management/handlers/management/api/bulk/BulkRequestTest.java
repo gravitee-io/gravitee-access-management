@@ -15,19 +15,62 @@
  */
 package io.gravitee.am.management.handlers.management.api.bulk;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.TestScheduler;
 import jakarta.ws.rs.core.Response;
+import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.AssertionsForInterfaceTypes;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+@Slf4j
 class BulkRequestTest {
 
-    private static final int MAX_DELAY_MS = 250;
+    private static final int MAX_DELAY_SECONDS = 100;
+
+    @Test
+    void deserializesViaGenericRequest() throws Exception {
+        var om = new ObjectMapper();
+        var createCommmandJson = """
+                            {
+                              "action": "CREATE",
+                              "items": [
+                                {
+                                  "email": "test@localhost.com"
+                                },
+                                {
+                                    "email": "test2@local.host"
+                                }
+                              ]
+                            }
+                """;
+
+        record EmailRecord(String email) {
+        }
+
+        var genericRequest = om.readValue(createCommmandJson, BulkRequest.Generic.class);
+        var expectedResults = List.of("To: test@localhost.com", "To: test2@local.host");
+        genericRequest.processOneByOne(EmailRecord.class, om, email -> Single.just(BulkOperationResult.ok("To: " + email.email())))
+                .test()
+                .assertComplete()
+                .assertValueCount(1)
+                .assertValue(res -> {
+                    if (res.getEntity() instanceof BulkResponse<?> response) {
+                        return response.getResults().size() == expectedResults.size()
+                                && response.getResults().stream().map(BulkOperationResult::getBody).toList().containsAll(expectedResults);
+
+                    } else {
+                        return false;
+                    }
+                });
+    }
+
 
     @Test
     void shouldReturnItemsInOriginalOrder() {
@@ -35,16 +78,23 @@ class BulkRequestTest {
 
         var expectedResults = items.stream().map(x -> BulkOperationResult.ok(pretendToDoStuff(x)).withIndex(x)).toList();
 
-        var actualResults = new BulkRequest<>(items)
-                // randomize delays so that the results are emitted in different order
-                .processOneByOne(i -> Single.just(BulkOperationResult.ok(pretendToDoStuff(i))).delay((long) Math.floor(Math.random() * MAX_DELAY_MS), TimeUnit.MILLISECONDS))
+        // take control of the time since we don't want actual delays during test execution
+        var testScheduler = new TestScheduler();
+
+        var testObserver = new BulkRequest<>(BulkRequest.Action.CREATE, items)
+                // randomize delays so that the results are emitted in random order
+                .processOneByOne(i -> Single.just(BulkOperationResult.ok(pretendToDoStuff(i)))
+                        .delay(randomDelay(), TimeUnit.SECONDS, testScheduler)
+                        .doOnSuccess(res -> log.info("test time = {}s: got {}", String.format("%3d", testScheduler.now(TimeUnit.SECONDS)), res)))
                 .map(Response::getEntity)
                 .map(entity -> {
                     assertThat(entity).isInstanceOf(BulkResponse.class);
-                    return (BulkResponse) entity;
+                    return (BulkResponse<String>) entity;
                 })
-                .test()
-                .awaitDone(MAX_DELAY_MS * 5, TimeUnit.MILLISECONDS)
+                .test();
+
+        testScheduler.advanceTimeBy(MAX_DELAY_SECONDS, TimeUnit.SECONDS);
+        var actualResults = testObserver
                 .assertComplete()
                 .assertValueCount(1)
                 .values()
@@ -57,8 +107,12 @@ class BulkRequestTest {
 
     }
 
-    int pretendToDoStuff(int value) {
-        return value + 100;
+    private static long randomDelay() {
+        return (long) Math.floor(Math.random() * MAX_DELAY_SECONDS);
+    }
+
+    String pretendToDoStuff(int value) {
+        return "(result for item #" + value + ")";
     }
 
 }
