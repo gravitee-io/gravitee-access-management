@@ -72,32 +72,41 @@ public class ThymeleafDataHelper {
         }
         data.put(PARAM_CONTEXT_KEY, parameters);
         if (context.session() != null && context.getDelegate() != null) {
+            MultiMap queryParams = context.queryParams();
             String errorHash = context.session().get(ERROR_HASH);
+            String error = queryParams.get(ERROR_PARAM_KEY);
+            String errorCode = queryParams.get(ERROR_CODE_PARAM_KEY);
+            String errorDescription = queryParams.get(ERROR_DESCRIPTION_PARAM_KEY);
             if (errorHash != null) {
-                StringBuilder error = new StringBuilder();
-                MultiMap queryParams = context.queryParams();
-                if (queryParams.get(ERROR_PARAM_KEY) != null) {
+                StringBuilder errorSB = new StringBuilder();
+                if (error != null) {
                     data.put(ERROR_PARAM_KEY, queryParams.get(ERROR_PARAM_KEY));
-                    error.append(queryParams.get(ERROR_PARAM_KEY));
+                    errorSB.append(queryParams.get(ERROR_PARAM_KEY));
                 }
-                if (queryParams.get(ERROR_CODE_PARAM_KEY) != null) {
+                if (errorCode != null) {
                     data.put(ERROR_CODE_PARAM_KEY, queryParams.get(ERROR_CODE_PARAM_KEY));
                 }
-                if (queryParams.get(ERROR_DESCRIPTION_PARAM_KEY) != null) {
+                if (errorDescription != null) {
                     data.put(ERROR_DESCRIPTION_PARAM_KEY, queryParams.get(ERROR_DESCRIPTION_PARAM_KEY));
-                    error.append("$");
-                    error.append(queryParams.get(ERROR_DESCRIPTION_PARAM_KEY));
+                    errorSB.append("$");
+                    errorSB.append(queryParams.get(ERROR_DESCRIPTION_PARAM_KEY));
                 }
-                if (!StringUtil.isBlank(error.toString()) && !HashUtil.compare(errorHash, error.toString())) {
-                    data.put(ERROR_PARAM_KEY, SERVER_ERROR);
-                    data.put(ERROR_CODE_PARAM_KEY, null);
-                    data.put(ERROR_DESCRIPTION_PARAM_KEY, "Unknown error occurred");
+                if (!StringUtil.isBlank(errorSB.toString()) && !HashUtil.compare(errorHash, errorSB.toString())) {
+                    setServerError(data);
                 }
+            } else if (error != null || errorCode != null || errorDescription != null) {
+                setServerError(data);
             }
         }
 
 
         return data;
+    }
+
+    private static void setServerError(Map<String, Object> data) {
+        data.put(ERROR_PARAM_KEY, SERVER_ERROR);
+        data.put(ERROR_CODE_PARAM_KEY, null);
+        data.put(ERROR_DESCRIPTION_PARAM_KEY, "Unknown error occurred");
     }
 
     private static Optional<UserProperties> getUser(RoutingContext context) {
