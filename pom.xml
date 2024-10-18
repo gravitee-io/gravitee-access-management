@@ -682,6 +682,7 @@
                         <exclude>gravitee-am-test/api/management/**</exclude>
                         <exclude>helm/**</exclude>
                         <exclude>node/**</exclude>
+                        <exclude>gravitee-am-test/scripts/templates/**</exclude>
                     </excludes>
                     <mapping>
                         <ts>SLASHSTAR_STYLE</ts>

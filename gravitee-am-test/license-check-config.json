@@ -1,6 +1,7 @@
 {
   "ignore": [
     "*",
+    "scripts/templates/**",
     "node/**",
     "node_modules/**",
     "**/*.svg",
