@@ -73,11 +73,11 @@ public class UserProperties {
     public UserProperties() {
     }
 
-    public UserProperties(User user) {
+    public UserProperties(User user, boolean withSensitiveInformation) {
         this.id = user.getId();
         this.externalId = user.getExternalId();
 
-        if(user.getReferenceType() == ReferenceType.DOMAIN) {
+        if (user.getReferenceType() == ReferenceType.DOMAIN) {
             this.domain = user.getReferenceId();
         }
 
@@ -100,7 +100,9 @@ public class UserProperties {
             claims.put(Claims.AUTH_TIME, user.getLoggedAt().getTime() / 1000);
         }
 
-        removeSensitiveClaims(claims);
+        if (!withSensitiveInformation) {
+            removeSensitiveClaims(claims);
+        }
 
         this.additionalInformation = claims; // use same ref as claims for additionalInfo to avoid regression on templates that used the User object before
         this.source = user.getSource();
@@ -115,11 +117,14 @@ public class UserProperties {
         this.lastIdentityUsed = user.getLastIdentityUsed();
         this.identities = ofNullable(user.getIdentities()).map(identities ->
                 identities.stream().map(sourceIdentity -> {
-                    // filter sensitive date from the additionalInformation map linked
-                    // to the UserIdentity object
-                    var filteredIdentity = new UserIdentity(sourceIdentity);
-                    removeSensitiveClaims(filteredIdentity.getAdditionalInformation());
-                    return filteredIdentity;
+                    if (!withSensitiveInformation) {
+                        // filter sensitive date from the additionalInformation map linked
+                        // to the UserIdentity object
+                        var filteredIdentity = new UserIdentity(sourceIdentity);
+                        removeSensitiveClaims(filteredIdentity.getAdditionalInformation());
+                        return filteredIdentity;
+                    }
+                    return new UserIdentity(sourceIdentity);
                 }).collect(toList())).orElse(List.of());
 
         this.rolesPermissions = ofNullable(user.getRolesPermissions())

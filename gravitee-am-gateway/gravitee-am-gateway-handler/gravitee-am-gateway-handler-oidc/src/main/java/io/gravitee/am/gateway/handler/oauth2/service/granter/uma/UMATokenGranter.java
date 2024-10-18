@@ -422,7 +422,7 @@ public class UMATokenGranter extends AbstractTokenGranter {
                     ExecutionContext executionContext = executionContextFactory.create(simpleExecutionContext);
                     executionContext.setAttribute(ConstantKeys.CLIENT_CONTEXT_KEY, new ClientProperties(client));
                     if (endUser != null) {
-                        executionContext.setAttribute(ConstantKeys.USER_CONTEXT_KEY, new UserProperties(endUser));
+                        executionContext.setAttribute(ConstantKeys.USER_CONTEXT_KEY, new UserProperties(endUser, true));
                     }
                     // execute the policies
                     return getRulesEngine().fire(rules, executionContext)
