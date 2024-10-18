@@ -25,7 +25,7 @@ export const createDomain = (accessToken, name, description): Promise<Domain> =>
   getDomainApi(accessToken).createDomain({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
-    domain: {
+    newDomain: {
       name: name,
       description: description,
     },
@@ -45,7 +45,7 @@ export const patchDomain = (domainId, accessToken, body): Promise<Domain> =>
     // domain in path param
     domain: domainId,
     // domain payload
-    domain2: body,
+    patchDomain: body,
   });
 
 export const startDomain = (domainId, accessToken): Promise<Domain> => patchDomain(domainId, accessToken, { enabled: true });
@@ -84,7 +84,7 @@ export const updateDomainFlows = (domainId, accessToken, flows) =>
     environmentId: process.env.AM_DEF_ENV_ID,
     // domain in path param
     domain: domainId,
-    flows,
+    flow: flows
   });
 
 export const waitForDomainStart: (domain: Domain) => Promise<{domain:Domain, oidcConfig:any}> = (domain: Domain) => {
