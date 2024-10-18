@@ -93,10 +93,10 @@ public class ThymeleafDataHelper {
         User authUser;
         if (user instanceof User) {
             authUser = (User) user;
-            mayHaveUser = Optional.of(new UserProperties(authUser));
+            mayHaveUser = Optional.of(new UserProperties(authUser, false));
         } else if (context.user() != null) {
             authUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) context.user().getDelegate()).getUser();
-            mayHaveUser = Optional.of(new UserProperties(authUser));
+            mayHaveUser = Optional.of(new UserProperties(authUser, false));
         }
         return mayHaveUser;
     }
