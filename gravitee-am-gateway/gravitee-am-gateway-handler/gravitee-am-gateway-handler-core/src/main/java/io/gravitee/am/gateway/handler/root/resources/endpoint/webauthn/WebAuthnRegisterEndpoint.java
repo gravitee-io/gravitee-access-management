@@ -92,7 +92,7 @@ public class WebAuthnRegisterEndpoint extends WebAuthnHandler {
             // prepare the context
             final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
             final User user = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
-            final UserProperties userProperties = new UserProperties(user);
+            final UserProperties userProperties = new UserProperties(user, false);
 
             final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true);
             final String skipAction = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams.set(SKIP_WEBAUTHN_PARAM_KEY, "true"), true);
