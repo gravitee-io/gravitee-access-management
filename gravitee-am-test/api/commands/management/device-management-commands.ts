@@ -17,9 +17,9 @@
 import { getDeviceIdentifiersApi } from './service/utils';
 
 export const createDevice = (domainId, accessToken, body) =>
-  getDeviceIdentifiersApi(accessToken).create7Raw({
+  getDeviceIdentifiersApi(accessToken).create4({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    deviceIdentifier: body,
+    newDeviceIdentifier: body,
   });

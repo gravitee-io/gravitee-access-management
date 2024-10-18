@@ -419,16 +419,16 @@ export interface User {
     locale?: string;
     /**
      * 
-     * @type {{ [key: string]: any; }}
-     * @memberof User
-     */
-    address?: { [key: string]: any; };
-    /**
-     * 
      * @type {string}
      * @memberof User
      */
     zoneInfo?: string;
+    /**
+     * 
+     * @type {{ [key: string]: any; }}
+     * @memberof User
+     */
+    address?: { [key: string]: any; };
     /**
      * 
      * @type {string}
@@ -566,8 +566,8 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
         'forceResetPassword': !exists(json, 'forceResetPassword') ? undefined : json['forceResetPassword'],
         'serviceAccount': !exists(json, 'serviceAccount') ? undefined : json['serviceAccount'],
         'locale': !exists(json, 'locale') ? undefined : json['locale'],
-        'address': !exists(json, 'address') ? undefined : json['address'],
         'zoneInfo': !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
+        'address': !exists(json, 'address') ? undefined : json['address'],
         'middleName': !exists(json, 'middleName') ? undefined : json['middleName'],
         'lastIdentityInformation': !exists(json, 'lastIdentityInformation') ? undefined : json['lastIdentityInformation'],
         'identitiesAsMap': !exists(json, 'identitiesAsMap') ? undefined : json['identitiesAsMap'],
@@ -646,8 +646,8 @@ export function UserToJSON(value?: User | null): any {
         'forceResetPassword': value.forceResetPassword,
         'serviceAccount': value.serviceAccount,
         'locale': value.locale,
-        'address': value.address,
         'zoneInfo': value.zoneInfo,
+        'address': value.address,
         'middleName': value.middleName,
         'lastIdentityInformation': value.lastIdentityInformation,
         'identitiesAsMap': value.identitiesAsMap,

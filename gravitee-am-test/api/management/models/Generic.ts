@@ -43,7 +43,7 @@ export interface Generic {
      * @type {string}
      * @memberof Generic
      */
-    action?: GenericActionEnum;
+    action: GenericActionEnum;
 }
 
 
@@ -69,7 +69,7 @@ export function GenericFromJSONTyped(json: any, ignoreDiscriminator: boolean): G
     return {
         
         'items': !exists(json, 'items') ? undefined : json['items'],
-        'action': !exists(json, 'action') ? undefined : json['action'],
+        'action': json['action'],
     };
 }
 

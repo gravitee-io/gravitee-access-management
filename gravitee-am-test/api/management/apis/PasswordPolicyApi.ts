@@ -31,6 +31,9 @@ import {
     NewPasswordPolicy,
     NewPasswordPolicyFromJSON,
     NewPasswordPolicyToJSON,
+    PasswordPolicy,
+    PasswordPolicyFromJSON,
+    PasswordPolicyToJSON,
     PasswordPolicyEntity,
     PasswordPolicyEntityFromJSON,
     PasswordPolicyEntityToJSON,
@@ -73,7 +76,7 @@ export interface SetDefaultPolicyRequest {
     policy: string;
 }
 
-export interface UpdatePasswordPolicy1Request {
+export interface UpdatePasswordPolicyRequest {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -294,7 +297,7 @@ export class PasswordPolicyApi extends runtime.BaseAPI {
      * User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain or DOMAIN_SETTINGS[UPDATE] permission on the specified environment or DOMAIN_SETTINGS[UPDATE] permission on the specified organization
      * Set default policy
      */
-    async setDefaultPolicyRaw(requestParameters: SetDefaultPolicyRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async setDefaultPolicyRaw(requestParameters: SetDefaultPolicyRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<PasswordPolicy>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
             throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling setDefaultPolicy.');
         }
@@ -330,40 +333,41 @@ export class PasswordPolicyApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => PasswordPolicyFromJSON(jsonValue));
     }
 
     /**
      * User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain or DOMAIN_SETTINGS[UPDATE] permission on the specified environment or DOMAIN_SETTINGS[UPDATE] permission on the specified organization
      * Set default policy
      */
-    async setDefaultPolicy(requestParameters: SetDefaultPolicyRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.setDefaultPolicyRaw(requestParameters, initOverrides);
+    async setDefaultPolicy(requestParameters: SetDefaultPolicyRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<PasswordPolicy> {
+        const response = await this.setDefaultPolicyRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**
      * User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain or DOMAIN_SETTINGS[UPDATE] permission on the specified environment or DOMAIN_SETTINGS[UPDATE] permission on the specified organization
      * Update a password policy
      */
-    async updatePasswordPolicy1Raw(requestParameters: UpdatePasswordPolicy1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async updatePasswordPolicyRaw(requestParameters: UpdatePasswordPolicyRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling updatePasswordPolicy1.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling updatePasswordPolicy.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling updatePasswordPolicy1.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling updatePasswordPolicy.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling updatePasswordPolicy1.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling updatePasswordPolicy.');
         }
 
         if (requestParameters.policy === null || requestParameters.policy === undefined) {
-            throw new runtime.RequiredError('policy','Required parameter requestParameters.policy was null or undefined when calling updatePasswordPolicy1.');
+            throw new runtime.RequiredError('policy','Required parameter requestParameters.policy was null or undefined when calling updatePasswordPolicy.');
         }
 
         if (requestParameters.updatePasswordPolicy === null || requestParameters.updatePasswordPolicy === undefined) {
-            throw new runtime.RequiredError('updatePasswordPolicy','Required parameter requestParameters.updatePasswordPolicy was null or undefined when calling updatePasswordPolicy1.');
+            throw new runtime.RequiredError('updatePasswordPolicy','Required parameter requestParameters.updatePasswordPolicy was null or undefined when calling updatePasswordPolicy.');
         }
 
         const queryParameters: any = {};
@@ -395,8 +399,8 @@ export class PasswordPolicyApi extends runtime.BaseAPI {
      * User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain or DOMAIN_SETTINGS[UPDATE] permission on the specified environment or DOMAIN_SETTINGS[UPDATE] permission on the specified organization
      * Update a password policy
      */
-    async updatePasswordPolicy1(requestParameters: UpdatePasswordPolicy1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.updatePasswordPolicy1Raw(requestParameters, initOverrides);
+    async updatePasswordPolicy(requestParameters: UpdatePasswordPolicyRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.updatePasswordPolicyRaw(requestParameters, initOverrides);
     }
 
 }

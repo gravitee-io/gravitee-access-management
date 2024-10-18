@@ -44,7 +44,7 @@ export interface BulkCreateOrganizationUser {
      * @type {string}
      * @memberof BulkCreateOrganizationUser
      */
-    action?: BulkCreateOrganizationUserActionEnum;
+    action: BulkCreateOrganizationUserActionEnum;
     /**
      * 
      * @type {Array<NewOrganizationUser>}
@@ -75,7 +75,7 @@ export function BulkCreateOrganizationUserFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
-        'action': !exists(json, 'action') ? undefined : json['action'],
+        'action': json['action'],
         'items': !exists(json, 'items') ? undefined : ((json['items'] as Array<any>).map(NewOrganizationUserFromJSON)),
     };
 }

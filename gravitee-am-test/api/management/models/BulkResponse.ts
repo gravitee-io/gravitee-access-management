@@ -45,6 +45,12 @@ export interface BulkResponse {
      * @memberof BulkResponse
      */
     results?: Array<BulkOperationResultObject>;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof BulkResponse
+     */
+    allSuccessful?: boolean;
 }
 
 export function BulkResponseFromJSON(json: any): BulkResponse {
@@ -58,6 +64,7 @@ export function BulkResponseFromJSONTyped(json: any, ignoreDiscriminator: boolea
     return {
         
         'results': !exists(json, 'results') ? undefined : ((json['results'] as Array<any>).map(BulkOperationResultObjectFromJSON)),
+        'allSuccessful': !exists(json, 'allSuccessful') ? undefined : json['allSuccessful'],
     };
 }
 
@@ -71,6 +78,7 @@ export function BulkResponseToJSON(value?: BulkResponse | null): any {
     return {
         
         'results': value.results === undefined ? undefined : ((value.results as Array<any>).map(BulkOperationResultObjectToJSON)),
+        'allSuccessful': value.allSuccessful,
     };
 }
 

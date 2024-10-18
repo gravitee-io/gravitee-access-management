@@ -145,6 +145,7 @@ models/NewUser.ts
 models/NotifierPlugin.ts
 models/OIDCSettings.ts
 models/Page.ts
+models/PasswordPolicy.ts
 models/PasswordPolicyEntity.ts
 models/PasswordSettings.ts
 models/PasswordValue.ts

@@ -44,7 +44,7 @@ export interface BulkCreateUser {
      * @type {string}
      * @memberof BulkCreateUser
      */
-    action?: BulkCreateUserActionEnum;
+    action: BulkCreateUserActionEnum;
     /**
      * 
      * @type {Array<NewUser>}
@@ -75,7 +75,7 @@ export function BulkCreateUserFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'action': !exists(json, 'action') ? undefined : json['action'],
+        'action': json['action'],
         'items': !exists(json, 'items') ? undefined : ((json['items'] as Array<any>).map(NewUserFromJSON)),
     };
 }

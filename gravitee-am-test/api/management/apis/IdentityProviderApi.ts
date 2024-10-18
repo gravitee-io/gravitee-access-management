@@ -45,6 +45,14 @@ import {
     UpdateIdentityProviderToJSON,
 } from '../models';
 
+export interface AssignPasswordPolicyToIdpRequest {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+    identity: string;
+    assignPasswordPolicy: AssignPasswordPolicy;
+}
+
 export interface Create12Request {
     organizationId: string;
     newIdentityProvider: NewIdentityProvider;
@@ -120,18 +128,69 @@ export interface UpdateIdentityProviderRequest {
     updateIdentityProvider: UpdateIdentityProvider;
 }
 
-export interface UpdatePasswordPolicyRequest {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-    identity: string;
-    assignPasswordPolicy: AssignPasswordPolicy;
-}
-
 /**
  * 
  */
 export class IdentityProviderApi extends runtime.BaseAPI {
+
+    /**
+     * User must have the DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified domain or DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified environment or DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified organization
+     * Assign password policy to identity provider
+     */
+    async assignPasswordPolicyToIdpRaw(requestParameters: AssignPasswordPolicyToIdpRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<AssignPasswordPolicy>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling assignPasswordPolicyToIdp.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling assignPasswordPolicyToIdp.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling assignPasswordPolicyToIdp.');
+        }
+
+        if (requestParameters.identity === null || requestParameters.identity === undefined) {
+            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling assignPasswordPolicyToIdp.');
+        }
+
+        if (requestParameters.assignPasswordPolicy === null || requestParameters.assignPasswordPolicy === undefined) {
+            throw new runtime.RequiredError('assignPasswordPolicy','Required parameter requestParameters.assignPasswordPolicy was null or undefined when calling assignPasswordPolicyToIdp.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("gravitee-auth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/identities/{identity}/password-policy`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"identity"}}`, encodeURIComponent(String(requestParameters.identity))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AssignPasswordPolicyToJSON(requestParameters.assignPasswordPolicy),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AssignPasswordPolicyFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified domain or DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified environment or DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified organization
+     * Assign password policy to identity provider
+     */
+    async assignPasswordPolicyToIdp(requestParameters: AssignPasswordPolicyToIdpRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<AssignPasswordPolicy> {
+        const response = await this.assignPasswordPolicyToIdpRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * User must have the ORGANIZATION_IDENTITY_PROVIDER[CREATE] permission on the specified organization
@@ -748,65 +807,6 @@ export class IdentityProviderApi extends runtime.BaseAPI {
      */
     async updateIdentityProvider(requestParameters: UpdateIdentityProviderRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<IdentityProvider> {
         const response = await this.updateIdentityProviderRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified domain or DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified environment or DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified organization
-     * Assign password policy to identity provider
-     */
-    async updatePasswordPolicyRaw(requestParameters: UpdatePasswordPolicyRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<AssignPasswordPolicy>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling updatePasswordPolicy.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling updatePasswordPolicy.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling updatePasswordPolicy.');
-        }
-
-        if (requestParameters.identity === null || requestParameters.identity === undefined) {
-            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling updatePasswordPolicy.');
-        }
-
-        if (requestParameters.assignPasswordPolicy === null || requestParameters.assignPasswordPolicy === undefined) {
-            throw new runtime.RequiredError('assignPasswordPolicy','Required parameter requestParameters.assignPasswordPolicy was null or undefined when calling updatePasswordPolicy.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("gravitee-auth", []);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/identities/{identity}/password-policy`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"identity"}}`, encodeURIComponent(String(requestParameters.identity))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: AssignPasswordPolicyToJSON(requestParameters.assignPasswordPolicy),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => AssignPasswordPolicyFromJSON(jsonValue));
-    }
-
-    /**
-     * User must have the DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified domain or DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified environment or DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified organization
-     * Assign password policy to identity provider
-     */
-    async updatePasswordPolicy(requestParameters: UpdatePasswordPolicyRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<AssignPasswordPolicy> {
-        const response = await this.updatePasswordPolicyRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -44,7 +44,7 @@ export interface BulkUpdateUser {
      * @type {string}
      * @memberof BulkUpdateUser
      */
-    action?: BulkUpdateUserActionEnum;
+    action: BulkUpdateUserActionEnum;
     /**
      * 
      * @type {Array<UpdateUser>}
@@ -75,7 +75,7 @@ export function BulkUpdateUserFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'action': !exists(json, 'action') ? undefined : json['action'],
+        'action': json['action'],
         'items': !exists(json, 'items') ? undefined : ((json['items'] as Array<any>).map(UpdateUserFromJSON)),
     };
 }
