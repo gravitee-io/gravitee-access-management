@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.scim.service.impl;
 
+import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.common.audit.EventType;
@@ -404,28 +405,32 @@ public class UserServiceImpl implements UserService {
         return innerGet(userId, baseUrl)
                 .switchIfEmpty(Single.error(() -> new UserNotFoundException(userId)))
                 .flatMap(userContainer -> {
-                    ObjectNode node = objectMapper.convertValue(userContainer.getScimUser(), ObjectNode.class);
-                    patchOp.getOperations().forEach(operation -> operation.apply(node));
-                    boolean isCustomGraviteeUser = GraviteeUser.SCHEMAS.stream().anyMatch(node::has);
-                    User scimUser = isCustomGraviteeUser ?
-                            objectMapper.treeToValue(node, GraviteeUser.class) :
-                            objectMapper.treeToValue(node, User.class);
+                    try {
+                        ObjectNode node = objectMapper.convertValue(userContainer.getScimUser(), ObjectNode.class);
+                        patchOp.getOperations().forEach(operation -> operation.apply(node));
+                        boolean isCustomGraviteeUser = GraviteeUser.SCHEMAS.stream().anyMatch(node::has);
+                        User scimUser = isCustomGraviteeUser ?
+                                objectMapper.treeToValue(node, GraviteeUser.class) :
+                                objectMapper.treeToValue(node, User.class);
 
-                    io.gravitee.am.model.User userToPatch = UserMapper.convert(scimUser);
+                        io.gravitee.am.model.User userToPatch = UserMapper.convert(scimUser);
+                        // set source
+                        String source = scimUser.getSource() != null ? scimUser.getSource() : (idp != null ? idp : userContainer.getAmUser().getSource());
+                        userToPatch.setSource(source);
 
-                    // set source
-                    String source = scimUser.getSource() != null ? scimUser.getSource() : (idp != null ? idp : userContainer.getAmUser().getSource());
-                    userToPatch.setSource(source);
+                        // check password
+                        if (isInvalidUserPassword(scimUser.getPassword(), userToPatch, client)) {
+                            return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
+                        }
 
-                    // check password
-                    if (isInvalidUserPassword(scimUser.getPassword(), userToPatch, client)) {
-                        return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
+                        return innerUpdate(userContainer.getAmUser(), scimUser, idp, baseUrl, principal, client);
+                    } catch (JacksonException e) {
+                        LOGGER.debug("JacksonException received during scim Patch operation", e);
+                        return Single.error(new InvalidValueException(e.getMessage()));
                     }
-
-                    return innerUpdate(userContainer.getAmUser(), scimUser, idp, baseUrl, principal, client);
                 })
                 .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
+                    if (ex instanceof AbstractManagementException || ex instanceof SCIMException) {
                         return Single.error(ex);
                     } else {
                         LOGGER.error("An error has occurred when trying to patch user: {}", userId, ex);
