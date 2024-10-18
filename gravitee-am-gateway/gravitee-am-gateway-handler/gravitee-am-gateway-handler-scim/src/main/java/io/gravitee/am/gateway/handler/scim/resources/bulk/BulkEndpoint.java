@@ -32,6 +32,7 @@ import io.gravitee.am.gateway.handler.scim.model.BulkRequest;
 import io.gravitee.am.gateway.handler.scim.service.BulkService;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Maybe;
@@ -48,6 +49,7 @@ import java.util.Set;
 
 import static java.util.List.of;
 import static org.springframework.util.CollectionUtils.isEmpty;
+import static org.springframework.util.StringUtils.hasText;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -118,7 +120,9 @@ public class BulkEndpoint {
         if (bulkRequest.getOperations().size() > BULK_MAX_REQUEST_OPERATIONS) {// TODO make this configurable in AM-3572
             throw TooManyOperationException.tooManyOperation(BULK_MAX_REQUEST_OPERATIONS);// TODO make this configurable in AM-3572
         }
-        if (bulkRequest.getOperations().stream().map(BulkOperation::getBulkId).distinct().count() != bulkRequest.getOperations().size()){
+        final var allBulkId = bulkRequest.getOperations().stream().filter(op -> op.getMethod() == HttpMethod.POST || hasText(op.getBulkId())).map(BulkOperation::getBulkId).count();
+        final var uniqBulkId = bulkRequest.getOperations().stream().filter(op -> op.getMethod() == HttpMethod.POST || hasText(op.getBulkId())).map(BulkOperation::getBulkId).distinct().count();
+        if (allBulkId != uniqBulkId){
             throw new InvalidValueException("bulkId must be unique across all Operations");
         }
         return bulkRequest;

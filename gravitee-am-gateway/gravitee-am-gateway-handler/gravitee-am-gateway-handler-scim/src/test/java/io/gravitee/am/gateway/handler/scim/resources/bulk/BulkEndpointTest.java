@@ -43,7 +43,9 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 import static io.gravitee.am.gateway.handler.scim.model.BulkRequest.BULK_REQUEST_SCHEMA;
+import static io.gravitee.common.http.HttpMethod.DELETE;
 import static io.gravitee.common.http.HttpMethod.POST;
+import static io.gravitee.common.http.HttpMethod.PUT;
 import static java.lang.String.valueOf;
 import static java.util.List.of;
 import static org.mockito.ArgumentMatchers.any;
@@ -88,7 +90,7 @@ public class BulkEndpointTest extends RxWebTestBase {
     @Test
     public void should_reject_too_many_request() throws Exception {
         final var bulkRequest = new BulkRequest();
-        bulkRequest.setOperations(IntStream.range(0, BulkEndpoint.BULK_MAX_REQUEST_OPERATIONS + 1).mapToObj(i -> bulkOp(valueOf(i))).toList());
+        bulkRequest.setOperations(IntStream.range(0, BulkEndpoint.BULK_MAX_REQUEST_OPERATIONS + 1).mapToObj(i -> bulkOp(POST, valueOf(i))).toList());
         bulkRequest.setSchemas(of(BULK_REQUEST_SCHEMA));
         testRequest(
                 HttpMethod.POST,
@@ -108,9 +110,9 @@ public class BulkEndpointTest extends RxWebTestBase {
     }
 
     @Test
-    public void should_reject_duplicated_bulkId() throws Exception {
+    public void should_reject_duplicated_bulkId_all_with_POST_method() throws Exception {
         final var bulkRequest = new BulkRequest();
-        bulkRequest.setOperations(List.of(bulkOp("id"), bulkOp("id")));
+        bulkRequest.setOperations(List.of(bulkOp(POST, "id"), bulkOp(POST, "id")));
         bulkRequest.setSchemas(of(BULK_REQUEST_SCHEMA));
         testRequest(
                 HttpMethod.POST,
@@ -128,6 +130,65 @@ public class BulkEndpointTest extends RxWebTestBase {
                         "}");
 
         verify(bulkService, never()).processBulkRequest(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    public void should_reject_duplicated_bulkId_all_with_mixed_method() throws Exception {
+        final var bulkRequest = new BulkRequest();
+        bulkRequest.setOperations(List.of(bulkOp(POST, "id"), bulkOp(DELETE, "id")));
+        bulkRequest.setSchemas(of(BULK_REQUEST_SCHEMA));
+        testRequest(
+                HttpMethod.POST,
+                "/Bulk",
+                req -> {
+                    req.end(Json.encode(bulkRequest));
+                },
+                400,
+                "Bad Request",
+                "{\n" +
+                        "  \"status\" : \"400\",\n" +
+                        "  \"scimType\" : \"invalidValue\",\n" +
+                        "  \"detail\" : \"bulkId must be unique across all Operations\",\n" +
+                        "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
+                        "}");
+
+        verify(bulkService, never()).processBulkRequest(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    public void should_accept_multiple_operation_without_bulkId() throws Exception {
+        when(subjectManager.getPrincipal(any())).thenReturn(Maybe.empty());
+        final var bulkRequest = new BulkRequest();
+        bulkRequest.setOperations(List.of(bulkOp(PUT, null), bulkOp(POST, "id"), bulkOp(DELETE, null)));
+        bulkRequest.setSchemas(of(BULK_REQUEST_SCHEMA));
+
+        BulkResponse response = new BulkResponse();
+        final var putOp = new BulkOperation();
+        putOp.setMethod(PUT);
+        putOp.setBulkId("id");
+        putOp.setLocation("https://localhost:8092/domain/Users/yxz");
+        final var postOp = new BulkOperation();
+        postOp.setMethod(POST);
+        postOp.setBulkId("id");
+        postOp.setLocation("https://localhost:8092/domain/Users");
+        postOp.setStatus(valueOf(HttpStatusCode.CREATED_201));
+        final var deleteOp = new BulkOperation();
+        deleteOp.setMethod(DELETE);
+        deleteOp.setBulkId("id");
+        deleteOp.setLocation("https://localhost:8092/domain/Users/yxz");
+        response.setOperations(of(putOp, postOp, deleteOp));
+
+        when(bulkService.processBulkRequest(any(), any(), any(), any(), any())).thenReturn(Single.just(response));
+        testRequest(
+                HttpMethod.POST,
+                "/Bulk",
+                req -> {
+                    req.end(Json.encode(bulkRequest));
+                },
+                200,
+                "OK", null);
+
+        verify(bulkService).processBulkRequest(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -171,9 +232,10 @@ public class BulkEndpointTest extends RxWebTestBase {
         verify(bulkService).processBulkRequest(any(), any(), any(), any(), any());
     }
 
-    private static BulkOperation bulkOp(String bulkId){
+    private static BulkOperation bulkOp(io.gravitee.common.http.HttpMethod method, String bulkId){
         BulkOperation operation = new BulkOperation();
         operation.setBulkId(bulkId);
+        operation.setMethod(method);
         return operation;
     }
 
