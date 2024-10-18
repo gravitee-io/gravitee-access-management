@@ -4,7 +4,7 @@ setup: true
 parameters:
   gio_action:
     type: enum
-    enum: [ release, publish_rpms, publish_docker_images, pull_requests, release_notes_am, publish_maven_central, release_helm, publish-images-azure-registry, release-version, release-alpha-version ]
+    enum: [ release, publish_rpms, publish_docker_images, pull_requests, release_notes_am, publish_maven_central, release_helm, publish-images-azure-registry, release-version, release-alpha-version, release-hotfix-version ]
     default: pull_requests
   gio_product:
     type: enum
@@ -49,6 +49,11 @@ parameters:
     type: boolean
     default: true
     description: "Is this a latest support version of the Product ? (if so minor version tagging docker images). True by default."
+  hotfix_version:
+    type: boolean
+    default: false
+    description: "Is this a hotfix?"
+
 
 orbs:
   path-filtering: circleci/path-filtering@0.0.2
