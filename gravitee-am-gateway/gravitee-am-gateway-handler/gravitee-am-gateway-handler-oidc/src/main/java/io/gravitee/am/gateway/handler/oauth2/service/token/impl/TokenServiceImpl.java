@@ -420,7 +420,7 @@ public class TokenServiceImpl implements TokenService {
         executionContext.getAttributes().putAll(request.getExecutionContext());
         executionContext.setAttribute(ConstantKeys.CLIENT_CONTEXT_KEY, new ClientProperties(client));
         if (user != null) {
-            executionContext.setAttribute(ConstantKeys.USER_CONTEXT_KEY, new UserProperties(user));
+            executionContext.setAttribute(ConstantKeys.USER_CONTEXT_KEY, new UserProperties(user, true));
         }
 
         return executionContext;

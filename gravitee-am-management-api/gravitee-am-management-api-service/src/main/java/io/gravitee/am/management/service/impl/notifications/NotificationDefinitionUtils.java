@@ -71,7 +71,7 @@ public class NotificationDefinitionUtils {
         public Map<String, Object> build() {
             var result = new HashMap();
             if (user != null) {
-                result.put(NOTIFIER_DATA_USER, new UserProperties(user));
+                result.put(NOTIFIER_DATA_USER, new UserProperties(user, false));
             }
 
             if (domain != null) {
