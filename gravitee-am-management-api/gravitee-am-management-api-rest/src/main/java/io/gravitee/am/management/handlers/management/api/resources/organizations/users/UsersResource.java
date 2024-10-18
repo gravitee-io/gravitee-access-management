@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.users;
 
+import io.gravitee.am.management.handlers.management.api.bulk.BulkOperationResult;
+import io.gravitee.am.management.handlers.management.api.bulk.BulkRequest;
 import io.gravitee.am.management.handlers.management.api.model.UserEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractUsersResource;
 import io.gravitee.am.model.Acl;
@@ -35,10 +37,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -62,7 +64,7 @@ import java.util.Set;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tags({@Tag(name= "user")})
+@Tag(name = "user")
 public class UsersResource extends AbstractUsersResource {
 
     @Context
@@ -82,11 +84,11 @@ public class UsersResource extends AbstractUsersResource {
             description = "User must have the ORGANIZATION_USER[LIST] permission on the specified organization. " +
                     "Each returned user is filtered and contains only basic information such as id and username and displayname. " +
                     "Last login and identity provider name will be also returned if current user has ORGANIZATION_USER[READ] permission on the organization.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List users of the organization",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Page.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+
+    @ApiResponse(responseCode = "200", description = "List users of the organization",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = Page.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void list(
             @PathParam("organizationId") String organizationId,
             @QueryParam("q") String query,
@@ -116,11 +118,11 @@ public class UsersResource extends AbstractUsersResource {
             operationId = "createOrganisationUser",
             summary = "Create a platform user or Service Account",
             description = "User must have the ORGANIZATION_USER[READ] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "User or Service Account successfully created",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = NewOrganizationUser.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+
+    @ApiResponse(responseCode = "201", description = "User or Service Account successfully created",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = NewOrganizationUser.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void create(
             @PathParam("organizationId") String organizationId,
             @Parameter(name = "user", required = true) @Valid @NotNull final NewOrganizationUser newOrganizationUser,
@@ -137,6 +139,62 @@ public class UsersResource extends AbstractUsersResource {
                                 .build()))
                 .subscribe(response::resume, response::resume);
     }
+
+    @POST
+    @Path("/bulk")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Operation(
+            operationId = "bulkCreateOrganisationUser",
+            summary = "Create a platform user or Service Account",
+            description = "User must have the ORGANIZATION_USER[READ] permission on the specified organization")
+
+    @ApiResponse(responseCode = "201", description = "Users or Service Accounts successfully created",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = NewOrganizationUser.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
+    public void create(
+            @PathParam("organizationId") String organizationId,
+            @Valid @NotNull final BulkRequest<NewOrganizationUser> newOrganizationUsers,
+            @Suspended final AsyncResponse response) {
+
+        final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
+
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.CREATE)
+                .andThen(organizationService.findById(organizationId)
+                        .flatMap(organization -> newOrganizationUsers.processOneByOne(user ->
+                                organizationUserService.createGraviteeUser(organization, user, authenticatedUser)
+                                        .map(BulkOperationResult::created)
+                                        .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex.getMessage())))
+                        )))
+                .subscribe(response::resume, response::resume);
+    }
+
+    @DELETE
+    @Path("/bulk")
+    @Operation(summary = "Delete a bulk of users",
+            operationId = "deleteOrganizationBulkUsers",
+            description = "User must have the ORGANIZATION_USER[DELETE] permission on the specified organization")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "User successfully deleted"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void bulkDelete(
+            @PathParam("organizationId") String organizationId,
+            @Parameter(required = true) @Valid @NotNull final BulkRequest<String> request,
+            @Suspended final AsyncResponse response){
+        final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
+
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.DELETE)
+                .andThen(request.processOneByOne(id -> organizationUserService
+                        .delete(ReferenceType.ORGANIZATION, organizationId, id, authenticatedUser)
+                        .map(User::getId)
+                        .map(BulkOperationResult::ok)
+                        .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex.getMessage())))
+
+                ))
+                .subscribe(response::resume, response::resume);
+    }
+
 
     @Path("{user}")
     public UserResource getUserResource() {
