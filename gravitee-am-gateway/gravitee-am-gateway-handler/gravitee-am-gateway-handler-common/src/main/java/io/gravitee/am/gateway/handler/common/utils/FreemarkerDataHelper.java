@@ -47,7 +47,7 @@ public class FreemarkerDataHelper {
             data.put(ConstantKeys.CLIENT_CONTEXT_KEY, new ClientProperties((Client) client));
         }
         if (user instanceof User) {
-            data.put(ConstantKeys.USER_CONTEXT_KEY, new UserProperties((User) user));
+            data.put(ConstantKeys.USER_CONTEXT_KEY, new UserProperties((User) user, false));
         }
         return data;
     }
