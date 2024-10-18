@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.scim.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import io.gravitee.am.common.scim.Schema;
@@ -51,6 +52,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
+import io.vertx.core.json.Json;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -546,6 +548,45 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         testObserver.assertValue(g -> "my user 2".equals(g.getDisplayName()));
+    }
+
+    @Test
+    public void shouldNotPatchUser_Invalid_patch_structure() throws Exception {
+        final String userId = "userId";
+
+        ObjectNode userNode = mock(ObjectNode.class);
+
+        PatchOp patchOp = Json.decodeValue("""
+                    { "schemas":
+                           ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+                         "Operations":[
+                           {
+                            "op":"add",
+                            "path":"name",
+                            "value": {
+                                "givenName": "Poppy",
+                                "familyName": "Seed",
+                                "displayName": "Poppy Seed"
+                            }
+                           }
+                         ]
+                       }
+                    """, PatchOp.class);
+
+        io.gravitee.am.model.User patchedUser = mock(io.gravitee.am.model.User.class);
+        when(patchedUser.getId()).thenReturn(userId);
+        when(patchedUser.getUsername()).thenReturn("username");
+        when(patchedUser.getDisplayName()).thenReturn("my user 2");
+        when(patchedUser.getAdditionalInformation()).thenReturn(Map.of("attr1", "value-attr1"));
+
+        when(objectMapper.convertValue(any(), eq(ObjectNode.class))).thenReturn(userNode);
+        when(objectMapper.treeToValue(userNode, User.class)).thenThrow(mock(UnrecognizedPropertyException.class));
+        when(groupService.findByMember(userId)).thenReturn(Flowable.empty());
+        when(userRepository.findById(userId)).thenReturn(Maybe.just(patchedUser));
+
+        TestObserver<User> testObserver = userService.patch(userId, patchOp, null, "/", null, null).test();
+        testObserver.assertError(err -> err instanceof InvalidValueException);
+        verify(userRepository, never()).update(any(), any());
     }
 
     @Test
