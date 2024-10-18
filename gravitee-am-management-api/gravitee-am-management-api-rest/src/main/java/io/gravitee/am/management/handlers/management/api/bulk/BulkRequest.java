@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.common.utils.Indexed;
 import io.gravitee.am.model.Acl;
 import io.reactivex.rxjava3.core.Single;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.core.Response;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +53,7 @@ public class BulkRequest<T> {
     }
 
     @JsonProperty("action")
+    @NotNull
     private final Action action;
     @JsonProperty("items")
     private final List<T> items;
@@ -66,7 +68,7 @@ public class BulkRequest<T> {
      */
     public final <R> Single<Response> processOneByOne(Function<T, Single<BulkOperationResult<R>>> processor) {
         if (CollectionUtils.isEmpty(items())) {
-            return Single.just(Response.noContent().build());
+            return Single.just(Response.status(Response.Status.BAD_REQUEST).entity("received a bulk request without any items").build());
         }
         return Indexed.toIndexedFlowable(items())
                 .flatMapSingle(indexed -> processor.apply(indexed.value())
@@ -77,7 +79,7 @@ public class BulkRequest<T> {
 
     private <R> Response makeResponse(List<BulkOperationResult<R>> bulkOperationResults) {
         var bulkResponse = new BulkResponse<>(bulkOperationResults);
-        return Response.status(bulkResponse.getStatus()).entity(bulkResponse).build();
+        return Response.status(Response.Status.OK).entity(bulkResponse).build();
     }
 
     /**

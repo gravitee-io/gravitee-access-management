@@ -15,38 +15,21 @@
  */
 package io.gravitee.am.management.handlers.management.api.bulk;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.ws.rs.core.Response;
 import lombok.Getter;
 import org.springframework.util.CollectionUtils;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Getter
 public class BulkResponse<T> {
     private final List<BulkOperationResult<T>> results;
-    @JsonIgnore
-    private final Response.Status status;
+    private final boolean allSuccessful;
 
     public BulkResponse(List<BulkOperationResult<T>> results) {
         if (CollectionUtils.isEmpty(results)) {
             throw new IllegalArgumentException("BulkResponse must contain at least 1 result");
         }
         this.results = results.stream().sorted(BulkOperationResult.byIndex()).toList();
-        var statuses = results.stream().map(BulkOperationResult::httpStatus).collect(Collectors.toSet());
-        if (statuses.size() == 1) {
-            // all responses have the same status - let's just use this
-            this.status = statuses.iterator().next();
-        } else if (statuses.stream().allMatch(s -> s.getStatusCode() >= 500)) {
-            // we got various statuses, but all are some server error
-            this.status = Response.Status.INTERNAL_SERVER_ERROR;
-        } else if (statuses.stream().allMatch(s -> s.getStatusCode() >= 400)) {
-            // we got various statuses, but all are some errors, and there's at least one client error
-            this.status = Response.Status.BAD_REQUEST;
-        } else {
-            // any other mix - caller should inspect the response
-            this.status = Response.Status.OK;
-        }
+        this.allSuccessful = results.stream().allMatch(BulkOperationResult::success);
     }
 }
