@@ -4487,15 +4487,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ngx-formly/material@npm:6.3.7":
-  version: 6.3.7
-  resolution: "@ngx-formly/material@npm:6.3.7"
+"@ngx-formly/material@npm:6.3.10":
+  version: 6.3.10
+  resolution: "@ngx-formly/material@npm:6.3.10"
   dependencies:
     tslib: "npm:^2.0.0"
   peerDependencies:
     "@angular/material": ">=13.0.0"
-    "@ngx-formly/core": 6.3.7
-  checksum: 10c0/197f289a512e5e7dddb4cfb36041ee2d6ef280bfd3d80b2e4900aa5dcb9876909cc4d6f5b9473b3d149e1fffbe46e92e9561d07d4e8beda3bf54806cd4e01f19
+    "@ngx-formly/core": 6.3.10
+  checksum: 10c0/53a028bc768a191cd50eb2edad79680428eca5a8934b93e4ad07154dbde40cf84a369520a874e3936a236c34d1567b7a259adcde856abb0cde31d58cfb137018
   languageName: node
   linkType: hard
 
@@ -9644,7 +9644,7 @@ __metadata:
     "@gravitee/ui-components": "npm:4.2.6"
     "@gravitee/ui-particles-angular": "npm:12.9.0"
     "@ngx-formly/core": "npm:6.3.9"
-    "@ngx-formly/material": "npm:6.3.7"
+    "@ngx-formly/material": "npm:6.3.10"
     "@swimlane/ngx-datatable": "npm:20.1.0"
     "@types/hammerjs": "npm:2.0.45"
     "@types/jest": "npm:29.5.12"
