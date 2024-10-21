@@ -10,8 +10,9 @@ import { ReleaseHelm } from './5-step-release-helm.mjs';
 import { ReleaseNotes } from './6-step-release-notes.mjs';
 import { ReleaseVersion } from "./am-release-pipeline.mjs";
 import { ReleaseAlphaVersion } from "./am-release-alpha-pipeline.mjs";
+import { ReleaseHotfix } from './am-release-hotfix.mjs';
 
-function changeLogLevel(newLevel, defaultLevel) {
+function changeLogLevel(newLevel) {
   logger.level = newLevel;
 }
 
@@ -59,6 +60,7 @@ async function main() {
   new ReleaseNotes().buildCommand(program);
   new ReleaseVersion().buildCommand(program);
   new ReleaseAlphaVersion().buildCommand(program);
+  new ReleaseHotfix().buildCommand(program);
 
   await checkCircleCIToken();
   // This parse call will trigger action needed.
