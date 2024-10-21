@@ -152,7 +152,7 @@ public class IdentityProviderResource extends AbstractResource {
     @Path("/password-policy")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Assign password policy to identity provider",
+    @Operation(operationId = "assignPasswordPolicyToIdp", summary = "Assign password policy to identity provider",
             description = "User must have the DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified domain " +
                     "or DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified environment " +
                     "or DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified organization")

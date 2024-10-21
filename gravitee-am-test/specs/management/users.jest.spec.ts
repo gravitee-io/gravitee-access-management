@@ -16,27 +16,15 @@
 
 import fetch from 'cross-fetch';
 import * as faker from 'faker';
-import { afterAll, beforeAll, expect } from '@jest/globals';
-import { createDomain, deleteDomain, startDomain } from '@management-commands/domain-management-commands';
-import {
-  buildCreateAndTestUser,
-  deleteUser,
-  getAllUsers,
-  getUser,
-  getUserPage,
-  lockUser,
-  resetUserPassword,
-  sendRegistrationConfirmation,
-  unlockUser,
-  updateUser,
-  updateUsername,
-  updateUserStatus,
-} from '@management-commands/user-management-commands';
+import {afterAll, beforeAll, expect,jest} from '@jest/globals';
+import {createDomain, deleteDomain, startDomain,waitForDomainStart} from '@management-commands/domain-management-commands';
+import {buildCreateAndTestUser, buildTestUser, bulkCreateUsers, deleteUser, getAllUsers, getUser, getUserPage, lockUser, resetUserPassword, sendRegistrationConfirmation, unlockUser, updateUser, updateUsername, updateUserStatus, } from '@management-commands/user-management-commands';
 
-import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { ResponseError } from '../../api/management/runtime';
+import {requestAdminAccessToken} from '@management-commands/token-management-commands';
+import {ResponseError} from '../../api/management/runtime';
 
 global.fetch = fetch;
+jest.setTimeout(200000);
 
 let accessToken;
 let domain;
@@ -47,11 +35,13 @@ beforeAll(async () => {
   accessToken = adminTokenResponse.body.access_token;
   expect(accessToken).toBeDefined();
 
-  const createdDomain = await createDomain(accessToken, 'domain-users', faker.company.catchPhraseDescriptor());
+  const createdDomain = await createDomain(accessToken, 'domain-users-22', faker.company.catchPhraseDescriptor());
   expect(createdDomain).toBeDefined();
   expect(createdDomain.id).toBeDefined();
 
-  const domainStarted = await startDomain(createdDomain.id, accessToken);
+  const domainStarted = await startDomain(createdDomain.id, accessToken)
+      .then(domain => waitForDomainStart(domain))
+      .then(result => result.domain);
   expect(domainStarted).toBeDefined();
   expect(domainStarted.id).toEqual(createdDomain.id);
 
@@ -65,6 +55,54 @@ describe('when using the users commands', () => {
     });
   }
 });
+
+describe('when creating users in bulk', () => {
+  it ('should create all users ', async () => {
+      let usersToCreate = []
+      for (let i = 0; i< 10; i++) {
+        usersToCreate.push(buildTestUser(i))
+      }
+      const response = await bulkCreateUsers(domain.id, accessToken, usersToCreate)
+      expect(response.results).toHaveLength(usersToCreate.length)
+      let ids = []
+      for (let result of response.results) {
+        expect(result.httpStatus).toBe(201)
+        expect(result.body).toBeDefined()
+        const newUserId = result.body.id
+        expect(newUserId).toBeDefined()
+        expect(ids).not.toContain(newUserId)
+        ids.push(newUserId)
+      }
+  });
+
+  it ('should create users even if there are errors and report errors', async () =>{
+    let usersToCreate = []
+    for (let i = 0; i< 10; i++) {
+      usersToCreate.push(buildTestUser(i))
+    }
+    usersToCreate.push(buildTestUser(4)) // duplicate
+
+    const response = await bulkCreateUsers(domain.id, accessToken, usersToCreate)
+    expect(response.results).toHaveLength(usersToCreate.length)
+    let ids = []
+    for (let result of response.results) {
+      if (result.index != 4) {
+        expect(result.httpStatus).toBe(201)
+        expect(result.body).toBeDefined()
+        expect(result.errorDetails).toBeUndefined()
+        const newUserId = result.body.id
+        expect(newUserId).toBeDefined()
+        expect(ids).not.toContain(newUserId)
+        ids.push(newUserId)
+      } else {
+        expect(result.httpStatus).toBe(400)
+        expect(result.body).toBeUndefined()
+        expect(result.errorDetails).toHaveProperty("error")
+        expect(result.errorDetails).toHaveProperty("message")
+      }
+    }
+  })
+})
 
 describe('after creating users', () => {
   it('must find User by id', async () => {
