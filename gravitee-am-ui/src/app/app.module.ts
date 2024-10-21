@@ -431,6 +431,7 @@ import { EmailTemplateFactoryService } from './services/email.template.factory.s
 import { FormTemplateFactoryService } from './services/form.template.factory.service';
 import { LicenseGuard } from './guards/license-guard.service';
 import { ApplicationClientSecretDialogModule } from './domain/applications/client-secret/application-client-secret-dialog.module';
+import { IdentitiesOrganizationResolver } from './resolvers/identities-organization.resolver';
 
 import { AppConfig } from '../config/app.config';
 
@@ -833,6 +834,7 @@ import { AppConfig } from '../config/app.config';
     ApplicationResourceResolver,
     ApplicationResourcePolicyResolver,
     IdentitiesResolver,
+    IdentitiesOrganizationResolver,
     PluginPoliciesResolver,
     PlatformFlowSchemaResolver,
     NewsletterResolver,
