@@ -21,9 +21,10 @@ import io.reactivex.rxjava3.schedulers.TestScheduler;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.AssertionsForInterfaceTypes;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
+import org.junit.platform.commons.util.StringUtils;
 
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
@@ -42,33 +43,51 @@ class BulkRequestTest {
                               "action": "CREATE",
                               "items": [
                                 {
-                                  "email": "test@localhost.com"
+                                  "value": "some text"
                                 },
                                 {
-                                    "email": "test2@local.host"
-                                }
+                                    "value": "error 1234"
+                                },
+                                {}
                               ]
                             }
                 """;
 
-        record EmailRecord(String email) {
+        record TestRecord(String value) {
         }
 
         var genericRequest = om.readValue(createCommmandJson, BulkRequest.Generic.class);
-        var expectedResults = List.of("To: test@localhost.com", "To: test2@local.host");
-        genericRequest.processOneByOne(EmailRecord.class, om, email -> Single.just(BulkOperationResult.ok("To: " + email.email())))
+        var responseEntity = genericRequest.processOneByOne(TestRecord.class, om, item -> {
+                    if (StringUtils.isBlank(item.value())) {
+                        return Single.just(BulkOperationResult.error(Response.Status.CONFLICT));
+                    }
+                    else if (item.value().startsWith("error")) {
+                        return Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, new RuntimeException(item.value())));
+                    } else {
+                        return Single.just(BulkOperationResult.ok("Done: " + item.value()));
+                    }
+                })
                 .test()
                 .assertComplete()
                 .assertValueCount(1)
-                .assertValue(res -> {
-                    if (res.getEntity() instanceof BulkResponse<?> response) {
-                        return response.getResults().size() == expectedResults.size()
-                                && response.getResults().stream().map(BulkOperationResult::getBody).toList().containsAll(expectedResults);
+                .values()
+                .get(0);
 
-                    } else {
-                        return false;
-                    }
+        @SuppressWarnings("unchecked") var results = (BulkResponse<String>) responseEntity.getEntity();
+        AssertionsForInterfaceTypes.assertThat(results.getResults()).anySatisfy(it -> {
+                    assertThat(it.httpStatus()).isEqualTo(Response.Status.OK);
+                    assertThat(it.getBody()).startsWith("Done: ");
+                })
+                .anySatisfy(it -> {
+                    assertThat(it.httpStatus()).isEqualTo(Response.Status.BAD_REQUEST);
+                    assertThat(it.getErrorDetails()).asInstanceOf(InstanceOfAssertFactories.map(String.class, String.class))
+                            .containsKeys("message", "error");
+                })
+                .anySatisfy(it -> {
+                    assertThat(it.httpStatus()).isEqualTo(Response.Status.CONFLICT);
+                    assertThat(it.getErrorDetails()).isEqualTo("unknown error");
                 });
+
     }
 
 
@@ -89,6 +108,7 @@ class BulkRequestTest {
                 .map(Response::getEntity)
                 .map(entity -> {
                     assertThat(entity).isInstanceOf(BulkResponse.class);
+                    //noinspection unchecked
                     return (BulkResponse<String>) entity;
                 })
                 .test();

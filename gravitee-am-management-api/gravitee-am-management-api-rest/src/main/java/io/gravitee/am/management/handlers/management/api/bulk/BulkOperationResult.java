@@ -26,6 +26,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 import lombok.With;
 
 import java.io.IOException;
@@ -34,6 +35,7 @@ import java.util.Map;
 
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @EqualsAndHashCode
+@ToString
 public class BulkOperationResult<T> {
 
     private static final int NO_INDEX = Integer.MIN_VALUE;
