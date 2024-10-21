@@ -447,6 +447,7 @@ import { PasswordPoliciesResolver } from './resolvers/password-policies-resolver
 import { PasswordPolicyResolver } from './resolvers/password-policy-resolver';
 import { PasswordPolicyService } from './services/password-policy.service';
 import { CreateGroupMapperComponent, ProviderGroupsComponent } from './domain/settings/providers/provider/groups/groups/groups.component';
+import { IdentitiesOrganizationResolver } from './resolvers/identities-organization.resolver';
 
 @NgModule({
   declarations: [
@@ -859,6 +860,7 @@ import { CreateGroupMapperComponent, ProviderGroupsComponent } from './domain/se
     ApplicationResourceResolver,
     ApplicationResourcePolicyResolver,
     IdentitiesResolver,
+    IdentitiesOrganizationResolver,
     PluginPoliciesResolver,
     PlatformFlowSchemaResolver,
     NewsletterResolver,

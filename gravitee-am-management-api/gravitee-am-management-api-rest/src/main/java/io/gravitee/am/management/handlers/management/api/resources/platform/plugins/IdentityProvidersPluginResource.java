@@ -40,10 +40,11 @@ import java.util.stream.Collectors;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tags({@Tag(name= "Plugin"), @Tag(name= "Identity Provider")})
+@Tags({@Tag(name = "Plugin"), @Tag(name = "Identity Provider")})
 public class IdentityProvidersPluginResource {
 
     public static final String GRAVITEE_AM_IDP = "gravitee-am-idp";
+    public static final String SAML2_IDP = "saml2-generic-am-idp";
     @Context
     private ResourceContext resourceContext;
 
@@ -55,12 +56,19 @@ public class IdentityProvidersPluginResource {
     @Operation(summary = "List identity provider plugins",
             description = "There is no particular permission needed. User must be authenticated.")
     public void list(@QueryParam("external") Boolean external,
+                     @QueryParam("organization") Boolean organization,
                      @QueryParam("expand") List<String> expand,
                      @Suspended final AsyncResponse response) {
 
         identityProviderPluginService.findAll(external, expand)
                 .map(identityProviderPlugins -> identityProviderPlugins.stream()
                         .filter(identityProvider -> !GRAVITEE_AM_IDP.equals(identityProvider.getId()))
+                        .filter(identityProvider -> {
+                            if (Boolean.TRUE.equals(organization)) {
+                                return !SAML2_IDP.equals(identityProvider.getId()); ////SAML2 is currently not available for Organization due to missing CertificateManager In Management API.
+                            }
+                            return true;
+                        })
                         .sorted(Comparator.comparing(IdentityProviderPlugin::getName))
                         .collect(Collectors.toList()))
                 .subscribe(response::resume, response::resume);
