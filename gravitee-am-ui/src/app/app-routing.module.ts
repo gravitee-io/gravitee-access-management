@@ -182,6 +182,7 @@ import { DomainSettingsEntrypointsComponent } from './domain/settings/entrypoint
 import { DomainSettingsWebAuthnComponent } from './domain/settings/webauthn/webauthn.component';
 import { ApplicationLoginSettingsComponent } from './domain/applications/application/advanced/login/login.component';
 import { IdentitiesResolver } from './resolvers/identities.resolver';
+import { IdentitiesOrganizationResolver } from './resolvers/identities-organization.resolver';
 import { PluginPoliciesResolver } from './resolvers/plugin-policies.resolver';
 import { PlatformFlowSchemaResolver } from './resolvers/platform-flow-schema.resolver';
 import { NewsletterComponent } from './newsletter/newsletter.component';
@@ -364,7 +365,7 @@ export const routes: Routes = [
                 component: DomainSettingsProvidersComponent,
                 resolve: {
                   providers: ProvidersResolver,
-                  identities: IdentitiesResolver,
+                  identities: IdentitiesOrganizationResolver,
                 },
               },
               {
@@ -372,7 +373,7 @@ export const routes: Routes = [
                 component: ProviderCreationComponent,
                 canActivate: [AuthGuard],
                 resolve: {
-                  identities: IdentitiesResolver,
+                  identities: IdentitiesOrganizationResolver,
                 },
                 data: {
                   perms: {

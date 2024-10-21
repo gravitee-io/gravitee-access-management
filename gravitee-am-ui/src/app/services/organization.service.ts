@@ -57,6 +57,15 @@ export class OrganizationService {
     );
   }
 
+  socialOrganizationIdentities(expandIcon = false, expandDisplayName = false, expandLabels = false): Observable<any> {
+    return this.http.get<any>(
+      this.platformURL +
+        '/plugins/identities' +
+        this.computeIdentitiesParameters(true, expandIcon, expandDisplayName, expandLabels) +
+        '&organization=true',
+    );
+  }
+
   identitySchema(id): Observable<any> {
     return this.http.get<any>(this.platformURL + '/plugins/identities/' + id + '/schema');
   }
