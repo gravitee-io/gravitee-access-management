@@ -21,7 +21,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.BaseJsonNode;
 import io.gravitee.am.common.utils.Indexed;
 import io.gravitee.am.model.Acl;
 import io.reactivex.rxjava3.core.Single;
@@ -87,10 +87,10 @@ public class BulkRequest<T> {
      * This allows defining a single /bulk endpoint that accepts different arguments for different actions. E.g.
      * a CREATE action might use a complex DTO, while a simple list of ids will be enough for a bulk DELETE.
      */
-    public static final class Generic extends BulkRequest<ObjectNode> {
+    public static final class Generic extends BulkRequest<BaseJsonNode> {
 
         @JsonCreator
-        public Generic(@JsonProperty("items") List<ObjectNode> items, @JsonProperty("action") Action action) {
+        public Generic(@JsonProperty("items") List<BaseJsonNode> items, @JsonProperty("action") Action action) {
             super(action, items);
         }
 

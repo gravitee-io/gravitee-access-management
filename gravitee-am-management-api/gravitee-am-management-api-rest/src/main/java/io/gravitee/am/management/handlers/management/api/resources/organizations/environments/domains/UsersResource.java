@@ -169,12 +169,12 @@ public class UsersResource extends AbstractUsersResource {
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = BulkResponse.class)))
     @ApiResponse(responseCode = "500", description = "Internal server error")
-    public void bulkCreate(
+    public void handleBulkOperation(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
             @Parameter(name = "bulkRequest", required = true)
-            @Valid @NotNull @Schema(name = "bulkUserRequest", oneOf = {BulkCreateUser.class, BulkUpdateUser.class}) final BulkRequest.Generic bulkRequest,
+            @Valid @NotNull @Schema(name = "bulkUserRequest", oneOf = {BulkCreateUser.class, BulkUpdateUser.class, BulkDeleteUser.class}) final BulkRequest.Generic bulkRequest,
             @Suspended final AsyncResponse response) {
 
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
@@ -191,7 +191,12 @@ public class UsersResource extends AbstractUsersResource {
             case CREATE -> bulkRequest.processOneByOne(NewUser.class, objectMapper, newUser -> userService.create(domain, newUser, authenticatedUser)
                             .map(BulkOperationResult::created)
                             .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex))));
-            case UPDATE, DELETE -> Single.error(new NotImplementedException());
+            case DELETE -> bulkRequest.processOneByOne(String.class, objectMapper, id -> userService.delete(ReferenceType.DOMAIN, domain.getId(), id, authenticatedUser)
+                            .map(User::getId)
+                            .map(BulkOperationResult::ok)
+                            .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex)))
+            );
+            case UPDATE -> Single.error(new NotImplementedException());
         };
     }
 
@@ -204,6 +209,12 @@ public class UsersResource extends AbstractUsersResource {
     private static class BulkUpdateUser extends BulkRequest<UpdateUser> {
         protected BulkUpdateUser() {
             super(Action.UPDATE);
+        }
+    }
+
+    private static class BulkDeleteUser extends BulkRequest<String> {
+        protected BulkDeleteUser() {
+            super(Action.DELETE);
         }
     }
 

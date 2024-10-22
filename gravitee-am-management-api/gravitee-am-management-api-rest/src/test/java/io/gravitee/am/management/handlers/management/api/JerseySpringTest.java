@@ -304,8 +304,8 @@ public abstract class JerseySpringTest {
         }
 
         @Bean
-        public JsonStringValidator jsonStringValidator(){
-            return new JsonStringValidator(new ObjectMapper());
+        public JsonStringValidator jsonStringValidator(ObjectMapper objectMapper){
+            return new JsonStringValidator(objectMapper);
         }
 
         @Bean
@@ -316,6 +316,11 @@ public abstract class JerseySpringTest {
         @Bean
         public EnvironmentService environmentService() {
             return mock(EnvironmentService.class);
+        }
+
+        @Bean
+        public ObjectMapper objectMapper(){
+            return new ObjectMapper();
         }
 
         @Bean
