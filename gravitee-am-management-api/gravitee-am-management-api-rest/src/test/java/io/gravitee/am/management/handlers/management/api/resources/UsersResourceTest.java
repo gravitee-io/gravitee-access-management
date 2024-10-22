@@ -16,8 +16,10 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Sets;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.management.handlers.management.api.bulk.BulkRequest;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Organization;
@@ -36,6 +38,7 @@ import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -52,8 +55,8 @@ import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -414,5 +417,43 @@ public class UsersResourceTest extends JerseySpringTest {
         assertTrue(getFilteredElements(data, User::getId).containsAll(List.of("service-id-1", "user-id-2", "user-id-3")));
         assertTrue(getFilteredElements(data, User::getUsername).containsAll(List.of("service-1", "username-2", "username-3")));
         assertTrue(getFilteredElements(data, User::getPassword).isEmpty());
+    }
+
+    @Test
+    public void shouldPerformBulkDeleteOperation() {
+        when(permissionService.hasPermission(any(), any())).thenReturn(Single.just(true));
+        Organization organization = new Organization();
+        organization.setId(ORGANIZATION_DEFAULT);
+        when(organizationService.findById(ORGANIZATION_DEFAULT)).thenReturn(Single.just(organization));
+
+        User user1 = new User();
+        user1.setId("1");
+        User user2 = new User();
+        user2.setId("2");
+        User user3 = new User();
+        user3.setId("3");
+
+        when(organizationUserService.delete(eq(ORGANIZATION), eq(ORGANIZATION_DEFAULT), eq("1"), any())).thenReturn(Single.just(user1));
+        when(organizationUserService.delete(eq(ORGANIZATION), eq(ORGANIZATION_DEFAULT), eq("2"), any())).thenReturn(Single.just(user2));
+        when(organizationUserService.delete(eq(ORGANIZATION), eq(ORGANIZATION_DEFAULT), eq("3"), any())).thenReturn(Single.just(user3));
+
+        BulkRequest<String> bulkRequest = new BulkRequest<>(BulkRequest.Action.DELETE, List.of("1", "2", "3"));
+        final Response response = target("organizations")
+                .path(ORGANIZATION_DEFAULT)
+                .path("users")
+                .path("bulk")
+                .request()
+                .post(Entity.entity(bulkRequest, MediaType.APPLICATION_JSON_TYPE));
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        JsonNode bulkResponse = readEntity(response, JsonNode.class);
+        assertTrue(bulkResponse.get("allSuccessful").asBoolean());
+
+        List<JsonNode> results = Lists.newArrayList(bulkResponse.get("results").elements());
+        assertEquals("1", results.get(0).get("body").asText());
+        assertEquals("2", results.get(1).get("body").asText());
+        assertEquals("3", results.get(2).get("body").asText());
+
     }
 }

@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkOperationResult;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkRequest;
+import io.gravitee.am.management.handlers.management.api.bulk.BulkResponse;
 import io.gravitee.am.management.handlers.management.api.model.UserEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractUsersResource;
 import io.gravitee.am.model.Acl;
@@ -59,7 +60,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -150,17 +150,20 @@ public class UsersResource extends AbstractUsersResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Operation(
-            operationId = "bulkOrganisationUserOperatiom",
+            operationId = "bulkOrganisationUserOperation",
             summary = "Create/update/delete platform users or Service Accounts",
             description = "User must have the ORGANIZATION_USER[CREATE/UPDATE/DELETE] permission on the specified organization")
 
+    @ApiResponse(responseCode = "200", description = "Some users or Service Accounts got created, inspect each result for details",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = BulkResponse.class)))
     @ApiResponse(responseCode = "201", description = "Users or Service Accounts successfully created",
             content = @Content(mediaType = "application/json",
-                    schema = @Schema(oneOf = {BulkCreateOrganizationUser.class})))
+                    schema = @Schema(implementation = BulkResponse.class)))
     @ApiResponse(responseCode = "500", description = "Internal server error")
-    public void create(
+    public void handleBulkOperation(
             @PathParam("organizationId") String organizationId,
-            @Valid @NotNull final BulkRequest.Generic bulkRequest,
+            @Valid @NotNull @Schema(name = "bulkUserRequest", oneOf = {BulkCreateOrganizationUser.class, BulkDeleteOrganizationUser.class}) final BulkRequest.Generic bulkRequest,
             @Suspended final AsyncResponse response) {
 
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
@@ -177,6 +180,12 @@ public class UsersResource extends AbstractUsersResource {
         }
     }
 
+    private static class BulkDeleteOrganizationUser extends BulkRequest<String> {
+        protected BulkDeleteOrganizationUser() {
+            super(Action.DELETE);
+        }
+    }
+
     private SingleSource<?> processBulkRequest(BulkRequest.Generic bulkRequest, Organization organization, io.gravitee.am.identityprovider.api.User authenticatedUser) {
         return switch (bulkRequest.action()) {
             case CREATE -> bulkRequest.processOneByOne(NewOrganizationUser.class, mapper, user ->
@@ -184,9 +193,12 @@ public class UsersResource extends AbstractUsersResource {
                             .map(BulkOperationResult::created)
                             .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex)))
             );
-
-            case UPDATE, DELETE -> Single.error(new NotImplementedException("not implemented"));
-
+            case DELETE -> bulkRequest.processOneByOne(String.class, mapper, id -> organizationUserService.delete(ReferenceType.ORGANIZATION, organization.getId(), id, authenticatedUser)
+                    .map(User::getId)
+                    .map(BulkOperationResult::ok)
+                    .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex)))
+            );
+            case UPDATE -> Single.error(new NotImplementedException("not implemented"));
         };
 
 
