@@ -162,16 +162,10 @@ public abstract class JerseySpringTest {
     protected CertificatePluginService certificatePluginService;
 
     @Autowired
-    protected TokenService tokenService;
-
-    @Autowired
     protected ExtensionGrantPluginService extensionGrantPluginService;
 
     @Autowired
     protected IdentityProviderPluginService identityProviderPluginService;
-
-    @Autowired
-    protected CertificateManager certificateManager;
 
     @Autowired
     protected IdentityProviderManager identityProviderManager;
@@ -183,9 +177,6 @@ public abstract class JerseySpringTest {
     protected EmailTemplateService emailTemplateService;
 
     @Autowired
-    protected EmailManager emailManager;
-
-    @Autowired
     protected FormService formService;
 
     @Autowired
@@ -193,12 +184,6 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected ScopeApprovalService scopeApprovalService;
-
-    @Autowired
-    protected AuditService auditService;
-
-    @Autowired
-    protected AuditReporterManager AuditReporterManager;
 
     @Autowired
     protected ReporterServiceProxy reporterService;
@@ -243,9 +228,6 @@ public abstract class JerseySpringTest {
     protected BotDetectionPluginService botDetectionPluginService;
 
     @Autowired
-    protected BotDetectionServiceProxy botDetectionService;
-
-    @Autowired
     protected DeviceIdentifierPluginService deviceIdentifierPluginService;
 
     @Autowired
@@ -262,9 +244,6 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected PreviewService previewService;
-
-    @Autowired
-    protected I18nDictionaryService i18nDictionaryService;
 
     @Autowired
     protected PolicyPluginService policyPluginService;
@@ -400,7 +379,7 @@ public abstract class JerseySpringTest {
 
         @Bean
         public AmPluginManager<CertificateManager> certificatePluginManager() {
-            return mock(AmPluginManager.class);
+            return mock();
         }
 
         @Bean
@@ -603,32 +582,37 @@ public abstract class JerseySpringTest {
             return mock(PasswordPolicyService.class);
         }
 
+        @Bean
+        public ObjectMapper objectMapper() {
+            return new ObjectMapperResolver().getContext(Void.class);
+        }
+
     }
 
-    private JerseyTest _jerseyTest;
+    private JerseyTest jerseyTest;
 
     public final WebTarget target(final String path) {
 
         if ("domains".equals(path)) {
-            return _jerseyTest.target("organizations").path("DEFAULT").path("environments").path("DEFAULT").path(path);
+            return jerseyTest.target("organizations").path("DEFAULT").path("environments").path("DEFAULT").path(path);
         }
 
-        return _jerseyTest.target(path);
+        return jerseyTest.target(path);
     }
 
     @BeforeEach
     public void setup() throws Exception {
-        _jerseyTest.setUp();
+        jerseyTest.setUp();
     }
 
     @AfterEach
     public void tearDown() throws Exception {
-        _jerseyTest.tearDown();
+        jerseyTest.tearDown();
     }
 
     @Autowired
     public void setApplicationContext(final ApplicationContext context) {
-        _jerseyTest = new JerseyTest() {
+        jerseyTest = new JerseyTest() {
             @Override
             protected Application configure() {
                 ResourceConfig application = new ManagementApplication();
@@ -683,6 +667,7 @@ public abstract class JerseySpringTest {
 
         try {
             if (clazz == String.class) {
+                //noinspection unchecked
                 return (T) response.readEntity(String.class);
             }
 
