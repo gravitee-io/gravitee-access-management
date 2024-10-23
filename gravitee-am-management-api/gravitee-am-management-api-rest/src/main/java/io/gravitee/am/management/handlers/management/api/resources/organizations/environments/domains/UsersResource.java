@@ -19,7 +19,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkOperationResult;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkRequest;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkResponse;
+import io.gravitee.am.management.handlers.management.api.model.UserEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractUsersResource;
+import io.gravitee.am.management.handlers.management.api.resources.model.BulkUpdateUser;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
@@ -28,9 +30,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.exception.NotImplementedException;
 import io.gravitee.am.service.model.NewUser;
-import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
@@ -188,25 +188,25 @@ public class UsersResource extends AbstractUsersResource {
 
     private Single<?> processBulkRequest(BulkRequest.Generic bulkRequest, Domain domain, io.gravitee.am.identityprovider.api.User authenticatedUser) {
         return switch (bulkRequest.action()) {
-            case CREATE -> bulkRequest.processOneByOne(NewUser.class, objectMapper, newUser -> userService.create(domain, newUser, authenticatedUser)
+            case CREATE ->
+                    bulkRequest.processOneByOne(NewUser.class, objectMapper, newUser -> userService.create(domain, newUser, authenticatedUser)
                             .map(BulkOperationResult::created));
-            case DELETE -> bulkRequest.processOneByOne(String.class, objectMapper, id -> userService.delete(ReferenceType.DOMAIN, domain.getId(), id, authenticatedUser)
+            case DELETE ->
+                    bulkRequest.processOneByOne(String.class, objectMapper, id -> userService.delete(ReferenceType.DOMAIN, domain.getId(), id, authenticatedUser)
                             .map(User::getId)
                             .map(BulkOperationResult::ok)
             );
-            case UPDATE -> Single.error(new NotImplementedException());
+            case UPDATE ->
+                    bulkRequest.processOneByOne(BulkUpdateUser.UpdateUserWithId.class, objectMapper, updated -> userService.update(ReferenceType.DOMAIN, domain.getId(), updated.getId(), updated, authenticatedUser)
+                            .map(UserEntity::new)
+                            .map(BulkOperationResult::ok)
+                            .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex))));
         };
     }
 
     private static class BulkCreateUser extends BulkRequest<NewUser> {
         protected BulkCreateUser() {
             super(Action.CREATE);
-        }
-    }
-
-    private static class BulkUpdateUser extends BulkRequest<UpdateUser> {
-        protected BulkUpdateUser() {
-            super(Action.UPDATE);
         }
     }
 

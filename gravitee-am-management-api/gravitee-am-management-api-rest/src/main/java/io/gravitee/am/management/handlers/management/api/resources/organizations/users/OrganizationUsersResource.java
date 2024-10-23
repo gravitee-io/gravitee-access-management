@@ -21,6 +21,7 @@ import io.gravitee.am.management.handlers.management.api.bulk.BulkRequest;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkResponse;
 import io.gravitee.am.management.handlers.management.api.model.UserEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractUsersResource;
+import io.gravitee.am.management.handlers.management.api.resources.model.BulkUpdateUser;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
@@ -29,7 +30,6 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.OrganizationService;
-import io.gravitee.am.service.exception.NotImplementedException;
 import io.gravitee.am.service.model.NewOrganizationUser;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Observable;
@@ -68,7 +68,7 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 @Tag(name = "user")
-public class UsersResource extends AbstractUsersResource {
+public class OrganizationUsersResource extends AbstractUsersResource {
 
     @Context
     private ResourceContext resourceContext;
@@ -163,7 +163,7 @@ public class UsersResource extends AbstractUsersResource {
     @ApiResponse(responseCode = "500", description = "Internal server error")
     public void handleBulkOperation(
             @PathParam("organizationId") String organizationId,
-            @Valid @NotNull @Schema(name = "bulkUserRequest", oneOf = {BulkCreateOrganizationUser.class, BulkDeleteOrganizationUser.class}) final BulkRequest.Generic bulkRequest,
+            @Valid @NotNull @Schema(name = "bulkUserRequest", oneOf = {BulkCreateOrganizationUser.class, BulkUpdateUser.class, BulkDeleteOrganizationUser.class}) final BulkRequest.Generic bulkRequest,
             @Suspended final AsyncResponse response) {
 
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
@@ -174,7 +174,8 @@ public class UsersResource extends AbstractUsersResource {
                 .subscribe(response::resume, response::resume);
     }
 
-    private static class BulkCreateOrganizationUser extends  BulkRequest<NewOrganizationUser> {
+
+    private static class BulkCreateOrganizationUser extends BulkRequest<NewOrganizationUser> {
         public BulkCreateOrganizationUser() {
             super(Action.CREATE);
         }
@@ -190,20 +191,28 @@ public class UsersResource extends AbstractUsersResource {
         return switch (bulkRequest.action()) {
             case CREATE -> bulkRequest.processOneByOne(NewOrganizationUser.class, mapper, user -> organizationUserService.createGraviteeUser(organization, user, authenticatedUser)
                             .map(BulkOperationResult::created)
+                            .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex)))
             );
-            case DELETE -> bulkRequest.processOneByOne(String.class, mapper, id -> organizationUserService.delete(ReferenceType.ORGANIZATION, organization.getId(), id, authenticatedUser)
-                    .map(User::getId)
-                    .map(BulkOperationResult::ok)
-            );
-            case UPDATE -> Single.error(new NotImplementedException("not implemented"));
+            case DELETE ->
+                    bulkRequest.processOneByOne(String.class, mapper, id -> organizationUserService.delete(ReferenceType.ORGANIZATION, organization.getId(), id, authenticatedUser)
+                            .map(User::getId)
+                            .map(BulkOperationResult::ok)
+                            .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex)))
+                    );
+            case UPDATE ->
+                    bulkRequest.processOneByOne(BulkUpdateUser.UpdateUserWithId.class, mapper, updateUser -> organizationUserService.update(ReferenceType.ORGANIZATION, organization.getId(), updateUser.getId(), updateUser, authenticatedUser)
+                            .map(UserEntity::new)
+                            .map(BulkOperationResult::ok)
+                            .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex)))
+                    );
         };
 
 
     }
 
     @Path("{user}")
-    public UserResource getUserResource() {
-        return resourceContext.getResource(UserResource.class);
+    public OrganizationUserResource getUserResource() {
+        return resourceContext.getResource(OrganizationUserResource.class);
     }
 
     private Single<User> filterUserInfos(Map<Permission, Set<Acl>> organizationPermissions, User user) {

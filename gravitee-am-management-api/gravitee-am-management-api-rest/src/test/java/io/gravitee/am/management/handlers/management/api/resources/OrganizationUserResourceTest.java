@@ -59,7 +59,7 @@ import static org.mockito.Mockito.doReturn;
  * @author GraviteeSource Team
  */
 @SuppressWarnings("ReactiveStreamsUnusedPublisher")
-public class UserResourceTest extends JerseySpringTest {
+public class OrganizationUserResourceTest extends JerseySpringTest {
 
     @Test
     public void shouldGetUser() {
