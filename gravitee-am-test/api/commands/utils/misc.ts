@@ -14,9 +14,31 @@
  * limitations under the License.
  */
 
-import {waitFor} from '@management-commands/domain-management-commands';
-import {expect} from '@jest/globals';
-import {performGet} from '@gateway-commands/oauth-oidc-commands';
+import { waitFor } from '@management-commands/domain-management-commands';
+import { expect } from '@jest/globals';
+import { performGet } from '@gateway-commands/oauth-oidc-commands';
+import faker from 'faker';
+import { BulkResponse } from '@management-models/BulkResponse';
+import { BulkOperationResultObject } from '@management-models/BulkOperationResultObject';
+
+/**
+ * Optionally randomize the name to make it easier to re-run a test with the same DB, e.g. while developing tests.
+ * if AM_TEST_RANDOMIZE_NAMES env variable is set to true, returns the name with a random suffix.
+ * Otherwise, just passes the name through.
+ *
+ * @param name the base name
+ * @param forceRandom if true, always randomizes the name (regardless of the env var)
+ */
+export function name(name: string, forceRandom: boolean = false) {
+  const randomize = forceRandom || process.env.AM_TEST_RANDOMIZE_NAMES?.toLowerCase() === 'true';
+  if (randomize) {
+    return faker.helpers.slugify(
+      `${name}-${faker.commerce.productAdjective()}-${faker.animal.type()}-${faker.datatype.number({ min: 1, max: 10000 })}`,
+    );
+  } else {
+    return name;
+  }
+}
 
 export async function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -32,10 +54,28 @@ export async function timeout<T>(millis: number, promise: Promise<T>): Promise<T
   return Promise.race([timeLimit, promise]);
 }
 
-export type BasicResponse = { status: number; header: { [x: string]: string }, headers: { [x: string]: string } };
+export type BasicResponse = { status: number; header: { [x: string]: string }; headers: { [x: string]: string } };
 
 export async function followRedirect(redirectResponse: BasicResponse) {
   expect(redirectResponse.status).toBe(302);
   const headers = redirectResponse.header['set-cookie'] ? { Cookie: redirectResponse.header['set-cookie'] } : {};
   return performGet(redirectResponse.header['location'], '', headers);
+}
+
+export function checkBulkResponse(
+  response: BulkResponse,
+  expectedItems: number,
+  allSuccessful: boolean,
+  expectations: { [key: number]: { count: number; assertions: (result: BulkOperationResultObject) => void } },
+) {
+  expect(response.results).toHaveLength(expectedItems);
+  expect(response.allSuccessful).toBe(allSuccessful);
+  for (let [status, expectation] of Object.entries(expectations)) {
+    const resultsWithStatus = response.results.filter((x) => x.httpStatus == Number(status));
+
+    expect(resultsWithStatus).toHaveLength(expectation.count);
+    for (let result of resultsWithStatus) {
+      expectation.assertions(result);
+    }
+  }
 }

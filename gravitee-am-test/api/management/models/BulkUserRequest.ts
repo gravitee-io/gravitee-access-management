@@ -26,24 +26,24 @@
 /* tslint:disable */
 /* eslint-disable */
 import {
-    BulkCreateUser,
-    BulkCreateUserFromJSON,
-    BulkCreateUserFromJSONTyped,
-    BulkCreateUserToJSON,
-} from './BulkCreateUser';
+    BulkCreateOrganizationUser,
+    BulkCreateOrganizationUserFromJSON,
+    BulkCreateOrganizationUserFromJSONTyped,
+    BulkCreateOrganizationUserToJSON,
+} from './BulkCreateOrganizationUser';
 import {
-    BulkUpdateUser,
-    BulkUpdateUserFromJSON,
-    BulkUpdateUserFromJSONTyped,
-    BulkUpdateUserToJSON,
-} from './BulkUpdateUser';
+    BulkDeleteOrganizationUser,
+    BulkDeleteOrganizationUserFromJSON,
+    BulkDeleteOrganizationUserFromJSONTyped,
+    BulkDeleteOrganizationUserToJSON,
+} from './BulkDeleteOrganizationUser';
 
 /**
  * @type BulkUserRequest
  * 
  * @export
  */
-export type BulkUserRequest = BulkCreateUser | BulkUpdateUser;
+export type BulkUserRequest = BulkCreateOrganizationUser | BulkDeleteOrganizationUser;
 
 export function BulkUserRequestFromJSON(json: any): BulkUserRequest {
     return BulkUserRequestFromJSONTyped(json, false);
@@ -53,7 +53,7 @@ export function BulkUserRequestFromJSONTyped(json: any, ignoreDiscriminator: boo
     if ((json === undefined) || (json === null)) {
         return json;
     }
-    return { ...BulkCreateUserFromJSONTyped(json, true), ...BulkUpdateUserFromJSONTyped(json, true) };
+    return { ...BulkCreateOrganizationUserFromJSONTyped(json, true), ...BulkDeleteOrganizationUserFromJSONTyped(json, true) };
 }
 
 export function BulkUserRequestToJSON(value?: BulkUserRequest | null): any {
@@ -63,6 +63,6 @@ export function BulkUserRequestToJSON(value?: BulkUserRequest | null): any {
     if (value === null) {
         return null;
     }
-    return { ...BulkCreateUserToJSON(value), ...BulkUpdateUserToJSON(value) };
+    return { ...BulkCreateOrganizationUserToJSON(value), ...BulkDeleteOrganizationUserToJSON(value) };
 }
 

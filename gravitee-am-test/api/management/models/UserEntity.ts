@@ -431,10 +431,10 @@ export interface UserEntity {
     sourceId?: string;
     /**
      * 
-     * @type {{ [key: string]: any; }}
+     * @type {string}
      * @memberof UserEntity
      */
-    address?: { [key: string]: any; };
+    locale?: string;
     /**
      * 
      * @type {string}
@@ -443,10 +443,10 @@ export interface UserEntity {
     zoneInfo?: string;
     /**
      * 
-     * @type {string}
+     * @type {{ [key: string]: any; }}
      * @memberof UserEntity
      */
-    locale?: string;
+    address?: { [key: string]: any; };
     /**
      * 
      * @type {string}
@@ -479,12 +479,6 @@ export interface UserEntity {
     phoneNumber?: string;
     /**
      * 
-     * @type {UserId}
-     * @memberof UserEntity
-     */
-    fullId?: UserId;
-    /**
-     * 
      * @type {boolean}
      * @memberof UserEntity
      */
@@ -501,6 +495,12 @@ export interface UserEntity {
      * @memberof UserEntity
      */
     website?: string;
+    /**
+     * 
+     * @type {UserId}
+     * @memberof UserEntity
+     */
+    fullId?: UserId;
 }
 
 
@@ -585,18 +585,18 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'serviceAccount': !exists(json, 'serviceAccount') ? undefined : json['serviceAccount'],
         'applicationEntity': !exists(json, 'applicationEntity') ? undefined : ApplicationEntityFromJSON(json['applicationEntity']),
         'sourceId': !exists(json, 'sourceId') ? undefined : json['sourceId'],
-        'address': !exists(json, 'address') ? undefined : json['address'],
-        'zoneInfo': !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
         'locale': !exists(json, 'locale') ? undefined : json['locale'],
+        'zoneInfo': !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
+        'address': !exists(json, 'address') ? undefined : json['address'],
         'middleName': !exists(json, 'middleName') ? undefined : json['middleName'],
         'lastIdentityInformation': !exists(json, 'lastIdentityInformation') ? undefined : json['lastIdentityInformation'],
         'identitiesAsMap': !exists(json, 'identitiesAsMap') ? undefined : json['identitiesAsMap'],
         'birthdate': !exists(json, 'birthdate') ? undefined : json['birthdate'],
         'phoneNumber': !exists(json, 'phoneNumber') ? undefined : json['phoneNumber'],
-        'fullId': !exists(json, 'fullId') ? undefined : UserIdFromJSON(json['fullId']),
         'inactive': !exists(json, 'inactive') ? undefined : json['inactive'],
         'profile': !exists(json, 'profile') ? undefined : json['profile'],
         'website': !exists(json, 'website') ? undefined : json['website'],
+        'fullId': !exists(json, 'fullId') ? undefined : UserIdFromJSON(json['fullId']),
     };
 }
 
@@ -667,18 +667,18 @@ export function UserEntityToJSON(value?: UserEntity | null): any {
         'serviceAccount': value.serviceAccount,
         'applicationEntity': ApplicationEntityToJSON(value.applicationEntity),
         'sourceId': value.sourceId,
-        'address': value.address,
-        'zoneInfo': value.zoneInfo,
         'locale': value.locale,
+        'zoneInfo': value.zoneInfo,
+        'address': value.address,
         'middleName': value.middleName,
         'lastIdentityInformation': value.lastIdentityInformation,
         'identitiesAsMap': value.identitiesAsMap,
         'birthdate': value.birthdate,
         'phoneNumber': value.phoneNumber,
-        'fullId': UserIdToJSON(value.fullId),
         'inactive': value.inactive,
         'profile': value.profile,
         'website': value.website,
+        'fullId': UserIdToJSON(value.fullId),
     };
 }
 

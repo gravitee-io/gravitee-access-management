@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import {getDomainApi, getDomainManagerUrl} from './service/utils';
-import {Domain} from '../../management/models';
-import {retryUntil} from '@utils-commands/retry';
-import {getWellKnownOpenIdConfiguration} from '@gateway-commands/oauth-oidc-commands';
+import { getDomainApi, getDomainManagerUrl } from './service/utils';
+import { Domain } from '../../management/models';
+import { retryUntil } from '@utils-commands/retry';
+import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
 
 const request = require('supertest');
 
@@ -25,7 +25,7 @@ export const createDomain = (accessToken, name, description): Promise<Domain> =>
   getDomainApi(accessToken).createDomain({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
-    domain: {
+    newDomain: {
       name: name,
       description: description,
     },
@@ -45,7 +45,7 @@ export const patchDomain = (domainId, accessToken, body): Promise<Domain> =>
     // domain in path param
     domain: domainId,
     // domain payload
-    domain2: body,
+    patchDomain: body,
   });
 
 export const startDomain = (domainId, accessToken): Promise<Domain> => patchDomain(domainId, accessToken, { enabled: true });
@@ -84,21 +84,21 @@ export const updateDomainFlows = (domainId, accessToken, flows) =>
     environmentId: process.env.AM_DEF_ENV_ID,
     // domain in path param
     domain: domainId,
-    flows,
+    flow: flows,
   });
 
-export const waitForDomainStart: (domain: Domain) => Promise<{domain:Domain, oidcConfig:any}> = (domain: Domain) => {
+export const waitForDomainStart: (domain: Domain) => Promise<{ domain: Domain; oidcConfig: any }> = (domain: Domain) => {
   const start = Date.now();
   return retryUntil(
-      () => getWellKnownOpenIdConfiguration(domain.hrid) as Promise<any>,
-      (res) => res.status == 200,
-      {
-        timeoutMillis: 10000,
-        onDone: () => console.log(`domain "${domain.hrid}" ready after ${(Date.now() - start) / 1000}s`),
-        onRetry: () => console.debug(`domain "${domain.hrid}" not ready yet`),
-      },
-  ).then(response => ({domain, oidcConfig: response.text}));
-}
+    () => getWellKnownOpenIdConfiguration(domain.hrid) as Promise<any>,
+    (res) => res.status == 200,
+    {
+      timeoutMillis: 10000,
+      onDone: () => console.log(`domain "${domain.hrid}" ready after ${(Date.now() - start) / 1000}s`),
+      onRetry: () => console.debug(`domain "${domain.hrid}" not ready yet`),
+    },
+  ).then((response) => ({ domain, oidcConfig: response.text }));
+};
 
 export const waitForDomainSync = () => waitFor(10000);
 export const waitFor = (duration) => new Promise((r) => setTimeout(r, duration));

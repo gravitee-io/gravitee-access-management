@@ -66,8 +66,9 @@ models/AuthenticationDeviceNotifier.ts
 models/BotDetection.ts
 models/BulkCreateOrganizationUser.ts
 models/BulkCreateUser.ts
+models/BulkDeleteOrganizationUser.ts
+models/BulkDeleteUser.ts
 models/BulkOperationResultObject.ts
-models/BulkOrganisationUserOperatiom201Response.ts
 models/BulkResponse.ts
 models/BulkUpdateUser.ts
 models/BulkUserRequest.ts
@@ -103,7 +104,6 @@ models/Flow.ts
 models/FlowEntity.ts
 models/Form.ts
 models/FormField.ts
-models/Generic.ts
 models/Group.ts
 models/GroupPage.ts
 models/I18nDictionary.ts

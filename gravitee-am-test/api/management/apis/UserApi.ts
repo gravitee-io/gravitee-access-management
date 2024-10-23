@@ -34,9 +34,6 @@ import {
     Audit,
     AuditFromJSON,
     AuditToJSON,
-    BulkOrganisationUserOperatiom201Response,
-    BulkOrganisationUserOperatiom201ResponseFromJSON,
-    BulkOrganisationUserOperatiom201ResponseToJSON,
     BulkResponse,
     BulkResponseFromJSON,
     BulkResponseToJSON,
@@ -52,9 +49,6 @@ import {
     EnrolledFactorEntity,
     EnrolledFactorEntityFromJSON,
     EnrolledFactorEntityToJSON,
-    Generic,
-    GenericFromJSON,
-    GenericToJSON,
     NewAccountAccessToken,
     NewAccountAccessTokenFromJSON,
     NewAccountAccessTokenToJSON,
@@ -110,9 +104,9 @@ export interface AssignRequest {
     requestBody: Array<string>;
 }
 
-export interface BulkOrganisationUserOperatiomRequest {
+export interface BulkOrganisationUserOperationRequest {
     organizationId: string;
-    generic: Generic;
+    bulkUserRequest: BulkUserRequest;
 }
 
 export interface BulkUserOperationRequest {
@@ -483,13 +477,13 @@ export class UserApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_USER[CREATE/UPDATE/DELETE] permission on the specified organization
      * Create/update/delete platform users or Service Accounts
      */
-    async bulkOrganisationUserOperatiomRaw(requestParameters: BulkOrganisationUserOperatiomRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<BulkOrganisationUserOperatiom201Response>> {
+    async bulkOrganisationUserOperationRaw(requestParameters: BulkOrganisationUserOperationRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<BulkResponse>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling bulkOrganisationUserOperatiom.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling bulkOrganisationUserOperation.');
         }
 
-        if (requestParameters.generic === null || requestParameters.generic === undefined) {
-            throw new runtime.RequiredError('generic','Required parameter requestParameters.generic was null or undefined when calling bulkOrganisationUserOperatiom.');
+        if (requestParameters.bulkUserRequest === null || requestParameters.bulkUserRequest === undefined) {
+            throw new runtime.RequiredError('bulkUserRequest','Required parameter requestParameters.bulkUserRequest was null or undefined when calling bulkOrganisationUserOperation.');
         }
 
         const queryParameters: any = {};
@@ -511,18 +505,18 @@ export class UserApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: GenericToJSON(requestParameters.generic),
+            body: BulkUserRequestToJSON(requestParameters.bulkUserRequest),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => BulkOrganisationUserOperatiom201ResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => BulkResponseFromJSON(jsonValue));
     }
 
     /**
      * User must have the ORGANIZATION_USER[CREATE/UPDATE/DELETE] permission on the specified organization
      * Create/update/delete platform users or Service Accounts
      */
-    async bulkOrganisationUserOperatiom(requestParameters: BulkOrganisationUserOperatiomRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<BulkOrganisationUserOperatiom201Response> {
-        const response = await this.bulkOrganisationUserOperatiomRaw(requestParameters, initOverrides);
+    async bulkOrganisationUserOperation(requestParameters: BulkOrganisationUserOperationRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<BulkResponse> {
+        const response = await this.bulkOrganisationUserOperationRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -16,10 +16,13 @@
 
 import fetch from 'cross-fetch';
 import * as faker from 'faker';
-import { afterAll, beforeAll, expect } from '@jest/globals';
-import { createDomain, deleteDomain, startDomain } from '@management-commands/domain-management-commands';
+import { afterAll, beforeAll, expect, jest } from '@jest/globals';
+import { createDomain, deleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
 import {
   buildCreateAndTestUser,
+  buildTestUser,
+  bulkCreateOrgUsers,
+  bulkCreateUsers,
   deleteUser,
   getAllUsers,
   getUser,
@@ -35,8 +38,11 @@ import {
 
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { ResponseError } from '../../api/management/runtime';
+import { checkBulkResponse, name } from '@utils-commands/misc';
+import { BulkResponse } from '@management-models/BulkResponse';
 
 global.fetch = fetch;
+jest.setTimeout(200000);
 
 let accessToken;
 let domain;
@@ -47,11 +53,13 @@ beforeAll(async () => {
   accessToken = adminTokenResponse.body.access_token;
   expect(accessToken).toBeDefined();
 
-  const createdDomain = await createDomain(accessToken, 'domain-users', faker.company.catchPhraseDescriptor());
+  const createdDomain = await createDomain(accessToken, name('domain-users'), faker.company.catchPhraseDescriptor());
   expect(createdDomain).toBeDefined();
   expect(createdDomain.id).toBeDefined();
 
-  const domainStarted = await startDomain(createdDomain.id, accessToken);
+  const domainStarted = await startDomain(createdDomain.id, accessToken)
+    .then((domain) => waitForDomainStart(domain))
+    .then((result) => result.domain);
   expect(domainStarted).toBeDefined();
   expect(domainStarted.id).toEqual(createdDomain.id);
 
@@ -59,11 +67,102 @@ beforeAll(async () => {
 });
 
 describe('when using the users commands', () => {
-  for (let i = 0; i < 10; i++) {
-    it('must create new users: ' + i, async () => {
-      user = await buildCreateAndTestUser(domain.id, accessToken, i);
-    });
-  }
+  it('must create new user: ', async () => {
+    user = await buildCreateAndTestUser(domain.id, accessToken, 0);
+  });
+});
+
+function expectAllUsersCreatedOk(response: BulkResponse, numberOfUsers: number) {
+  console.log('Response', JSON.stringify(response, null, 2));
+  let ids = [];
+  checkBulkResponse(response, numberOfUsers, true, {
+    201: {
+      count: numberOfUsers,
+      assertions: (result) => {
+        expect(result.httpStatus).toBe(201);
+        expect(result.body).toBeDefined();
+        const newUserId = result.body.id;
+        expect(newUserId).toBeDefined();
+        expect(ids).not.toContain(newUserId);
+        ids.push(newUserId);
+      },
+    },
+  });
+}
+function expectAllUsersCreatedExceptOneError(response: BulkResponse, usersToCreate: any[]) {
+  let ids = [];
+  checkBulkResponse(response, usersToCreate.length, false, {
+    201: {
+      count: usersToCreate.length - 1,
+      assertions: (result) => {
+        expect(result.body).toBeDefined();
+        const newUserId = result.body.id;
+        expect(newUserId).toBeDefined();
+        expect(ids).not.toContain(newUserId);
+        ids.push(newUserId);
+      },
+    },
+    400: {
+      count: 1,
+      assertions: (result) => {
+        expect(result.body).toBeUndefined();
+        expect(result.errorDetails).toHaveProperty('error');
+        expect(result.errorDetails).toHaveProperty('message');
+      },
+    },
+  });
+}
+describe('when creating users in bulk', () => {
+  it('should create all users ', async () => {
+    let usersToCreate = [];
+    for (let i = 0; i < 10; i++) {
+      usersToCreate.push(buildTestUser(100 + i));
+    }
+    console.log('Creating users: ', usersToCreate);
+    const response = await bulkCreateUsers(domain.id, accessToken, usersToCreate);
+    console.log('Response', JSON.stringify(response, null, 2));
+    expectAllUsersCreatedOk(response, usersToCreate.length);
+  });
+
+  it('should create users even if there are errors and report errors', async () => {
+    let usersToCreate = [];
+    const numUniqueUsersToCreate = 10;
+    for (let i = 0; i < 10; i++) {
+      usersToCreate.push(buildTestUser(200 + i));
+    }
+    usersToCreate.push(buildTestUser(204)); // duplicate
+    console.log('Creating users: ', usersToCreate);
+    const response = await bulkCreateUsers(domain.id, accessToken, usersToCreate);
+    console.log('Response', JSON.stringify(response, null, 2));
+    expectAllUsersCreatedExceptOneError(response, usersToCreate);
+  });
+});
+
+describe('when creating organization users in bulk', () => {
+  it('should create all users ', async () => {
+    let usersToCreate = [];
+    for (let i = 0; i < 10; i++) {
+      usersToCreate.push(buildTestUser(Math.floor(Math.random() * 100000)));
+    }
+    console.log('Creating org users: ', usersToCreate);
+    const response = await bulkCreateOrgUsers(domain.id, accessToken, usersToCreate);
+    console.log('Response', JSON.stringify(response, null, 2));
+    expectAllUsersCreatedOk(response, usersToCreate.length);
+  });
+
+  it('should create org users & service accounts and report errors', async () => {
+    const numUniqueUsersToCreate = 10;
+    let usersToCreate = [];
+    for (let i = 0; i < 10; i++) {
+      const serviceAccount = Math.random() < 0.4; // make some of the users service accounts
+      return buildTestUser(Math.floor(Math.random() * 100000), { serviceAccount });
+    }
+    usersToCreate.push(usersToCreate[4]); // duplicate one user
+    console.log('Creating org users: ', usersToCreate);
+    const response = await bulkCreateOrgUsers(domain.id, accessToken, usersToCreate);
+    console.log('Response', JSON.stringify(response, null, 2));
+    expectAllUsersCreatedExceptOneError(response, usersToCreate);
+  });
 });
 
 describe('after creating users', () => {
@@ -85,15 +184,15 @@ describe('after creating users', () => {
     const applicationPage = await getAllUsers(domain.id, accessToken);
 
     expect(applicationPage.currentPage).toEqual(0);
-    expect(applicationPage.totalCount).toEqual(10);
-    expect(applicationPage.data.length).toEqual(10);
+    expect(applicationPage.totalCount).toEqual(21);
+    expect(applicationPage.data.length).toEqual(21);
   });
 
   it('must find User page', async () => {
     const UserPage = await getUserPage(domain.id, accessToken, 1, 3);
 
     expect(UserPage.currentPage).toEqual(1);
-    expect(UserPage.totalCount).toEqual(10);
+    expect(UserPage.totalCount).toEqual(21);
     expect(UserPage.data.length).toEqual(3);
   });
 
@@ -101,8 +200,8 @@ describe('after creating users', () => {
     const UserPage = await getUserPage(domain.id, accessToken, 3, 3);
 
     expect(UserPage.currentPage).toEqual(3);
-    expect(UserPage.totalCount).toEqual(10);
-    expect(UserPage.data.length).toEqual(1);
+    expect(UserPage.totalCount).toEqual(21);
+    expect(UserPage.data.length).toEqual(3);
   });
 
   it('must change user status', async () => {
@@ -162,8 +261,8 @@ describe('after creating users', () => {
     const UserPage = await getUserPage(domain.id, accessToken);
 
     expect(UserPage.currentPage).toEqual(0);
-    expect(UserPage.totalCount).toEqual(9);
-    expect(UserPage.data.length).toEqual(9);
+    expect(UserPage.totalCount).toEqual(20);
+    expect(UserPage.data.length).toEqual(20);
     expect(UserPage.data.find((u) => u.id === user.id)).toBeFalsy();
   });
 });

@@ -40,10 +40,10 @@ export interface BulkOperationResultObject {
     index?: number;
     /**
      * 
-     * @type {string}
+     * @type {number}
      * @memberof BulkOperationResultObject
      */
-    httpStatus?: BulkOperationResultObjectHttpStatusEnum;
+    httpStatus?: number;
     /**
      * 
      * @type {any}
@@ -63,58 +63,6 @@ export interface BulkOperationResultObject {
      */
     success?: boolean;
 }
-
-
-/**
- * @export
- */
-export const BulkOperationResultObjectHttpStatusEnum = {
-    Ok: 'OK',
-    Created: 'Created',
-    Accepted: 'Accepted',
-    NoContent: 'No Content',
-    ResetContent: 'Reset Content',
-    PartialContent: 'Partial Content',
-    MultipleChoices: 'Multiple Choices',
-    MovedPermanently: 'Moved Permanently',
-    Found: 'Found',
-    SeeOther: 'See Other',
-    NotModified: 'Not Modified',
-    UseProxy: 'Use Proxy',
-    TemporaryRedirect: 'Temporary Redirect',
-    PermanentRedirect: 'Permanent Redirect',
-    BadRequest: 'Bad Request',
-    Unauthorized: 'Unauthorized',
-    PaymentRequired: 'Payment Required',
-    Forbidden: 'Forbidden',
-    NotFound: 'Not Found',
-    MethodNotAllowed: 'Method Not Allowed',
-    NotAcceptable: 'Not Acceptable',
-    ProxyAuthenticationRequired: 'Proxy Authentication Required',
-    RequestTimeout: 'Request Timeout',
-    Conflict: 'Conflict',
-    Gone: 'Gone',
-    LengthRequired: 'Length Required',
-    PreconditionFailed: 'Precondition Failed',
-    RequestEntityTooLarge: 'Request Entity Too Large',
-    RequestUriTooLong: 'Request-URI Too Long',
-    UnsupportedMediaType: 'Unsupported Media Type',
-    RequestedRangeNotSatisfiable: 'Requested Range Not Satisfiable',
-    ExpectationFailed: 'Expectation Failed',
-    PreconditionRequired: 'Precondition Required',
-    TooManyRequests: 'Too Many Requests',
-    RequestHeaderFieldsTooLarge: 'Request Header Fields Too Large',
-    UnavailableForLegalReasons: 'Unavailable For Legal Reasons',
-    InternalServerError: 'Internal Server Error',
-    NotImplemented: 'Not Implemented',
-    BadGateway: 'Bad Gateway',
-    ServiceUnavailable: 'Service Unavailable',
-    GatewayTimeout: 'Gateway Timeout',
-    HttpVersionNotSupported: 'HTTP Version Not Supported',
-    NetworkAuthenticationRequired: 'Network Authentication Required'
-} as const;
-export type BulkOperationResultObjectHttpStatusEnum = typeof BulkOperationResultObjectHttpStatusEnum[keyof typeof BulkOperationResultObjectHttpStatusEnum];
-
 
 export function BulkOperationResultObjectFromJSON(json: any): BulkOperationResultObject {
     return BulkOperationResultObjectFromJSONTyped(json, false);

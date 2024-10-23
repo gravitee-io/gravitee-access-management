@@ -29,32 +29,51 @@ import { exists, mapValues } from '../runtime';
 /**
  * 
  * @export
- * @interface AssignPasswordPolicy
+ * @interface BulkDeleteOrganizationUser
  */
-export interface AssignPasswordPolicy {
+export interface BulkDeleteOrganizationUser {
     /**
      * 
      * @type {string}
-     * @memberof AssignPasswordPolicy
+     * @memberof BulkDeleteOrganizationUser
      */
-    passwordPolicy?: string;
+    action: BulkDeleteOrganizationUserActionEnum;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof BulkDeleteOrganizationUser
+     */
+    items?: Array<string>;
 }
 
-export function AssignPasswordPolicyFromJSON(json: any): AssignPasswordPolicy {
-    return AssignPasswordPolicyFromJSONTyped(json, false);
+
+/**
+ * @export
+ */
+export const BulkDeleteOrganizationUserActionEnum = {
+    Create: 'CREATE',
+    Update: 'UPDATE',
+    Delete: 'DELETE'
+} as const;
+export type BulkDeleteOrganizationUserActionEnum = typeof BulkDeleteOrganizationUserActionEnum[keyof typeof BulkDeleteOrganizationUserActionEnum];
+
+
+export function BulkDeleteOrganizationUserFromJSON(json: any): BulkDeleteOrganizationUser {
+    return BulkDeleteOrganizationUserFromJSONTyped(json, false);
 }
 
-export function AssignPasswordPolicyFromJSONTyped(json: any, ignoreDiscriminator: boolean): AssignPasswordPolicy {
+export function BulkDeleteOrganizationUserFromJSONTyped(json: any, ignoreDiscriminator: boolean): BulkDeleteOrganizationUser {
     if ((json === undefined) || (json === null)) {
         return json;
     }
     return {
         
-        'passwordPolicy': !exists(json, 'passwordPolicy') ? undefined : json['passwordPolicy'],
+        'action': json['action'],
+        'items': !exists(json, 'items') ? undefined : json['items'],
     };
 }
 
-export function AssignPasswordPolicyToJSON(value?: AssignPasswordPolicy | null): any {
+export function BulkDeleteOrganizationUserToJSON(value?: BulkDeleteOrganizationUser | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -63,7 +82,8 @@ export function AssignPasswordPolicyToJSON(value?: AssignPasswordPolicy | null):
     }
     return {
         
-        'passwordPolicy': value.passwordPolicy,
+        'action': value.action,
+        'items': value.items,
     };
 }
 

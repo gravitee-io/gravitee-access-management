@@ -29,32 +29,51 @@ import { exists, mapValues } from '../runtime';
 /**
  * 
  * @export
- * @interface AssignPasswordPolicy
+ * @interface BulkDeleteUser
  */
-export interface AssignPasswordPolicy {
+export interface BulkDeleteUser {
     /**
      * 
      * @type {string}
-     * @memberof AssignPasswordPolicy
+     * @memberof BulkDeleteUser
      */
-    passwordPolicy?: string;
+    action: BulkDeleteUserActionEnum;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof BulkDeleteUser
+     */
+    items?: Array<string>;
 }
 
-export function AssignPasswordPolicyFromJSON(json: any): AssignPasswordPolicy {
-    return AssignPasswordPolicyFromJSONTyped(json, false);
+
+/**
+ * @export
+ */
+export const BulkDeleteUserActionEnum = {
+    Create: 'CREATE',
+    Update: 'UPDATE',
+    Delete: 'DELETE'
+} as const;
+export type BulkDeleteUserActionEnum = typeof BulkDeleteUserActionEnum[keyof typeof BulkDeleteUserActionEnum];
+
+
+export function BulkDeleteUserFromJSON(json: any): BulkDeleteUser {
+    return BulkDeleteUserFromJSONTyped(json, false);
 }
 
-export function AssignPasswordPolicyFromJSONTyped(json: any, ignoreDiscriminator: boolean): AssignPasswordPolicy {
+export function BulkDeleteUserFromJSONTyped(json: any, ignoreDiscriminator: boolean): BulkDeleteUser {
     if ((json === undefined) || (json === null)) {
         return json;
     }
     return {
         
-        'passwordPolicy': !exists(json, 'passwordPolicy') ? undefined : json['passwordPolicy'],
+        'action': json['action'],
+        'items': !exists(json, 'items') ? undefined : json['items'],
     };
 }
 
-export function AssignPasswordPolicyToJSON(value?: AssignPasswordPolicy | null): any {
+export function BulkDeleteUserToJSON(value?: BulkDeleteUser | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -63,7 +82,8 @@ export function AssignPasswordPolicyToJSON(value?: AssignPasswordPolicy | null):
     }
     return {
         
-        'passwordPolicy': value.passwordPolicy,
+        'action': value.action,
+        'items': value.items,
     };
 }
 
