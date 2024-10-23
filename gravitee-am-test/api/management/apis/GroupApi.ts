@@ -70,7 +70,7 @@ export interface AssignRolesRequest {
     requestBody: Array<string>;
 }
 
-export interface Create11Request {
+export interface Create8Request {
     organizationId: string;
     newGroup: NewGroup;
 }
@@ -122,14 +122,14 @@ export interface GetOrganizationGroupRequest {
     group: string;
 }
 
-export interface List21Request {
+export interface List18Request {
     organizationId: string;
     group: string;
     page?: number;
     size?: number;
 }
 
-export interface List22Request {
+export interface List19Request {
     organizationId: string;
     page?: number;
     size?: number;
@@ -349,13 +349,13 @@ export class GroupApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_GROUP[CREATE] permission on the specified organization
      * Create a platform group
      */
-    async create11Raw(requestParameters: Create11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async create8Raw(requestParameters: Create8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create11.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create8.');
         }
 
         if (requestParameters.newGroup === null || requestParameters.newGroup === undefined) {
-            throw new runtime.RequiredError('newGroup','Required parameter requestParameters.newGroup was null or undefined when calling create11.');
+            throw new runtime.RequiredError('newGroup','Required parameter requestParameters.newGroup was null or undefined when calling create8.');
         }
 
         const queryParameters: any = {};
@@ -387,8 +387,8 @@ export class GroupApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_GROUP[CREATE] permission on the specified organization
      * Create a platform group
      */
-    async create11(requestParameters: Create11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.create11Raw(requestParameters, initOverrides);
+    async create8(requestParameters: Create8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.create8Raw(requestParameters, initOverrides);
     }
 
     /**
@@ -752,13 +752,13 @@ export class GroupApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_GROUP[READ] permission on the specified organization
      * List group members
      */
-    async list21Raw(requestParameters: List21Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<User>> {
+    async list18Raw(requestParameters: List18Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<User>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list21.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list18.');
         }
 
         if (requestParameters.group === null || requestParameters.group === undefined) {
-            throw new runtime.RequiredError('group','Required parameter requestParameters.group was null or undefined when calling list21.');
+            throw new runtime.RequiredError('group','Required parameter requestParameters.group was null or undefined when calling list18.');
         }
 
         const queryParameters: any = {};
@@ -795,8 +795,8 @@ export class GroupApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_GROUP[READ] permission on the specified organization
      * List group members
      */
-    async list21(requestParameters: List21Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<User> {
-        const response = await this.list21Raw(requestParameters, initOverrides);
+    async list18(requestParameters: List18Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<User> {
+        const response = await this.list18Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -804,9 +804,9 @@ export class GroupApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION[LIST] permission on the specified organization. Each returned group is filtered and contains only basic information such as id and name.
      * List groups of the organization
      */
-    async list22Raw(requestParameters: List22Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<Group>>> {
+    async list19Raw(requestParameters: List19Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<Group>>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list22.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list19.');
         }
 
         const queryParameters: any = {};
@@ -843,8 +843,8 @@ export class GroupApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION[LIST] permission on the specified organization. Each returned group is filtered and contains only basic information such as id and name.
      * List groups of the organization
      */
-    async list22(requestParameters: List22Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Group>> {
-        const response = await this.list22Raw(requestParameters, initOverrides);
+    async list19(requestParameters: List19Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Group>> {
+        const response = await this.list19Raw(requestParameters, initOverrides);
         return await response.value();
     }
 

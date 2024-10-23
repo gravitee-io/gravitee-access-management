@@ -17,13 +17,13 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.exception.DeviceIdentifierNotFoundException;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.DeviceIdentifier;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DeviceIdentifierService;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.UpdateDeviceIdentifier;
 import io.gravitee.common.http.MediaType;
@@ -33,7 +33,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
@@ -62,15 +61,15 @@ public class DeviceIdentifierResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a Device identifier",
+    @Operation(operationId = "getDeviceIdentifier",
+            summary = "Get a Device identifier",
             description = "User must have the DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified domain " +
                     "or DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified environment " +
                     "or DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Device identifier successfully fetched",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = DeviceIdentifier.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "200", description = "Device identifier successfully fetched",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = DeviceIdentifier.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -95,15 +94,14 @@ public class DeviceIdentifierResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Update a Device identifier",
+    @Operation(operationId = "updateDeviceIdentifier", summary = "Update a Device identifier",
             description = "User must have the DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified domain " +
                     "or DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified environment " +
                     "or DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Device identifier successfully updated",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = DeviceIdentifier.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "201", description = "Device identifier successfully updated",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = DeviceIdentifier.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -121,13 +119,13 @@ public class DeviceIdentifierResource extends AbstractResource {
     }
 
     @DELETE
-    @Operation(summary = "Delete a Device identifier",
+    @Operation(
+            operationId = "deleteDeviceIdentifier", summary = "Delete a Device identifier",
             description = "User must have the DOMAIN_DEVICE_IDENTIFIER[DELETE] permission on the specified domain " +
                     "or DOMAIN_DEVICE_IDENTIFIER[DELETE] permission on the specified environment " +
                     "or DOMAIN_DEVICE_IDENTIFIER[DELETE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Device identifier successfully deleted"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "204", description = "Device identifier successfully deleted")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

@@ -278,8 +278,7 @@ async function validateMaxAgeCookie(cookieName: string, maxAgeExpected: string, 
 }
 
 async function initEnv(applicationConfiguration, domainConfiguration = null) {
-  const adminTokenResponse = await requestAdminAccessToken();
-  accessToken = adminTokenResponse.body.access_token;
+  accessToken = await requestAdminAccessToken();
   domain = await createDomain(accessToken, faker.company.companyName(), 'test remember me option')
     .then((domain) => startDomain(domain.id, accessToken))
     .then((domain) => {
@@ -296,7 +295,7 @@ async function initEnv(applicationConfiguration, domainConfiguration = null) {
       ...defaultApplicationConfiguration.settings,
       ...applicationConfiguration.settings,
     },
-    identityProviders: [{ identity: customIdp.id, priority: 0 }],
+    identityProviders: new Set([{ identity: customIdp.id, priority: 0 }]),
   });
 
   await new Promise((r) => setTimeout(r, 10000));

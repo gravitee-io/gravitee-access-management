@@ -53,7 +53,7 @@ export interface AssignPasswordPolicyToIdpRequest {
     assignPasswordPolicy: AssignPasswordPolicy;
 }
 
-export interface Create12Request {
+export interface Create9Request {
     organizationId: string;
     newIdentityProvider: NewIdentityProvider;
 }
@@ -65,7 +65,7 @@ export interface CreateIdentityProviderRequest {
     newIdentityProvider: NewIdentityProvider;
 }
 
-export interface Delete15Request {
+export interface Delete12Request {
     organizationId: string;
     identity: string;
 }
@@ -84,12 +84,12 @@ export interface FindIdentityProviderRequest {
     identity: string;
 }
 
-export interface Get21Request {
+export interface Get18Request {
     organizationId: string;
     identity: string;
 }
 
-export interface Get33Request {
+export interface Get30Request {
     identity: string;
 }
 
@@ -97,12 +97,12 @@ export interface GetSchema5Request {
     identity: string;
 }
 
-export interface List23Request {
+export interface List20Request {
     organizationId: string;
     userProvider?: boolean;
 }
 
-export interface List32Request {
+export interface List29Request {
     external?: boolean;
     expand?: Array<string>;
 }
@@ -114,7 +114,7 @@ export interface ListIdentityProvidersRequest {
     userProvider?: boolean;
 }
 
-export interface Update11Request {
+export interface Update8Request {
     organizationId: string;
     identity: string;
     updateIdentityProvider: UpdateIdentityProvider;
@@ -196,13 +196,13 @@ export class IdentityProviderApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_IDENTITY_PROVIDER[CREATE] permission on the specified organization
      * Create an identity provider for the organization
      */
-    async create12Raw(requestParameters: Create12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async create9Raw(requestParameters: Create9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create12.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create9.');
         }
 
         if (requestParameters.newIdentityProvider === null || requestParameters.newIdentityProvider === undefined) {
-            throw new runtime.RequiredError('newIdentityProvider','Required parameter requestParameters.newIdentityProvider was null or undefined when calling create12.');
+            throw new runtime.RequiredError('newIdentityProvider','Required parameter requestParameters.newIdentityProvider was null or undefined when calling create9.');
         }
 
         const queryParameters: any = {};
@@ -234,8 +234,8 @@ export class IdentityProviderApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_IDENTITY_PROVIDER[CREATE] permission on the specified organization
      * Create an identity provider for the organization
      */
-    async create12(requestParameters: Create12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.create12Raw(requestParameters, initOverrides);
+    async create9(requestParameters: Create9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.create9Raw(requestParameters, initOverrides);
     }
 
     /**
@@ -297,13 +297,13 @@ export class IdentityProviderApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_IDENTITY_PROVIDER[DELETE] permission on the specified organization
      * Delete an identity provider
      */
-    async delete15Raw(requestParameters: Delete15Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async delete12Raw(requestParameters: Delete12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete15.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete12.');
         }
 
         if (requestParameters.identity === null || requestParameters.identity === undefined) {
-            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling delete15.');
+            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling delete12.');
         }
 
         const queryParameters: any = {};
@@ -332,8 +332,8 @@ export class IdentityProviderApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_IDENTITY_PROVIDER[DELETE] permission on the specified organization
      * Delete an identity provider
      */
-    async delete15(requestParameters: Delete15Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.delete15Raw(requestParameters, initOverrides);
+    async delete12(requestParameters: Delete12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.delete12Raw(requestParameters, initOverrides);
     }
 
     /**
@@ -443,13 +443,13 @@ export class IdentityProviderApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_IDENTITY_PROVIDER[READ] permission on the specified organization
      * Get an identity provider
      */
-    async get21Raw(requestParameters: Get21Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<IdentityProvider>> {
+    async get18Raw(requestParameters: Get18Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<IdentityProvider>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get21.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get18.');
         }
 
         if (requestParameters.identity === null || requestParameters.identity === undefined) {
-            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling get21.');
+            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling get18.');
         }
 
         const queryParameters: any = {};
@@ -478,8 +478,8 @@ export class IdentityProviderApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_IDENTITY_PROVIDER[READ] permission on the specified organization
      * Get an identity provider
      */
-    async get21(requestParameters: Get21Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<IdentityProvider> {
-        const response = await this.get21Raw(requestParameters, initOverrides);
+    async get18(requestParameters: Get18Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<IdentityProvider> {
+        const response = await this.get18Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -487,9 +487,9 @@ export class IdentityProviderApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get an identity provider
      */
-    async get33Raw(requestParameters: Get33Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get30Raw(requestParameters: Get30Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.identity === null || requestParameters.identity === undefined) {
-            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling get33.');
+            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling get30.');
         }
 
         const queryParameters: any = {};
@@ -518,8 +518,8 @@ export class IdentityProviderApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get an identity provider
      */
-    async get33(requestParameters: Get33Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get33Raw(requestParameters, initOverrides);
+    async get30(requestParameters: Get30Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get30Raw(requestParameters, initOverrides);
     }
 
     /**
@@ -565,9 +565,9 @@ export class IdentityProviderApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_IDENTITY_PROVIDER[LIST] permission on the specified organization. Each returned identity provider is filtered and contains only basic information such as id, name, type and isExternal.
      * List registered identity providers of the organization
      */
-    async list23Raw(requestParameters: List23Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<FilteredIdentityProviderInfo>>> {
+    async list20Raw(requestParameters: List20Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<FilteredIdentityProviderInfo>>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list23.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list20.');
         }
 
         const queryParameters: any = {};
@@ -600,8 +600,8 @@ export class IdentityProviderApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_IDENTITY_PROVIDER[LIST] permission on the specified organization. Each returned identity provider is filtered and contains only basic information such as id, name, type and isExternal.
      * List registered identity providers of the organization
      */
-    async list23(requestParameters: List23Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<FilteredIdentityProviderInfo>> {
-        const response = await this.list23Raw(requestParameters, initOverrides);
+    async list20(requestParameters: List20Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<FilteredIdentityProviderInfo>> {
+        const response = await this.list20Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -609,7 +609,7 @@ export class IdentityProviderApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List identity provider plugins
      */
-    async list32Raw(requestParameters: List32Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async list29Raw(requestParameters: List29Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         if (requestParameters.external !== undefined) {
@@ -644,8 +644,8 @@ export class IdentityProviderApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List identity provider plugins
      */
-    async list32(requestParameters: List32Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list32Raw(requestParameters, initOverrides);
+    async list29(requestParameters: List29Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list29Raw(requestParameters, initOverrides);
     }
 
     /**
@@ -704,17 +704,17 @@ export class IdentityProviderApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_IDENTITY_PROVIDER[UPDATE] permission on the specified organization
      * Update an identity provider
      */
-    async update11Raw(requestParameters: Update11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<IdentityProvider>> {
+    async update8Raw(requestParameters: Update8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<IdentityProvider>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update11.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update8.');
         }
 
         if (requestParameters.identity === null || requestParameters.identity === undefined) {
-            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling update11.');
+            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling update8.');
         }
 
         if (requestParameters.updateIdentityProvider === null || requestParameters.updateIdentityProvider === undefined) {
-            throw new runtime.RequiredError('updateIdentityProvider','Required parameter requestParameters.updateIdentityProvider was null or undefined when calling update11.');
+            throw new runtime.RequiredError('updateIdentityProvider','Required parameter requestParameters.updateIdentityProvider was null or undefined when calling update8.');
         }
 
         const queryParameters: any = {};
@@ -746,8 +746,8 @@ export class IdentityProviderApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_IDENTITY_PROVIDER[UPDATE] permission on the specified organization
      * Update an identity provider
      */
-    async update11(requestParameters: Update11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<IdentityProvider> {
-        const response = await this.update11Raw(requestParameters, initOverrides);
+    async update8(requestParameters: Update8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<IdentityProvider> {
+        const response = await this.update8Raw(requestParameters, initOverrides);
         return await response.value();
     }
 

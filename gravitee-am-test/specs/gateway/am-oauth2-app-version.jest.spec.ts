@@ -22,6 +22,7 @@ import {
   patchDomain,
   startDomain,
   waitFor,
+  waitForDomainStart,
   waitForDomainSync,
 } from '@management-commands/domain-management-commands';
 import { createIdp, deleteIdp, getAllIdps } from '@management-commands/idp-management-commands';
@@ -62,8 +63,7 @@ let openIdConfiguration;
 jest.setTimeout(200000);
 
 beforeAll(async () => {
-  const adminTokenResponse = await requestAdminAccessToken();
-  accessToken = adminTokenResponse.body.access_token;
+  accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
 
   masterDomain = await createDomain(accessToken, 'oauth2-app-version', 'test oauth2 authorization framework specifications');
@@ -78,9 +78,9 @@ beforeAll(async () => {
   application2 = await createApp2(masterDomain, accessToken, scope.key, defaultInlineIdp.id);
   application3 = await createApp3(masterDomain, accessToken, scope.key);
 
-  masterDomain = await getStartedDomain(masterDomain);
-  await waitForDomainSync();
-  openIdConfiguration = await getOpenIDConfiguration(masterDomain);
+  const masterDomainStarted = await startDomain(masterDomain.id, accessToken).then((x) => waitForDomainStart(masterDomain));
+  masterDomain = masterDomainStarted.domain;
+  openIdConfiguration = masterDomainStarted.oidcConfig;
 });
 
 describe('OAuth2 - App version', () => {
@@ -1007,7 +1007,7 @@ async function mustMakeDomainMaster(createdDomain: Domain, accessToken: string):
 async function mustDeleteDefaultIdp(domain: Domain, accessToken: string) {
   await deleteIdp(domain.id, accessToken, 'default-idp-' + domain.id);
   const idpSet = await getAllIdps(domain.id, accessToken);
-  expect(idpSet.size).toEqual(0);
+  expect(idpSet.length).toEqual(0);
 }
 
 async function createNewIdp(domain: Domain, accessToken: string) {

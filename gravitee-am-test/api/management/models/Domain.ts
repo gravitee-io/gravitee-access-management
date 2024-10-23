@@ -266,24 +266,6 @@ export interface Domain {
      * @type {boolean}
      * @memberof Domain
      */
-    redirectUriLocalhostAllowed?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof Domain
-     */
-    redirectUriUnsecuredHttpSchemeAllowed?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof Domain
-     */
-    redirectUriWildcardAllowed?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof Domain
-     */
     dynamicClientRegistrationEnabled?: boolean;
     /**
      * 
@@ -303,6 +285,24 @@ export interface Domain {
      * @memberof Domain
      */
     dynamicClientRegistrationTemplateEnabled?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof Domain
+     */
+    redirectUriLocalhostAllowed?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof Domain
+     */
+    redirectUriUnsecuredHttpSchemeAllowed?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof Domain
+     */
+    redirectUriWildcardAllowed?: boolean;
 }
 
 
@@ -365,13 +365,13 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
         'selfServiceAccountManagementSettings': !exists(json, 'selfServiceAccountManagementSettings') ? undefined : SelfServiceAccountManagementSettingsFromJSON(json['selfServiceAccountManagementSettings']),
         'saml': !exists(json, 'saml') ? undefined : SAMLSettingsFromJSON(json['saml']),
         'corsSettings': !exists(json, 'corsSettings') ? undefined : CorsSettingsFromJSON(json['corsSettings']),
-        'redirectUriLocalhostAllowed': !exists(json, 'redirectUriLocalhostAllowed') ? undefined : json['redirectUriLocalhostAllowed'],
-        'redirectUriUnsecuredHttpSchemeAllowed': !exists(json, 'redirectUriUnsecuredHttpSchemeAllowed') ? undefined : json['redirectUriUnsecuredHttpSchemeAllowed'],
-        'redirectUriWildcardAllowed': !exists(json, 'redirectUriWildcardAllowed') ? undefined : json['redirectUriWildcardAllowed'],
         'dynamicClientRegistrationEnabled': !exists(json, 'dynamicClientRegistrationEnabled') ? undefined : json['dynamicClientRegistrationEnabled'],
         'openDynamicClientRegistrationEnabled': !exists(json, 'openDynamicClientRegistrationEnabled') ? undefined : json['openDynamicClientRegistrationEnabled'],
         'redirectUriStrictMatching': !exists(json, 'redirectUriStrictMatching') ? undefined : json['redirectUriStrictMatching'],
         'dynamicClientRegistrationTemplateEnabled': !exists(json, 'dynamicClientRegistrationTemplateEnabled') ? undefined : json['dynamicClientRegistrationTemplateEnabled'],
+        'redirectUriLocalhostAllowed': !exists(json, 'redirectUriLocalhostAllowed') ? undefined : json['redirectUriLocalhostAllowed'],
+        'redirectUriUnsecuredHttpSchemeAllowed': !exists(json, 'redirectUriUnsecuredHttpSchemeAllowed') ? undefined : json['redirectUriUnsecuredHttpSchemeAllowed'],
+        'redirectUriWildcardAllowed': !exists(json, 'redirectUriWildcardAllowed') ? undefined : json['redirectUriWildcardAllowed'],
     };
 }
 
@@ -411,13 +411,13 @@ export function DomainToJSON(value?: Domain | null): any {
         'selfServiceAccountManagementSettings': SelfServiceAccountManagementSettingsToJSON(value.selfServiceAccountManagementSettings),
         'saml': SAMLSettingsToJSON(value.saml),
         'corsSettings': CorsSettingsToJSON(value.corsSettings),
-        'redirectUriLocalhostAllowed': value.redirectUriLocalhostAllowed,
-        'redirectUriUnsecuredHttpSchemeAllowed': value.redirectUriUnsecuredHttpSchemeAllowed,
-        'redirectUriWildcardAllowed': value.redirectUriWildcardAllowed,
         'dynamicClientRegistrationEnabled': value.dynamicClientRegistrationEnabled,
         'openDynamicClientRegistrationEnabled': value.openDynamicClientRegistrationEnabled,
         'redirectUriStrictMatching': value.redirectUriStrictMatching,
         'dynamicClientRegistrationTemplateEnabled': value.dynamicClientRegistrationTemplateEnabled,
+        'redirectUriLocalhostAllowed': value.redirectUriLocalhostAllowed,
+        'redirectUriUnsecuredHttpSchemeAllowed': value.redirectUriUnsecuredHttpSchemeAllowed,
+        'redirectUriWildcardAllowed': value.redirectUriWildcardAllowed,
     };
 }
 

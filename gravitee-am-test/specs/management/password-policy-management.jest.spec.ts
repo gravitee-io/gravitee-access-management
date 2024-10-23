@@ -17,7 +17,7 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, afterEach, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, deleteDomain,setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import {
   createPasswordPolicy,
   deletePasswordPolicy,
@@ -27,6 +27,7 @@ import {
   setPasswordPolicyDefault,
   updatePasswordPolicy,
 } from '@management-commands/password-policy-management-commands';
+import {uniqueName} from '@utils-commands/misc';
 
 global.fetch = fetch;
 
@@ -34,19 +35,8 @@ let accessToken;
 let domain;
 
 beforeAll(async () => {
-  const adminTokenResponse = await requestAdminAccessToken();
-  accessToken = adminTokenResponse.body.access_token;
-  expect(accessToken).toBeDefined();
-
-  const createdDomain = await createDomain(accessToken, 'domain-password-policy-m', faker.company.catchPhraseDescriptor());
-  expect(createdDomain).toBeDefined();
-  expect(createdDomain.id).toBeDefined();
-
-  const domainStarted = await startDomain(createdDomain.id, accessToken);
-  expect(domainStarted).toBeDefined();
-  expect(domainStarted.id).toEqual(createdDomain.id);
-
-  domain = domainStarted;
+  accessToken = await requestAdminAccessToken()
+  domain = await setupDomainForTest(uniqueName('domain-password-policy-m'), {accessToken, waitForStart: true}).then(it=>it.domain)
 });
 
 describe('password policy management', () => {

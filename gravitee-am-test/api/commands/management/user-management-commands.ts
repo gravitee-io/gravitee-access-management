@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { getDomainApi, getUserApi } from './service/utils';
-import { expect } from '@jest/globals';
-import { NewOrganizationUser, NewUser } from '../../management/models';
-import { name } from '@utils-commands/misc';
+import {getDomainApi, getUserApi} from './service/utils';
+import {expect} from '@jest/globals';
+import {NewOrganizationUser, NewUser} from '../../management/models';
 
 export const createUser = (domainId, accessToken, user) =>
   getUserApi(accessToken).createUser({
@@ -26,7 +25,7 @@ export const createUser = (domainId, accessToken, user) =>
     newUser: user,
   });
 
-export const bulkCreateOrgUsers = (domainId: string, accessToken: string, users: NewOrganizationUser[]) =>
+export const bulkCreateOrgUsers = (accessToken: string, users: NewOrganizationUser[]) =>
   getUserApi(accessToken).bulkOrganisationUserOperation({
     organizationId: process.env.AM_DEF_ORG_ID,
     bulkUserRequest: {

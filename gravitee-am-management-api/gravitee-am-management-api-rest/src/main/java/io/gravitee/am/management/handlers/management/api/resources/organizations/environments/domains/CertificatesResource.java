@@ -108,7 +108,7 @@ public class CertificatesResource extends AbstractResource {
                     "or DOMAIN_CERTIFICATE[CREATE] permission on the specified organization")
     @ApiResponse(responseCode = "201", description = "Certificate successfully created",
             content = @Content(mediaType = "application/json",
-                    schema = @Schema(implementation = CertificateEntity.class)))
+                    schema = @Schema(implementation = ModifiedCertificateEntity.class)))
     @ApiResponse(responseCode = "500", description = "Internal server error")
     public void create(
             @PathParam("organizationId") String organizationId,

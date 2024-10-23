@@ -19,7 +19,7 @@ global.fetch = fetch;
 
 import { jest, afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, patchDomain, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, deleteDomain, patchDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
@@ -54,8 +54,7 @@ jest.setTimeout(200000);
 const waitForDomainSync = () => new Promise((r) => setTimeout(r, 10000));
 
 beforeAll(async () => {
-  const adminTokenResponse = await requestAdminAccessToken();
-  managementApiAccessToken = adminTokenResponse.body.access_token;
+  managementApiAccessToken = await requestAdminAccessToken();
   expect(managementApiAccessToken).toBeDefined();
   domain = await createDomain(managementApiAccessToken, 'self-account-change-password', 'test Change Password through SelfAccount API');
   expect(domain).toBeDefined();
@@ -110,11 +109,12 @@ beforeAll(async () => {
 
   // Create a User
   await createUser(domain.id, managementApiAccessToken, user);
-  await waitForDomainSync();
 
-  const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
-  openIdConfiguration = result.body;
-  expect(openIdConfiguration).toBeDefined();
+  await waitForDomainStart(domain).then((started) => {
+    domain = started.domain;
+    openIdConfiguration = started.oidcConfig;
+    expect(openIdConfiguration).toBeDefined();
+  });
 });
 
 describe('SelfAccount - Change Password', () => {

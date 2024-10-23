@@ -18,11 +18,11 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.DeviceIdentifierPluginService;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.DeviceIdentifier;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DeviceIdentifierService;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewDeviceIdentifier;
 import io.gravitee.common.http.MediaType;
@@ -33,7 +33,6 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -73,16 +72,16 @@ public class DeviceIdentifiersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List registered device identifiers for a security domain",
+    @Operation(operationId = "listDeviceIdentifiers", summary = "List registered device identifiers for a security domain",
             description = "User must have the DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified domain " +
                     "or DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified environment " +
                     "or DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified organization " +
                     "Each returned bot detections is filtered and contains only basic information such as id, name.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List registered device identifiers for a security domain",
-                    content = @Content(mediaType =  "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = DeviceIdentifier.class)))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+
+    @ApiResponse(responseCode = "200", description = "List registered device identifiers for a security domain",
+            content = @Content(mediaType = "application/json",
+                    array = @ArraySchema(schema = @Schema(implementation = DeviceIdentifier.class))))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -99,13 +98,15 @@ public class DeviceIdentifiersResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Create a device identifier",
+    @Operation(
+            operationId = "createDeviceIdentifier",
+            summary = "Create a device identifier",
             description = "User must have the DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified domain " +
                     "or DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified environment " +
                     "or DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Device identifiers successfully created"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "201", description = "Device identifiers successfully created", content = @Content(schema =
+    @Schema(implementation = DeviceIdentifier.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void create(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

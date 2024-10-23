@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { getScopeApi } from './service/utils';
-import { expect } from '@jest/globals';
+import {getScopeApi} from './service/utils';
 
 export const createScope = (domainId, accessToken, scope) =>
   getScopeApi(accessToken).createScope({

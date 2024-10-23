@@ -111,6 +111,6 @@ export function getExtensionApi(accessToken) {
   return new ExtensionGrantApi(createAccessTokenConfig(accessToken));
 }
 
-export function getBotDetecionApi(accessToken) {
+export function getBotDetectionApi(accessToken) {
   return new BotDetectionApi(createAccessTokenConfig(accessToken));
 }

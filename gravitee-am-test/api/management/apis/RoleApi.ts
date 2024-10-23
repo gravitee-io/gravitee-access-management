@@ -45,7 +45,7 @@ import {
     UpdateRoleToJSON,
 } from '../models';
 
-export interface Create13Request {
+export interface Create10Request {
     organizationId: string;
     newRole: NewRole;
 }
@@ -57,7 +57,7 @@ export interface CreateRoleRequest {
     newRole: NewRole;
 }
 
-export interface Delete16Request {
+export interface Delete13Request {
     organizationId: string;
     role: string;
 }
@@ -85,17 +85,17 @@ export interface FindRolesRequest {
     q?: string;
 }
 
-export interface Get22Request {
+export interface Get19Request {
     organizationId: string;
     role: string;
 }
 
-export interface List24Request {
+export interface List21Request {
     organizationId: string;
-    type?: List24TypeEnum;
+    type?: List21TypeEnum;
 }
 
-export interface Update12Request {
+export interface Update9Request {
     organizationId: string;
     role: string;
     updateRole: UpdateRole;
@@ -118,13 +118,13 @@ export class RoleApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_ROLE[CREATE] permission on the specified organization
      * Create a role for the organization
      */
-    async create13Raw(requestParameters: Create13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async create10Raw(requestParameters: Create10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create13.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create10.');
         }
 
         if (requestParameters.newRole === null || requestParameters.newRole === undefined) {
-            throw new runtime.RequiredError('newRole','Required parameter requestParameters.newRole was null or undefined when calling create13.');
+            throw new runtime.RequiredError('newRole','Required parameter requestParameters.newRole was null or undefined when calling create10.');
         }
 
         const queryParameters: any = {};
@@ -156,8 +156,8 @@ export class RoleApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_ROLE[CREATE] permission on the specified organization
      * Create a role for the organization
      */
-    async create13(requestParameters: Create13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.create13Raw(requestParameters, initOverrides);
+    async create10(requestParameters: Create10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.create10Raw(requestParameters, initOverrides);
     }
 
     /**
@@ -219,13 +219,13 @@ export class RoleApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_ROLE[DELETE] permission on the specified organization
      * Delete a plaform role
      */
-    async delete16Raw(requestParameters: Delete16Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async delete13Raw(requestParameters: Delete13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete16.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete13.');
         }
 
         if (requestParameters.role === null || requestParameters.role === undefined) {
-            throw new runtime.RequiredError('role','Required parameter requestParameters.role was null or undefined when calling delete16.');
+            throw new runtime.RequiredError('role','Required parameter requestParameters.role was null or undefined when calling delete13.');
         }
 
         const queryParameters: any = {};
@@ -254,8 +254,8 @@ export class RoleApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_ROLE[DELETE] permission on the specified organization
      * Delete a plaform role
      */
-    async delete16(requestParameters: Delete16Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.delete16Raw(requestParameters, initOverrides);
+    async delete13(requestParameters: Delete13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.delete13Raw(requestParameters, initOverrides);
     }
 
     /**
@@ -425,13 +425,13 @@ export class RoleApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_ROLE[READ] permission on the specified organization
      * Get a platform role
      */
-    async get22Raw(requestParameters: Get22Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<RoleEntity>> {
+    async get19Raw(requestParameters: Get19Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<RoleEntity>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get22.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get19.');
         }
 
         if (requestParameters.role === null || requestParameters.role === undefined) {
-            throw new runtime.RequiredError('role','Required parameter requestParameters.role was null or undefined when calling get22.');
+            throw new runtime.RequiredError('role','Required parameter requestParameters.role was null or undefined when calling get19.');
         }
 
         const queryParameters: any = {};
@@ -460,8 +460,8 @@ export class RoleApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_ROLE[READ] permission on the specified organization
      * Get a platform role
      */
-    async get22(requestParameters: Get22Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<RoleEntity> {
-        const response = await this.get22Raw(requestParameters, initOverrides);
+    async get19(requestParameters: Get19Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<RoleEntity> {
+        const response = await this.get19Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -469,9 +469,9 @@ export class RoleApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_ROLE[LIST] permission on the specified organization. Each returned role is filtered and contains only basic information such as id, name, isSystem and assignableType.
      * List registered roles of the organization
      */
-    async list24Raw(requestParameters: List24Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<RoleEntity>>> {
+    async list21Raw(requestParameters: List21Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<RoleEntity>>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list24.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list21.');
         }
 
         const queryParameters: any = {};
@@ -504,8 +504,8 @@ export class RoleApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_ROLE[LIST] permission on the specified organization. Each returned role is filtered and contains only basic information such as id, name, isSystem and assignableType.
      * List registered roles of the organization
      */
-    async list24(requestParameters: List24Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<RoleEntity>> {
-        const response = await this.list24Raw(requestParameters, initOverrides);
+    async list21(requestParameters: List21Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<RoleEntity>> {
+        const response = await this.list21Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -513,17 +513,17 @@ export class RoleApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_ROLE[UPDATE] permission on the specified organization
      * Update a platform role
      */
-    async update12Raw(requestParameters: Update12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<RoleEntity>> {
+    async update9Raw(requestParameters: Update9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<RoleEntity>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update12.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update9.');
         }
 
         if (requestParameters.role === null || requestParameters.role === undefined) {
-            throw new runtime.RequiredError('role','Required parameter requestParameters.role was null or undefined when calling update12.');
+            throw new runtime.RequiredError('role','Required parameter requestParameters.role was null or undefined when calling update9.');
         }
 
         if (requestParameters.updateRole === null || requestParameters.updateRole === undefined) {
-            throw new runtime.RequiredError('updateRole','Required parameter requestParameters.updateRole was null or undefined when calling update12.');
+            throw new runtime.RequiredError('updateRole','Required parameter requestParameters.updateRole was null or undefined when calling update9.');
         }
 
         const queryParameters: any = {};
@@ -555,8 +555,8 @@ export class RoleApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_ROLE[UPDATE] permission on the specified organization
      * Update a platform role
      */
-    async update12(requestParameters: Update12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<RoleEntity> {
-        const response = await this.update12Raw(requestParameters, initOverrides);
+    async update9(requestParameters: Update9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<RoleEntity> {
+        const response = await this.update9Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -624,11 +624,11 @@ export class RoleApi extends runtime.BaseAPI {
 /**
  * @export
  */
-export const List24TypeEnum = {
+export const List21TypeEnum = {
     Platform: 'PLATFORM',
     Domain: 'DOMAIN',
     Application: 'APPLICATION',
     Organization: 'ORGANIZATION',
     Environment: 'ENVIRONMENT'
 } as const;
-export type List24TypeEnum = typeof List24TypeEnum[keyof typeof List24TypeEnum];
+export type List21TypeEnum = typeof List21TypeEnum[keyof typeof List21TypeEnum];

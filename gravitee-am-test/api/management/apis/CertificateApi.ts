@@ -66,7 +66,7 @@ export interface FindCertificateRequest {
     certificate: string;
 }
 
-export interface Get30Request {
+export interface Get27Request {
     certificate: string;
 }
 
@@ -118,7 +118,7 @@ export class CertificateApi extends runtime.BaseAPI {
      * User must have the DOMAIN_CERTIFICATE[CREATE] permission on the specified domain or DOMAIN_CERTIFICATE[CREATE] permission on the specified environment or DOMAIN_CERTIFICATE[CREATE] permission on the specified organization
      * Create a certificate
      */
-    async createCertificateRaw(requestParameters: CreateCertificateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<CertificateEntity>> {
+    async createCertificateRaw(requestParameters: CreateCertificateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<ModifiedCertificateEntity>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
             throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling createCertificate.');
         }
@@ -157,14 +157,14 @@ export class CertificateApi extends runtime.BaseAPI {
             body: NewCertificateToJSON(requestParameters.newCertificate),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => CertificateEntityFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ModifiedCertificateEntityFromJSON(jsonValue));
     }
 
     /**
      * User must have the DOMAIN_CERTIFICATE[CREATE] permission on the specified domain or DOMAIN_CERTIFICATE[CREATE] permission on the specified environment or DOMAIN_CERTIFICATE[CREATE] permission on the specified organization
      * Create a certificate
      */
-    async createCertificate(requestParameters: CreateCertificateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<CertificateEntity> {
+    async createCertificate(requestParameters: CreateCertificateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ModifiedCertificateEntity> {
         const response = await this.createCertificateRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -276,9 +276,9 @@ export class CertificateApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get an certificate plugin
      */
-    async get30Raw(requestParameters: Get30Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get27Raw(requestParameters: Get27Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.certificate === null || requestParameters.certificate === undefined) {
-            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling get30.');
+            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling get27.');
         }
 
         const queryParameters: any = {};
@@ -307,8 +307,8 @@ export class CertificateApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get an certificate plugin
      */
-    async get30(requestParameters: Get30Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get30Raw(requestParameters, initOverrides);
+    async get27(requestParameters: Get27Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get27Raw(requestParameters, initOverrides);
     }
 
     /**
@@ -458,7 +458,7 @@ export class CertificateApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List certificate plugins
      */
-    async list29Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async list26Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -485,8 +485,8 @@ export class CertificateApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List certificate plugins
      */
-    async list29(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list29Raw(initOverrides);
+    async list26(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list26Raw(initOverrides);
     }
 
     /**

@@ -22,9 +22,11 @@ import { requestAdminAccessToken } from '@management-commands/token-management-c
 import {
   createDomain,
   deleteDomain,
+  DomainOidcConfig,
   getDomainFlows,
   startDomain,
   updateDomainFlows,
+  waitForDomainStart,
 } from '@management-commands/domain-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
@@ -37,14 +39,14 @@ import {
 } from '@management-commands/application-management-commands';
 import { getWellKnownOpenIdConfiguration, logoutUser, requestToken, signInUser } from '@gateway-commands/oauth-oidc-commands';
 
-import { FlowEntity, FlowEntityTypeEnum } from '../../api/management/models';
+import { Domain, FlowEntity, FlowEntityTypeEnum } from '../../api/management/models';
 import { assertGeneratedTokenAndGet } from '@gateway-commands/utils';
 import { decodeJwt } from '@utils-commands/jwt';
 import { clearEmails, getLastEmail, hasEmail } from '@utils-commands/email-commands';
 
-let domain;
-let managementApiAccessToken;
-let openIdConfiguration;
+let domain: Domain;
+let managementApiAccessToken: string;
+let openIdConfiguration: DomainOidcConfig;
 let application;
 let user = {
   username: 'FlowUser',
@@ -60,8 +62,7 @@ jest.setTimeout(200000);
 const waitForDomainSync = () => new Promise((r) => setTimeout(r, 10000));
 
 beforeAll(async () => {
-  const adminTokenResponse = await requestAdminAccessToken();
-  managementApiAccessToken = adminTokenResponse.body.access_token;
+  managementApiAccessToken = await requestAdminAccessToken();
   expect(managementApiAccessToken).toBeDefined();
 
   const createdDomain = await createDomain(managementApiAccessToken, 'jest-flow-exec', 'test end-user logout');
@@ -69,8 +70,8 @@ beforeAll(async () => {
   expect(createdDomain.id).toBeDefined();
   domain = createdDomain;
 
-  await startDomain(domain.id, managementApiAccessToken);
-
+  const domainStarted = await startDomain(domain.id, managementApiAccessToken);
+  // do the rest of the setup while the domain is starting
   // Create the application
   const idpSet = await getAllIdps(domain.id, managementApiAccessToken);
   application = await createApplication(domain.id, managementApiAccessToken, {
@@ -103,11 +104,11 @@ beforeAll(async () => {
 
   // Create a User
   await createUser(domain.id, managementApiAccessToken, user);
-  await waitForDomainSync();
 
-  const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
-  openIdConfiguration = result.body;
-  expect(openIdConfiguration).toBeDefined();
+  waitForDomainStart(domainStarted).then((result) => {
+    domain = result.domain;
+    openIdConfiguration = result.oidcConfig;
+  });
 });
 
 describe('Flows Execution - authorization_code flow', () => {

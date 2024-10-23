@@ -32,7 +32,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -68,9 +67,8 @@ public class PasswordPolicyResource extends AbstractDomainResource {
             description = "User must have the DOMAIN_SETTINGS[READ] permission on the specified domain " +
                     "or DOMAIN_SETTINGS[READ] permission on the specified environment " +
                     "or DOMAIN_SETTINGS[READ] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Password Policy description"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "200", description = "Password Policy description", content = @Content(schema = @Schema(implementation = PasswordPolicy.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -94,9 +92,8 @@ public class PasswordPolicyResource extends AbstractDomainResource {
             description = "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain " +
                     "or DOMAIN_SETTINGS[UPDATE] permission on the specified environment " +
                     "or DOMAIN_SETTINGS[UPDATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Password Policy successfully updated"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "200", description = "Password Policy successfully updated", content = @Content(schema = @Schema(implementation = PasswordPolicy.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -150,9 +147,8 @@ public class PasswordPolicyResource extends AbstractDomainResource {
             description = "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain " +
                     "or DOMAIN_SETTINGS[UPDATE] permission on the specified environment " +
                     "or DOMAIN_SETTINGS[UPDATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Password Policy successfully deleted"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "204", description = "Password Policy successfully deleted")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

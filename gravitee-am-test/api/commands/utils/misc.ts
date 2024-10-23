@@ -22,14 +22,14 @@ import { BulkResponse } from '@management-models/BulkResponse';
 import { BulkOperationResultObject } from '@management-models/BulkOperationResultObject';
 
 /**
- * Optionally randomize the name to make it easier to re-run a test with the same DB, e.g. while developing tests.
+ * Optionally randomize the name to make it unique, making it easier to re-run a test with the same DB, e.g. while developing tests.
  * if AM_TEST_RANDOMIZE_NAMES env variable is set to true, returns the name with a random suffix.
  * Otherwise, just passes the name through.
  *
  * @param name the base name
  * @param forceRandom if true, always randomizes the name (regardless of the env var)
  */
-export function name(name: string, forceRandom: boolean = false) {
+export function uniqueName(name: string, forceRandom: boolean = false) {
   const randomize = forceRandom || process.env.AM_TEST_RANDOMIZE_NAMES?.toLowerCase() === 'true';
   if (randomize) {
     return faker.helpers.slugify(

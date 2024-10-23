@@ -66,7 +66,7 @@ export const setPasswordPolicyDefault = (domainId: string, accessToken: string, 
   });
 
 export const deletePasswordPolicy = (domainId: string, accessToken: string, policyId: string) =>
-  getPasswordPolicyApi(accessToken).deletePasswordPolicy({
+  getPasswordPolicyApi(accessToken).deletePasswordPolicyRaw({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
@@ -83,7 +83,7 @@ export const assignPasswordPolicyToIdp = (domainId: string, accessToken: string,
   });
 
 export const resetUserPassword = (domainId: string, accessToken: string, user: string, password: string) =>
-  getUserApi(accessToken).resetPassword({
+  getUserApi(accessToken).resetPasswordRaw({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,

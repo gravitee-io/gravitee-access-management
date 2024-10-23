@@ -18,8 +18,35 @@ import { getDomainApi, getDomainManagerUrl } from './service/utils';
 import { Domain } from '../../management/models';
 import { retryUntil } from '@utils-commands/retry';
 import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
+import { requestAdminAccessToken } from '@management-commands/token-management-commands';
+import { expect } from '@jest/globals';
+import faker from 'faker';
 
 const request = require('supertest');
+
+export type DomainOidcConfig = { userinfo_endpoint: string; token_endpoint: string; end_session_endpoint: string; [key: string]: any };
+export type DomainWithOidcConfig = { domain: Domain; oidcConfig?: DomainOidcConfig };
+
+export const setupDomainForTest = async (
+  domainName: string,
+  options?: { accessToken?: string; waitForStart?: boolean },
+): Promise<DomainWithOidcConfig> => {
+  const token = options.accessToken ?? (await requestAdminAccessToken());
+  expect(token).toBeDefined();
+
+  const createdDomain = await createDomain(token, domainName, faker.company.catchPhraseDescriptor());
+  expect(createdDomain).toBeDefined();
+  expect(createdDomain.id).toBeDefined();
+
+  const domainStarted = await startDomain(createdDomain.id, token);
+  expect(domainStarted).toBeDefined();
+  expect(domainStarted.id).toEqual(createdDomain.id);
+  if (options.waitForStart === true) {
+    return waitForDomainStart(createdDomain);
+  } else {
+    return { domain: domainStarted, oidcConfig: undefined };
+  }
+};
 
 export const createDomain = (accessToken, name, description): Promise<Domain> =>
   getDomainApi(accessToken).createDomain({
@@ -48,7 +75,7 @@ export const patchDomain = (domainId, accessToken, body): Promise<Domain> =>
     patchDomain: body,
   });
 
-export const startDomain = (domainId, accessToken): Promise<Domain> => patchDomain(domainId, accessToken, { enabled: true });
+export const startDomain = (domainId: string, accessToken): Promise<Domain> => patchDomain(domainId, accessToken, { enabled: true });
 
 export const getDomain = (domainId, accessToken): Promise<Domain> =>
   getDomainApi(accessToken).findDomain({
@@ -87,7 +114,7 @@ export const updateDomainFlows = (domainId, accessToken, flows) =>
     flow: flows,
   });
 
-export const waitForDomainStart: (domain: Domain) => Promise<{ domain: Domain; oidcConfig: any }> = (domain: Domain) => {
+export const waitForDomainStart: (domain: Domain) => Promise<DomainWithOidcConfig> = (domain: Domain) => {
   const start = Date.now();
   return retryUntil(
     () => getWellKnownOpenIdConfiguration(domain.hrid) as Promise<any>,
@@ -97,7 +124,7 @@ export const waitForDomainStart: (domain: Domain) => Promise<{ domain: Domain; o
       onDone: () => console.log(`domain "${domain.hrid}" ready after ${(Date.now() - start) / 1000}s`),
       onRetry: () => console.debug(`domain "${domain.hrid}" not ready yet`),
     },
-  ).then((response) => ({ domain, oidcConfig: response.text }));
+  ).then((response) => ({ domain, oidcConfig: response.body }));
 };
 
 export const waitForDomainSync = () => waitFor(10000);

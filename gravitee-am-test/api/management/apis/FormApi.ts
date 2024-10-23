@@ -45,11 +45,6 @@ import {
     UpdateFormToJSON,
 } from '../models';
 
-export interface Create10Request {
-    organizationId: string;
-    newForm: NewForm;
-}
-
 export interface Create2Request {
     organizationId: string;
     environmentId: string;
@@ -58,14 +53,19 @@ export interface Create2Request {
     newForm: NewForm;
 }
 
-export interface Create7Request {
+export interface Create5Request {
     organizationId: string;
     environmentId: string;
     domain: string;
     newForm: NewForm;
 }
 
-export interface Delete14Request {
+export interface Create7Request {
+    organizationId: string;
+    newForm: NewForm;
+}
+
+export interface Delete11Request {
     organizationId: string;
     form: string;
 }
@@ -78,23 +78,23 @@ export interface Delete2Request {
     form: string;
 }
 
-export interface Delete7Request {
+export interface Delete5Request {
     organizationId: string;
     environmentId: string;
     domain: string;
     form: string;
 }
 
-export interface Get14Request {
+export interface Get12Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    template: Get14TemplateEnum;
+    template: Get12TemplateEnum;
 }
 
-export interface Get20Request {
+export interface Get17Request {
     organizationId: string;
-    template: Get20TemplateEnum;
+    template: Get17TemplateEnum;
 }
 
 export interface Get6Request {
@@ -112,12 +112,6 @@ export interface RenderDomainTemplateRequest {
     previewRequest: PreviewRequest;
 }
 
-export interface Update10Request {
-    organizationId: string;
-    form: string;
-    updateForm: UpdateForm;
-}
-
 export interface Update2Request {
     organizationId: string;
     environmentId: string;
@@ -127,10 +121,16 @@ export interface Update2Request {
     updateForm: UpdateForm;
 }
 
-export interface Update7Request {
+export interface Update5Request {
     organizationId: string;
     environmentId: string;
     domain: string;
+    form: string;
+    updateForm: UpdateForm;
+}
+
+export interface Update7Request {
+    organizationId: string;
     form: string;
     updateForm: UpdateForm;
 }
@@ -139,52 +139,6 @@ export interface Update7Request {
  * 
  */
 export class FormApi extends runtime.BaseAPI {
-
-    /**
-     * User must have the ORGANIZATION_FORM[CREATE] permission on the specified organization
-     * Create a form
-     */
-    async create10Raw(requestParameters: Create10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create10.');
-        }
-
-        if (requestParameters.newForm === null || requestParameters.newForm === undefined) {
-            throw new runtime.RequiredError('newForm','Required parameter requestParameters.newForm was null or undefined when calling create10.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("gravitee-auth", []);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/organizations/{organizationId}/forms`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: NewFormToJSON(requestParameters.newForm),
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * User must have the ORGANIZATION_FORM[CREATE] permission on the specified organization
-     * Create a form
-     */
-    async create10(requestParameters: Create10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.create10Raw(requestParameters, initOverrides);
-    }
 
     /**
      * User must have APPLICATION_FORM[CREATE] permission on the specified application or APPLICATION_FORM[CREATE] permission on the specified domain or APPLICATION_FORM[CREATE] permission on the specified environment or APPLICATION_FORM[CREATE] permission on the specified organization
@@ -248,21 +202,21 @@ export class FormApi extends runtime.BaseAPI {
      * User must have the DOMAIN_FORM[CREATE] permission on the specified domain or DOMAIN_FORM[CREATE] permission on the specified environment or DOMAIN_FORM[CREATE] permission on the specified organization
      * Create a form
      */
-    async create7Raw(requestParameters: Create7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async create5Raw(requestParameters: Create5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create7.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create5.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling create7.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling create5.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling create7.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling create5.');
         }
 
         if (requestParameters.newForm === null || requestParameters.newForm === undefined) {
-            throw new runtime.RequiredError('newForm','Required parameter requestParameters.newForm was null or undefined when calling create7.');
+            throw new runtime.RequiredError('newForm','Required parameter requestParameters.newForm was null or undefined when calling create5.');
         }
 
         const queryParameters: any = {};
@@ -294,6 +248,52 @@ export class FormApi extends runtime.BaseAPI {
      * User must have the DOMAIN_FORM[CREATE] permission on the specified domain or DOMAIN_FORM[CREATE] permission on the specified environment or DOMAIN_FORM[CREATE] permission on the specified organization
      * Create a form
      */
+    async create5(requestParameters: Create5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.create5Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * User must have the ORGANIZATION_FORM[CREATE] permission on the specified organization
+     * Create a form
+     */
+    async create7Raw(requestParameters: Create7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create7.');
+        }
+
+        if (requestParameters.newForm === null || requestParameters.newForm === undefined) {
+            throw new runtime.RequiredError('newForm','Required parameter requestParameters.newForm was null or undefined when calling create7.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("gravitee-auth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/organizations/{organizationId}/forms`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: NewFormToJSON(requestParameters.newForm),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * User must have the ORGANIZATION_FORM[CREATE] permission on the specified organization
+     * Create a form
+     */
     async create7(requestParameters: Create7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
         await this.create7Raw(requestParameters, initOverrides);
     }
@@ -302,13 +302,13 @@ export class FormApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_FORM[DELETE] permission on the specified organization
      * Delete a form
      */
-    async delete14Raw(requestParameters: Delete14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async delete11Raw(requestParameters: Delete11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete14.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete11.');
         }
 
         if (requestParameters.form === null || requestParameters.form === undefined) {
-            throw new runtime.RequiredError('form','Required parameter requestParameters.form was null or undefined when calling delete14.');
+            throw new runtime.RequiredError('form','Required parameter requestParameters.form was null or undefined when calling delete11.');
         }
 
         const queryParameters: any = {};
@@ -337,8 +337,8 @@ export class FormApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_FORM[DELETE] permission on the specified organization
      * Delete a form
      */
-    async delete14(requestParameters: Delete14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.delete14Raw(requestParameters, initOverrides);
+    async delete11(requestParameters: Delete11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.delete11Raw(requestParameters, initOverrides);
     }
 
     /**
@@ -400,21 +400,21 @@ export class FormApi extends runtime.BaseAPI {
      * User must have the DOMAIN_FORM[DELETE] permission on the specified domain or DOMAIN_FORM[DELETE] permission on the specified environment or DOMAIN_FORM[DELETE] permission on the specified organization
      * Delete a form
      */
-    async delete7Raw(requestParameters: Delete7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async delete5Raw(requestParameters: Delete5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete7.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete5.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete7.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete5.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete7.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete5.');
         }
 
         if (requestParameters.form === null || requestParameters.form === undefined) {
-            throw new runtime.RequiredError('form','Required parameter requestParameters.form was null or undefined when calling delete7.');
+            throw new runtime.RequiredError('form','Required parameter requestParameters.form was null or undefined when calling delete5.');
         }
 
         const queryParameters: any = {};
@@ -443,29 +443,29 @@ export class FormApi extends runtime.BaseAPI {
      * User must have the DOMAIN_FORM[DELETE] permission on the specified domain or DOMAIN_FORM[DELETE] permission on the specified environment or DOMAIN_FORM[DELETE] permission on the specified organization
      * Delete a form
      */
-    async delete7(requestParameters: Delete7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.delete7Raw(requestParameters, initOverrides);
+    async delete5(requestParameters: Delete5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.delete5Raw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the DOMAIN_FORM[READ] permission on the specified domain or DOMAIN_FORM[READ] permission on the specified environment or DOMAIN_FORM[READ] permission on the specified organization
      * Find a form
      */
-    async get14Raw(requestParameters: Get14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get12Raw(requestParameters: Get12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get14.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get12.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get14.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get12.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get14.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get12.');
         }
 
         if (requestParameters.template === null || requestParameters.template === undefined) {
-            throw new runtime.RequiredError('template','Required parameter requestParameters.template was null or undefined when calling get14.');
+            throw new runtime.RequiredError('template','Required parameter requestParameters.template was null or undefined when calling get12.');
         }
 
         const queryParameters: any = {};
@@ -498,21 +498,21 @@ export class FormApi extends runtime.BaseAPI {
      * User must have the DOMAIN_FORM[READ] permission on the specified domain or DOMAIN_FORM[READ] permission on the specified environment or DOMAIN_FORM[READ] permission on the specified organization
      * Find a form
      */
-    async get14(requestParameters: Get14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get14Raw(requestParameters, initOverrides);
+    async get12(requestParameters: Get12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get12Raw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the ORGANIZATION_FORM[READ] permission on the specified organization
      * Find an organization form template
      */
-    async get20Raw(requestParameters: Get20Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get17Raw(requestParameters: Get17Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get20.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get17.');
         }
 
         if (requestParameters.template === null || requestParameters.template === undefined) {
-            throw new runtime.RequiredError('template','Required parameter requestParameters.template was null or undefined when calling get20.');
+            throw new runtime.RequiredError('template','Required parameter requestParameters.template was null or undefined when calling get17.');
         }
 
         const queryParameters: any = {};
@@ -545,8 +545,8 @@ export class FormApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_FORM[READ] permission on the specified organization
      * Find an organization form template
      */
-    async get20(requestParameters: Get20Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get20Raw(requestParameters, initOverrides);
+    async get17(requestParameters: Get17Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get17Raw(requestParameters, initOverrides);
     }
 
     /**
@@ -664,57 +664,6 @@ export class FormApi extends runtime.BaseAPI {
     }
 
     /**
-     * User must have the ORGANIZATION_FORM[UPDATE] permission on the specified organization
-     * Update a form
-     */
-    async update10Raw(requestParameters: Update10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Form>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update10.');
-        }
-
-        if (requestParameters.form === null || requestParameters.form === undefined) {
-            throw new runtime.RequiredError('form','Required parameter requestParameters.form was null or undefined when calling update10.');
-        }
-
-        if (requestParameters.updateForm === null || requestParameters.updateForm === undefined) {
-            throw new runtime.RequiredError('updateForm','Required parameter requestParameters.updateForm was null or undefined when calling update10.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("gravitee-auth", []);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/organizations/{organizationId}/forms/{form}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"form"}}`, encodeURIComponent(String(requestParameters.form))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: UpdateFormToJSON(requestParameters.updateForm),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => FormFromJSON(jsonValue));
-    }
-
-    /**
-     * User must have the ORGANIZATION_FORM[UPDATE] permission on the specified organization
-     * Update a form
-     */
-    async update10(requestParameters: Update10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Form> {
-        const response = await this.update10Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
      * User must have APPLICATION_FORM[UPDATE] permission on the specified application or APPLICATION_FORM[UPDATE] permission on the specified domain or APPLICATION_FORM[UPDATE] permission on the specified environment or APPLICATION_FORM[UPDATE] permission on the specified organization
      * Update a form for an application
      */
@@ -781,25 +730,25 @@ export class FormApi extends runtime.BaseAPI {
      * User must have the DOMAIN_FORM[UPDATE] permission on the specified domain or DOMAIN_FORM[UPDATE] permission on the specified environment or DOMAIN_FORM[UPDATE] permission on the specified organization
      * Update a form
      */
-    async update7Raw(requestParameters: Update7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Form>> {
+    async update5Raw(requestParameters: Update5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Form>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update7.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update5.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update7.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update5.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update7.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update5.');
         }
 
         if (requestParameters.form === null || requestParameters.form === undefined) {
-            throw new runtime.RequiredError('form','Required parameter requestParameters.form was null or undefined when calling update7.');
+            throw new runtime.RequiredError('form','Required parameter requestParameters.form was null or undefined when calling update5.');
         }
 
         if (requestParameters.updateForm === null || requestParameters.updateForm === undefined) {
-            throw new runtime.RequiredError('updateForm','Required parameter requestParameters.updateForm was null or undefined when calling update7.');
+            throw new runtime.RequiredError('updateForm','Required parameter requestParameters.updateForm was null or undefined when calling update5.');
         }
 
         const queryParameters: any = {};
@@ -831,6 +780,57 @@ export class FormApi extends runtime.BaseAPI {
      * User must have the DOMAIN_FORM[UPDATE] permission on the specified domain or DOMAIN_FORM[UPDATE] permission on the specified environment or DOMAIN_FORM[UPDATE] permission on the specified organization
      * Update a form
      */
+    async update5(requestParameters: Update5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Form> {
+        const response = await this.update5Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the ORGANIZATION_FORM[UPDATE] permission on the specified organization
+     * Update a form
+     */
+    async update7Raw(requestParameters: Update7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Form>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update7.');
+        }
+
+        if (requestParameters.form === null || requestParameters.form === undefined) {
+            throw new runtime.RequiredError('form','Required parameter requestParameters.form was null or undefined when calling update7.');
+        }
+
+        if (requestParameters.updateForm === null || requestParameters.updateForm === undefined) {
+            throw new runtime.RequiredError('updateForm','Required parameter requestParameters.updateForm was null or undefined when calling update7.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("gravitee-auth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/organizations/{organizationId}/forms/{form}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"form"}}`, encodeURIComponent(String(requestParameters.form))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateFormToJSON(requestParameters.updateForm),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => FormFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the ORGANIZATION_FORM[UPDATE] permission on the specified organization
+     * Update a form
+     */
     async update7(requestParameters: Update7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Form> {
         const response = await this.update7Raw(requestParameters, initOverrides);
         return await response.value();
@@ -841,7 +841,7 @@ export class FormApi extends runtime.BaseAPI {
 /**
  * @export
  */
-export const Get14TemplateEnum = {
+export const Get12TemplateEnum = {
     Login: 'LOGIN',
     Registration: 'REGISTRATION',
     RegistrationConfirmation: 'REGISTRATION_CONFIRMATION',
@@ -863,11 +863,11 @@ export const Get14TemplateEnum = {
     CertificateExpiration: 'CERTIFICATE_EXPIRATION',
     VerifyAttempt: 'VERIFY_ATTEMPT'
 } as const;
-export type Get14TemplateEnum = typeof Get14TemplateEnum[keyof typeof Get14TemplateEnum];
+export type Get12TemplateEnum = typeof Get12TemplateEnum[keyof typeof Get12TemplateEnum];
 /**
  * @export
  */
-export const Get20TemplateEnum = {
+export const Get17TemplateEnum = {
     Login: 'LOGIN',
     Registration: 'REGISTRATION',
     RegistrationConfirmation: 'REGISTRATION_CONFIRMATION',
@@ -889,7 +889,7 @@ export const Get20TemplateEnum = {
     CertificateExpiration: 'CERTIFICATE_EXPIRATION',
     VerifyAttempt: 'VERIFY_ATTEMPT'
 } as const;
-export type Get20TemplateEnum = typeof Get20TemplateEnum[keyof typeof Get20TemplateEnum];
+export type Get17TemplateEnum = typeof Get17TemplateEnum[keyof typeof Get17TemplateEnum];
 /**
  * @export
  */

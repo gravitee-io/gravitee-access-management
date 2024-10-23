@@ -79,13 +79,13 @@ export interface ClientRegistrationSettings {
      * @type {boolean}
      * @memberof ClientRegistrationSettings
      */
-    clientTemplateEnabled?: boolean;
+    allowedScopesEnabled?: boolean;
     /**
      * 
      * @type {boolean}
      * @memberof ClientRegistrationSettings
      */
-    allowedScopesEnabled?: boolean;
+    clientTemplateEnabled?: boolean;
 }
 
 export function ClientRegistrationSettingsFromJSON(json: any): ClientRegistrationSettings {
@@ -105,8 +105,8 @@ export function ClientRegistrationSettingsFromJSONTyped(json: any, ignoreDiscrim
         'allowedScopes': !exists(json, 'allowedScopes') ? undefined : json['allowedScopes'],
         'dynamicClientRegistrationEnabled': !exists(json, 'dynamicClientRegistrationEnabled') ? undefined : json['dynamicClientRegistrationEnabled'],
         'openDynamicClientRegistrationEnabled': !exists(json, 'openDynamicClientRegistrationEnabled') ? undefined : json['openDynamicClientRegistrationEnabled'],
-        'clientTemplateEnabled': !exists(json, 'clientTemplateEnabled') ? undefined : json['clientTemplateEnabled'],
         'allowedScopesEnabled': !exists(json, 'allowedScopesEnabled') ? undefined : json['allowedScopesEnabled'],
+        'clientTemplateEnabled': !exists(json, 'clientTemplateEnabled') ? undefined : json['clientTemplateEnabled'],
     };
 }
 
@@ -126,8 +126,8 @@ export function ClientRegistrationSettingsToJSON(value?: ClientRegistrationSetti
         'allowedScopes': value.allowedScopes,
         'dynamicClientRegistrationEnabled': value.dynamicClientRegistrationEnabled,
         'openDynamicClientRegistrationEnabled': value.openDynamicClientRegistrationEnabled,
-        'clientTemplateEnabled': value.clientTemplateEnabled,
         'allowedScopesEnabled': value.allowedScopesEnabled,
+        'clientTemplateEnabled': value.clientTemplateEnabled,
     };
 }
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
-import { createDomain, deleteDomain, startDomain, waitFor } from '@management-commands/domain-management-commands';
+import { createDomain, deleteDomain, startDomain, waitFor, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 
@@ -34,6 +34,7 @@ import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
 import { TOTP } from 'otpauth';
 import * as faker from 'faker';
 import { initiateLoginFlow } from '@gateway-commands/login-commands';
+import {uniqueName} from '@utils-commands/misc';
 
 const cheerio = require('cheerio');
 
@@ -61,10 +62,9 @@ const sharedSecret = 'K546JFR2PK5CGQLLUTFG4W46IKDFWWUE';
 jest.setTimeout(200000);
 
 beforeAll(async () => {
-  const adminTokenResponse = await requestAdminAccessToken();
-  accessToken = adminTokenResponse.body.access_token;
+  accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
-  domain = await createDomain(accessToken, 'mfa-test-domain', 'test mfa');
+  domain = await createDomain(accessToken, uniqueName('mfa-test-domain'), 'test mfa');
 
   smsResource = await createSMSResource(validMFACode, domain, accessToken);
   mockFactor = await createMockFactor(smsResource, domain, accessToken);
@@ -73,8 +73,6 @@ beforeAll(async () => {
   emailFactor = await createEmailFactor(smtpResource, domain, accessToken);
 
   recoveryCodeFactor = await createRecoveryCodeFactor(domain, accessToken);
-
-  domain = await startDomain(domain.id, accessToken);
 
   smsTestApp = await createMfaApp(domain, accessToken, [mockFactor.id]);
   bruteForceTestApp = await createBruteForceTestApp(mockFactor, domain, accessToken, mfaChallengeAttemptsResetTime, [mockFactor.id]);
@@ -89,10 +87,10 @@ beforeAll(async () => {
    * At this point I haven't found a function which is similar to retry until specific http code is returned.
    * jest.retryTimes(numRetries, options) didn't applicable in this case.
    * */
-  await waitFor(10000);
-
-  const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
-  openIdConfiguration = result.body;
+  await waitForDomainStart(domain).then((started) => {
+    domain = started.domain;
+    openIdConfiguration = started.oidcConfig;
+  });
 });
 
 describe('MFA', () => {
