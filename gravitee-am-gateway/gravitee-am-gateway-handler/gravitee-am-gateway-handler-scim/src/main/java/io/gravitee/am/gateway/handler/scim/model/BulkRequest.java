@@ -37,4 +37,7 @@ public class BulkRequest {
     @JsonProperty("Operations")
     private List<BulkOperation> operations;
 
+    public int getFailOnErrors() {
+        return (failOnErrors == null || failOnErrors <= 0) ? Integer.MAX_VALUE : failOnErrors;
+    }
 }

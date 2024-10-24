@@ -58,16 +58,7 @@ import static org.springframework.util.StringUtils.hasText;
 @Slf4j
 @AllArgsConstructor
 public class BulkEndpoint {
-    /**
-     * Max payload size for Bulk request limited to 1MB
-     */
-    public final static int BULK_MAX_REQUEST_LENGTH = 1048576; // TODO make this configurable in AM-3572
-
-    /**
-     * Maximum number of operations for Bulk request
-     */
-    public final static int BULK_MAX_REQUEST_OPERATIONS = 1000; // TODO make this configurable in AM-3572
-
+    private BulkEndpointConfiguration configuration;
     private BulkService bulkService;
     private ObjectMapper objectMapper;
     private SubjectManager subjectManager;
@@ -102,10 +93,10 @@ public class BulkEndpoint {
     private Maybe<@NonNull BulkRequest> parseRequestBody(RoutingContext context) {
         return Maybe.fromSupplier(() -> {
             try {
-                return context.body().asPojo(BulkRequest.class, BULK_MAX_REQUEST_LENGTH);// TODO make this configurable in AM-3572
+                return context.body().asPojo(BulkRequest.class, configuration.bulkMaxRequestLength());
             } catch (IllegalStateException e) {
                 log.warn("The size of the bulk operation exceeds the maxPayloadSize ");
-                throw TooManyOperationException.payloadLimitReached(BULK_MAX_REQUEST_LENGTH);// TODO make this configurable in AM-3572
+                throw TooManyOperationException.payloadLimitReached(configuration.bulkMaxRequestLength());
             }
         });
     }
@@ -117,8 +108,8 @@ public class BulkEndpoint {
             throw new InvalidValueException("Bulk request requires at least one operation");
         }
         
-        if (bulkRequest.getOperations().size() > BULK_MAX_REQUEST_OPERATIONS) {// TODO make this configurable in AM-3572
-            throw TooManyOperationException.tooManyOperation(BULK_MAX_REQUEST_OPERATIONS);// TODO make this configurable in AM-3572
+        if (bulkRequest.getOperations().size() > configuration.bulkMaxRequestOperations()) {
+            throw TooManyOperationException.tooManyOperation(configuration.bulkMaxRequestOperations());
         }
         final var allBulkId = bulkRequest.getOperations().stream().filter(op -> op.getMethod() == HttpMethod.POST || hasText(op.getBulkId())).map(BulkOperation::getBulkId).count();
         final var uniqBulkId = bulkRequest.getOperations().stream().filter(op -> op.getMethod() == HttpMethod.POST || hasText(op.getBulkId())).map(BulkOperation::getBulkId).distinct().count();
