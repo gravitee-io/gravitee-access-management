@@ -49,7 +49,7 @@ export async function delay(ms: number) {
  */
 export async function timeout<T>(millis: number, promise: Promise<T>): Promise<T | never> {
   let timeLimit = waitFor(millis).then((_) => {
-    throw Error('timeout');
+    throw Error('timeout after ' + millis + 'ms');
   });
   return Promise.race([timeLimit, promise]);
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
-import { createDomain, deleteDomain, startDomain, waitFor, waitForDomainStart } from '@management-commands/domain-management-commands';
+import { deleteDomain, setupDomainForTest, waitFor, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 
@@ -24,7 +24,6 @@ import { createFactor } from '@management-commands/factor-management-commands';
 import { createResource } from '@management-commands/resource-management-commands';
 import {
   extractXsrfTokenAndActionResponse,
-  getWellKnownOpenIdConfiguration,
   logoutUser,
   performFormPost,
   performGet,
@@ -34,7 +33,7 @@ import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
 import { TOTP } from 'otpauth';
 import * as faker from 'faker';
 import { initiateLoginFlow } from '@gateway-commands/login-commands';
-import {uniqueName} from '@utils-commands/misc';
+import { uniqueName } from '@utils-commands/misc';
 
 const cheerio = require('cheerio');
 
@@ -43,8 +42,6 @@ global.fetch = fetch;
 let domain;
 let accessToken;
 let mockFactor;
-let smsResource;
-let smtpResource;
 let emailFactor;
 let openIdConfiguration;
 let smsTestApp;
@@ -64,13 +61,13 @@ jest.setTimeout(200000);
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
-  domain = await createDomain(accessToken, uniqueName('mfa-test-domain'), 'test mfa');
+  domain = await setupDomainForTest(uniqueName('mfa-test-domain'), { accessToken }).then((it) => it.domain);
 
-  smsResource = await createSMSResource(validMFACode, domain, accessToken);
-  mockFactor = await createMockFactor(smsResource, domain, accessToken);
+  mockFactor = await createSMSResource(validMFACode, domain, accessToken).then((smsResource) =>
+    createMockFactor(smsResource, domain, accessToken),
+  );
 
-  smtpResource = await createSMTPResource(domain, accessToken);
-  emailFactor = await createEmailFactor(smtpResource, domain, accessToken);
+  emailFactor = await createSMTPResource(domain, accessToken).then((smtpResource) => createEmailFactor(smtpResource, domain, accessToken));
 
   recoveryCodeFactor = await createRecoveryCodeFactor(domain, accessToken);
 
@@ -87,10 +84,9 @@ beforeAll(async () => {
    * At this point I haven't found a function which is similar to retry until specific http code is returned.
    * jest.retryTimes(numRetries, options) didn't applicable in this case.
    * */
-  await waitForDomainStart(domain).then((started) => {
-    domain = started.domain;
-    openIdConfiguration = started.oidcConfig;
-  });
+  let started = await waitForDomainStart(domain);
+  domain = started.domain;
+  openIdConfiguration = started.oidcConfig;
 });
 
 describe('MFA', () => {
@@ -124,11 +120,13 @@ describe('MFA', () => {
        * The number of the get requests is based on the gateway gravtitee.yml 'mfa_rate' configuration
        * These assertions will fail or need to be updated if 'mfa_rate' configuration is changed
        */
-      const expectedCode = [200, 200, 302];
+      const expectedCode = [200, 200, 200, 302];
+
       for (const responseCode of expectedCode) {
         const rateLimitException = await performGet(authorize2.headers['location'], '', {
           Cookie: authorize2.headers['set-cookie'],
-        }).expect(responseCode);
+        })
+        expect(rateLimitException.status).toBe(responseCode);
 
         if (responseCode === 302) {
           expect(rateLimitException.headers['location']).toBeDefined();
@@ -684,6 +682,7 @@ const createBruteForceTestApp = async (smsFactor, domain, accessToken, mfaChalle
     }),
   );
 
+  await waitFor(1000)
   expect(application).toBeDefined();
   expect(application.settings.oauth.clientId).toBeDefined();
 

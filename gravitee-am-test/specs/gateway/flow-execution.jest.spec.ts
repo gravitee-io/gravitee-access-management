@@ -105,7 +105,7 @@ beforeAll(async () => {
   // Create a User
   await createUser(domain.id, managementApiAccessToken, user);
 
-  waitForDomainStart(domainStarted).then((result) => {
+  await waitForDomainStart(domainStarted).then((result) => {
     domain = result.domain;
     openIdConfiguration = result.oidcConfig;
   });

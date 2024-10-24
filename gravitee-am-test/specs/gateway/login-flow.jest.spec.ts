@@ -39,7 +39,8 @@ jest.setTimeout(200000);
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
-  domain = await createDomain(accessToken, uniqueName('login-flow-domain'), 'test user login').then((domain) => startDomain(domain.id, accessToken));
+  domain = await createDomain(accessToken, uniqueName('login-flow-domain'), 'test user login')
+      .then((domain) => startDomain(domain.id, accessToken));
 
   customIdp = jdbc === 'jdbc' ? await createJdbcIdp(domain.id, accessToken) : await createMongoIdp(domain.id, accessToken);
   multiUserLoginApp = await createTestApp('multi-user-login-app', domain, accessToken, 'WEB', {
@@ -63,7 +64,6 @@ beforeAll(async () => {
         expect(started.oidcConfig).toBeDefined()
         openIdConfiguration = started.oidcConfig
       })
-      .then(x=>waitFor(1000))
 
 });
 

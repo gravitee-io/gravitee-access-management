@@ -22,7 +22,8 @@ import {
   deleteDomain,
   patchDomain,
   startDomain,
-  waitFor,waitForDomainStart,
+  waitFor,
+  waitForDomainStart,
   waitForDomainSync,
 } from '@management-commands/domain-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
@@ -220,11 +221,10 @@ settings.forEach((setting) => {
       );
       clientId = application.settings.oauth.clientId;
 
-      await waitForDomainStart(domain)
-          .then(started => {
-            domain = started.domain
-            openIdConfiguration = started.oidcConfig
-          })
+      let started = await startDomain(domain.id, accessToken).then(waitForDomainStart);
+
+      domain = started.domain;
+      openIdConfiguration = started.oidcConfig;
 
       user = await createUser(domain.id, accessToken, userProps);
       await waitFor(1000);
