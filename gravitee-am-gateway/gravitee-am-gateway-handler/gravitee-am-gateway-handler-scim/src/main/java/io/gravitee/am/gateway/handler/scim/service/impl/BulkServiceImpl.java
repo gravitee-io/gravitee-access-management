@@ -34,11 +34,13 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 import static io.gravitee.common.http.HttpMethod.DELETE;
@@ -68,56 +70,14 @@ public class BulkServiceImpl implements BulkService {
 
     @Override
     public Single<BulkResponse> processBulkRequest(BulkRequest bulkRequest, AuthenticationContext authenticationContext, String baseUrl, Client client, User principal) {
+        final AtomicInteger failuresCounter = new AtomicInteger(0);
+        final Integer failOnErrors = bulkRequest.getFailOnErrors();
         return Flowable.fromIterable(bulkRequest.getOperations())
-                .concatMapSingle(operation -> checkOperation(operation)
-                            .flatMap(validOperation -> {
-                                switch (validOperation.getMethod()) {
-                                    case POST:
-                                        return new CreateUserAction(userService, domain, client)
-                                                .execute(updateBaseUrl(baseUrl, validOperation.getPath()), operation.getData(), authenticationContext, principal)
-                                                .map(scimUser -> {
-                                                    validOperation.setLocation(scimUser.getMeta().getLocation());
-                                                    validOperation.setStatus(valueOf(HttpStatusCode.CREATED_201));
-                                                    // response attribute is not set for successful operation
-                                                    // so no need to provide the scimUser in the operation.response
-                                                    return validOperation.asResponse();
-                                                });
-                                    case PUT:
-                                        return new UpdateUserAction(userService, domain, client)
-                                                .execute(extractUserIdFromPath(validOperation), updateBaseUrl(baseUrl, validOperation.getPath()), operation.getData(), authenticationContext, principal)
-                                                .map(scimUser -> {
-                                                    validOperation.setLocation(scimUser.getMeta().getLocation());
-                                                    validOperation.setStatus(valueOf(HttpStatusCode.OK_200));
-                                                    // response attribute is not set for successful operation
-                                                    // so no need to provide the scimUser in the operation.response
-                                                    return validOperation.asResponse();
-                                                });
-                                    case PATCH:
-                                        return new PatchUserAction(userService, domain, client)
-                                                .execute(extractUserIdFromPath(validOperation), updateBaseUrl(baseUrl, validOperation.getPath()), operation.getData(), authenticationContext, principal)
-                                                .map(scimUser -> {
-                                                    validOperation.setLocation(scimUser.getMeta().getLocation());
-                                                    validOperation.setStatus(valueOf(HttpStatusCode.OK_200));
-                                                    // response attribute is not set for successful operation
-                                                    // so no need to provide the scimUser in the operation.response
-                                                    return validOperation.asResponse();
-                                                });
-                                    case DELETE:
-                                        return userService.delete(extractUserIdFromPath(validOperation), principal)
-                                                .andThen(Single.fromSupplier(() -> {
-                                                    validOperation.setStatus(valueOf(HttpStatusCode.NO_CONTENT_204));
-                                                    validOperation.setLocation(updateBaseUrl(baseUrl, validOperation.getPath()));
-                                                    return validOperation.asResponse();
-                                                }));
-                                    default:
-                                        io.gravitee.am.gateway.handler.scim.model.Error error = new Error();
-                                        error.setScimType("invalidSyntax"); // should not happen
-                                        validOperation.setResponse(error);
-                                        return Single.just(validOperation.asResponse());
-
-                                }
-                            })
-                            .onErrorResumeNext(ex-> {
+                .concatMapMaybe(operation -> Single.just(operation)
+                            .filter(x -> failOnErrors == null || failOnErrors <= 0 || failuresCounter.get() < failOnErrors)
+                            .flatMapSingle(this::checkOperation)
+                            .flatMap(validOperation -> perform(validOperation, authenticationContext, baseUrl, client, principal).toMaybe())
+                            .onErrorResumeNext(ex -> {
                                 final var knownError = io.gravitee.am.gateway.handler.scim.model.Error.fromThrowable(ex);
                                 if (knownError.isPresent()) {
                                     operation.setResponse(knownError.get());
@@ -129,7 +89,8 @@ public class BulkServiceImpl implements BulkService {
                                     operation.setResponse(error);
                                     operation.setStatus(error.getStatus());
                                 }
-                                return Single.just(operation.asResponse());
+                                failuresCounter.incrementAndGet();
+                                return Maybe.just(operation.asResponse());
                             })
                 ).toList()
                 .map(responses -> {
@@ -137,6 +98,54 @@ public class BulkServiceImpl implements BulkService {
                     bulkResponse.setOperations(responses);
                     return bulkResponse;
                 });
+    }
+
+    private Single<BulkOperation> perform(BulkOperation operation, AuthenticationContext authenticationContext, String baseUrl, Client client, User principal){
+        switch (operation.getMethod()) {
+            case POST:
+                return new CreateUserAction(userService, domain, client)
+                        .execute(updateBaseUrl(baseUrl, operation.getPath()), operation.getData(), authenticationContext, principal)
+                        .map(scimUser -> {
+                            operation.setLocation(scimUser.getMeta().getLocation());
+                            operation.setStatus(valueOf(HttpStatusCode.CREATED_201));
+                            // response attribute is not set for successful operation
+                            // so no need to provide the scimUser in the operation.response
+                            return operation.asResponse();
+                        });
+            case PUT:
+                return new UpdateUserAction(userService, domain, client)
+                        .execute(extractUserIdFromPath(operation), updateBaseUrl(baseUrl, operation.getPath()), operation.getData(), authenticationContext, principal)
+                        .map(scimUser -> {
+                            operation.setLocation(scimUser.getMeta().getLocation());
+                            operation.setStatus(valueOf(HttpStatusCode.OK_200));
+                            // response attribute is not set for successful operation
+                            // so no need to provide the scimUser in the operation.response
+                            return operation.asResponse();
+                        });
+            case PATCH:
+                return new PatchUserAction(userService, domain, client)
+                        .execute(extractUserIdFromPath(operation), updateBaseUrl(baseUrl, operation.getPath()), operation.getData(), authenticationContext, principal)
+                        .map(scimUser -> {
+                            operation.setLocation(scimUser.getMeta().getLocation());
+                            operation.setStatus(valueOf(HttpStatusCode.OK_200));
+                            // response attribute is not set for successful operation
+                            // so no need to provide the scimUser in the operation.response
+                            return operation.asResponse();
+                        });
+            case DELETE:
+                return userService.delete(extractUserIdFromPath(operation), principal)
+                        .andThen(Single.fromSupplier(() -> {
+                            operation.setStatus(valueOf(HttpStatusCode.NO_CONTENT_204));
+                            operation.setLocation(updateBaseUrl(baseUrl, operation.getPath()));
+                            return operation.asResponse();
+                        }));
+            default:
+                io.gravitee.am.gateway.handler.scim.model.Error error = new Error();
+                error.setScimType("invalidSyntax"); // should not happen
+                operation.setResponse(error);
+                return Single.just(operation.asResponse());
+
+        }
     }
 
     private static String extractUserIdFromPath(BulkOperation validOperation) {

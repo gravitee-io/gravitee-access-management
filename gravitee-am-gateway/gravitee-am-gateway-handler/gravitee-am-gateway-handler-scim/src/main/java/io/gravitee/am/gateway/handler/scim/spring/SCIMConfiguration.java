@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.scim.spring;
 
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
+import io.gravitee.am.gateway.handler.scim.resources.bulk.BulkEndpointConfiguration;
 import io.gravitee.am.gateway.handler.scim.service.BulkService;
 import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.gateway.handler.scim.service.ServiceProviderConfigService;
@@ -27,6 +28,7 @@ import io.gravitee.am.gateway.handler.scim.service.impl.UserServiceImpl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.authentication.crypto.password.Argon2IdPasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -60,5 +62,15 @@ public class SCIMConfiguration implements ProtocolConfiguration {
     @Bean
     public PasswordEncoder argon2IdEncoder(){
         return new Argon2IdPasswordEncoder();
+    }
+
+    @Bean
+    public BulkEndpointConfiguration bulkEndpointConfiguration(
+            @Value("${handlers.scim.bulk.maxRequestLength:1048576}") int bulkMaxRequestLength,
+            @Value("${handlers.scim.bulk.maxRequestOperations:1000}") int bulkMaxRequestOperations){
+        return BulkEndpointConfiguration.builder()
+                .bulkMaxRequestLength(bulkMaxRequestLength)
+                .bulkMaxRequestOperations(bulkMaxRequestOperations)
+                .build();
     }
 }
