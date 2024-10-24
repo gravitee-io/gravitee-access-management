@@ -278,6 +278,163 @@ describe('SCIM Bulk endpoint', () => {
     expect(op.status).toEqual('404');
     expect(op.location).toBeUndefined();
   });
+
+  it('should stop processing at second failure when failOnErrors=2', async () => {
+    const operation1: BulkOperation = {
+      method: 'POST',
+      path: '/Users',
+      bulkId: random.word(),
+      data: {
+        schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
+        userName: 'rubble',
+      },
+    };
+    const operation2: BulkOperation = {
+      method: 'POST',
+      path: '/Users',
+      bulkId: random.word(),
+      data: {
+        schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
+        userName: 'rubble',
+      },
+    };
+    const operation3: BulkOperation = {
+      method: 'POST',
+      path: '/Users',
+      bulkId: random.word(),
+      data: {
+        schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
+        userName: 'rubble',
+      },
+    };
+    const operation4: BulkOperation = {
+      method: 'POST',
+      path: '/Users',
+      bulkId: random.word(),
+      data: {
+        schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
+        userName: 'skye',
+      },
+    };
+
+    const request: BulkRequest = {
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:BulkRequest'],
+      failOnErrors: 2,
+      Operations: [operation1, operation2, operation3, operation4],
+    };
+
+    const scimResponse = await performPost(scimEndpoint, '/Bulk', JSON.stringify(request), {
+      'Content-type': 'application/json',
+      Authorization: `Bearer ${scimAccessToken}`,
+    }).expect(200);
+
+    const bulkResponse: BulkResponse = scimResponse.body;
+    expect(bulkResponse.Operations).toHaveLength(3);
+    const firstOp = bulkResponse.Operations[0];
+    expect(firstOp.bulkId).toBeDefined();
+    expect(firstOp.bulkId).toEqual(operation1.bulkId);
+    expect(firstOp.status).toEqual('201');
+    expect(firstOp.location).toBeDefined();
+    expect(firstOp.location).toContain(scimEndpoint + '/Users/');
+
+    const secondOp = bulkResponse.Operations[1];
+    expect(secondOp.bulkId).toBeDefined();
+    expect(secondOp.bulkId).toEqual(operation2.bulkId);
+    expect(secondOp.status).toEqual('409');
+    expect(secondOp.location).toBeUndefined();
+    expect(secondOp.response).toBeDefined();
+    expect(secondOp.response.status).toEqual('409');
+
+    const thirdOp = bulkResponse.Operations[2];
+    expect(thirdOp.bulkId).toBeDefined();
+    expect(thirdOp.bulkId).toEqual(operation3.bulkId);
+    expect(thirdOp.status).toEqual('409');
+    expect(thirdOp.location).toBeUndefined();
+    expect(thirdOp.response).toBeDefined();
+    expect(thirdOp.response.status).toEqual('409');
+  });
+
+  it('should process all operations despite single error when failOnErrors=2', async () => {
+    const operation1: BulkOperation = {
+      method: 'POST',
+      path: '/Users',
+      bulkId: random.word(),
+      data: {
+        schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
+        userName: 'marshal',
+      },
+    };
+    const operation2: BulkOperation = {
+      method: 'POST',
+      path: '/Users',
+      bulkId: random.word(),
+      data: {
+        schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
+        userName: 'marshal',
+      },
+    };
+    const operation3: BulkOperation = {
+      method: 'POST',
+      path: '/Users',
+      bulkId: random.word(),
+      data: {
+        schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
+        userName: 'sky',
+      },
+    };
+    const operation4: BulkOperation = {
+      method: 'POST',
+      path: '/Users',
+      bulkId: random.word(),
+      data: {
+        schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
+        userName: 'chase',
+      },
+    };
+
+    const request: BulkRequest = {
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:BulkRequest'],
+      failOnErrors: 2,
+      Operations: [operation1, operation2, operation3, operation4],
+    };
+
+    const scimResponse = await performPost(scimEndpoint, '/Bulk', JSON.stringify(request), {
+      'Content-type': 'application/json',
+      Authorization: `Bearer ${scimAccessToken}`,
+    }).expect(200);
+
+    const bulkResponse: BulkResponse = scimResponse.body;
+    expect(bulkResponse.Operations).toHaveLength(4);
+
+    const firstOp = bulkResponse.Operations[0];
+    expect(firstOp.bulkId).toBeDefined();
+    expect(firstOp.bulkId).toEqual(operation1.bulkId);
+    expect(firstOp.status).toEqual('201');
+    expect(firstOp.location).toBeDefined();
+    expect(firstOp.location).toContain(scimEndpoint + '/Users/');
+
+    const secondOp = bulkResponse.Operations[1];
+    expect(secondOp.bulkId).toBeDefined();
+    expect(secondOp.bulkId).toEqual(operation2.bulkId);
+    expect(secondOp.status).toEqual('409');
+    expect(secondOp.location).toBeUndefined();
+    expect(secondOp.response).toBeDefined();
+    expect(secondOp.response.status).toEqual('409');
+
+    const thirdOp = bulkResponse.Operations[2];
+    expect(thirdOp.bulkId).toBeDefined();
+    expect(thirdOp.bulkId).toEqual(operation3.bulkId);
+    expect(thirdOp.status).toEqual('201');
+    expect(thirdOp.location).toBeDefined();
+    expect(thirdOp.location).toContain(scimEndpoint + '/Users/');
+
+    const forth = bulkResponse.Operations[3];
+    expect(forth.bulkId).toBeDefined();
+    expect(forth.bulkId).toEqual(operation4.bulkId);
+    expect(forth.status).toEqual('201');
+    expect(forth.location).toBeDefined();
+    expect(forth.location).toContain(scimEndpoint + '/Users/');
+  });
 });
 
 it('should accept request with patch user', async () => {

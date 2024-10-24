@@ -35,11 +35,11 @@ import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.IntStream;
 
 import static io.gravitee.am.gateway.handler.scim.model.BulkRequest.BULK_REQUEST_SCHEMA;
@@ -74,11 +74,17 @@ public class BulkEndpointTest extends RxWebTestBase {
     @Mock
     private SubjectManager subjectManager;
 
-    @InjectMocks
-    private BulkEndpoint bulkEndpoint = new BulkEndpoint(bulkService, objectMapper, subjectManager);
+    private BulkEndpointConfiguration bulkEndpointConfiguration = BulkEndpointConfiguration.builder()
+            .bulkMaxRequestOperations(100)
+            .bulkMaxRequestLength(1024*100)
+            .build();
+
+    private BulkEndpoint bulkEndpoint;
 
     @Override
     public void setUp() throws Exception {
+        bulkEndpoint = new BulkEndpoint(bulkEndpointConfiguration, bulkService, objectMapper, subjectManager);
+
         super.setUp();
 
         router.post("/Bulk")
@@ -90,7 +96,7 @@ public class BulkEndpointTest extends RxWebTestBase {
     @Test
     public void should_reject_too_many_request() throws Exception {
         final var bulkRequest = new BulkRequest();
-        bulkRequest.setOperations(IntStream.range(0, BulkEndpoint.BULK_MAX_REQUEST_OPERATIONS + 1).mapToObj(i -> bulkOp(POST, valueOf(i))).toList());
+        bulkRequest.setOperations(IntStream.range(0, bulkEndpointConfiguration.bulkMaxRequestOperations() + 1).mapToObj(i -> bulkOp(POST, valueOf(i))).toList());
         bulkRequest.setSchemas(of(BULK_REQUEST_SCHEMA));
         testRequest(
                 HttpMethod.POST,
@@ -102,7 +108,30 @@ public class BulkEndpointTest extends RxWebTestBase {
                 "Request Entity Too Large",
                 "{\n" +
                         "  \"status\" : \"413\",\n" +
-                        "  \"detail\" : \"The bulk operation exceeds the maximum number of operations ("+BulkEndpoint.BULK_MAX_REQUEST_OPERATIONS+").\",\n" +
+                        "  \"detail\" : \"The bulk operation exceeds the maximum number of operations ("+bulkEndpointConfiguration.bulkMaxRequestOperations()+").\",\n" +
+                        "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
+                        "}");
+
+        verify(bulkService, never()).processBulkRequest(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    public void should_reject_too_large_request() throws Exception {
+        final Map<String, Object> largePayload = Map.of("key", "a".repeat(1000));
+        final var bulkRequest = new BulkRequest();
+        bulkRequest.setOperations(IntStream.range(0, bulkEndpointConfiguration.bulkMaxRequestOperations() - 1).mapToObj(i -> bulkOp(POST, valueOf(i), largePayload)).toList());
+        bulkRequest.setSchemas(of(BULK_REQUEST_SCHEMA));
+        testRequest(
+                HttpMethod.POST,
+                "/Bulk",
+                req -> {
+                    req.end(Json.encode(bulkRequest));
+                },
+                413,
+                "Request Entity Too Large",
+                "{\n" +
+                        "  \"status\" : \"413\",\n" +
+                        "  \"detail\" : \"The size of the bulk operation exceeds the maxPayloadSize ("+bulkEndpointConfiguration.bulkMaxRequestLength()+").\",\n" +
                         "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
                         "}");
 
@@ -236,6 +265,14 @@ public class BulkEndpointTest extends RxWebTestBase {
         BulkOperation operation = new BulkOperation();
         operation.setBulkId(bulkId);
         operation.setMethod(method);
+        return operation;
+    }
+
+    private static BulkOperation bulkOp(io.gravitee.common.http.HttpMethod method, String bulkId, Map<String, Object> data){
+        BulkOperation operation = new BulkOperation();
+        operation.setBulkId(bulkId);
+        operation.setMethod(method);
+        operation.setData(data);
         return operation;
     }
 

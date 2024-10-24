@@ -301,6 +301,10 @@ handlers:
   oauth2:
     response:
       strict: false
+  scim:
+    bulk:
+      maxRequestLength: 1048576
+      maxRequestOperations: 1000
 
 repositories:
   # Management repository is used to store global configuration such as domains, clients, ...
