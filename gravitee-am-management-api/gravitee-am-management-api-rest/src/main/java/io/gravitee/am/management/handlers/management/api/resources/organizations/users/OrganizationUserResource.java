@@ -67,7 +67,7 @@ import java.net.URI;
  * @author GraviteeSource Team
  */
 @SuppressWarnings("ResultOfMethodCallIgnored")
-public class UserResource extends AbstractResource {
+public class OrganizationUserResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
