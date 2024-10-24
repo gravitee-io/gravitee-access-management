@@ -18,11 +18,11 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.BotDetectionServiceProxy;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.BotDetection;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.exception.BotDetectionNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.UpdateBotDetection;
@@ -33,7 +33,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
@@ -67,15 +66,15 @@ public class BotDetectionResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a bot detection",
+    @Operation(operationId = "getBotDetection",
+            summary = "Get a bot detection",
             description = "User must have the DOMAIN_BOT_DETECTION[READ] permission on the specified domain " +
                     "or DOMAIN_BOT_DETECTION[READ] permission on the specified environment " +
                     "or DOMAIN_BOT_DETECTION[READ] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Bot detection successfully fetched",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BotDetection.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "200", description = "Bot detection successfully fetched",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = BotDetection.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -100,15 +99,15 @@ public class BotDetectionResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Update a bot detection",
+    @Operation(operationId = "updateBotDetection",
+            summary = "Update a bot detection",
             description = "User must have the DOMAIN_BOT_DETECTION[UPDATE] permission on the specified domain " +
                     "or DOMAIN_BOT_DETECTION[UPDATE] permission on the specified environment " +
                     "or DOMAIN_BOT_DETECTION[UPDATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Bot detection successfully updated",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BotDetection.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "201", description = "Bot detection successfully updated",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = BotDetection.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -126,13 +125,13 @@ public class BotDetectionResource extends AbstractResource {
     }
 
     @DELETE
-    @Operation(summary = "Delete a bot detection",
+    @Operation(operationId = "deleteBotDetection",
+            summary = "Delete a bot detection",
             description = "User must have the DOMAIN_BOT_DETECTION[DELETE] permission on the specified domain " +
                     "or DOMAIN_BOT_DETECTION[DELETE] permission on the specified environment " +
                     "or DOMAIN_BOT_DETECTION[DELETE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Bot detection successfully deleted"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "204", description = "Bot detection successfully deleted")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

@@ -15,14 +15,15 @@
  */
 
 import fetch from 'cross-fetch';
-import { afterAll, beforeAll, expect, jest } from '@jest/globals';
-import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, startDomain } from '@management-commands/domain-management-commands';
-import { createUser, updateUsername } from '@management-commands/user-management-commands';
-import { getWellKnownOpenIdConfiguration, logoutUser, performGet } from '@gateway-commands/oauth-oidc-commands';
-import { loginAdditionalInfoAndPassword, loginUserNameAndPassword } from '@gateway-commands/login-commands';
-import { createJdbcIdp, createMongoIdp } from '@utils-commands/idps-commands';
-import { createTestApp } from '@utils-commands/application-commands';
+import {afterAll, beforeAll, expect, jest} from '@jest/globals';
+import {requestAdminAccessToken} from '@management-commands/token-management-commands';
+import {createDomain, startDomain,waitFor, waitForDomainStart} from '@management-commands/domain-management-commands';
+import {createUser, updateUsername} from '@management-commands/user-management-commands';
+import {logoutUser, performGet} from '@gateway-commands/oauth-oidc-commands';
+import {loginAdditionalInfoAndPassword, loginUserNameAndPassword} from '@gateway-commands/login-commands';
+import {createJdbcIdp, createMongoIdp} from '@utils-commands/idps-commands';
+import {createTestApp} from '@utils-commands/application-commands';
+import {uniqueName} from '@utils-commands/misc';
 
 global.fetch = fetch;
 
@@ -37,9 +38,9 @@ let openIdConfiguration;
 jest.setTimeout(200000);
 
 beforeAll(async () => {
-  const adminTokenResponse = await requestAdminAccessToken();
-  accessToken = adminTokenResponse.body.access_token;
-  domain = await createDomain(accessToken, 'login-flow-domain', 'test user login').then((domain) => startDomain(domain.id, accessToken));
+  accessToken = await requestAdminAccessToken();
+  domain = await createDomain(accessToken, uniqueName('login-flow-domain'), 'test user login')
+      .then((domain) => startDomain(domain.id, accessToken));
 
   customIdp = jdbc === 'jdbc' ? await createJdbcIdp(domain.id, accessToken) : await createMongoIdp(domain.id, accessToken);
   multiUserLoginApp = await createTestApp('multi-user-login-app', domain, accessToken, 'WEB', {
@@ -55,13 +56,15 @@ beforeAll(async () => {
         ],
       },
     },
-    identityProviders: [{ identity: customIdp.id, priority: 0 }],
+    identityProviders: new Set([{ identity: customIdp.id, priority: 0 }]),
   });
 
-  await new Promise((r) => setTimeout(r, 10000));
+  await waitForDomainStart(domain)
+      .then(started => {
+        expect(started.oidcConfig).toBeDefined()
+        openIdConfiguration = started.oidcConfig
+      })
 
-  const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
-  openIdConfiguration = result.body;
 });
 
 describe('multiple user', () => {

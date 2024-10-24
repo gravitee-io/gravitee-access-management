@@ -17,7 +17,7 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, deleteDomain,setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import {
   createCertificate,
   deleteCertificate,
@@ -37,19 +37,8 @@ let domain;
 let certificate;
 
 beforeAll(async () => {
-  const adminTokenResponse = await requestAdminAccessToken();
-  accessToken = adminTokenResponse.body.access_token;
-  expect(accessToken).toBeDefined();
-
-  const createdDomain = await createDomain(accessToken, 'domain-certificate', faker.company.catchPhraseDescriptor());
-  expect(createdDomain).toBeDefined();
-  expect(createdDomain.id).toBeDefined();
-
-  const domainStarted = await startDomain(createdDomain.id, accessToken);
-  expect(domainStarted).toBeDefined();
-  expect(domainStarted.id).toEqual(createdDomain.id);
-
-  domain = domainStarted;
+  accessToken = await requestAdminAccessToken();
+  domain = await setupDomainForTest('domain-certificate', {accessToken}).then(it=>it.domain)
 });
 
 describe('when creating certificates', () => {
@@ -101,20 +90,20 @@ describe('after creating certificates', () => {
   it('must find certificate public keys', async () => {
     const foundCertificate = await getPublicKeys(domain.id, accessToken, certificate.id);
     expect(foundCertificate).toBeDefined();
-    expect(foundCertificate.length).toEqual(2);
+    expect(foundCertificate).toHaveLength(2);
   });
 
   it('must find all certificates', async () => {
     const idpSet = await getAllCertificates(domain.id, accessToken);
 
-    expect(idpSet.size).toEqual(11);
+    expect(idpSet).toHaveLength(11);
   });
 
   it('Must delete certificates', async () => {
     await deleteCertificate(domain.id, accessToken, certificate.id);
     const idpSet = await getAllCertificates(domain.id, accessToken);
 
-    expect(idpSet.size).toEqual(10);
+    expect(idpSet).toHaveLength(10);
   });
 });
 
@@ -122,7 +111,7 @@ describe('When we want to renew a certificate', () => {
   let certificateCount = 0;
   it('before the renewal, only one System certificate exists', async () => {
     const foundCertificates = await getAllCertificates(domain.id, accessToken);
-    certificateCount = foundCertificates.size;
+    certificateCount = foundCertificates.length;
     let numberOfDefault = 0;
     foundCertificates.forEach((cert) => {
       if (cert.system) {
@@ -153,7 +142,7 @@ describe('When we want to renew a certificate', () => {
 
   it('After the renewal, two System certificates exist', async () => {
     const foundCertificates = await getAllCertificates(domain.id, accessToken);
-    certificateCount = foundCertificates.size;
+    certificateCount = foundCertificates.length;
     let numberOfDefault = 0;
     let numberOfRenewed = 0;
     foundCertificates.forEach((cert) => {

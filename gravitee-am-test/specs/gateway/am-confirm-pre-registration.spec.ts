@@ -19,7 +19,14 @@ import { clearEmails, getLastEmail, hasEmail } from '@utils-commands/email-comma
 
 import { jest, afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, startDomain, waitFor, waitForDomainSync } from '@management-commands/domain-management-commands';
+import {
+  createDomain,
+  deleteDomain,
+  startDomain,
+  waitFor,
+  waitForDomainStart,
+  waitForDomainSync,
+} from '@management-commands/domain-management-commands';
 import { createUser, getUser } from '@management-commands/user-management-commands';
 import { extractXsrfToken, performFormPost, performGet } from '@gateway-commands/oauth-oidc-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
@@ -40,8 +47,7 @@ let defaultIdp;
 jest.setTimeout(200000);
 
 beforeAll(async () => {
-  const adminTokenResponse = await requestAdminAccessToken();
-  accessToken = adminTokenResponse.body.access_token;
+  accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
   const createdDomain = await createDomain(accessToken, 'pre-registration', 'test user pre-registration');
   expect(createdDomain).toBeDefined();
@@ -89,7 +95,7 @@ beforeAll(async () => {
   expect(application).toBeDefined();
   clientId = application.settings.oauth.clientId;
 
-  await waitForDomainSync();
+  await waitForDomainStart(domain);
 });
 
 describe('AM - User Pre-Registration', () => {

@@ -21,6 +21,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.ws.rs.core.Response;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -43,6 +44,7 @@ public class BulkOperationResult<T> {
     @With
     private int index;
 
+    @Schema(implementation = Integer.class, minimum = "100", maximum = "599")
     private Response.Status httpStatus;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

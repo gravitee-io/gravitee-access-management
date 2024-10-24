@@ -19,7 +19,7 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { jest, afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { createDomain, deleteDomain, startDomain,waitForDomainStart, waitForDomainSync } from '@management-commands/domain-management-commands';
 import { getAllUsers, listUsers } from '@management-commands/user-management-commands';
 import { extractXsrfToken, getWellKnownOpenIdConfiguration, performFormPost } from '@gateway-commands/oauth-oidc-commands';
 import { createIdp, getAllIdps } from '@management-commands/idp-management-commands';
@@ -41,8 +41,7 @@ let openIdConfiguration;
 jest.setTimeout(200000);
 
 beforeAll(async () => {
-  const adminTokenResponse = await requestAdminAccessToken();
-  accessToken = adminTokenResponse.body.access_token;
+  accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
 
   domain = await createDomain(accessToken, 'user-registration', faker.company.catchPhraseDescriptor());
@@ -92,10 +91,11 @@ beforeAll(async () => {
   expect(application).toBeDefined();
   clientId = application.settings.oauth.clientId;
 
-  await waitForDomainSync();
-
-  const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
-  openIdConfiguration = result.body;
+  await waitForDomainStart(domain).then((started) => {
+    domain = started.domain;
+    openIdConfiguration = started.oidcConfig;
+    expect(openIdConfiguration).toBeDefined();
+  });
 });
 
 describe('Register User on domain', () => {

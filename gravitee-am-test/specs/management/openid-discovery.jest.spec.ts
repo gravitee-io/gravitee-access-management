@@ -16,12 +16,12 @@
 import fetch from 'cross-fetch';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, deleteDomain,setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import { buildRSA512Certificate } from '@api-fixtures/certificates';
 import { createCertificate } from '@management-commands/certificate-management-commands';
 import { getWellKnownOpenIdConfiguration, performGet } from '@gateway-commands/oauth-oidc-commands';
 import { Domain } from 'api/management/models';
-import { delay } from '@utils-commands/misc';
+import { delay,uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 
@@ -32,28 +32,17 @@ let jwksUriEndpoint: any;
 jest.setTimeout(200000);
 
 beforeAll(async () => {
-  const adminTokenResponse = await requestAdminAccessToken();
-  accessToken = adminTokenResponse.body.access_token;
-  expect(accessToken).toBeDefined();
-
-  const createdDomain = await createDomain(accessToken, 'oidc-discovery', 'test openid connect discovery specifications');
-  expect(createdDomain).toBeDefined();
-  expect(createdDomain.id).toBeDefined();
+  accessToken = await requestAdminAccessToken()
+  domain = await setupDomainForTest(uniqueName('oidc-discovery'), {accessToken, waitForStart: true}).then(it=>it.domain)
 
   const builtCertificate = buildRSA512Certificate();
-  const certificateResponse = await createCertificate(createdDomain.id, accessToken, builtCertificate);
+  const certificateResponse = await createCertificate(domain.id, accessToken, builtCertificate);
   expect(certificateResponse).toBeDefined();
 
-  const domainStarted = await startDomain(createdDomain.id, accessToken);
-  expect(domainStarted).toBeDefined();
-  expect(domainStarted.id).toEqual(createdDomain.id);
-
-  domain = domainStarted;
 });
 
 describe('well-known/openid-configuration', () => {
   it('must describe oidc', async () => {
-    await delay(5000);
     const wellKnown = await getWellKnownOpenIdConfiguration(domain.hrid);
     // Discovery endpoints:
     const openIdConfiguration = wellKnown.body;

@@ -49,8 +49,7 @@ let openIdConfiguration;
 let user;
 
 beforeAll(async () => {
-  const adminTokenResponse = await requestAdminAccessToken();
-  accessToken = adminTokenResponse.body.access_token;
+  accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
 
   const createdDomain = await createDomain(accessToken, 'domain-idp', faker.company.catchPhraseDescriptor());
@@ -78,7 +77,7 @@ beforeAll(async () => {
         ],
       },
     },
-    identityProviders: [{ identity: customIdp.id, priority: 0 }],
+    identityProviders: new Set([{ identity: customIdp.id, priority: 0 }]),
   });
 
   await new Promise((r) => setTimeout(r, 10000));

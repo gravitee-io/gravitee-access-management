@@ -23,6 +23,7 @@ import {
   patchDomain,
   startDomain,
   waitFor,
+  waitForDomainStart,
   waitForDomainSync,
 } from '@management-commands/domain-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
@@ -163,8 +164,7 @@ settings.forEach((setting) => {
   const selectedSetting = selectSetting(setting);
   describe('Gateway reset password', () => {
     beforeAll(async () => {
-      const adminTokenResponse = await requestAdminAccessToken();
-      accessToken = adminTokenResponse.body.access_token;
+      accessToken = await requestAdminAccessToken();
       domain = await createDomain(accessToken, faker.company.companyName(0), 'test Gateway reset password with password history');
       domainIds.add(domain.id);
       domain = await patchDomain(domain.id, accessToken, {
@@ -221,10 +221,10 @@ settings.forEach((setting) => {
       );
       clientId = application.settings.oauth.clientId;
 
-      domain = await startDomain(domain.id, accessToken);
-      await waitForDomainSync();
-      const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
-      openIdConfiguration = result.body;
+      let started = await startDomain(domain.id, accessToken).then(waitForDomainStart);
+
+      domain = started.domain;
+      openIdConfiguration = started.oidcConfig;
 
       user = await createUser(domain.id, accessToken, userProps);
       await waitFor(1000);

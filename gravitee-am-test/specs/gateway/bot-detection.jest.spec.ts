@@ -16,7 +16,7 @@
 
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, deleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import { delay } from '@utils-commands/misc';
 import fetch from 'cross-fetch';
 import {
@@ -35,11 +35,8 @@ let domain;
 let botDetection;
 
 beforeAll(async () => {
-  const adminTokenResponse = await requestAdminAccessToken();
-  accessToken = adminTokenResponse.body.access_token;
-  domain = await createDomain(accessToken, 'bot-detection-domain', 'desc').then((domain) => startDomain(domain.id, accessToken));
-
-  await delay(6000);
+  accessToken = await requestAdminAccessToken();
+  domain = await setupDomainForTest('bot-detection-domain', { waitForStart: true }).then((started) => started.domain);
 });
 
 describe('CRUD Bot detection', () => {

@@ -68,8 +68,7 @@ beforeAll(async function () {
   let clientDomain: Domain;
   let clientOpenIdConfiguration: any;
 
-  const adminTokenResponse = await requestAdminAccessToken();
-  accessToken = adminTokenResponse.body.access_token;
+  accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
 
   clientDomain = await createDomain(accessToken, 'idp-pkce-client', 'Client domain for OIDC+PKCE tests');
@@ -157,13 +156,15 @@ beforeAll(async function () {
           } else {
             // proceed with the login flow
             // login to the provider
-            return login(oidcProviderLoginResponse, user, providerIdpApplication.settings.oauth.clientId, pass)
-              // follow redirect to provider authorize endpoint
-              .then(followRedirect)
-              // follow redirect client domain callback
-              .then(followRedirect)
-              // follow redirect to client authorize endpoint
-              .then(followRedirect);
+            return (
+              login(oidcProviderLoginResponse, user, providerIdpApplication.settings.oauth.clientId, pass)
+                // follow redirect to provider authorize endpoint
+                .then(followRedirect)
+                // follow redirect client domain callback
+                .then(followRedirect)
+                // follow redirect to client authorize endpoint
+                .then(followRedirect)
+            );
           }
         });
     },
@@ -407,7 +408,7 @@ async function createOidcProvider(clientDomain: Domain, providerDomain: Domain, 
 async function ensureDefaultIdpIsDeleted(domain: Domain, accessToken: string) {
   await deleteIdp(domain.id, accessToken, 'default-idp-' + domain.id);
   const idpSet = await getAllIdps(domain.id, accessToken);
-  expect(idpSet.size).toEqual(0);
+  expect(idpSet).toHaveLength(0);
 }
 
 async function doStartDomain(domain: Domain, accessToken: string): Promise<Domain> {

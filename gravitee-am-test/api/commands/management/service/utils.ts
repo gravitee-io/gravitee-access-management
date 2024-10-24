@@ -35,7 +35,7 @@ import { ExtensionGrantApi } from '@management-apis/ExtensionGrantApi';
 import { BotDetectionApi } from '@management-apis/BotDetectionApi';
 
 function createAccessTokenConfig(accessToken) {
-  return new Configuration({ ...managementConf, apiKey: 'Bearer ' + accessToken });
+  return new Configuration({ ...managementConf, accessToken: accessToken });
 }
 
 export const getDomainManagerUrl = (domainId: String) => {
@@ -111,6 +111,6 @@ export function getExtensionApi(accessToken) {
   return new ExtensionGrantApi(createAccessTokenConfig(accessToken));
 }
 
-export function getBotDetecionApi(accessToken) {
+export function getBotDetectionApi(accessToken) {
   return new BotDetectionApi(createAccessTokenConfig(accessToken));
 }

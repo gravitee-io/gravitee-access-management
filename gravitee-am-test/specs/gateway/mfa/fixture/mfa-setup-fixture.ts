@@ -78,7 +78,7 @@ export async function initDomain(domain: Domain, usersCount: number) {
 }
 
 export async function getAccessToken(domain: Domain): Promise<string> {
-  return requestAccessToken(domain.admin.username, domain.admin.password).then((response) => response.body.access_token);
+  return requestAccessToken(domain.admin.username, domain.admin.password);
 }
 
 export async function createTestDomain(domain: Domain): Promise<any> {

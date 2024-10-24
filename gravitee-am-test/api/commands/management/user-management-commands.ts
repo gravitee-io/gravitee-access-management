@@ -13,15 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { getDomainApi, getUserApi } from './service/utils';
-import { expect } from '@jest/globals';
+import {getDomainApi, getUserApi} from './service/utils';
+import {expect} from '@jest/globals';
+import {NewOrganizationUser, NewUser} from '../../management/models';
 
 export const createUser = (domainId, accessToken, user) =>
   getUserApi(accessToken).createUser({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    user: user,
+    newUser: user,
+  });
+
+export const bulkCreateOrgUsers = (accessToken: string, users: NewOrganizationUser[]) =>
+  getUserApi(accessToken).bulkOrganisationUserOperation({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    bulkUserRequest: {
+      action: 'CREATE',
+      items: users,
+    },
+  });
+
+export const bulkCreateUsers = (domainId: string, accessToken: string, users: NewUser[]) =>
+  getUserApi(accessToken).bulkUserOperation({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    bulkUserRequest: {
+      action: 'CREATE',
+      items: users,
+    },
   });
 
 export const getUser = (domainId, accessToken, userId: string) =>
@@ -52,7 +73,7 @@ export const updateUser = (domainId, accessToken, userId, payload) =>
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     user: userId,
-    user2: payload,
+    updateUser: payload,
   });
 
 export const updateUserStatus = (domainId, accessToken, userId, status: boolean) =>
@@ -61,7 +82,7 @@ export const updateUserStatus = (domainId, accessToken, userId, status: boolean)
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     user: userId,
-    status: { enabled: status },
+    statusEntity: { enabled: status },
   });
 
 export const updateUsername = (domainId, accessToken, userId, username) =>
@@ -70,7 +91,7 @@ export const updateUsername = (domainId, accessToken, userId, username) =>
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     user: userId,
-    username: { username: username },
+    usernameEntity: { username: username },
   });
 
 export const resetUserPassword = (domainId, accessToken, userId, password) =>
@@ -79,7 +100,7 @@ export const resetUserPassword = (domainId, accessToken, userId, password) =>
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     user: userId,
-    password: { password: password },
+    passwordValue: { password: password },
   });
 
 export const sendRegistrationConfirmation = (domainId, accessToken, userId) =>
@@ -114,6 +135,21 @@ export const deleteUser = (domainId, accessToken, userId) =>
     user: userId,
   });
 
+export function buildTestUser(i: number, options: { preRegistration?: boolean; password?: string; serviceAccount?: boolean } = {}) {
+  const { preRegistration = false, password = 'SomeP@assw0rd', serviceAccount = false } = options;
+  const firstName = 'firstName' + i;
+  const lastName = 'lastName' + i;
+  return {
+    firstName: firstName,
+    lastName: lastName,
+    email: `${firstName}.${lastName}@example.com`,
+    username: `${firstName}.${lastName}`,
+    password: serviceAccount ? undefined : password,
+    preRegistration: preRegistration,
+    serviceAccount: serviceAccount,
+  };
+}
+
 export async function buildCreateAndTestUser(
   domainId,
   accessToken,
@@ -121,16 +157,7 @@ export async function buildCreateAndTestUser(
   preRegistration: boolean = false,
   password = 'SomeP@ssw0rd',
 ) {
-  const firstName = 'firstName' + i;
-  const lastName = 'lastName' + i;
-  const payload = {
-    firstName: firstName,
-    lastName: lastName,
-    email: `${firstName}.${lastName}@mail.com`,
-    username: `${firstName}.${lastName}`,
-    password: password,
-    preRegistration: preRegistration,
-  };
+  const payload = buildTestUser(i, { preRegistration, password });
 
   const newUser = await createUser(domainId, accessToken, payload);
   expect(newUser).toBeDefined();

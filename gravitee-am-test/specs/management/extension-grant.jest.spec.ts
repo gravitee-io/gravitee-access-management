@@ -17,7 +17,7 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, deleteDomain,setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import {
   createExtensionGrant,
   deleteExtensionGrant,
@@ -29,7 +29,7 @@ import { createApplication, patchApplication } from '@management-commands/applic
 import { getWellKnownOpenIdConfiguration, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { buildCreateAndTestUser, deleteUser, getAllUsers } from '@management-commands/user-management-commands';
-import { delay } from '@utils-commands/misc';
+import { delay,uniqueName } from '@utils-commands/misc';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { generateSignedJwt, getPublicKey } from '@utils-commands/jwt';
 
@@ -47,22 +47,10 @@ let user: any;
 jest.setTimeout(200000);
 
 beforeAll(async () => {
-  const adminTokenResponse = await requestAdminAccessToken();
-  accessToken = adminTokenResponse.body.access_token;
-  expect(accessToken).toBeDefined();
-
-  const createdDomain = await createDomain(accessToken, 'domain-extension-grant', faker.company.catchPhraseDescriptor());
-  expect(createdDomain).toBeDefined();
-  expect(createdDomain.id).toBeDefined();
-
-  const domainStarted = await startDomain(createdDomain.id, accessToken);
-  expect(domainStarted).toBeDefined();
-  expect(domainStarted.id).toEqual(createdDomain.id);
-  domain = domainStarted;
-  //wait for domain sync
-  await delay(6000);
-  const wellKnown = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
-  tokenEndpoint = wellKnown.body.token_endpoint;
+  accessToken = await requestAdminAccessToken()
+  const startedDomain = await setupDomainForTest(uniqueName("domain-extension-grant"), {accessToken, waitForStart: true})
+  domain = startedDomain.domain
+  tokenEndpoint = startedDomain.oidcConfig.token_endpoint
 
   const appBody = {
     name: 'app',
@@ -102,7 +90,7 @@ describe('when manipulating extension grant', () => {
   });
   it('must get list of extension grants:', async () => {
     const grants = await listExtensionGrant(domain.id, accessToken);
-    expect(grants.size).toEqual(1);
+    expect(grants).toHaveLength(1);
   });
   it('must update extension grant:', async () => {
     const updated = await updateExtensionGrant(domain.id, accessToken, extensionGrant.id, {
@@ -115,7 +103,7 @@ describe('when manipulating extension grant', () => {
   it('must remove extension grant:', async () => {
     await deleteExtensionGrant(domain.id, accessToken, extensionGrant.id);
     const grants = await listExtensionGrant(domain.id, accessToken);
-    expect(grants.size).toEqual(0);
+    expect(grants).toHaveLength(0);
   });
 });
 

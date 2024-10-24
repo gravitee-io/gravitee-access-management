@@ -17,7 +17,7 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, deleteDomain,setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
 import { createRole, updateRole } from '@management-commands/role-management-commands';
 import {
@@ -30,6 +30,7 @@ import {
   revokeRoleToGroup,
   updateGroup,
 } from '@management-commands/group-management-commands';
+import {uniqueName} from '@utils-commands/misc';
 
 global.fetch = fetch;
 
@@ -41,19 +42,8 @@ let role;
 let group;
 
 beforeAll(async () => {
-  const adminTokenResponse = await requestAdminAccessToken();
-  accessToken = adminTokenResponse.body.access_token;
-  expect(accessToken).toBeDefined();
-
-  const createdDomain = await createDomain(accessToken, 'domain-groups', faker.company.catchPhraseDescriptor());
-  expect(createdDomain).toBeDefined();
-  expect(createdDomain.id).toBeDefined();
-
-  const domainStarted = await startDomain(createdDomain.id, accessToken);
-  expect(domainStarted).toBeDefined();
-  expect(domainStarted.id).toEqual(createdDomain.id);
-
-  domain = domainStarted;
+  accessToken = await requestAdminAccessToken()
+  domain = await setupDomainForTest(uniqueName('domain-groups'), {accessToken}).then(it=>it.domain)
 });
 
 describe('before creating groups', () => {
