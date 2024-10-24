@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.node.BaseJsonNode;
 import io.gravitee.am.common.utils.Indexed;
 import io.gravitee.am.model.Acl;
 import io.reactivex.rxjava3.core.Single;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.core.Response;
 import lombok.Getter;
@@ -55,7 +56,9 @@ public class BulkRequest<T> {
     @JsonProperty("action")
     @NotNull
     private final Action action;
+
     @JsonProperty("items")
+    @NotEmpty(message = "items must not be empty")
     private final List<T> items;
 
     protected BulkRequest(Action action) {
