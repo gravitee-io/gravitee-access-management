@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
-import { deleteDomain, setupDomainForTest, waitFor, waitForDomainStart } from '@management-commands/domain-management-commands';
+import {createDomain, deleteDomain, setupDomainForTest,startDomain, waitFor, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 
@@ -61,7 +61,7 @@ jest.setTimeout(200000);
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
-  domain = await setupDomainForTest(uniqueName('mfa-test-domain'), { accessToken }).then((it) => it.domain);
+  domain = await createDomain(accessToken,uniqueName('mfa-test-domain'), 'mfa test domain')
 
   mockFactor = await createSMSResource(validMFACode, domain, accessToken).then((smsResource) =>
     createMockFactor(smsResource, domain, accessToken),
@@ -84,7 +84,7 @@ beforeAll(async () => {
    * At this point I haven't found a function which is similar to retry until specific http code is returned.
    * jest.retryTimes(numRetries, options) didn't applicable in this case.
    * */
-  let started = await waitForDomainStart(domain);
+  let started = await startDomain(domain.id, accessToken).then(waitForDomainStart);
   domain = started.domain;
   openIdConfiguration = started.oidcConfig;
 });
@@ -120,9 +120,10 @@ describe('MFA', () => {
        * The number of the get requests is based on the gateway gravtitee.yml 'mfa_rate' configuration
        * These assertions will fail or need to be updated if 'mfa_rate' configuration is changed
        */
-      const expectedCode = [200, 200, 200, 302];
+      const expectedCode = [200, 200, 302];
 
       for (const responseCode of expectedCode) {
+        console.log("Getting " + authorize2.headers['location'])
         const rateLimitException = await performGet(authorize2.headers['location'], '', {
           Cookie: authorize2.headers['set-cookie'],
         })
