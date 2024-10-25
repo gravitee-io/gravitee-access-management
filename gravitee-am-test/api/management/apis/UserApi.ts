@@ -626,7 +626,7 @@ export class UserApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_USER[READ] permission on the specified organization
      * Create a platform user or Service Account
      */
-    async createOrganisationUserRaw(requestParameters: CreateOrganisationUserRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<NewOrganizationUser>> {
+    async createOrganisationUserRaw(requestParameters: CreateOrganisationUserRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<User>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
             throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling createOrganisationUser.');
         }
@@ -657,14 +657,14 @@ export class UserApi extends runtime.BaseAPI {
             body: NewOrganizationUserToJSON(requestParameters.newOrganizationUser),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => NewOrganizationUserFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => UserFromJSON(jsonValue));
     }
 
     /**
      * User must have the ORGANIZATION_USER[READ] permission on the specified organization
      * Create a platform user or Service Account
      */
-    async createOrganisationUser(requestParameters: CreateOrganisationUserRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<NewOrganizationUser> {
+    async createOrganisationUser(requestParameters: CreateOrganisationUserRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<User> {
         const response = await this.createOrganisationUserRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -1093,7 +1093,7 @@ export class UserApi extends runtime.BaseAPI {
     /**
      * Get the current user
      */
-    async getRaw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<any>> {
+    async getRaw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<{ [key: string]: string; }>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -1113,13 +1113,13 @@ export class UserApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.TextApiResponse(response) as any;
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
      * Get the current user
      */
-    async get(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<any> {
+    async get(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<{ [key: string]: string; }> {
         const response = await this.getRaw(initOverrides);
         return await response.value();
     }

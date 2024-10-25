@@ -36,7 +36,7 @@ let domain;
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken()
-  domain = await setupDomainForTest(uniqueName('domain-password-policy-m'), {accessToken, waitForStart: true}).then(it=>it.domain)
+  domain = await setupDomainForTest(uniqueName('domain-password-policy-m'), {accessToken, waitForStart: false}).then(it=>it.domain)
 });
 
 describe('password policy management', () => {

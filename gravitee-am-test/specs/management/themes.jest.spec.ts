@@ -31,7 +31,7 @@ let theme;
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken()
-  domain = await setupDomainForTest(uniqueName('domain-themes'), {accessToken, waitForStart: true}).then(it=>it.domain)
+  domain = await setupDomainForTest(uniqueName('domain-themes'), {accessToken, waitForStart: false}).then(it=>it.domain)
 });
 
 async function testCreate() {

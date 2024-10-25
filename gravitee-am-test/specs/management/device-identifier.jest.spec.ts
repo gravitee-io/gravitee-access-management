@@ -25,6 +25,7 @@ import {
   listDeviceIdentifiers,
   updateDevice,
 } from '@management-commands/device-management-commands';
+import {uniqueName} from '@utils-commands/misc';
 
 global.fetch = fetch;
 
@@ -37,7 +38,7 @@ jest.setTimeout(200000);
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken()
-  domain = await setupDomainForTest("domain-device-id", {accessToken}).then(it=>it.domain)
+  domain = await setupDomainForTest(uniqueName("domain-device-id"), {accessToken}).then(it=>it.domain)
 });
 
 describe('when creating device identifier', () => {

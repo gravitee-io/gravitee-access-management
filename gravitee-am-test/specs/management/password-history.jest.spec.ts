@@ -34,7 +34,7 @@ let user;
 describe('Testing password history...', () => {
   beforeAll(async () => {
     accessToken = await requestAdminAccessToken()
-    domain = await setupDomainForTest(uniqueName('domain-ph-users'), {accessToken, waitForStart: true}).then(it=>it.domain)
+    domain = await setupDomainForTest(uniqueName('domain-ph-users'), {accessToken, waitForStart: false}).then(it=>it.domain)
 
     await createPasswordPolicy(domain.id, accessToken, {
       name: 'default',
@@ -42,7 +42,7 @@ describe('Testing password history...', () => {
       oldPasswords: 3,
     });
 
-    user = await buildCreateAndTestUser(domain.id, accessToken, 0, false);
+    user = await buildCreateAndTestUser(domain.id, accessToken, -1, false);
     await new Promise((r) => setTimeout(r, 1000));
   });
 

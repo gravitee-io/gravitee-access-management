@@ -49,8 +49,7 @@ let domain;
 let user;
 
 beforeAll(async () => {
-  const adminTokenResponse = await requestAdminAccessToken();
-  accessToken = adminTokenResponse.body.access_token;
+  accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
 
   const createdDomain = await createDomain(accessToken, uniqueName('domain-users'), faker.company.catchPhraseDescriptor());

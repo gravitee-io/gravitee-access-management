@@ -26,10 +26,10 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.StringToClassMapItem;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.ws.rs.GET;
@@ -51,7 +51,7 @@ import java.util.Set;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tags({@Tag( name = "user")})
+@Tag(name = "user")
 @Path("/user")
 public class CurrentUserResource extends AbstractResource {
 
@@ -64,11 +64,10 @@ public class CurrentUserResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Get the current user")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Current user successfully fetched",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Object.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "200", description = "Current user successfully fetched",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(type="object", additionalPropertiesSchema = String.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void get(@Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
@@ -82,12 +81,12 @@ public class CurrentUserResource extends AbstractResource {
                 .map(Permission::flatten);
 
         Single.zip(platformPermissions, organizationPermissions,
-                (p, o) -> {
-                    Set<String> allPermissions = new HashSet<>();
-                    allPermissions.addAll(p);
-                    allPermissions.addAll(o);
-                    return allPermissions;
-                })
+                        (p, o) -> {
+                            Set<String> allPermissions = new HashSet<>();
+                            allPermissions.addAll(p);
+                            allPermissions.addAll(o);
+                            return allPermissions;
+                        })
                 .map(permissions -> {
                     // prepare profile information with role permissions
                     Map<String, Object> profile = new HashMap<>(authenticatedUser.getAdditionalInformation());

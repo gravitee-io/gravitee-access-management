@@ -40,7 +40,7 @@ let customDraftTheme = {
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken()
-  domain = await setupDomainForTest(uniqueName('domain-themes-preview'), {accessToken, waitForStart: true}).then(it=>it.domain)
+  domain = await setupDomainForTest(uniqueName('domain-themes-preview'), {accessToken, waitForStart: false}).then(it=>it.domain)
 });
 
 async function testRequestPreview(template: String, content: String, theme?: any) {

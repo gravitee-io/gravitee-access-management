@@ -30,7 +30,8 @@ let role;
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken()
-  domain = await setupDomainForTest(uniqueName('domain-roles'), {accessToken, waitForStart: true}).then(it=>it.domain)
+  domain = await setupDomainForTest(uniqueName('domain-roles'), {accessToken, waitForStart: false})
+      .then(it=>it.domain)
 });
 
 describe('when using the roles commands', () => {

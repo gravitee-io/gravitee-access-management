@@ -27,40 +27,39 @@ import {
 import { requestAccessToken, requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {buildTestUser,bulkCreateOrgUsers} from '@management-commands/user-management-commands';
 import {BulkResponse} from '@management-models/BulkResponse';
-import {checkBulkResponse} from '@utils-commands/misc';
+import {checkBulkResponse,uniqueName} from '@utils-commands/misc';
+import {User} from '@management-models/User';
+import {waitFor} from '@management-commands/domain-management-commands';
 
 global.fetch = fetch;
 
 let accessToken;
-let organisationUser;
+let organisationUser: User;
 const password = 'SomeP@ssw0rd';
 let organisationUserToken;
 
 beforeAll(async () => {
-  const adminTokenResponse = await requestAdminAccessToken();
-  accessToken = adminTokenResponse.body.access_token;
+  accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
-});
 
-describe('when using the users commands', () => {
-  it('should create organisation user', async () => {
-    const firstName = 'orgUserFirstName';
-    const lastName = 'orgUserLastName';
-    const payload = {
-      firstName: firstName,
-      lastName: lastName,
-      email: `${firstName}.${lastName}@mail.com`,
-      username: 'organization_username',
-      password: password,
-      preRegistration: false,
-    };
-    organisationUser = await createOrganisationUser(accessToken, payload);
-    expect(organisationUser.id).toBeDefined();
-    expect(organisationUser.firstName).toEqual(payload.firstName);
-    expect(organisationUser.lastName).toEqual(payload.lastName);
-    expect(organisationUser.username).toEqual(payload.username);
-    expect(organisationUser.email).toEqual(payload.email);
-  });
+  const firstName = 'orgUserFirstName';
+  const lastName = 'orgUserLastName';
+  const payload = {
+    firstName: firstName,
+    lastName: lastName,
+    email: `${firstName}.${lastName}@mail.com`,
+    username: uniqueName('org').toLowerCase(),
+    password: password,
+    preRegistration: false,
+  };
+  organisationUser = await createOrganisationUser(accessToken, payload);
+  expect(organisationUser.id).toBeDefined();
+  expect(organisationUser.firstName).toEqual(payload.firstName);
+  expect(organisationUser.lastName).toEqual(payload.lastName);
+  expect(organisationUser.username).toEqual(payload.username);
+  expect(organisationUser.email).toEqual(payload.email);
+  await waitFor(3000)
+  console.log(`using user: ${organisationUser.username}:${password}`)
 });
 
 describe('when creating organization users in bulk', () => {
@@ -98,7 +97,7 @@ describe('when managing users at organisation level', () => {
   });
 
   it('should change organisation username', async () => {
-    const username = 'my-new-username';
+    const username = uniqueName('my-new-username').toLowerCase();
     organisationUser = await updateOrganisationUsername(accessToken, organisationUser.id, username);
     expect(organisationUser.username).toEqual(username);
   });

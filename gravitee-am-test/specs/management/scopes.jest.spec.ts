@@ -39,7 +39,7 @@ let scope;
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken()
-  domain = await setupDomainForTest(uniqueName('domain-scopes'), {accessToken, waitForStart: true}).then(it=>it.domain)
+  domain = await setupDomainForTest(uniqueName('domain-scopes'), {accessToken, waitForStart: false}).then(it=>it.domain)
 });
 
 describe('when using the scope commands', () => {

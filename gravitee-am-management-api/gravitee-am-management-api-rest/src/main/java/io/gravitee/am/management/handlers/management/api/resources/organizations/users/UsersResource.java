@@ -126,7 +126,7 @@ public class UsersResource extends AbstractUsersResource {
 
     @ApiResponse(responseCode = "201", description = "User or Service Account successfully created",
             content = @Content(mediaType = "application/json",
-                    schema = @Schema(implementation = NewOrganizationUser.class)))
+                    schema = @Schema(implementation = User.class)))
     @ApiResponse(responseCode = "500", description = "Internal server error")
     public void create(
             @PathParam("organizationId") String organizationId,
