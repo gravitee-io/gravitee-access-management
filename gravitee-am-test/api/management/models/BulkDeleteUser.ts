@@ -40,10 +40,16 @@ export interface BulkDeleteUser {
     action: BulkDeleteUserActionEnum;
     /**
      * 
+     * @type {number}
+     * @memberof BulkDeleteUser
+     */
+    failOnErrors?: number;
+    /**
+     * 
      * @type {Array<string>}
      * @memberof BulkDeleteUser
      */
-    items?: Array<string>;
+    items: Array<string>;
 }
 
 
@@ -69,7 +75,8 @@ export function BulkDeleteUserFromJSONTyped(json: any, ignoreDiscriminator: bool
     return {
         
         'action': json['action'],
-        'items': !exists(json, 'items') ? undefined : json['items'],
+        'failOnErrors': !exists(json, 'failOnErrors') ? undefined : json['failOnErrors'],
+        'items': json['items'],
     };
 }
 
@@ -83,6 +90,7 @@ export function BulkDeleteUserToJSON(value?: BulkDeleteUser | null): any {
     return {
         
         'action': value.action,
+        'failOnErrors': value.failOnErrors,
         'items': value.items,
     };
 }

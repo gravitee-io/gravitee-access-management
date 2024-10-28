@@ -47,10 +47,16 @@ export interface BulkCreateUser {
     action: BulkCreateUserActionEnum;
     /**
      * 
+     * @type {number}
+     * @memberof BulkCreateUser
+     */
+    failOnErrors?: number;
+    /**
+     * 
      * @type {Array<NewUser>}
      * @memberof BulkCreateUser
      */
-    items?: Array<NewUser>;
+    items: Array<NewUser>;
 }
 
 
@@ -76,7 +82,8 @@ export function BulkCreateUserFromJSONTyped(json: any, ignoreDiscriminator: bool
     return {
         
         'action': json['action'],
-        'items': !exists(json, 'items') ? undefined : ((json['items'] as Array<any>).map(NewUserFromJSON)),
+        'failOnErrors': !exists(json, 'failOnErrors') ? undefined : json['failOnErrors'],
+        'items': ((json['items'] as Array<any>).map(NewUserFromJSON)),
     };
 }
 
@@ -90,7 +97,8 @@ export function BulkCreateUserToJSON(value?: BulkCreateUser | null): any {
     return {
         
         'action': value.action,
-        'items': value.items === undefined ? undefined : ((value.items as Array<any>).map(NewUserToJSON)),
+        'failOnErrors': value.failOnErrors,
+        'items': ((value.items as Array<any>).map(NewUserToJSON)),
     };
 }
 

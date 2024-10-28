@@ -188,15 +188,12 @@ public class UsersResource extends AbstractUsersResource {
 
     private SingleSource<?> processBulkRequest(BulkRequest.Generic bulkRequest, Organization organization, io.gravitee.am.identityprovider.api.User authenticatedUser) {
         return switch (bulkRequest.action()) {
-            case CREATE -> bulkRequest.processOneByOne(NewOrganizationUser.class, mapper, user ->
-                    organizationUserService.createGraviteeUser(organization, user, authenticatedUser)
+            case CREATE -> bulkRequest.processOneByOne(NewOrganizationUser.class, mapper, user -> organizationUserService.createGraviteeUser(organization, user, authenticatedUser)
                             .map(BulkOperationResult::created)
-                            .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex)))
             );
             case DELETE -> bulkRequest.processOneByOne(String.class, mapper, id -> organizationUserService.delete(ReferenceType.ORGANIZATION, organization.getId(), id, authenticatedUser)
                     .map(User::getId)
                     .map(BulkOperationResult::ok)
-                    .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex)))
             );
             case UPDATE -> Single.error(new NotImplementedException("not implemented"));
         };

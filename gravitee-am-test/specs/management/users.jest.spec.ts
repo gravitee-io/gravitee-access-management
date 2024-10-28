@@ -88,11 +88,11 @@ function expectAllUsersCreatedOk(response: BulkResponse, numberOfUsers: number) 
     },
   });
 }
-function expectAllUsersCreatedExceptOneError(response: BulkResponse, usersToCreate: any[]) {
+function expectAllUsersCreatedExceptOneError(response: BulkResponse, responseCount: number) {
   let ids = [];
-  checkBulkResponse(response, usersToCreate.length, false, {
+  checkBulkResponse(response, responseCount, false, {
     201: {
-      count: usersToCreate.length - 1,
+      count: responseCount - 1,
       assertions: (result) => {
         expect(result.body).toBeDefined();
         const newUserId = result.body.id;
@@ -134,7 +134,20 @@ describe('when creating users in bulk', () => {
     console.log('Creating users: ', usersToCreate);
     const response = await bulkCreateUsers(domain.id, accessToken, usersToCreate);
     console.log('Response', JSON.stringify(response, null, 2));
-    expectAllUsersCreatedExceptOneError(response, usersToCreate);
+    expectAllUsersCreatedExceptOneError(response, usersToCreate.length);
+  });
+
+  it('should stop creating users when failOnErrors is set', async () => {
+    let usersToCreate = [];
+    const numUniqueUsersToCreate = 10;
+    usersToCreate.push(buildTestUser(304)); // will be duplicated
+    for (let i = 0; i < 10; i++) {
+      usersToCreate.push(buildTestUser(300 + i));
+    }
+    console.log('Creating users: ', usersToCreate);
+    const response = await bulkCreateUsers(domain.id, accessToken, usersToCreate, 1);
+    console.log('Response', JSON.stringify(response, null, 2));
+    expectAllUsersCreatedExceptOneError(response, 6);
   });
 });
 
@@ -157,15 +170,15 @@ describe('after creating users', () => {
     const applicationPage = await getAllUsers(domain.id, accessToken);
 
     expect(applicationPage.currentPage).toEqual(0);
-    expect(applicationPage.totalCount).toEqual(21);
-    expect(applicationPage.data.length).toEqual(21);
+    expect(applicationPage.totalCount).toEqual(26);
+    expect(applicationPage.data.length).toEqual(26);
   });
 
   it('must find User page', async () => {
     const UserPage = await getUserPage(domain.id, accessToken, 1, 3);
 
     expect(UserPage.currentPage).toEqual(1);
-    expect(UserPage.totalCount).toEqual(21);
+    expect(UserPage.totalCount).toEqual(26);
     expect(UserPage.data.length).toEqual(3);
   });
 
@@ -173,7 +186,7 @@ describe('after creating users', () => {
     const UserPage = await getUserPage(domain.id, accessToken, 3, 3);
 
     expect(UserPage.currentPage).toEqual(3);
-    expect(UserPage.totalCount).toEqual(21);
+    expect(UserPage.totalCount).toEqual(26);
     expect(UserPage.data.length).toEqual(3);
   });
 
@@ -234,8 +247,8 @@ describe('after creating users', () => {
     const UserPage = await getUserPage(domain.id, accessToken);
 
     expect(UserPage.currentPage).toEqual(0);
-    expect(UserPage.totalCount).toEqual(20);
-    expect(UserPage.data.length).toEqual(20);
+    expect(UserPage.totalCount).toEqual(25);
+    expect(UserPage.data.length).toEqual(25);
     expect(UserPage.data.find((u) => u.id === user.id)).toBeFalsy();
   });
 });

@@ -189,12 +189,10 @@ public class UsersResource extends AbstractUsersResource {
     private Single<?> processBulkRequest(BulkRequest.Generic bulkRequest, Domain domain, io.gravitee.am.identityprovider.api.User authenticatedUser) {
         return switch (bulkRequest.action()) {
             case CREATE -> bulkRequest.processOneByOne(NewUser.class, objectMapper, newUser -> userService.create(domain, newUser, authenticatedUser)
-                            .map(BulkOperationResult::created)
-                            .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex))));
+                            .map(BulkOperationResult::created));
             case DELETE -> bulkRequest.processOneByOne(String.class, objectMapper, id -> userService.delete(ReferenceType.DOMAIN, domain.getId(), id, authenticatedUser)
                             .map(User::getId)
                             .map(BulkOperationResult::ok)
-                            .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex)))
             );
             case UPDATE -> Single.error(new NotImplementedException());
         };
