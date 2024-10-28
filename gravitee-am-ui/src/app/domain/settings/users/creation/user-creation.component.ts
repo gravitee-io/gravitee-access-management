@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, ComponentFactoryResolver, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { each } from 'lodash';
@@ -46,7 +46,7 @@ export class UserCreationComponent implements OnInit {
   userProviders: any[];
   selectedAccountType: AccountType = AccountType.User;
   protected readonly AccountType = AccountType;
-  @ViewChild('dynamic', { read: ViewContainerRef, static: true }) viewContainerRef: ViewContainerRef;
+  @ViewChild('dynamic', { read: ViewContainerRef }) viewContainerRef: ViewContainerRef;
   private domainId: string;
 
   constructor(
@@ -54,7 +54,6 @@ export class UserCreationComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private snackbarService: SnackbarService,
-    private factoryResolver: ComponentFactoryResolver,
     private providerService: ProviderService,
     private organizationService: OrganizationService,
   ) {}
@@ -133,8 +132,7 @@ export class UserCreationComponent implements OnInit {
   }
 
   addDynamicComponent(): void {
-    const factory = this.factoryResolver.resolveComponentFactory(UserClaimComponent);
-    const component = this.viewContainerRef.createComponent(factory);
+    const component = this.viewContainerRef.createComponent(UserClaimComponent);
 
     component.instance.addClaimChange.subscribe((claim) => {
       if (claim.name && claim.value) {
