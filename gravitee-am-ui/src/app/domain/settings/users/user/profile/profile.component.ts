@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, ComponentFactoryResolver, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgForm } from '@angular/forms';
 import { filter, map, switchMap, tap } from 'rxjs/operators';
@@ -71,7 +71,6 @@ export class UserProfileComponent implements OnInit {
     private userService: UserService,
     private organizationService: OrganizationService,
     private authService: AuthService,
-    private factoryResolver: ComponentFactoryResolver,
     private readonly matDialog: MatDialog,
   ) {}
 
@@ -219,8 +218,7 @@ export class UserProfileComponent implements OnInit {
   }
 
   addDynamicComponent(): void {
-    const factory = this.factoryResolver.resolveComponentFactory(UserClaimComponent);
-    const component = this.viewContainerRef.createComponent(factory);
+    const component = this.viewContainerRef.createComponent(UserClaimComponent);
 
     component.instance.addClaimChange.subscribe((claim) => {
       if (claim.name && claim.value) {
