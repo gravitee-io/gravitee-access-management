@@ -47,10 +47,16 @@ export interface BulkUpdateUser {
     action: BulkUpdateUserActionEnum;
     /**
      * 
+     * @type {number}
+     * @memberof BulkUpdateUser
+     */
+    failOnErrors?: number;
+    /**
+     * 
      * @type {Array<UpdateUser>}
      * @memberof BulkUpdateUser
      */
-    items?: Array<UpdateUser>;
+    items: Array<UpdateUser>;
 }
 
 
@@ -76,7 +82,8 @@ export function BulkUpdateUserFromJSONTyped(json: any, ignoreDiscriminator: bool
     return {
         
         'action': json['action'],
-        'items': !exists(json, 'items') ? undefined : ((json['items'] as Array<any>).map(UpdateUserFromJSON)),
+        'failOnErrors': !exists(json, 'failOnErrors') ? undefined : json['failOnErrors'],
+        'items': ((json['items'] as Array<any>).map(UpdateUserFromJSON)),
     };
 }
 
@@ -90,7 +97,8 @@ export function BulkUpdateUserToJSON(value?: BulkUpdateUser | null): any {
     return {
         
         'action': value.action,
-        'items': value.items === undefined ? undefined : ((value.items as Array<any>).map(UpdateUserToJSON)),
+        'failOnErrors': value.failOnErrors,
+        'items': ((value.items as Array<any>).map(UpdateUserToJSON)),
     };
 }
 

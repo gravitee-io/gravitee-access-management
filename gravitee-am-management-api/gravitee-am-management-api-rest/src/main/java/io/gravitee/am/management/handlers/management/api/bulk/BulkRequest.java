@@ -34,6 +34,7 @@ import lombok.experimental.Accessors;
 import org.springframework.util.CollectionUtils;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 /**
@@ -57,12 +58,19 @@ public class BulkRequest<T> {
     @NotNull
     private final Action action;
 
+    @JsonProperty("failOnErrors")
+    private final Integer failOnErrors;
+
     @JsonProperty("items")
     @NotEmpty(message = "items must not be empty")
     private final List<T> items;
 
     protected BulkRequest(Action action) {
-        this(action, List.of());
+        this(action, Integer.MAX_VALUE, List.of());
+    }
+
+    public int getFailOnErrors() {
+        return (failOnErrors == null || failOnErrors <= 0) ? Integer.MAX_VALUE : failOnErrors;
     }
 
     /**
@@ -73,12 +81,17 @@ public class BulkRequest<T> {
         if (CollectionUtils.isEmpty(items())) {
             return Single.just(Response.status(Response.Status.BAD_REQUEST).entity("received a bulk request without any items").build());
         }
+        final AtomicInteger failuresCounter = new AtomicInteger(0);
         return Indexed.toIndexedFlowable(items())
-                .flatMapSingle(indexed -> processor.apply(indexed.value())
+                .concatMapSingle(indexed -> processor.apply(indexed.value())
+                        .doOnError(error -> failuresCounter.incrementAndGet())
+                        .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex)))
                         .map(result -> result.withIndex(indexed.index())))
+                .takeUntil(result -> failuresCounter.get() >= getFailOnErrors())
                 .toList()
                 .map(this::makeResponse);
     }
+
 
     private <R> Response makeResponse(List<BulkOperationResult<R>> bulkOperationResults) {
         var bulkResponse = new BulkResponse<>(bulkOperationResults);
@@ -93,8 +106,10 @@ public class BulkRequest<T> {
     public static final class Generic extends BulkRequest<BaseJsonNode> {
 
         @JsonCreator
-        public Generic(@JsonProperty("items") List<BaseJsonNode> items, @JsonProperty("action") Action action) {
-            super(action, items);
+        public Generic(@JsonProperty("action") Action action,
+                       @JsonProperty("failOnErrors") Integer failOnErrors,
+                       @JsonProperty("items") List<BaseJsonNode> items) {
+            super(action, failOnErrors, items);
         }
 
         /**
@@ -118,7 +133,7 @@ public class BulkRequest<T> {
 
         @SuppressWarnings("unchecked") // always called with a JavaType representing T
         private <T> BulkRequest<T> readItemsAs(ObjectMapper mapper, JavaType type) {
-            return new BulkRequest<>(action(), items().stream().map(x -> {
+            return new BulkRequest<>(action(), failOnErrors(), items().stream().map(x -> {
                 try {
                     return (T) mapper.treeToValue(x, type);
                 } catch (JsonProcessingException e) {

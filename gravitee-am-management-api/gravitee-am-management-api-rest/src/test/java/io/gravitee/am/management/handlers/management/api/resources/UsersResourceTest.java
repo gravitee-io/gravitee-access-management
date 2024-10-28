@@ -28,6 +28,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.common.http.HttpStatusCode;
@@ -39,6 +40,7 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.assertj.core.util.Lists;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -52,9 +54,8 @@ import java.util.function.Function;
 
 import static io.gravitee.am.model.ReferenceType.ORGANIZATION;
 import static java.util.stream.Collectors.toList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -186,9 +187,9 @@ public class UsersResourceTest extends JerseySpringTest {
         assertEquals(2, values.getTotalCount());
         final Collection<User> data = values.getData();
 
-        assertTrue(getFilteredElements(data, User::getId).containsAll(List.of("user-id-1", "domain-id-2")));
-        assertTrue(getFilteredElements(data, User::getUsername).containsAll(List.of("username-1", "username-2")));
-        assertTrue(getFilteredElements(data, User::getPassword).isEmpty());
+        Assertions.assertTrue(getFilteredElements(data, User::getId).containsAll(List.of("user-id-1", "domain-id-2")));
+        Assertions.assertTrue(getFilteredElements(data, User::getUsername).containsAll(List.of("username-1", "username-2")));
+        Assertions.assertTrue(getFilteredElements(data, User::getPassword).isEmpty());
     }
 
     @Test
@@ -233,9 +234,9 @@ public class UsersResourceTest extends JerseySpringTest {
         assertEquals(2, values.getTotalCount());
         final Collection<User> data = values.getData();
 
-        assertTrue(getFilteredElements(data, User::getId).containsAll(List.of("user-id-1", "domain-id-2")));
+        Assertions.assertTrue(getFilteredElements(data, User::getId).containsAll(List.of("user-id-1", "domain-id-2")));
         assertEquals(Arrays.asList("username-2", null), getFilteredElements(data, User::getUsername, true));
-        assertTrue(getFilteredElements(data, User::getPassword).isEmpty());
+        Assertions.assertTrue(getFilteredElements(data, User::getPassword).isEmpty());
     }
 
     private static <T> List<T> getFilteredElements(Collection<User> data, Function<User, T> mapper) {
@@ -325,7 +326,7 @@ public class UsersResourceTest extends JerseySpringTest {
         User user = readEntity(response, User.class);
         assertEquals(user.getId(), mockUser.getId());
         assertEquals(user.getUsername(), mockUser.getUsername());
-        assertNull(user.getPassword());
+        Assertions.assertNull(user.getPassword());
         assertEquals(user.getReferenceId(), mockUser.getReferenceId());
     }
 
@@ -359,8 +360,8 @@ public class UsersResourceTest extends JerseySpringTest {
         User user = readEntity(response, User.class);
         assertEquals(user.getId(), mockUser.getId());
         assertEquals(user.getUsername(), mockUser.getUsername());
-        assertNull(user.getPassword());
-        assertTrue(user.getServiceAccount());
+        Assertions.assertNull(user.getPassword());
+        Assertions.assertTrue(user.getServiceAccount());
         assertEquals(user.getReferenceId(), mockUser.getReferenceId());
     }
 
@@ -414,9 +415,9 @@ public class UsersResourceTest extends JerseySpringTest {
         assertEquals(3, values.getTotalCount());
         final Collection<User> data = values.getData();
 
-        assertTrue(getFilteredElements(data, User::getId).containsAll(List.of("service-id-1", "user-id-2", "user-id-3")));
-        assertTrue(getFilteredElements(data, User::getUsername).containsAll(List.of("service-1", "username-2", "username-3")));
-        assertTrue(getFilteredElements(data, User::getPassword).isEmpty());
+        Assertions.assertTrue(getFilteredElements(data, User::getId).containsAll(List.of("service-id-1", "user-id-2", "user-id-3")));
+        Assertions.assertTrue(getFilteredElements(data, User::getUsername).containsAll(List.of("service-1", "username-2", "username-3")));
+        Assertions.assertTrue(getFilteredElements(data, User::getPassword).isEmpty());
     }
 
     @Test
@@ -437,7 +438,7 @@ public class UsersResourceTest extends JerseySpringTest {
         when(organizationUserService.delete(eq(ORGANIZATION), eq(ORGANIZATION_DEFAULT), eq("2"), any())).thenReturn(Single.just(user2));
         when(organizationUserService.delete(eq(ORGANIZATION), eq(ORGANIZATION_DEFAULT), eq("3"), any())).thenReturn(Single.just(user3));
 
-        BulkRequest<String> bulkRequest = new BulkRequest<>(BulkRequest.Action.DELETE, List.of("1", "2", "3"));
+        BulkRequest<String> bulkRequest = new BulkRequest<>(BulkRequest.Action.DELETE, null, List.of("1", "2", "3"));
         final Response response = target("organizations")
                 .path(ORGANIZATION_DEFAULT)
                 .path("users")
@@ -448,12 +449,49 @@ public class UsersResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         JsonNode bulkResponse = readEntity(response, JsonNode.class);
-        assertTrue(bulkResponse.get("allSuccessful").asBoolean());
+        Assertions.assertTrue(bulkResponse.get("allSuccessful").asBoolean());
 
         List<JsonNode> results = Lists.newArrayList(bulkResponse.get("results").elements());
         assertEquals("1", results.get(0).get("body").asText());
         assertEquals("2", results.get(1).get("body").asText());
         assertEquals("3", results.get(2).get("body").asText());
+
+    }
+
+    @Test
+    public void shouldStopProcessingBulkDeleteOperationWhenFailOnErrorIsSet() {
+        when(permissionService.hasPermission(any(), any())).thenReturn(Single.just(true));
+        Organization organization = new Organization();
+        organization.setId(ORGANIZATION_DEFAULT);
+        when(organizationService.findById(ORGANIZATION_DEFAULT)).thenReturn(Single.just(organization));
+
+        User user1 = new User();
+        user1.setId("1");
+        User user2 = new User();
+        user2.setId("2");
+        User user3 = new User();
+        user3.setId("3");
+
+        when(organizationUserService.delete(eq(ORGANIZATION), eq(ORGANIZATION_DEFAULT), eq("1"), any())).thenReturn(Single.error(new UserAlreadyExistsException()));
+        when(organizationUserService.delete(eq(ORGANIZATION), eq(ORGANIZATION_DEFAULT), eq("2"), any())).thenReturn(Single.error(new UserAlreadyExistsException()));
+
+        BulkRequest<String> bulkRequest = new BulkRequest<>(BulkRequest.Action.DELETE, 2, List.of("1", "2", "3"));
+        final Response response = target("organizations")
+                .path(ORGANIZATION_DEFAULT)
+                .path("users")
+                .path("bulk")
+                .request()
+                .post(Entity.entity(bulkRequest, MediaType.APPLICATION_JSON_TYPE));
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        JsonNode bulkResponse = readEntity(response, JsonNode.class);
+        assertFalse(bulkResponse.get("allSuccessful").asBoolean());
+
+        List<JsonNode> results = Lists.newArrayList(bulkResponse.get("results").elements());
+        assertEquals(2, results.size());
+        assertEquals("UserAlreadyExistsException", results.get(0).get("errorDetails").get("error").asText());
+        assertEquals("UserAlreadyExistsException", results.get(1).get("errorDetails").get("error").asText());
 
     }
 }

@@ -47,10 +47,16 @@ export interface BulkCreateOrganizationUser {
     action: BulkCreateOrganizationUserActionEnum;
     /**
      * 
+     * @type {number}
+     * @memberof BulkCreateOrganizationUser
+     */
+    failOnErrors?: number;
+    /**
+     * 
      * @type {Array<NewOrganizationUser>}
      * @memberof BulkCreateOrganizationUser
      */
-    items?: Array<NewOrganizationUser>;
+    items: Array<NewOrganizationUser>;
 }
 
 
@@ -76,7 +82,8 @@ export function BulkCreateOrganizationUserFromJSONTyped(json: any, ignoreDiscrim
     return {
         
         'action': json['action'],
-        'items': !exists(json, 'items') ? undefined : ((json['items'] as Array<any>).map(NewOrganizationUserFromJSON)),
+        'failOnErrors': !exists(json, 'failOnErrors') ? undefined : json['failOnErrors'],
+        'items': ((json['items'] as Array<any>).map(NewOrganizationUserFromJSON)),
     };
 }
 
@@ -90,7 +97,8 @@ export function BulkCreateOrganizationUserToJSON(value?: BulkCreateOrganizationU
     return {
         
         'action': value.action,
-        'items': value.items === undefined ? undefined : ((value.items as Array<any>).map(NewOrganizationUserToJSON)),
+        'failOnErrors': value.failOnErrors,
+        'items': ((value.items as Array<any>).map(NewOrganizationUserToJSON)),
     };
 }
 

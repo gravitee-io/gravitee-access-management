@@ -93,14 +93,15 @@ class BulkRequestTest {
 
     @Test
     void shouldReturnItemsInOriginalOrder() {
-        var items = (IntStream.iterate(0, i -> i + 1).limit(20).boxed().toList());
+        var itemsCount = 20;
+        var items = (IntStream.iterate(0, i -> i + 1).limit(itemsCount).boxed().toList());
 
         var expectedResults = items.stream().map(x -> BulkOperationResult.ok(pretendToDoStuff(x)).withIndex(x)).toList();
 
         // take control of the time since we don't want actual delays during test execution
         var testScheduler = new TestScheduler();
 
-        var testObserver = new BulkRequest<>(BulkRequest.Action.CREATE, items)
+        var testObserver = new BulkRequest<>(BulkRequest.Action.CREATE, null, items)
                 // randomize delays so that the results are emitted in random order
                 .processOneByOne(i -> Single.just(BulkOperationResult.ok(pretendToDoStuff(i)))
                         .delay(randomDelay(), TimeUnit.SECONDS, testScheduler)
@@ -113,7 +114,7 @@ class BulkRequestTest {
                 })
                 .test();
 
-        testScheduler.advanceTimeBy(MAX_DELAY_SECONDS, TimeUnit.SECONDS);
+        testScheduler.advanceTimeBy(itemsCount * MAX_DELAY_SECONDS, TimeUnit.SECONDS);
         var actualResults = testObserver
                 .assertComplete()
                 .assertValueCount(1)
@@ -123,8 +124,6 @@ class BulkRequestTest {
 
         // even with out-of-order processing, results should be returned in the input order
         AssertionsForInterfaceTypes.assertThat(actualResults).containsExactlyElementsOf(expectedResults);
-
-
     }
 
     private static long randomDelay() {
@@ -135,4 +134,7 @@ class BulkRequestTest {
         return "(result for item #" + value + ")";
     }
 
+    String pretendToDoStuff(int value, boolean fail) {
+        return "(result for item #" + value + ")";
+    }
 }
