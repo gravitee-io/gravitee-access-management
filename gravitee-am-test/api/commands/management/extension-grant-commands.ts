@@ -22,7 +22,7 @@ export const createExtensionGrant = (domainId, accessToken, body) =>
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    extensionGrant: body,
+    newExtensionGrant: body,
   });
 
 export const deleteExtensionGrant = (domainId, accessToken, extensionId) =>
@@ -42,7 +42,7 @@ export const getExtensionGrant = (domainId, accessToken, extensionId) =>
   });
 
 export const listExtensionGrant = (domainId, accessToken) =>
-  getExtensionApi(accessToken).listExtensionGrant({
+  getExtensionApi(accessToken).listExtensionGrants({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
@@ -54,5 +54,5 @@ export const updateExtensionGrant = (domainId, accessToken, extensionId, updateE
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     extensionGrant: extensionId,
-    tokenGranter: updateExtension,
+    updateExtensionGrant: updateExtension
   });

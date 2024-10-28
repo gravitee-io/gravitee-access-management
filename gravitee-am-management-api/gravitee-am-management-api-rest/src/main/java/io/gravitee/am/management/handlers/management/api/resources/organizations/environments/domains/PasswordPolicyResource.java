@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.PasswordPolicyService;
@@ -28,8 +29,9 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -65,9 +67,8 @@ public class PasswordPolicyResource extends AbstractDomainResource {
             description = "User must have the DOMAIN_SETTINGS[READ] permission on the specified domain " +
                     "or DOMAIN_SETTINGS[READ] permission on the specified environment " +
                     "or DOMAIN_SETTINGS[READ] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Password Policy description"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "200", description = "Password Policy description", content = @Content(schema = @Schema(implementation = PasswordPolicy.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -79,7 +80,7 @@ public class PasswordPolicyResource extends AbstractDomainResource {
                         .switchIfEmpty(Maybe.error(() -> new DomainNotFoundException(domain)))
                         .flatMap(__ ->
                                 passwordPolicyService.findByReferenceAndId(ReferenceType.DOMAIN, domain, policy)
-                                .switchIfEmpty(Maybe.error(() -> new PasswordPolicyNotFoundException(policy)))))
+                                        .switchIfEmpty(Maybe.error(() -> new PasswordPolicyNotFoundException(policy)))))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -91,9 +92,8 @@ public class PasswordPolicyResource extends AbstractDomainResource {
             description = "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain " +
                     "or DOMAIN_SETTINGS[UPDATE] permission on the specified environment " +
                     "or DOMAIN_SETTINGS[UPDATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Password Policy successfully updated"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "200", description = "Password Policy successfully updated", content = @Content(schema = @Schema(implementation = PasswordPolicy.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -107,7 +107,7 @@ public class PasswordPolicyResource extends AbstractDomainResource {
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(() -> new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> passwordPolicyService.update(ReferenceType.DOMAIN, domain, policy, updatePasswordPolicy, authenticatedUser))
-                .doOnError(error -> log.error("Update Password Policy fails: ", error)))
+                        .doOnError(error -> log.error("Update Password Policy fails: ", error)))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -119,9 +119,11 @@ public class PasswordPolicyResource extends AbstractDomainResource {
             description = "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain " +
                     "or DOMAIN_SETTINGS[UPDATE] permission on the specified environment " +
                     "or DOMAIN_SETTINGS[UPDATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Default policy updated"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+
+    @ApiResponse(responseCode = "200", description = "Default policy updated",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = PasswordPolicy.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void setDefaultPolicy(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -145,9 +147,8 @@ public class PasswordPolicyResource extends AbstractDomainResource {
             description = "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain " +
                     "or DOMAIN_SETTINGS[UPDATE] permission on the specified environment " +
                     "or DOMAIN_SETTINGS[UPDATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Password Policy successfully deleted"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "204", description = "Password Policy successfully deleted")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -160,7 +161,7 @@ public class PasswordPolicyResource extends AbstractDomainResource {
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(() -> new DomainNotFoundException(domain)))
                         .flatMapCompletable(d -> passwordPolicyService.deleteAndUpdateIdp(ReferenceType.DOMAIN, d.getId(), policy, authenticatedUser))
-                .doOnError(error -> log.error("Delete Password Policy fails: ", error)))
+                        .doOnError(error -> log.error("Delete Password Policy fails: ", error)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 

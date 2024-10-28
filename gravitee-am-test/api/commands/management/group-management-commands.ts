@@ -21,7 +21,7 @@ export const createGroup = (domainId, accessToken, group) =>
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    group: group,
+    newGroup: group,
   });
 
 export const getGroup = (domainId, accessToken, groupId) =>
@@ -52,7 +52,7 @@ export const updateGroup = (domainId, accessToken, groupId, payload) =>
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     group: groupId,
-    group2: payload,
+    updateGroup: payload,
   });
 
 export const deleteGroup = (domainId, accessToken, groupId) =>
@@ -69,7 +69,7 @@ export const addRolesToGroup = (domainId, accessToken, groupId, roles: Array<str
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     group: groupId,
-    body: roles,
+    requestBody: roles,
   });
 
 export const revokeRoleToGroup = (domainId, accessToken, groupId, role) =>

@@ -21,5 +21,5 @@ export const preview = (domainId, accessToken, body) =>
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    body,
+      previewRequest: body,
   });

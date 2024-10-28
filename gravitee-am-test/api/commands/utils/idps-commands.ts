@@ -22,8 +22,22 @@ export const createMongoIdp = async (domainId, accessToken) => {
     external: false,
     type: 'mongo-am-idp',
     domainWhitelist: [],
-    configuration:
-      '{"uri":"mongodb://localhost:27017","host":"localhost","port":27017,"enableCredentials":false,"databaseCredentials":"gravitee-am","database":"gravitee-am","usersCollection":"idp-test-users","findUserByUsernameQuery":"{$or: [{username: ?}, {contract: ?}]}","findUserByEmailQuery":"{email: ?}","usernameField":"username","passwordField":"password","passwordEncoder":"None","useDedicatedSalt":false,"passwordSaltLength":32}',
+    configuration: JSON.stringify({
+      uri: 'mongodb://localhost:27017',
+      host: 'localhost',
+      port: 27017,
+      enableCredentials: false,
+      databaseCredentials: 'gravitee-am',
+      database: 'gravitee-am',
+      usersCollection: 'idp-test-users',
+      findUserByUsernameQuery: '{$or: [{username: ?}, {contract: ?}]}',
+      findUserByEmailQuery: '{email: ?}',
+      usernameField: 'username',
+      passwordField: 'password',
+      passwordEncoder: 'None',
+      useDedicatedSalt: false,
+      passwordSaltLength: 32,
+    }),
     name: 'another-idp',
   });
 };

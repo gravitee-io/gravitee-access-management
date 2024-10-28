@@ -18,7 +18,7 @@ import { getUserApi } from '@management-commands/service/utils';
 export const createOrganisationUser = (accessToken, user) =>
   getUserApi(accessToken).createOrganisationUser({
     organizationId: process.env.AM_DEF_ORG_ID,
-    user: user,
+    newOrganizationUser: user,
   });
 
 export const getOrganisationUserPage = (accessToken, page: number = null, size: number = null) => {
@@ -35,7 +35,7 @@ export const updateOrganisationUsername = (accessToken, userId, username) =>
   getUserApi(accessToken).updateOrganisationUsername({
     organizationId: process.env.AM_DEF_ORG_ID,
     user: userId,
-    username: { username: username },
+    usernameEntity: { username: username },
   });
 
 export const deleteOrganisationUser = (accessToken, userId) =>

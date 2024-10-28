@@ -47,8 +47,7 @@ let user = {
 jest.setTimeout(200000);
 
 beforeAll(async () => {
-  const adminTokenResponse = await requestAdminAccessToken();
-  managementApiAccessToken = adminTokenResponse.body.access_token;
+  managementApiAccessToken = await requestAdminAccessToken();
   expect(managementApiAccessToken).toBeDefined();
   domain = await createDomain(managementApiAccessToken, 'jest-logout', 'test end-user logout');
   expect(domain).toBeDefined();

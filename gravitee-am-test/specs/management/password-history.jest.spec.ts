@@ -16,12 +16,13 @@
 import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
-import { createDomain, deleteDomain, patchDomain, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, deleteDomain, patchDomain,setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import { buildCreateAndTestUser, resetUserPassword } from '@management-commands/user-management-commands';
 
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { ResponseError } from '../../api/management/runtime';
 import { createPasswordPolicy } from '@management-commands/password-policy-management-commands';
+import {uniqueName} from '@utils-commands/misc';
 
 global.fetch = fetch;
 jest.setTimeout(200000);
@@ -32,11 +33,8 @@ let user;
 
 describe('Testing password history...', () => {
   beforeAll(async () => {
-    const adminTokenResponse = await requestAdminAccessToken();
-    accessToken = adminTokenResponse.body.access_token;
-    domain = await createDomain(accessToken, 'domain-ph-users', faker.company.catchPhraseDescriptor()).then(async (createdDomain) => {
-      return await startDomain(createdDomain.id, accessToken);
-    });
+    accessToken = await requestAdminAccessToken()
+    domain = await setupDomainForTest(uniqueName('domain-ph-users'), {accessToken, waitForStart: false}).then(it=>it.domain)
 
     await createPasswordPolicy(domain.id, accessToken, {
       name: 'default',
@@ -44,7 +42,7 @@ describe('Testing password history...', () => {
       oldPasswords: 3,
     });
 
-    user = await buildCreateAndTestUser(domain.id, accessToken, 0, false);
+    user = await buildCreateAndTestUser(domain.id, accessToken, -1, false);
     await new Promise((r) => setTimeout(r, 1000));
   });
 

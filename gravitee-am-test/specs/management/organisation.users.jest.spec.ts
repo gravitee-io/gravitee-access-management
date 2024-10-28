@@ -25,52 +25,79 @@ import {
 } from '@management-commands/organisation-user-commands';
 
 import { requestAccessToken, requestAdminAccessToken } from '@management-commands/token-management-commands';
+import {buildTestUser,bulkCreateOrgUsers} from '@management-commands/user-management-commands';
+import {BulkResponse} from '@management-models/BulkResponse';
+import {checkBulkResponse,uniqueName} from '@utils-commands/misc';
+import {User} from '@management-models/User';
+import {waitFor} from '@management-commands/domain-management-commands';
 
 global.fetch = fetch;
 
 let accessToken;
-let organisationUser;
+let organisationUser: User;
 const password = 'SomeP@ssw0rd';
 let organisationUserToken;
 
 beforeAll(async () => {
-  const adminTokenResponse = await requestAdminAccessToken();
-  accessToken = adminTokenResponse.body.access_token;
+  accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
+
+  const firstName = 'orgUserFirstName';
+  const lastName = 'orgUserLastName';
+  const payload = {
+    firstName: firstName,
+    lastName: lastName,
+    email: `${firstName}.${lastName}@mail.com`,
+    username: uniqueName('org').toLowerCase(),
+    password: password,
+    preRegistration: false,
+  };
+  organisationUser = await createOrganisationUser(accessToken, payload);
+  expect(organisationUser.id).toBeDefined();
+  expect(organisationUser.firstName).toEqual(payload.firstName);
+  expect(organisationUser.lastName).toEqual(payload.lastName);
+  expect(organisationUser.username).toEqual(payload.username);
+  expect(organisationUser.email).toEqual(payload.email);
+  await waitFor(3000)
+  console.log(`using user: ${organisationUser.username}:${password}`)
 });
 
-describe('when using the users commands', () => {
-  it('should create organisation user', async () => {
-    const firstName = 'orgUserFirstName';
-    const lastName = 'orgUserLastName';
-    const payload = {
-      firstName: firstName,
-      lastName: lastName,
-      email: `${firstName}.${lastName}@mail.com`,
-      username: 'organization_username',
-      password: password,
-      preRegistration: false,
-    };
-    organisationUser = await createOrganisationUser(accessToken, payload);
-    expect(organisationUser.id).toBeDefined();
-    expect(organisationUser.firstName).toEqual(payload.firstName);
-    expect(organisationUser.lastName).toEqual(payload.lastName);
-    expect(organisationUser.username).toEqual(payload.username);
-    expect(organisationUser.email).toEqual(payload.email);
+describe('when creating organization users in bulk', () => {
+  it('should create all users ', async () => {
+    let usersToCreate = [];
+    for (let i = 0; i < 10; i++) {
+      usersToCreate.push(buildTestUser(Math.floor(Math.random() * 100000)));
+    }
+    console.log('Creating org users: ', usersToCreate);
+    const response = await bulkCreateOrgUsers(accessToken, usersToCreate);
+    console.log('Response', JSON.stringify(response, null, 2));
+    expectAllUsersCreatedOk(response, usersToCreate.length);
+  });
+
+  it('should create org users & service accounts and report errors', async () => {
+    const numUniqueUsersToCreate = 10;
+    let usersToCreate = [];
+    for (let i = 0; i < 10; i++) {
+      const serviceAccount = Math.random() < 0.4; // make some of the users service accounts
+      return buildTestUser(Math.floor(Math.random() * 100000), { serviceAccount });
+    }
+    usersToCreate.push(usersToCreate[4]); // duplicate one user
+    console.log('Creating org users: ', usersToCreate);
+    const response = await bulkCreateOrgUsers(accessToken, usersToCreate);
+    console.log('Response', JSON.stringify(response, null, 2));
+    expectAllUsersCreatedExceptOneError(response, usersToCreate);
   });
 });
 
 describe('when managing users at organisation level', () => {
   it('it should get current user', async () => {
-    const responseAccess = await requestAccessToken(organisationUser.username, password);
-    organisationUserToken = responseAccess.body.access_token;
-
+    organisationUserToken = await requestAccessToken(organisationUser.username, password);
     const currentOrgUser = await getCurrentUser(organisationUserToken);
     expect(currentOrgUser.email).toEqual(organisationUser.email);
   });
 
   it('should change organisation username', async () => {
-    const username = 'my-new-username';
+    const username = uniqueName('my-new-username').toLowerCase();
     organisationUser = await updateOrganisationUsername(accessToken, organisationUser.id, username);
     expect(organisationUser.username).toEqual(username);
   });
@@ -86,8 +113,7 @@ describe('when managing users at organisation level', () => {
   });
 
   it('it should get current user with new username', async () => {
-    const responseAccess = await requestAccessToken(organisationUser.username, password);
-    const newOrganisationUserToken = responseAccess.body.access_token;
+    const newOrganisationUserToken = await requestAccessToken(organisationUser.username, password);
 
     expect(newOrganisationUserToken).toBeDefined();
     expect(newOrganisationUserToken).not.toEqual(organisationUserToken);
@@ -101,3 +127,44 @@ afterAll(async () => {
     expect(userPage.data.find((user) => user.id === organisationUser.id)).toBeUndefined();
   }
 });
+
+function expectAllUsersCreatedOk(response: BulkResponse, numberOfUsers: number) {
+  console.log('Response', JSON.stringify(response, null, 2));
+  let ids = [];
+  checkBulkResponse(response, numberOfUsers, true, {
+    201: {
+      count: numberOfUsers,
+      assertions: (result) => {
+        expect(result.httpStatus).toBe(201);
+        expect(result.body).toBeDefined();
+        const newUserId = result.body.id;
+        expect(newUserId).toBeDefined();
+        expect(ids).not.toContain(newUserId);
+        ids.push(newUserId);
+      },
+    },
+  });
+}
+function expectAllUsersCreatedExceptOneError(response: BulkResponse, usersToCreate: any[]) {
+  let ids = [];
+  checkBulkResponse(response, usersToCreate.length, false, {
+    201: {
+      count: usersToCreate.length - 1,
+      assertions: (result) => {
+        expect(result.body).toBeDefined();
+        const newUserId = result.body.id;
+        expect(newUserId).toBeDefined();
+        expect(ids).not.toContain(newUserId);
+        ids.push(newUserId);
+      },
+    },
+    400: {
+      count: 1,
+      assertions: (result) => {
+        expect(result.body).toBeUndefined();
+        expect(result.errorDetails).toHaveProperty('error');
+        expect(result.errorDetails).toHaveProperty('message');
+      },
+    },
+  });
+}

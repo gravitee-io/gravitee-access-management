@@ -21,7 +21,7 @@ export const createApplication = (domainId, accessToken, body) =>
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    application: body,
+    newApplication: body,
   });
 
 export const getApplication = (domainId, accessToken, applicationId) =>
@@ -52,7 +52,7 @@ export const patchApplication = (domainId, accessToken, body, applicationId) =>
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     application: applicationId,
-    application2: body,
+    patchApplication: body,
   });
 
 export const updateApplication = (domainId, accessToken, body, applicationId) =>
@@ -61,7 +61,7 @@ export const updateApplication = (domainId, accessToken, body, applicationId) =>
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     application: applicationId,
-    application2: body,
+    patchApplication: body,
   });
 
 export const deleteApplication = (domainId, accessToken, applicationId) =>
@@ -94,5 +94,5 @@ export const updateApplicationFlows = (domainId, accessToken, applicationId, flo
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     application: applicationId,
-    flows,
+    flow: flows,
   });

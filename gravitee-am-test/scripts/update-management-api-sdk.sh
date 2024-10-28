@@ -46,9 +46,4 @@ if [[ $UPDATE_SDK_STATUS -ne 0 ]]; then
   exit $UPDATE_SDK_STATUS
 fi
 
-# Mac Users, make sure you have GNU sed
-# $ brew install gnu-sed and replace this with gsed
-# Typescript 3.6+ replacement
-sed -ri 's#GlobalFetch#WindowOrWorkerGlobalScope#g' "$MANAGEMENT_SDK_PATH/runtime.ts"
-
 exit 0

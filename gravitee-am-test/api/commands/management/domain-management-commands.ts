@@ -14,18 +14,45 @@
  * limitations under the License.
  */
 
-import {getDomainApi, getDomainManagerUrl} from './service/utils';
-import {Domain} from '../../management/models';
-import {retryUntil} from '@utils-commands/retry';
-import {getWellKnownOpenIdConfiguration} from '@gateway-commands/oauth-oidc-commands';
+import { getDomainApi, getDomainManagerUrl } from './service/utils';
+import { Domain } from '../../management/models';
+import { retryUntil } from '@utils-commands/retry';
+import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
+import { requestAdminAccessToken } from '@management-commands/token-management-commands';
+import { expect } from '@jest/globals';
+import faker from 'faker';
 
 const request = require('supertest');
+
+export type DomainOidcConfig = { userinfo_endpoint: string; token_endpoint: string; end_session_endpoint: string; [key: string]: any };
+export type DomainWithOidcConfig = { domain: Domain; oidcConfig?: DomainOidcConfig };
+
+export const setupDomainForTest = async (
+  domainName: string,
+  options?: { accessToken?: string; waitForStart?: boolean },
+): Promise<DomainWithOidcConfig> => {
+  const token = options.accessToken ?? (await requestAdminAccessToken());
+  expect(token).toBeDefined();
+
+  const createdDomain = await createDomain(token, domainName, faker.company.catchPhraseDescriptor());
+  expect(createdDomain).toBeDefined();
+  expect(createdDomain.id).toBeDefined();
+
+  const domainStarted = await startDomain(createdDomain.id, token);
+  expect(domainStarted).toBeDefined();
+  expect(domainStarted.id).toEqual(createdDomain.id);
+  if (options.waitForStart === true) {
+    return waitForDomainStart(createdDomain);
+  } else {
+    return { domain: domainStarted, oidcConfig: undefined };
+  }
+};
 
 export const createDomain = (accessToken, name, description): Promise<Domain> =>
   getDomainApi(accessToken).createDomain({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
-    domain: {
+    newDomain: {
       name: name,
       description: description,
     },
@@ -45,10 +72,10 @@ export const patchDomain = (domainId, accessToken, body): Promise<Domain> =>
     // domain in path param
     domain: domainId,
     // domain payload
-    domain2: body,
+    patchDomain: body,
   });
 
-export const startDomain = (domainId, accessToken): Promise<Domain> => patchDomain(domainId, accessToken, { enabled: true });
+export const startDomain = (domainId: string, accessToken): Promise<Domain> => patchDomain(domainId, accessToken, { enabled: true });
 
 export const getDomain = (domainId, accessToken): Promise<Domain> =>
   getDomainApi(accessToken).findDomain({
@@ -84,21 +111,21 @@ export const updateDomainFlows = (domainId, accessToken, flows) =>
     environmentId: process.env.AM_DEF_ENV_ID,
     // domain in path param
     domain: domainId,
-    flows,
+    flow: flows,
   });
 
-export const waitForDomainStart: (domain: Domain) => Promise<{domain:Domain, oidcConfig:any}> = (domain: Domain) => {
+export const waitForDomainStart: (domain: Domain) => Promise<DomainWithOidcConfig> = (domain: Domain) => {
   const start = Date.now();
   return retryUntil(
-      () => getWellKnownOpenIdConfiguration(domain.hrid) as Promise<any>,
-      (res) => res.status == 200,
-      {
-        timeoutMillis: 10000,
-        onDone: () => console.log(`domain "${domain.hrid}" ready after ${(Date.now() - start) / 1000}s`),
-        onRetry: () => console.debug(`domain "${domain.hrid}" not ready yet`),
-      },
-  ).then(response => ({domain, oidcConfig: response.text}));
-}
+    () => getWellKnownOpenIdConfiguration(domain.hrid) as Promise<any>,
+    (res) => res.status == 200,
+    {
+      timeoutMillis: 10000,
+      onDone: () => console.log(`domain "${domain.hrid}" ready after ${(Date.now() - start) / 1000}s`),
+      onRetry: () => console.debug(`domain "${domain.hrid}" not ready yet`),
+    },
+  ).then((response) => ({ domain, oidcConfig: response.body }));
+};
 
 export const waitForDomainSync = () => waitFor(10000);
 export const waitFor = (duration) => new Promise((r) => setTimeout(r, duration));

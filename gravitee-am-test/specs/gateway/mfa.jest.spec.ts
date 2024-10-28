@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
-import { createDomain, deleteDomain, startDomain, waitFor } from '@management-commands/domain-management-commands';
+import {createDomain, deleteDomain, setupDomainForTest,startDomain, waitFor, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 
@@ -24,7 +24,6 @@ import { createFactor } from '@management-commands/factor-management-commands';
 import { createResource } from '@management-commands/resource-management-commands';
 import {
   extractXsrfTokenAndActionResponse,
-  getWellKnownOpenIdConfiguration,
   logoutUser,
   performFormPost,
   performGet,
@@ -34,6 +33,7 @@ import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
 import { TOTP } from 'otpauth';
 import * as faker from 'faker';
 import { initiateLoginFlow } from '@gateway-commands/login-commands';
+import { uniqueName } from '@utils-commands/misc';
 
 const cheerio = require('cheerio');
 
@@ -42,8 +42,6 @@ global.fetch = fetch;
 let domain;
 let accessToken;
 let mockFactor;
-let smsResource;
-let smtpResource;
 let emailFactor;
 let openIdConfiguration;
 let smsTestApp;
@@ -61,20 +59,17 @@ const sharedSecret = 'K546JFR2PK5CGQLLUTFG4W46IKDFWWUE';
 jest.setTimeout(200000);
 
 beforeAll(async () => {
-  const adminTokenResponse = await requestAdminAccessToken();
-  accessToken = adminTokenResponse.body.access_token;
+  accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
-  domain = await createDomain(accessToken, 'mfa-test-domain', 'test mfa');
+  domain = await createDomain(accessToken,uniqueName('mfa-test-domain'), 'mfa test domain')
 
-  smsResource = await createSMSResource(validMFACode, domain, accessToken);
-  mockFactor = await createMockFactor(smsResource, domain, accessToken);
+  mockFactor = await createSMSResource(validMFACode, domain, accessToken).then((smsResource) =>
+    createMockFactor(smsResource, domain, accessToken),
+  );
 
-  smtpResource = await createSMTPResource(domain, accessToken);
-  emailFactor = await createEmailFactor(smtpResource, domain, accessToken);
+  emailFactor = await createSMTPResource(domain, accessToken).then((smtpResource) => createEmailFactor(smtpResource, domain, accessToken));
 
   recoveryCodeFactor = await createRecoveryCodeFactor(domain, accessToken);
-
-  domain = await startDomain(domain.id, accessToken);
 
   smsTestApp = await createMfaApp(domain, accessToken, [mockFactor.id]);
   bruteForceTestApp = await createBruteForceTestApp(mockFactor, domain, accessToken, mfaChallengeAttemptsResetTime, [mockFactor.id]);
@@ -89,10 +84,9 @@ beforeAll(async () => {
    * At this point I haven't found a function which is similar to retry until specific http code is returned.
    * jest.retryTimes(numRetries, options) didn't applicable in this case.
    * */
-  await waitFor(10000);
-
-  const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
-  openIdConfiguration = result.body;
+  let started = await startDomain(domain.id, accessToken).then(waitForDomainStart);
+  domain = started.domain;
+  openIdConfiguration = started.oidcConfig;
 });
 
 describe('MFA', () => {
@@ -127,10 +121,13 @@ describe('MFA', () => {
        * These assertions will fail or need to be updated if 'mfa_rate' configuration is changed
        */
       const expectedCode = [200, 200, 302];
+
       for (const responseCode of expectedCode) {
+        console.log("Getting " + authorize2.headers['location'])
         const rateLimitException = await performGet(authorize2.headers['location'], '', {
           Cookie: authorize2.headers['set-cookie'],
-        }).expect(responseCode);
+        })
+        expect(rateLimitException.status).toBe(responseCode);
 
         if (responseCode === 302) {
           expect(rateLimitException.headers['location']).toBeDefined();
@@ -686,6 +683,7 @@ const createBruteForceTestApp = async (smsFactor, domain, accessToken, mfaChalle
     }),
   );
 
+  await waitFor(1000)
   expect(application).toBeDefined();
   expect(application.settings.oauth.clientId).toBeDefined();
 

@@ -73,16 +73,17 @@ public class ExtensionGrantsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List registered extension grants for a security domain",
+    @Operation(
+            operationId = "listExtensionGrants",
+            summary = "List registered extension grants for a security domain",
             description = "User must have the DOMAIN_EXTENSION_GRANT[LIST] permission on the specified domain " +
                     "or DOMAIN_EXTENSION_GRANT[LIST] permission on the specified environment " +
                     "or DOMAIN_EXTENSION_GRANT[LIST] permission on the specified organization. " +
                     "Each returned extension grant is filtered and contains only basic information such as id, name and type.")
-    @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List registered extension grants for a security domain",
                     content = @Content(mediaType =  "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ExtensionGrant.class)))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+                            array = @ArraySchema(schema = @Schema(implementation = ExtensionGrant.class))))
+            @ApiResponse(responseCode = "500", description = "Internal server error")
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -102,13 +103,14 @@ public class ExtensionGrantsResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Create a extension grant",
+    @Operation(
+            operationId = "createExtensionGrant",
+            summary = "Create a extension grant",
             description = "User must have the DOMAIN_EXTENSION_GRANT[CREATE] permission on the specified domain " +
                     "or DOMAIN_EXTENSION_GRANT[CREATE] permission on the specified environment " +
                     "or DOMAIN_EXTENSION_GRANT[CREATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Extension grant successfully created"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+            @ApiResponse(responseCode = "201", description = "Extension grant successfully created", content = @Content(schema = @Schema(implementation = ExtensionGrant.class)))
+            @ApiResponse(responseCode = "500", description = "Internal server error")
     public void create(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

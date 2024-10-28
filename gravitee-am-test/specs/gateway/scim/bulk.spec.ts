@@ -37,8 +37,7 @@ let scimEndpoint: string;
 jest.setTimeout(200000);
 
 beforeAll(async function () {
-  const adminTokenResponse = await requestAdminAccessToken();
-  mngAccessToken = adminTokenResponse.body.access_token;
+  mngAccessToken = await requestAdminAccessToken();
   expect(mngAccessToken).toBeDefined();
 
   domain = await createDomain(mngAccessToken, 'bulk-scim', 'Domain used to test Bulk SCIM requests');

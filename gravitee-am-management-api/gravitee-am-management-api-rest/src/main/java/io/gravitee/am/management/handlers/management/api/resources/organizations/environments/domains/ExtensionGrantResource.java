@@ -17,10 +17,10 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.ExtensionGrantService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.ExtensionGrantNotFoundException;
@@ -66,15 +66,16 @@ public class ExtensionGrantResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a extension grant",
+    @Operation(
+            operationId = "getExtensionGrant",
+            summary = "Get a extension grant",
             description = "User must have the DOMAIN_EXTENSION_GRANT[READ] permission on the specified domain " +
                     "or DOMAIN_EXTENSION_GRANT[READ] permission on the specified environment " +
                     "or DOMAIN_EXTENSION_GRANT[READ] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Extension grant successfully fetched",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ExtensionGrant.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "200", description = "Extension grant successfully fetched",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ExtensionGrant.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -99,15 +100,16 @@ public class ExtensionGrantResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Update a extension grant",
+    @Operation(
+            operationId = "updateExtensionGrant",
+            summary = "Update an extension grant",
             description = "User must have the DOMAIN_EXTENSION_GRANT[UPDATE] permission on the specified domain " +
                     "or DOMAIN_EXTENSION_GRANT[UPDATE] permission on the specified environment " +
                     "or DOMAIN_EXTENSION_GRANT[UPDATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Extension grant successfully updated",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ExtensionGrant.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "201", description = "Extension grant successfully updated",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ExtensionGrant.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -125,7 +127,8 @@ public class ExtensionGrantResource extends AbstractResource {
     }
 
     @DELETE
-    @Operation(summary = "Delete a extension grant",
+    @Operation(operationId = "deleteExtensionGrant",
+            summary = "Delete a extension grant",
             description = "User must have the DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified domain " +
                     "or DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified environment " +
                     "or DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified organization")

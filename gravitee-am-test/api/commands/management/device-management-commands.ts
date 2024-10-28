@@ -15,16 +15,14 @@
  */
 
 import { getDeviceIdentifiersApi } from './service/utils';
-import * as process from 'node:process';
 
 export const createDevice = (domainId, accessToken, body) =>
   getDeviceIdentifiersApi(accessToken).createDeviceIdentifier({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    deviceIdentifier: body,
+    newDeviceIdentifier: body,
   });
-
 export const deleteDevice = (domainId, accessToken, deviceId) =>
   getDeviceIdentifiersApi(accessToken).deleteDeviceIdentifier({
     organizationId: process.env.AM_DEF_ORG_ID,
@@ -54,5 +52,5 @@ export const updateDevice = (domainId, accessToken, deviceId, updateDevice) =>
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     deviceIdentifier: deviceId,
-    deviceIdentifier2: updateDevice,
+    updateDeviceIdentifier: updateDevice,
   });

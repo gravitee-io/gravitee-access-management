@@ -35,7 +35,6 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -75,16 +74,14 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            operationId = "listPasswordPolicies",
+    @Operation(operationId = "listPasswordPolicies",
             summary = "List registered password policies for a security domain",
             description = "User must have the DOMAIN_SETTINGS[READ] permission on the specified domain " +
                     "or DOMAIN_SETTINGS[READ] permission on the specified environment " +
                     "or DOMAIN_SETTINGS[READ] permission on the specified organization. ")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List registered password policies for a security domain", content = @Content(mediaType = "application/json",
-                    array = @ArraySchema(schema = @Schema(implementation = PasswordPolicyEntity.class)))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "200", description = "List registered password policies for a security domain", content = @Content(mediaType = "application/json",
+            array = @ArraySchema(schema = @Schema(implementation = PasswordPolicyEntity.class))))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -123,9 +120,9 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
             description = "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain " +
                     "or DOMAIN_SETTINGS[UPDATE] permission on the specified environment " +
                     "or DOMAIN_SETTINGS[UPDATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Password Policy successfully created"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @ApiResponse(responseCode = "201", description = "Password Policy successfully created", content = @Content(mediaType = "application/json",
+            schema = @Schema(implementation = PasswordPolicy.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public void create(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,

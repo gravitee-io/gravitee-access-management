@@ -23,5 +23,7 @@ export const requestAccessToken = (username: string, password: string) => {
     .post('/management/auth/token')
     .set('Authorization', 'Basic ' + btoa(`${username}:${password}`))
     .send({ grant_type: 'password', username: username, password: password })
-    .expect(200);
+    .expect(200)
+    .then((res) => res.body.access_token);
 };
+

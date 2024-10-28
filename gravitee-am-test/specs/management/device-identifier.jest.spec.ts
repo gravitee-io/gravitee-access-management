@@ -17,7 +17,7 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, startDomain, waitFor } from '@management-commands/domain-management-commands';
+import { createDomain, deleteDomain,setupDomainForTest, startDomain, waitFor } from '@management-commands/domain-management-commands';
 import {
   createDevice,
   deleteDevice,
@@ -25,6 +25,7 @@ import {
   listDeviceIdentifiers,
   updateDevice,
 } from '@management-commands/device-management-commands';
+import {uniqueName} from '@utils-commands/misc';
 
 global.fetch = fetch;
 
@@ -36,19 +37,8 @@ let deviceProId: any;
 jest.setTimeout(200000);
 
 beforeAll(async () => {
-  const adminTokenResponse = await requestAdminAccessToken();
-  accessToken = adminTokenResponse.body.access_token;
-  expect(accessToken).toBeDefined();
-
-  const createdDomain = await createDomain(accessToken, 'domain-certificate', faker.company.catchPhraseDescriptor());
-  expect(createdDomain).toBeDefined();
-  expect(createdDomain.id).toBeDefined();
-
-  const domainStarted = await startDomain(createdDomain.id, accessToken);
-  expect(domainStarted).toBeDefined();
-  expect(domainStarted.id).toEqual(createdDomain.id);
-
-  domain = domainStarted;
+  accessToken = await requestAdminAccessToken()
+  domain = await setupDomainForTest(uniqueName("domain-device-id"), {accessToken}).then(it=>it.domain)
 });
 
 describe('when creating device identifier', () => {

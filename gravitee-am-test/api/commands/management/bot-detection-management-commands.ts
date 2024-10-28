@@ -13,28 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { getBotDetecionApi } from '@management-commands/service/utils';
+import { getBotDetectionApi } from '@management-commands/service/utils';
 import process from 'node:process';
 
 export const createBotDetection = (domainId, accessToken, body) =>
-  getBotDetecionApi(accessToken).createBotDetection({
+  getBotDetectionApi(accessToken).createBotDetection({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    detection: body,
+    newBotDetection: body,
   });
 
 export const updateBotDetection = (domainId, accessToken, botDetectionId, body) =>
-  getBotDetecionApi(accessToken).updateBotDetection({
+  getBotDetectionApi(accessToken).updateBotDetection({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     botDetection: botDetectionId,
-    identity: body,
+    updateBotDetection: body
   });
 
 export const getBotDetection = (domainId, accessToken, botDetectionId) =>
-  getBotDetecionApi(accessToken).getBotDetection({
+  getBotDetectionApi(accessToken).getBotDetection({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
@@ -42,14 +42,14 @@ export const getBotDetection = (domainId, accessToken, botDetectionId) =>
   });
 
 export const listBotDetection = (domainId, accessToken) =>
-  getBotDetecionApi(accessToken).listBotDetections({
+  getBotDetectionApi(accessToken).listBotDetections({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
   });
 
 export const deleteBotDetection = (domainId, accessToken, botDetectionId) =>
-  getBotDetecionApi(accessToken).deleteBotDetection({
+  getBotDetectionApi(accessToken).deleteBotDetection({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
