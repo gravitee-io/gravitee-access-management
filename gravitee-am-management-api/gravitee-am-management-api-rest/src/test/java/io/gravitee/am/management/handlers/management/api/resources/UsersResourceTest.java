@@ -180,13 +180,8 @@ public class UsersResourceTest extends JerseySpringTest {
         Page<User> values = readEntity(response, new TypeReference<>() {
         });
 
-<<<<<<< HEAD
-        assertEquals(0, values.getCurrentPage());
-        assertEquals(2, values.getTotalCount());
-=======
         assertThat(values.getCurrentPage()).isZero();
         assertThat(values.getTotalCount()).isEqualTo(2);
->>>>>>> b5ef44e807 (Disable creating service users in domains (#5076))
         final Collection<User> data = values.getData();
 
         assertTrue(getFilteredElements(data, User::getId).containsAll(List.of("user-id-1", "domain-id-2")));
@@ -232,13 +227,8 @@ public class UsersResourceTest extends JerseySpringTest {
         Page<User> values = readEntity(response, new TypeReference<>() {
         });
 
-<<<<<<< HEAD
-        assertEquals(0, values.getCurrentPage());
-        assertEquals(2, values.getTotalCount());
-=======
         assertThat(values.getCurrentPage()).isZero();
         assertThat(values.getTotalCount()).isEqualTo(2);
->>>>>>> b5ef44e807 (Disable creating service users in domains (#5076))
         final Collection<User> data = values.getData();
 
         assertTrue(getFilteredElements(data, User::getId).containsAll(List.of("user-id-1", "domain-id-2")));
@@ -418,13 +408,8 @@ public class UsersResourceTest extends JerseySpringTest {
         Page<User> values = readEntity(response, new TypeReference<>() {
         });
 
-<<<<<<< HEAD
-        assertEquals(0, values.getCurrentPage());
-        assertEquals(3, values.getTotalCount());
-=======
         assertThat(values.getCurrentPage()).isZero();
         assertThat(values.getTotalCount()).isEqualTo(3);
->>>>>>> b5ef44e807 (Disable creating service users in domains (#5076))
         final Collection<User> data = values.getData();
 
         assertTrue(getFilteredElements(data, User::getId).containsAll(List.of("service-id-1", "user-id-2", "user-id-3")));
