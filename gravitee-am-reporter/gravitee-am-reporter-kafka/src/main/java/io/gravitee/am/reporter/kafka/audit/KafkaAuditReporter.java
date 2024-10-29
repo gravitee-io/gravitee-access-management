@@ -39,6 +39,7 @@ import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.util.StringUtils;
 
@@ -55,6 +56,8 @@ import java.util.Properties;
 public class KafkaAuditReporter extends AbstractService<Reporter> implements AuditReporter {
 
     private static final String SCHEMA_REGISTRY_URL_KEY = "schema.registry.url";
+
+    private static final String SASL_JAAS_CONFIG_PLACEHOLDER = "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";";
 
 
     private final Vertx vertx;
@@ -162,6 +165,10 @@ public class KafkaAuditReporter extends AbstractService<Reporter> implements Aud
             properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JacksonSerializer.class);
         }
         properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+
+        if (StringUtils.hasText(config.getUsername()) && StringUtils.hasText(config.getPassword())) {
+            properties.put(SaslConfigs.SASL_JAAS_CONFIG, String.format(SASL_JAAS_CONFIG_PLACEHOLDER, config.getUsername(), config.getPassword()));
+        }
 
         List<Map<String, String>> additionalProperties = this.config.getAdditionalProperties();
         if (additionalProperties != null && !additionalProperties.isEmpty()) {
