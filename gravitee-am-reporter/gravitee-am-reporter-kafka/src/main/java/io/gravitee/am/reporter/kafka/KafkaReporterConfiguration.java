@@ -35,6 +35,8 @@ public class KafkaReporterConfiguration implements ReporterConfiguration {
   private String bootstrapServers;
   private String topic;
   private String acks;
+  private String username;
+  private String password;
   private String schemaRegistryUrl;
   private List<Map<String, String>> additionalProperties;
 

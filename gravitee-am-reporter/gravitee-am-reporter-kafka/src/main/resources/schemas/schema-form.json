@@ -32,6 +32,17 @@
       "description": "Host and port of schema registry (e.g. http://localhost:8081). Supported serializers: JSON.",
       "pattern": "^(http|https)://"
     },
+    "username":{
+      "type": "string",
+      "title": "Username",
+      "description": "When username and password is not empty, the following producer configuration will be created: \nsasl.jaas.config = org.apache.kafka.common.security.plain.PlainLoginModule \nrequired username=\"your-username\" password=\"your-username-secret\";"
+    },
+    "password": {
+      "type" : "string",
+      "title": "Password",
+      "description": "When username and password is not empty, the following producer configuration will be created: \nsasl.jaas.config = org.apache.kafka.common.security.plain.PlainLoginModule \nrequired username=\"your-username\" password=\"your-username-secret\";",
+      "sensitive" : true
+    },
     "additionalProperties": {
       "title": "Producer properties",
       "type": "array",
