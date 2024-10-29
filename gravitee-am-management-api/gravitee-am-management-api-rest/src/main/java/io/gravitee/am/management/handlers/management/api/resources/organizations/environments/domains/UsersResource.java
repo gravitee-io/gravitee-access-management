@@ -21,7 +21,9 @@ import io.gravitee.am.management.handlers.management.api.bulk.BulkRequest;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkResponse;
 import io.gravitee.am.management.handlers.management.api.model.UserEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractUsersResource;
-import io.gravitee.am.management.handlers.management.api.resources.model.BulkUpdateUser;
+import io.gravitee.am.management.handlers.management.api.schemas.BulkCreateUser;
+import io.gravitee.am.management.handlers.management.api.schemas.BulkDeleteUser;
+import io.gravitee.am.management.handlers.management.api.schemas.BulkUpdateUser;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
@@ -195,25 +197,13 @@ public class UsersResource extends AbstractUsersResource {
                     bulkRequest.processOneByOne(String.class, objectMapper, id -> userService.delete(ReferenceType.DOMAIN, domain.getId(), id, authenticatedUser)
                             .map(User::getId)
                             .map(BulkOperationResult::ok)
-            );
+                    );
             case UPDATE ->
                     bulkRequest.processOneByOne(BulkUpdateUser.UpdateUserWithId.class, objectMapper, updated -> userService.update(ReferenceType.DOMAIN, domain.getId(), updated.getId(), updated, authenticatedUser)
                             .map(UserEntity::new)
                             .map(BulkOperationResult::ok)
-                            .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex))));
+                    );
         };
-    }
-
-    private static class BulkCreateUser extends BulkRequest<NewUser> {
-        protected BulkCreateUser() {
-            super(Action.CREATE);
-        }
-    }
-
-    private static class BulkDeleteUser extends BulkRequest<String> {
-        protected BulkDeleteUser() {
-            super(Action.DELETE);
-        }
     }
 
     @Path("{user}")

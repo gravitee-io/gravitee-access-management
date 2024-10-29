@@ -21,7 +21,9 @@ import io.gravitee.am.management.handlers.management.api.bulk.BulkRequest;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkResponse;
 import io.gravitee.am.management.handlers.management.api.model.UserEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractUsersResource;
-import io.gravitee.am.management.handlers.management.api.resources.model.BulkUpdateUser;
+import io.gravitee.am.management.handlers.management.api.schemas.BulkCreateOrganizationUser;
+import io.gravitee.am.management.handlers.management.api.schemas.BulkDeleteOrganizationUser;
+import io.gravitee.am.management.handlers.management.api.schemas.BulkUpdateUser;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
@@ -175,35 +177,21 @@ public class OrganizationUsersResource extends AbstractUsersResource {
     }
 
 
-    private static class BulkCreateOrganizationUser extends BulkRequest<NewOrganizationUser> {
-        public BulkCreateOrganizationUser() {
-            super(Action.CREATE);
-        }
-    }
-
-    private static class BulkDeleteOrganizationUser extends BulkRequest<String> {
-        protected BulkDeleteOrganizationUser() {
-            super(Action.DELETE);
-        }
-    }
-
     private SingleSource<?> processBulkRequest(BulkRequest.Generic bulkRequest, Organization organization, io.gravitee.am.identityprovider.api.User authenticatedUser) {
         return switch (bulkRequest.action()) {
-            case CREATE -> bulkRequest.processOneByOne(NewOrganizationUser.class, mapper, user -> organizationUserService.createGraviteeUser(organization, user, authenticatedUser)
+            case CREATE ->
+                    bulkRequest.processOneByOne(NewOrganizationUser.class, mapper, user -> organizationUserService.createGraviteeUser(organization, user, authenticatedUser)
                             .map(BulkOperationResult::created)
-                            .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex)))
-            );
+                    );
             case DELETE ->
                     bulkRequest.processOneByOne(String.class, mapper, id -> organizationUserService.delete(ReferenceType.ORGANIZATION, organization.getId(), id, authenticatedUser)
                             .map(User::getId)
                             .map(BulkOperationResult::ok)
-                            .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex)))
                     );
             case UPDATE ->
                     bulkRequest.processOneByOne(BulkUpdateUser.UpdateUserWithId.class, mapper, updateUser -> organizationUserService.update(ReferenceType.ORGANIZATION, organization.getId(), updateUser.getId(), updateUser, authenticatedUser)
                             .map(UserEntity::new)
                             .map(BulkOperationResult::ok)
-                            .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex)))
                     );
         };
 
