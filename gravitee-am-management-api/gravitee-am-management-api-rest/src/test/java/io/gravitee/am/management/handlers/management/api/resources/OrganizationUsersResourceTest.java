@@ -30,6 +30,7 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
+import io.gravitee.am.service.model.NewOrganizationUser;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.util.Maps;
@@ -53,10 +54,17 @@ import java.util.Set;
 import java.util.function.Function;
 
 import static io.gravitee.am.model.ReferenceType.ORGANIZATION;
+<<<<<<< HEAD
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
+=======
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+>>>>>>> b5ef44e807 (Disable creating service users in domains (#5076))
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
@@ -183,8 +191,13 @@ public class OrganizationUsersResourceTest extends JerseySpringTest {
         Page<User> values = readEntity(response, new TypeReference<>() {
         });
 
+<<<<<<< HEAD
         assertEquals(0, values.getCurrentPage());
         assertEquals(2, values.getTotalCount());
+=======
+        assertThat(values.getCurrentPage()).isZero();
+        assertThat(values.getTotalCount()).isEqualTo(2);
+>>>>>>> b5ef44e807 (Disable creating service users in domains (#5076))
         final Collection<User> data = values.getData();
 
         Assertions.assertTrue(getFilteredElements(data, User::getId).containsAll(List.of("user-id-1", "domain-id-2")));
@@ -230,8 +243,13 @@ public class OrganizationUsersResourceTest extends JerseySpringTest {
         Page<User> values = readEntity(response, new TypeReference<>() {
         });
 
+<<<<<<< HEAD
         assertEquals(0, values.getCurrentPage());
         assertEquals(2, values.getTotalCount());
+=======
+        assertThat(values.getCurrentPage()).isZero();
+        assertThat(values.getTotalCount()).isEqualTo(2);
+>>>>>>> b5ef44e807 (Disable creating service users in domains (#5076))
         final Collection<User> data = values.getData();
 
         Assertions.assertTrue(getFilteredElements(data, User::getId).containsAll(List.of("user-id-1", "domain-id-2")));
@@ -244,7 +262,7 @@ public class OrganizationUsersResourceTest extends JerseySpringTest {
     }
 
     private static <T> List<T> getFilteredElements(Collection<User> data, Function<User, T> mapper, boolean withNulls) {
-        return data.stream().map(mapper).filter(i -> withNulls || i != null).distinct().collect(toList());
+        return data.stream().map(mapper).filter(i -> withNulls || i != null).distinct().toList();
     }
 
     @Test
@@ -311,7 +329,7 @@ public class OrganizationUsersResourceTest extends JerseySpringTest {
 
         when(organizationUserService.createGraviteeUser(any(), any(), any())).thenReturn(Single.just(mockUser));
 
-        final NewUser entity = new NewUser();
+        final var entity = new NewOrganizationUser();
         entity.setUsername("test");
         entity.setPassword("password");
         entity.setEmail("email@acme.fr");
@@ -344,7 +362,7 @@ public class OrganizationUsersResourceTest extends JerseySpringTest {
 
         when(organizationUserService.createGraviteeUser(any(), any(), any())).thenReturn(Single.just(mockUser));
 
-        final NewUser entity = new NewUser();
+        final NewOrganizationUser entity = new NewOrganizationUser();
         entity.setUsername("test");
         entity.setEmail("test@test.com");
         entity.setServiceAccount(Boolean.TRUE);
@@ -411,8 +429,13 @@ public class OrganizationUsersResourceTest extends JerseySpringTest {
         Page<User> values = readEntity(response, new TypeReference<>() {
         });
 
+<<<<<<< HEAD
         assertEquals(0, values.getCurrentPage());
         assertEquals(3, values.getTotalCount());
+=======
+        assertThat(values.getCurrentPage()).isZero();
+        assertThat(values.getTotalCount()).isEqualTo(3);
+>>>>>>> b5ef44e807 (Disable creating service users in domains (#5076))
         final Collection<User> data = values.getData();
 
         Assertions.assertTrue(getFilteredElements(data, User::getId).containsAll(List.of("service-id-1", "user-id-2", "user-id-3")));
