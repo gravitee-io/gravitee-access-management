@@ -138,7 +138,7 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
                     notifierToUpdate.setConfiguration(updateNotifier.getConfiguration());
                     notifierToUpdate.setUpdatedAt(new Date());
 
-                    return  adNotifierRepository.update(notifierToUpdate)
+                    return adNotifierRepository.update(notifierToUpdate)
                             .flatMap(notifier -> {
                                 // create event for sync process
                                 Event event = new Event(Type.AUTH_DEVICE_NOTIFIER, new Payload(notifier.getId(), notifier.getReferenceType(), notifier.getReferenceId(), Action.UPDATE));
@@ -175,15 +175,15 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
                     // create event for sync process
                     Event event = new Event(Type.AUTH_DEVICE_NOTIFIER, new Payload(notifierId, ReferenceType.DOMAIN, domainId, Action.DELETE));
                     return Completable.fromSingle(adNotifierRepository.delete(notifierId)
-                            .andThen(eventService.create(event)))
+                                    .andThen(eventService.create(event)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(AuthDeviceNotifierAuditBuilder.class)
                                     .principal(principal)
                                     .type(EventType.AUTH_DEVICE_NOTIFIER_DELETED)
                                     .authDeviceNotifier(notifier)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthDeviceNotifierAuditBuilder.class)
                                     .principal(principal)
-                                    .reference(new Reference(notifier.getReferenceType(), notifier.getReferenceId()))
                                     .type(EventType.AUTH_DEVICE_NOTIFIER_DELETED)
+                                    .authDeviceNotifier(notifier)
                                     .throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {

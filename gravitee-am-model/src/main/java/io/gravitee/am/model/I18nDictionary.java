@@ -114,4 +114,8 @@ public class I18nDictionary {
     public void setEntries(Map<String, String> entries) {
         this.entries = new TreeMap<>(entries);
     }
+
+    public Reference getReference() {
+        return new Reference(getReferenceType(), getReferenceId());
+    }
 }

@@ -17,12 +17,12 @@ package io.gravitee.am.management.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.TagService;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Tag;
 import io.gravitee.am.repository.management.api.TagRepository;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.management.service.DomainService;
-import io.gravitee.am.management.service.TagService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.TagAlreadyExistsException;
 import io.gravitee.am.service.exception.TagNotFoundException;
@@ -153,8 +153,16 @@ public class TagServiceImpl implements TagService {
                 .switchIfEmpty(Maybe.error(new TagNotFoundException(tagId)))
                 .flatMapCompletable(tag -> removeTagsFromDomains(tagId)
                         .andThen(tagRepository.delete(tagId))
-                        .doOnComplete(() -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).principal(principal).type(EventType.TAG_DELETED).tag(tag)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).principal(principal).type(EventType.TAG_DELETED).reference(Reference.organization(organizationId)).throwable(throwable))))
+                        .doOnComplete(() -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class)
+                                .principal(principal)
+                                .type(EventType.TAG_DELETED)
+                                .tag(tag)))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class)
+                                .principal(principal)
+                                .type(EventType.TAG_DELETED)
+                                .reference(Reference.organization(organizationId))
+                                .tag(tag)
+                                .throwable(throwable))))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
@@ -165,7 +173,7 @@ public class TagServiceImpl implements TagService {
                 });
     }
 
-    private Completable removeTagsFromDomains(String tagId){
+    private Completable removeTagsFromDomains(String tagId) {
         // todo mre listAll() -> findByTag(tagId)
         return domainService.listAll()
                 .filter(domain -> domain.getTags() != null && domain.getTags().contains(tagId))

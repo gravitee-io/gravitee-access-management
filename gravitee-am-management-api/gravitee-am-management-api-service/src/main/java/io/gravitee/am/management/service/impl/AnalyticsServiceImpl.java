@@ -109,7 +109,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
             case Field.APPLICATION:
                 // applications are group by login attempts
                 queryBuilder.types(Collections.singletonList(EventType.USER_LOGIN));
-                queryBuilder.status(Status.SUCCESS);
+                queryBuilder.status(Status.SUCCESS.name());
                 queryBuilder.field("accessPoint.id");
                 return executeGroupBy(query.getDomain(), queryBuilder.build(), query.getType())
                         .flatMap(analyticsResponse -> fetchMetadata((AnalyticsGroupByResponse) analyticsResponse));
@@ -151,7 +151,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 .types(Collections.singletonList(query.getField().toUpperCase()));
         queryBuilder.from(query.getFrom());
         queryBuilder.to(query.getTo());
-        queryBuilder.status(Status.SUCCESS);
+        queryBuilder.status(Status.SUCCESS.name());
 
         return switch (query.getField()) {
             case Field.APPLICATION ->

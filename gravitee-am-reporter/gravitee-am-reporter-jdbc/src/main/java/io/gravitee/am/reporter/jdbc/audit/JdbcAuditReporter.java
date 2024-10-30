@@ -444,7 +444,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
     private Audit fillWith(Audit audit, AuditOutcomeJdbc entity) {
         AuditOutcome outcome = new AuditOutcome();
         outcome.setMessage(entity.getMessage());
-        outcome.setStatus(entity.getStatus());
+        outcome.setStatus(Status.valueOf(entity.getStatus()));
 
         audit.setOutcome(outcome);
         return audit;

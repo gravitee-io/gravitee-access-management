@@ -260,6 +260,7 @@ public class I18nDictionaryService {
                                                         .principal(principal)
                                                         .type(EventType.I18N_DICTIONARY_DELETED)
                                                         .reference(new Reference(dictionary.getReferenceType(), dictionary.getReferenceId()))
+                                                        .dictionary(dictionary)
                                                         .oldValue(dictionary)))
                                         .doOnError(throwable -> auditService.report(
                                                 AuditBuilder

@@ -266,7 +266,7 @@ public class AccountServiceImpl implements AccountService {
                     }
                     return credentialService.delete(id)
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(CredentialAuditBuilder.class).principal(principal).type(EventType.CREDENTIAL_DELETED).credential(credential)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(CredentialAuditBuilder.class).principal(principal).type(EventType.CREDENTIAL_DELETED).reference(new Reference(credential.getReferenceType(), credential.getReferenceId())).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(CredentialAuditBuilder.class).principal(principal).type(EventType.CREDENTIAL_DELETED).reference(new Reference(credential.getReferenceType(), credential.getReferenceId())).credential(credential).throwable(throwable)));
                 });
     }
 
