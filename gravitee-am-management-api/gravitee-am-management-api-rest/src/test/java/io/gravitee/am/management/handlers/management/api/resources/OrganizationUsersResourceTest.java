@@ -66,7 +66,7 @@ import static org.mockito.Mockito.when;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UsersResourceTest extends JerseySpringTest {
+public class OrganizationUsersResourceTest extends JerseySpringTest {
 
     public static final String ORGANIZATION_DEFAULT = "DEFAULT";
 
