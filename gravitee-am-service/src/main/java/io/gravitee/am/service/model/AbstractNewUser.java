@@ -79,8 +79,6 @@ public abstract class AbstractNewUser implements IUser {
 
     private Boolean forceResetPassword;
 
-    private Boolean serviceAccount;
-
     @Override
     @JsonIgnore
     public String getDisplayName() {
