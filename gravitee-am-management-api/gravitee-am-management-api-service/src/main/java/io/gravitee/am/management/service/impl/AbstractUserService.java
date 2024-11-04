@@ -121,6 +121,9 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
     }
 
     private Single<User> updateUser(ReferenceType referenceType, String referenceId, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal) {
+        if(id == null){
+            return Single.error(new InvalidUserException("User id is required"));
+        }
         return getUserService().findById(referenceType, referenceId, id).flatMap(user -> {
 
                     if (Boolean.FALSE.equals(user.isInternal()) && Boolean.TRUE.equals(updateUser.getForceResetPassword())) {
