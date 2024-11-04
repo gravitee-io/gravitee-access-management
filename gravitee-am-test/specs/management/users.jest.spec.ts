@@ -21,7 +21,6 @@ import { createDomain, deleteDomain, startDomain, waitForDomainStart } from '@ma
 import {
   buildCreateAndTestUser,
   buildTestUser,
-  bulkCreateOrgUsers,
   bulkCreateUsers,
   deleteUser,
   getAllUsers,
@@ -40,6 +39,8 @@ import { requestAdminAccessToken } from '@management-commands/token-management-c
 import { ResponseError } from '../../api/management/runtime';
 import { checkBulkResponse, uniqueName } from '@utils-commands/misc';
 import { BulkResponse } from '@management-models/BulkResponse';
+import { performPost } from '@gateway-commands/oauth-oidc-commands';
+import {createRandomString, getDomainManagerUrl} from '@management-commands/service/utils';
 
 global.fetch = fetch;
 jest.setTimeout(200000);
@@ -72,7 +73,6 @@ describe('when using the users commands', () => {
 });
 
 function expectAllUsersCreatedOk(response: BulkResponse, numberOfUsers: number) {
-  console.log('Response', JSON.stringify(response, null, 2));
   let ids = [];
   checkBulkResponse(response, numberOfUsers, true, {
     201: {
@@ -118,36 +118,74 @@ describe('when creating users in bulk', () => {
     for (let i = 0; i < 10; i++) {
       usersToCreate.push(buildTestUser(100 + i));
     }
-    console.log('Creating users: ', usersToCreate);
     const response = await bulkCreateUsers(domain.id, accessToken, usersToCreate);
-    console.log('Response', JSON.stringify(response, null, 2));
     expectAllUsersCreatedOk(response, usersToCreate.length);
   });
 
   it('should create users even if there are errors and report errors', async () => {
     let usersToCreate = [];
-    const numUniqueUsersToCreate = 10;
     for (let i = 0; i < 10; i++) {
       usersToCreate.push(buildTestUser(200 + i));
     }
     usersToCreate.push(buildTestUser(204)); // duplicate
-    console.log('Creating users: ', usersToCreate);
     const response = await bulkCreateUsers(domain.id, accessToken, usersToCreate);
-    console.log('Response', JSON.stringify(response, null, 2));
     expectAllUsersCreatedExceptOneError(response, usersToCreate.length);
   });
 
   it('should stop creating users when failOnErrors is set', async () => {
     let usersToCreate = [];
-    const numUniqueUsersToCreate = 10;
     usersToCreate.push(buildTestUser(304)); // will be duplicated
     for (let i = 0; i < 10; i++) {
       usersToCreate.push(buildTestUser(300 + i));
     }
-    console.log('Creating users: ', usersToCreate);
     const response = await bulkCreateUsers(domain.id, accessToken, usersToCreate, 1);
-    console.log('Response', JSON.stringify(response, null, 2));
     expectAllUsersCreatedExceptOneError(response, 6);
+  });
+
+  it('should not create users, more than 1MB', async () => {
+    let usersToCreate = [];
+    for (let i = 0; i < 500; i++) {
+      let user = {
+        firstName: createRandomString(1000),
+        lastName: createRandomString(1000),
+        email: `${createRandomString(1000)}.${createRandomString(1000)}@example.com`,
+        username: `${createRandomString(1000)}.${createRandomString(1000)}`,
+        password: 'Password1234567!',
+        preRegistration: false,
+        serviceAccount: false,
+      };
+      usersToCreate.push(user);
+    }
+
+    const request = {
+      action: 'CREATE',
+      items: usersToCreate,
+    };
+
+    const response = await performPost(getDomainManagerUrl(domain.id), '/users/bulk', JSON.stringify(request), {
+      'Content-type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    });
+    expect(response.status).toEqual(413);
+    expect(response.body.message).toEqual('The size of the bulk operation exceeds the maxPayloadSize (1048576).');
+  });
+
+  it('should not create users, more than 1000', async () => {
+    let usersToCreate = [];
+    for (let i = 0; i < 1001; i++) {
+      usersToCreate.push(buildTestUser(1001 + i));
+    }
+    const request = {
+      action: 'CREATE',
+      items: usersToCreate,
+    };
+
+    const response = await performPost(getDomainManagerUrl(domain.id), '/users/bulk', JSON.stringify(request), {
+      'Content-type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    });
+    expect(response.status).toEqual(413);
+    expect(response.body.message).toEqual('The bulk operation exceeds the maximum number of operations (1000).');
   });
 });
 
