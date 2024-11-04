@@ -69,6 +69,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -79,6 +80,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -1408,6 +1410,35 @@ public class UserServiceTest {
 
         verify(emailService, times(1)).send(domain, application, template, user);
     }
+
+    @Test
+    public void shouldNotUpdateUserWithoutAnId(){
+        TestObserver<User> observer = new TestObserver<>();
+        userService.update(ReferenceType.DOMAIN, "domain_id", null, new UpdateUser(), new DefaultUser())
+                .subscribe(observer);
+        observer.assertError(throwable -> throwable.getMessage().equals("User id is required"));
+    }
+
+    @Test
+    public void shouldThrowAnExceptionOnUpdateExternalUserWithForceResetPassword() {
+        // given
+        UpdateUser updateUser = new UpdateUser();
+        updateUser.setForceResetPassword(true);
+
+        User user = new User();
+        user.setInternal(false);
+
+        Mockito.when(userService.findById(any(), any(), any())).thenReturn(Single.just(user));
+
+        // when
+        TestObserver<User> observer = new TestObserver<>();
+        userService.update(ReferenceType.DOMAIN, "id", "id", updateUser, new DefaultUser())
+                .subscribe(observer);
+
+        // then
+        observer.assertError(throwable -> throwable.getMessage().equals("forceResetPassword is forbidden on external users"));
+    }
+
 
     private static Stream<Arguments> must_send_the_good_template_based_on_configuration() {
 
