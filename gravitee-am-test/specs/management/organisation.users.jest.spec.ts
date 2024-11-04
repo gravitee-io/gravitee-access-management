@@ -15,7 +15,7 @@
  */
 
 import fetch from 'cross-fetch';
-import { afterAll, beforeAll, expect } from '@jest/globals';
+import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import {
   createOrganisationUser,
   deleteOrganisationUser,
@@ -25,13 +25,16 @@ import {
 } from '@management-commands/organisation-user-commands';
 
 import { requestAccessToken, requestAdminAccessToken } from '@management-commands/token-management-commands';
-import {buildTestUser,bulkCreateOrgUsers} from '@management-commands/user-management-commands';
-import {BulkResponse} from '@management-models/BulkResponse';
-import {checkBulkResponse,uniqueName} from '@utils-commands/misc';
-import {User} from '@management-models/User';
-import {waitFor} from '@management-commands/domain-management-commands';
+import { buildTestUser, bulkCreateOrgUsers } from '@management-commands/user-management-commands';
+import { BulkResponse } from '@management-models/BulkResponse';
+import { checkBulkResponse, uniqueName } from '@utils-commands/misc';
+import { User } from '@management-models/User';
+import { waitFor } from '@management-commands/domain-management-commands';
+import { performPost } from '@gateway-commands/oauth-oidc-commands';
+import { createRandomString, getOrganisationManagementUrl } from '@management-commands/service/utils';
 
 global.fetch = fetch;
+jest.setTimeout(200000);
 
 let accessToken;
 let organisationUser: User;
@@ -58,8 +61,7 @@ beforeAll(async () => {
   expect(organisationUser.lastName).toEqual(payload.lastName);
   expect(organisationUser.username).toEqual(payload.username);
   expect(organisationUser.email).toEqual(payload.email);
-  await waitFor(3000)
-  console.log(`using user: ${organisationUser.username}:${password}`)
+  await waitFor(3000);
 });
 
 describe('when creating organization users in bulk', () => {
@@ -68,24 +70,65 @@ describe('when creating organization users in bulk', () => {
     for (let i = 0; i < 10; i++) {
       usersToCreate.push(buildTestUser(Math.floor(Math.random() * 100000)));
     }
-    console.log('Creating org users: ', usersToCreate);
     const response = await bulkCreateOrgUsers(accessToken, usersToCreate);
-    console.log('Response', JSON.stringify(response, null, 2));
     expectAllUsersCreatedOk(response, usersToCreate.length);
   });
 
   it('should create org users & service accounts and report errors', async () => {
-    const numUniqueUsersToCreate = 10;
     let usersToCreate = [];
     for (let i = 0; i < 10; i++) {
-      const serviceAccount = Math.random() < 0.4; // make some of the users service accounts
-      return buildTestUser(Math.floor(Math.random() * 100000), { serviceAccount });
+      const serviceAccount = i < 4; // make some of the users service accounts
+      usersToCreate.push(buildTestUser(Math.floor(Math.random() * 100000), { serviceAccount }));
     }
     usersToCreate.push(usersToCreate[4]); // duplicate one user
-    console.log('Creating org users: ', usersToCreate);
     const response = await bulkCreateOrgUsers(accessToken, usersToCreate);
-    console.log('Response', JSON.stringify(response, null, 2));
     expectAllUsersCreatedExceptOneError(response, usersToCreate);
+  });
+
+  it('should not create users, more than 1MB', async () => {
+    let usersToCreate = [];
+    for (let i = 0; i < 250; i++) {
+      let user = {
+        firstName: createRandomString(1000),
+        lastName: createRandomString(1000),
+        email: `${createRandomString(1000)}.${createRandomString(1000)}@example.com`,
+        username: `${createRandomString(1000)}.${createRandomString(1000)}`,
+        password: 'Password1234567!',
+        preRegistration: false,
+        serviceAccount: false,
+      };
+      usersToCreate.push(user);
+    }
+
+    const request = {
+      action: 'CREATE',
+      items: usersToCreate,
+    };
+
+    const response = await performPost(getOrganisationManagementUrl(), '/users/bulk', JSON.stringify(request), {
+      'Content-type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    });
+    expect(response.status).toEqual(413);
+    expect(response.body.message).toEqual('The size of the bulk operation exceeds the maxPayloadSize (1048576).');
+  });
+
+  it('should not create users, more than 1000', async () => {
+    let usersToCreate = [];
+    for (let i = 0; i < 1001; i++) {
+      usersToCreate.push(buildTestUser(1001 + i));
+    }
+
+    const request = {
+      action: 'CREATE',
+      items: usersToCreate,
+    };
+    const response = await performPost(getOrganisationManagementUrl(), '/users/bulk', JSON.stringify(request), {
+      'Content-type': 'application/json',
+      Authorization: `Bearer ${accessToken}`
+    });
+    expect(response.status).toEqual(413);
+    expect(response.body.message).toEqual('The bulk operation exceeds the maximum number of operations (1000).');
   });
 });
 
@@ -129,7 +172,6 @@ afterAll(async () => {
 });
 
 function expectAllUsersCreatedOk(response: BulkResponse, numberOfUsers: number) {
-  console.log('Response', JSON.stringify(response, null, 2));
   let ids = [];
   checkBulkResponse(response, numberOfUsers, true, {
     201: {
