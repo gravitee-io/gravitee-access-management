@@ -26,10 +26,12 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 import static java.time.ZoneOffset.UTC;
 import static org.springframework.data.relational.core.query.Criteria.where;
@@ -70,6 +72,12 @@ public class JdbcDeviceRepository extends AbstractJdbcRepository implements Devi
                 ))
                 .all())
                 .map(this::toEntity);
+    }
+
+    @Override
+    protected Criteria userIdMatches(UserId user) {
+        Objects.requireNonNull(user.id(), "internal user id");
+        return where(USER_ID_FIELD).is(user.id());
     }
 
     @Override
