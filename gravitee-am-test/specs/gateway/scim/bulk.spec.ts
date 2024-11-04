@@ -112,7 +112,13 @@ describe('SCIM Bulk endpoint', () => {
     }).expect(400);
 
     const scimError: Error = scimResponse.body;
-    assertExpectedError(scimError, '400', 'invalidSyntax');
+
+    assertExpectedError(
+      scimError,
+      '400',
+      'invalidSyntax',
+      "The 'schemas' attribute MUST only contain values defined as 'schema' and 'schemaExtensions' for the resource's defined BulkRequest type",
+    );
   });
 
   it('should reject request with too many operation', async () => {
@@ -132,9 +138,8 @@ describe('SCIM Bulk endpoint', () => {
       'Content-type': 'application/json',
       Authorization: `Bearer ${scimAccessToken}`,
     }).expect(413);
-
     const scimError: Error = scimResponse.body;
-    assertExpectedError(scimError, '413', null);
+    assertExpectedError(scimError, '413', null, 'The bulk operation exceeds the maximum number of operations (1000).');
   });
 
   it('should accept request with 3 user creations (two success, one failure)', async () => {
@@ -434,171 +439,203 @@ describe('SCIM Bulk endpoint', () => {
     expect(forth.location).toBeDefined();
     expect(forth.location).toContain(scimEndpoint + '/Users/');
   });
-});
-
-it('should accept request with patch user', async () => {
-  const userLocation = await createRandomUser();
-  const user = await readScimUserProfile(userLocation);
-
-  const patchOp: BulkOperation = {
-    method: 'PATCH',
-    path: '/Users/' + user.id,
-    bulkId: random.word(),
-    data: {
-      schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
-      Operations: [
-        {
-          op: 'add',
-          path: 'emails',
-          value: [
-            {
-              value: user['username'] + '@noware.com',
-              type: 'home',
-              primary: true,
-            },
-          ],
+  it('should not process more than 1MB', async () => {
+    let operations = [];
+    for (let i = 0; i < 500; i++) {
+      const operation: BulkOperation = {
+        method: 'POST',
+        path: '/Users',
+        bulkId: random.word(),
+        data: {
+          schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
+          userName: createRandomString(1000),
+          lastName: createRandomString(1000),
+          firstName: createRandomString(1000),
         },
-        {
-          op: 'add',
-          path: 'profileUrl',
-          value: 'https://my.picture.xyz/me',
-        },
-      ],
-    },
-  };
+      };
+      operations.push(operation);
+    }
 
-  const patchRequest: BulkRequest = {
-    schemas: ['urn:ietf:params:scim:api:messages:2.0:BulkRequest'],
-    Operations: [patchOp],
-  };
+    const request: BulkRequest = {
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:BulkRequest'],
+      failOnErrors: 1,
+      Operations: operations,
+    };
+    const res = await performPost(scimEndpoint, '/Bulk', JSON.stringify(request), {
+      'Content-type': 'application/json',
+      Authorization: `Bearer ${scimAccessToken}`,
+    }).expect(413);
+    const scimError: Error = res.body;
+    assertExpectedError(scimError, '413', null, 'The size of the bulk operation exceeds the maxPayloadSize (1048576).');
+  });
 
-  const scimResponse = await performPost(scimEndpoint, '/Bulk', JSON.stringify(patchRequest), {
-    'Content-type': 'application/json',
-    Authorization: `Bearer ${scimAccessToken}`,
-  }).expect(200);
+  it('should accept request with patch user', async () => {
+    const userLocation = await createRandomUser();
+    const user = await readScimUserProfile(userLocation);
 
-  const bulkResponse: BulkResponse = scimResponse.body;
-  expect(bulkResponse.Operations).toHaveLength(1);
-  const op = bulkResponse.Operations[0];
-  expect(op.bulkId).toBeDefined();
-  expect(op.bulkId).toEqual(patchOp.bulkId);
-  expect(op.status).toEqual('200');
-  expect(op.location).toBeDefined();
-  expect(op.location).toEqual(userLocation);
+    const patchOp: BulkOperation = {
+      method: 'PATCH',
+      path: '/Users/' + user.id,
+      bulkId: random.word(),
+      data: {
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
+        Operations: [
+          {
+            op: 'add',
+            path: 'emails',
+            value: [
+              {
+                value: user['username'] + '@noware.com',
+                type: 'home',
+                primary: true,
+              },
+            ],
+          },
+          {
+            op: 'add',
+            path: 'profileUrl',
+            value: 'https://my.picture.xyz/me',
+          },
+        ],
+      },
+    };
 
-  const updatedUser = await readScimUserProfile(userLocation);
-  expect(updatedUser.profileUrl).toBeDefined();
-  expect(updatedUser.emails).toBeDefined();
-  expect(updatedUser.emails).toHaveLength(1);
-  expect(updatedUser.emails[0].value).toEqual(user['username'] + '@noware.com');
+    const patchRequest: BulkRequest = {
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:BulkRequest'],
+      Operations: [patchOp],
+    };
+
+    const scimResponse = await performPost(scimEndpoint, '/Bulk', JSON.stringify(patchRequest), {
+      'Content-type': 'application/json',
+      Authorization: `Bearer ${scimAccessToken}`,
+    }).expect(200);
+
+    const bulkResponse: BulkResponse = scimResponse.body;
+    expect(bulkResponse.Operations).toHaveLength(1);
+    const op = bulkResponse.Operations[0];
+    expect(op.bulkId).toBeDefined();
+    expect(op.bulkId).toEqual(patchOp.bulkId);
+    expect(op.status).toEqual('200');
+    expect(op.location).toBeDefined();
+    expect(op.location).toEqual(userLocation);
+
+    const updatedUser = await readScimUserProfile(userLocation);
+    expect(updatedUser.profileUrl).toBeDefined();
+    expect(updatedUser.emails).toBeDefined();
+    expect(updatedUser.emails).toHaveLength(1);
+    expect(updatedUser.emails[0].value).toEqual(user['username'] + '@noware.com');
+  });
+
+  it('should reject patch if user is unknown', async () => {
+    const patchOp: BulkOperation = {
+      method: 'PATCH',
+      path: '/Users/' + random.word(),
+      bulkId: random.word(),
+      data: {
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
+        Operations: [
+          {
+            op: 'replace',
+            path: 'displayName',
+            value: 'replacedDisplayname',
+          },
+          {
+            op: 'add',
+            path: 'profileUrl',
+            value: 'https://my.picture.xyz/me',
+          },
+        ],
+      },
+    };
+
+    const patchRequest: BulkRequest = {
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:BulkRequest'],
+      Operations: [patchOp],
+    };
+
+    const scimResponse = await performPost(scimEndpoint, '/Bulk', JSON.stringify(patchRequest), {
+      'Content-type': 'application/json',
+      Authorization: `Bearer ${scimAccessToken}`,
+    }).expect(200);
+
+    const bulkResponse: BulkResponse = scimResponse.body;
+    expect(bulkResponse.Operations).toHaveLength(1);
+    const op = bulkResponse.Operations[0];
+    expect(op.bulkId).toBeDefined();
+    expect(op.bulkId).toEqual(patchOp.bulkId);
+    expect(op.status).toEqual('404');
+    expect(op.location).toBeUndefined();
+  });
+
+  it('should reject delete if user is unknown', async () => {
+    const deleteOp: BulkOperation = {
+      method: 'DELETE',
+      path: '/Users/' + random.word(),
+      bulkId: random.word(),
+    };
+
+    const deleteRequest: BulkRequest = {
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:BulkRequest'],
+      Operations: [deleteOp],
+    };
+
+    const scimResponse = await performPost(scimEndpoint, '/Bulk', JSON.stringify(deleteRequest), {
+      'Content-type': 'application/json',
+      Authorization: `Bearer ${scimAccessToken}`,
+    }).expect(200);
+
+    const bulkResponse: BulkResponse = scimResponse.body;
+    expect(bulkResponse.Operations).toHaveLength(1);
+    const op = bulkResponse.Operations[0];
+    expect(op.bulkId).toBeDefined();
+    expect(op.bulkId).toEqual(deleteOp.bulkId);
+    expect(op.status).toEqual('404');
+    expect(op.location).toBeUndefined();
+  });
+
+  it('should accept request with delete user', async () => {
+    const userLocation = await createRandomUser();
+    const user = await readScimUserProfile(userLocation);
+
+    const deleteOp: BulkOperation = {
+      method: 'DELETE',
+      path: '/Users/' + user.id,
+    };
+
+    const deleteRequest: BulkRequest = {
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:BulkRequest'],
+      Operations: [deleteOp],
+    };
+
+    const scimResponse = await performPost(scimEndpoint, '/Bulk', JSON.stringify(deleteRequest), {
+      'Content-type': 'application/json',
+      Authorization: `Bearer ${scimAccessToken}`,
+    }).expect(200);
+
+    const bulkResponse: BulkResponse = scimResponse.body;
+    expect(bulkResponse.Operations).toHaveLength(1);
+    const op = bulkResponse.Operations[0];
+    expect(op.bulkId).toBeUndefined();
+    expect(op.status).toEqual('204');
+    expect(op.location).toBeDefined();
+    expect(op.location).toEqual(userLocation);
+
+    await performGet(userLocation, '', {
+      Authorization: `Bearer ${scimAccessToken}`,
+    }).expect(404);
+  });
 });
 
-it('should reject patch if user is unknown', async () => {
-  const patchOp: BulkOperation = {
-    method: 'PATCH',
-    path: '/Users/' + random.word(),
-    bulkId: random.word(),
-    data: {
-      schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
-      Operations: [
-        {
-          op: 'replace',
-          path: 'displayName',
-          value: 'replacedDisplayname',
-        },
-        {
-          op: 'add',
-          path: 'profileUrl',
-          value: 'https://my.picture.xyz/me',
-        },
-      ],
-    },
-  };
-
-  const patchRequest: BulkRequest = {
-    schemas: ['urn:ietf:params:scim:api:messages:2.0:BulkRequest'],
-    Operations: [patchOp],
-  };
-
-  const scimResponse = await performPost(scimEndpoint, '/Bulk', JSON.stringify(patchRequest), {
-    'Content-type': 'application/json',
-    Authorization: `Bearer ${scimAccessToken}`,
-  }).expect(200);
-
-  const bulkResponse: BulkResponse = scimResponse.body;
-  expect(bulkResponse.Operations).toHaveLength(1);
-  const op = bulkResponse.Operations[0];
-  expect(op.bulkId).toBeDefined();
-  expect(op.bulkId).toEqual(patchOp.bulkId);
-  expect(op.status).toEqual('404');
-  expect(op.location).toBeUndefined();
-});
-
-it('should reject delete if user is unknown', async () => {
-  const deleteOp: BulkOperation = {
-    method: 'DELETE',
-    path: '/Users/' + random.word(),
-    bulkId: random.word(),
-  };
-
-  const deleteRequest: BulkRequest = {
-    schemas: ['urn:ietf:params:scim:api:messages:2.0:BulkRequest'],
-    Operations: [deleteOp],
-  };
-
-  const scimResponse = await performPost(scimEndpoint, '/Bulk', JSON.stringify(deleteRequest), {
-    'Content-type': 'application/json',
-    Authorization: `Bearer ${scimAccessToken}`,
-  }).expect(200);
-
-  const bulkResponse: BulkResponse = scimResponse.body;
-  expect(bulkResponse.Operations).toHaveLength(1);
-  const op = bulkResponse.Operations[0];
-  expect(op.bulkId).toBeDefined();
-  expect(op.bulkId).toEqual(deleteOp.bulkId);
-  expect(op.status).toEqual('404');
-  expect(op.location).toBeUndefined();
-});
-
-it('should accept request with delete user', async () => {
-  const userLocation = await createRandomUser();
-  const user = await readScimUserProfile(userLocation);
-
-  const deleteOp: BulkOperation = {
-    method: 'DELETE',
-    path: '/Users/' + user.id,
-  };
-
-  const deleteRequest: BulkRequest = {
-    schemas: ['urn:ietf:params:scim:api:messages:2.0:BulkRequest'],
-    Operations: [deleteOp],
-  };
-
-  const scimResponse = await performPost(scimEndpoint, '/Bulk', JSON.stringify(deleteRequest), {
-    'Content-type': 'application/json',
-    Authorization: `Bearer ${scimAccessToken}`,
-  }).expect(200);
-
-  const bulkResponse: BulkResponse = scimResponse.body;
-  expect(bulkResponse.Operations).toHaveLength(1);
-  const op = bulkResponse.Operations[0];
-  expect(op.bulkId).toBeUndefined();
-  expect(op.status).toEqual('204');
-  expect(op.location).toBeDefined();
-  expect(op.location).toEqual(userLocation);
-
-  await performGet(userLocation, '', {
-    Authorization: `Bearer ${scimAccessToken}`,
-  }).expect(404);
-});
-
-function assertExpectedError(scimError: Error, status: string, scimType: string) {
+function assertExpectedError(scimError: Error, status: string, scimType: string, errorMessage: string) {
   expect(scimError).toBeDefined();
   expect(scimError.schemas).toBeDefined();
   expect(scimError.detail).toBeDefined();
   expect(scimError.status).toEqual(status);
   if (scimType) {
     expect(scimError.scimType).toEqual(scimType);
+  }
+  if (errorMessage) {
+    expect(scimError.detail).toEqual(errorMessage);
   }
 }
 
@@ -607,6 +644,15 @@ async function readScimUserProfile(userLocation: string) {
     Authorization: `Bearer ${scimAccessToken}`,
   }).expect(200);
   return getUser.body;
+}
+
+function createRandomString(length: number) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
 }
 
 async function createRandomUser() {
