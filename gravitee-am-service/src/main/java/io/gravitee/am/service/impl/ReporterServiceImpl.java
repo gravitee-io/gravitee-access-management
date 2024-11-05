@@ -36,6 +36,7 @@ import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.ReporterConfigurationException;
+import io.gravitee.am.service.exception.ReporterDeleteException;
 import io.gravitee.am.service.exception.ReporterNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewReporter;
@@ -52,7 +53,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -238,11 +238,15 @@ public class ReporterServiceImpl implements ReporterService {
     }
 
     @Override
-    public Completable delete(String reporterId, User principal) {
+    public Completable delete(String reporterId, User principal, boolean removeSystemReporter) {
         LOGGER.debug("Delete reporter {}", reporterId);
         return reporterRepository.findById(reporterId)
                 .switchIfEmpty(Maybe.error(new ReporterNotFoundException(reporterId)))
                 .flatMapCompletable(reporter -> {
+                    // cannot remove system reporter
+                    if (reporter.isSystem() && !removeSystemReporter) {
+                        return Completable.error(new ReporterDeleteException("System reporter cannot be deleted."));
+                    }
                     // create event for sync process
                     Event event = new Event(Type.REPORTER, new Payload(reporterId, reporter.getReference(), Action.DELETE));
                     return Completable.fromSingle(reporterRepository.delete(reporterId)
