@@ -50,7 +50,15 @@ public interface ReporterService {
 
     Single<Reporter> update(Reference reference, String id, UpdateReporter updateReporter, User principal, boolean isUpgrader);
 
-    Completable delete(String reporterId, User principal);
+    /**
+     * Deletes the reporter specified by {@code reporterId}.
+     *
+     * @param reporterId the ID of the reporter to delete
+     * @param principal the user requesting the deletion
+     * @param removeSystemReporter if true then remove system(default) reporter
+     * @return a {@link Completable} that completes if deletion is successful or emits an error
+     */
+    Completable delete(String reporterId, User principal, boolean removeSystemReporter);
 
     String createReporterConfig(Reference reference);
 
@@ -66,8 +74,25 @@ public interface ReporterService {
         return update(reference, id, updateReporter, null, isUpgrader);
     }
 
+    /**
+     * Deletes the reporter specified by {@code reporterId}. Includes system reporter.
+     *
+     * @param reporterId the ID of the reporter to delete
+     * @return a {@link Completable} that completes if deletion is successful or emits an error
+     */
     default Completable delete(String reporterId) {
-        return delete(reporterId, null);
+        return delete(reporterId, null, true);
+    }
+
+    /**
+     * Deletes the reporter specified by {@code reporterId}. Not includes system reporter. Restricted to API calls.
+     * Calling this with system reporter ID will return error.
+     *
+     * @param reporterId the ID of the reporter to delete
+     * @return a {@link Completable} that completes if deletion is successful or emits an error
+     */
+    default Completable delete(String reporterId, User principal) {
+        return delete(reporterId, principal, false);
     }
 
     Completable notifyInheritedReporters(Reference parentReference, Reference affectedReference, Action action);

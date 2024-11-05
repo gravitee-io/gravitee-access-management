@@ -106,8 +106,8 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
     }
 
     @Override
-    public Completable delete(String reporterId, User principal) {
-        return reporterService.delete(reporterId, principal);
+    public Completable delete(String reporterId, User principal, boolean removeSystemReporter) {
+        return reporterService.delete(reporterId, principal, removeSystemReporter);
     }
 
     @Override
