@@ -186,7 +186,7 @@ export class ReporterComponent implements OnInit {
   }
 
   isDefaultReporter() {
-    return this.reporter.type === 'mongodb' || this.reporter.type === 'reporter-am-jdbc';
+    return this.reporter.system;
   }
   isOrganizationContext() {
     return this.organizationContext;

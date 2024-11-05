@@ -17,15 +17,18 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.repository.junit.management.MemoryReporterRepository;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.service.exception.ReporterConfigurationException;
+import io.gravitee.am.service.exception.ReporterDeleteException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.ReporterServiceImpl;
 import io.gravitee.am.service.model.NewReporter;
 import io.gravitee.am.service.model.UpdateReporter;
-import io.gravitee.am.repository.junit.management.MemoryReporterRepository;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.apache.commons.text.RandomStringGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -127,7 +130,7 @@ class ReporterServiceTest {
                 .values();
         assertThat(foundReporters)
                 .hasSize(2)
-                .noneMatch(r->r.getName().equals("unwanted"));
+                .noneMatch(r -> r.getName().equals("unwanted"));
     }
 
     @Test
@@ -135,8 +138,8 @@ class ReporterServiceTest {
         environment.setProperty("repositories.management.type", "mongodb");
         environment.setProperty("repositories.management.mongodb.host", "doesnt-exist.local");
         environment.setProperty("repositories.management.mongodb.port", "12345");
-        environment.setProperty("repositories.management.mongodb.username","invalid");
-        environment.setProperty("repositories.management.mongodb.password","credentials");
+        environment.setProperty("repositories.management.mongodb.username", "invalid");
+        environment.setProperty("repositories.management.mongodb.password", "credentials");
 
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -187,7 +190,7 @@ class ReporterServiceTest {
         updateReporter.setConfiguration(newReporter.getConfiguration());
         updateReporter.setEnabled(newReporter.isEnabled());
         updateReporter.setInherited(true);
-        reporterService.update(reference, createdReporter.getId() ,updateReporter, false)
+        reporterService.update(reference, createdReporter.getId(), updateReporter, false)
                 .test()
                 .awaitDone(1, TimeUnit.SECONDS)
                 .assertError(ReporterConfigurationException.class);
@@ -209,13 +212,37 @@ class ReporterServiceTest {
         updateReporter.setConfiguration(newReporter.getConfiguration());
         updateReporter.setEnabled(newReporter.isEnabled());
         updateReporter.setInherited(true);
-        reporterService.update(reference, createdReporter.getId() ,updateReporter, false)
+        reporterService.update(reference, createdReporter.getId(), updateReporter, false)
                 .test()
                 .awaitDone(1, TimeUnit.SECONDS)
                 .assertComplete()
                 .assertNoErrors();
     }
 
+    @Test
+    void canNotRemoveDefaultReporter() {
+        environment.setProperty("repositories.management.type", "mongodb");
+        environment.setProperty("repositories.management.mongodb.host", "some.host");
+        environment.setProperty("repositories.management.mongodb.port", "12345");
+        environment.setProperty("repositories.management.mongodb.username", "invalid");
+        environment.setProperty("repositories.management.mongodb.password", "credentials");
+
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<Reporter> reporterTestObserver = reporterService.createDefault(Reference.organization("org"))
+                .test()
+                .awaitDone(1, TimeUnit.SECONDS)
+                .assertNoErrors()
+                .assertComplete()
+                .assertValue(r -> r.getType().contains("mongo"))
+                .assertValue(r -> r.getReference().equals(Reference.organization("org")));
+        Reporter createdReporter = reporterTestObserver.values().get(0);
+        reporterService.delete(createdReporter.getId(), null)
+                .test()
+                .awaitDone(1, TimeUnit.SECONDS)
+                .assertError(ReporterDeleteException.class)
+                .assertError(t -> t.getMessage().contains("System reporter cannot be deleted."));
+    }
 
 
     private NewReporter randomTestFileReporter(String name) {
