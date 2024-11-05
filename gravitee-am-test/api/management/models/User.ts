@@ -416,13 +416,13 @@ export interface User {
      * @type {string}
      * @memberof User
      */
-    zoneInfo?: string;
+    locale?: string;
     /**
      * 
      * @type {string}
      * @memberof User
      */
-    locale?: string;
+    zoneInfo?: string;
     /**
      * 
      * @type {{ [key: string]: any; }}
@@ -565,8 +565,8 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
         'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
         'forceResetPassword': !exists(json, 'forceResetPassword') ? undefined : json['forceResetPassword'],
         'serviceAccount': !exists(json, 'serviceAccount') ? undefined : json['serviceAccount'],
-        'zoneInfo': !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
         'locale': !exists(json, 'locale') ? undefined : json['locale'],
+        'zoneInfo': !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
         'address': !exists(json, 'address') ? undefined : json['address'],
         'middleName': !exists(json, 'middleName') ? undefined : json['middleName'],
         'lastIdentityInformation': !exists(json, 'lastIdentityInformation') ? undefined : json['lastIdentityInformation'],
@@ -645,8 +645,8 @@ export function UserToJSON(value?: User | null): any {
         'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
         'forceResetPassword': value.forceResetPassword,
         'serviceAccount': value.serviceAccount,
-        'zoneInfo': value.zoneInfo,
         'locale': value.locale,
+        'zoneInfo': value.zoneInfo,
         'address': value.address,
         'middleName': value.middleName,
         'lastIdentityInformation': value.lastIdentityInformation,
