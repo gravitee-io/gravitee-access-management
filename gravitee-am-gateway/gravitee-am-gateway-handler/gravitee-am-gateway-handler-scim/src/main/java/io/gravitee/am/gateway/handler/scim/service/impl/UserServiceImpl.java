@@ -156,7 +156,7 @@ public class UserServiceImpl implements UserService {
                 userRepository.findAll(ReferenceType.DOMAIN, domain.getId(), page, size);
 
         return findUsers
-                .flatMap(userPage -> {
+                .concatMap(userPage -> {
                     // A negative value SHALL be interpreted as "0".
                     // A value of "0" indicates that no resource results are to be returned except for "totalResults".
                     if (size <= 0) {

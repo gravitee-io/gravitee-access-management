@@ -49,6 +49,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -239,8 +241,13 @@ public class GroupServiceTest {
 
     @Test
     public void shouldListGroups() {
-        final io.gravitee.am.model.Group group = new io.gravitee.am.model.Group();
-        final Page page = new Page(List.of(group), 0, 1);
+        List<io.gravitee.am.model.Group> groups = IntStream.range(0, 10).mapToObj(i -> {
+            final io.gravitee.am.model.Group group = new io.gravitee.am.model.Group();
+            group.setName("" + i);
+            return group;
+        }).toList();
+
+        final Page page = new Page(groups, 0, groups.size());
         final String domainID = "any-domain-id";
         when(domain.getId()).thenReturn(domainID);
         when(groupRepository.findAll(ReferenceType.DOMAIN, domainID, 0, 10)).thenReturn(Single.just(page));
@@ -248,6 +255,10 @@ public class GroupServiceTest {
         TestObserver<ListResponse<Group>> observer = groupService.list(null, 0, 10, "").test();
         observer.assertNoErrors();
         observer.assertComplete();
+        observer.assertValue(listResp -> 10 == listResp.getItemsPerPage()
+                &&
+                listResp.getResources().stream().map(Group::getDisplayName).collect(Collectors.joining(","))
+                        .equals(groups.stream().map(io.gravitee.am.model.Group::getName).collect(Collectors.joining(","))));
 
         verify(groupRepository, times(1)).findAll(ReferenceType.DOMAIN, domainID, 0, 10);
     }
