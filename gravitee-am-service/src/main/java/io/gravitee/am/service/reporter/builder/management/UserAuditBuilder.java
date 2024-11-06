@@ -26,6 +26,7 @@ import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.vertx.core.json.Json;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import static io.gravitee.am.common.audit.EventType.REGISTRATION_VERIFY_ACCOUNT;
@@ -72,9 +73,15 @@ public class UserAuditBuilder extends ManagementAuditBuilder<UserAuditBuilder> {
         return this;
     }
 
+    public UserAuditBuilder accountToken(String tokenId) {
+        if (tokenId != null) {
+            accountToken = Map.of("id", tokenId);
+        }
+        return this;
+    }
     public UserAuditBuilder accountToken(AccountAccessToken token) {
         if (token != null) {
-            accountToken = Map.of("id", token.tokenId(), "name", token.name());
+            accountToken = Map.of("id", token.tokenId(), "name", Objects.requireNonNullElse(token.name(),"<token name missing>"));
         }
         return this;
     }

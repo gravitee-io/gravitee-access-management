@@ -392,7 +392,7 @@ public class CertificateServiceImpl implements CertificateService {
                     return Completable.fromSingle(certificateRepository.delete(certificateId)
                                     .andThen(eventService.create(event)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_DELETED).certificate(certificate)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_DELETED).reference(Reference.domain(certificate.getDomain())).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_DELETED).certificate(certificate).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     log.error("An error occurs while trying to delete certificate: {}", certificateId, ex);

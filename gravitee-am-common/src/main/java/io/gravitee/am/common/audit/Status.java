@@ -21,7 +21,7 @@ package io.gravitee.am.common.audit;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface Status {
-    String SUCCESS = "SUCCESS";
-    String FAILURE = "FAILURE";
+public enum Status {
+    SUCCESS,
+    FAILURE
 }

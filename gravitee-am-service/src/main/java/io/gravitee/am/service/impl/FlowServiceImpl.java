@@ -90,14 +90,14 @@ public class FlowServiceImpl implements FlowService {
                 .filter(f -> !excludeApps || f.getApplication() == null)
                 .toMultimap(Flow::getType)
                 .flattenAsFlowable(flows -> {
-                    // The toMultimap(Flow::getType) groups all the flows by type
-                    // and here we enumerate all the flow types in order to create empty flows when a new type of flow is missing
-                    // this is useful when a new Type of flow is introduced in AM.
-                    return Stream.of(Type.values())
-                        .map(type -> ofNullable(flows.get(type)).orElse(List.of(buildFlow(type, referenceType, referenceId))))
-                        .flatMap(c -> c.stream())
-                        .collect(toList());
-                    }
+                            // The toMultimap(Flow::getType) groups all the flows by type
+                            // and here we enumerate all the flow types in order to create empty flows when a new type of flow is missing
+                            // this is useful when a new Type of flow is introduced in AM.
+                            return Stream.of(Type.values())
+                                    .map(type -> ofNullable(flows.get(type)).orElse(List.of(buildFlow(type, referenceType, referenceId))))
+                                    .flatMap(c -> c.stream())
+                                    .collect(toList());
+                        }
                 )
                 .switchIfEmpty(Flowable.fromIterable(defaultFlows(referenceType, referenceId)))
                 .sorted(getFlowComparator())
@@ -227,7 +227,7 @@ public class FlowServiceImpl implements FlowService {
                                 return eventService.create(event).flatMap(__ -> Single.just(flow1));
                             })
                             .doOnSuccess(flow1 -> auditService.report(AuditBuilder.builder(FlowAuditBuilder.class).principal(principal).type(EventType.FLOW_UPDATED).oldValue(oldFlow).flow(flow1)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(FlowAuditBuilder.class).principal(principal).reference( new Reference(referenceType, referenceId)).type(EventType.FLOW_UPDATED).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(FlowAuditBuilder.class).principal(principal).reference(new Reference(referenceType, referenceId)).type(EventType.FLOW_UPDATED).throwable(throwable)));
 
                 })
                 .onErrorResumeNext(ex -> {
@@ -266,8 +266,16 @@ public class FlowServiceImpl implements FlowService {
                     return flowRepository.delete(id)
                             .andThen(eventService.create(event))
                             .ignoreElement()
-                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(FlowAuditBuilder.class).principal(principal).type(EventType.FLOW_DELETED).flow(flow)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(FlowAuditBuilder.class).reference(new Reference(flow.getReferenceType(), flow.getReferenceId())).principal(principal).type(EventType.FLOW_DELETED).throwable(throwable)));
+                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(FlowAuditBuilder.class)
+                                    .reference(new Reference(flow.getReferenceType(), flow.getReferenceId()))
+                                    .principal(principal)
+                                    .type(EventType.FLOW_DELETED)
+                                    .flow(flow)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(FlowAuditBuilder.class)
+                                    .principal(principal)
+                                    .type(EventType.FLOW_DELETED)
+                                    .flow(flow)
+                                    .throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -357,6 +365,7 @@ public class FlowServiceImpl implements FlowService {
     /**
      * Set value for the order attribute of each flow (regarding the flow type)
      * Assumption: incoming flows are in the right order
+     *
      * @param flows
      */
     private void computeFlowOrders(List<Flow> flows) {

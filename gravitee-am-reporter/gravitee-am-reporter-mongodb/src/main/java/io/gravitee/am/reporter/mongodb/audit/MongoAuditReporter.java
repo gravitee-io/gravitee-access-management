@@ -273,8 +273,8 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
                                 new BasicDBObject("_id",
                                         new BasicDBObject("$subtract",
                                                 Arrays.asList(subTractTimestamp, new BasicDBObject("$mod", Arrays.asList(subTractTimestamp, criteria.interval()))))),
-                                Accumulators.sum(fieldSuccess, new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$outcome.status", Status.SUCCESS)), 1, 0))),
-                                Accumulators.sum(fieldFailure, new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$outcome.status", Status.FAILURE)), 1, 0))))), Document.class))
+                                Accumulators.sum(fieldSuccess, new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$outcome.status", Status.SUCCESS.name())), 1, 0))),
+                                Accumulators.sum(fieldFailure, new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$outcome.status", Status.FAILURE.name())), 1, 0))))), Document.class))
                 ).toList()
                 .map(docs -> {
                     Map<Long, Long> successResult = new HashMap<>();
@@ -420,7 +420,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
         if (audit.getOutcome() != null) {
             AuditOutcome result = audit.getOutcome();
             AuditOutcomeMongo resultMongo = new AuditOutcomeMongo();
-            resultMongo.setStatus(result.getStatus());
+            resultMongo.setStatus(result.getStatus().name());
             resultMongo.setMessage(result.getMessage());
             auditMongo.setOutcome(resultMongo);
         }
@@ -480,7 +480,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
         if (auditMongo.getOutcome() != null) {
             AuditOutcomeMongo resultMongo = auditMongo.getOutcome();
             AuditOutcome result = new AuditOutcome();
-            result.setStatus(resultMongo.getStatus());
+            result.setStatus(Status.valueOf(resultMongo.getStatus()));
             result.setMessage(resultMongo.getMessage());
             audit.setOutcome(result);
         }

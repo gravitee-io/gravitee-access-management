@@ -72,7 +72,7 @@ public class I18nDictionaryServiceTest {
         newDictionary.setLocale(Locale.FRENCH.getLanguage());
 
         given(repository.findByLocale(DOMAIN, REFERENCE_ID, Locale.FRENCH.getLanguage())).willReturn(Maybe.empty());
-        given(repository.create(any(I18nDictionary.class))).willReturn(Single.just(new I18nDictionary()));
+        given(repository.create(any(I18nDictionary.class))).will(invocation -> Single.just(invocation.getArgument(0)));
         given(eventService.create(any())).willReturn(Single.just(new Event()));
 
         var observer = service
@@ -103,6 +103,8 @@ public class I18nDictionaryServiceTest {
         final String key = "login.username";
         updateDict.setEntries(Map.of(key, translation));
         var dictionary = new I18nDictionary();
+        dictionary.setReferenceType(DOMAIN);
+        dictionary.setReferenceId(REFERENCE_ID);
 
         when(repository.findById(DOMAIN, REFERENCE_ID, ID)).thenReturn(just(dictionary));
         when(repository.findByLocale(DOMAIN, REFERENCE_ID, expectedLocale)).thenReturn(Maybe.empty());
@@ -131,6 +133,8 @@ public class I18nDictionaryServiceTest {
         final String key = "login.username";
         var entries = Map.of(key, translation);
         var dictionary = new I18nDictionary();
+        dictionary.setReferenceType(DOMAIN);
+        dictionary.setReferenceId(REFERENCE_ID);
 
         when(repository.findById(DOMAIN, REFERENCE_ID, ID)).thenReturn(just(dictionary));
         when(repository.update(any(I18nDictionary.class))).thenReturn(Single.just(dictionary));

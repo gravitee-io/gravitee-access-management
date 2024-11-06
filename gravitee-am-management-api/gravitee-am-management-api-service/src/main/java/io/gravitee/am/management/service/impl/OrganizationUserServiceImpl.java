@@ -25,6 +25,7 @@ import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
@@ -253,17 +254,21 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
 
     @Override
     public Completable revokeToken(String organizationId, String userId, String tokenId, io.gravitee.am.identityprovider.api.User principal) {
-        return getUserService().revokeToken(organizationId, userId, tokenId)
-                .doOnSuccess(revoked -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
-                        .principal(principal)
-                        .type(EventType.ACCOUNT_ACCESS_TOKEN_REVOKED)
-                        .reference(Reference.organization(organizationId))
-                        .accountToken(revoked)))
-                .doOnError(x -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
-                        .principal(principal)
-                        .type(EventType.ACCOUNT_ACCESS_TOKEN_REVOKED)
-                        .reference(Reference.organization(organizationId))
-                        .throwable(x)))
+        return getUserService().findById(Reference.organization(organizationId), UserId.internal(userId))
+                .flatMap(user ->
+                        getUserService().revokeToken(organizationId, userId, tokenId)
+                                .doOnSuccess(revoked -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.ACCOUNT_ACCESS_TOKEN_REVOKED)
+                                        .user(user)
+                                        .accountToken(revoked)))
+                                .doOnError(x -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.ACCOUNT_ACCESS_TOKEN_REVOKED)
+                                        .user(user)
+                                        .accountToken(tokenId)
+                                        .throwable(x)))
+                )
                 .ignoreElement();
     }
 

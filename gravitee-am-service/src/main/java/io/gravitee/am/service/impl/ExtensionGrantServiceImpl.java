@@ -223,7 +223,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                     return Completable.fromSingle(extensionGrantRepository.delete(extensionGrantId)
                             .andThen(eventService.create(event)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).type(EventType.EXTENSION_GRANT_DELETED).extensionGrant(extensionGrant)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).reference(Reference.domain(domain)).type(EventType.EXTENSION_GRANT_DELETED).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).extensionGrant(extensionGrant).type(EventType.EXTENSION_GRANT_DELETED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

@@ -237,7 +237,8 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     return Completable.fromSingle(identityProviderRepository.delete(identityProviderId)
                                     .andThen(eventService.create(event)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_DELETED).identityProvider(identityProvider)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_DELETED).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_DELETED).reference(new Reference(referenceType, referenceId))
+                                    .identityProvider(identityProvider).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

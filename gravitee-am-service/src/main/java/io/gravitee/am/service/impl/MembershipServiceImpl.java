@@ -238,8 +238,14 @@ public class MembershipServiceImpl implements MembershipService {
                 .switchIfEmpty(Maybe.error(new MembershipNotFoundException(membershipId)))
                 .flatMapCompletable(membership -> membershipRepository.delete(membershipId)
                         .andThen(Completable.fromSingle(eventService.create(new Event(Type.MEMBERSHIP, new Payload(membership.getId(), membership.getReferenceType(), membership.getReferenceId(), Action.DELETE)))))
-                        .doOnComplete(() -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_DELETED).membership(membership)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_DELETED).reference(new Reference(membership.getReferenceType(), membership.getReferenceId())).throwable(throwable)))
+                        .doOnComplete(() -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class)
+                                .principal(principal)
+                                .type(EventType.MEMBERSHIP_DELETED)
+                                .membership(membership)))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class)
+                                .principal(principal).type(EventType.MEMBERSHIP_DELETED)
+                                .membership(membership)
+                                .throwable(throwable)))
                 )
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

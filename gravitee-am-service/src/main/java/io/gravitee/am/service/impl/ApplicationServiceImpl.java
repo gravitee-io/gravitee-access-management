@@ -522,7 +522,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                                     .flatMapCompletable(membership -> membershipService.delete(membership.getId()))
                             )
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_DELETED).application(application)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).reference(Reference.domain(application.getDomain())).principal(principal).type(EventType.APPLICATION_DELETED).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).application(application).principal(principal).type(EventType.APPLICATION_DELETED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

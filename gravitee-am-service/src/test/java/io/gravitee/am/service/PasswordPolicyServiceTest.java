@@ -721,6 +721,8 @@ public class PasswordPolicyServiceTest {
     public void shouldNotDeleteAndUpdateIdpPolicyIfIdpNotUpdated() {
         PasswordPolicy passwordPolicy = new PasswordPolicy();
         passwordPolicy.setId(UUID.randomUUID().toString());
+        passwordPolicy.setReferenceType(ReferenceType.DOMAIN);
+        passwordPolicy.setReferenceId(DOMAIN_ID);
 
         when(passwordPolicyRepository.findByReferenceAndId(any(), any(), any())).thenReturn(Maybe.just(passwordPolicy));
         when(identityProviderService.findWithPasswordPolicy(any(), any(), any())).thenReturn(Flowable.just(new IdentityProvider()));

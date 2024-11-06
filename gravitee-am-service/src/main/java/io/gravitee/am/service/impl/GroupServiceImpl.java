@@ -303,7 +303,7 @@ public class GroupServiceImpl implements GroupService {
                 .flatMapCompletable(group -> groupRepository.delete(groupId)
                         .andThen(Completable.fromSingle(eventService.create(new Event(Type.GROUP, new Payload(group.getId(), group.getReferenceType(), group.getReferenceId(), Action.DELETE)))))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).group(group)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).reference(new Reference(referenceType, referenceId)).throwable(throwable)))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).group(group).throwable(throwable)))
                 )
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

@@ -16,6 +16,7 @@
 package io.gravitee.am.reporter.jdbc.audit;
 
 import io.gravitee.am.common.analytics.Type;
+import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
@@ -102,7 +103,7 @@ public class JdbcAuditReporterTest {
             // third insert match criteria with failure status
             reportable = buildRandomAudit(ReferenceType.DOMAIN, "testReporter_aggregationHistogram");
             reportable.getTarget().setAlternativeId(MY_USER);
-            reportable.getOutcome().setStatus("FAILURE");
+            reportable.getOutcome().setStatus(Status.FAILURE);
             reportable.setType("FIXED_TYPE");
             reportable.setTimestamp(now.plusMillis((i * 60000)));
             auditReporter.report(reportable);
@@ -144,7 +145,7 @@ public class JdbcAuditReporterTest {
                     accSuccess++;
                 } else {
                     reportable.getTarget().setAlternativeId(MY_USER);
-                    reportable.getOutcome().setStatus("FAILURE");
+                    reportable.getOutcome().setStatus(Status.FAILURE);
                     accFailure++;
                 }
             }
@@ -368,7 +369,7 @@ public class JdbcAuditReporterTest {
         reportable.setActor(actor);
 
         AuditOutcome outcome = new AuditOutcome();
-        outcome.setStatus("SUCCESS");
+        outcome.setStatus(Status.SUCCESS);
         outcome.setMessage("Message" + random);
         reportable.setOutcome(outcome);
 
