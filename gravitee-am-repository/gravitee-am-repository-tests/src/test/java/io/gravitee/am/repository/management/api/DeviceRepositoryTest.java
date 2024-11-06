@@ -251,4 +251,21 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoValues();
         testObserver.assertNoErrors();
     }
+
+    @Test
+    public void shouldFindByReferenceAndUserId() {
+        var device = buildDevice();
+
+        final var testDomain = "test-domain";
+        final var testUser = UserId.internal("user1");
+        device.setReferenceType(ReferenceType.DOMAIN);
+        device.setReferenceId(testDomain);
+        device.setUserId(testUser);
+        repository.create(device)
+                .ignoreElement()
+                .andThen(repository.findByReferenceAndUser(ReferenceType.DOMAIN, testDomain, testUser))
+                .test().awaitDone(5, TimeUnit.SECONDS)
+                .assertComplete()
+        ;
+    }
 }
