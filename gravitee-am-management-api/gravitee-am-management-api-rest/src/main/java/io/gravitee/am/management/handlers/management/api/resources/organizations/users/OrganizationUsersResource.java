@@ -24,6 +24,7 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractUsers
 import io.gravitee.am.management.handlers.management.api.schemas.BulkCreateOrganizationUser;
 import io.gravitee.am.management.handlers.management.api.schemas.BulkDeleteOrganizationUser;
 import io.gravitee.am.management.handlers.management.api.schemas.BulkUpdateUser;
+import io.gravitee.am.management.handlers.management.api.spring.UserBulkConfiguration;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
@@ -32,6 +33,7 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.OrganizationService;
+import io.gravitee.am.service.exception.TooManyOperationsException;
 import io.gravitee.am.service.model.NewOrganizationUser;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Observable;
@@ -74,6 +76,9 @@ public class OrganizationUsersResource extends AbstractUsersResource {
 
     @Context
     private ResourceContext resourceContext;
+
+    @Autowired
+    private UserBulkConfiguration userBulkConfiguration;
 
     @Autowired
     private IdentityProviderService identityProviderService;
@@ -167,6 +172,10 @@ public class OrganizationUsersResource extends AbstractUsersResource {
             @PathParam("organizationId") String organizationId,
             @Valid @NotNull @Schema(name = "bulkUserRequest", oneOf = {BulkCreateOrganizationUser.class, BulkUpdateUser.class, BulkDeleteOrganizationUser.class}) final BulkRequest.Generic bulkRequest,
             @Suspended final AsyncResponse response) {
+
+        if (bulkRequest.items().size() > userBulkConfiguration.bulkMaxRequestOperations()) {
+            throw TooManyOperationsException.tooManyOperation(userBulkConfiguration.bulkMaxRequestOperations());
+        }
 
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 

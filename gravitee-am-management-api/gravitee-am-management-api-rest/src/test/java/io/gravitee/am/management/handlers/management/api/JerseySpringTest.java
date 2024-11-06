@@ -24,6 +24,7 @@ import io.gravitee.am.management.handlers.management.api.adapter.ScopeApprovalAd
 import io.gravitee.am.management.handlers.management.api.authentication.view.TemplateResolver;
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
 import io.gravitee.am.management.handlers.management.api.preview.PreviewService;
+import io.gravitee.am.management.handlers.management.api.spring.UserBulkConfiguration;
 import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.management.service.AuthenticationDeviceNotifierPluginService;
 import io.gravitee.am.management.service.BotDetectionPluginService;
@@ -606,6 +607,11 @@ public abstract class JerseySpringTest {
         @Bean
         public PasswordPolicyService passwordPolicyService() {
             return mock(PasswordPolicyService.class);
+        }
+
+        @Bean
+        public UserBulkConfiguration userBulkConfiguration(){
+            return new UserBulkConfiguration(1048576,1000);
         }
 
     }
