@@ -44,6 +44,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static java.time.ZoneOffset.UTC;
 import static java.util.List.of;
@@ -153,6 +155,59 @@ public class UserRepositoryTest extends AbstractManagementTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(users -> users.getData().size() == 1);
+    }
+
+    @Test
+    public void testFindAll_Paging() throws TechnicalException {
+        final var REFID = "testFindByAll";
+        // create user
+        final List<User> users = IntStream.range(0, 10).mapToObj(i -> {
+                    User user = new User();
+                    user.setUsername(String.format("testsUsername%02d", i));
+                    user.setReferenceType(ReferenceType.DOMAIN);
+                    user.setReferenceId(REFID);
+                    return user;
+                }).map(user -> {
+                    userRepository.create(user).blockingGet();
+                    return user;
+                })
+                .toList();
+
+        // fetch users multiple time to ensure order is constant
+        for (int i = 0; i < 10; i++) {
+            TestObserver<Page<User>> testObserver = userRepository.findAll(ReferenceType.DOMAIN, REFID, 0, 10).test();
+            testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+            testObserver.assertComplete();
+            testObserver.assertNoErrors();
+            testObserver.assertValue(result -> result.getData().size() == 10);
+            testObserver.assertValue(result -> result.getData().stream().map(User::getUsername).collect(Collectors.joining(","))
+                    .equals(users.stream().map(User::getUsername).collect(Collectors.joining(","))));
+        }
+
+        // fetch users with size inferior to max result multiple time to ensure order is constant
+        for (int i = 0; i < 10; i++) {
+            TestObserver<Page<User>> testFirstPageObserver = userRepository.findAll(ReferenceType.DOMAIN, REFID, 0, 2).test();
+            testFirstPageObserver.awaitDone(10, TimeUnit.SECONDS);
+
+            testFirstPageObserver.assertComplete();
+            testFirstPageObserver.assertNoErrors();
+            testFirstPageObserver.assertValue(result -> result.getData().size() == 2);
+            testFirstPageObserver.assertValue(result -> result.getData().stream().map(User::getUsername).collect(Collectors.joining(","))
+                    .equals(users.subList(0,2).stream().map(User::getUsername).collect(Collectors.joining(","))));
+        }
+
+        // fetch users with size inferior to max result multiple time to ensure order is constant
+        for (int i = 0; i < 10; i++) {
+            TestObserver<Page<User>> testObserverNextPage = userRepository.findAll(ReferenceType.DOMAIN, REFID, 1, 2).test();
+            testObserverNextPage.awaitDone(10, TimeUnit.SECONDS);
+
+            testObserverNextPage.assertComplete();
+            testObserverNextPage.assertNoErrors();
+            testObserverNextPage.assertValue(result -> result.getData().size() == 2);
+            testObserverNextPage.assertValue(result -> result.getData().stream().map(User::getUsername).collect(Collectors.joining(","))
+                    .equals(users.subList(2,4).stream().map(User::getUsername).collect(Collectors.joining(","))));
+        }
     }
 
     @Test
