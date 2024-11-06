@@ -351,6 +351,9 @@ user:
       #subject: Please reset your password
     token:
     #expire-after: 300 # the end of validity of the token in seconds for reset password email (default 300 = 5 minutes)
+  bulk:
+    maxRequestLength: 1048576
+    maxRequestOperations: 1000
 
 repositories:
   # Management repository is used to store global configuration such as domains, clients, ...

@@ -21,6 +21,7 @@ import io.gravitee.am.management.handlers.management.api.provider.ClientErrorExc
 import io.gravitee.am.management.handlers.management.api.provider.JacksonExceptionMapper;
 import io.gravitee.am.management.handlers.management.api.provider.ManagementExceptionMapper;
 import io.gravitee.am.management.handlers.management.api.provider.Oauth2ExceptionMapper;
+import io.gravitee.am.management.handlers.management.api.provider.BulkPayloadSizeFilter;
 import io.gravitee.am.management.handlers.management.api.provider.ThrowableMapper;
 import io.gravitee.am.management.handlers.management.api.provider.UnrecognizedPropertyExceptionMapper;
 import io.gravitee.am.management.handlers.management.api.provider.UriBuilderRequestFilter;
@@ -61,6 +62,7 @@ public class ManagementApplication extends ResourceConfig {
         register(ValidationExceptionMapper.class);
         register(WebApplicationExceptionMapper.class);
         register(UriBuilderRequestFilter.class);
+        register(BulkPayloadSizeFilter.class);
         register(ByteArrayOutputStreamWriter.class);
 
         register(GraviteeApiDefinition.class);

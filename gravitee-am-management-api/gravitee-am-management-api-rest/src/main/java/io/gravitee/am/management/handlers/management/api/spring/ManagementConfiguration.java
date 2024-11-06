@@ -29,6 +29,7 @@ import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.UserService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
@@ -63,5 +64,14 @@ ScopeApprovalService scopeApprovalService,
         ScopeService scopeService,
         UserService userService) {
         return new ScopeApprovalAdapterImpl(domainService, scopeApprovalService, applicationService, scopeService, userService);
+    }
+    @Bean
+    public UserBulkConfiguration bulkEndpointConfiguration(
+            @Value("${user.bulk.maxRequestLength:1048576}") int bulkMaxRequestLength,
+            @Value("${user.bulk.maxRequestOperations:1000}") int bulkMaxRequestOperations){
+        return UserBulkConfiguration.builder()
+                .bulkMaxRequestLength(bulkMaxRequestLength)
+                .bulkMaxRequestOperations(bulkMaxRequestOperations)
+                .build();
     }
 }

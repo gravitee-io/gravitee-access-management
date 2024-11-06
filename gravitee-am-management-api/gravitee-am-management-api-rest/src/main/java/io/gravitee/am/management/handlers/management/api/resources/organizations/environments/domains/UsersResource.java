@@ -24,6 +24,7 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractUsers
 import io.gravitee.am.management.handlers.management.api.schemas.BulkCreateUser;
 import io.gravitee.am.management.handlers.management.api.schemas.BulkDeleteUser;
 import io.gravitee.am.management.handlers.management.api.schemas.BulkUpdateUser;
+import io.gravitee.am.management.handlers.management.api.spring.UserBulkConfiguration;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
@@ -32,6 +33,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.TooManyOperationsException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
@@ -73,6 +75,9 @@ public class UsersResource extends AbstractUsersResource {
 
     @Context
     private ResourceContext resourceContext;
+
+    @Autowired
+    private UserBulkConfiguration userBulkConfiguration;
 
     @Autowired
     private IdentityProviderServiceProxy identityProviderService;
@@ -181,6 +186,11 @@ public class UsersResource extends AbstractUsersResource {
 
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
         var requiredAcl = bulkRequest.action().requiredAcl();
+
+        if(bulkRequest.items().size() > userBulkConfiguration.bulkMaxRequestOperations()){
+            throw TooManyOperationsException.tooManyOperation(userBulkConfiguration.bulkMaxRequestOperations());
+        }
+
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, requiredAcl)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
