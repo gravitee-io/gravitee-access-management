@@ -248,7 +248,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         return fluxToFlowable(getTemplate().select(JdbcOrganizationUser.class)
                 .matching(Query.query(where(USER_COL_REFERENCE_ID).is(referenceId)
                         .and(where(USER_COL_REFERENCE_TYPE).is(referenceType.name())))
-                        .sort(Sort.by(USER_COL_ID).ascending())
+                        .sort(Sort.by(USER_COL_USERNAME).ascending())
                         .with(PageRequest.of(page, size))
                 ).all())
                 .map(this::toEntity)
@@ -291,7 +291,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
 
         StringBuilder queryBuilder = new StringBuilder();
         queryBuilder.append(" FROM organization_users WHERE reference_id = :refId AND reference_type = :refType AND ");
-        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, page, size, ORGANIZATION_USERS);
+        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, USER_COL_USERNAME, page, size, ORGANIZATION_USERS);
 
         // execute query
         org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeSelect = getTemplate().getDatabaseClient().sql(search.getSelectQuery()).bind("refType", referenceType.name()).bind("refId", referenceId);
@@ -321,7 +321,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
 
         StringBuilder queryBuilder = new StringBuilder();
         queryBuilder.append(" FROM organization_users WHERE reference_id = :refId AND reference_type = :refType AND ");
-        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, -1, -1, ORGANIZATION_USERS);
+        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, USER_COL_USERNAME, -1, -1, ORGANIZATION_USERS);
 
         // execute query
         org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeSelect = getTemplate().getDatabaseClient().sql(search.getSelectQuery()).bind("refType", referenceType.name()).bind("refId", referenceId);

@@ -143,7 +143,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
 
         return fluxToFlowable(getTemplate().getDatabaseClient().sql("SELECT * FROM " +
                         databaseDialectHelper.toSql(quoted("groups")) +
-                        " g WHERE g.reference_id = :refId AND g.reference_type = :refType " + databaseDialectHelper.buildPagingClause(page, size))
+                        " g WHERE g.reference_id = :refId AND g.reference_type = :refType " + databaseDialectHelper.buildPagingClause(COL_NAME, page, size))
                         .bind("refId", referenceId)
                         .bind("refType", referenceType.name())
                 .map((row, rowMetadata) ->rowMapper.read(JdbcGroup.class, row))
@@ -160,7 +160,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
 
         StringBuilder queryBuilder = new StringBuilder();
         queryBuilder.append(" FROM " + databaseDialectHelper.toSql(quoted("groups"))  + " WHERE reference_id = :refId AND reference_type = :refType AND ");
-        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, page, size, GROUPS);
+        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, COL_NAME, page, size, GROUPS);
 
         // execute query
         org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeSelect = getTemplate().getDatabaseClient().sql(search.getSelectQuery());
