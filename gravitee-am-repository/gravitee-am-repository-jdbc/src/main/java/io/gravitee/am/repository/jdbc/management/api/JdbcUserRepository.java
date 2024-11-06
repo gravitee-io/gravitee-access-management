@@ -434,7 +434,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         LOGGER.debug("findByReference({})", referenceId);
         return userRepository.findByReference(referenceType.name(), referenceId)
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toFlowable());
+                .concatMap(user -> completeUser(user).toFlowable());
     }
 
     @Override
@@ -443,14 +443,21 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         return fluxToFlowable(getTemplate().select(JdbcUser.class)
                 .matching(Query.query(where(USER_COL_REFERENCE_ID).is(referenceId)
                                 .and(where(USER_COL_REFERENCE_TYPE).is(referenceType.name())))
-                        .sort(Sort.by(USER_COL_ID).ascending())
+                        .sort(Sort.by(USER_COL_USERNAME).ascending())
                         .with(PageRequest.of(page, size))
                 ).all())
                 .map(this::toEntity)
+<<<<<<< HEAD
                 .flatMap(user -> completeUser(user).toFlowable(), flatMapMaxConcurrency)
                 .toList()
                 .flatMap(content -> userRepository.countByReference(referenceType.name(), referenceId)
                         .map(count -> new Page<>(content, page, count)));
+=======
+                .concatMap(user -> completeUser(user).toFlowable(), CONCURRENT_FLATMAP)
+                .toList()
+                .concatMap(content -> userRepository.countByReference(referenceType.name(), referenceId)
+                        .map((count) -> new Page<>(content, page, count)));
+>>>>>>> 3d1fb59f30 (fix: preserve processing order during SCIM list action)
     }
 
     @Override
@@ -469,9 +476,13 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .bind(REF_TYPE, referenceType.name())
                 .map((row, rowMetadata) -> rowMapper.read(JdbcUser.class, row)).all())
                 .map(this::toEntity)
+<<<<<<< HEAD
                 .flatMap(app -> completeUser(app).toFlowable(), flatMapMaxConcurrency) // single thread to keep order
+=======
+                .concatMap(app -> completeUser(app).toFlowable(), CONCURRENT_FLATMAP) // single thread to keep order
+>>>>>>> 3d1fb59f30 (fix: preserve processing order during SCIM list action)
                 .toList()
-                .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
+                .concatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
                         .bind(ATTR_COL_VALUE, wildcardSearch ? wildcardValue : query)
                         .bind(REF_ID, referenceId)
                         .bind(REF_TYPE, referenceType.name())
@@ -506,9 +517,9 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
         return fluxToFlowable(userFlux)
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toFlowable())
+                .concatMap(user -> completeUser(user).toFlowable())
                 .toList()
-                .flatMap(list -> monoToSingle(userCount).map(total -> new Page<User>(list, page, total)));
+                .concatMap(list -> monoToSingle(userCount).map(total -> new Page<User>(list, page, total)));
     }
 
     @Override
@@ -529,7 +540,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
         return fluxToFlowable(userFlux)
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toFlowable());
+                .concatMap(user -> completeUser(user).toFlowable());
     }
 
     @Override
@@ -541,7 +552,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .map((row, rowMetadata) -> rowMapper.read(JdbcUser.class, row))
                 .all())
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toFlowable());
+                .concatMap(user -> completeUser(user).toFlowable());
     }
 
     @Override
