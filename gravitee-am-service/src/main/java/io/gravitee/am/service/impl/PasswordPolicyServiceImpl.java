@@ -157,27 +157,33 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
     public Completable deleteAndUpdateIdp(ReferenceType referenceType, String referenceId, String policyId, User principal) {
         log.debug("Delete password policy with id '{}' for {} {}", policyId, referenceType, referenceId);
         return passwordPolicyRepository.findByReferenceAndId(referenceType, referenceId, policyId)
-                .flatMapSingle(policy -> resetPolicyOnIdentityProviders(referenceType, referenceId, policyId)
-                        .andThen(passwordPolicyRepository.delete(policy.getId()))
-                        .andThen(eventService.create(new Event(Type.PASSWORD_POLICY, new Payload(policy.getId(), referenceType, referenceId, Action.DELETE))))
-                        .map(__ -> policy))
-                .doOnSuccess(policy -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
-                        .principal(principal)
-                        .type(EventType.PASSWORD_POLICY_DELETED)
-                        .reference(new Reference(referenceType, referenceId))
-                        .oldValue(policy)))
-                .doOnError(error -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
-                        .principal(principal)
-                        .type(EventType.PASSWORD_POLICY_DELETED)
-                        .reference(new Reference(referenceType, referenceId))
-                        .throwable(error)))
-                .flatMap(policy -> {
-                    if (policy.getDefaultPolicy().equals(Boolean.TRUE)) {
+                .flatMap(policy -> doDelete(policy, principal))
+                .flatMap(deletedPolicy -> {
+                    if (deletedPolicy.getDefaultPolicy().equals(Boolean.TRUE)) {
                         return setOldestPolicyDefault(referenceType, referenceId, principal);
                     }
                     return Maybe.empty();
                 })
                 .ignoreElement();
+    }
+
+    private Maybe<PasswordPolicy> doDelete(PasswordPolicy policy, User principal) {
+        var reference = new Reference(policy.getReferenceType(), policy.getReferenceId());
+        return resetPolicyOnIdentityProviders(reference.type(), reference.id(), policy.getId())
+                .andThen(passwordPolicyRepository.delete(policy.getId()))
+                .andThen(eventService.create(new Event(Type.PASSWORD_POLICY, new Payload(policy.getId(), reference.type(), reference.id(), Action.DELETE))))
+                .ignoreElement()
+                .doOnComplete(() -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.PASSWORD_POLICY_DELETED)
+                        .policy(policy)
+                        .oldValue(policy)))
+                .doOnError(error -> auditService.report(AuditBuilder.builder(PasswordPolicyAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.PASSWORD_POLICY_DELETED)
+                        .policy(policy)
+                        .throwable(error)))
+                .andThen(Maybe.just(policy));
     }
 
     @Override

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.reporter.kafka;
 
+import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.reporter.api.audit.model.AuditAccessPoint;
@@ -40,7 +41,7 @@ public class AuditValueFactory {
         audit.setType("type");
 
         AuditOutcome outcome = new AuditOutcome();
-        outcome.setStatus("status");
+        outcome.setStatus(Status.SUCCESS);
         audit.setOutcome(outcome);
 
         AuditEntity actor = createAuditEntity("actor");

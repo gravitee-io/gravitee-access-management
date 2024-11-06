@@ -330,4 +330,14 @@ export class AuditsComponent implements OnInit {
     const effectivePermissions = permissions.map((acl) => (this.organizationContext ? 'organization_reporter_' : 'domain_reporter_') + acl);
     return this.authService.hasPermissions(effectivePermissions);
   }
+
+  hasLinkableTarget(row: any) {
+    const isSuccessfulDeleteEvent = row.outcome.status === 'SUCCESS' && this.isDeletionEventType(row.type);
+    return !this.isDomainAuditOnOrganizationLevel(row) && !isSuccessfulDeleteEvent;
+  }
+
+  private isDeletionEventType(type: string): boolean {
+    const eventType = type.toLowerCase();
+    return eventType.includes('deleted') || eventType.includes('revoked');
+  }
 }

@@ -22,6 +22,6 @@ public record AuditOutcomeDto(String status, String message) {
         if (outcome == null) {
             return null;
         }
-        return new AuditOutcomeDto(outcome.getStatus(), outcome.getMessage());
+        return new AuditOutcomeDto(outcome.getStatus().name(), outcome.getMessage());
     }
 }

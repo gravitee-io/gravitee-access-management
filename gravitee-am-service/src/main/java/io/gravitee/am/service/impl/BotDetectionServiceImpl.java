@@ -141,7 +141,7 @@ public class BotDetectionServiceImpl implements BotDetectionService {
                     botDetectionToUpdate.setConfiguration(updateBotDetection.getConfiguration());
                     botDetectionToUpdate.setUpdatedAt(new Date());
 
-                    return  botDetectionRepository.update(botDetectionToUpdate)
+                    return botDetectionRepository.update(botDetectionToUpdate)
                             .flatMap(detection -> {
                                 // create event for sync process
                                 Event event = new Event(Type.BOT_DETECTION, new Payload(detection.getId(), detection.getReferenceType(), detection.getReferenceId(), Action.UPDATE));
@@ -170,7 +170,7 @@ public class BotDetectionServiceImpl implements BotDetectionService {
                     // create event for sync process
                     Event event = new Event(Type.BOT_DETECTION, new Payload(botDetectionId, ReferenceType.DOMAIN, domainId, Action.DELETE));
                     return Completable.fromSingle(botDetectionRepository.delete(botDetectionId)
-                            .andThen(eventService.create(event)))
+                                    .andThen(eventService.create(event)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class)
                                     .principal(principal)
                                     .type(EventType.BOT_DETECTION_DELETED)
@@ -178,7 +178,7 @@ public class BotDetectionServiceImpl implements BotDetectionService {
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class)
                                     .principal(principal)
                                     .type(EventType.BOT_DETECTION_DELETED)
-                                    .reference(new Reference(botDetection.getReferenceType(), botDetection.getReferenceId()))
+                                    .botDetection(botDetection)
                                     .throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {

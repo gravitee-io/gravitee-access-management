@@ -76,7 +76,7 @@ public class ApplicationAnalyticsServiceImpl implements ApplicationAnalyticsServ
                 .types(Collections.singletonList(query.getField().toUpperCase()));
         queryBuilder.from(query.getFrom());
         queryBuilder.to(query.getTo());
-        queryBuilder.status(Status.SUCCESS);
+        queryBuilder.status(Status.SUCCESS.name());
         queryBuilder.accessPointId(query.getApplication());
 
         if (query.getField().equals(Field.USER)) {

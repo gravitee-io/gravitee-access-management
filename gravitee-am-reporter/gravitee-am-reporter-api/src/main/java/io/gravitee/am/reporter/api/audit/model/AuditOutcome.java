@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.reporter.api.audit.model;
 
+import io.gravitee.am.common.audit.Status;
+import lombok.Data;
+import lombok.Getter;
+
 /**
  * Indicates whether the event succeeded or failed.
  *
@@ -23,30 +27,15 @@ package io.gravitee.am.reporter.api.audit.model;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Data
 public class AuditOutcome {
 
     /**
      * Result status of the action
      */
-    private String status;
+    private Status status;
     /**
      * Result message of the action (exception if error/ diff if management actions)
      */
     private String message;
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
 }

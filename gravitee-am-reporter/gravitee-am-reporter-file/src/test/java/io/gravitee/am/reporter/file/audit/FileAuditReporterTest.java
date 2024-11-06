@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.reporter.file.audit;
 
+import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.audit.AuditReporter;
@@ -106,7 +107,7 @@ public abstract class FileAuditReporterTest {
         assertEquals(test.getActor().getAlternativeId(), audit.getActor().getAlternativeId());
 
         assertNotNull(test.getStatus());
-        assertEquals(test.getStatus(), audit.getOutcome().getStatus());
+        assertEquals(test.getStatus(), audit.getOutcome().getStatus().name());
 
         assertNotNull(test.getOutcome());
         assertEquals(test.getOutcome().getStatus(), audit.getOutcome().getStatus());
@@ -144,7 +145,7 @@ public abstract class FileAuditReporterTest {
         reportable.setActor(actor);
 
         AuditOutcome outcome = new AuditOutcome();
-        outcome.setStatus("SUCCESS");
+        outcome.setStatus(Status.SUCCESS);
         outcome.setMessage("Message"+random);
         reportable.setOutcome(outcome);
 

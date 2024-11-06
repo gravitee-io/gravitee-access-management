@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
@@ -255,7 +256,7 @@ public class ServiceResourceServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
 
-        verify(auditService).report(argThat(auditBuilder -> auditBuilder.build(new ObjectMapper()).getOutcome().getStatus().equals("SUCCESS")));
+        verify(auditService).report(argThat(auditBuilder -> auditBuilder.build(new ObjectMapper()).getOutcome().getStatus().equals(Status.SUCCESS)));
     }
 
     @Test

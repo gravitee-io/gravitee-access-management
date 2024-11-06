@@ -178,8 +178,17 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
                             return serviceResourceRepository.delete(resourceId)
                                     .andThen(eventService.create(event))
                                     .ignoreElement()
-                                    .doOnComplete(() -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_DELETED).resource(resource)))
-                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_DELETED).reference(Reference.domain(domain)).throwable(throwable)));
+                                    .doOnComplete(() -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class)
+                                            .principal(principal)
+                                            .reference(Reference.domain(domain))
+                                            .type(EventType.RESOURCE_DELETED)
+                                            .resource(resource)))
+                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class)
+                                            .principal(principal)
+                                            .type(EventType.RESOURCE_DELETED)
+                                            .reference(Reference.domain(domain))
+                                            .resource(resource)
+                                            .throwable(throwable)));
                         }
                 )
                 .onErrorResumeNext(ex -> {
