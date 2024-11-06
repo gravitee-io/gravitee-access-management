@@ -497,7 +497,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
         StringBuilder queryBuilder = new StringBuilder();
         queryBuilder.append(" FROM users WHERE reference_id = :refId AND reference_type = :refType AND ");
-        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, page, size, USERS);
+        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, USER_COL_USERNAME, page, size, USERS);
 
         // execute query
         org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeSelect = getTemplate().getDatabaseClient().sql(search.getSelectQuery());
@@ -528,7 +528,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
         StringBuilder queryBuilder = new StringBuilder();
         queryBuilder.append(" FROM users WHERE reference_id = :refId AND reference_type = :refType AND ");
-        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, -1, -1, USERS);
+        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, USER_COL_USERNAME,  -1, -1, USERS);
 
         // execute query
         org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeSelect = getTemplate().getDatabaseClient().sql(search.getSelectQuery());

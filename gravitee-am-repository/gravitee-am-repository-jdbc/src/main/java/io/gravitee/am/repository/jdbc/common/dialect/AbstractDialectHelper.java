@@ -22,6 +22,7 @@ import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.DatabaseClient;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -99,10 +100,10 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     }
 
     @Override
-    public ScimSearch prepareScimSearchQuery(StringBuilder queryBuilder, FilterCriteria criteria, int page, int size, ScimRepository scimRepository) {
+    public ScimSearch prepareScimSearchQuery(StringBuilder queryBuilder, FilterCriteria criteria, String sortField, int page, int size, ScimRepository scimRepository) {
         ScimSearch search = new ScimSearch();
         processFilters(queryBuilder, criteria, search, scimRepository);
-        search.buildQueries(size > 0 ? buildPagingClause(page, size): "");
+        search.buildQueries(size > 0 ? buildPagingClause(StringUtils.hasLength(sortField)? sortField : "id" , page, size): "");
         return search;
     }
 
