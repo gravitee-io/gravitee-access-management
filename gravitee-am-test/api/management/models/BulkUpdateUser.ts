@@ -27,11 +27,11 @@
 /* eslint-disable */
 import { exists, mapValues } from '../runtime';
 import {
-    UpdateUser,
-    UpdateUserFromJSON,
-    UpdateUserFromJSONTyped,
-    UpdateUserToJSON,
-} from './UpdateUser';
+    UpdateUserWithId,
+    UpdateUserWithIdFromJSON,
+    UpdateUserWithIdFromJSONTyped,
+    UpdateUserWithIdToJSON,
+} from './UpdateUserWithId';
 
 /**
  * 
@@ -53,10 +53,10 @@ export interface BulkUpdateUser {
     failOnErrors?: number;
     /**
      * 
-     * @type {Array<UpdateUser>}
+     * @type {Array<UpdateUserWithId>}
      * @memberof BulkUpdateUser
      */
-    items: Array<UpdateUser>;
+    items: Array<UpdateUserWithId>;
 }
 
 
@@ -83,7 +83,7 @@ export function BulkUpdateUserFromJSONTyped(json: any, ignoreDiscriminator: bool
         
         'action': json['action'],
         'failOnErrors': !exists(json, 'failOnErrors') ? undefined : json['failOnErrors'],
-        'items': ((json['items'] as Array<any>).map(UpdateUserFromJSON)),
+        'items': ((json['items'] as Array<any>).map(UpdateUserWithIdFromJSON)),
     };
 }
 
@@ -98,7 +98,7 @@ export function BulkUpdateUserToJSON(value?: BulkUpdateUser | null): any {
         
         'action': value.action,
         'failOnErrors': value.failOnErrors,
-        'items': ((value.items as Array<any>).map(UpdateUserToJSON)),
+        'items': ((value.items as Array<any>).map(UpdateUserWithIdToJSON)),
     };
 }
 

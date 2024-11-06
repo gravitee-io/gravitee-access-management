@@ -18,8 +18,8 @@ package io.gravitee.am.management.handlers.management.api.schemas;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkRequest;
 import io.gravitee.am.service.model.NewUser;
 
-public class BulkCreateUser extends BulkRequest<NewUser> {
-    protected BulkCreateUser() {
+public final class BulkCreateUser extends BulkRequest<NewUser> {
+    private BulkCreateUser() {
         super(Action.CREATE);
     }
 }

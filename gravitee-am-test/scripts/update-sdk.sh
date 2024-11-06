@@ -55,6 +55,7 @@ npx @openapitools/openapi-generator-cli generate \
   -pmodelPropertyNaming=original \
   -psortModelPropertiesByRequiredFlag=false \
   -psortParamsByRequiredFlag=false \
+  -plegacyDiscriminatorBehavior=false \
   --import-mappings=DateTime=Date \
   --type-mappings=DateTime=Date,object=any \
   --reserved-words-mappings=configuration=configuration \

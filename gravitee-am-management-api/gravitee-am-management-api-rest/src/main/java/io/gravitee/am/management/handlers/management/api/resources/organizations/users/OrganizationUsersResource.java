@@ -15,14 +15,17 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.users;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.BaseJsonNode;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkOperationResult;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkRequest;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkResponse;
 import io.gravitee.am.management.handlers.management.api.model.UserEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractUsersResource;
 import io.gravitee.am.management.handlers.management.api.schemas.BulkCreateOrganizationUser;
-import io.gravitee.am.management.handlers.management.api.schemas.BulkDeleteOrganizationUser;
+import io.gravitee.am.management.handlers.management.api.schemas.BulkDeleteUser;
 import io.gravitee.am.management.handlers.management.api.schemas.BulkUpdateUser;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Organization;
@@ -40,6 +43,7 @@ import io.reactivex.rxjava3.core.SingleSource;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -62,6 +66,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -165,7 +170,7 @@ public class OrganizationUsersResource extends AbstractUsersResource {
     @ApiResponse(responseCode = "500", description = "Internal server error")
     public void handleBulkOperation(
             @PathParam("organizationId") String organizationId,
-            @Valid @NotNull @Schema(name = "bulkUserRequest", oneOf = {BulkCreateOrganizationUser.class, BulkUpdateUser.class, BulkDeleteOrganizationUser.class}) final BulkRequest.Generic bulkRequest,
+            @Valid @NotNull final OrganizationUserBulkRequest bulkRequest,
             @Suspended final AsyncResponse response) {
 
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
@@ -227,5 +232,21 @@ public class OrganizationUsersResource extends AbstractUsersResource {
             filteredUser.setPicture(user.getPicture());
         }
         return Single.just(filteredUser);
+    }
+
+    @Schema(oneOf = {BulkCreateOrganizationUser.class, BulkUpdateUser.class, BulkDeleteUser.class},
+            discriminatorProperty = "action",
+            discriminatorMapping = {
+                    @DiscriminatorMapping(value = "CREATE", schema = BulkCreateOrganizationUser.class),
+                    @DiscriminatorMapping(value = "UPDATE", schema = BulkUpdateUser.class),
+                    @DiscriminatorMapping(value = "DELETE", schema = BulkDeleteUser.class)
+            })
+    private static class OrganizationUserBulkRequest extends BulkRequest.Generic {
+        @JsonCreator
+        public OrganizationUserBulkRequest(@JsonProperty("action") Action action,
+                                     @JsonProperty("failOnErrors") Integer failOnErrors,
+                                     @JsonProperty("items") List<BaseJsonNode> items) {
+            super(action, failOnErrors, items);
+        }
     }
 }

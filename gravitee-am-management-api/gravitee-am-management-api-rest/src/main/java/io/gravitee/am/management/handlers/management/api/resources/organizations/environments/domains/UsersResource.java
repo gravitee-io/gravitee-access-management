@@ -15,7 +15,10 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.BaseJsonNode;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkOperationResult;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkRequest;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkResponse;
@@ -40,6 +43,7 @@ import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -63,6 +67,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -162,8 +167,8 @@ public class UsersResource extends AbstractUsersResource {
             operationId = "bulkUserOperation",
             summary = "Create/update/delete multiple users on the specified security domain",
             description = "User must have the DOMAIN_USER[CREATE/UPDATE/DELETE] permission on the specified domain, " +
-                    "the environment, or the organization")
-
+                    "the environment, or the organization"
+    )
     @ApiResponse(responseCode = "200", description = "Some users got created, inspect each result for details",
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = BulkResponse.class)))
@@ -175,8 +180,7 @@ public class UsersResource extends AbstractUsersResource {
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
-            @Parameter(name = "bulkRequest", required = true)
-            @Valid @NotNull @Schema(name = "bulkUserRequest", oneOf = {BulkCreateUser.class, BulkUpdateUser.class, BulkDeleteUser.class}) final BulkRequest.Generic bulkRequest,
+            @Valid @NotNull final DomainUserBulkRequest bulkRequest,
             @Suspended final AsyncResponse response) {
 
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
@@ -240,6 +244,22 @@ public class UsersResource extends AbstractUsersResource {
     public static final class UserPage extends Page<User> {
         public UserPage(Collection<User> data, int currentPage, long totalCount) {
             super(data, currentPage, totalCount);
+        }
+    }
+
+    @Schema(oneOf = {BulkCreateUser.class, BulkUpdateUser.class, BulkDeleteUser.class},
+            discriminatorProperty = "action",
+            discriminatorMapping = {
+                    @DiscriminatorMapping(value = "CREATE", schema = BulkCreateUser.class),
+                    @DiscriminatorMapping(value = "UPDATE", schema = BulkUpdateUser.class),
+                    @DiscriminatorMapping(value = "DELETE", schema = BulkDeleteUser.class)
+            })
+    private static class DomainUserBulkRequest extends BulkRequest.Generic {
+        @JsonCreator
+        public DomainUserBulkRequest(@JsonProperty("action") Action action,
+                                     @JsonProperty("failOnErrors") Integer failOnErrors,
+                                     @JsonProperty("items") List<BaseJsonNode> items) {
+            super(action, failOnErrors, items);
         }
     }
 }

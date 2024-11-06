@@ -413,10 +413,10 @@ export interface User {
     serviceAccount?: boolean;
     /**
      * 
-     * @type {string}
+     * @type {{ [key: string]: any; }}
      * @memberof User
      */
-    locale?: string;
+    address?: { [key: string]: any; };
     /**
      * 
      * @type {string}
@@ -425,10 +425,10 @@ export interface User {
     zoneInfo?: string;
     /**
      * 
-     * @type {{ [key: string]: any; }}
+     * @type {string}
      * @memberof User
      */
-    address?: { [key: string]: any; };
+    locale?: string;
     /**
      * 
      * @type {string}
@@ -565,9 +565,9 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
         'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
         'forceResetPassword': !exists(json, 'forceResetPassword') ? undefined : json['forceResetPassword'],
         'serviceAccount': !exists(json, 'serviceAccount') ? undefined : json['serviceAccount'],
-        'locale': !exists(json, 'locale') ? undefined : json['locale'],
-        'zoneInfo': !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
         'address': !exists(json, 'address') ? undefined : json['address'],
+        'zoneInfo': !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
+        'locale': !exists(json, 'locale') ? undefined : json['locale'],
         'middleName': !exists(json, 'middleName') ? undefined : json['middleName'],
         'lastIdentityInformation': !exists(json, 'lastIdentityInformation') ? undefined : json['lastIdentityInformation'],
         'identitiesAsMap': !exists(json, 'identitiesAsMap') ? undefined : json['identitiesAsMap'],
@@ -645,9 +645,9 @@ export function UserToJSON(value?: User | null): any {
         'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
         'forceResetPassword': value.forceResetPassword,
         'serviceAccount': value.serviceAccount,
-        'locale': value.locale,
-        'zoneInfo': value.zoneInfo,
         'address': value.address,
+        'zoneInfo': value.zoneInfo,
+        'locale': value.locale,
         'middleName': value.middleName,
         'lastIdentityInformation': value.lastIdentityInformation,
         'identitiesAsMap': value.identitiesAsMap,

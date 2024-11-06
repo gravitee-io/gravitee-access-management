@@ -37,12 +37,12 @@ import {
     BulkResponse,
     BulkResponseFromJSON,
     BulkResponseToJSON,
-    BulkUserRequest,
-    BulkUserRequestFromJSON,
-    BulkUserRequestToJSON,
     Credential,
     CredentialFromJSON,
     CredentialToJSON,
+    DomainUserBulkRequest,
+    DomainUserBulkRequestFromJSON,
+    DomainUserBulkRequestToJSON,
     EmailValue,
     EmailValueFromJSON,
     EmailValueToJSON,
@@ -58,6 +58,9 @@ import {
     NewUser,
     NewUserFromJSON,
     NewUserToJSON,
+    OrganizationUserBulkRequest,
+    OrganizationUserBulkRequestFromJSON,
+    OrganizationUserBulkRequestToJSON,
     Page,
     PageFromJSON,
     PageToJSON,
@@ -106,14 +109,14 @@ export interface AssignRequest {
 
 export interface BulkOrganisationUserOperationRequest {
     organizationId: string;
-    bulkUserRequest: BulkUserRequest;
+    organizationUserBulkRequest: OrganizationUserBulkRequest;
 }
 
 export interface BulkUserOperationRequest {
     organizationId: string;
     environmentId: string;
     domain: string;
-    bulkUserRequest: BulkUserRequest;
+    domainUserBulkRequest: DomainUserBulkRequest;
 }
 
 export interface CreateAccountAccessTokenRequest {
@@ -482,8 +485,8 @@ export class UserApi extends runtime.BaseAPI {
             throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling bulkOrganisationUserOperation.');
         }
 
-        if (requestParameters.bulkUserRequest === null || requestParameters.bulkUserRequest === undefined) {
-            throw new runtime.RequiredError('bulkUserRequest','Required parameter requestParameters.bulkUserRequest was null or undefined when calling bulkOrganisationUserOperation.');
+        if (requestParameters.organizationUserBulkRequest === null || requestParameters.organizationUserBulkRequest === undefined) {
+            throw new runtime.RequiredError('organizationUserBulkRequest','Required parameter requestParameters.organizationUserBulkRequest was null or undefined when calling bulkOrganisationUserOperation.');
         }
 
         const queryParameters: any = {};
@@ -505,7 +508,7 @@ export class UserApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: BulkUserRequestToJSON(requestParameters.bulkUserRequest),
+            body: OrganizationUserBulkRequestToJSON(requestParameters.organizationUserBulkRequest),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => BulkResponseFromJSON(jsonValue));
@@ -537,8 +540,8 @@ export class UserApi extends runtime.BaseAPI {
             throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling bulkUserOperation.');
         }
 
-        if (requestParameters.bulkUserRequest === null || requestParameters.bulkUserRequest === undefined) {
-            throw new runtime.RequiredError('bulkUserRequest','Required parameter requestParameters.bulkUserRequest was null or undefined when calling bulkUserOperation.');
+        if (requestParameters.domainUserBulkRequest === null || requestParameters.domainUserBulkRequest === undefined) {
+            throw new runtime.RequiredError('domainUserBulkRequest','Required parameter requestParameters.domainUserBulkRequest was null or undefined when calling bulkUserOperation.');
         }
 
         const queryParameters: any = {};
@@ -560,7 +563,7 @@ export class UserApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: BulkUserRequestToJSON(requestParameters.bulkUserRequest),
+            body: DomainUserBulkRequestToJSON(requestParameters.domainUserBulkRequest),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => BulkResponseFromJSON(jsonValue));

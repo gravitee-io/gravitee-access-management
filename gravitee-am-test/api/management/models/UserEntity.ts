@@ -431,10 +431,10 @@ export interface UserEntity {
     sourceId?: string;
     /**
      * 
-     * @type {string}
+     * @type {{ [key: string]: any; }}
      * @memberof UserEntity
      */
-    locale?: string;
+    address?: { [key: string]: any; };
     /**
      * 
      * @type {string}
@@ -443,10 +443,10 @@ export interface UserEntity {
     zoneInfo?: string;
     /**
      * 
-     * @type {{ [key: string]: any; }}
+     * @type {string}
      * @memberof UserEntity
      */
-    address?: { [key: string]: any; };
+    locale?: string;
     /**
      * 
      * @type {string}
@@ -585,9 +585,9 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'serviceAccount': !exists(json, 'serviceAccount') ? undefined : json['serviceAccount'],
         'applicationEntity': !exists(json, 'applicationEntity') ? undefined : ApplicationEntityFromJSON(json['applicationEntity']),
         'sourceId': !exists(json, 'sourceId') ? undefined : json['sourceId'],
-        'locale': !exists(json, 'locale') ? undefined : json['locale'],
-        'zoneInfo': !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
         'address': !exists(json, 'address') ? undefined : json['address'],
+        'zoneInfo': !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
+        'locale': !exists(json, 'locale') ? undefined : json['locale'],
         'middleName': !exists(json, 'middleName') ? undefined : json['middleName'],
         'lastIdentityInformation': !exists(json, 'lastIdentityInformation') ? undefined : json['lastIdentityInformation'],
         'identitiesAsMap': !exists(json, 'identitiesAsMap') ? undefined : json['identitiesAsMap'],
@@ -667,9 +667,9 @@ export function UserEntityToJSON(value?: UserEntity | null): any {
         'serviceAccount': value.serviceAccount,
         'applicationEntity': ApplicationEntityToJSON(value.applicationEntity),
         'sourceId': value.sourceId,
-        'locale': value.locale,
-        'zoneInfo': value.zoneInfo,
         'address': value.address,
+        'zoneInfo': value.zoneInfo,
+        'locale': value.locale,
         'middleName': value.middleName,
         'lastIdentityInformation': value.lastIdentityInformation,
         'identitiesAsMap': value.identitiesAsMap,

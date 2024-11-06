@@ -18,8 +18,8 @@ package io.gravitee.am.management.handlers.management.api.schemas;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkRequest;
 import io.gravitee.am.service.model.NewOrganizationUser;
 
-public class BulkCreateOrganizationUser extends BulkRequest<NewOrganizationUser> {
-    public BulkCreateOrganizationUser() {
+public final class BulkCreateOrganizationUser extends BulkRequest<NewOrganizationUser> {
+    private BulkCreateOrganizationUser() {
         super(Action.CREATE);
     }
 }

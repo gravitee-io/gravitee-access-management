@@ -66,12 +66,10 @@ models/AuthenticationDeviceNotifier.ts
 models/BotDetection.ts
 models/BulkCreateOrganizationUser.ts
 models/BulkCreateUser.ts
-models/BulkDeleteOrganizationUser.ts
 models/BulkDeleteUser.ts
 models/BulkOperationResultObject.ts
 models/BulkResponse.ts
 models/BulkUpdateUser.ts
-models/BulkUserRequest.ts
 models/CIBASettingNotifier.ts
 models/CIBASettings.ts
 models/Certificate.ts
@@ -85,6 +83,7 @@ models/CorsSettings.ts
 models/Credential.ts
 models/DeviceIdentifier.ts
 models/Domain.ts
+models/DomainUserBulkRequest.ts
 models/Email.ts
 models/EmailValue.ts
 models/EnrollSettings.ts
@@ -144,6 +143,7 @@ models/NewTheme.ts
 models/NewUser.ts
 models/NotifierPlugin.ts
 models/OIDCSettings.ts
+models/OrganizationUserBulkRequest.ts
 models/Page.ts
 models/PasswordPolicy.ts
 models/PasswordPolicyEntity.ts
@@ -225,6 +225,7 @@ models/UpdateScope.ts
 models/UpdateServiceResource.ts
 models/UpdateTag.ts
 models/UpdateUser.ts
+models/UpdateUserWithId.ts
 models/User.ts
 models/UserEntity.ts
 models/UserId.ts

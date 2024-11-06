@@ -28,7 +28,7 @@ export const createUser = (domainId, accessToken, user) =>
 export const bulkCreateOrgUsers = (accessToken: string, users: NewOrganizationUser[]) =>
   getUserApi(accessToken).bulkOrganisationUserOperation({
     organizationId: process.env.AM_DEF_ORG_ID,
-    bulkUserRequest: {
+    organizationUserBulkRequest: {
       action: 'CREATE',
       items: users,
     },
@@ -39,7 +39,7 @@ export const bulkCreateUsers = (domainId: string, accessToken: string, users: Ne
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
-    bulkUserRequest: {
+    domainUserBulkRequest: {
       action: 'CREATE',
       items: users,
       failOnErrors: failOnErrors,
