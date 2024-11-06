@@ -502,7 +502,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                 DatabaseClient.GenericExecuteSpec insertOutcomeSpec = template.getDatabaseClient().sql(INSERT_OUTCOMES_STATEMENT);
 
                 insertOutcomeSpec = addQuotedField(insertOutcomeSpec, COL_AUDIT_ID, audit.getId(), String.class);
-                insertOutcomeSpec = addQuotedField(insertOutcomeSpec, COL_STATUS, outcome.getStatus(), String.class);
+                insertOutcomeSpec = addQuotedField(insertOutcomeSpec, COL_STATUS, outcome.getStatus().name(), String.class);
                 insertOutcomeSpec = addQuotedField(insertOutcomeSpec, COL_MESSAGE, outcome.getMessage(), String.class);
 
                 insertAction = insertAction.then(insertOutcomeSpec.fetch().rowsUpdated());
@@ -653,9 +653,9 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                 }
             }
 
-            if (this.connectionFactory != null && this.connectionFactory instanceof ConnectionPool connectionFactory && !connectionFactory.isDisposed()) {
+            if (this.connectionFactory != null && this.connectionFactory instanceof ConnectionPool connectionPool && !connectionPool.isDisposed()) {
                     // dispose is a blocking call, use the non blocking one to avoid error
-                    connectionFactory.disposeLater().subscribe();
+                    connectionPool.disposeLater().subscribe();
                 }
 
         } catch (Exception ex) {
