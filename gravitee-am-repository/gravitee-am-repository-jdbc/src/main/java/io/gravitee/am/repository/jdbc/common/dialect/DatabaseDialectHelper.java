@@ -34,7 +34,7 @@ public interface DatabaseDialectHelper {
 
     DatabaseClient.GenericExecuteSpec addJsonField(DatabaseClient.GenericExecuteSpec spec, String name, Object value);
 
-    ScimSearch prepareScimSearchQuery(StringBuilder queryBuilder, FilterCriteria filterCriteria, int page, int size, ScimRepository scimRepository);
+    ScimSearch prepareScimSearchQuery(StringBuilder queryBuilder, FilterCriteria filterCriteria, String sortField, int page, int size, ScimRepository scimRepository);
 
     String buildFindUserByReferenceAndEmail(ReferenceType referenceType, String referenceId, String email, boolean strict);
 
