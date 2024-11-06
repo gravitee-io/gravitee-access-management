@@ -20,12 +20,11 @@ import io.gravitee.am.model.ReferenceType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -100,7 +99,7 @@ public enum Permission {
     INSTALLATION(ReferenceType.PLATFORM);
 
 
-    List<ReferenceType> relevantTypes;
+    final List<ReferenceType> relevantTypes;
 
     Permission(ReferenceType... relevantTypes) {
         this.relevantTypes = Arrays.asList(relevantTypes);
@@ -113,7 +112,7 @@ public enum Permission {
 
     public static Map<Permission, Set<Acl>> of(Permission permission, Acl... acls) {
 
-        HashMap<Permission, Set<Acl>> permissions = new HashMap<>();
+        Map<Permission, Set<Acl>> permissions = new EnumMap<>(Permission.class);
         permissions.put(permission, Acl.of(acls));
 
         return permissions;
@@ -121,7 +120,7 @@ public enum Permission {
 
     public static Map<Permission, Set<Acl>> allPermissionAcls(ReferenceType referenceType) {
 
-        Map<Permission, Set<Acl>> allPermissionAcls = new HashMap<>();
+        Map<Permission, Set<Acl>> allPermissionAcls = new EnumMap<>(Permission.class);
 
         Stream.of(Permission.values())
                 .filter(permission -> permission.relevantTypes.contains(referenceType))
@@ -133,7 +132,7 @@ public enum Permission {
     public static List<Permission> allPermissions(ReferenceType referenceType) {
 
         return Stream.of(Permission.values())
-                .filter(permission -> permission.relevantTypes.contains(referenceType)).collect(Collectors.toList());
+                .filter(permission -> permission.relevantTypes.contains(referenceType)).toList();
     }
 
     public static List<String> flatten(Map<Permission, Set<Acl>> permissions) {
@@ -149,7 +148,7 @@ public enum Permission {
 
     public static Map<Permission, Set<Acl>> unflatten(List<String> flatPermissions) {
 
-        Map<Permission, Set<Acl>> permissions = new HashMap<>();
+        Map<Permission, Set<Acl>> permissions = new EnumMap<>(Permission.class);
 
         if (flatPermissions != null) {
             flatPermissions.stream().map(String::toUpperCase)
