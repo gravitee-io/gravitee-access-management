@@ -79,7 +79,7 @@ public class GroupServiceImpl implements GroupService {
                 groupRepository.findAll(ReferenceType.DOMAIN, domain.getId(), page, size);
 
         return groupResult
-                .flatMap(groupPage -> {
+                .concatMap(groupPage -> {
                     // A negative value SHALL be interpreted as "0".
                     // A value of "0" indicates that no resource results are to be returned except for "totalResults".
                     if (size <= 0) {

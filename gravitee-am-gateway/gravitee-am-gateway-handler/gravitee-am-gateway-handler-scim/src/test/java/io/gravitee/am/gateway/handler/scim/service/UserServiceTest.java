@@ -24,16 +24,19 @@ import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
 import io.gravitee.am.gateway.handler.scim.model.GraviteeUser;
+import io.gravitee.am.gateway.handler.scim.model.ListResponse;
 import io.gravitee.am.gateway.handler.scim.model.Operation;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.impl.UserServiceImpl;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Group;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordHistory;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.AuditService;
@@ -64,9 +67,12 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_LAX_PATTERN;
@@ -148,6 +154,31 @@ public class UserServiceTest {
     public void setUp() {
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
         when(userRepository.findByExternalIdAndSource(any(), any(), any(), any())).thenReturn(Maybe.empty());
+    }
+
+    @Test
+    public void shouldListUsers() {
+        final List<io.gravitee.am.model.User> users = IntStream.range(0, 10).mapToObj(i -> {
+            final io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+            user.setUsername("" + i);
+            return user;
+        }).toList();
+
+        final Page page = new Page(users, 0, users.size());
+        final String domainID = "any-domain-id";
+        when(domain.getId()).thenReturn(domainID);
+        when(userRepository.findAll(ReferenceType.DOMAIN, domainID, 0, 10)).thenReturn(Single.just(page));
+        when(groupService.findByMember(any())).thenReturn(Flowable.empty());
+
+        TestObserver<ListResponse<io.gravitee.am.gateway.handler.scim.model.User>> observer = userService.list(null, 0, 10, "").test();
+        observer.assertNoErrors();
+        observer.assertComplete();
+        observer.assertValue(listResp -> 10 == listResp.getItemsPerPage()
+                &&
+                listResp.getResources().stream().map(io.gravitee.am.gateway.handler.scim.model.User::getUserName).collect(Collectors.joining(","))
+                        .equals(users.stream().map(io.gravitee.am.model.User::getUsername).collect(Collectors.joining(","))));
+
+        verify(userRepository, times(1)).findAll(ReferenceType.DOMAIN, domainID, 0, 10);
     }
 
     @Test
