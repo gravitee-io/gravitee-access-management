@@ -59,7 +59,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -208,7 +208,7 @@ public class RoleServiceImpl implements RoleService {
                     role.setName(newRole.getName());
                     role.setDescription(newRole.getDescription());
                     role.setAssignableType(newRole.getAssignableType());
-                    role.setPermissionAcls(new HashMap<>());
+                    role.setPermissionAcls(new EnumMap<>(Permission.class));
                     role.setOauthScopes(new ArrayList<>());
                     role.setCreatedAt(new Date());
                     role.setUpdatedAt(role.getCreatedAt());
@@ -436,7 +436,7 @@ public class RoleServiceImpl implements RoleService {
         environmentPrimaryOwnerPermissions.put(Permission.ENVIRONMENT, Acl.of(READ));
 
         domainPrimaryOwnerPermissions.put(Permission.DOMAIN, Acl.of(READ, UPDATE, DELETE));
-        domainPrimaryOwnerPermissions.put(Permission.DOMAIN_SETTINGS, Acl.of(READ, UPDATE));
+        domainPrimaryOwnerPermissions.put(Permission.DOMAIN_SETTINGS, Acl.of(READ, UPDATE, DELETE));
         domainPrimaryOwnerPermissions.put(Permission.DOMAIN_I18N_DICTIONARY, Acl.all());
         domainPrimaryOwnerPermissions.put(Permission.DOMAIN_AUDIT, Acl.of(READ, LIST));
 
@@ -482,10 +482,10 @@ public class RoleServiceImpl implements RoleService {
         roles.add(buildDefaultRole(DefaultRole.APPLICATION_OWNER.name(), ReferenceType.APPLICATION, organizationId, applicationOwnerPermissions));
 
         // Create USER roles.
-        Map<Permission, Set<Acl>> organizationUserPermissions = new HashMap<>();
-        Map<Permission, Set<Acl>> environmentUserPermissions = new HashMap<>();
-        Map<Permission, Set<Acl>> domainUserPermissions = new HashMap<>();
-        Map<Permission, Set<Acl>> applicationUserPermissions = new HashMap<>();
+        Map<Permission, Set<Acl>> organizationUserPermissions = new EnumMap<>(Permission.class);
+        Map<Permission, Set<Acl>> environmentUserPermissions = new EnumMap<>(Permission.class);
+        Map<Permission, Set<Acl>> domainUserPermissions = new EnumMap<>(Permission.class);
+        Map<Permission, Set<Acl>> applicationUserPermissions = new EnumMap<>(Permission.class);
 
         organizationUserPermissions.put(Permission.ORGANIZATION, Acl.of(READ));
         organizationUserPermissions.put(Permission.ORGANIZATION_GROUP, Acl.of(LIST));
