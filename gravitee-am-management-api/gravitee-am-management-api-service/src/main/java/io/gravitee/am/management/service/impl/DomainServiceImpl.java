@@ -645,6 +645,7 @@ public class DomainServiceImpl implements DomainService {
                                     .principal(principal)
                                     .type(EventType.DOMAIN_DELETED)
                                     .throwable(throwable)
+                                            .domain(domain)
                                     .reference(Reference.organization(graviteeContext.getOrganizationId()))));
                 })
                 .onErrorResumeNext(ex -> {

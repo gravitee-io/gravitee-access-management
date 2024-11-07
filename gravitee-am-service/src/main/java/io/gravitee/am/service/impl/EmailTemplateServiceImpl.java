@@ -206,7 +206,7 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
                     return emailRepository.delete(emailId)
                             .andThen(eventService.create(event))
                             .doOnSuccess(event1 -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_DELETED).email(email)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_DELETED).reference(new Reference(email.getReferenceType(), email.getReferenceId())).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_DELETED).email(email).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

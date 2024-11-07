@@ -36,8 +36,7 @@ public class DictionaryAuditBuilder extends ManagementAuditBuilder<DictionaryAud
             if (EventType.I18N_DICTIONARY_CREATED.equals(getType()) || EventType.I18N_DICTIONARY_UPDATED.equals(getType())) {
                 setNewValue(dictionary);
             }
-            referenceType(dictionary.getReferenceType());
-            referenceId(dictionary.getReferenceId());
+            reference(dictionary.getReference());
             setTarget(dictionary.getId(), I18N_DICTIONARY, null, dictionary.getName(), dictionary.getReferenceType(), dictionary.getReferenceId());
         }
         return this;

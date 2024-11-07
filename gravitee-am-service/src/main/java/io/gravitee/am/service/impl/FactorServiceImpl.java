@@ -217,8 +217,15 @@ public class FactorServiceImpl implements FactorService {
                     return factorRepository.delete(factorId)
                             .andThen(eventService.create(event))
                             .ignoreElement()
-                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(FactorAuditBuilder.class).principal(principal).type(EventType.FACTOR_DELETED).factor(factor)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(FactorAuditBuilder.class).reference(Reference.domain(domain)).principal(principal).type(EventType.FACTOR_DELETED).throwable(throwable)));
+                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(FactorAuditBuilder.class)
+                                    .principal(principal)
+                                    .type(EventType.FACTOR_DELETED)
+                                    .factor(factor)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(FactorAuditBuilder.class)
+                                    .principal(principal)
+                                    .type(EventType.FACTOR_DELETED)
+                                    .factor(factor)
+                                    .throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

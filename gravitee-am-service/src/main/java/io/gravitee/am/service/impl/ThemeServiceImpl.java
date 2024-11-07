@@ -212,7 +212,7 @@ public class ThemeServiceImpl implements ThemeService {
                                 .builder(ThemeAuditBuilder.class)
                                 .principal(principal)
                                 .type(EventType.THEME_DELETED)
-                                .theme(null)
+                                .theme(theme)
                                 .reference(new Reference(theme.getReferenceType(), theme.getReferenceId()))
                                 .oldValue(theme));
                     })

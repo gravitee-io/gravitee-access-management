@@ -101,7 +101,7 @@ public class AuditEntry implements ReportEntry {
      */
     @Deprecated(since = "4.5", forRemoval = true)
     public String getStatus() {
-        return outcome == null ? null : outcome.getStatus();
+        return outcome == null ? null : outcome.getStatus().name();
     }
 
 }
