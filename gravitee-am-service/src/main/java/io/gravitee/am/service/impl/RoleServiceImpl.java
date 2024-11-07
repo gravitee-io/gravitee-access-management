@@ -417,7 +417,8 @@ public class RoleServiceImpl implements RoleService {
     }
 
     private static List<Role> buildSystemRoles() {
-
+        // If you change permissions for default roles, bump DefaultRoleUpgrader.VERSION to make sure
+        // changes are applied to existing installations as well
         List<Role> roles = new ArrayList<>();
 
         // Create PRIMARY_OWNER roles and PLATFORM_ADMIN role.
