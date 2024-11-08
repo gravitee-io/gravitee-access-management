@@ -40,12 +40,15 @@ import io.reactivex.rxjava3.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static org.springframework.util.StringUtils.hasText;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -262,9 +265,7 @@ public class GroupServiceImpl implements GroupService {
             List<String> memberIds = group.getMembers().stream().map(Member::getValue).collect(Collectors.toList());
             return userRepository.findByIdIn(memberIds)
                     .map(user -> {
-                        String display = (user.getDisplayName() != null) ? user.getDisplayName()
-                                : (user.getFirstName() != null) ? user.getFirstName() + " " + (user.getLastName() != null ? user.getLastName() : "")
-                                : user.getUsername();
+                        String display = computeDisplayName(user);
                         String usersBaseUrl = baseUrl.substring(0, baseUrl.lastIndexOf("/Groups")).concat("/Users");
                         Member member = new Member();
                         member.setValue(user.getId());
@@ -280,6 +281,18 @@ public class GroupServiceImpl implements GroupService {
         } else {
             return Single.just(group);
         }
+    }
+
+    private String computeDisplayName(io.gravitee.am.model.User user) {
+        String displayName =user.getDisplayName();
+        if (!hasText(displayName)) {
+            if (hasText(user.getFirstName())) {
+                displayName = user.getFirstName() + " " + (hasText(user.getLastName()) ? user.getLastName() : "");
+            } else {
+                displayName = user.getUsername();
+            }
+        }
+        return displayName;
     }
 
     private Group convert(io.gravitee.am.model.Group group, String baseUrl, boolean listing) {
