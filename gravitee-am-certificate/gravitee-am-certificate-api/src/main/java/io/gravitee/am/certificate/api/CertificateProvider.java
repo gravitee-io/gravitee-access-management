@@ -29,6 +29,7 @@ import java.util.Optional;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+
 public interface CertificateProvider {
 
     Optional<Date> getExpirationDate();
@@ -52,4 +53,7 @@ public interface CertificateProvider {
     default Single<List<CertificateKey>> publicKeys() {
         return Single.just(Collections.emptyList());
     }
+
+    default void unregister() { }
+
 }
