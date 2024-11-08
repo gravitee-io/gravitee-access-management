@@ -128,6 +128,7 @@ public class CertificateServiceImpl implements CertificateService {
     private static final String ALIAS = "alias";
     private static final String NAME = "name";
     private static final String AWS_AM_CERTIFICATE = "aws-am-certificate";
+    private static final String AWS_HSM_AM_CERTIFICATE = "aws-hsm-am-certificate";
     private static final String SECRET_NAME = "secretname";
     private static final String KEY_PASS = "keypass";
     private static final String STORE_PASS = "storepass";
@@ -244,25 +245,36 @@ public class CertificateServiceImpl implements CertificateService {
 
     private Certificate getCertificateToCreate(String domain, NewCertificate newCertificate, boolean isSystem, String schema) throws JsonProcessingException, CertificateException {
         JsonNode configuration = objectMapper.readTree(newCertificate.getConfiguration());
-        if (!newCertificate.getType().equals(AWS_AM_CERTIFICATE)) {
+        if (newCertificate.getType().equals(AWS_AM_CERTIFICATE)) {
+            validateAwsConfiguration(configuration);
+            return createCertificate(domain, newCertificate, isSystem);
+        } else if(newCertificate.getType().equals(AWS_HSM_AM_CERTIFICATE)) {
+            validateAwsHsmConfiguration(configuration);
+            return createCertificate(domain, newCertificate, isSystem);
+        } else {
             var key = getFileKey(configuration, objectMapper.readValue(schema, CertificateSchema.class));
             var file = objectMapper.readTree(configuration.get(key).asText());
             // update configuration to set the file name
             ((ObjectNode) configuration).put(key, file.get(NAME).asText());
             newCertificate.setConfiguration(objectMapper.writeValueAsString(configuration));
             return createCertificate(domain, newCertificate, isSystem, Base64.getDecoder().decode(file.get(CONTENT).asText()));
-        } else {
-            validateAwsConfiguration(configuration);
-            return createCertificate(domain, newCertificate, isSystem, null);
         }
     }
 
     private String getFileKey(JsonNode configuration, CertificateSchema schema) throws CertificateException {
-        var key = schema.getProperties().entrySet().stream().filter(map -> map.getValue().getWidget() != null && "file".equals(map.getValue().getWidget())).map(Map.Entry::getKey).findFirst().orElse(null);
+        var key = schema.getProperties().entrySet().stream()
+                .filter(map -> "file".equals(map.getValue().getWidget()))
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElse(null);
         if (key == null || !configuration.has(key)) {
             throw new CertificateException("A valid certificate file was not uploaded. Please make sure to attach one.");
         }
         return key;
+    }
+
+    private Certificate createCertificate(String domain, NewCertificate newCertificate, boolean isSystem) {
+        return createCertificate(domain, newCertificate, isSystem, null);
     }
 
     private Certificate createCertificate(String domain, NewCertificate newCertificate, boolean isSystem, byte[] content) {
@@ -336,6 +348,8 @@ public class CertificateServiceImpl implements CertificateService {
         if (!certificateToUpdate.isSystem()) { // system certificate can't be updated
             if (oldCertificate.certificate().getType().equals(AWS_AM_CERTIFICATE)) {
                 validateAwsConfiguration(objectMapper.readTree(updateCertificate.getConfiguration()));
+            } else if (oldCertificate.certificate().getType().equals(AWS_HSM_AM_CERTIFICATE)) {
+                validateAwsHsmConfiguration(objectMapper.readTree(updateCertificate.getConfiguration()));
             } else {
                 var certificateConfiguration = objectMapper.readTree(updateCertificate.getConfiguration());
                 var key = getFileKey(certificateConfiguration, oldCertificate.schema());
@@ -353,6 +367,10 @@ public class CertificateServiceImpl implements CertificateService {
 
         }
         return certificateToUpdate;
+    }
+
+    private void validateAwsHsmConfiguration(JsonNode configuration)  throws CertificateException {
+        // TODO certificates should be validated by plugins itself.
     }
 
     private void validateAwsConfiguration(JsonNode configuration) throws CertificateException {
@@ -594,6 +612,7 @@ public class CertificateServiceImpl implements CertificateService {
                 certificate.setExpiresAt(expiryDate);
             }
         }
+        certificateProvider.unregister();
         return certificate;
     }
 }

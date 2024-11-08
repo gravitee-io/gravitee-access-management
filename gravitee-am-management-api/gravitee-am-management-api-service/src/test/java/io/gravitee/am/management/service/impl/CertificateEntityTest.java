@@ -45,7 +45,8 @@ class CertificateEntityTest {
                 // renewed certs should be RENEWED regardless of actual expiration date
                 arguments(true, now.plus(expirationWarningThreshold.multipliedBy(2)), RENEWED),
                 arguments(true, now.plus(expirationWarningThreshold.dividedBy(2)), RENEWED),
-                arguments(true, now.minusSeconds(3600), RENEWED)
+                arguments(true, now.minusSeconds(3600), RENEWED),
+                arguments(false, null, VALID)
         };
     }
 
@@ -61,7 +62,7 @@ class CertificateEntityTest {
 
     private Certificate aCertificateExpiringAt(Instant certExpiresAt) {
         var cert = new Certificate();
-        cert.setExpiresAt(Date.from(certExpiresAt));
+        cert.setExpiresAt(certExpiresAt == null ? null : Date.from(certExpiresAt));
         return cert;
     }
 
