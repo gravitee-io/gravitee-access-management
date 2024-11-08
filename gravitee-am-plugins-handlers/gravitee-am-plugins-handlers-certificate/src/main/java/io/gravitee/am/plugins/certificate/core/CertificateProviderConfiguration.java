@@ -16,9 +16,11 @@
 
 package io.gravitee.am.plugins.certificate.core;
 
+import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -31,7 +33,8 @@ public class CertificateProviderConfiguration extends ProviderConfiguration {
 
     public CertificateProviderConfiguration(Certificate certificate) {
         super(certificate.getType(), certificate.getConfiguration());
-        this.metadata = certificate.getMetadata();
+        this.metadata = certificate.getMetadata() == null ? new HashMap<>() : certificate.getMetadata();
+        this.metadata.put(CertificateMetadata.ID, certificate.getId());
     }
 
     public Map<String, Object> getMetadata() {
