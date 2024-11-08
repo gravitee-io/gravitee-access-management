@@ -112,7 +112,7 @@
         <commons-cli.version>1.4</commons-cli.version>
         <ognl.version>3.3.4</ognl.version>
         <mockito-jupiter.version>4.4.0</mockito-jupiter.version>
-        <test-container.version>1.17.6</test-container.version>
+        <test-container.version>1.20.3</test-container.version>
 
         <!-- R2DBC dependencies -->
         <spring-data-r2dbc.version>3.2.2</spring-data-r2dbc.version>
@@ -126,13 +126,6 @@
         <jdbc-mssql.version>7.4.1.jre8</jdbc-mssql.version>
         <jdbc-mysql.version>8.0.33</jdbc-mysql.version>
         <jdbc-mariadb.version>2.4.0</jdbc-mariadb.version>
-
-        <!--
-        we have to redefine the property here
-        due to the spring-security-crypto dep into
-        the gravitee-am-service module
-        -->
-        <spring-security.version>6.2.1</spring-security.version>
 
         <!-- External plugins versions -->
         <gravitee-policy-callout-http.version>3.0.0</gravitee-policy-callout-http.version>

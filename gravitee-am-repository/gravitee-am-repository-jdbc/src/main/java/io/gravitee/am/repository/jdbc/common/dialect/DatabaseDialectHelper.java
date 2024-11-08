@@ -36,6 +36,8 @@ public interface DatabaseDialectHelper {
 
     ScimSearch prepareScimSearchQuery(StringBuilder queryBuilder, FilterCriteria filterCriteria, String sortField, int page, int size, ScimRepository scimRepository);
 
+    ScimSearch prepareScimSearchQueryUsingOffset(StringBuilder queryBuilder, FilterCriteria filterCriteria, String sortField, int offset, int size, ScimRepository scimRepository);
+
     String buildFindUserByReferenceAndEmail(ReferenceType referenceType, String referenceId, String email, boolean strict);
 
     String buildSearchUserQuery(boolean wildcard, int page, int size, boolean organizationUser);
@@ -66,7 +68,11 @@ public interface DatabaseDialectHelper {
 
     String buildPagingClause(int page, int size);
 
-    String buildPagingClause(String field, int page, int size);
+    default String buildPagingClause(String field, int page, int size) {
+        return buildPagingClauseUsingOffset(field, page * size, size);
+    }
+
+    String buildPagingClauseUsingOffset(String field, int offset, int size);
 
     enum ScimRepository {GROUPS, ORGANIZATION_USERS, USERS}
 }

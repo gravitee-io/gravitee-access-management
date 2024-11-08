@@ -256,7 +256,7 @@ public class GroupServiceTest {
         final Page page = new Page(groups, 0, groups.size());
         final String domainID = "any-domain-id";
         when(domain.getId()).thenReturn(domainID);
-        when(groupRepository.findAll(ReferenceType.DOMAIN, domainID, 0, 10)).thenReturn(Single.just(page));
+        when(groupRepository.findAllScim(ReferenceType.DOMAIN, domainID, 0, 10)).thenReturn(Single.just(page));
 
         TestObserver<ListResponse<Group>> observer = groupService.list(null, 0, 10, "").test();
         observer.assertNoErrors();
@@ -266,7 +266,7 @@ public class GroupServiceTest {
                 listResp.getResources().stream().map(Group::getDisplayName).collect(Collectors.joining(","))
                         .equals(groups.stream().map(io.gravitee.am.model.Group::getName).collect(Collectors.joining(","))));
 
-        verify(groupRepository, times(1)).findAll(ReferenceType.DOMAIN, domainID, 0, 10);
+        verify(groupRepository, times(1)).findAllScim(ReferenceType.DOMAIN, domainID, 0, 10);
     }
 
     @Test
@@ -276,12 +276,12 @@ public class GroupServiceTest {
         final String domainID = "any-domain-id";
         Filter dummyFilter = new Filter(Operator.EQUALITY, new AttributePath("", "", ""), "", false, null);
         when(domain.getId()).thenReturn(domainID);
-        when(groupRepository.search(any(ReferenceType.class), anyString(), any(FilterCriteria.class), anyInt(), anyInt())).thenReturn(Single.just(page));
+        when(groupRepository.searchScim(any(ReferenceType.class), anyString(), any(FilterCriteria.class), anyInt(), anyInt())).thenReturn(Single.just(page));
 
         TestObserver<ListResponse<Group>> observer = groupService.list(dummyFilter, 0, 10, "").test();
         observer.assertNoErrors();
         observer.assertComplete();
 
-        verify(groupRepository, times(1)).search(any(ReferenceType.class), anyString(), any(FilterCriteria.class), anyInt(), anyInt());
+        verify(groupRepository, times(1)).searchScim(any(ReferenceType.class), anyString(), any(FilterCriteria.class), anyInt(), anyInt());
     }
 }

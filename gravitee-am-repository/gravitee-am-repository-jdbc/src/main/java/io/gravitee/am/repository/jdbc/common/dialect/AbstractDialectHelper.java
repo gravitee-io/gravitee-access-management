@@ -100,11 +100,16 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     }
 
     @Override
-    public ScimSearch prepareScimSearchQuery(StringBuilder queryBuilder, FilterCriteria criteria, String sortField, int page, int size, ScimRepository scimRepository) {
+    public ScimSearch prepareScimSearchQueryUsingOffset(StringBuilder queryBuilder, FilterCriteria criteria, String sortField, int offset, int size, ScimRepository scimRepository) {
         ScimSearch search = new ScimSearch();
         processFilters(queryBuilder, criteria, search, scimRepository);
-        search.buildQueries(size > 0 ? buildPagingClause(StringUtils.hasLength(sortField)? sortField : "id" , page, size): "");
+        search.buildQueries(size > 0 ? buildPagingClauseUsingOffset(StringUtils.hasLength(sortField)? sortField : "id" , offset, size): "");
         return search;
+    }
+
+    @Override
+    public ScimSearch prepareScimSearchQuery(StringBuilder queryBuilder, FilterCriteria filterCriteria, String sortField, int page, int size, ScimRepository scimRepository) {
+        return prepareScimSearchQueryUsingOffset(queryBuilder, filterCriteria, sortField, page * size, size, scimRepository);
     }
 
     private ScimSearch processFilters(StringBuilder queryBuilder, FilterCriteria criteria, ScimSearch search, ScimRepository scimRepository) {
@@ -281,6 +286,11 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     }
 
     protected abstract ScimSearch processJsonFilter(StringBuilder queryBuilder, FilterCriteria criteria, ScimSearch search);
+
+    @Override
+    public String buildPagingClause(int page, int size) {
+        return buildPagingClause("id", page, size);
+    }
 
     @Override
     public String buildSearchUserQuery(boolean wildcard, int page, int size, boolean organizationUser) {

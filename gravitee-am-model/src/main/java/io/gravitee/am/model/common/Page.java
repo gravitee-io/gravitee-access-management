@@ -48,4 +48,8 @@ public class Page<T> {
     public long getTotalCount() {
         return totalCount;
     }
+
+    public static int pageFromOffset(int offset, int size) {
+        return size > 0 ? (offset/size) : 0;
+    }
 }

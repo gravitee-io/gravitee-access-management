@@ -55,15 +55,15 @@ public class UsersEndpoint extends AbstractUserEndpoint {
 
     public void list(RoutingContext context) {
         // Pagination (https://tools.ietf.org/html/rfc7644#section-3.4.2.4)
-        Integer page = DEFAULT_START_INDEX;
+        Integer startIndex = DEFAULT_START_INDEX;
         Integer size = MAX_ITEMS_PER_PAGE;
         Filter filter = null;
 
         // The 1-based index of the first query result.
         // A value less than 1 SHALL be interpreted as 1.
-        final String startIndex = context.request().getParam("startIndex");
-        if (StringUtils.isNumeric(startIndex)) {
-            page = Integer.valueOf(startIndex);
+        final String startIndexParam = context.request().getParam("startIndex");
+        if (StringUtils.isNumeric(startIndexParam)) {
+            startIndex = Integer.max(Integer.valueOf(startIndexParam), 1);
         }
 
         // Non-negative integer. Specifies the desired  results per page, e.g., 10.
@@ -71,7 +71,7 @@ public class UsersEndpoint extends AbstractUserEndpoint {
         // A value of "0"  indicates that no resource results are to be returned except for "totalResults".
         final String count = context.request().getParam("count");
         if (StringUtils.isNumeric(count)) {
-            size = Integer.min(Integer.parseInt(count), MAX_ITEMS_PER_PAGE);
+            size = Integer.min(Integer.max(Integer.valueOf(count), 0), MAX_ITEMS_PER_PAGE);
         }
 
         // Filter results
@@ -86,7 +86,7 @@ public class UsersEndpoint extends AbstractUserEndpoint {
         }
 
         // user service use 0-based index
-        userService.list(filter, page - 1, size, location(context.request()))
+        userService.list(filter, startIndex - 1, size, location(context.request()))
                 .subscribe(
                         users -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
