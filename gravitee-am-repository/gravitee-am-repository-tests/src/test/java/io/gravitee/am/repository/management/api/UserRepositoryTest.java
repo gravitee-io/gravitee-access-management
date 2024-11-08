@@ -165,6 +165,14 @@ public class UserRepositoryTest extends AbstractManagementTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(users -> users.getData().size() == 1);
+
+        // fetch users
+        testObserver = userRepository.findAllScim(ReferenceType.DOMAIN, user.getReferenceId(), 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(users -> users.getData().size() == 1);
     }
 
     @Test
@@ -891,6 +899,81 @@ public class UserRepositoryTest extends AbstractManagementTest {
         testObserverP1.assertComplete();
         testObserverP1.assertNoErrors();
         testObserverP1.assertValue(users -> users.getData().size() == 1);
+    }
+
+    @Test
+    public void testScimSearch_byDate_paged_by_Offset() {
+        final String domain = "domain";
+        // create user
+        Date now = new Date();
+        User user1 = new User();
+        user1.setReferenceType(ReferenceType.DOMAIN);
+        user1.setReferenceId(domain);
+        user1.setUsername("testUsername1");
+        user1.setCreatedAt(now);
+        user1.setUpdatedAt(now);
+        userRepository.create(user1).blockingGet();
+
+        User user2 = new User();
+        user2.setReferenceType(ReferenceType.DOMAIN);
+        user2.setReferenceId(domain);
+        user2.setUsername("testUsername2");
+        user2.setCreatedAt(now);
+        user2.setUpdatedAt(now);
+        userRepository.create(user2).blockingGet();
+
+        User user3 = new User();
+        user3.setReferenceType(ReferenceType.DOMAIN);
+        user3.setReferenceId(domain);
+        user3.setUsername("testUsername3");
+        user3.setCreatedAt(now);
+        user3.setUpdatedAt(now);
+        userRepository.create(user3).blockingGet();
+
+        // fetch user (offset 0)
+        FilterCriteria criteriaName = new FilterCriteria();
+        criteriaName.setFilterName("userName");
+        criteriaName.setFilterValue("testUsername");
+        criteriaName.setOperator("sw");
+        criteriaName.setQuoteFilterValue(true);
+
+        FilterCriteria criteriaDate = new FilterCriteria();
+        criteriaDate.setFilterName("meta.created");
+        criteriaDate.setFilterValue(UTC_FORMATTER.format(LocalDateTime.now(UTC).minusSeconds(10)));
+        criteriaDate.setOperator("gt");
+
+        FilterCriteria criteria = new FilterCriteria();
+        criteria.setOperator("and");
+        criteria.setFilterComponents(Arrays.asList(criteriaDate, criteriaName));
+        TestObserver<Page<User>> testObserverOffset0 = userRepository.searchScim(ReferenceType.DOMAIN, domain, criteria, 0, 4).test();
+        testObserverOffset0.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserverOffset0.assertComplete();
+        testObserverOffset0.assertNoErrors();
+        testObserverOffset0.assertValue(users -> users.getData().size() == 3);
+
+        final var allValues = testObserverOffset0.values().get(0).getData().stream().toList();
+
+        // fetch user (offset 1)
+        TestObserver<Page<User>> testObserverOffset1 = userRepository.searchScim(ReferenceType.DOMAIN, domain, criteria, 1, 2).test();
+        testObserverOffset1.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserverOffset1.assertComplete();
+        testObserverOffset1.assertNoErrors();
+        testObserverOffset1.assertValue(users -> users.getData().size() == 2);
+
+        // startIndex = 1 so the first element of the allValue is skipped
+        testObserverOffset1.assertValue(users -> users.getData().stream().toList().get(0).getId().equals(allValues.get(1).getId()));
+        testObserverOffset1.assertValue(users -> users.getData().stream().toList().get(1).getId().equals(allValues.get(2).getId()));
+
+        // fetch user (offset 2)
+        TestObserver<Page<User>> testObserverOffset2 = userRepository.searchScim(ReferenceType.DOMAIN, domain, criteria, 2, 2).test();
+        testObserverOffset2.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserverOffset2.assertComplete();
+        testObserverOffset2.assertNoErrors();
+        testObserverOffset2.assertValue(users -> users.getData().size() == 1);
+        testObserverOffset2.assertValue(users -> users.getData().stream().toList().get(0).getId().equals(allValues.get(2).getId()));
     }
 
     @Test

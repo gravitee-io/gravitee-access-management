@@ -288,6 +288,60 @@ public class GroupRepositoryTest extends AbstractManagementTest {
         assertTrue(data.stream().map(Group::getId).collect(Collectors.toSet()).containsAll(pagedData));
     }
 
+    @Test
+    public void shouldFindAll_WithPage_using_offset() {
+        List<Group> emptyList = repository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).toList().blockingGet();
+        assertNotNull(emptyList);
+        assertTrue(emptyList.isEmpty());
+
+        final int loop = 10;
+        for (int i = 0; i < loop; ++i) {
+            // build 10 group with random domain
+            repository.create(buildGroup()).blockingGet();
+        }
+
+        for (int i = 0; i < loop; ++i) {
+            // build 10 group with DOMAIN_ID
+            final Group item = buildGroup();
+            item.setReferenceId(DOMAIN_ID);
+            repository.create(item).blockingGet();
+        }
+
+        Page<Group> groupOfDomain = repository.findAllScim(ReferenceType.DOMAIN, DOMAIN_ID, 0, 20).blockingGet();
+        assertNotNull(groupOfDomain);
+        assertEquals(0, groupOfDomain.getCurrentPage());
+        assertEquals(loop, groupOfDomain.getTotalCount());
+        assertEquals(loop, groupOfDomain.getData().stream()
+                .filter(g -> g.getReferenceId().equals(DOMAIN_ID)
+                        && g.getReferenceType().equals(ReferenceType.DOMAIN)).count());
+
+        final Collection<Group> data = groupOfDomain.getData();
+
+        groupOfDomain = repository.findAllScim(ReferenceType.DOMAIN, DOMAIN_ID, 0, 5).blockingGet();
+        assertNotNull(groupOfDomain);
+        assertEquals(loop, groupOfDomain.getTotalCount());
+        assertEquals(0, groupOfDomain.getCurrentPage());
+        assertEquals(5, groupOfDomain.getData().stream()
+                .filter(g -> g.getReferenceId().equals(DOMAIN_ID)
+                        && g.getReferenceType().equals(ReferenceType.DOMAIN)).count());
+
+        final Collection<Group> data1 = groupOfDomain.getData();
+
+        groupOfDomain = repository.findAllScim(ReferenceType.DOMAIN, DOMAIN_ID, 5, 5).blockingGet();
+        assertNotNull(groupOfDomain);
+        assertEquals(loop, groupOfDomain.getTotalCount());
+        assertEquals(1, groupOfDomain.getCurrentPage());
+        assertEquals(5, groupOfDomain.getData().stream()
+                .filter(g -> g.getReferenceId().equals(DOMAIN_ID)
+                        && g.getReferenceType().equals(ReferenceType.DOMAIN)).count());
+
+        final Collection<Group> data2 = groupOfDomain.getData();
+        Set<String> pagedData = new HashSet<>();
+        pagedData.addAll(data1.stream().map(Group::getId).collect(Collectors.toSet()));
+        pagedData.addAll(data2.stream().map(Group::getId).collect(Collectors.toSet()));
+        // check that all group are different
+        assertTrue(data.stream().map(Group::getId).collect(Collectors.toSet()).containsAll(pagedData));
+    }
 
     @Test
     public void shouldFindIdsIn() {

@@ -43,8 +43,8 @@ import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserRepos
 import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserRoleRepository;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
-import io.r2dbc.spi.R2dbcTransientException;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
+import io.r2dbc.spi.R2dbcTransientException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -79,6 +79,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
+import static io.gravitee.am.model.common.Page.pageFromOffset;
 import static io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper.ScimRepository.USERS;
 import static java.time.ZoneOffset.UTC;
 import static java.util.stream.Stream.concat;
@@ -239,8 +240,6 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     private static final String EMAIL = "email";
     private static final String USER_ID = "user_id";
 
-
-    private static final short flatMapMaxConcurrency = 1;
     private static final UserIdFields USER_ID_FIELDS = new UserIdFields(USER_COL_ID, USER_COL_SOURCE, USER_COL_EXTERNAL_ID);
 
     private String updateUserStatement;
@@ -454,6 +453,23 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     }
 
     @Override
+    public Single<Page<User>> findAllScim(ReferenceType referenceType, String referenceId, int startIndex, int count) {
+        LOGGER.debug("findAllScim({}, {}, {}, {})", referenceType, referenceId, startIndex, count);
+        Sort sortByUsername = Sort.by(USER_COL_USERNAME).ascending();
+        OffsetPageRequest pageable = new OffsetPageRequest(startIndex, count, sortByUsername);
+        return fluxToFlowable(getTemplate().select(JdbcUser.class)
+                .matching(Query.query(where(USER_COL_REFERENCE_ID).is(referenceId)
+                                .and(where(USER_COL_REFERENCE_TYPE).is(referenceType.name())))
+                        .with(pageable)
+                ).all())
+                .map(this::toEntity)
+                .concatMap(user -> completeUser(user).toFlowable())
+                .toList()
+                .concatMap(content -> userRepository.countByReference(referenceType.name(), referenceId)
+                        .map((totalCount) -> new Page<>(content, pageable.getPageNumber(), totalCount)));
+    }
+
+    @Override
     public Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size) {
         LOGGER.debug("search({}, {}, {}, {}, {})", referenceType, referenceId, query, page, size);
 
@@ -511,6 +527,36 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .concatMap(list -> monoToSingle(userCount).map(total -> new Page<User>(list, page, total)));
     }
 
+    @Override
+    public Single<Page<User>> searchScim(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int startIndex, int count) {
+        LOGGER.debug("searchScim({}, {}, {}, {}, {})", referenceType, referenceId, criteria, startIndex, count);
+
+        StringBuilder queryBuilder = new StringBuilder();
+        queryBuilder.append(" FROM users WHERE reference_id = :refId AND reference_type = :refType AND ");
+        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQueryUsingOffset(queryBuilder, criteria, USER_COL_USERNAME, startIndex, count, USERS);
+
+        // execute query
+        org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeSelect = getTemplate().getDatabaseClient().sql(search.getSelectQuery());
+        executeSelect = executeSelect.bind("refType", referenceType.name()).bind("refId", referenceId);
+        for (Map.Entry<String, Object> entry : search.getBinding().entrySet()) {
+            executeSelect = executeSelect.bind(entry.getKey(), entry.getValue());
+        }
+        Flux<JdbcUser> userFlux = executeSelect.map((row, rowMetadata) -> rowMapper.read(JdbcUser.class, row)).all();
+
+        // execute count to provide total in the Page
+        org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeCount = getTemplate().getDatabaseClient().sql(search.getCountQuery());
+        executeCount = executeCount.bind("refType", referenceType.name()).bind("refId", referenceId);
+        for (Map.Entry<String, Object> entry : search.getBinding().entrySet()) {
+            executeCount = executeCount.bind(entry.getKey(), entry.getValue());
+        }
+        Mono<Long> userCount = executeCount.map((row, rowMetadata) -> row.get(0, Long.class)).first();
+
+        return fluxToFlowable(userFlux)
+                .map(this::toEntity)
+                .concatMap(user -> completeUser(user).toFlowable())
+                .toList()
+                .concatMap(list -> monoToSingle(userCount).map(total -> new Page<User>(list, pageFromOffset(startIndex, count), total)));
+    }
     @Override
     public Flowable<User> search(ReferenceType referenceType, String referenceId, FilterCriteria criteria) {
         LOGGER.debug("search({}, {}, {})", referenceType, referenceId, criteria);
@@ -596,7 +642,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         }
         return userRepository.findByIdIn(ids)
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toFlowable(), flatMapMaxConcurrency)
+                .concatMap(user -> completeUser(user).toFlowable())
                 .onErrorResumeNext(err -> Flowable.fromMaybe(mapException(err)));
     }
 
