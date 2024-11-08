@@ -55,14 +55,13 @@ public class CertificatePluginManager
     @Override
     public CertificateProvider create(CertificateProviderConfiguration providerConfig) {
         logger.debug("Looking for a certificate provider for [{}]", providerConfig.getType());
-        var certificate = ofNullable(get(providerConfig.getType())).orElseGet(() -> {
+        var certificatePlugin = ofNullable(get(providerConfig.getType())).orElseGet(() -> {
             logger.error("No certificate provider is registered for type {}", providerConfig.getType());
             throw new IllegalStateException("No certificate provider is registered for type " + providerConfig.getType());
         });
 
-        var certificateConfiguration = configurationFactory.create(certificate.configuration(), providerConfig.getConfiguration());
-
-        return createProvider(certificate, List.of(
+        var certificateConfiguration = configurationFactory.create(certificatePlugin.configuration(), providerConfig.getConfiguration());
+        return createProvider(certificatePlugin, List.of(
                 new CertificateConfigurationBeanFactoryPostProcessor(certificateConfiguration),
                 new CertificateMetadataBeanFactoryPostProcessor(getCertificateMetadata(providerConfig))
         ));
@@ -85,4 +84,5 @@ public class CertificatePluginManager
             super("configuration", configuration);
         }
     }
+
 }

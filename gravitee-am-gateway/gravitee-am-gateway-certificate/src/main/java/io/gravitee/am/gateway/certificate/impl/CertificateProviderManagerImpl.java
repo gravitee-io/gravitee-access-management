@@ -60,7 +60,7 @@ public class CertificateProviderManagerImpl implements CertificateProviderManage
 
     @Override
     public void delete(String certificateId) {
-        certificateProviders.remove(certificateId);
+        undeploy(certificateId);
     }
 
     @Override
@@ -105,15 +105,24 @@ public class CertificateProviderManagerImpl implements CertificateProviderManage
         // create underline provider
         var providerConfig = new CertificateProviderConfiguration(certificate);
         io.gravitee.am.certificate.api.CertificateProvider provider = certificatePluginManager.create(providerConfig);
+
         // create certificate provider
         if (provider != null) {
             CertificateProvider certificateProvider = create(provider);
             if (certificateProvider != null) {
                 certificateProvider.setDomain(certificate.getDomain());
+                undeploy(certificate.getId());
                 certificateProviders.put(certificate.getId(), certificateProvider);
             }
         } else {
-            certificateProviders.remove(certificate.getId());
+            undeploy(certificate.getId());
+        }
+    }
+
+    private void undeploy(String certificateId) {
+        CertificateProvider removed = certificateProviders.remove(certificateId);
+        if(removed != null){
+            removed.getProvider().unregister();
         }
     }
 }
