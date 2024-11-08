@@ -41,9 +41,32 @@ public interface UserRepository extends CommonUserRepository {
 
     Single<Page<User>> findAll(ReferenceType referenceType, String referenceId, int page, int size);
 
+    /**
+     * Same implementation as findAll for SCIM request as for SCIM pagination the startingIndex value is used instead of the page number.
+     *
+     * @param referenceType
+     * @param referenceId
+     * @param startIndex index of the record from which the search as to start
+     * @param count
+     * @return
+     */
+    Single<Page<User>> findAllScim(ReferenceType referenceType, String referenceId, int startIndex, int count);
+
     Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size);
 
     Single<Page<User>> search(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int page, int size);
+
+    /**
+     * Same implementation as search for SCIM request as for SCIM pagination the startingIndex value is used instead of the page number.
+     *
+     * @param referenceType
+     * @param referenceId
+     * @param criteria
+     * @param startIndex index of the record from which the search as to start
+     * @param count
+     * @return
+     */
+    Single<Page<User>> searchScim(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int startIndex, int count);
 
     Flowable<User> findByDomainAndEmail(String domain, String email, boolean strict);
 

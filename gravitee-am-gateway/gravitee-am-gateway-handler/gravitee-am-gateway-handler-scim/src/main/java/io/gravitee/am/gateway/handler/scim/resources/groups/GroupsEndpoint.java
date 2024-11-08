@@ -59,7 +59,7 @@ public class GroupsEndpoint extends AbstractGroupEndpoint {
         // A value less than 1 SHALL be interpreted as 1.
         try {
             final String startIndex = context.request().getParam("startIndex");
-            page = Integer.parseInt(startIndex);
+            page = Integer.max(Integer.parseInt(startIndex), 1);
         } catch (Exception ex) {
             log.error("Error parsing 'startIndex' parameter", ex);
         }
@@ -68,7 +68,7 @@ public class GroupsEndpoint extends AbstractGroupEndpoint {
         // A value of "0"  indicates that no resource results are to be returned except for "totalResults".
         try {
             final String count = context.request().getParam("count");
-            size = Integer.min(Integer.parseInt(count), MAX_ITEMS_PER_PAGE);
+            size = Integer.min(Integer.max(Integer.parseInt(count), 0), MAX_ITEMS_PER_PAGE);
         } catch (Exception ex) {
             log.error("Error parsing 'count' parameter", ex);
         }

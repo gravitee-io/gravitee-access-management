@@ -27,9 +27,13 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
+import io.gravitee.am.model.common.Page;
+import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.common.UserIdFields;
 import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
 import io.gravitee.am.repository.management.api.UserRepository;
+import io.gravitee.am.repository.management.api.search.FilterCriteria;
+import io.gravitee.am.repository.mongodb.common.FilterCriteriaParser;
 import io.gravitee.am.repository.mongodb.management.internal.model.UserMongo;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -51,8 +55,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -135,6 +141,36 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
     public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source, boolean includeLinkedIdentities) {
         return findByUsernameAndSource(referenceType, referenceId, username, source)
                 .switchIfEmpty(includeLinkedIdentities ? findByIdentityUsernameAndProviderId(referenceType, referenceId, username, source) : Maybe.empty());
+    }
+
+    @Override
+    public Single<Page<User>> findAllScim(ReferenceType referenceType, String referenceId, int startIndex, int count) {
+        Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)), countOptions())).first(0l);
+        Single<Set<User>> usersOperation = Observable.fromPublisher(withMaxTime(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(startIndex).limit(count)).map(this::convert).collect(LinkedHashSet::new, Set::add);
+        return Single.zip(countOperation, usersOperation, (totalResults, users) -> new Page<>(users, count > 0 ? (startIndex/count) : 0, totalResults));
+    }
+
+    @Override
+    public Single<Page<User>> searchScim(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int startIndex, int count) {
+        try {
+            BasicDBObject searchQuery = BasicDBObject.parse(FilterCriteriaParser.parse(criteria));
+
+            Bson mongoQuery = and(
+                    eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                    eq(FIELD_REFERENCE_ID, referenceId),
+                    searchQuery);
+
+            Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(mongoQuery, countOptions())).first(0l);
+            Single<Set<User>> usersOperation = Observable.fromPublisher(withMaxTime(usersCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(startIndex).limit(count)).map(this::convert).collect(LinkedHashSet::new, Set::add);
+            return Single.zip(countOperation, usersOperation, (totalCount, users) -> new Page<>(users, count > 0 ? (startIndex/count) : 0, totalCount));
+        } catch (Exception ex) {
+            if (ex instanceof IllegalArgumentException) {
+                return Single.error(ex);
+            }
+            logger.error("An error has occurred while searching users with criteria {}", criteria, ex);
+            return Single.error(new TechnicalException("An error has occurred while searching users with filter criteria", ex));
+        }
+
     }
 
     private Maybe<User> findByIdentityUsernameAndProviderId(ReferenceType referenceType, String referenceId, String username, String providerId){

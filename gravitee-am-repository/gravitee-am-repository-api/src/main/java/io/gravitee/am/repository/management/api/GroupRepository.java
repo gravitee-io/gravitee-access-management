@@ -36,9 +36,17 @@ public interface GroupRepository extends CrudRepository<Group, String> {
 
     Flowable<Group> findAll(ReferenceType referenceType, String referenceId);
 
-    Single<Page<Group>> findAll(ReferenceType referenceType, String referenceId, int page, int size);
+    default Single<Page<Group>> findAll(ReferenceType referenceType, String referenceId, int page, int size) {
+        return findAllScim(referenceType, referenceId, page * size, size);
+    }
 
-    Single<Page<Group>> search(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int page, int size);
+    Single<Page<Group>> findAllScim(ReferenceType referenceType, String referenceId, int page, int size);
+
+    default Single<Page<Group>> search(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int page, int size) {
+        return searchScim(referenceType, referenceId, criteria, page * size, size);
+    }
+
+    Single<Page<Group>> searchScim(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int page, int size);
 
     Flowable<Group> findByIdIn(List<String> ids);
 

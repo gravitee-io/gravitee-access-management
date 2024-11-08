@@ -43,6 +43,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import static io.gravitee.am.model.common.Page.pageFromOffset;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.in;
@@ -82,14 +83,14 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
     }
 
     @Override
-    public Single<Page<Group>> findAll(ReferenceType referenceType, String referenceId, int page, int size) {
+    public Single<Page<Group>> findAllScim(ReferenceType referenceType, String referenceId, int offset, int size) {
         Single<Long> countOperation = Observable.fromPublisher(groupsCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)), countOptions())).first(0l);
-        Single<List<Group>> groupsOperation = Observable.fromPublisher(withMaxTime(groupsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).sort(new BasicDBObject(FIELD_NAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedList::new, List::add);
-        return Single.zip(countOperation, groupsOperation, (count, groups) -> new Page<>(groups, page, count));
+        Single<List<Group>> groupsOperation = Observable.fromPublisher(withMaxTime(groupsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).sort(new BasicDBObject(FIELD_NAME, 1)).skip(offset).limit(size)).map(this::convert).collect(LinkedList::new, List::add);
+        return Single.zip(countOperation, groupsOperation, (count, groups) -> new Page<>(groups, pageFromOffset(offset, size), count));
     }
 
     @Override
-    public Single<Page<Group>> search(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int page, int size) {
+    public Single<Page<Group>> searchScim(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int offset, int size) {
         try {
             final FilterCriteria mappedCriteria = mapCriteria(criteria);
             BasicDBObject searchQuery = BasicDBObject.parse(FilterCriteriaParser.parse(mappedCriteria));
@@ -99,8 +100,8 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
                     eq(FIELD_REFERENCE_ID, referenceId),
                     searchQuery);
             Single<Long> countOperation = Observable.fromPublisher(groupsCollection.countDocuments(mongoQuery, countOptions())).first(0l);
-            Single<List<Group>> groupsOperation = Observable.fromPublisher(withMaxTime(groupsCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_NAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedList::new, List::add);
-            return Single.zip(countOperation, groupsOperation, (count, groups) -> new Page<>(groups, page, count));
+            Single<List<Group>> groupsOperation = Observable.fromPublisher(withMaxTime(groupsCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_NAME, 1)).skip(offset).limit(size)).map(this::convert).collect(LinkedList::new, List::add);
+            return Single.zip(countOperation, groupsOperation, (count, groups) -> new Page<>(groups, pageFromOffset(offset, size), count));
         } catch (Exception ex) {
             if (ex instanceof IllegalArgumentException) {
                 return Single.error(ex);
