@@ -75,9 +75,9 @@ public record CertificateEntity(
         var now = Instant.now();
         if (isRenewedSystemCert) {
             return CertificateStatus.RENEWED;
-        } else if (expiresAt.getTime() <= now.toEpochMilli()) {
+        } else if (expiresAt != null && expiresAt.getTime() <= now.toEpochMilli()) {
             return CertificateStatus.EXPIRED;
-        } else if (expiresAt.getTime() < now.plus(certExpiryWarningThreshold).toEpochMilli()) {
+        } else if (expiresAt != null && expiresAt.getTime() < now.plus(certExpiryWarningThreshold).toEpochMilli()) {
             return CertificateStatus.WILL_EXPIRE;
         } else {
             return CertificateStatus.VALID;
