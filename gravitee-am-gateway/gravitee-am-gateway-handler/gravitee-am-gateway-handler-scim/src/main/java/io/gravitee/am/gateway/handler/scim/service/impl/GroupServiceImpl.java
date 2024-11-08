@@ -55,7 +55,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static java.util.Optional.ofNullable;
+import static org.springframework.util.StringUtils.hasText;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -272,9 +272,7 @@ public class GroupServiceImpl implements GroupService {
             List<String> memberIds = group.getMembers().stream().map(Member::getValue).collect(Collectors.toList());
             return userRepository.findByIdIn(memberIds)
                     .map(user -> {
-                        String display = ofNullable(user.getDisplayName())
-                                .orElse(ofNullable(user.getFirstName()).map(firstName -> firstName + " " + ofNullable(user.getLastName()).orElse(""))
-                                        .orElse(user.getUsername()));
+                        String display = computeDisplayName(user);
                         String usersBaseUrl = baseUrl.substring(0, baseUrl.lastIndexOf("/Groups")).concat("/Users");
                         Member member = new Member();
                         member.setValue(user.getId());
@@ -290,6 +288,18 @@ public class GroupServiceImpl implements GroupService {
         } else {
             return Single.just(group);
         }
+    }
+
+    private String computeDisplayName(io.gravitee.am.model.User user) {
+        String displayName =user.getDisplayName();
+        if (!hasText(displayName)) {
+            if (hasText(user.getFirstName())) {
+                displayName = user.getFirstName() + " " + (hasText(user.getLastName()) ? user.getLastName() : "");
+            } else {
+                displayName = user.getUsername();
+            }
+        }
+        return displayName;
     }
 
     private Group convert(io.gravitee.am.model.Group group, String baseUrl, boolean listing) {

@@ -29,6 +29,7 @@ import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
+import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -47,6 +48,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -166,11 +168,8 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-<<<<<<< HEAD
-    public void testFindById() {
-=======
     public void testFindAll_Paging() throws TechnicalException {
-        final var REFID = "testFindByAll";
+        final String REFID = "testFindByAll";
         // create user
         final List<User> users = IntStream.range(0, 10).mapToObj(i -> {
                     User user = new User();
@@ -223,7 +222,6 @@ public class UserRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testFindById() throws TechnicalException {
->>>>>>> a061848789 (fix: align sort order between Mongo and JDBC reporter implementation)
         // create user
         User user = buildUser();
         User userCreated = userRepository.create(user).blockingGet();

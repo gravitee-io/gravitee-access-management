@@ -447,17 +447,10 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                         .with(PageRequest.of(page, size))
                 ).all())
                 .map(this::toEntity)
-<<<<<<< HEAD
-                .flatMap(user -> completeUser(user).toFlowable(), flatMapMaxConcurrency)
-                .toList()
-                .flatMap(content -> userRepository.countByReference(referenceType.name(), referenceId)
-                        .map(count -> new Page<>(content, page, count)));
-=======
-                .concatMap(user -> completeUser(user).toFlowable(), CONCURRENT_FLATMAP)
+                .concatMap(user -> completeUser(user).toFlowable())
                 .toList()
                 .concatMap(content -> userRepository.countByReference(referenceType.name(), referenceId)
                         .map((count) -> new Page<>(content, page, count)));
->>>>>>> 3d1fb59f30 (fix: preserve processing order during SCIM list action)
     }
 
     @Override
@@ -476,11 +469,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .bind(REF_TYPE, referenceType.name())
                 .map((row, rowMetadata) -> rowMapper.read(JdbcUser.class, row)).all())
                 .map(this::toEntity)
-<<<<<<< HEAD
-                .flatMap(app -> completeUser(app).toFlowable(), flatMapMaxConcurrency) // single thread to keep order
-=======
-                .concatMap(app -> completeUser(app).toFlowable(), CONCURRENT_FLATMAP) // single thread to keep order
->>>>>>> 3d1fb59f30 (fix: preserve processing order during SCIM list action)
+                .concatMap(app -> completeUser(app).toFlowable()) // single thread to keep order
                 .toList()
                 .concatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
                         .bind(ATTR_COL_VALUE, wildcardSearch ? wildcardValue : query)
