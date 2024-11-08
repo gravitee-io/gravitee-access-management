@@ -143,7 +143,7 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
 
     private void removeCertificate(String domainId, String certificateId) {
         logger.info("Management API has received a undeploy certificate event for {}", certificateId);
-        certificateProviders.remove(certificateId);
+        undeploy(certificateId);
         notifierService.unregisterCertificateExpiration(domainId, certificateId);
         notifierService.deleteCertificateExpirationAcknowledgement(certificateId)
                 .doOnError(err -> logger.warn(DELETE_NOTIFICATION_ERROR, certificateId, err.getMessage()))
@@ -155,6 +155,7 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
             var providerConfig = new CertificateProviderConfiguration(certificate);
             var certificateProvider = certificatePluginManager.create(providerConfig);
             if (certificateProvider != null) {
+                undeploy(certificate.getId());
                 certificateProviders.put(certificate.getId(), certificateProvider);
                 // expiration date is extracted from the Certificate by the provider
                 // we update the certificate definition only if the expiration date has changed
@@ -175,11 +176,19 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
                 notifierService.deleteCertificateExpirationAcknowledgement(certificate.getId())
                         .doOnError(err -> logger.warn(DELETE_NOTIFICATION_ERROR, certificate.getId(), err.getMessage()))
                         .subscribe();
-                certificateProviders.remove(certificate.getId());
+                undeploy(certificate.getId());
             }
         } catch (Exception ex) {
             logger.error("An error has occurred while loading certificate: {} [{}]", certificate.getName(), certificate.getType(), ex);
-            certificateProviders.remove(certificate.getId());
+            undeploy(certificate.getId());
         }
+    }
+
+    private void undeploy(String certificateId){
+        CertificateProvider removedProvider = certificateProviders.remove(certificateId);
+        if(removedProvider != null){
+            removedProvider.unregister();
+        }
+
     }
 }

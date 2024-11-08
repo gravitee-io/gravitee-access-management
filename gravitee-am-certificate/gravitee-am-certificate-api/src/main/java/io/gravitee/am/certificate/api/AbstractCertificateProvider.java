@@ -26,6 +26,7 @@ import io.gravitee.am.model.jose.RSAKey;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ConfigurableApplicationContext;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -57,6 +58,10 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
     public static final String EC = "EC";
     @Autowired
     protected CertificateMetadata certificateMetadata;
+
+    @Autowired
+    protected ConfigurableApplicationContext context;
+
     private Date expirationDate;
     private Certificate cert;
     private JWKSet jwkSet;
@@ -301,5 +306,10 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
                 .filter(signatureAlgorithm -> signatureAlgorithm.getJcaName().equals(signingAlgorithm))
                 .findFirst()
                 .orElse(SignatureAlgorithm.RS256);
+    }
+
+    @Override
+    public void unregister() {
+        context.close();
     }
 }
