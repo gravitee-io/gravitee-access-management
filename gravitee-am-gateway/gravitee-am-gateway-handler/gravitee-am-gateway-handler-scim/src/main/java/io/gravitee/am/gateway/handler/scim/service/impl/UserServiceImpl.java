@@ -151,11 +151,11 @@ public class UserServiceImpl implements UserService {
     private PasswordPolicyManager passwordPolicyManager;
 
     @Override
-    public Single<ListResponse<User>> list(Filter filter, int page, int size, String baseUrl) {
+    public Single<ListResponse<User>> list(Filter filter, int startIndex, int size, String baseUrl) {
         LOGGER.debug("Find users by domain: {}", domain.getId());
         Single<Page<io.gravitee.am.model.User>> findUsers = filter != null ?
-                userRepository.search(ReferenceType.DOMAIN, domain.getId(), FilterCriteria.convert(filter), page, size) :
-                userRepository.findAll(ReferenceType.DOMAIN, domain.getId(), page, size);
+                userRepository.searchScim(ReferenceType.DOMAIN, domain.getId(), FilterCriteria.convert(filter), startIndex, size) :
+                userRepository.findAllScim(ReferenceType.DOMAIN, domain.getId(), startIndex, size);
 
         return findUsers
                 .concatMap(userPage -> {
@@ -164,13 +164,13 @@ public class UserServiceImpl implements UserService {
                     if (size <= 0) {
                         return Single.just(new ListResponse<User>(null, userPage.getCurrentPage() + 1, userPage.getTotalCount(), 0));
                     } else {
-                        // SCIM use 1-based index (increment current page)
+                        // SCIM use 1-based index (increment current startIndex)
                         return Observable.fromIterable(userPage.getData())
                                 .map(user1 -> UserMapper.convert(user1, baseUrl, true))
                                 // set groups
                                 .flatMapSingle(this::setGroups)
                                 .toList()
-                                .map(users -> new ListResponse<>(users, userPage.getCurrentPage() + 1, userPage.getTotalCount(), users.size()));
+                                .map(users -> new ListResponse<>(users, startIndex + 1, userPage.getTotalCount(), users.size()));
                     }
                 })
                 .onErrorResumeNext(ex -> {

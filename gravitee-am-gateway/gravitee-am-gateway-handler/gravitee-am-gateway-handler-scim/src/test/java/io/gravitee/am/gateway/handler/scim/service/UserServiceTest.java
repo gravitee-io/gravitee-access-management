@@ -32,7 +32,6 @@ import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.impl.UserServiceImpl;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Group;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordHistory;
 import io.gravitee.am.model.ReferenceType;
@@ -173,7 +172,7 @@ public class UserServiceTest {
         final Page page = new Page(users, 0, users.size());
         final String domainID = "any-domain-id";
         when(domain.getId()).thenReturn(domainID);
-        when(userRepository.findAll(ReferenceType.DOMAIN, domainID, 0, 10)).thenReturn(Single.just(page));
+        when(userRepository.findAllScim(ReferenceType.DOMAIN, domainID, 0, 10)).thenReturn(Single.just(page));
         when(groupService.findByMember(any())).thenReturn(Flowable.empty());
 
         TestObserver<ListResponse<io.gravitee.am.gateway.handler.scim.model.User>> observer = userService.list(null, 0, 10, "").test();
@@ -184,7 +183,7 @@ public class UserServiceTest {
                 listResp.getResources().stream().map(io.gravitee.am.gateway.handler.scim.model.User::getUserName).collect(Collectors.joining(","))
                         .equals(users.stream().map(io.gravitee.am.model.User::getUsername).collect(Collectors.joining(","))));
 
-        verify(userRepository, times(1)).findAll(ReferenceType.DOMAIN, domainID, 0, 10);
+        verify(userRepository, times(1)).findAllScim(ReferenceType.DOMAIN, domainID, 0, 10);
     }
 
     @Test

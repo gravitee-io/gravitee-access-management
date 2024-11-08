@@ -45,8 +45,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+import static io.gravitee.am.model.common.Page.pageFromOffset;
+import static io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper.ScimRepository.GROUPS;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.quoted;
+import static org.springframework.data.util.Streamable.of;
+import static reactor.adapter.rxjava.RxJava3Adapter.*;
 import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToMaybe;
@@ -137,8 +141,8 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
     }
 
     @Override
-    public Single<Page<Group>> findAll(ReferenceType referenceType, String referenceId, int page, int size) {
-        LOGGER.debug("findAll({}, {}, {}, {})", referenceType, referenceId, page, size);
+    public Single<Page<Group>> findAllScim(ReferenceType referenceType, String referenceId, int offset, int size) {
+        LOGGER.debug("findAllScim({}, {}, {}, {})", referenceType, referenceId, offset, size);
 
         Single<Long> counter = monoToSingle(getTemplate().getDatabaseClient().sql("SELECT count(*) FROM " +
                 databaseDialectHelper.toSql(quoted(GROUPS)) +
@@ -150,7 +154,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
 
         return fluxToFlowable(getTemplate().getDatabaseClient().sql(SELECT_FROM +
                         databaseDialectHelper.toSql(quoted(GROUPS)) +
-                        " g WHERE g.reference_id = :refId AND g.reference_type = :refType " + databaseDialectHelper.buildPagingClause(COL_NAME, page, size))
+                        " g WHERE g.reference_id = :refId AND g.reference_type = :refType " + databaseDialectHelper.buildPagingClauseUsingOffset(COL_NAME, offset, size))
                         .bind(REF_ID, referenceId)
                         .bind(REF_TYPE, referenceType.name())
                 .map((row, rowMetadata) ->rowMapper.read(JdbcGroup.class, row))
@@ -158,16 +162,16 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 .map(this::toEntity)
                 .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), concurrentFlatmap)
                 .toList()
-                .flatMap(content -> counter.map(count -> new Page<>(content, page, count)));
+                .flatMap(content -> counter.map((count) -> new Page<Group>(content, pageFromOffset(offset, size), count)));
     }
 
     @Override
-    public Single<Page<Group>> search(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int page, int size) {
-        LOGGER.debug("search({}, {}, {}, {}, {})", referenceType, referenceId, criteria, page, size);
+    public Single<Page<Group>> searchScim(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int offset, int size) {
+        LOGGER.debug("search({}, {}, {}, {}, {})", referenceType, referenceId, criteria, offset, size);
 
         StringBuilder queryBuilder = new StringBuilder();
         queryBuilder.append(" FROM " + databaseDialectHelper.toSql(quoted(GROUPS))  + " WHERE reference_id = :refId AND reference_type = :refType AND ");
-        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, COL_NAME, page, size, DatabaseDialectHelper.ScimRepository.GROUPS);
+        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, COL_NAME, offset, size, DatabaseDialectHelper.ScimRepository.GROUPS);
 
         // execute query
         org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeSelect = getTemplate().getDatabaseClient().sql(search.getSelectQuery());
@@ -191,7 +195,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 .map(this::toEntity)
                 .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), concurrentFlatmap)
                 .toList()
-                .flatMap(list -> monoToSingle(groupCount).map(total -> new Page<>(list, page, total)));
+                .flatMap(list -> monoToSingle(groupCount).map(total -> new Page<Group>(list, pageFromOffset(offset, size), total)));
 
     }
 

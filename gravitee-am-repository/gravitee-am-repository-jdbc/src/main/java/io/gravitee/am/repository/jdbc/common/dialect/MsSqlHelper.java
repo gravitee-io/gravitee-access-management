@@ -85,12 +85,8 @@ public class MsSqlHelper extends AbstractDialectHelper {
         return search;
     }
 
-    public String buildPagingClause(int page, int size) {
-        return buildPagingClause("id", page, size);
-    }
-
-    public String buildPagingClause(String field, int page, int size) {
-        return " ORDER BY "+ field +" OFFSET "+ (page * size) +" ROWS FETCH NEXT " + size + " ROWS ONLY ";
+    public String buildPagingClauseUsingOffset(String field, int offset, int size) {
+        return " ORDER BY "+ field +" OFFSET "+ offset +" ROWS FETCH NEXT " + size + " ROWS ONLY ";
     }
 
 }

@@ -81,12 +81,12 @@ public class GroupServiceImpl implements GroupService {
     private AuditService auditService;
 
     @Override
-    public Single<ListResponse<Group>> list(Filter filter, int page, int size, String baseUrl) {
+    public Single<ListResponse<Group>> list(Filter filter, int startIndex, int size, String baseUrl) {
         LOGGER.debug("Find groups by domain : {}", domain.getId());
 
         Single<Page<io.gravitee.am.model.Group>> groupResult = filter != null ?
-                groupRepository.search(ReferenceType.DOMAIN, domain.getId(), FilterCriteria.convert(filter), page, size) :
-                groupRepository.findAll(ReferenceType.DOMAIN, domain.getId(), page, size);
+                groupRepository.searchScim(ReferenceType.DOMAIN, domain.getId(), FilterCriteria.convert(filter), startIndex, size) :
+                groupRepository.findAllScim(ReferenceType.DOMAIN, domain.getId(), startIndex, size);
 
         return groupResult
                 .concatMap(groupPage -> {
@@ -95,13 +95,13 @@ public class GroupServiceImpl implements GroupService {
                     if (size <= 0) {
                         return Single.just(new ListResponse<Group>(null, groupPage.getCurrentPage() + 1, groupPage.getTotalCount(), 0));
                     } else {
-                        // SCIM use 1-based index (increment current page)
+                        // SCIM use 1-based index (increment current startIndex)
                         return Observable.fromIterable(groupPage.getData())
                                 .map(group -> convert(group, baseUrl, true))
                                 // set members
                                 .flatMapSingle(group -> setMembers(group, baseUrl))
                                 .toList()
-                                .map(groups -> new ListResponse<>(groups, groupPage.getCurrentPage() + 1, groupPage.getTotalCount(), groups.size()));
+                                .map(groups -> new ListResponse<>(groups, startIndex + 1, groupPage.getTotalCount(), groups.size()));
                     }
                 })
                 .onErrorResumeNext(ex -> {
