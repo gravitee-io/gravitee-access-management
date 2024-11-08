@@ -15,22 +15,26 @@
  */
 package io.gravitee.am.certificate.api;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import lombok.experimental.UtilityClass;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class RSAKeyUtils {
+@UtilityClass
+public final class KeyUtils {
 
     public static String toSSHRSAString(RSAPublicKey publicKey) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -57,5 +61,11 @@ public final class RSAKeyUtils {
         tmp[2] = (byte)((value >>> 8) & 0xff);
         tmp[3] = (byte)(value & 0xff);
         out.write(tmp);
+    }
+
+    public static String toEcdsaString(ECPublicKey publicKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        KeyFactory keyFactory = KeyFactory.getInstance("EC");
+        X509EncodedKeySpec keySpec = keyFactory.getKeySpec(publicKey, X509EncodedKeySpec.class);
+        return new String(java.util.Base64.getEncoder().encode(keySpec.getEncoded()));
     }
 }

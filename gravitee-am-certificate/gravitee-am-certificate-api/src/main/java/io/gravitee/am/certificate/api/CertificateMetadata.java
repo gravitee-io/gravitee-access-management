@@ -25,6 +25,7 @@ public class CertificateMetadata {
 
     public static final String FILE = "file";
     public static final String DIGEST_ALGORITHM_NAME = "digestAlgorithmName";
+    public static final String ID = "id";
 
     private Map<String, Object> metadata;
 
