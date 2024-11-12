@@ -148,19 +148,11 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 .map((row, rowMetadata) ->row.get(0, Long.class))
                 .first());
 
-<<<<<<< HEAD
         return fluxToFlowable(getTemplate().getDatabaseClient().sql(SELECT_FROM +
                         databaseDialectHelper.toSql(quoted(GROUPS)) +
-                        " g WHERE g.reference_id = :refId AND g.reference_type = :refType " + databaseDialectHelper.buildPagingClause(page, size))
+                        " g WHERE g.reference_id = :refId AND g.reference_type = :refType " + databaseDialectHelper.buildPagingClause(COL_NAME, page, size))
                         .bind(REF_ID, referenceId)
                         .bind(REF_TYPE, referenceType.name())
-=======
-        return fluxToFlowable(getTemplate().getDatabaseClient().sql("SELECT * FROM " +
-                        databaseDialectHelper.toSql(quoted("groups")) +
-                        " g WHERE g.reference_id = :refId AND g.reference_type = :refType " + databaseDialectHelper.buildPagingClause(COL_NAME, page, size))
-                        .bind("refId", referenceId)
-                        .bind("refType", referenceType.name())
->>>>>>> a061848789 (fix: align sort order between Mongo and JDBC reporter implementation)
                 .map((row, rowMetadata) ->rowMapper.read(JdbcGroup.class, row))
                 .all())
                 .map(this::toEntity)
@@ -174,13 +166,8 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
         LOGGER.debug("search({}, {}, {}, {}, {})", referenceType, referenceId, criteria, page, size);
 
         StringBuilder queryBuilder = new StringBuilder();
-<<<<<<< HEAD
         queryBuilder.append(" FROM " + databaseDialectHelper.toSql(quoted(GROUPS))  + " WHERE reference_id = :refId AND reference_type = :refType AND ");
-        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, page, size, DatabaseDialectHelper.ScimRepository.GROUPS);
-=======
-        queryBuilder.append(" FROM " + databaseDialectHelper.toSql(quoted("groups"))  + " WHERE reference_id = :refId AND reference_type = :refType AND ");
-        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, COL_NAME, page, size, GROUPS);
->>>>>>> a061848789 (fix: align sort order between Mongo and JDBC reporter implementation)
+        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, COL_NAME, page, size, DatabaseDialectHelper.ScimRepository.GROUPS);
 
         // execute query
         org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeSelect = getTemplate().getDatabaseClient().sql(search.getSelectQuery());
