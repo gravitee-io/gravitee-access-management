@@ -48,7 +48,6 @@ import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.StringUtils;
 
 import java.util.Date;
 import java.util.HashSet;
@@ -56,11 +55,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-<<<<<<< HEAD
-import static java.util.Optional.ofNullable;
-=======
 import static org.springframework.util.StringUtils.hasText;
->>>>>>> 37a01dc982 (chore(refactoring): extract dedicated method to compute user display in SCIM group member)
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -277,13 +272,7 @@ public class GroupServiceImpl implements GroupService {
             List<String> memberIds = group.getMembers().stream().map(Member::getValue).collect(Collectors.toList());
             return userRepository.findByIdIn(memberIds)
                     .map(user -> {
-<<<<<<< HEAD
-                        String display = ofNullable(user.getDisplayName())
-                                .orElse(ofNullable(user.getFirstName()).map(firstName -> firstName + " " + ofNullable(user.getLastName()).orElse(""))
-                                        .orElse(user.getUsername()));
-=======
                         String display = computeDisplayName(user);
->>>>>>> 37a01dc982 (chore(refactoring): extract dedicated method to compute user display in SCIM group member)
                         String usersBaseUrl = baseUrl.substring(0, baseUrl.lastIndexOf("/Groups")).concat("/Users");
                         Member member = new Member();
                         member.setValue(user.getId());
