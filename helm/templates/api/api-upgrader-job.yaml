@@ -104,6 +104,7 @@ spec:
             - name: GRAVITEE_PLUGINS_PATH_1
               value: '${gravitee.home}/plugins-ext'
             {{- end }}
+<<<<<<< HEAD
             {{- if .Values.cockpit.enabled }}
             - name: gravitee_cockpit_enabled
               value: "true"
@@ -128,6 +129,8 @@ spec:
             - name: gravitee_cockpit_ssl_verifyHostname
               value: "{{ .Values.cockpit.ssl.verifyHostname }}"
             {{- end }}
+=======
+>>>>>>> e77fb92a34 (fix(helm): remove probes from upgrader manifest)
 {{- if .Values.api.env | default .Values.api.deployment.extraEnvs }}
 {{ toYaml ( .Values.api.env | default .Values.api.deployment.extraEnvs ) | indent 12 }}
 {{- end }}
@@ -145,8 +148,6 @@ spec:
                 command: {{ .Values.api.lifecycle.preStop }}
             {{- end }}
           {{- end }}
-          livenessProbe: {{ toYaml .Values.api.livenessProbe | nindent 12 }}
-          readinessProbe: {{ toYaml .Values.api.readinessProbe | nindent 12 }}
           resources: {{ toYaml .Values.api.resources | nindent 12 }}
           volumeMounts:
             - name: config
@@ -163,11 +164,14 @@ spec:
             - name: graviteeio-am-jdbc-ext
               mountPath: /opt/graviteeio-am-management-api/plugins/ext/reporter-am-jdbc
           {{- end }}
+<<<<<<< HEAD
           {{- if .Values.cockpit.enabled }}
             - name: gravitee-cockpit-certificates
               mountPath: /opt/graviteeio-am-management-api/cockpit
               readOnly: true
           {{- end }}
+=======
+>>>>>>> e77fb92a34 (fix(helm): remove probes from upgrader manifest)
           {{- include "deployment.pluginVolumeMounts" $pluginParams | indent 12 }}
           {{- with .Values.api.extraVolumeMounts }}
           {{- tpl . $ | nindent 12 }}
@@ -184,11 +188,14 @@ spec:
         - name: graviteeio-am-jdbc-ext
           emptyDir: { }
         {{- end }}
+<<<<<<< HEAD
         {{- if .Values.cockpit.enabled }}
         - name: gravitee-cockpit-certificates
           secret:
             secretName: gravitee-cockpit-certificates
         {{- end }}
+=======
+>>>>>>> e77fb92a34 (fix(helm): remove probes from upgrader manifest)
         {{- include "deployment.pluginVolumes" $pluginParams | indent 8 }}
         {{- with .Values.api.extraVolumes }}
           {{- tpl . $ | nindent 8 }}
