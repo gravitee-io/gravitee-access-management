@@ -50,6 +50,7 @@ public class IntrospectionServiceImpl implements IntrospectionService {
                 .orElseGet(() -> tokenService.introspect(request.getToken()))
                 .flatMapSingle(token -> {
                     if (token.getSubject() != null && !token.getSubject().equals(token.getClientId())) {
+<<<<<<< HEAD
                         return subjectManager
                                 // accessToken additional info is initialized using the decoded JWT
                                 // we can use it to create a temporary instance of JWT
@@ -57,6 +58,15 @@ public class IntrospectionServiceImpl implements IntrospectionService {
                                 .map(user -> convert(token, user))
                                 .defaultIfEmpty(convert(token, null));
 
+=======
+                        return userService
+                                .findById(token.getSubject())
+                                .map(user -> convert(token, user))
+                                // in some circumstances for example when the token is generated using ExtensionGrant
+                                // the sub may not be a valid user so we have to acknowledge the token without enhancing
+                                // it with user information.
+                                .switchIfEmpty(Maybe.fromCallable(() -> convert(token, null)));
+>>>>>>> 5130d22dbf (fix: ingore Unknown sub user during introspect)
                     } else {
                         return Single.just(convert(token, null));
                     }
