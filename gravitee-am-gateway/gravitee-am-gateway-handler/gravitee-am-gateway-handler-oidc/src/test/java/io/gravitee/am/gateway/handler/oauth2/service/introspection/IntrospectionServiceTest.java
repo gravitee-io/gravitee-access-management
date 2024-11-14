@@ -30,6 +30,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -58,6 +60,8 @@ public class IntrospectionServiceTest {
         AccessToken accessToken = new AccessToken(token);
         accessToken.setSubject("user");
         accessToken.setClientId("client-id");
+        accessToken.setCreatedAt(new Date(Instant.now().toEpochMilli()));
+        accessToken.setExpireAt(new Date(Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()));
         when(tokenService.introspect("token")).thenReturn(Maybe.just(accessToken));
         when(userService.findById("user")).thenReturn(Maybe.just(new User()));
 
@@ -67,6 +71,29 @@ public class IntrospectionServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
+        testObserver.assertValue(introspectionResponse -> introspectionResponse.isActive());
+        verify(userService, times(1)).findById("user");
+    }
+
+    @Test
+    public void shouldConsiderTokenActiveWhenSubIsUnknown() {
+        final String token = "token";
+        AccessToken accessToken = new AccessToken(token);
+        accessToken.setSubject("user");
+        accessToken.setClientId("client-id");
+        accessToken.setCreatedAt(new Date(Instant.now().toEpochMilli()));
+        accessToken.setExpireAt(new Date(Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()));
+        when(tokenService.introspect("token")).thenReturn(Maybe.just(accessToken));
+        when(userService.findById("user")).thenReturn(Maybe.empty());
+
+        IntrospectionRequest introspectionRequest = IntrospectionRequest.withoutHint("token");
+        TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
+
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(introspectionResponse -> introspectionResponse.isActive());
+
         verify(userService, times(1)).findById("user");
     }
 
@@ -76,6 +103,8 @@ public class IntrospectionServiceTest {
         AccessToken accessToken = new AccessToken(token);
         accessToken.setSubject("client-id");
         accessToken.setClientId("client-id");
+        accessToken.setCreatedAt(new Date(Instant.now().toEpochMilli()));
+        accessToken.setExpireAt(new Date(Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()));
         when(tokenService.introspect("token")).thenReturn(Maybe.just(accessToken));
 
         IntrospectionRequest introspectionRequest = IntrospectionRequest.withoutHint("token");
@@ -84,6 +113,7 @@ public class IntrospectionServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
+        testObserver.assertValue(introspectionResponse -> introspectionResponse.isActive());
         verify(userService, never()).findById(anyString());
     }
 
@@ -104,6 +134,7 @@ public class IntrospectionServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
+        testObserver.assertValue(introspectionResponse -> introspectionResponse.isActive());
         testObserver.assertValue(introspectionResponse -> introspectionResponse.get("custom-claim").equals("test"));
     }
 
@@ -124,6 +155,7 @@ public class IntrospectionServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
+        testObserver.assertValue(introspectionResponse -> introspectionResponse.isActive());
         testObserver.assertValue(introspectionResponse -> !introspectionResponse.containsKey(Claims.aud));
     }
 }
