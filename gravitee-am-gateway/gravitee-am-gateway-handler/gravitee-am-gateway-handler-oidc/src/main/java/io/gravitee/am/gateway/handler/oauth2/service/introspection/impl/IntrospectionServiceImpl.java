@@ -52,7 +52,11 @@ public class IntrospectionServiceImpl implements IntrospectionService {
                     if (token.getSubject() != null && !token.getSubject().equals(token.getClientId())) {
                         return userService
                                 .findById(token.getSubject())
-                                .map(user -> convert(token, user));
+                                .map(user -> convert(token, user))
+                                // in some circumstances for example when the token is generated using ExtensionGrant
+                                // the sub may not be a valid user so we have to acknowledge the token without enhancing
+                                // it with user information.
+                                .switchIfEmpty(Maybe.fromCallable(() -> convert(token, null)));
                     } else {
                         return Maybe.just(convert(token, null));
                     }
