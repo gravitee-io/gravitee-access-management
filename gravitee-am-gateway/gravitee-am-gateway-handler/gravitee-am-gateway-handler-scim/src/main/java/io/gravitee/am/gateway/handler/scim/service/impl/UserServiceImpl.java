@@ -162,7 +162,7 @@ public class UserServiceImpl implements UserService {
                         return Observable.fromIterable(userPage.getData())
                                 .map(user1 -> UserMapper.convert(user1, baseUrl, true))
                                 // set groups
-                                .flatMapSingle(this::setGroups)
+                                .concatMapSingle(this::setGroups)
                                 .toList()
                                 .map(users -> new ListResponse<>(users, userPage.getCurrentPage() + 1, userPage.getTotalCount(), users.size()));
                     }
