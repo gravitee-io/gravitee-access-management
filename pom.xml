@@ -155,7 +155,7 @@
         <gravitee-am-factor-http.version>3.0.0</gravitee-am-factor-http.version>
         <gravitee-am-factor-recovery-code.version>1.0.1</gravitee-am-factor-recovery-code.version>
         <gravitee-am-factor-otp-sender.version>3.0.0</gravitee-am-factor-otp-sender.version>
-        <gravitee-am-resource-twilio.version>1.1.0</gravitee-am-resource-twilio.version>
+        <gravitee-am-resource-twilio.version>1.2.0</gravitee-am-resource-twilio.version>
         <gravitee-am-policy-account-linking.version>1.0.0</gravitee-am-policy-account-linking.version>
         <gravitee-am-policy-mfa-challenge.version>2.0.0</gravitee-am-policy-mfa-challenge.version>
 
