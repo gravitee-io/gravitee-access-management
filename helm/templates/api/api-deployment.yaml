@@ -115,8 +115,10 @@ spec:
               containerPort: {{ .Values.api.http.services.core.http.port | default "18093" }}
             {{- end }}
           env:
+            {{- if .Values.api.upgrader }}
             - name: upgrade.mode
               value: "false"
+            {{- end }}
             {{- if $plugins }}
             - name: GRAVITEE_PLUGINS_PATH_0
               value: '${gravitee.home}/plugins'
