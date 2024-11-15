@@ -117,3 +117,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_1_0/4.1.0-update-users-table.yml
   - include:
       - file: liquibase/changelogs/v4_1_0/4.1.23-update-user-identities-table.yml
+  - include:
+      - file: liquibase/changelogs/v4_1_0/4.1.35-update-web-credential-index.yml
