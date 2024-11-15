@@ -460,8 +460,9 @@ if (listOfCollections.includes("webauthn_credentials")) {
     db.webauthn_credentials.createIndex({
         "referenceType": 1,
         "referenceId": 1,
-        "username": 1
-    }, {"name": "rt1ri1un1"}, "majority");
+        "username": 1,
+        "createdAt": -1
+    }, {"name": "rt1ri1un1c_1"}, "majority");
     db.webauthn_credentials.createIndex({
         "referenceType": 1,
         "referenceId": 1,
