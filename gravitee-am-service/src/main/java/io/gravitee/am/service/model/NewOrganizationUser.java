@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -25,4 +26,10 @@ import lombok.ToString;
 public class NewOrganizationUser extends AbstractNewUser {
 
     private String email;
+    @Getter(AccessLevel.NONE)
+    private Boolean serviceAccount;
+
+    public boolean isServiceAccount() {
+        return Boolean.TRUE == serviceAccount;
+    }
 }

@@ -29,172 +29,158 @@ import { exists, mapValues } from '../runtime';
 /**
  * 
  * @export
- * @interface NewUser
+ * @interface UpdateUserWithId
  */
-export interface NewUser {
+export interface UpdateUserWithId {
     /**
      * 
      * @type {string}
-     * @memberof NewUser
+     * @memberof UpdateUserWithId
      */
-    username: string;
+    email?: string;
     /**
      * 
      * @type {string}
-     * @memberof NewUser
-     */
-    password?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof NewUser
+     * @memberof UpdateUserWithId
      */
     firstName?: string;
     /**
      * 
      * @type {string}
-     * @memberof NewUser
+     * @memberof UpdateUserWithId
      */
     lastName?: string;
     /**
      * 
      * @type {string}
-     * @memberof NewUser
+     * @memberof UpdateUserWithId
+     */
+    displayName?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateUserWithId
      */
     externalId?: string;
     /**
      * 
      * @type {boolean}
-     * @memberof NewUser
+     * @memberof UpdateUserWithId
      */
     accountNonExpired?: boolean;
     /**
      * 
      * @type {boolean}
-     * @memberof NewUser
+     * @memberof UpdateUserWithId
      */
     accountNonLocked?: boolean;
     /**
      * 
      * @type {boolean}
-     * @memberof NewUser
+     * @memberof UpdateUserWithId
      */
     credentialsNonExpired?: boolean;
     /**
      * 
      * @type {boolean}
-     * @memberof NewUser
+     * @memberof UpdateUserWithId
      */
     enabled?: boolean;
     /**
      * 
      * @type {boolean}
-     * @memberof NewUser
-     */
-    internal?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof NewUser
+     * @memberof UpdateUserWithId
      */
     preRegistration?: boolean;
     /**
      * 
      * @type {boolean}
-     * @memberof NewUser
+     * @memberof UpdateUserWithId
      */
     registrationCompleted?: boolean;
     /**
      * 
      * @type {string}
-     * @memberof NewUser
-     */
-    domain?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof NewUser
+     * @memberof UpdateUserWithId
      */
     source?: string;
     /**
      * 
      * @type {string}
-     * @memberof NewUser
+     * @memberof UpdateUserWithId
      */
     client?: string;
     /**
      * 
      * @type {number}
-     * @memberof NewUser
+     * @memberof UpdateUserWithId
      */
     loginsCount?: number;
     /**
      * 
      * @type {Date}
-     * @memberof NewUser
+     * @memberof UpdateUserWithId
      */
     loggedAt?: Date;
     /**
      * 
      * @type {string}
-     * @memberof NewUser
+     * @memberof UpdateUserWithId
      */
     preferredLanguage?: string;
     /**
      * 
      * @type {{ [key: string]: any; }}
-     * @memberof NewUser
+     * @memberof UpdateUserWithId
      */
     additionalInformation?: { [key: string]: any; };
     /**
      * 
      * @type {Date}
-     * @memberof NewUser
+     * @memberof UpdateUserWithId
      */
     createdAt?: Date;
     /**
      * 
      * @type {Date}
-     * @memberof NewUser
+     * @memberof UpdateUserWithId
      */
     updatedAt?: Date;
     /**
      * 
      * @type {boolean}
-     * @memberof NewUser
+     * @memberof UpdateUserWithId
      */
     forceResetPassword?: boolean;
     /**
      * 
      * @type {string}
-     * @memberof NewUser
+     * @memberof UpdateUserWithId
      */
-    email?: string;
+    id?: string;
 }
 
-export function NewUserFromJSON(json: any): NewUser {
-    return NewUserFromJSONTyped(json, false);
+export function UpdateUserWithIdFromJSON(json: any): UpdateUserWithId {
+    return UpdateUserWithIdFromJSONTyped(json, false);
 }
 
-export function NewUserFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewUser {
+export function UpdateUserWithIdFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdateUserWithId {
     if ((json === undefined) || (json === null)) {
         return json;
     }
     return {
         
-        'username': json['username'],
-        'password': !exists(json, 'password') ? undefined : json['password'],
+        'email': !exists(json, 'email') ? undefined : json['email'],
         'firstName': !exists(json, 'firstName') ? undefined : json['firstName'],
         'lastName': !exists(json, 'lastName') ? undefined : json['lastName'],
+        'displayName': !exists(json, 'displayName') ? undefined : json['displayName'],
         'externalId': !exists(json, 'externalId') ? undefined : json['externalId'],
         'accountNonExpired': !exists(json, 'accountNonExpired') ? undefined : json['accountNonExpired'],
         'accountNonLocked': !exists(json, 'accountNonLocked') ? undefined : json['accountNonLocked'],
         'credentialsNonExpired': !exists(json, 'credentialsNonExpired') ? undefined : json['credentialsNonExpired'],
         'enabled': !exists(json, 'enabled') ? undefined : json['enabled'],
-        'internal': !exists(json, 'internal') ? undefined : json['internal'],
         'preRegistration': !exists(json, 'preRegistration') ? undefined : json['preRegistration'],
         'registrationCompleted': !exists(json, 'registrationCompleted') ? undefined : json['registrationCompleted'],
-        'domain': !exists(json, 'domain') ? undefined : json['domain'],
         'source': !exists(json, 'source') ? undefined : json['source'],
         'client': !exists(json, 'client') ? undefined : json['client'],
         'loginsCount': !exists(json, 'loginsCount') ? undefined : json['loginsCount'],
@@ -204,11 +190,11 @@ export function NewUserFromJSONTyped(json: any, ignoreDiscriminator: boolean): N
         'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
         'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
         'forceResetPassword': !exists(json, 'forceResetPassword') ? undefined : json['forceResetPassword'],
-        'email': !exists(json, 'email') ? undefined : json['email'],
+        'id': !exists(json, 'id') ? undefined : json['id'],
     };
 }
 
-export function NewUserToJSON(value?: NewUser | null): any {
+export function UpdateUserWithIdToJSON(value?: UpdateUserWithId | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -217,19 +203,17 @@ export function NewUserToJSON(value?: NewUser | null): any {
     }
     return {
         
-        'username': value.username,
-        'password': value.password,
+        'email': value.email,
         'firstName': value.firstName,
         'lastName': value.lastName,
+        'displayName': value.displayName,
         'externalId': value.externalId,
         'accountNonExpired': value.accountNonExpired,
         'accountNonLocked': value.accountNonLocked,
         'credentialsNonExpired': value.credentialsNonExpired,
         'enabled': value.enabled,
-        'internal': value.internal,
         'preRegistration': value.preRegistration,
         'registrationCompleted': value.registrationCompleted,
-        'domain': value.domain,
         'source': value.source,
         'client': value.client,
         'loginsCount': value.loginsCount,
@@ -239,7 +223,7 @@ export function NewUserToJSON(value?: NewUser | null): any {
         'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
         'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
         'forceResetPassword': value.forceResetPassword,
-        'email': value.email,
+        'id': value.id,
     };
 }
 

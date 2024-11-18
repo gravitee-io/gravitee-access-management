@@ -103,7 +103,7 @@ public class BulkRequest<T> {
      * This allows defining a single /bulk endpoint that accepts different arguments for different actions. E.g.
      * a CREATE action might use a complex DTO, while a simple list of ids will be enough for a bulk DELETE.
      */
-    public static final class Generic extends BulkRequest<BaseJsonNode> {
+    public static class Generic extends BulkRequest<BaseJsonNode> {
 
         @JsonCreator
         public Generic(@JsonProperty("action") Action action,
@@ -117,7 +117,7 @@ public class BulkRequest<T> {
          *
          * @return this request with items mapped to the expected type
          */
-        public <T> BulkRequest<T> readItemsAs(Class<T> itemType, ObjectMapper mapper) {
+        public final <T> BulkRequest<T> readItemsAs(Class<T> itemType, ObjectMapper mapper) {
             return readItemsAs(mapper, mapper.constructType(itemType));
         }
 
@@ -126,7 +126,7 @@ public class BulkRequest<T> {
          *
          * @return this request with items mapped to the expected type
          */
-        public <T> BulkRequest<T> readItemsAs(TypeReference<T> itemType, ObjectMapper mapper) {
+        public final <T> BulkRequest<T> readItemsAs(TypeReference<T> itemType, ObjectMapper mapper) {
             return readItemsAs(mapper, mapper.constructType(itemType));
         }
 
@@ -148,7 +148,7 @@ public class BulkRequest<T> {
          * @param <S> input item type
          * @param <R> output item type
          */
-        public <S, R> Single<Response> processOneByOne(Class<S> itemType, ObjectMapper mapper, Function<S, Single<BulkOperationResult<R>>> itemProcessor) {
+        public final <S, R> Single<Response> processOneByOne(Class<S> itemType, ObjectMapper mapper, Function<S, Single<BulkOperationResult<R>>> itemProcessor) {
             return readItemsAs(itemType, mapper).processOneByOne(itemProcessor);
         }
     }

@@ -64,9 +64,6 @@ import {
     BulkResponse,
     BulkResponseFromJSON,
     BulkResponseToJSON,
-    BulkUserRequest,
-    BulkUserRequestFromJSON,
-    BulkUserRequestToJSON,
     CertificateEntity,
     CertificateEntityFromJSON,
     CertificateEntityToJSON,
@@ -82,6 +79,9 @@ import {
     Domain,
     DomainFromJSON,
     DomainToJSON,
+    DomainUserBulkRequest,
+    DomainUserBulkRequestFromJSON,
+    DomainUserBulkRequestToJSON,
     Email,
     EmailFromJSON,
     EmailToJSON,
@@ -381,7 +381,7 @@ export interface BulkUserOperationRequest {
     organizationId: string;
     environmentId: string;
     domain: string;
-    bulkUserRequest: BulkUserRequest;
+    domainUserBulkRequest: DomainUserBulkRequest;
 }
 
 export interface Create1Request {
@@ -2054,8 +2054,8 @@ export class DomainApi extends runtime.BaseAPI {
             throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling bulkUserOperation.');
         }
 
-        if (requestParameters.bulkUserRequest === null || requestParameters.bulkUserRequest === undefined) {
-            throw new runtime.RequiredError('bulkUserRequest','Required parameter requestParameters.bulkUserRequest was null or undefined when calling bulkUserOperation.');
+        if (requestParameters.domainUserBulkRequest === null || requestParameters.domainUserBulkRequest === undefined) {
+            throw new runtime.RequiredError('domainUserBulkRequest','Required parameter requestParameters.domainUserBulkRequest was null or undefined when calling bulkUserOperation.');
         }
 
         const queryParameters: any = {};
@@ -2077,7 +2077,7 @@ export class DomainApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: BulkUserRequestToJSON(requestParameters.bulkUserRequest),
+            body: DomainUserBulkRequestToJSON(requestParameters.domainUserBulkRequest),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => BulkResponseFromJSON(jsonValue));
