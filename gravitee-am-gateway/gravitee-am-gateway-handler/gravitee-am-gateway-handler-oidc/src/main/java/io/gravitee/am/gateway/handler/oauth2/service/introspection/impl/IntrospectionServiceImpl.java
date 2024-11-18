@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.introspection.impl;
 
+import io.gravitee.am.common.exception.jwt.InvalidGISException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
@@ -25,6 +26,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.model.User;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -54,6 +56,16 @@ public class IntrospectionServiceImpl implements IntrospectionService {
                                 // accessToken additional info is initialized using the decoded JWT
                                 // we can use it to create a temporary instance of JWT
                                 .findUserBySub(new JWT(token.getAdditionalInformation()))
+                                .onErrorResumeNext(err -> {
+                                    if (err instanceof InvalidGISException) {
+                                        // in some cases when extension grant is used
+                                        // GIS claims maybe missing form the access_token
+                                        // so in this case we can ignore the error and
+                                        // continue the introspect process
+                                        return Maybe.empty();
+                                    }
+                                    return Maybe.error(err);
+                                })
                                 .map(user -> convert(token, user))
                                 .defaultIfEmpty(convert(token, null));
 

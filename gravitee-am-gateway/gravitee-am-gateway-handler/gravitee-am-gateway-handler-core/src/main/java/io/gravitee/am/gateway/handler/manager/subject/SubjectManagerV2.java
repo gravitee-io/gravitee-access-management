@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.manager.subject;
 
 
+import io.gravitee.am.common.exception.jwt.InvalidGISException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
@@ -80,7 +81,7 @@ public class SubjectManagerV2 implements SubjectManager {
     public Maybe<User> findUserBySub(JWT token) {
         if (!hasValidInternalSub(token)) {
             log.error("malformed internal sub value '{}'", token);
-            return Maybe.error(new IllegalArgumentException("Required internal sub value is missing"));
+            return Maybe.error(new InvalidGISException("Required internal sub value is missing"));
         }
 
         final var internalSub = token.getInternalSub();
