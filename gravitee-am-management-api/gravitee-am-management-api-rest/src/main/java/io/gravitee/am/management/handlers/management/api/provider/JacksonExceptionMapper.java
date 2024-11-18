@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.provider;
 
 import com.fasterxml.jackson.core.JacksonException;
+import com.fasterxml.jackson.databind.DatabindException;
 import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.common.http.HttpStatusCode;
 import jakarta.ws.rs.core.MediaType;
@@ -34,7 +35,12 @@ public class JacksonExceptionMapper extends AbstractExceptionMapper<JacksonExcep
 
     @Override
     public Response toResponse(JacksonException e) {
-        LOGGER.debug("Malformed json, msg={}", e.getMessage());
+        if (e instanceof DatabindException) {
+            // non-io errors, e.g. incorrect mapping
+            LOGGER.error("Malformed json", e);
+        } else {
+            LOGGER.debug("Malformed json, msg={}", e.getMessage());
+        }
         return Response
                 .status(Response.Status.BAD_REQUEST)
                 .type(MediaType.APPLICATION_JSON_TYPE)

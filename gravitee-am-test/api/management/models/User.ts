@@ -413,6 +413,12 @@ export interface User {
     serviceAccount?: boolean;
     /**
      * 
+     * @type {{ [key: string]: any; }}
+     * @memberof User
+     */
+    address?: { [key: string]: any; };
+    /**
+     * 
      * @type {string}
      * @memberof User
      */
@@ -423,12 +429,6 @@ export interface User {
      * @memberof User
      */
     locale?: string;
-    /**
-     * 
-     * @type {{ [key: string]: any; }}
-     * @memberof User
-     */
-    address?: { [key: string]: any; };
     /**
      * 
      * @type {string}
@@ -565,9 +565,9 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
         'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
         'forceResetPassword': !exists(json, 'forceResetPassword') ? undefined : json['forceResetPassword'],
         'serviceAccount': !exists(json, 'serviceAccount') ? undefined : json['serviceAccount'],
+        'address': !exists(json, 'address') ? undefined : json['address'],
         'zoneInfo': !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
         'locale': !exists(json, 'locale') ? undefined : json['locale'],
-        'address': !exists(json, 'address') ? undefined : json['address'],
         'middleName': !exists(json, 'middleName') ? undefined : json['middleName'],
         'lastIdentityInformation': !exists(json, 'lastIdentityInformation') ? undefined : json['lastIdentityInformation'],
         'identitiesAsMap': !exists(json, 'identitiesAsMap') ? undefined : json['identitiesAsMap'],
@@ -645,9 +645,9 @@ export function UserToJSON(value?: User | null): any {
         'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
         'forceResetPassword': value.forceResetPassword,
         'serviceAccount': value.serviceAccount,
+        'address': value.address,
         'zoneInfo': value.zoneInfo,
         'locale': value.locale,
-        'address': value.address,
         'middleName': value.middleName,
         'lastIdentityInformation': value.lastIdentityInformation,
         'identitiesAsMap': value.identitiesAsMap,
