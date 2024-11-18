@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.introspection;
 
+import io.gravitee.am.common.exception.jwt.InvalidGISException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.impl.IntrospectionServiceImpl;
@@ -29,6 +30,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -70,6 +73,28 @@ public class IntrospectionServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
+        verify(subjectManager, times(1)).findUserBySub(any());
+    }
+
+    @Test
+    public void shouldConsiderTokenActiveWhenGISIsMissing() {
+        final String token = "token";
+        AccessToken accessToken = new AccessToken(token);
+        accessToken.setSubject("user");
+        accessToken.setClientId("client-id");
+        accessToken.setCreatedAt(new Date(Instant.now().toEpochMilli()));
+        accessToken.setExpireAt(new Date(Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()));
+        when(tokenService.introspect("token")).thenReturn(Maybe.just(accessToken));
+        when(subjectManager.findUserBySub(any())).thenReturn(Maybe.error(new InvalidGISException("invalid gis")));
+
+        IntrospectionRequest introspectionRequest = IntrospectionRequest.withoutHint("token");
+        TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
+
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(introspectionResponse -> introspectionResponse.isActive());
+
         verify(subjectManager, times(1)).findUserBySub(any());
     }
 
