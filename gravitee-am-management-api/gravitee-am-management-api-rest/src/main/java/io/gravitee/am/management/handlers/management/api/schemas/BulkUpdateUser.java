@@ -20,8 +20,8 @@ import io.gravitee.am.service.model.UpdateUser;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-public class BulkUpdateUser extends BulkRequest<UpdateUser> {
-    protected BulkUpdateUser() {
+public final class BulkUpdateUser extends BulkRequest<BulkUpdateUser.UpdateUserWithId> {
+    private BulkUpdateUser() {
         super(Action.UPDATE);
     }
 

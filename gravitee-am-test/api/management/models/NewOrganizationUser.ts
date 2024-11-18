@@ -166,16 +166,16 @@ export interface NewOrganizationUser {
     forceResetPassword?: boolean;
     /**
      * 
-     * @type {boolean}
-     * @memberof NewOrganizationUser
-     */
-    serviceAccount?: boolean;
-    /**
-     * 
      * @type {string}
      * @memberof NewOrganizationUser
      */
     email?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof NewOrganizationUser
+     */
+    serviceAccount?: boolean;
 }
 
 export function NewOrganizationUserFromJSON(json: any): NewOrganizationUser {
@@ -210,8 +210,8 @@ export function NewOrganizationUserFromJSONTyped(json: any, ignoreDiscriminator:
         'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
         'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
         'forceResetPassword': !exists(json, 'forceResetPassword') ? undefined : json['forceResetPassword'],
-        'serviceAccount': !exists(json, 'serviceAccount') ? undefined : json['serviceAccount'],
         'email': !exists(json, 'email') ? undefined : json['email'],
+        'serviceAccount': !exists(json, 'serviceAccount') ? undefined : json['serviceAccount'],
     };
 }
 
@@ -246,8 +246,8 @@ export function NewOrganizationUserToJSON(value?: NewOrganizationUser | null): a
         'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
         'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
         'forceResetPassword': value.forceResetPassword,
-        'serviceAccount': value.serviceAccount,
         'email': value.email,
+        'serviceAccount': value.serviceAccount,
     };
 }
 

@@ -17,8 +17,8 @@ package io.gravitee.am.management.handlers.management.api.schemas;
 
 import io.gravitee.am.management.handlers.management.api.bulk.BulkRequest;
 
-public class BulkDeleteUser extends BulkRequest<String> {
-    protected BulkDeleteUser() {
+public final class BulkDeleteUser extends BulkRequest<String> {
+    private BulkDeleteUser() {
         super(Action.DELETE);
     }
 }

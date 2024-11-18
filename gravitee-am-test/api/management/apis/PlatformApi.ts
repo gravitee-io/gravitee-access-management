@@ -147,6 +147,7 @@ export interface List24Request {
 
 export interface List29Request {
     external?: boolean;
+    organization?: boolean;
     expand?: Array<string>;
 }
 
@@ -1494,6 +1495,10 @@ export class PlatformApi extends runtime.BaseAPI {
 
         if (requestParameters.external !== undefined) {
             queryParameters['external'] = requestParameters.external;
+        }
+
+        if (requestParameters.organization !== undefined) {
+            queryParameters['organization'] = requestParameters.organization;
         }
 
         if (requestParameters.expand) {

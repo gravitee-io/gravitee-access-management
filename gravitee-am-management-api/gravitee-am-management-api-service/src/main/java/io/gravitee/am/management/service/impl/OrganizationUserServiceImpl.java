@@ -110,6 +110,12 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                 }));
     }
 
+    protected User transform(NewOrganizationUser newUser, ReferenceType referenceType, String referenceId) {
+        var user = super.transform(newUser, referenceType, referenceId);
+        user.setServiceAccount(newUser.isServiceAccount());
+        return user;
+    }
+
     public Single<User> createGraviteeUser(Organization organization, NewOrganizationUser newUser, io.gravitee.am.identityprovider.api.User principal) {
         if (StringUtils.isBlank(newUser.getUsername())) {
             return Single.error(() -> new UserInvalidException("Field [username] is required"));
@@ -136,7 +142,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                                     newUser.setClient(null);
                                     // user is flagged as internal user
                                     newUser.setInternal(true);
-                                    if (newUser.getServiceAccount() == null || newUser.getServiceAccount().equals(Boolean.FALSE)) {
+                                    if (!newUser.isServiceAccount()) {
                                         String password = newUser.getPassword();
                                         if (password == null || !passwordService.isValid(password)) {
                                             return Single.error(InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value"));
@@ -158,7 +164,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                                                     .map(idpUser -> {
                                                         // Excepted for GraviteeIDP that manage Organization Users
                                                         // AM 'users' collection is not made for authentication (but only management stuff)
-                                                        if(newUser.getServiceAccount() == null || newUser.getServiceAccount().equals(Boolean.FALSE)) {
+                                                        if(!newUser.isServiceAccount()) {
                                                             userToPersist.setPassword(PWD_ENCODER.encode(newUser.getPassword()));
                                                         }
                                                         // set external id
