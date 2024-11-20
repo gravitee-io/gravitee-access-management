@@ -49,7 +49,10 @@
           <button
             mat-raised-button
             color="primary"
-            [disabled]="(!certificateForm.valid || certificateForm.pristine) && (!configurationIsValid || configurationPristine)"
+            [disabled]="
+              ((!certificateForm.valid || certificateForm.pristine) && (!configurationIsValid || configurationPristine)) ||
+              submissionPending
+            "
             (click)="update()"
           >
             SAVE

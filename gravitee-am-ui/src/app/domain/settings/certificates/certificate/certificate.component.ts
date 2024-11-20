@@ -16,6 +16,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, switchMap, tap } from 'rxjs/operators';
+import { finalize } from 'rxjs';
 
 import { OrganizationService } from '../../../../services/organization.service';
 import { CertificateService } from '../../../../services/certificate.service';
@@ -35,6 +36,7 @@ export class CertificateComponent implements OnInit {
   certificateSchema: any;
   certificateConfiguration: any;
   updateCertificateConfiguration: any;
+  submissionPending = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -55,12 +57,16 @@ export class CertificateComponent implements OnInit {
 
   update() {
     this.certificate.configuration = JSON.stringify(this.updateCertificateConfiguration);
-    this.certificateService.update(this.domainId, this.certificate.id, this.certificate).subscribe((data) => {
-      this.snackbarService.open('Certificate successfully updated');
-      this.certificate = data;
-      this.certificateConfiguration = JSON.parse(this.certificate.configuration);
-      this.updateCertificateConfiguration = this.certificateConfiguration;
-    });
+    this.submissionPending = true;
+    this.certificateService
+      .update(this.domainId, this.certificate.id, this.certificate)
+      .pipe(finalize(() => (this.submissionPending = true)))
+      .subscribe((data) => {
+        this.snackbarService.open('Certificate successfully updated');
+        this.certificate = data;
+        this.certificateConfiguration = JSON.parse(this.certificate.configuration);
+        this.updateCertificateConfiguration = this.certificateConfiguration;
+      });
   }
 
   delete(event) {
