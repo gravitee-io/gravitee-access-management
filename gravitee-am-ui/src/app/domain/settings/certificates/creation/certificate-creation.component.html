@@ -46,7 +46,7 @@
         <div class="stepper-button-zone">
           <button mat-raised-button matStepperPrevious type="button">Back</button>
           <span fxFlex></span>
-          <button mat-raised-button color="primary" (click)="create()" [disabled]="!stepperValid()">Create</button>
+          <button mat-raised-button color="primary" (click)="create()" [disabled]="!stepperValid() || submissionPending">Create</button>
         </div>
       </mat-step>
     </mat-horizontal-stepper>
