@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ChangeDetectorRef, Component, OnInit, ViewChild, AfterViewChecked } from '@angular/core';
+import { AfterViewChecked, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { MatStepper } from '@angular/material/stepper';
 import { ActivatedRoute, Router } from '@angular/router';
+import { finalize } from 'rxjs';
 
 import { CertificateService } from '../../../../services/certificate.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
@@ -29,6 +30,7 @@ export class CertificateCreationComponent implements OnInit, AfterViewChecked {
   public certificate: any = {};
   private domainId: string;
   configurationIsValid = false;
+  submissionPending = false;
   @ViewChild('stepper', { static: true }) stepper: MatStepper;
 
   constructor(
@@ -45,15 +47,19 @@ export class CertificateCreationComponent implements OnInit, AfterViewChecked {
 
   create(): void {
     this.certificate.configuration = JSON.stringify(this.certificate.configuration);
-    this.certificateService.create(this.domainId, this.certificate).subscribe(
-      (data) => {
-        this.snackbarService.open('The certificate ' + data.name + ' has been successfully created.');
-        this.router.navigate(['..', data.id], { relativeTo: this.route });
-      },
-      (_: unknown) => {
-        this.certificate = { ...this.certificate, name: '', configuration: null };
-      },
-    );
+    this.submissionPending = true;
+    this.certificateService
+      .create(this.domainId, this.certificate)
+      .pipe(finalize(() => (this.submissionPending = false)))
+      .subscribe(
+        (data) => {
+          this.snackbarService.open('The certificate ' + data.name + ' has been successfully created.');
+          this.router.navigate(['..', data.id], { relativeTo: this.route });
+        },
+        (_: unknown) => {
+          this.certificate = { ...this.certificate, name: '', configuration: null };
+        },
+      );
   }
 
   stepperValid() {
