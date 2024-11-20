@@ -22,10 +22,13 @@ import jakarta.validation.constraints.NotNull;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UpdateCertificate {
+public class UpdateCertificate implements PluginConfigurationPayload {
 
     @NotNull
     private String name;
+
+    @NotNull
+    private String type;
 
     @NotNull
     @JsonString
@@ -45,6 +48,15 @@ public class UpdateCertificate {
 
     public void setConfiguration(String configuration) {
         this.configuration = configuration;
+    }
+
+    @Override
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     @Override

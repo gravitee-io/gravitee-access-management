@@ -62,11 +62,8 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.SingleSource;
 import io.reactivex.rxjava3.functions.Function;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateExpiredException;
-import java.time.Instant;
-import java.util.Map;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.BasicConstraints;
@@ -81,7 +78,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -91,6 +87,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateExpiredException;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -127,13 +124,8 @@ public class CertificateServiceImpl implements CertificateService {
     private static final String CONTENT = "content";
     private static final String ALIAS = "alias";
     private static final String NAME = "name";
-    private static final String AWS_AM_CERTIFICATE = "aws-am-certificate";
-    private static final String AWS_HSM_AM_CERTIFICATE = "aws-hsm-am-certificate";
-    private static final String SECRET_NAME = "secretname";
     private static final String KEY_PASS = "keypass";
     private static final String STORE_PASS = "storepass";
-    private static final String CACHE = "cache";
-    private static final String REGION = "region";
 
     @Lazy
     @Autowired
@@ -213,9 +205,12 @@ public class CertificateServiceImpl implements CertificateService {
         return certificatePluginService
                 .getSchema(newCertificate.getType())
                 .switchIfEmpty(Single.error(() -> new CertificatePluginSchemaNotFoundException(newCertificate.getType())))
+                .map(schema -> objectMapper.readValue(schema, CertificateSchema.class))
                 .flatMap(schema -> {
                     try {
-                        var certificate = getCertificateToCreate(domain, newCertificate, isSystem, schema);
+                        var certificate = schema.getFileKey()
+                                .map(fileKey -> createCertificateWithEmbeddedKeys(domain, newCertificate, isSystem, fileKey))
+                                .orElseGet(() -> createCertificate(domain, newCertificate, isSystem));
                         return certificateRepository.create(getValid(certificate));
                     } catch (CertificateException ex) {
                         log.error("An error occurs while trying to create certificate configuration", ex);
@@ -243,34 +238,14 @@ public class CertificateServiceImpl implements CertificateService {
                 });
     }
 
-    private Certificate getCertificateToCreate(String domain, NewCertificate newCertificate, boolean isSystem, String schema) throws JsonProcessingException, CertificateException {
+    @SneakyThrows
+    private Certificate createCertificateWithEmbeddedKeys(String domain, NewCertificate newCertificate, boolean isSystem, String fileKey) {
         JsonNode configuration = objectMapper.readTree(newCertificate.getConfiguration());
-        if (newCertificate.getType().equals(AWS_AM_CERTIFICATE)) {
-            validateAwsConfiguration(configuration);
-            return createCertificate(domain, newCertificate, isSystem);
-        } else if(newCertificate.getType().equals(AWS_HSM_AM_CERTIFICATE)) {
-            validateAwsHsmConfiguration(configuration);
-            return createCertificate(domain, newCertificate, isSystem);
-        } else {
-            var key = getFileKey(configuration, objectMapper.readValue(schema, CertificateSchema.class));
-            var file = objectMapper.readTree(configuration.get(key).asText());
-            // update configuration to set the file name
-            ((ObjectNode) configuration).put(key, file.get(NAME).asText());
-            newCertificate.setConfiguration(objectMapper.writeValueAsString(configuration));
-            return createCertificate(domain, newCertificate, isSystem, Base64.getDecoder().decode(file.get(CONTENT).asText()));
-        }
-    }
-
-    private String getFileKey(JsonNode configuration, CertificateSchema schema) throws CertificateException {
-        var key = schema.getProperties().entrySet().stream()
-                .filter(map -> "file".equals(map.getValue().getWidget()))
-                .map(Map.Entry::getKey)
-                .findFirst()
-                .orElse(null);
-        if (key == null || !configuration.has(key)) {
-            throw new CertificateException("A valid certificate file was not uploaded. Please make sure to attach one.");
-        }
-        return key;
+        var file = objectMapper.readTree(configuration.get(fileKey).asText());
+        // update configuration to set the file name
+        ((ObjectNode) configuration).put(fileKey, file.get(NAME).asText());
+        newCertificate.setConfiguration(objectMapper.writeValueAsString(configuration));
+        return createCertificate(domain, newCertificate, isSystem, Base64.getDecoder().decode(file.get(CONTENT).asText()));
     }
 
     private Certificate createCertificate(String domain, NewCertificate newCertificate, boolean isSystem) {
@@ -346,36 +321,27 @@ public class CertificateServiceImpl implements CertificateService {
         certificateToUpdate.setName(updateCertificate.getName());
         certificateToUpdate.setUpdatedAt(new Date());
         if (!certificateToUpdate.isSystem()) { // system certificate can't be updated
-            if (oldCertificate.certificate().getType().equals(AWS_AM_CERTIFICATE)) {
-                validateAwsConfiguration(objectMapper.readTree(updateCertificate.getConfiguration()));
-            } else if (oldCertificate.certificate().getType().equals(AWS_HSM_AM_CERTIFICATE)) {
-                validateAwsHsmConfiguration(objectMapper.readTree(updateCertificate.getConfiguration()));
-            } else {
-                var certificateConfiguration = objectMapper.readTree(updateCertificate.getConfiguration());
-                var key = getFileKey(certificateConfiguration, oldCertificate.schema());
-                var oldFileInformation = objectMapper.readTree(oldCertificate.certificate().getConfiguration()).get(key).asText();
-                var fileInformation = certificateConfiguration.get(key).asText();
-                // file has changed, let's update it
-                if (!oldFileInformation.equals(fileInformation)) {
-                    var file = objectMapper.readTree(certificateConfiguration.get(key).asText());
-                    certificateToUpdate.setMetadata(Maps.newHashMap(Map.of(FILE, Base64.getDecoder().decode(file.get(CONTENT).asText()))));
-                    // update configuration to set the file path
-                    ((ObjectNode) certificateConfiguration).put(key, file.get(NAME).asText());
-                }
-            }
+            oldCertificate.schema.getFileKey().ifPresent(fileKey -> updateEmbeddedKeys(updateCertificate, certificateToUpdate, oldCertificate, fileKey));
             certificateToUpdate.setConfiguration(updateCertificate.getConfiguration());
-
         }
+
         return certificateToUpdate;
     }
 
-    private void validateAwsHsmConfiguration(JsonNode configuration)  throws CertificateException {
-        // TODO certificates should be validated by plugins itself.
-    }
-
-    private void validateAwsConfiguration(JsonNode configuration) throws CertificateException {
-        if (!StringUtils.hasText(configuration.get(SECRET_NAME).asText()) && !StringUtils.hasText(configuration.get(CACHE).asText()) && !StringUtils.hasText(configuration.get(REGION).asText())) {
-            throw new CertificateException("A required field is not provided in AWS certificate configuration.");
+    @SneakyThrows
+    private void updateEmbeddedKeys(UpdateCertificate updateCertificate,
+                                    Certificate certificateToUpdate,
+                                    CertificateWithSchema oldCertificate,
+                                    String fileKey) {
+        JsonNode updateCertJson = objectMapper.readTree(updateCertificate.getConfiguration());
+        var oldFileInformation = objectMapper.readTree(oldCertificate.certificate().getConfiguration()).get(fileKey).asText();
+        var fileInformation = updateCertJson.get(fileKey).asText();
+        // file has changed, let's update it
+        if (!oldFileInformation.equals(fileInformation)) {
+            var file = objectMapper.readTree(fileInformation);
+            certificateToUpdate.setMetadata(Maps.newHashMap(Map.of(FILE, Base64.getDecoder().decode(file.get(CONTENT).asText()))));
+            // update configuration to set the file path
+            ((ObjectNode) updateCertJson).put(fileKey, file.get(NAME).asText());
         }
     }
 

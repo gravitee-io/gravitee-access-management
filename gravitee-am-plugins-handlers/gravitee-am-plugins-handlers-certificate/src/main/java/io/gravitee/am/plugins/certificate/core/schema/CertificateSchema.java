@@ -18,8 +18,10 @@ package io.gravitee.am.plugins.certificate.core.schema;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -34,4 +36,11 @@ public class CertificateSchema {
     private String description;
     private Map<String, CertificateSchemaProperty> properties;
     private List<String> required;
+
+    public Optional<String> getFileKey() throws CertificateException {
+        return getProperties().entrySet().stream()
+                .filter(map -> "file".equals(map.getValue().getWidget()))
+                .map(Map.Entry::getKey)
+                .findFirst();
+    }
 }
