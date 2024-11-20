@@ -43,6 +43,12 @@ export interface UpdateCertificate {
      * @type {string}
      * @memberof UpdateCertificate
      */
+    type: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateCertificate
+     */
     configuration: string;
 }
 
@@ -57,6 +63,7 @@ export function UpdateCertificateFromJSONTyped(json: any, ignoreDiscriminator: b
     return {
         
         'name': json['name'],
+        'type': json['type'],
         'configuration': json['configuration'],
     };
 }
@@ -71,6 +78,7 @@ export function UpdateCertificateToJSON(value?: UpdateCertificate | null): any {
     return {
         
         'name': value.name,
+        'type': value.type,
         'configuration': value.configuration,
     };
 }

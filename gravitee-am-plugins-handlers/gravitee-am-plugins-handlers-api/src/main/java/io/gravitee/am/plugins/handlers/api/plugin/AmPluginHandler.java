@@ -18,6 +18,7 @@ package io.gravitee.am.plugins.handlers.api.plugin;
 import com.google.common.reflect.TypeToken;
 import io.gravitee.am.common.plugin.AmPlugin;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
 import io.gravitee.plugin.core.api.AbstractPluginHandler;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
@@ -35,7 +36,11 @@ public abstract class AmPluginHandler<T extends AmPlugin<?, ?>> extends Abstract
     protected PluginClassLoaderFactory<Plugin> pluginClassLoaderFactory;
 
     @Autowired
-    private AmPluginManager<T> pluginManager;
+    protected AmPluginManager<T> pluginManager;
+
+    @Autowired
+    protected PluginConfigurationValidatorsRegistry validatorsRegistry;
+
     private final Class<T> actualTypeArgument;
 
     protected AmPluginHandler() {
@@ -80,4 +85,5 @@ public abstract class AmPluginHandler<T extends AmPlugin<?, ?>> extends Abstract
             throw ex;
         }
     }
+
 }
