@@ -17,7 +17,7 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain,setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, deleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import {
   createCertificate,
   deleteCertificate,
@@ -38,7 +38,7 @@ let certificate;
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
-  domain = await setupDomainForTest('domain-certificate', {accessToken}).then(it=>it.domain)
+  domain = await setupDomainForTest('domain-certificate', { accessToken }).then((it) => it.domain);
 });
 
 describe('when creating certificates', () => {

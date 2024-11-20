@@ -82,6 +82,7 @@ import io.gravitee.am.service.validators.email.UserEmailConstraintValidator;
 import io.gravitee.am.service.validators.email.resource.EmailTemplateValidator;
 import io.gravitee.am.service.validators.flow.FlowValidator;
 import io.gravitee.am.service.validators.jsonstring.JsonStringValidator;
+import io.gravitee.am.service.validators.plugincfg.PluginJsonFormValidator;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
@@ -302,6 +303,11 @@ public abstract class JerseySpringTest {
         public UserEmailConstraintValidator userEmailConstraintValidator(){
             MockEnvironment mockEnvironment = new MockEnvironment().withProperty(UserEmail.PROPERTY_USER_EMAIL_REQUIRED, "false");
             return new UserEmailConstraintValidator(mockEnvironment);
+        }
+
+        @Bean
+        public PluginJsonFormValidator pluginJsonFormValidator(){
+            return new PluginJsonFormValidator(List.of());
         }
 
         @Bean

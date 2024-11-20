@@ -16,11 +16,15 @@
 package io.gravitee.am.plugins.certificate.plugin;
 
 import io.gravitee.am.certificate.api.Certificate;
+import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidator;
+import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
 import io.gravitee.am.plugins.handlers.api.plugin.AmPluginHandler;
+import io.gravitee.json.validation.JsonSchemaValidatorImpl;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -31,9 +35,29 @@ public class CertificatePluginHandler extends AmPluginHandler<Certificate<?, ?>>
 
     private final Logger LOGGER = LoggerFactory.getLogger(CertificatePluginHandler.class);
 
+    @Autowired
+    private PluginConfigurationValidatorsRegistry validatorsRegistry;
+
     @Override
     public boolean canHandle(Plugin plugin) {
         return type().equalsIgnoreCase(plugin.type());
+    }
+
+    @Override
+    protected void handle(Plugin plugin, Class<?> pluginClass) {
+        super.handle(plugin, pluginClass);
+        if (pluginManager.findById(plugin.id()) != null) {
+            registerValidator(plugin);
+        }
+    }
+
+    private void registerValidator(Plugin plugin){
+        try {
+            getLogger().info("Register a new plugin validator: {} [{}]", plugin.id(), plugin.clazz());
+            validatorsRegistry.put(new PluginConfigurationValidator(plugin.id(), pluginManager.getSchema(plugin.id()), new JsonSchemaValidatorImpl()));
+        } catch (Exception iae) {
+            getLogger().error("Unexpected error while create certificate schema validator", iae);
+        }
     }
 
     @Override
