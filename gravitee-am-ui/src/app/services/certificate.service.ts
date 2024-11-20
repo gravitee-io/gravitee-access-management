@@ -44,6 +44,7 @@ export class CertificateService {
   update(domainId, id, provider): Observable<any> {
     return this.http.put<any>(this.certificatesURL + domainId + '/certificates/' + id, {
       name: provider.name,
+      type: provider.type,
       configuration: provider.configuration,
     });
   }

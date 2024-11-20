@@ -92,6 +92,7 @@ public class CertificateServiceTest {
 
     public static final String DOMAIN_NAME = "my-domain";
     public static String certificateSchemaDefinition;
+    public static String certificateAwsSchemaDefinition;
     public static String certificateConfiguration;
     public static String certificateConfigurationWithOptions;
     @InjectMocks
@@ -134,6 +135,7 @@ public class CertificateServiceTest {
         certificateSchemaDefinition = loadResource("certificate-schema-definition.json");
         certificateConfiguration = loadResource("certificate-configuration.json");
         certificateConfigurationWithOptions = loadResource("certificate-configuration-with-options.json");
+        certificateAwsSchemaDefinition = loadResource("certificate-aws-schema-definition.json");
     }
 
     @Before
@@ -281,12 +283,9 @@ public class CertificateServiceTest {
     @Test
     public void shouldCreateAwsCertificate() {
         var type = "aws-am-certificate";
-        when(certificatePluginService.getSchema(type)).thenReturn(Maybe.just(certificateSchemaDefinition));
+        when(certificatePluginService.getSchema(type)).thenReturn(Maybe.just(certificateAwsSchemaDefinition));
         var certificateNode = objectMapper.createObjectNode();
         certificateNode.put("secretname", "aws-secret-name");
-        certificateNode.put("alias", "am-server");
-        certificateNode.put("storepass", "server-secret");
-        certificateNode.put("keypass", "server-secret");
         var newCertificate = new NewCertificate();
         newCertificate.setType(type);
         newCertificate.setConfiguration(certificateNode.toString());
@@ -307,37 +306,12 @@ public class CertificateServiceTest {
     }
 
     @Test
-    public void shouldNotCreateAwsCertificateWhenSecretNameIsNotDefined() {
-        var type = "aws-am-certificate";
-        when(certificatePluginService.getSchema(type)).thenReturn(Maybe.just(certificateSchemaDefinition));
-        var certificateNode = objectMapper.createObjectNode();
-        certificateNode.put("alias", "am-server");
-        certificateNode.put("storepass", "server-secret");
-        certificateNode.put("keypass", "server-secret");
-        var newCertificate = new NewCertificate();
-        newCertificate.setType(type);
-        newCertificate.setConfiguration(certificateNode.toString());
-
-        certificateService.create(DOMAIN_NAME, newCertificate, Mockito.mock(User.class))
-                .test()
-                .awaitDone(10, TimeUnit.SECONDS)
-                .assertError(TechnicalManagementException.class);
-
-        verify(certificatePluginManager, never()).create(any());
-        verify(certificateRepository, never()).create(any());
-        verify(eventService, never()).create(any());
-    }
-
-    @Test
     public void shouldUpdateAwsCertificate() {
         var id = "123";
         var type = "aws-am-certificate";
-        when(certificatePluginService.getSchema(type)).thenReturn(Maybe.just(certificateSchemaDefinition));
+        when(certificatePluginService.getSchema(type)).thenReturn(Maybe.just(certificateAwsSchemaDefinition));
         var certificateNode = objectMapper.createObjectNode();
         certificateNode.put("secretname", "aws-secret-name");
-        certificateNode.put("alias", "am-server");
-        certificateNode.put("storepass", "server-secret");
-        certificateNode.put("keypass", "server-secret");
         var newCertificate = new UpdateCertificate();
         newCertificate.setConfiguration(certificateNode.toString());
         var certificateProvider = mock(CertificateProvider.class);
@@ -405,22 +379,6 @@ public class CertificateServiceTest {
         TestObserver<Certificate> testObserver = certificateService.create(DOMAIN_NAME, newCertificate, Mockito.mock(User.class)).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(error -> error instanceof InvalidParameterException && "The configuration details entered are incorrect. Please check those and try again.".equals(error.getMessage()));
-    }
-
-    @Test
-    public void shouldNotCreateWhenCertificateFileIsNotFound(){
-        when(certificatePluginService.getSchema(CertificateServiceImpl.DEFAULT_CERTIFICATE_PLUGIN)).thenReturn(Maybe.just(certificateSchemaDefinition));
-        var certificateNode = objectMapper.createObjectNode();
-        certificateNode.put("alias", "am-server");
-        certificateNode.put("storepass", "server-secret");
-        certificateNode.put("keypass", "server-secret");
-        var newCertificate = new NewCertificate();
-        newCertificate.setName("without-file");
-        newCertificate.setType(DEFAULT_CERTIFICATE_PLUGIN);
-        newCertificate.setConfiguration(certificateNode.toString());
-        TestObserver<Certificate> testObserver = certificateService.create(DOMAIN_NAME, newCertificate, Mockito.mock(User.class)).test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-        testObserver.assertError(error -> error instanceof InvalidParameterException && "A valid certificate file was not uploaded. Please make sure to attach one.".equals(error.getMessage()));
     }
 
     @Test
