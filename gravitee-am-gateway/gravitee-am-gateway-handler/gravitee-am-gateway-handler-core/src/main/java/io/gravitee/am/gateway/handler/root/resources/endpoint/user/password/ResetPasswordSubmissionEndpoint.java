@@ -36,6 +36,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_QUERY_PARAM;
+import static io.gravitee.am.gateway.core.LegacySettingsKeys.RESET_PWD_KEEP_PARAMS;
+import static io.gravitee.am.gateway.handler.common.vertx.utils.RedirectHelper.getReturnUrl;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -43,7 +45,6 @@ import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_QUERY_PARAM;
  */
 public class ResetPasswordSubmissionEndpoint extends UserRequestHandler {
 
-    public static final String GATEWAY_ENDPOINT_RESET_PWD_KEEP_PARAMS = "legacy.resetPassword.keepParams";
     private static final Logger logger = LoggerFactory.getLogger(ResetPasswordSubmissionEndpoint.class);
     private final UserService userService;
 
@@ -51,7 +52,7 @@ public class ResetPasswordSubmissionEndpoint extends UserRequestHandler {
 
     public ResetPasswordSubmissionEndpoint(UserService userService, Environment environment) {
         this.userService = userService;
-        this.keepParams = environment.getProperty(GATEWAY_ENDPOINT_RESET_PWD_KEEP_PARAMS, boolean.class, true);
+        this.keepParams = RESET_PWD_KEEP_PARAMS.from(environment);
     }
 
     @Override

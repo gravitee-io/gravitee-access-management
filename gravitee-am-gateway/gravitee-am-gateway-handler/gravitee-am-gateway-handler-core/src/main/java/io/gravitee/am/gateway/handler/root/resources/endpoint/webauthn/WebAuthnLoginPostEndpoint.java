@@ -17,13 +17,13 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
-import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
-import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+
+import static io.gravitee.am.gateway.handler.common.vertx.utils.RedirectHelper.doRedirect;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -55,11 +55,6 @@ public class WebAuthnLoginPostEndpoint extends AbstractEndpoint implements Handl
     private void authenticateV1(RoutingContext ctx) {
         // at this stage the user has been authenticated
         // redirect the user to the original request
-        final MultiMap queryParams = RequestUtils.getCleanedQueryParams(ctx.request());
-        final String redirectUri = getReturnUrl(ctx, queryParams);
-
-        ctx.response().putHeader(io.vertx.core.http.HttpHeaders.LOCATION, redirectUri)
-                .setStatusCode(302)
-                .end();
+        doRedirect(ctx);
     }
 }

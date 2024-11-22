@@ -33,13 +33,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 
+import static io.gravitee.am.gateway.core.LegacySettingsKeys.REGISTRATION_KEEP_PARAMS;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class RegisterConfirmationSubmissionEndpoint extends UserRequestHandler {
 
-    public static final String GATEWAY_ENDPOINT_REGISTRATION_KEEP_PARAMS = "legacy.registration.keepParams";
     private static final Logger logger = LoggerFactory.getLogger(RegisterConfirmationSubmissionEndpoint.class);
 
     private final UserService userService;
@@ -47,7 +48,7 @@ public class RegisterConfirmationSubmissionEndpoint extends UserRequestHandler {
 
     public RegisterConfirmationSubmissionEndpoint(UserService userService, Environment environment) {
         this.userService = userService;
-        this.keepParams = environment.getProperty(GATEWAY_ENDPOINT_REGISTRATION_KEEP_PARAMS, boolean.class, true);
+        this.keepParams = REGISTRATION_KEEP_PARAMS.from(environment);
     }
 
     @Override

@@ -60,6 +60,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import static io.gravitee.am.gateway.core.LegacySettingsKeys.OIDC_SCOPE_FULL_PROFILE;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
@@ -93,8 +94,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
-        when(env.getProperty("legacy.openid.openid_scope_full_profile", boolean.class, false)).thenReturn(false);
+        when(env.getProperty(OIDC_SCOPE_FULL_PROFILE.getKey(), Boolean.class, OIDC_SCOPE_FULL_PROFILE.getDefaultValue())).thenReturn(false);
         userInfoEndpoint = new UserInfoEndpoint(userEnhancer, jwtService, jweService, openIDDiscoveryService, env, subjectManager);
 
         router.route(HttpMethod.GET, "/userinfo")

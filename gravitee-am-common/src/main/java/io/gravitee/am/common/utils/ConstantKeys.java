@@ -276,4 +276,10 @@ public interface ConstantKeys {
     String PROTOCOL_VALUE_SAML_REDIRECT = "SAML/HTTP-Redirect";
     String PROTOCOL_VALUE_SAML_POST = "SAML/HTTP-POST";
     String IDP_CODE_VERIFIER = "idp_code_verifier";
+
+    // This const is used by the authorization endpoint to flag an ongoing authentication
+    String SESSION_KEY_AUTH_FLOW_STATE = "auth_state";
+    // note: Create an enum if another value becomes useful
+    String SESSION_KEY_AUTH_FLOW_STATE_ONGOING = "ongoing";
+
 }

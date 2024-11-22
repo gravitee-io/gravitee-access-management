@@ -50,6 +50,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ID_TOKEN_EXCLUDED_CLAIMS;
+import static io.gravitee.am.gateway.core.LegacySettingsKeys.OIDC_SCOPE_FULL_PROFILE;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -89,7 +90,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
         this.jwtService = jwtService;
         this.jweService = jweService;
         this.openIDDiscoveryService = openIDDiscoveryService;
-        this.legacyOpenidScope = environment.getProperty("legacy.openid.openid_scope_full_profile", boolean.class, false);
+        this.legacyOpenidScope = OIDC_SCOPE_FULL_PROFILE.from(environment);
         this.subjectManager = subjectManager;
     }
 

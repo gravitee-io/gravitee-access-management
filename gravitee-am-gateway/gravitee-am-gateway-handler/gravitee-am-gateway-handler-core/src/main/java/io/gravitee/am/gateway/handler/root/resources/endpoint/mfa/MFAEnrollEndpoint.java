@@ -40,14 +40,12 @@ import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
-import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.rxjava3.core.Observable;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
-import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
@@ -65,6 +63,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
+import static io.gravitee.am.gateway.handler.common.vertx.utils.RedirectHelper.doRedirect;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 import static org.springframework.util.StringUtils.hasText;
@@ -123,7 +122,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
             var context = new MfaFilterContext(routingContext, routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY), factorManager, ruleEngine);
             if (context.userHasMatchingActivatedFactors()) {
                 logger.warn("User already has a factor.");
-                redirectToAuthorize(routingContext);
+                doRedirect(routingContext);
                 return;
             }
 
@@ -224,7 +223,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
             // user request a skipEnrollment but it is required,
             // redirect back to the authorize endpoint to force
             // the enrollment
-            redirectToAuthorize(routingContext);
+            doRedirect(routingContext);
             return;
         }
 
@@ -245,7 +244,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                         // that means the user has also skipped the MFA challenge page
                         routingContext.session().put(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY, true);
                         routingContext.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
-                        redirectToAuthorize(routingContext);
+                        doRedirect(routingContext);
                     });
             return true;
         }
@@ -309,7 +308,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
             // update the session
             routingContext.session().put(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY, true);
             // redirect to the original request
-            redirectToAuthorize(routingContext);
+            doRedirect(routingContext);
         } else {
             // parameters are invalid
             routingContext.fail(400);
@@ -328,12 +327,6 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                 endUser.getFactors().stream()
                         .filter(enrolledFactor -> !recoveryCodeFactors.contains(enrolledFactor.getFactorId()))
                         .anyMatch(enrolledFactor -> enrolledFactor.getStatus() == FactorStatus.ACTIVATED);
-    }
-
-    private void redirectToAuthorize(RoutingContext routingContext) {
-        final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-        final String returnURL = getReturnUrl(routingContext, queryParams);
-        doRedirect(routingContext.response(), returnURL);
     }
 
     private EnrolledFactor getSecurityFactor(MultiMap params, io.gravitee.am.model.Factor factor) {
@@ -392,10 +385,6 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
     @Override
     public String getTemplateSuffix() {
         return Template.MFA_ENROLL.template();
-    }
-
-    private void doRedirect(HttpServerResponse response, String url) {
-        response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
     }
 
     @Getter

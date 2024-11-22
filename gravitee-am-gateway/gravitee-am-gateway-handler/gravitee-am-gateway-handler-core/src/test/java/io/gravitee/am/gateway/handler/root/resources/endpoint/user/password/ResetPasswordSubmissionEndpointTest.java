@@ -37,6 +37,7 @@ import org.springframework.core.env.Environment;
 
 import java.util.Collections;
 
+import static io.gravitee.am.gateway.core.LegacySettingsKeys.RESET_PWD_KEEP_PARAMS;
 import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static org.mockito.ArgumentMatchers.any;
@@ -59,7 +60,7 @@ public class ResetPasswordSubmissionEndpointTest extends RxWebTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        when(environment.getProperty(eq(ResetPasswordSubmissionEndpoint.GATEWAY_ENDPOINT_RESET_PWD_KEEP_PARAMS), any(), eq(true))).thenReturn(true);
+        when(environment.getProperty(eq(RESET_PWD_KEEP_PARAMS.getKey()), any(), eq(RESET_PWD_KEEP_PARAMS.getDefaultValue()))).thenReturn(true);
 
         ResetPasswordSubmissionEndpoint resetPasswordSubmissionEndpoint = new ResetPasswordSubmissionEndpoint(userService, environment);
         router.route(HttpMethod.POST, "/resetPassword")
