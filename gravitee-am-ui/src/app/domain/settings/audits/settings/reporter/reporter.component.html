@@ -77,9 +77,7 @@
       <div fxLayout="row">
         <button
           mat-raised-button
-          [disabled]="
-            (!reporterForm.valid || reporterForm.pristine) && (!configurationIsValid || !hasName || configurationPristine) && !formChanged
-          "
+          [disabled]="!reporterForm.valid || reporterForm.pristine || !configurationIsValid || !hasName"
           (click)="save()"
         >
           SAVE
