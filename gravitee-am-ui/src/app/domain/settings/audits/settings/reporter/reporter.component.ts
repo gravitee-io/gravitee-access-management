@@ -18,7 +18,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { filter, switchMap, tap } from 'rxjs/operators';
 
 import { DialogService } from '../../../../../services/dialog.service';
-import { NavbarService } from '../../../../../components/navbar/navbar.service';
 import { OrganizationService } from '../../../../../services/organization.service';
 import { ReporterService } from '../../../../../services/reporter.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
@@ -32,10 +31,9 @@ export class ReporterComponent implements OnInit {
   @ViewChild('reporterForm', { static: true }) form: any;
 
   private domainId: string;
-  private organizationContext = false;
-  createMode = false;
+  organizationContext: boolean;
+  createMode;
   configurationIsValid = true;
-  configurationPristine = true;
   reporterSchema: any;
   reporter: any;
   plugins: any;
@@ -51,19 +49,12 @@ export class ReporterComponent implements OnInit {
     private reporterService: ReporterService,
     private snackbarService: SnackbarService,
     private dialogService: DialogService,
-    private navbarService: NavbarService,
   ) {}
 
   ngOnInit() {
+    this.organizationContext = this.route.snapshot.data['organizationContext'];
+    this.createMode = this.route.snapshot.data['createMode'];
     this.domainId = this.route.snapshot.data['domain']?.id;
-
-    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.organizationContext = true;
-    }
-
-    if (this.router.routerState.snapshot.url.endsWith('/new')) {
-      this.createMode = true;
-    }
 
     // filter default reporter type (mongo & jdbc) only additional reporters can be added
     this.plugins = this.route.snapshot.data['reporterPlugins'].filter(
@@ -142,7 +133,6 @@ export class ReporterComponent implements OnInit {
         this.reporter = data;
         this.reporterConfiguration = JSON.parse(this.reporter.configuration);
         this.updateReporterConfiguration = this.reporterConfiguration;
-        this.formChanged = false;
         this.form.reset(this.reporter);
         this.snackbarService.open('Reporter updated');
       });
@@ -166,15 +156,14 @@ export class ReporterComponent implements OnInit {
 
   enableReporterUpdate(configurationWrapper) {
     window.setTimeout(() => {
-      this.configurationPristine = this.reporter.configuration === JSON.stringify(configurationWrapper.configuration);
-      this.configurationIsValid = configurationWrapper.isValid;
+      const configurationPristine = this.reporter.configuration === JSON.stringify(configurationWrapper.configuration);
+      this.configurationIsValid = configurationWrapper.isValid && !configurationPristine;
       this.updateReporterConfiguration = configurationWrapper.configuration;
     });
   }
 
   enableReporter(event) {
     this.reporter.enabled = event.checked;
-    this.formChanged = true;
   }
 
   validateName() {

@@ -1792,6 +1792,8 @@ export const routes: Routes = [
                                   reporterPlugins: PluginReportersResolver,
                                 },
                                 data: {
+                                  createMode: true,
+                                  organizationContext: false,
                                   perms: {
                                     only: ['domain_reporter_create'],
                                   },
@@ -1805,6 +1807,8 @@ export const routes: Routes = [
                                   reporterPlugins: PluginReportersResolver,
                                 },
                                 data: {
+                                  createMode: false,
+                                  organizationContext: false,
                                   breadcrumb: {
                                     label: 'reporter.name',
                                   },
