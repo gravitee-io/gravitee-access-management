@@ -36,6 +36,8 @@ public class SessionManager {
         cleanSessionOnMfaChallenge(context);
         if (context.session() != null) {
             getSessionState(context).getUserAuthState().finalized();
+            getSessionState(context).getWebAuthnState().reset();
+            getSessionState(context).getConsentState().clearConsentComplete();
 
             context.session().remove(ConstantKeys.TRANSACTION_ID_KEY);
             context.session().remove(ConstantKeys.USER_CONSENT_COMPLETED_KEY);

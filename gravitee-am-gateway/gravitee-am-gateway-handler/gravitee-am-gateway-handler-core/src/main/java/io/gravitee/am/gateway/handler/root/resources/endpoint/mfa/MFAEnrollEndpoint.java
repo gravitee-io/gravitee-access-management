@@ -244,6 +244,16 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                         // that means the user has also skipped the MFA challenge page
                         routingContext.session().put(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY, true);
                         routingContext.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
+
+                        final var sessionState = sessionManager.getSessionState(routingContext);
+                        sessionState.getMfaState().enrollmentCompleted();
+                        sessionState.getMfaState().challengeCompleted();
+                        // in addition of the complete state to keep consistency with legacy behaviour
+                        // we add flag to mention it has been skipped
+                        sessionState.getMfaState().skipEnrollment();
+                        sessionState.getMfaState().skipChallenge();
+                        sessionState.save(routingContext.session());
+
                         doRedirect(routingContext);
                     });
             return true;
@@ -307,6 +317,11 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
             }
             // update the session
             routingContext.session().put(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY, true);
+
+            final var sessionState = sessionManager.getSessionState(routingContext);
+            sessionState.getMfaState().enrollmentCompleted();
+            sessionState.save(routingContext.session());
+
             // redirect to the original request
             doRedirect(routingContext);
         } else {

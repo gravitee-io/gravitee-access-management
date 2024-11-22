@@ -19,12 +19,10 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
-import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.*;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.challengeConditionSatisfied;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.continueMfaFlow;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.evaluateRule;
@@ -34,6 +32,7 @@ import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.inter
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.isChallengeActive;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.isMfaFlowStopped;
 import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.stepUpRequired;
+import static io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils.stopMfaFlow;
 
 public class MFAChallengeStep extends MFAStep {
     private final FactorManager factorManager;
@@ -54,7 +53,7 @@ public class MFAChallengeStep extends MFAStep {
         if (!isMfaFlowStopped(context)) {
             if (context.isUserSelectedEnrollFactor()) {
                 challenge(context, flow);
-            } else if (!context.isChallengeCompleted() && stepUpRequired(context, client, ruleEngine)) {
+            } else if (!context.isChallengeCompleted(sessionManager) && stepUpRequired(context, client, ruleEngine)) {
                 challenge(context, flow);
             } else if (isChallengeActive(client)) {
                 switch (getChallengeSettings(client).getType()) {
@@ -98,8 +97,12 @@ public class MFAChallengeStep extends MFAStep {
         }
     }
 
-    private void challenge(MfaFilterContext routingContext, AuthenticationFlowChain flow) {
-        executeFlowStep(routingContext, flow, this);
+    private void challenge(MfaFilterContext mfaFilterContext, AuthenticationFlowChain flow) {
+        final var sessionState = sessionManager.getSessionState(mfaFilterContext.routingContext());
+        sessionState.getMfaState().challengeOngoing();
+        sessionState.save(mfaFilterContext.session());
+
+        executeFlowStep(mfaFilterContext, flow, this);
     }
 
     private boolean isSafe(MfaFilterContext context, Client client) {

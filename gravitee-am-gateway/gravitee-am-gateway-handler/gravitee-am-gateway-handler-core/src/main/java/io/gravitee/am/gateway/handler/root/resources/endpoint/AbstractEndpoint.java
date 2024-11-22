@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint;
 
+import io.gravitee.am.gateway.handler.common.session.SessionManager;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.UserActivityService;
@@ -48,6 +49,7 @@ import static java.lang.Boolean.TRUE;
 public abstract class AbstractEndpoint {
 
     private final TemplateEngine templateEngine;
+    protected final SessionManager sessionManager = new SessionManager();
 
     protected AbstractEndpoint() {
         templateEngine = null;

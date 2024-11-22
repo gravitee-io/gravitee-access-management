@@ -36,6 +36,10 @@ public class LoginPostEndpoint extends AbstractEndpoint implements Handler<Routi
         // save that the user has just been signed in
         session.put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, true);
 
+        final var sessionState = sessionManager.getSessionState(context);
+        sessionState.getUserAuthState().isSignedIn();
+        sessionState.save(session);
+
         // the login process is done
         // redirect the user to the original request
         doRedirect(context);

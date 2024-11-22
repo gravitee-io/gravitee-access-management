@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
+import io.gravitee.am.gateway.handler.common.session.SessionManager;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowStep;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -27,6 +28,7 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 public abstract class MFAStep extends AuthenticationFlowStep {
 
     protected final RuleEngine ruleEngine;
+    protected final SessionManager sessionManager = new SessionManager();
 
     MFAStep(Handler<RoutingContext> handler, RuleEngine ruleEngine) {
         super(handler);

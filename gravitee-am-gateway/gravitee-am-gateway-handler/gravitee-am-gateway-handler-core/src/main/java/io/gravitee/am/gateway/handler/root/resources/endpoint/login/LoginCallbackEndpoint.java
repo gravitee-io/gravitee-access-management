@@ -80,6 +80,10 @@ public class LoginCallbackEndpoint extends AbstractEndpoint implements Handler<R
             }
             // save that the user has just been signed in
             session.put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, true);
+
+            final var sessionState = sessionManager.getSessionState(routingContext);
+            sessionState.getUserAuthState().isSignedIn();
+            sessionState.save(session);
         }
 
         AuthenticationProvider authProvider = routingContext.get(ConstantKeys.PROVIDER_CONTEXT_KEY);

@@ -206,6 +206,12 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
                                 // between login or registration action
                                 session.put(PASSWORDLESS_AUTH_ACTION_KEY, PASSWORDLESS_AUTH_ACTION_VALUE_REGISTER);
                                 ctx.put(PASSWORDLESS_AUTH_ACTION_KEY, PASSWORDLESS_AUTH_ACTION_VALUE_REGISTER);
+
+                                final var state = sessionManager.getSessionState(ctx);
+                                final var webAuthnState = state.getWebAuthnState();
+                                webAuthnState.registrationOngoing();
+                                state.save(session);
+
                                 final Credential credential = credentialHandler.result();
                                 if (isEnrollingFido2Factor(ctx)) {
                                     enrollFido2Factor(ctx, authenticatedUser, createEnrolledFactor(session.get(ENROLLED_FACTOR_ID_KEY), credentialId), credential);

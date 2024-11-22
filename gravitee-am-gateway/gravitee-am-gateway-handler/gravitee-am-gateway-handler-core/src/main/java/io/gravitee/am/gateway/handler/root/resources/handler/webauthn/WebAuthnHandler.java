@@ -23,6 +23,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.session.SessionManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
@@ -83,11 +84,15 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
     private UserAuthenticationManager userAuthenticationManager;
     protected Domain domain;
 
+    protected final SessionManager sessionManager;
+
     protected WebAuthnHandler() {
+        this.sessionManager = new SessionManager();
     }
 
     protected WebAuthnHandler(TemplateEngine templateEngine) {
         super(templateEngine);
+        this.sessionManager = new SessionManager();
     }
 
     public void setFactorManager(FactorManager factorManager) {
@@ -212,6 +217,11 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
     protected void updateSessionAuthAndChallengeStatus(RoutingContext ctx) {
         ctx.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
         ctx.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
+
+        final var sessionState = sessionManager.getSessionState(ctx);
+        sessionState.getUserAuthState().isStronglyAuth();
+        sessionState.getUserAuthState().isStronglyAuthWitMfa();
+        sessionState.save(ctx.session());
     }
 
     protected void updateSessionLoginCompletedStatus(RoutingContext ctx, Credential credential) {
@@ -219,6 +229,11 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
         ctx.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, credential.getCredentialId());
         ctx.session().put(WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY, credential.getId());
         ctx.session().put(USER_LOGIN_COMPLETED_KEY, true);
+
+        final var sessionState = sessionManager.getSessionState(ctx);
+        sessionState.getUserAuthState().isSignedIn();
+        sessionState.getUserAuthState().isStronglyAuthWitWebAuthn();
+        sessionState.save(ctx.session());
     }
 
     protected EnrolledFactor createEnrolledFactor(String factorId, String credentialId) {

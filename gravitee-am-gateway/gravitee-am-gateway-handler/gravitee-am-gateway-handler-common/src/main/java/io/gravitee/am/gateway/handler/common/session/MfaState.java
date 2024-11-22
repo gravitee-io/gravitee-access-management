@@ -40,20 +40,82 @@ public class MfaState {
         return this.state.get(IDX_MFA_STEP_ENROLLMENT_ONGOING.ordinal());
     }
 
-    public void enrollment() {
+    public boolean isEnrollmentCompleted() {
+        return this.state.get(IDX_MFA_STEP_ENROLLMENT_ONGOING.ordinal());
+    }
+
+    public void enrollmentOngoing() {
         this.state.flip(IDX_MFA_STEP_ENROLLMENT_ONGOING.ordinal());
+        this.state.clear(IDX_MFA_STEP_ENROLLMENT_COMPLETED.ordinal());
+    }
+
+    public void enrollmentCompleted() {
+        this.state.clear(IDX_MFA_STEP_ENROLLMENT_ONGOING.ordinal());
+        this.state.flip(IDX_MFA_STEP_ENROLLMENT_COMPLETED.ordinal());
+    }
+
+    public boolean isEnrollConditionalSkip() {
+        return this.state.get(IDX_MFA_ENROLL_CONDITIONAL_SKIPPED.ordinal());
+    }
+
+    public void enrollConditionalSkip() {
+        this.state.flip(IDX_MFA_ENROLL_CONDITIONAL_SKIPPED.ordinal());
+    }
+
+    public void resetEnrollConditionalSkip() {
+        this.state.clear(IDX_MFA_ENROLL_CONDITIONAL_SKIPPED.ordinal());
     }
 
     public boolean isChallengeOngoing() {
         return this.state.get(IDX_MFA_STEP_CHALLENGE_ONGOING.ordinal());
     }
 
-    public void challenge() {
+    public boolean isChallengeCompleted() {
+        return this.state.get(IDX_MFA_STEP_CHALLENGE_COMPLETED.ordinal());
+    }
+
+    public void challengeOngoing() {
         this.state.flip(IDX_MFA_STEP_CHALLENGE_ONGOING.ordinal());
+        this.state.flip(IDX_MFA_STEP_CHALLENGE_COMPLETED.ordinal());
+    }
+
+    public void challengeCompleted() {
+        this.state.clear(IDX_MFA_STEP_CHALLENGE_ONGOING.ordinal());
+        this.state.flip(IDX_MFA_STEP_CHALLENGE_COMPLETED.ordinal());
+    }
+
+    public boolean isChallengeSkipped() {
+        return this.state.get(IDX_MFA_STEP_CHALLENGE_SKIPPED.ordinal());
+    }
+
+    public void skipChallenge() {
+        this.state.flip(IDX_MFA_STEP_CHALLENGE_SKIPPED.ordinal());
+    }
+
+    public boolean isEnrollmentSkipped() {
+        return this.state.get(IDX_MFA_STEP_ENROLLMENT_SKIPPED.ordinal());
+    }
+
+    public void skipEnrollment() {
+        this.state.flip(IDX_MFA_STEP_ENROLLMENT_SKIPPED.ordinal());
+    }
+
+    public void stopMfaFlow() {
+        this.state.flip(IDX_MFA_STOPPED.ordinal());
+    }
+
+    public boolean isMfaFlowStopped() {
+        return this.state.get(IDX_MFA_STOPPED.ordinal());
     }
 
     public void reset() {
         this.state.clear(IDX_MFA_STEP_ENROLLMENT_ONGOING.ordinal());
+        this.state.clear(IDX_MFA_STEP_ENROLLMENT_COMPLETED.ordinal());
         this.state.clear(IDX_MFA_STEP_CHALLENGE_ONGOING.ordinal());
+        this.state.clear(IDX_MFA_STEP_CHALLENGE_COMPLETED.ordinal());
+        this.state.clear(IDX_MFA_STEP_ENROLLMENT_SKIPPED.ordinal());
+        this.state.clear(IDX_MFA_STEP_CHALLENGE_SKIPPED.ordinal());
+        this.state.clear(IDX_MFA_ENROLL_CONDITIONAL_SKIPPED.ordinal());
+        this.state.clear(IDX_MFA_STOPPED.ordinal());
     }
 }

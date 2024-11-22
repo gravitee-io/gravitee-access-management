@@ -20,6 +20,7 @@ import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
+import io.gravitee.am.gateway.handler.common.session.SessionManager;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFAStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MfaFilterContext;
@@ -53,6 +54,7 @@ import static java.util.Optional.ofNullable;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MfaUtils {
+    private static final SessionManager SESSION_MANAGER = new SessionManager();
 
     public static boolean isUserStronglyAuth(Session session) {
         return TRUE.equals(session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY));
@@ -98,9 +100,14 @@ public class MfaUtils {
         return getChallengeSettings(client).isActive();
     }
 
-    public static void stopMfaFlow(MfaFilterContext routingContext, AuthenticationFlowChain flow) {
-        routingContext.session().put(MFA_STOP, true);
-        flow.doNext(routingContext.routingContext());
+    public static void stopMfaFlow(MfaFilterContext mfaFilterContext, AuthenticationFlowChain flow) {
+        mfaFilterContext.session().put(MFA_STOP, true);
+
+        final var sessionState = SESSION_MANAGER.getSessionState(mfaFilterContext.routingContext());
+        sessionState.getMfaState().stopMfaFlow();
+        sessionState.save(mfaFilterContext.session());
+
+        flow.doNext(mfaFilterContext.routingContext());
     }
 
     public static void executeFlowStep(MfaFilterContext routingContext, AuthenticationFlowChain flow, MFAStep mFAStep) {
@@ -149,7 +156,10 @@ public class MfaUtils {
         var enrollSettings = MfaUtils.getEnrollSettings(client);
         boolean enrollmentActive = enrollSettings.isActive();
         boolean isNotForcedEnrollment = enrollSettings.getForceEnrollment() != null && !enrollSettings.getForceEnrollment();
-        boolean isConditionalAndSkipped = CONDITIONAL.equals(enrollSettings.getType()) && TRUE.equals(routingContext.session().get(ConstantKeys.MFA_ENROLL_CONDITIONAL_SKIPPED_KEY));
+
+        final var mfaState = SESSION_MANAGER.getSessionState(routingContext).getMfaState();
+
+        boolean isConditionalAndSkipped = CONDITIONAL.equals(enrollSettings.getType()) && (TRUE.equals(routingContext.session().get(ConstantKeys.MFA_ENROLL_CONDITIONAL_SKIPPED_KEY)) || mfaState.isEnrollConditionalSkip());
         return enrollmentActive && (isNotForcedEnrollment || isConditionalAndSkipped);
     }
 }

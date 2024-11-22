@@ -62,7 +62,6 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnLoginHandler.class);
     private final WebAuthn webAuthn;
     private final String origin;
-
     public WebAuthnLoginHandler(UserService userService,
                                 FactorManager factorManager,
                                 Domain domain,
@@ -216,6 +215,12 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
                             // between login or registration action
                             session.put(PASSWORDLESS_AUTH_ACTION_KEY, PASSWORDLESS_AUTH_ACTION_VALUE_LOGIN);
                             ctx.put(PASSWORDLESS_AUTH_ACTION_KEY, PASSWORDLESS_AUTH_ACTION_VALUE_LOGIN);
+
+                            final var state = sessionManager.getSessionState(ctx);
+                            final var webAuthnState = state.getWebAuthnState();
+                            webAuthnState.loginOngoing();
+                            state.save(session);
+
                             // manage FIDO2 device enrollment if needed and continue
                             manageFido2FactorEnrollment(ctx, client, credential, user.getUser());
                         },

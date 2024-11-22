@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
 import io.gravitee.am.common.oidc.Prompt;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.session.SessionManager;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
@@ -49,6 +50,7 @@ public class AuthorizationRequestMFAPromptHandler implements Handler<RoutingCont
     private static final Logger logger = LoggerFactory.getLogger(AuthorizationRequestMFAPromptHandler.class);
     private static final String MFA_ENROLL_PATH = "/mfa/enroll";
     private static final String MFA_CHALLENGE_PATH = "/mfa/challenge";
+    private final SessionManager sessionManager = new SessionManager();
 
     @Override
     public void handle(RoutingContext context) {
@@ -64,13 +66,15 @@ public class AuthorizationRequestMFAPromptHandler implements Handler<RoutingCont
             context.next();
             return;
         }
+        final var mfaState = sessionManager.getSessionState(context).getMfaState();
+
         // if MFA enrollment not completed, redirect to MFA Enroll page
-        if (!Boolean.TRUE.equals(context.session().get(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY))) {
+        if (!Boolean.TRUE.equals(context.session().get(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY)) || mfaState.isEnrollmentCompleted()) {
             redirect(context, MFA_ENROLL_PATH);
             return;
         }
         // if MFA challenge not completed, redirect to MFA Challenge page
-        if (!Boolean.TRUE.equals(context.session().get(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY))) {
+        if (!Boolean.TRUE.equals(context.session().get(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY)) || mfaState.isChallengeCompleted()) {
             redirect(context, MFA_CHALLENGE_PATH);
             return;
         }

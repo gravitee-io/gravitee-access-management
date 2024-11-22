@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mf
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
+import io.gravitee.am.gateway.handler.common.session.SessionManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
 import io.gravitee.am.gateway.handler.context.EvaluableExecutionContext;
@@ -141,10 +142,9 @@ public class MfaFilterContext {
                 .orElse(false);
     }
 
-    public boolean isChallengeCompleted() {
-        return TRUE.equals(session.get(MFA_CHALLENGE_COMPLETED_KEY));
+    public boolean isChallengeCompleted(SessionManager sessionManager) {
+        return TRUE.equals(session.get(MFA_CHALLENGE_COMPLETED_KEY)) || sessionManager.getSessionState(routingContext).getMfaState().isChallengeCompleted();
     }
-
 
     public boolean checkSelectedFactor() {
         String enrollingFactorId = session.get(ENROLLED_FACTOR_ID_KEY);

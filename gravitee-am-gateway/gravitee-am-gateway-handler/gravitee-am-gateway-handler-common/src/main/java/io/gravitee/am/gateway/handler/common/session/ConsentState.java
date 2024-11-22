@@ -41,6 +41,10 @@ public class ConsentState {
         this.state.flip(IDX_CONSENT_COMPLETED.ordinal());
     }
 
+    public void clearConsentComplete() {
+        this.state.clear(IDX_CONSENT_COMPLETED.ordinal());
+    }
+
     public boolean isConsentComplete() {
         return this.state.get(IDX_CONSENT_COMPLETED.ordinal());
     }

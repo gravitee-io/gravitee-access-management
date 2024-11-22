@@ -90,8 +90,13 @@ public final class SessionState {
         IDX_RESERVED_5,
 
         IDX_MFA_STEP_ENROLLMENT_ONGOING,
+        IDX_MFA_STEP_ENROLLMENT_COMPLETED,
+        IDX_MFA_STEP_ENROLLMENT_SKIPPED,
         IDX_MFA_STEP_CHALLENGE_ONGOING,
+        IDX_MFA_STEP_CHALLENGE_COMPLETED,
+        IDX_MFA_STEP_CHALLENGE_SKIPPED,
         IDX_MFA_ENROLL_CONDITIONAL_SKIPPED,
+        IDX_MFA_STOPPED,
         // keep 4 additional bit in case other mfa flag should be added (ex: already have factor)
         IDX_RESERVED_6,
         IDX_RESERVED_7,

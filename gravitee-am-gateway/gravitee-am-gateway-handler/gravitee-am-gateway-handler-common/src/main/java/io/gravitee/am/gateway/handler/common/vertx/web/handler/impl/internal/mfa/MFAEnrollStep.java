@@ -94,6 +94,11 @@ public class MFAEnrollStep extends MFAStep {
             continueFlow(context, flow);
         } else if (canUserSkip(client, context)) {
             context.session().put(MFA_ENROLL_CONDITIONAL_SKIPPED_KEY, true);
+
+            final var sessionState = sessionManager.getSessionState(context.routingContext());
+            sessionState.getMfaState().enrollConditionalSkip();
+            sessionState.save(context.session());
+
             if (context.isEnrollSkipped()) {
                 stopMfaFlow(context, flow);
             } else {
@@ -128,8 +133,11 @@ public class MFAEnrollStep extends MFAStep {
         }
     }
 
-    private void enrollment(MfaFilterContext routingContext, AuthenticationFlowChain flow) {
-        executeFlowStep(routingContext, flow, this);
+    private void enrollment(MfaFilterContext mfaFilterContext, AuthenticationFlowChain flow) {
+        final var sessionState = sessionManager.getSessionState(mfaFilterContext.routingContext());
+        sessionState.getMfaState().enrollmentOngoing();
+        sessionState.save(mfaFilterContext.session());
+        executeFlowStep(mfaFilterContext, flow, this);
     }
 
     private boolean enrollConditionSatisfied(Client client, MfaFilterContext context) {
