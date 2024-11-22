@@ -18,12 +18,15 @@ package io.gravitee.am.gateway.handler.root.resources.handler;
 
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.session.SessionManager;
+import io.gravitee.am.gateway.handler.common.session.SessionState;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.function.Function;
+
 import static io.gravitee.am.gateway.handler.common.vertx.utils.RedirectHelper.doRedirect;
-import static org.springframework.util.StringUtils.hasText;
 
 /**
  * This handler is used to evaluate if an authentication step is coming from a regular flow
@@ -39,14 +42,18 @@ import static org.springframework.util.StringUtils.hasText;
 public class BypassDirectRequestHandler implements Handler<RoutingContext> {
 
     private final boolean skipHandlerExecution;
+    private final SessionManager sessionManager;
+    private final Function<SessionState, Boolean> evaluateRouting;
 
-    public BypassDirectRequestHandler(boolean skip) {
+    public BypassDirectRequestHandler(boolean skip, Function<SessionState, Boolean> evaluateRouting) {
         this.skipHandlerExecution = skip;
+        this.sessionManager = new SessionManager();
+        this.evaluateRouting = evaluateRouting;
     }
 
     @Override
     public void handle(RoutingContext routingContext) {
-        if (needAuthFlowStateEvaluation(routingContext)) {
+        if (needAuthorizationEndpointRouting(routingContext)) {
             routingContext.session().put(ConstantKeys.SESSION_KEY_AUTH_FLOW_STATE, ConstantKeys.SESSION_KEY_AUTH_FLOW_STATE_ONGOING);
             doRedirect(routingContext);
         } else {
@@ -63,9 +70,13 @@ public class BypassDirectRequestHandler implements Handler<RoutingContext> {
      * @param routingContext
      * @return true if a redirect to the authorization endpoint is required, false otherwise
      */
-    private boolean needAuthFlowStateEvaluation(RoutingContext routingContext) {
-        return !skipHandlerExecution && (routingContext.session() == null ||
-                !hasText(routingContext.session().get(ConstantKeys.SESSION_KEY_AUTH_FLOW_STATE)) ||
-                !ConstantKeys.SESSION_KEY_AUTH_FLOW_STATE_ONGOING.equalsIgnoreCase(routingContext.session().get(ConstantKeys.SESSION_KEY_AUTH_FLOW_STATE)));
+    private boolean needAuthorizationEndpointRouting(RoutingContext routingContext) {
+        if (skipHandlerExecution) {
+            return false;
+        }
+
+        SessionState state = sessionManager.getSessionState(routingContext);
+
+        return evaluateRouting.apply(state);
     }
 }

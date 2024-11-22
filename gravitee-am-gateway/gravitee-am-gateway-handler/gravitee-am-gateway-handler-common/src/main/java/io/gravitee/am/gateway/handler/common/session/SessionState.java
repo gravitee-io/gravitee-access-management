@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.gateway.handler.manager.session;
+package io.gravitee.am.gateway.handler.common.session;
 
 
 import io.gravitee.am.common.utils.ConstantKeys;
@@ -29,30 +29,13 @@ import java.util.BitSet;
  * @author GraviteeSource Team
  */
 public final class SessionState {
-
     private static final int BITS_FOR_LONG = 64;
 
-    static final short IDX_ONGOING = 0;
-    static final short IDX_SIGNED_IN = 1;
-    static final short IDX_STRONG_AUTH = 2;
-    static final short IDX_STRONG_AUTH_MFA = 3;
-    static final short IDX_STRONG_AUTH_WEBAUTHN = 4;
-    // keep 3 additional bit in case other auth methods should be used (Wallet?)
-    static final short IDX_RESERVED_1 = 5;
-    static final short IDX_RESERVED_2 = 6;
-    static final short IDX_RESERVED_3 = 7;
-    static final short IDX_MFA_STEP_ENROLLMENT_ONGOING = 8;
-    static final short IDX_MFA_STEP_CHALLENGE_ONGOING = 9;
-    // keep 2 additional bit in case other mfa flag should be added (ex: already have factor)
-    static final short IDX_RESERVED_4 = 10;
-    static final short IDX_RESERVED_5 = 11;
-    static final short IDX_WEB_AUTHN_REGISTER_ONGOING = 12;
-    static final short IDX_WEB_AUTHN_LOGIN_ONGOING = 13;
-    // keep 2 additional bit in case other mfa flag should be added  (ex: already have credential)
-    static final short IDX_RESERVED_6 = 14;
-    static final short IDX_RESERVED_7 = 15;
-
     private final BitSet state;
+
+    public SessionState() {
+       this(0);
+    }
 
     public SessionState(long state) {
         this.state = BitSet.valueOf(new long[]{state});
@@ -66,8 +49,8 @@ public final class SessionState {
         }
     }
 
-    public long getState() {
-        return state.toLongArray()[0];
+    public void save(Session session) {
+        session.put(ConstantKeys.SESSION_KEY_STATE, state.toLongArray()[0]);
     }
 
     public void reset() {
@@ -77,10 +60,45 @@ public final class SessionState {
     public UserAuthState getUserAuthState() {
         return UserAuthState.load(this.state);
     }
+
     public MfaState getMfaState() {
         return MfaState.load(this.state);
     }
+
     public WebAuthnState getWebAuthnState() {
         return WebAuthnState.load(this.state);
+    }
+
+    public ConsentState getConsentState() {
+        return ConsentState.load(this.state);
+    }
+
+    public static enum Flags {
+        IDX_ONGOING,
+        IDX_SIGNED_IN,
+        IDX_STRONG_AUTH,
+        IDX_STRONG_AUTH_MFA,
+        IDX_STRONG_AUTH_WEBAUTHN,
+        // keep 2 additional bit in case other auth methods should be used (Wallet?)
+        IDX_RESERVED_1,
+        IDX_RESERVED_2,
+        IDX_RESERVED_3,
+
+        IDX_CONSENT_COMPLETED,
+        IDX_CONSENT_APPROVED,
+        IDX_RESERVED_4,
+        IDX_RESERVED_5,
+
+        IDX_MFA_STEP_ENROLLMENT_ONGOING,
+        IDX_MFA_STEP_CHALLENGE_ONGOING,
+        IDX_MFA_ENROLL_CONDITIONAL_SKIPPED,
+        // keep 4 additional bit in case other mfa flag should be added (ex: already have factor)
+        IDX_RESERVED_6,
+        IDX_RESERVED_7,
+        IDX_WEB_AUTHN_REGISTER_ONGOING,
+        IDX_WEB_AUTHN_LOGIN_ONGOING,
+        // keep 2 additional bit in case other mfa flag should be added  (ex: already have credential)
+        IDX_RESERVED_8,
+        IDX_RESERVED_9;
     }
 }

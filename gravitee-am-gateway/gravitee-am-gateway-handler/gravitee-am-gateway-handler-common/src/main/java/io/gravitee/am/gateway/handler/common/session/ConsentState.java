@@ -14,43 +14,42 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.gateway.handler.manager.session;
+package io.gravitee.am.gateway.handler.common.session;
 
 
 import java.util.BitSet;
 
-import static io.gravitee.am.gateway.handler.manager.session.SessionState.IDX_WEB_AUTHN_LOGIN_ONGOING;
-import static io.gravitee.am.gateway.handler.manager.session.SessionState.IDX_WEB_AUTHN_REGISTER_ONGOING;
+import static io.gravitee.am.gateway.handler.common.session.SessionState.Flags.IDX_CONSENT_APPROVED;
+import static io.gravitee.am.gateway.handler.common.session.SessionState.Flags.IDX_CONSENT_COMPLETED;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class WebAuthnState {
+public class ConsentState {
     private final BitSet state;
 
-    private WebAuthnState(BitSet state) {
+    private ConsentState(BitSet state) {
         this.state = state;
     }
 
-    static WebAuthnState load(BitSet state) {
-        return new WebAuthnState(state);
+    static ConsentState load(BitSet state) {
+        return new ConsentState(state);
     }
 
-    public boolean isRegistrationOngoing() {
-        return this.state.get(IDX_WEB_AUTHN_REGISTER_ONGOING);
+    public void consentComplete() {
+        this.state.flip(IDX_CONSENT_COMPLETED.ordinal());
     }
 
-    public void registrationOngoing() {
-        this.state.flip(IDX_WEB_AUTHN_REGISTER_ONGOING);
+    public boolean isConsentComplete() {
+        return this.state.get(IDX_CONSENT_COMPLETED.ordinal());
     }
 
-    public boolean isLoginOngoing() {
-        return this.state.get(IDX_WEB_AUTHN_LOGIN_ONGOING);
+    public void approve() {
+        this.state.flip(IDX_CONSENT_APPROVED.ordinal());
     }
 
-    public void loginOngoing() {
-        this.state.flip(IDX_WEB_AUTHN_LOGIN_ONGOING);
+    public boolean isApproved() {
+        return this.state.get(IDX_CONSENT_APPROVED.ordinal());
     }
-
 }

@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.session.SessionManager;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
@@ -61,9 +62,11 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
     private static final String CONSENT_PAGE_PATH = "/oauth/consent";
 
     private final UserConsentService userConsentService;
+    private final SessionManager sessionManager;
 
     public AuthorizationRequestEndUserConsentHandler(UserConsentService userConsentService) {
         this.userConsentService = userConsentService;
+        this.sessionManager = new SessionManager();
     }
 
     @Override
@@ -80,8 +83,9 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
             return;
         }
         // check if user is already set its consent
-        if (Boolean.TRUE.equals(session.get(ConstantKeys.USER_CONSENT_COMPLETED_KEY))) {
-            if (authorizationRequest.isApproved()) {
+        final var consentState = sessionManager.getSessionState(routingContext).getConsentState();
+        if (Boolean.TRUE.equals(session.get(ConstantKeys.USER_CONSENT_COMPLETED_KEY)) || consentState.isConsentComplete()) {
+            if (authorizationRequest.isApproved() || consentState.isApproved()) {
                 routingContext.next();
             } else {
                 routingContext.fail(new AccessDeniedException("User denied access"));

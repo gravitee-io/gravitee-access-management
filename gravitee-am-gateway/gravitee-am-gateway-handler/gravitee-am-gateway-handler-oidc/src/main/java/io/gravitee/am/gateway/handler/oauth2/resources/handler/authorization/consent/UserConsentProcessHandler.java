@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.co
 
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.session.SessionManager;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
@@ -54,8 +55,9 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
 
     private final Domain domain;
     private final UserConsentService userConsentService;
-
+    private final SessionManager sessionManager;
     public UserConsentProcessHandler(UserConsentService userConsentService, Domain domain) {
+        this.sessionManager = new SessionManager();
         this.userConsentService = userConsentService;
         this.domain = domain;
     }
@@ -107,6 +109,14 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
             authorizationRequest.setConsents(h.result());
             session.put(ConstantKeys.USER_CONSENT_COMPLETED_KEY, true);
             session.put(ConstantKeys.USER_CONSENT_APPROVED_KEY, approved);
+            final var state = sessionManager.getSessionState(routingContext);
+            final var consentState = state.getConsentState();
+            consentState.consentComplete();
+            if (approved) {
+                consentState.approve();
+            }
+            state.save(session);
+
             routingContext.next();
         });
     }

@@ -286,9 +286,9 @@ public class OAuth2Provider extends AbstractProtocolProvider {
 
         // Authorization consent endpoint
         Handler<RoutingContext> userConsentPrepareContextHandler = new UserConsentPrepareContextHandler();
-        final var bypassDirectrequestHandler = new BypassDirectRequestHandler(HANDLER_SKIP_BYPASS_DIRECT_REQUEST_HDL.from(environment));
+        final var bypassConsentHandler = new BypassDirectRequestHandler(HANDLER_SKIP_BYPASS_DIRECT_REQUEST_HDL.from(environment), (state) -> state.getUserAuthState().isSignedIn() && !state.getUserAuthState().isOngoing());
         oauth2Router.route(HttpMethod.GET, "/consent")
-                .handler(bypassDirectrequestHandler)
+                .handler(bypassConsentHandler)
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(authenticationFlowContextHandler)
@@ -300,7 +300,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(localeHandler)
                 .handler(new UserConsentEndpoint(userConsentService, thymeleafTemplateEngine, domain));
         oauth2Router.route(HttpMethod.POST, "/consent")
-                .handler(bypassDirectrequestHandler)
+                .handler(bypassConsentHandler)
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(authenticationFlowContextHandler)

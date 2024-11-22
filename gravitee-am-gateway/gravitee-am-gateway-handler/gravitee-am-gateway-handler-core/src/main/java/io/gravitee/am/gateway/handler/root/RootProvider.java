@@ -369,7 +369,7 @@ public class RootProvider extends AbstractProtocolProvider {
         Handler<RoutingContext> loginPostWebAuthnHandler = new LoginPostWebAuthnHandler(webAuthnCookieService);
         Handler<RoutingContext> userRememberMeHandler = new UserRememberMeRequestHandler(jwtService, domain, rememberMeCookieName);
         Handler<RoutingContext> redirectUriValidationHandler = new RedirectUriValidationHandler(domain, userService);
-        Handler<RoutingContext> bypassHandler = new BypassDirectRequestHandler(HANDLER_SKIP_BYPASS_DIRECT_REQUEST_HDL.from(environment));
+        final boolean skipBypassHdl = HANDLER_SKIP_BYPASS_DIRECT_REQUEST_HDL.from(environment);
 
         // Root policy chain handler
         rootRouter.route()
@@ -382,10 +382,11 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(geoIpHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.ROOT));
 
+        final var bypassLogin = new BypassDirectRequestHandler(skipBypassHdl, (state) -> state.getUserAuthState().isSignedIn());
         // Identifier First Login route
         rootRouter.get(PATH_IDENTIFIER_FIRST_LOGIN)
                 .handler(clientRequestParseHandler)
-                .handler(bypassHandler)
+                .handler(bypassLogin)
                 .handler(redirectUriValidationHandler)
                 .handler(new LoginAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_LOGIN_IDENTIFIER))
@@ -394,7 +395,7 @@ public class RootProvider extends AbstractProtocolProvider {
 
         rootRouter.post(PATH_IDENTIFIER_FIRST_LOGIN)
                 .handler(clientRequestParseHandler)
-                .handler(bypassHandler)
+                .handler(bypassLogin)
                 .handler(redirectUriValidationHandler)
                 .handler(botDetectionHandler)
                 .handler(new LoginAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
@@ -406,7 +407,7 @@ public class RootProvider extends AbstractProtocolProvider {
         // login route
         rootRouter.get(PATH_LOGIN)
                 .handler(clientRequestParseHandler)
-                .handler(bypassHandler)
+                .handler(bypassLogin)
                 .handler(new LoginAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(redirectUriValidationHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_LOGIN))
@@ -417,7 +418,7 @@ public class RootProvider extends AbstractProtocolProvider {
 
         rootRouter.post(PATH_LOGIN)
                 .handler(clientRequestParseHandler)
-                .handler(bypassHandler)
+                .handler(bypassLogin)
                 .handler(redirectUriValidationHandler)
                 .handler(botDetectionHandler)
                 .handler(loginAttemptHandler)
@@ -478,16 +479,20 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(new LoginPostEndpoint());
 
         // MFA route
+        final var bypassEnrollMfa = new BypassDirectRequestHandler(skipBypassHdl, (state) -> state.getMfaState().isChallengeOngoing() || state.getUserAuthState().isStronglyAuth());
+        final var bypassMfaChallenge = new BypassDirectRequestHandler(skipBypassHdl, (state) -> state.getUserAuthState().isStronglyAuth());
         Handler<RoutingContext> mfaChallengeUserHandler = new MFAChallengeUserHandler(userService);
+
         rootRouter.route(PATH_MFA_ENROLL)
                 .handler(clientRequestParseHandler)
-                .handler(bypassHandler)
+                .handler(bypassEnrollMfa)
                 .handler(redirectUriValidationHandler)
                 .handler(localeHandler)
                 .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine, userService, domain, applicationContext, ruleEngine));
+
         rootRouter.route(PATH_MFA_CHALLENGE)
                 .handler(clientRequestParseHandler)
-                .handler(bypassHandler)
+                .handler(bypassMfaChallenge)
                 .handler(redirectUriValidationHandler)
                 .handler(rememberDeviceSettingsHandler)
                 .handler(localeHandler)
@@ -495,16 +500,16 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext,
                         domain, credentialService, rateLimiterService, verifyAttemptService, emailService, auditService))
                 .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
+
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)
-                .handler(bypassHandler)
+                .handler(bypassMfaChallenge)
                 .handler(redirectUriValidationHandler)
                 .handler(localeHandler)
                 .handler(mfaChallengeUserHandler)
                 .handler(new MFAChallengeAlternativesEndpoint(thymeleafTemplateEngine, factorManager, domain));
         rootRouter.route(PATH_MFA_RECOVERY_CODE)
                 .handler(clientRequestParseHandler)
-                .handler(bypassHandler)
                 .handler(redirectUriValidationHandler)
                 .handler(localeHandler)
                 .handler(new MFARecoveryCodeEndpoint(thymeleafTemplateEngine, domain, userService, factorManager, applicationContext));
@@ -512,9 +517,12 @@ public class RootProvider extends AbstractProtocolProvider {
         // WebAuthn route
         Handler<RoutingContext> webAuthnAccessHandler = new WebAuthnAccessHandler(domain, factorManager);
         Handler<RoutingContext> webAuthnRememberDeviceHandler = new WebAuthnRememberDeviceHandler(webAuthnCookieService, domain);
+        final var bypassWebAuthRegister = new BypassDirectRequestHandler(skipBypassHdl, (state) -> !state.getUserAuthState().isSignedIn());
+        final var bypassWebAuthLogin = new BypassDirectRequestHandler(skipBypassHdl, (state) -> state.getUserAuthState().isStronglyAuth());
+
         rootRouter.get(PATH_WEBAUTHN_REGISTER)
                 .handler(clientRequestParseHandler)
-                .handler(bypassHandler)
+                .handler(bypassWebAuthRegister)
                 .handler(redirectUriValidationHandler)
                 .handler(webAuthnAccessHandler)
                 .handler(localeHandler)
@@ -522,7 +530,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(new WebAuthnRegisterEndpoint(thymeleafTemplateEngine, domain, factorManager));
         rootRouter.post(PATH_WEBAUTHN_REGISTER)
                 .handler(clientRequestParseHandler)
-                .handler(bypassHandler)
+                .handler(bypassWebAuthRegister)
                 .handler(redirectUriValidationHandler)
                 .handler(webAuthnAccessHandler)
                 .handler(new WebAuthnRegisterHandler(userService, factorManager, domain, webAuthn, credentialService))
@@ -538,7 +546,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(new WebAuthnRegisterSuccessEndpoint(thymeleafTemplateEngine, credentialService, domain));
         rootRouter.get(PATH_WEBAUTHN_LOGIN)
                 .handler(clientRequestParseHandler)
-                .handler(bypassHandler)
+                .handler(bypassWebAuthLogin)
                 .handler(redirectUriValidationHandler)
                 .handler(webAuthnAccessHandler)
                 .handler(new LoginAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
@@ -547,7 +555,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(new WebAuthnLoginEndpoint(thymeleafTemplateEngine, domain, deviceIdentifierManager, userActivityService));
         rootRouter.post(PATH_WEBAUTHN_LOGIN)
                 .handler(clientRequestParseHandler)
-                .handler(bypassHandler)
+                .handler(bypassWebAuthLogin)
                 .handler(redirectUriValidationHandler)
                 .handler(webAuthnAccessHandler)
                 .handler(new WebAuthnLoginHandler(userService, factorManager, domain, webAuthn, credentialService, userAuthenticationManager))

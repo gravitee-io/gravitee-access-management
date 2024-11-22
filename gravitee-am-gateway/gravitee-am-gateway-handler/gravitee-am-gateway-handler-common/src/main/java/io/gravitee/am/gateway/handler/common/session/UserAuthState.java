@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.gateway.handler.manager.session;
+package io.gravitee.am.gateway.handler.common.session;
 
 
 import java.util.BitSet;
-import static io.gravitee.am.gateway.handler.manager.session.SessionState.*;
+import static io.gravitee.am.gateway.handler.common.session.SessionState.Flags.*;
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -35,54 +35,57 @@ public class UserAuthState {
     }
 
     public void ongoing() {
-        this.state.flip(IDX_ONGOING);
+        this.state.flip(IDX_ONGOING.ordinal());
     }
 
     public boolean isOngoing() {
-        return this.state.get(IDX_ONGOING);
+        return this.state.get(IDX_ONGOING.ordinal());
     }
 
     public void finalized() {
-        // reset ongoing bit
-        this.state.clear(IDX_ONGOING);
+        // reset ongoing bit and consent completion
+        this.state.clear(IDX_ONGOING.ordinal());
+        this.state.clear(IDX_CONSENT_COMPLETED.ordinal());
+
         // reset also the states for MFA & WebAuthn phases
         // as this is transitive state which can be clear once
         // the flow is finalized
-        this.state.clear(IDX_MFA_STEP_ENROLLMENT_ONGOING);
-        this.state.clear(IDX_MFA_STEP_CHALLENGE_ONGOING);
-        this.state.clear(IDX_WEB_AUTHN_REGISTER_ONGOING);
-        this.state.clear(IDX_WEB_AUTHN_LOGIN_ONGOING);
+        this.state.clear(IDX_MFA_STEP_ENROLLMENT_ONGOING.ordinal());
+        this.state.clear(IDX_MFA_STEP_CHALLENGE_ONGOING.ordinal());
+        this.state.clear(IDX_WEB_AUTHN_REGISTER_ONGOING.ordinal());
+        this.state.clear(IDX_WEB_AUTHN_LOGIN_ONGOING.ordinal());
     }
 
     public void signedIn() {
-        this.state.flip(IDX_SIGNED_IN);
+        this.state.flip(IDX_SIGNED_IN.ordinal());
     }
 
     public boolean isSignedIn() {
-        return this.state.get(IDX_SIGNED_IN);
+        return this.state.get(IDX_SIGNED_IN.ordinal());
     }
 
     public void stronglyAuth() {
-        this.state.flip(IDX_STRONG_AUTH);
+        this.state.flip(IDX_STRONG_AUTH.ordinal());
     }
 
     public boolean isStronglyAuth() {
-        return this.state.get(IDX_STRONG_AUTH);
+        return this.state.get(IDX_STRONG_AUTH.ordinal());
     }
 
     public void stronglyAuthWitMfa() {
-        this.state.flip(IDX_STRONG_AUTH_MFA);
+        this.state.flip(IDX_STRONG_AUTH_MFA.ordinal());
     }
 
     public boolean isStronglyAuthWitMfa() {
-        return this.state.get(IDX_STRONG_AUTH_MFA);
+        return this.state.get(IDX_STRONG_AUTH_MFA.ordinal());
     }
 
     public void stronglyAuthWitWebAuthn() {
-        this.state.flip(IDX_STRONG_AUTH_WEBAUTHN);
+        this.state.flip(IDX_STRONG_AUTH_WEBAUTHN.ordinal());
     }
 
     public boolean isStronglyAuthWitWebAuthn() {
-        return this.state.get(IDX_STRONG_AUTH_WEBAUTHN);
+        return this.state.get(IDX_STRONG_AUTH_WEBAUTHN.ordinal());
     }
+
 }

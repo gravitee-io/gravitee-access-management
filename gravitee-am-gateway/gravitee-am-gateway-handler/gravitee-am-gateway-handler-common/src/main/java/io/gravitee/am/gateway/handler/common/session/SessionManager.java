@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.gateway.handler.manager.session;
+package io.gravitee.am.gateway.handler.common.session;
 
 
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+
+import java.util.Optional;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -26,11 +28,15 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
  */
 public class SessionManager {
 
-
+    public SessionState getSessionState(RoutingContext routingContext) {
+        return Optional.ofNullable(routingContext.session()).map(SessionState::new).orElse(new SessionState());
+    }
 
     public void cleanSessionAfterAuth(RoutingContext context) {
         cleanSessionOnMfaChallenge(context);
         if (context.session() != null) {
+            getSessionState(context).getUserAuthState().finalized();
+
             context.session().remove(ConstantKeys.TRANSACTION_ID_KEY);
             context.session().remove(ConstantKeys.USER_CONSENT_COMPLETED_KEY);
             context.session().remove(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY);
@@ -48,6 +54,8 @@ public class SessionManager {
 
     public void cleanSessionOnMfaChallenge(RoutingContext context) {
         if (context.session() != null) {
+            getSessionState(context).getMfaState().reset();
+
             context.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
             context.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
 

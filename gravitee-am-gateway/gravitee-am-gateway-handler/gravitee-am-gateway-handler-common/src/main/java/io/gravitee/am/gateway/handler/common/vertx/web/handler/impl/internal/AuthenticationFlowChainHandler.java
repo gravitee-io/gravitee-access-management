@@ -15,13 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
-import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.session.SessionManager;
+import io.gravitee.am.gateway.handler.common.session.SessionState;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import java.util.List;
-
-import static org.springframework.util.StringUtils.hasText;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -30,19 +29,26 @@ import static org.springframework.util.StringUtils.hasText;
 public class AuthenticationFlowChainHandler implements Handler<RoutingContext> {
 
     private final List<AuthenticationFlowStep> steps;
+    private final SessionManager sessionManager;
 
     public AuthenticationFlowChainHandler(List<AuthenticationFlowStep> steps) {
         this.steps = steps;
+        this.sessionManager = new SessionManager();
     }
 
     @Override
     public void handle(RoutingContext routingContext) {
-        if (routingContext.session() != null && !hasText(routingContext.session().get(ConstantKeys.SESSION_KEY_AUTH_FLOW_STATE))) {
-            routingContext.session().put(ConstantKeys.SESSION_KEY_AUTH_FLOW_STATE, ConstantKeys.SESSION_KEY_AUTH_FLOW_STATE_ONGOING);
-        }
-
+        markAuthFlowOngoing(routingContext);
         new AuthenticationFlowChain(steps)
                 .exitHandler(stepHandler -> stepHandler.handle(routingContext))
                 .handle(routingContext);
+    }
+
+    private void markAuthFlowOngoing(RoutingContext routingContext) {
+        if (routingContext.session() != null) {
+            SessionState sessionSate = sessionManager.getSessionState(routingContext);
+            sessionSate.getUserAuthState().ongoing();
+            sessionSate.save(routingContext.session());
+        }
     }
 }

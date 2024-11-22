@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.gateway.handler.manager.session;
+package io.gravitee.am.gateway.handler.common.session;
 
 
 import java.util.BitSet;
 
-import static io.gravitee.am.gateway.handler.manager.session.SessionState.IDX_MFA_STEP_CHALLENGE_ONGOING;
-import static io.gravitee.am.gateway.handler.manager.session.SessionState.IDX_MFA_STEP_ENROLLMENT_ONGOING;
+import static io.gravitee.am.gateway.handler.common.session.SessionState.Flags.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -37,20 +36,24 @@ public class MfaState {
         return new MfaState(state);
     }
 
-    public boolean isEnrollment() {
-        return this.state.get(IDX_MFA_STEP_ENROLLMENT_ONGOING);
+    public boolean isEnrollmentOngoing() {
+        return this.state.get(IDX_MFA_STEP_ENROLLMENT_ONGOING.ordinal());
     }
 
     public void enrollment() {
-        this.state.flip(IDX_MFA_STEP_ENROLLMENT_ONGOING);
+        this.state.flip(IDX_MFA_STEP_ENROLLMENT_ONGOING.ordinal());
     }
 
-    public boolean isChallenge() {
-        return this.state.get(IDX_MFA_STEP_CHALLENGE_ONGOING);
+    public boolean isChallengeOngoing() {
+        return this.state.get(IDX_MFA_STEP_CHALLENGE_ONGOING.ordinal());
     }
 
     public void challenge() {
-        this.state.flip(IDX_MFA_STEP_CHALLENGE_ONGOING);
+        this.state.flip(IDX_MFA_STEP_CHALLENGE_ONGOING.ordinal());
     }
 
+    public void reset() {
+        this.state.clear(IDX_MFA_STEP_ENROLLMENT_ONGOING.ordinal());
+        this.state.clear(IDX_MFA_STEP_CHALLENGE_ONGOING.ordinal());
+    }
 }
