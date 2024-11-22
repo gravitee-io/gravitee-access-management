@@ -282,4 +282,5 @@ public interface ConstantKeys {
     // note: Create an enum if another value becomes useful
     String SESSION_KEY_AUTH_FLOW_STATE_ONGOING = "ongoing";
 
+    String SESSION_KEY_STATE = "state";
 }
