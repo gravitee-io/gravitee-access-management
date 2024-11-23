@@ -920,10 +920,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/helper-string-parser@npm:^7.25.7":
-  version: 7.25.7
-  resolution: "@babel/helper-string-parser@npm:7.25.7"
-  checksum: 10c0/73ef2ceb81f8294678a0afe8ab0103729c0370cac2e830e0d5128b03be5f6a2635838af31d391d763e3c5a4460ed96f42fd7c9b552130670d525be665913bc4c
+"@babel/helper-string-parser@npm:^7.25.9":
+  version: 7.25.9
+  resolution: "@babel/helper-string-parser@npm:7.25.9"
+  checksum: 10c0/7244b45d8e65f6b4338a6a68a8556f2cb161b782343e97281a5f2b9b93e420cad0d9f5773a59d79f61d0c448913d06f6a2358a87f2e203cf112e3c5b53522ee6
   languageName: node
   linkType: hard
 
@@ -934,10 +934,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/helper-validator-identifier@npm:^7.25.7":
-  version: 7.25.7
-  resolution: "@babel/helper-validator-identifier@npm:7.25.7"
-  checksum: 10c0/07438e5bf01ab2882a15027fdf39ac3b0ba1b251774a5130917907014684e2f70fef8fd620137ca062c4c4eedc388508d2ea7a3a7d9936a32785f4fe116c68c0
+"@babel/helper-validator-identifier@npm:^7.25.9":
+  version: 7.25.9
+  resolution: "@babel/helper-validator-identifier@npm:7.25.9"
+  checksum: 10c0/4fc6f830177b7b7e887ad3277ddb3b91d81e6c4a24151540d9d1023e8dc6b1c0505f0f0628ae653601eb4388a8db45c1c14b2c07a9173837aef7e4116456259d
   languageName: node
   linkType: hard
 
@@ -2023,13 +2023,12 @@ __metadata:
   linkType: hard
 
 "@babel/types@npm:^7.8.3":
-  version: 7.25.8
-  resolution: "@babel/types@npm:7.25.8"
+  version: 7.26.0
+  resolution: "@babel/types@npm:7.26.0"
   dependencies:
-    "@babel/helper-string-parser": "npm:^7.25.7"
-    "@babel/helper-validator-identifier": "npm:^7.25.7"
-    to-fast-properties: "npm:^2.0.0"
-  checksum: 10c0/55ca2d6df6426c98db2769ce884ce5e9de83a512ea2dd7bcf56c811984dc14351cacf42932a723630c5afcff2455809323decd645820762182f10b7b5252b59f
+    "@babel/helper-string-parser": "npm:^7.25.9"
+    "@babel/helper-validator-identifier": "npm:^7.25.9"
+  checksum: 10c0/b694f41ad1597127e16024d766c33a641508aad037abd08d0d1f73af753e1119fa03b4a107d04b5f92cc19c095a594660547ae9bead1db2299212d644b0a5cb8
   languageName: node
   linkType: hard
 
@@ -4487,15 +4486,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ngx-formly/material@npm:6.3.7":
-  version: 6.3.7
-  resolution: "@ngx-formly/material@npm:6.3.7"
+"@ngx-formly/material@npm:6.3.11":
+  version: 6.3.11
+  resolution: "@ngx-formly/material@npm:6.3.11"
   dependencies:
     tslib: "npm:^2.0.0"
   peerDependencies:
     "@angular/material": ">=13.0.0"
-    "@ngx-formly/core": 6.3.7
-  checksum: 10c0/197f289a512e5e7dddb4cfb36041ee2d6ef280bfd3d80b2e4900aa5dcb9876909cc4d6f5b9473b3d149e1fffbe46e92e9561d07d4e8beda3bf54806cd4e01f19
+    "@ngx-formly/core": 6.3.11
+  checksum: 10c0/bfc983d1ff4fbc4aa8b2c41ed518823272b9f68f9e246a3eb0c1775232b144ebf951e1cb7205753e0595547bf18437217a630b64abb2048292dbd4cf2dd94a01
   languageName: node
   linkType: hard
 
@@ -9644,7 +9643,7 @@ __metadata:
     "@gravitee/ui-components": "npm:4.2.6"
     "@gravitee/ui-particles-angular": "npm:12.9.0"
     "@ngx-formly/core": "npm:6.3.9"
-    "@ngx-formly/material": "npm:6.3.7"
+    "@ngx-formly/material": "npm:6.3.11"
     "@swimlane/ngx-datatable": "npm:20.1.0"
     "@types/hammerjs": "npm:2.0.45"
     "@types/jest": "npm:29.5.12"
