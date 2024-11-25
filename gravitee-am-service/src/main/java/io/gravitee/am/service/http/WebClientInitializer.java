@@ -17,9 +17,11 @@ package io.gravitee.am.service.http;
 
 import io.gravitee.am.service.utils.RetryWithDelay;
 import io.reactivex.rxjava3.core.Maybe;
+import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.RequestOptions;
+import io.vertx.core.net.SSLOptions;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.rxjava3.ext.web.client.WebClient;
@@ -100,6 +102,11 @@ public class WebClientInitializer {
 
         @Override
         public HttpRequest<Buffer> requestAbs(HttpMethod httpMethod, SocketAddress socketAddress, UriTemplate uriTemplate) {
+            throw new UnsupportedOperationException(MSG);
+        }
+
+        @Override
+        public Future<Boolean> updateSSLOptions(SSLOptions sslOptions, boolean b) {
             throw new UnsupportedOperationException(MSG);
         }
 
