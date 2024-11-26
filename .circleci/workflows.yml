@@ -865,6 +865,7 @@ jobs:
             
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
+            docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-dev-debian --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG}-debian -t ${IMAGE_TAG_LATEST}-debian /tmp
       - run:
           name: Build Gateway Docker Image to Azure Registry
           when: always
@@ -877,6 +878,7 @@ jobs:
             
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
+            docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-dev-debian --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG}-debian -t ${IMAGE_TAG_LATEST}-debian /tmp
       - run:
           name: Build Web UI Docker Image to Azure Registry
           when: always
