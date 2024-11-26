@@ -45,6 +45,10 @@ public class DefaultPasswordValidatorImpl implements PasswordValidator {
         this.defaultPasswordPattern = Pattern.compile(pattern);
     }
 
+    public String pattern() {
+        return defaultPasswordPattern.pattern();
+    }
+
     public Boolean validate(String password) {
         return password.length() <= PASSWORD_MAX_LENGTH && defaultPasswordPattern.matcher(password).matches();
     }

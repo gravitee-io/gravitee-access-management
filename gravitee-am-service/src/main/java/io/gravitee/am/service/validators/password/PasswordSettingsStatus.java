@@ -15,10 +15,17 @@
  */
 package io.gravitee.am.service.validators.password;
 
+import lombok.Builder;
+import lombok.Getter;
+
+import static org.apache.commons.lang3.BooleanUtils.isNotFalse;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Builder(toBuilder = true)
 public class PasswordSettingsStatus {
 
     private Boolean minLength;
@@ -35,74 +42,16 @@ public class PasswordSettingsStatus {
 
     private Boolean excludeUserProfileInfoInPassword;
 
-
-    public Boolean getMinLength() {
-        return minLength;
-    }
-
-    public void setMinLength(Boolean minLength) {
-        this.minLength = minLength;
-    }
-
-    public Boolean getIncludeNumbers() {
-        return includeNumbers;
-    }
-
-    public void setIncludeNumbers(Boolean includeNumbers) {
-        this.includeNumbers = includeNumbers;
-    }
-
-    public Boolean getIncludeSpecialCharacters() {
-        return includeSpecialCharacters;
-    }
-
-    public void setIncludeSpecialCharacters(Boolean includeSpecialCharacters) {
-        this.includeSpecialCharacters = includeSpecialCharacters;
-    }
-
-    public Boolean getLettersInMixedCase() {
-        return lettersInMixedCase;
-    }
-
-    public void setLettersInMixedCase(Boolean lettersInMixedCase) {
-        this.lettersInMixedCase = lettersInMixedCase;
-    }
-
-    public Boolean getMaxConsecutiveLetters() {
-        return maxConsecutiveLetters;
-    }
-
-    public void setMaxConsecutiveLetters(Boolean maxConsecutiveLetters) {
-        this.maxConsecutiveLetters = maxConsecutiveLetters;
-    }
-
-    public Boolean getExcludePasswordsInDictionary() {
-        return excludePasswordsInDictionary;
-    }
-
-    public void setExcludePasswordsInDictionary(Boolean excludePasswordsInDictionary) {
-        this.excludePasswordsInDictionary = excludePasswordsInDictionary;
-    }
-
-    public Boolean getExcludeUserProfileInfoInPassword() {
-        return excludeUserProfileInfoInPassword;
-    }
-
-    public void setExcludeUserProfileInfoInPassword(Boolean excludeUserProfileInfoInPassword) {
-        this.excludeUserProfileInfoInPassword = excludeUserProfileInfoInPassword;
-    }
+    private Boolean recentPasswordsNotReused;
 
     public boolean isValid() {
-        return validConstraint(this.minLength) &&
-                validConstraint(this.excludePasswordsInDictionary) &&
-                validConstraint(this.maxConsecutiveLetters) &&
-                validConstraint(this.includeNumbers) &&
-                validConstraint(this.lettersInMixedCase) &&
-                validConstraint(this.excludeUserProfileInfoInPassword) &&
-                validConstraint(this.includeSpecialCharacters);
-    }
-
-    private boolean validConstraint(Boolean constraint) {
-        return constraint == null || constraint;
+        return isNotFalse(this.minLength) &&
+                isNotFalse(this.excludePasswordsInDictionary) &&
+                isNotFalse(this.maxConsecutiveLetters) &&
+                isNotFalse(this.includeNumbers) &&
+                isNotFalse(this.lettersInMixedCase) &&
+                isNotFalse(this.excludeUserProfileInfoInPassword) &&
+                isNotFalse(this.includeSpecialCharacters) &&
+                isNotFalse(this.recentPasswordsNotReused);
     }
 }

@@ -91,6 +91,12 @@ public class PasswordPolicy implements Resource {
     private Short oldPasswords;
 
     /**
+     * Regex the passwords should match. Only used for the "fake" policy implemented by DefaultPasswordValidator
+     */
+    private String regex;
+
+
+    /**
      * If Password Policy is the default one
      */
     private Boolean defaultPolicy = Boolean.FALSE;

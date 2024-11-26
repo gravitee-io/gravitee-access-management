@@ -448,6 +448,7 @@ import { PasswordPolicyResolver } from './resolvers/password-policy-resolver';
 import { PasswordPolicyService } from './services/password-policy.service';
 import { CreateGroupMapperComponent, ProviderGroupsComponent } from './domain/settings/providers/provider/groups/groups/groups.component';
 import { IdentitiesOrganizationResolver } from './resolvers/identities-organization.resolver';
+import { PasswordPolicyStatusComponent } from './domain/settings/password-policy/pass-policy-status/password-policy-status.component';
 
 @NgModule({
   declarations: [
@@ -609,6 +610,7 @@ import { IdentitiesOrganizationResolver } from './resolvers/identities-organizat
     ApplicationEndpointsComponent,
     ApplicationGeneralComponent,
     PasswordPolicyComponent,
+    PasswordPolicyStatusComponent,
     DomainPasswordPolicyComponent,
     ApplicationIdPComponent,
     ApplicationDesignComponent,

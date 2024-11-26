@@ -163,33 +163,42 @@
           </mat-checkbox>
         </div>
         <div fxLayout="column" *ngIf="!isOrganizationUserAction()">
-          <mat-slide-toggle (change)="preRegistration = !preRegistration">Enable pre-registration</mat-slide-toggle>
+          <mat-slide-toggle (change)="togglePreRegistration()">Enable pre-registration</mat-slide-toggle>
           <mat-hint style="font-size: 75%">The user will receive an email to complete his profile and activate account. </mat-hint>
         </div>
-        <div *ngIf="!preRegistration" [@fadeInOut]>
-          <div fxLayout="row">
-            <mat-form-field appearance="outline" floatLabel="always">
-              <input
-                matInput
-                placeholder="Password"
-                #password="ngModel"
-                name="password"
-                [type]="hidePassword ? 'password' : 'text'"
-                [(ngModel)]="user.password"
-                [required]="!preRegistration"
+        @if (!preRegistration) {
+          <div [@fadeInOut]>
+            <div fxLayout="row">
+              <mat-form-field appearance="outline" floatLabel="always">
+                <input
+                  matInput
+                  #password="ngModel"
+                  placeholder="Password"
+                  name="password"
+                  [type]="hidePassword ? 'password' : 'text'"
+                  [(ngModel)]="user.password"
+                  [required]="!preRegistration"
+                />
+                <mat-icon matSuffix (click)="hidePassword = !hidePassword">{{ hidePassword ? 'visibility_off' : 'visibility' }} </mat-icon>
+                <mat-hint>Password for the User.</mat-hint>
+              </mat-form-field>
+            </div>
+            @if (!password.pristine) {
+              <password-policy-status
+                [policy]="passwordPolicy"
+                [password]="user.password"
+                [profile]="{ id: user.id, firstName: user.firstName, lastName: user.lastName, email: user.email }"
+                (valid)="passwordValid = $event"
               />
-              <mat-icon matSuffix (click)="hidePassword = !hidePassword">{{ hidePassword ? 'visibility_off' : 'visibility' }} </mat-icon>
-              <mat-hint>Password for the User.</mat-hint>
-              <mat-error *ngIf="password.errors?.required">Enter password</mat-error>
-            </mat-form-field>
+            }
           </div>
-        </div>
+        }
         <div *ngIf="!isOrganizationUserAction()">
           <app-select-applications (onSelectApp)="onAppSelectionChanged($event)" (onRemoveApp)="onAppDeleted()"></app-select-applications>
         </div>
         <div *ngIf="!isOrganizationUserAction()">
           <mat-form-field appearance="outline" floatLabel="always">
-            <mat-select placeholder="Identity provider" [(ngModel)]="user.source" name="source">
+            <mat-select placeholder="Identity provider" [(ngModel)]="user.source" (selectionChange)="loadPasswordPolicy()" name="source">
               <mat-option>None</mat-option>
               <mat-option *ngFor="let userProvider of userProviders" [value]="userProvider.id">{{ userProvider.name }} </mat-option>
             </mat-select>
@@ -227,7 +236,7 @@
       </div>
       <div fxLayout="row" fxLayoutAlign="end">
         <a mat-button [routerLink]="['..']" style="margin-right: 20px">CANCEL</a>
-        <button mat-raised-button [disabled]="!userForm.valid || userForm.pristine" type="submit">CREATE</button>
+        <button mat-raised-button [disabled]="!(userForm.valid && passwordValid) || userForm.pristine" type="submit">CREATE</button>
       </div>
     </form>
     <div class="gv-page-description" fxFlex>

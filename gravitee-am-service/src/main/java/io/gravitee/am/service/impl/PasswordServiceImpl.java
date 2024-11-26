@@ -86,29 +86,30 @@ public class PasswordServiceImpl implements PasswordService {
 
     @Override
     public PasswordSettingsStatus evaluate(String password, PasswordPolicy passwordPolicy, User user) {
-        var result = new PasswordSettingsStatus();
-        if (password != null && passwordPolicy != null) {
-            result.setMinLength(new MinLengthPasswordValidator(passwordPolicy.getMinLength()).validate(password));
-            if (TRUE.equals(passwordPolicy.getExcludePasswordsInDictionary())) {
-                result.setExcludePasswordsInDictionary(new DictionaryPasswordValidator(passwordPolicy.getExcludePasswordsInDictionary(), passwordDictionary).validate(password));
-            }
-            if (TRUE.equals(passwordPolicy.getIncludeNumbers())) {
-                result.setIncludeNumbers(new IncludeNumbersPasswordValidator(passwordPolicy.getIncludeNumbers()).validate(password));
-            }
-            if (TRUE.equals(passwordPolicy.getIncludeSpecialCharacters())) {
-                result.setIncludeSpecialCharacters(new IncludeSpecialCharactersPasswordValidator(passwordPolicy.getIncludeSpecialCharacters()).validate(password));
-            }
-            if (TRUE.equals(passwordPolicy.getLettersInMixedCase())) {
-                result.setLettersInMixedCase(new MixedCasePasswordValidator(passwordPolicy.getLettersInMixedCase()).validate(password));
-            }
-            if (passwordPolicy.getMaxConsecutiveLetters() != null) {
-                result.setMaxConsecutiveLetters(new ConsecutiveCharacterPasswordValidator(passwordPolicy.getMaxConsecutiveLetters()).validate(password));
-            }
-            if (TRUE.equals(passwordPolicy.getExcludeUserProfileInfoInPassword())) {
-                result.setExcludeUserProfileInfoInPassword(new UserProfilePasswordValidator(passwordPolicy.getExcludeUserProfileInfoInPassword(), user).validate(password));
-            }
+        var result = PasswordSettingsStatus.builder();
+        if (password == null || passwordPolicy == null) {
+            return result.build();
         }
-        return result;
+        result.minLength(new MinLengthPasswordValidator(passwordPolicy.getMinLength()).validate(password));
+        if (TRUE.equals(passwordPolicy.getExcludePasswordsInDictionary())) {
+            result.excludePasswordsInDictionary(new DictionaryPasswordValidator(passwordPolicy.getExcludePasswordsInDictionary(), passwordDictionary).validate(password));
+        }
+        if (TRUE.equals(passwordPolicy.getIncludeNumbers())) {
+            result.includeNumbers(new IncludeNumbersPasswordValidator(passwordPolicy.getIncludeNumbers()).validate(password));
+        }
+        if (TRUE.equals(passwordPolicy.getIncludeSpecialCharacters())) {
+            result.includeSpecialCharacters(new IncludeSpecialCharactersPasswordValidator(passwordPolicy.getIncludeSpecialCharacters()).validate(password));
+        }
+        if (TRUE.equals(passwordPolicy.getLettersInMixedCase())) {
+            result.lettersInMixedCase(new MixedCasePasswordValidator(passwordPolicy.getLettersInMixedCase()).validate(password));
+        }
+        if (passwordPolicy.getMaxConsecutiveLetters() != null) {
+            result.maxConsecutiveLetters(new ConsecutiveCharacterPasswordValidator(passwordPolicy.getMaxConsecutiveLetters()).validate(password));
+        }
+        if (TRUE.equals(passwordPolicy.getExcludeUserProfileInfoInPassword())) {
+            result.excludeUserProfileInfoInPassword(new UserProfilePasswordValidator(passwordPolicy.getExcludeUserProfileInfoInPassword(), user).validate(password));
+        }
+        return result.build();
     }
 
     /**

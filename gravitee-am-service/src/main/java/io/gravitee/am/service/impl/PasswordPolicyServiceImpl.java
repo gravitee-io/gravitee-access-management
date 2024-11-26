@@ -40,12 +40,15 @@ import io.gravitee.am.service.model.AssignPasswordPolicy;
 import io.gravitee.am.service.model.UpdatePasswordPolicy;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.PasswordPolicyAuditBuilder;
+import io.gravitee.am.service.validators.password.impl.DefaultPasswordValidatorImpl;
+import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -76,6 +79,10 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
 
     @Autowired
     private IdentityProviderService identityProviderService;
+
+    @Autowired
+    @Qualifier("defaultPasswordValidator")
+    private DefaultPasswordValidatorImpl defaultPasswordValidator;
 
     @Override
     public Flowable<PasswordPolicy> findByDomain(String domain) {
@@ -205,6 +212,18 @@ public class PasswordPolicyServiceImpl implements PasswordPolicyService {
                     log.error("An error occurs while trying to set default policy", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to set default policy", ex));
                 });
+    }
+
+    @Override
+    public Single<PasswordPolicy> getDefaultPasswordPolicy(Reference reference) {
+        return passwordPolicyRepository.findByDefaultPolicy(reference.type(), reference.id())
+                .defaultIfEmpty(defaultValidatorPolicy(defaultPasswordValidator));
+    }
+
+    private @NonNull PasswordPolicy defaultValidatorPolicy(DefaultPasswordValidatorImpl defaultPasswordValidator) {
+        var policy = new PasswordPolicy();
+        policy.setRegex(defaultPasswordValidator.pattern());
+        return policy;
     }
 
     @Override
