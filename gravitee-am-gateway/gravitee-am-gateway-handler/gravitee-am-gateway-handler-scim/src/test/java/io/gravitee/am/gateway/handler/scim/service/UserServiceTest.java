@@ -15,10 +15,13 @@
  */
 package io.gravitee.am.gateway.handler.scim.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.scim.Schema;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
@@ -30,10 +33,12 @@ import io.gravitee.am.gateway.handler.scim.model.Operation;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.impl.UserServiceImpl;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordHistory;
+import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.Page;
@@ -70,6 +75,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -85,6 +91,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
@@ -512,16 +519,20 @@ public class UserServiceTest {
         io.gravitee.am.model.User existingUser = mock(io.gravitee.am.model.User.class);
         when(existingUser.getId()).thenReturn("user-id");
         when(existingUser.getUsername()).thenReturn("username");
+        when(existingUser.getReferenceId()).thenReturn(DOMAIN_ID);
+        when(existingUser.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
 
         User scimUser = mock(User.class);
         when(scimUser.getPassword()).thenReturn(PASSWORD);
         when(scimUser.isActive()).thenReturn(true);
 
         when(userRepository.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
+        when(identityProviderManager.getIdentityProvider(any())).thenReturn(null);
         ArgumentCaptor<io.gravitee.am.model.User> userCaptor = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
-
+        when(passwordService.isValid(anyString(),any(),any())).thenReturn(true);
         TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null, null).test();
         testObserver.assertError(InvalidValueException.class);
+        testObserver.assertError(throwable -> throwable.getMessage().equals("Identity Provider [null] can not be found."));
 
         verify(userRepository, never()).update(userCaptor.capture());
         verify(identityProviderManager, never()).getUserProvider(anyString());
@@ -529,7 +540,6 @@ public class UserServiceTest {
 
     @Test
     public void shouldPatchUser() throws Exception {
-        final String domainName = "domainName";
         final String userId = "userId";
 
         ObjectNode userNode = mock(ObjectNode.class);
@@ -621,7 +631,6 @@ public class UserServiceTest {
 
     @Test
     public void shouldPatchUser_customGraviteeUser() throws Exception {
-        final String domainName = "domainName";
         final String userId = "userId";
 
         ObjectNode userNode = mock(ObjectNode.class);
@@ -729,5 +738,110 @@ public class UserServiceTest {
         verify(userRepository, times(1)).delete(userId);
         verify(identityProviderManager, times(1)).getUserProvider(anyString());
         verify(userProvider, never()).delete(anyString());
+    }
+
+    @Test
+    public void shouldThrowAnExceptionAndReportAuditIfPasswordIsInvalidOnCreateUser(){
+        // given
+        String clientId = "clientId";
+        Client client = new Client();
+        client.setId(clientId);
+
+        User user = new User();
+        user.setUserName("username");
+        user.setSource("unknown-idp");
+        user.setPassword("123");
+
+        // when
+        when(identityProviderManager.getIdentityProvider(any())).thenReturn(new IdentityProvider());
+        when(passwordPolicyManager.getPolicy(any(),any())).thenReturn(Optional.of(new PasswordPolicy()));
+        when(passwordService.isValid(anyString(),any(),any())).thenReturn(false);
+
+        TestObserver<User> observer = new TestObserver<>();
+        userService.create(user,"unknown-idp", "", new DefaultUser(), client).subscribe(observer);
+
+        // then
+        observer.assertError(throwable -> throwable.getMessage().equals("The provided password does not meet the password policy requirements."));
+        verify(auditService,atMostOnce()).report(any());
+        verify(auditService).report(argThat(builder -> Status.FAILURE.equals(builder.build(new ObjectMapper()).getOutcome().getStatus())));
+        verify(auditService).report(argThat(builder -> builder.build(new ObjectMapper()).getType().equals(EventType.USER_PASSWORD_VALIDATION)));
+    }
+
+    @Test
+    public void shouldThrowAnExceptionAndReportAuditIfPasswordIsInvalidOnPatchUser() throws JsonProcessingException {
+        // given
+        Client client = new Client();
+        client.setId("clientId");
+
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setId("user-id");
+        user.setUsername("username");
+        user.setSource("unknown-idp");
+        user.setPassword("myPassword");
+        user.setReferenceId("domainId");
+        user.setReferenceType(ReferenceType.DOMAIN);
+
+        ObjectNode userNode = mock(ObjectNode.class);
+        when(userNode.get(Schema.SCHEMA_URI_CUSTOM_USER)).thenReturn(new TextNode("test"));
+        when(userNode.has(Schema.SCHEMA_URI_CUSTOM_USER)).thenReturn(true);
+
+        GraviteeUser patchUser = mock(GraviteeUser.class);
+        Map<String, Object> additionalInformation = Collections.singletonMap("customClaim", "customValue");
+        when(patchUser.getAdditionalInformation()).thenReturn(additionalInformation);
+        when(patchUser.getPassword()).thenReturn("newPass");
+
+        Operation operation = mock(Operation.class);
+        doAnswer(invocation -> {
+            ObjectNode arg0 = invocation.getArgument(0);
+            Assert.assertEquals("test", arg0.get(Schema.SCHEMA_URI_CUSTOM_USER).asText());
+            return null;
+        }).when(operation).apply(any());
+
+        PatchOp patchOp = mock(PatchOp.class);
+
+        // when
+        when(userRepository.findById("user-id")).thenReturn(Maybe.just(user));
+        when(groupService.findByMember("user-id")).thenReturn(Flowable.empty());
+        when(patchOp.getOperations()).thenReturn(Collections.singletonList(operation));
+        when(objectMapper.convertValue(any(), eq(ObjectNode.class))).thenReturn(userNode);
+        when(objectMapper.treeToValue(userNode, GraviteeUser.class)).thenReturn(patchUser);
+        when(passwordService.isValid(anyString(),any(),any())).thenReturn(false);
+
+        TestObserver<User> observer = new TestObserver<>();
+        userService.patch(user.getId(), patchOp, "unknown-idp","", new DefaultUser(), client).subscribe(observer);
+
+        // then
+        observer.assertError(throwable -> throwable.getMessage().equals("The provided password does not meet the password policy requirements."));
+        verify(auditService,atMostOnce()).report(any());
+        verify(auditService).report(argThat(builder -> Status.FAILURE.equals(builder.build(new ObjectMapper()).getOutcome().getStatus())));
+        verify(auditService).report(argThat(builder -> builder.build(new ObjectMapper()).getType().equals(EventType.USER_PASSWORD_VALIDATION)));
+    }
+
+    @Test
+    public void shouldThrowAnExceptionAndReportAuditIfPasswordIsInvalidOnUpdateUser(){
+        // given
+        io.gravitee.am.model.User existingUser = new io.gravitee.am.model.User();
+        existingUser.setId("user-id");
+        existingUser.setUsername("username");
+        existingUser.setPassword("myPassword");
+        existingUser.setReferenceId("domainId");
+        existingUser.setReferenceType(ReferenceType.DOMAIN);
+
+        User scimUser = mock(User.class);
+        when(scimUser.getPassword()).thenReturn(PASSWORD);
+        when(scimUser.isActive()).thenReturn(true);
+
+        // when
+        when(userRepository.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
+        when(passwordService.isValid(anyString(),any(),any())).thenReturn(false);
+
+        TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "", new DefaultUser(), new Client()).test();
+        testObserver.assertError(InvalidValueException.class);
+
+        // then
+        testObserver.assertError(throwable -> throwable.getMessage().equals("The provided password does not meet the password policy requirements."));
+        verify(auditService,atMostOnce()).report(any());
+        verify(auditService).report(argThat(builder -> Status.FAILURE.equals(builder.build(new ObjectMapper()).getOutcome().getStatus())));
+        verify(auditService).report(argThat(builder -> builder.build(new ObjectMapper()).getType().equals(EventType.USER_PASSWORD_VALIDATION)));
     }
 }

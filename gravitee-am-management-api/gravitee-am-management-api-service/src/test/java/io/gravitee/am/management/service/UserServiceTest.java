@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.common.utils.MovingFactorUtils;
@@ -29,6 +30,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordHistory;
+import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.Template;
@@ -109,6 +111,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.lenient;
@@ -1437,6 +1440,80 @@ public class UserServiceTest {
 
         // then
         observer.assertError(throwable -> throwable.getMessage().equals("forceResetPassword is forbidden on external users"));
+    }
+
+    @Test
+    public void shouldThrowAnExceptionAndReportAuditIfPasswordIsInvalidOnCreate(){
+        // given
+        String domainId = "domainId";
+        String clientId = "clientId";
+        Application client = new Application();
+        client.setId(clientId);
+        client.setDomain(domainId);
+
+        Domain domain = new Domain();
+        domain.setId(domainId);
+
+        NewUser newUser = new NewUser();
+        newUser.setUsername(USERNAME);
+        newUser.setSource("unknown-idp");
+        newUser.setPassword("123");
+        newUser.setClient(clientId);
+
+        // when
+        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
+        when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
+        when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.just(new PasswordPolicy()));
+        when(passwordService.isValid(anyString(),any(),any())).thenReturn(false);
+
+        TestObserver<User> observer = new TestObserver<>();
+        userService.create(domain, newUser, new DefaultUser()).subscribe(observer);
+
+        // then
+        observer.assertError(throwable -> throwable.getMessage().equals("The provided password does not meet the password policy requirements."));
+        verify(auditService,atMostOnce()).report(any());
+        verify(auditService).report(argThat(builder -> Status.FAILURE.equals(builder.build(new ObjectMapper()).getOutcome().getStatus())));
+        verify(auditService).report(argThat(builder -> builder.build(new ObjectMapper()).getType().equals(EventType.USER_PASSWORD_VALIDATION)));
+    }
+
+    @Test
+    public void shouldThrowAnExceptionAndReportAuditIfPasswordIsInvalidOnResetPassword(){
+        // given
+        String domainId = "domainId";
+        String clientId = "clientId";
+        Application client = new Application();
+        client.setId(clientId);
+        client.setDomain(domainId);
+
+        Domain domain = new Domain();
+        domain.setId(domainId);
+
+        User user = new User();
+        user.setId("user-id");
+        user.setUsername(USERNAME);
+        user.setSource("unknown-idp");
+        user.setPassword("myPassword");
+        user.setClient(clientId);
+        user.setReferenceType(DOMAIN);
+        user.setReferenceId(domain.getId());
+
+        // when
+        when(userService.findById(any(), anyString(), anyString())).thenReturn(Single.just(user));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(Optional.of(new IdentityProvider()));
+        when(applicationService.findById(user.getClient())).thenReturn(Maybe.just(client));
+        when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.just(new PasswordPolicy()));
+        when(passwordService.isValid(anyString(),any(),any())).thenReturn(false);
+
+        TestObserver<Void> observer = new TestObserver<>();
+        userService.resetPassword(domain, user.getId(),"123", new DefaultUser()).subscribe(observer);
+
+        // then
+        observer.assertError(throwable -> throwable.getMessage().equals("The provided password does not meet the password policy requirements."));
+        verify(auditService,atMostOnce()).report(any());
+        verify(auditService).report(argThat(builder -> Status.FAILURE.equals(builder.build(new ObjectMapper()).getOutcome().getStatus())));
+        verify(auditService).report(argThat(builder -> builder.build(new ObjectMapper()).getType().equals(EventType.USER_PASSWORD_VALIDATION)));
     }
 
 

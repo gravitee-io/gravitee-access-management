@@ -355,7 +355,7 @@ public class RootProvider extends AbstractProtocolProvider {
         Handler<RoutingContext> userTokenRequestParseHandler = new UserTokenRequestParseHandler(userService);
         Handler<RoutingContext> clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService).setRequired(true);
         Handler<RoutingContext> clientRequestParseHandlerOptional = new ClientRequestParseHandler(clientSyncService);
-        Handler<RoutingContext> passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordService, passwordPolicyManager, identityProviderManager, domain);
+        Handler<RoutingContext> passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordService, passwordPolicyManager, identityProviderManager, domain, auditService);
         Handler<RoutingContext> botDetectionHandler = new BotDetectionHandler(domain, botDetectionManager);
         Handler<RoutingContext> dataConsentHandler = new DataConsentHandler(environment);
         Handler<RoutingContext> geoIpHandler = new GeoIpHandler(userActivityService, vertx.eventBus());
