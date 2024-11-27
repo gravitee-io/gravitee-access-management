@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.root.service.user.UserRegistrationIdpResolver;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
@@ -72,10 +73,14 @@ public class PasswordPolicyRequestParseHandler extends UserRequestHandler {
             context.next();
         } catch (InvalidPasswordException e) {
             Optional.ofNullable(context.request().getParam(Parameters.CLIENT_ID)).ifPresent(t -> queryParams.set(Parameters.CLIENT_ID, t));
-            if (user.getReferenceId() != null && user.getReferenceType() != null) {
-                Throwable exception = new InvalidPasswordException("The provided password does not meet the password policy requirements.");
-                auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_PASSWORD_VALIDATION).user(user).throwable(exception));
+            if (user.getReferenceType() == null) {
+                user.setReferenceType(ReferenceType.DOMAIN);
             }
+            if (user.getReferenceId() == null) {
+                user.setReferenceId(domain.getId());
+            }
+            Throwable exception = new InvalidPasswordException("The provided password does not meet the password policy requirements.");
+            auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_PASSWORD_VALIDATION).user(user).throwable(exception));
             warningRedirection(context, queryParams, e.getErrorKey());
         }
     }
