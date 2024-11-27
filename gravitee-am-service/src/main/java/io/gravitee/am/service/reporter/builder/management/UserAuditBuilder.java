@@ -57,7 +57,7 @@ public class UserAuditBuilder extends ManagementAuditBuilder<UserAuditBuilder> {
 
 
     public UserAuditBuilder user(User user) {
-        if (user != null) {
+        if (user != null && user.getReferenceId() != null && user.getReferenceType() != null) {
             if (isSensitiveEventType()) {
                 setNewValue(user);
             }
