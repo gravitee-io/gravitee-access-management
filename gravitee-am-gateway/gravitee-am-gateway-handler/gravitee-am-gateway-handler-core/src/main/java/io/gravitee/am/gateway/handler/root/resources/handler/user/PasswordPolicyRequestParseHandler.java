@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.user;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -24,8 +25,11 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.exception.InvalidPasswordException;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
@@ -43,12 +47,14 @@ public class PasswordPolicyRequestParseHandler extends UserRequestHandler {
     private final PasswordService passwordService;
     private final PasswordPolicyManager passwordPolicyManager;
     private final IdentityProviderManager identityProviderManager;
+    private final AuditService auditService;
 
-    public PasswordPolicyRequestParseHandler(PasswordService passwordService, PasswordPolicyManager passwordPolicyManager, IdentityProviderManager identityProviderManager, Domain domain) {
+    public PasswordPolicyRequestParseHandler(PasswordService passwordService, PasswordPolicyManager passwordPolicyManager, IdentityProviderManager identityProviderManager, Domain domain, AuditService auditService) {
         this.identityProviderManager = identityProviderManager;
         this.passwordPolicyManager = passwordPolicyManager;
         this.passwordService = passwordService;
         this.domain = domain;
+        this.auditService = auditService;
     }
 
     @Override
@@ -56,18 +62,20 @@ public class PasswordPolicyRequestParseHandler extends UserRequestHandler {
         HttpServerRequest request = context.request();
         String password = request.getParam(ConstantKeys.PASSWORD_PARAM_KEY);
         MultiMap queryParams = RequestUtils.getCleanedQueryParams(request);
-
+        Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+        User user = getUser(context, client);
+        String source = Optional.ofNullable(user.getSource())
+                .orElseGet(() -> UserRegistrationIdpResolver.getRegistrationIdp(domain, client));
+        IdentityProvider provider = identityProviderManager.getIdentityProvider(source);
         try {
-            Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-            User user = getUser(context, client);
-            String source =  Optional.ofNullable(user.getSource())
-                    .orElseGet(() -> UserRegistrationIdpResolver.getRegistrationIdp(domain, client));
-            IdentityProvider provider = identityProviderManager.getIdentityProvider(source);
-
             passwordService.validate(password, passwordPolicyManager.getPolicy(client, provider).orElse(null), user);
             context.next();
         } catch (InvalidPasswordException e) {
             Optional.ofNullable(context.request().getParam(Parameters.CLIENT_ID)).ifPresent(t -> queryParams.set(Parameters.CLIENT_ID, t));
+            if (user.getReferenceId() != null && user.getReferenceType() != null) {
+                Throwable exception = new InvalidPasswordException("The provided password does not meet the password policy requirements.");
+                auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_PASSWORD_VALIDATION).user(user).throwable(exception));
+            }
             warningRedirection(context, queryParams, e.getErrorKey());
         }
     }

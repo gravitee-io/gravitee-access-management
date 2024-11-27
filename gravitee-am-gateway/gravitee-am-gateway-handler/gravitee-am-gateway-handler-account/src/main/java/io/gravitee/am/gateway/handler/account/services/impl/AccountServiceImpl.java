@@ -58,6 +58,7 @@ import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.CredentialAuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -74,8 +75,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-
-import static org.springframework.util.StringUtils.hasLength;
 
 /**
  * @author Donald Courtney (donald.courtney at graviteesource.com)
@@ -203,12 +202,17 @@ public class AccountServiceImpl implements AccountService {
         return Single.defer(() -> {
             final var idp = identityProviderManager.getIdentityProvider(user.getSource());
             final var passwordPolicy = passwordPolicyManager.getPolicy(client, idp).orElse(null);
-            passwordService.validate(password, passwordPolicy, user);
+            try {
+                passwordService.validate(password, passwordPolicy, user);
+            } catch (InvalidPasswordException e){
+                auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(EventType.USER_PASSWORD_VALIDATION).user(user).throwable(e));
+                return Single.error(e);
+            }
             user.setPassword(password);
 
             final boolean needOldPassword = domain.getSelfServiceAccountManagementSettings() != null && domain.getSelfServiceAccountManagementSettings().resetPasswordWithOldValue();
             if (needOldPassword && olPassword.isEmpty()) {
-                return Single.error(InvalidPasswordException.of("oldPassword is missing", InvalidPasswordException.INVALID_PASSWORD_VALUE));
+                return Single.error(InvalidPasswordException.of("oldPassword is missing"));
             }
             var pwdCheck = needOldPassword ? gatewayUserService.checkPassword(user, olPassword.get(), principal) : Completable.complete();
 

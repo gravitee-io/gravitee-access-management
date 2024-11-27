@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.account.services;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.account.model.UpdateUsername;
@@ -28,6 +31,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.oidc.Client;
@@ -55,8 +59,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.atMostOnce;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -380,6 +387,29 @@ public class AccountServiceTest {
         blankUsername.setUsername("  ");
         execUpdateUsername(blankUsername);
     }
+
+    @Test
+    public void shouldNotResetPassword_PasswordInvalid(){
+        final var client = mock(Client.class);
+        var user = new io.gravitee.am.model.User();
+        user.setReferenceId("DOMAIN_ID");
+        user.setReferenceType(ReferenceType.DOMAIN);
+        when(passwordPolicyManager.getPolicy(any(),any())).thenReturn(Optional.of(new PasswordPolicy()));
+        doThrow(InvalidPasswordException.of("invalid password minimum length"))
+                .when(passwordService).validate(anyString(), any(), any());
+        var observable = accountService.resetPassword(user, client, "123", new DefaultUser(), Optional.empty()).test();
+
+        observable.awaitDone(10, TimeUnit.SECONDS);
+        observable.assertError(InvalidPasswordException.class);
+
+        verify(gatewayUserService, never()).resetPassword(any(), any(), any());
+        verify(gatewayUserService, never()).checkPassword(any(), any(), any());
+        observable.assertError(throwable -> throwable.getMessage().equals("invalid password minimum length"));
+        verify(auditService,atMostOnce()).report(any());
+        verify(auditService).report(argThat(builder -> Status.FAILURE.equals(builder.build(new ObjectMapper()).getOutcome().getStatus())));
+        verify(auditService).report(argThat(builder -> builder.build(new ObjectMapper()).getType().equals(EventType.USER_PASSWORD_VALIDATION)));
+    }
+
 
     private void execUpdateUsername(UpdateUsername newUsername) {
         accountService.updateUsername(new io.gravitee.am.model.User(), newUsername, new DefaultUser())

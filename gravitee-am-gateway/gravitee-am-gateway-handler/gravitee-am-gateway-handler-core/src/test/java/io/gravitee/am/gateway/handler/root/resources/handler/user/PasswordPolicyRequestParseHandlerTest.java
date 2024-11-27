@@ -15,12 +15,19 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.user;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.audit.Status;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.User;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.exception.InvalidPasswordException;
 import io.vertx.core.http.HttpMethod;
@@ -33,8 +40,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -53,12 +63,15 @@ public class PasswordPolicyRequestParseHandlerTest extends RxWebTestBase {
     @Mock
     private IdentityProviderManager identityProviderManager;
 
+    @Mock
+    private AuditService auditService;
+
     private PasswordPolicyRequestParseHandler passwordPolicyRequestParseHandler;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordValidator, passwordPolicyManager, identityProviderManager, new Domain());
+        passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordValidator, passwordPolicyManager, identityProviderManager, new Domain(), auditService);
 
         router.route()
                 .handler(BodyHandler.create())
@@ -67,6 +80,16 @@ public class PasswordPolicyRequestParseHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldNotHandle_invalid_password() throws Exception {
+
+        router.route().order(-1).handler(routingContext -> {
+            User user = new User();
+            user.setId("123");
+            user.setUsername("username");
+            user.setReferenceId("domainId");
+            user.setReferenceType(ReferenceType.DOMAIN);
+            routingContext.put(ConstantKeys.USER_CONTEXT_KEY, user);
+            routingContext.next();
+        });
         router.route("/")
                 .handler(passwordPolicyRequestParseHandler)
                 .handler(rc -> rc.response().end());
@@ -85,6 +108,10 @@ public class PasswordPolicyRequestParseHandlerTest extends RxWebTestBase {
             assertNotNull(location);
             assertTrue(location.contains("warning=invalid_password_value"));
         }, 302, "Found", null);
+        
+        verify(auditService,atMostOnce()).report(any());
+        verify(auditService).report(argThat(builder -> Status.FAILURE.equals(builder.build(new ObjectMapper()).getOutcome().getStatus())));
+        verify(auditService).report(argThat(builder -> builder.build(new ObjectMapper()).getType().equals(EventType.USER_PASSWORD_VALIDATION)));
     }
 
     @Test
