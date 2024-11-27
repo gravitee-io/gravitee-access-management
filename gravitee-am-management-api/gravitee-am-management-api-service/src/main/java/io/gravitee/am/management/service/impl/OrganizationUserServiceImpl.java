@@ -145,7 +145,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                                     if (!newUser.isServiceAccount()) {
                                         String password = newUser.getPassword();
                                         if (password == null || !passwordService.isValid(password)) {
-                                            return Single.error(InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value"));
+                                            return Single.error(InvalidPasswordException.of("Field [password] is invalid"));
                                         }
                                     }
                                     newUser.setRegistrationCompleted(true);
@@ -187,7 +187,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
     @Override
     public Completable resetPassword(String organizationId, User user, String password, io.gravitee.am.identityprovider.api.User principal) {
         if (password == null || !passwordService.isValid(password)) {
-            return Completable.error(InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value"));
+            return Completable.error(InvalidPasswordException.of("Field [password] is invalid"));
         }
 
         if (!IDP_GRAVITEE.equals(user.getSource())) {

@@ -54,6 +54,7 @@ import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.AbstractNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
+import io.gravitee.am.service.exception.InvalidPasswordException;
 import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
@@ -97,7 +98,7 @@ public class UserServiceImpl implements UserService {
     private static final String PARAMETER_EXIST_ERROR = "User with {0} [{1}] already exists";
     private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";
-    public static final String FIELD_PASSWORD_IS_INVALID = "Field [password] is invalid";
+    public static final String FIELD_PASSWORD_IS_INVALID = "The provided password does not meet the password policy requirements.";
 
     private static final Set<String> SCIM_DECLARED_CLAIMS = Set.of(StandardClaims.SUB,
             StandardClaims.GIVEN_NAME,
@@ -217,7 +218,7 @@ public class UserServiceImpl implements UserService {
         userModel.setUpdatedAt(userModel.getCreatedAt());
         userModel.setEnabled(userModel.getPassword() != null);
         // check password
-        if (isInvalidUserPassword(user.getPassword(), userModel, client)) {
+        if (isInvalidUserPassword(user.getPassword(), userModel, client, principal)) {
             return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
         }
 
@@ -327,7 +328,7 @@ public class UserServiceImpl implements UserService {
                                 userToUpdate.setSource(source);
 
                                 // check password
-                                if (isInvalidUserPassword(userToUpdate.getPassword(), userToUpdate, client)) {
+                                if (isInvalidUserPassword(userToUpdate.getPassword(), userToUpdate, client, principal)) {
                                     return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
                                 }
 
@@ -419,7 +420,7 @@ public class UserServiceImpl implements UserService {
                         userToPatch.setSource(source);
 
                         // check password
-                        if (isInvalidUserPassword(scimUser.getPassword(), userToPatch, client)) {
+                        if (isInvalidUserPassword(scimUser.getPassword(), userContainer.getAmUser(), client, principal)) {
                             return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
                         }
 
@@ -479,12 +480,17 @@ public class UserServiceImpl implements UserService {
                 });
     }
 
-    private boolean isInvalidUserPassword(String password, io.gravitee.am.model.User user, Client client) {
+    private boolean isInvalidUserPassword(String password, io.gravitee.am.model.User user, Client client, io.gravitee.am.identityprovider.api.User principal) {
+        final var provider = identityProviderManager.getIdentityProvider(user.getSource());
         if (isNull(password)) {
             return false;
         }
-        final var provider = identityProviderManager.getIdentityProvider(user.getSource());
-        return !passwordService.isValid(password, passwordPolicyManager.getPolicy(client, provider).orElse(null), user);
+        else if(!passwordService.isValid(password, passwordPolicyManager.getPolicy(client, provider).orElse(null), user)) {
+            Throwable exception = new InvalidPasswordException("The provided password does not meet the password policy requirements.");
+            auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(EventType.USER_PASSWORD_VALIDATION).user(user).throwable(exception));
+            return true;
+        }
+        return false;
     }
 
     private Single<User> setGroups(User scimUser) {
