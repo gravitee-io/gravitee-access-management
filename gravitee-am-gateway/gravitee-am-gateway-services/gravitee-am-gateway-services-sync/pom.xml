@@ -55,6 +55,13 @@
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.plugins.handlers</groupId>
+            <artifactId>gravitee-am-plugins-handlers-dataplan</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>

@@ -36,6 +36,7 @@ public class R2DBCPoolWrapper implements ClientWrapper<ConnectionFactory>, Conne
     private final R2DBCConnectionConfiguration configuration;
     private final ConnectionFactoryProvider connectionFactoryProvider;
     private final ConnectionFactory connectionFactory;
+    private final String dbName;
 
     private AtomicInteger reference = new AtomicInteger(0);
 
@@ -43,12 +44,19 @@ public class R2DBCPoolWrapper implements ClientWrapper<ConnectionFactory>, Conne
         this.connectionFactoryProvider = connectionFactoryProvider;
         this.connectionFactory = connectionFactoryProvider.factory();
         this.configuration = null;
+        this.dbName = connectionFactoryProvider.getJdbcDatabase();
     }
 
     public R2DBCPoolWrapper(R2DBCConnectionConfiguration configuration, ConnectionFactory connectionFactory) {
         this.configuration = configuration;
         this.connectionFactory = connectionFactory;
         this.connectionFactoryProvider = null;
+        this.dbName = configuration.getDatabase();
+    }
+
+    @Override
+    public String databaseName() {
+        return this.dbName;
     }
 
     @Override

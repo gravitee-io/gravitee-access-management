@@ -20,6 +20,7 @@ package io.gravitee.am.repository.provider;
  * @author GraviteeSource Team
  */
 public interface ClientWrapper <T> {
+    String databaseName();
 
     T getClient();
 

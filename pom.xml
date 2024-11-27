@@ -69,13 +69,14 @@
         <module>gravitee-am-authdevice-notifier</module>
         <module>gravitee-am-ciba-delegated-service</module>
         <module>gravitee-am-monitoring</module>
+        <module>gravitee-am-dataplan</module>
     </modules>
 
     <properties>
         <awaitility.version>4.2.1</awaitility.version>
         <gravitee-bom.version>8.1.19</gravitee-bom.version>
         <gravitee-common.version>4.2.0</gravitee-common.version>
-        <gravitee-plugin.version>4.2.0</gravitee-plugin.version>
+        <gravitee-plugin.version>4.3.0</gravitee-plugin.version>
         <gravitee-node.version>6.4.4</gravitee-node.version>
         <gravitee-reporter.version>1.17.1</gravitee-reporter.version>
         <gravitee-gateway-api.version>3.5.0</gravitee-gateway-api.version>

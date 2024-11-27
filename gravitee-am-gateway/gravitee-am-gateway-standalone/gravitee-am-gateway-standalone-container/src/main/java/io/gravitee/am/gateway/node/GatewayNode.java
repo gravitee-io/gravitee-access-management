@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.node;
 
 import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.am.gateway.vertx.VertxEmbeddedContainer;
+import io.gravitee.am.plugins.dataplan.core.DataPlanLoader;
 import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.node.api.NodeMetadataResolver;
 import io.gravitee.node.container.AbstractNode;
@@ -52,6 +53,7 @@ public class GatewayNode extends AbstractNode {
     public List<Class<? extends LifecycleComponent>> components() {
         List<Class<? extends LifecycleComponent>> components = super.components();
 
+        components.add(DataPlanLoader.class);
         components.add(Reactor.class);
         components.add(VertxEmbeddedContainer.class);
         components.add(AlertEventProducerManager.class);

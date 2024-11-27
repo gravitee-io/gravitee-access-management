@@ -366,6 +366,8 @@ repositories:
       port: ${ds.mongodb.port}
   #    ensureIndexOnStart: true
 
+dataPlan: default
+
 # Gateway entry point used in emails
 gateway:
   url: http://localhost:8092

@@ -118,7 +118,6 @@
             <artifactId>gravitee-am-plugins-handlers-deviceidentifier</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>io.gravitee.am.plugins.handlers</groupId>
             <artifactId>gravitee-am-plugins-handlers-authdevice-notifier</artifactId>

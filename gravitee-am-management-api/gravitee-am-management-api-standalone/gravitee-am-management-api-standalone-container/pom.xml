@@ -88,6 +88,11 @@
             <artifactId>gravitee-node-cluster-plugin-standalone</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>io.gravitee.am.plugins.handlers</groupId>
+            <artifactId>gravitee-am-plugins-handlers-dataplan</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!-- Jackson dependencies -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

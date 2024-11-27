@@ -34,6 +34,11 @@ public class EmbeddedMongoConnectionProvider implements ConnectionProvider<Mongo
         MongoClient mongoClient = MongoClients.create(configuration.getUri());
         this.wrapper = new ClientWrapper() {
             @Override
+            public String databaseName() {
+                return configuration.getDatabase();
+            }
+
+            @Override
             public Object getClient() {
                 return mongoClient;
             }
@@ -52,6 +57,11 @@ public class EmbeddedMongoConnectionProvider implements ConnectionProvider<Mongo
 
     @Override
     public ClientWrapper getClientWrapper(String name) {
+        return this.wrapper;
+    }
+
+    @Override
+    public ClientWrapper<MongoClient> getClientWrapperFromPrefix(String prefix) {
         return this.wrapper;
     }
 

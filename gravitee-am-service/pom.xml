@@ -76,6 +76,12 @@
         </dependency>
 
         <dependency>
+            <groupId>io.gravitee.am.plugins.handlers</groupId>
+            <artifactId>gravitee-am-plugins-handlers-dataplan</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>io.gravitee.node</groupId>
             <artifactId>gravitee-node-reporter</artifactId>
         </dependency>

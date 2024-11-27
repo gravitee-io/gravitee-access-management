@@ -25,13 +25,19 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author GraviteeSource Team
  */
 public class MongoClientWrapper implements ClientWrapper<MongoClient> {
-
     private final MongoClient client;
+    private final String dbName;
 
     private AtomicInteger reference = new AtomicInteger(0);
 
-    public MongoClientWrapper(MongoClient client) {
+    public MongoClientWrapper(MongoClient client, String dbName) {
         this.client = client;
+        this.dbName = dbName;
+    }
+
+    @Override
+    public String databaseName() {
+        return this.dbName;
     }
 
     @Override
