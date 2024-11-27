@@ -19,6 +19,7 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.jwt.JWTBuilder;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.Application;
@@ -38,7 +39,6 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.RoleService;
@@ -205,12 +205,19 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                                         .flatMapSingle(optPolicy -> {
                                                             var password = newUser.getPassword();
                                                             if (password != null && isInvalidUserPassword(password, optPolicy.orElse(null), transform)) {
-                                                                return Single.error(InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value"));
+                                                                return Single.error(InvalidPasswordException.of("The provided password does not meet the password policy requirements."));
                                                             }
                                                             return Single.just(transform);
                                                         })
                                                         .flatMapCompletable(user -> userValidator.validate(user))
-                                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).reference(Reference.domain(domain.getId())).throwable(throwable)))
+                                                        .doOnError(throwable -> {
+                                                            if (throwable instanceof InvalidPasswordException) {
+                                                                auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_VALIDATION).reference(Reference.domain(domain.getId())).throwable(throwable));
+                                                            } else {
+                                                                auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).reference(Reference.domain(domain.getId())).throwable(throwable));
+                                                            }
+
+                                                        })
                                                         .andThen(Single.defer(() -> userProvider.create(convert(newUser))))
                                                         .map(idpUser -> {
                                                             // AM 'users' collection is not made for authentication (but only management stuff)
@@ -313,7 +320,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                                     .map(Optional::ofNullable)
                                                     .switchIfEmpty(Maybe.just(Optional.empty()))
                                                     .filter(optPolicy -> !isInvalidUserPassword(password, optPolicy.orElse(null), user))
-                                                    .switchIfEmpty(Maybe.error(() -> InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value")))
+                                                    .switchIfEmpty(Maybe.error(() -> new InvalidPasswordException("The provided password does not meet the password policy requirements.")))
                                                     .flatMap(optPolicy -> passwordHistoryService.addPasswordToHistory(DOMAIN, domain.getId(), user, password, principal, optPolicy.orElse(null)))
                                                     .ignoreElement()
                                                     .andThen(Single.defer(() -> userProvider.findByUsername(user.getUsername())
@@ -349,7 +356,13 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                                                                  return Single.just(updatedUser);
                                                                              })))
                                        .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user)))
-                                       .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user).throwable(throwable)));
+                                       .doOnError(throwable -> {
+                                            if(throwable instanceof InvalidPasswordException){
+                                                auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).user(user).principal(principal).type(EventType.USER_PASSWORD_VALIDATION).reference(Reference.domain(domain.getId())).throwable(throwable));
+                                            } else {
+                                                auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user).throwable(throwable));
+                                            }
+                                        });
                             });
                 }).flatMapCompletable(user -> {
                     // reset login attempts in case of reset password action

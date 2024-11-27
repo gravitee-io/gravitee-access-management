@@ -24,6 +24,11 @@ public class InvalidPasswordException extends InvalidParameterException {
     public static final String INVALID_PASSWORD_VALUE = "invalid_password_value";
     private final String errorKey;
 
+    public InvalidPasswordException(String message) {
+        super(message);
+        this.errorKey = INVALID_PASSWORD_VALUE;
+    }
+
     private InvalidPasswordException(String message, String errorKey) {
         super(message);
         this.errorKey = errorKey;
@@ -31,6 +36,9 @@ public class InvalidPasswordException extends InvalidParameterException {
 
     public static InvalidPasswordException of(String message, String errorKey) {
         return new InvalidPasswordException(message, errorKey);
+    }
+    public static InvalidPasswordException of(String message) {
+        return new InvalidPasswordException(message);
     }
 
     public String getErrorKey() {
