@@ -19,6 +19,7 @@ import io.gravitee.am.common.utils.PathUtils;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.VirtualHost;
+import io.gravitee.am.plugins.dataplan.core.DataPlanLoader;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -40,16 +41,21 @@ public class DomainReadServiceImpl implements DomainReadService {
 
     private final String gatewayUrl;
     private final DomainRepository domainRepository;
+    private final DataPlanLoader dataPlanLoader;
 
-    public DomainReadServiceImpl(@Lazy DomainRepository domainRepository, @Value("${gateway.url:http://localhost:8092}") String gatewayUrl) {
+    public DomainReadServiceImpl(@Lazy DomainRepository domainRepository, @Value("${gateway.url:http://localhost:8092}") String gatewayUrl, DataPlanLoader dataPlanLoader) {
         this.domainRepository = domainRepository;
         this.gatewayUrl = gatewayUrl;
+        this.dataPlanLoader = dataPlanLoader;
     }
 
 
     @Override
     public Maybe<Domain> findById(String id) {
         log.debug("Find domain by ID: {}", id);
+        this.dataPlanLoader.getDataPlanProvider("default").get().getDataPlanPOCRepository().writeValue("test - from common service layer").subscribe();
+        this.dataPlanLoader.getDataPlanProvider("deuxieme").get().getDataPlanPOCRepository().writeValue("test - from common service layer deuxieme").subscribe();
+
         return domainRepository.findById(id)
                 .onErrorResumeNext(ex -> {
                     log.error("An error occurred while trying to find a domain using its ID: {}", id, ex);

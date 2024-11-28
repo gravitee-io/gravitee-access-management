@@ -15,12 +15,16 @@
  */
 package io.gravitee.am.service.impl.application;
 
+import io.gravitee.am.dataplan.api.provider.DataPlanProvider;
+import io.gravitee.am.dataplan.api.repository.DataPlanPOCRepository;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.VirtualHost;
+import io.gravitee.am.plugins.dataplan.core.DataPlanLoader;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -28,15 +32,27 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class DomainReadServiceImplTest {
     private final DomainRepository domainRepository = mock();
-    private final DomainReadService underTest = new DomainReadServiceImpl(domainRepository, "http://localhost:8092");
+    private final DomainReadService underTest;
+
+    {
+        DataPlanLoader mock = mock(DataPlanLoader.class);
+        DataPlanProvider dataPlanProvider = mock(DataPlanProvider.class);
+        DataPlanPOCRepository pocRepository = mock(DataPlanPOCRepository.class);
+        when(pocRepository.writeValue(any())).thenReturn(Completable.complete());
+        when(dataPlanProvider.getDataPlanPOCRepository()).thenReturn(pocRepository);
+        when(mock.getDataPlanProvider(any())).thenReturn(Optional.of(dataPlanProvider));
+        underTest = new DomainReadServiceImpl(domainRepository, "http://localhost:8092", mock);
+    }
 
     @Test
     public void shouldFindById() {
@@ -123,7 +139,13 @@ class DomainReadServiceImplTest {
 
     @Test
     void shouldBuildUrl_vhostModeAndHttps() {
-        var underTest = new DomainReadServiceImpl(mock(), "https://localhost:8092");
+        DataPlanLoader mock = mock(DataPlanLoader.class);
+        DataPlanProvider dataPlanProvider = mock(DataPlanProvider.class);
+        DataPlanPOCRepository pocRepository = mock(DataPlanPOCRepository.class);
+        when(pocRepository.writeValue(any())).thenReturn(Completable.complete());
+        when(dataPlanProvider.getDataPlanPOCRepository()).thenReturn(pocRepository);
+        when(mock.getDataPlanProvider(any())).thenReturn(Optional.of(dataPlanProvider));
+        var underTest = new DomainReadServiceImpl(mock(), "https://localhost:8092", mock);
 
         Domain domain = new Domain();
         domain.setPath("/testPath");

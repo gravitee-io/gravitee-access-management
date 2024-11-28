@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.reactor.impl.DefaultReactor;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
+import io.gravitee.am.plugins.dataplan.core.DataPlanLoader;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.common.event.EventManager;
@@ -103,6 +104,10 @@ public class SyncManager implements InitializingBean {
     @Autowired
     private GatewayMetricProvider gatewayMetricProvider;
 
+    @Autowired
+    @Lazy
+    private DataPlanLoader dataPlanLoader;
+
     private Optional<List<String>> shardingTags;
 
     private Optional<List<String>> environments;
@@ -157,6 +162,7 @@ public class SyncManager implements InitializingBean {
         long nextLastRefreshAt = System.currentTimeMillis();
 
         try {
+            this.dataPlanLoader.getDataPlanProvider("default").get().getDataPlanPOCRepository().writeValue("from - gw sync process").subscribe();
             if (lastRefreshAt == -1) {
                 logger.debug("Initial synchronization");
                 deployDomains();

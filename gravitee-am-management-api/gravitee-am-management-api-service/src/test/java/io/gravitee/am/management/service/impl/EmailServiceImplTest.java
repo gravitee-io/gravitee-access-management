@@ -37,6 +37,7 @@ import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.plugins.dataplan.core.DataPlanLoader;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.impl.application.DomainReadServiceImpl;
@@ -139,7 +140,7 @@ public class EmailServiceImplTest {
                 freemarkerConfiguration,
                 auditService,
                 jwtBuilder,
-                new DomainReadServiceImpl(mock(), "http://localhost:1234/unittest"),
+                new DomainReadServiceImpl(mock(), "http://localhost:1234/unittest", mock(DataPlanLoader.class)),
                 i18nDictionaryService,
                 environment
         );
