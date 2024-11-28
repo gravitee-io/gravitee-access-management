@@ -44,6 +44,8 @@ public class PasswordSettingsStatus {
 
     private Boolean recentPasswordsNotReused;
 
+    private Boolean defaultPolicy;
+
     public boolean isValid() {
         return isNotFalse(this.minLength) &&
                 isNotFalse(this.excludePasswordsInDictionary) &&
@@ -52,6 +54,7 @@ public class PasswordSettingsStatus {
                 isNotFalse(this.lettersInMixedCase) &&
                 isNotFalse(this.excludeUserProfileInfoInPassword) &&
                 isNotFalse(this.includeSpecialCharacters) &&
-                isNotFalse(this.recentPasswordsNotReused);
+                isNotFalse(this.recentPasswordsNotReused) &&
+                isNotFalse(this.defaultPolicy);
     }
 }

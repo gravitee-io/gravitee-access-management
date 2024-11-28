@@ -69,26 +69,29 @@ public class PasswordServiceImpl implements PasswordService {
         } else {
             // check password settings
             Stream.of(
-                    new MaxLengthPasswordValidator(passwordPolicy.getMaxLength()),
-                    new MinLengthPasswordValidator(passwordPolicy.getMinLength()),
-                    new IncludeNumbersPasswordValidator(TRUE.equals(passwordPolicy.getIncludeNumbers())),
-                    new IncludeSpecialCharactersPasswordValidator(TRUE.equals(passwordPolicy.getIncludeSpecialCharacters())),
-                    new MixedCasePasswordValidator(passwordPolicy.getLettersInMixedCase()),
-                    new ConsecutiveCharacterPasswordValidator(passwordPolicy.getMaxConsecutiveLetters()),
-                    new DictionaryPasswordValidator(TRUE.equals(passwordPolicy.getExcludePasswordsInDictionary()), passwordDictionary),
-                    new UserProfilePasswordValidator(TRUE.equals(passwordPolicy.getExcludeUserProfileInfoInPassword()), user)
-            ).filter(not(passwordValidator -> passwordValidator.validate(password)))
-            .findFirst().ifPresent(validator -> {
-                throw validator.getCause();
-            });
+                            new MaxLengthPasswordValidator(passwordPolicy.getMaxLength()),
+                            new MinLengthPasswordValidator(passwordPolicy.getMinLength()),
+                            new IncludeNumbersPasswordValidator(TRUE.equals(passwordPolicy.getIncludeNumbers())),
+                            new IncludeSpecialCharactersPasswordValidator(TRUE.equals(passwordPolicy.getIncludeSpecialCharacters())),
+                            new MixedCasePasswordValidator(passwordPolicy.getLettersInMixedCase()),
+                            new ConsecutiveCharacterPasswordValidator(passwordPolicy.getMaxConsecutiveLetters()),
+                            new DictionaryPasswordValidator(TRUE.equals(passwordPolicy.getExcludePasswordsInDictionary()), passwordDictionary),
+                            new UserProfilePasswordValidator(TRUE.equals(passwordPolicy.getExcludeUserProfileInfoInPassword()), user)
+                    ).filter(not(passwordValidator -> passwordValidator.validate(password)))
+                    .findFirst().ifPresent(validator -> {
+                        throw validator.getCause();
+                    });
         }
     }
 
     @Override
     public PasswordSettingsStatus evaluate(String password, PasswordPolicy passwordPolicy, User user) {
         var result = PasswordSettingsStatus.builder();
-        if (password == null || passwordPolicy == null) {
+        if (password == null) {
             return result.build();
+        }
+        if (passwordPolicy == null) {
+            return result.defaultPolicy(defaultPasswordValidator.validate(password)).build();
         }
         result.minLength(new MinLengthPasswordValidator(passwordPolicy.getMinLength()).validate(password));
         if (TRUE.equals(passwordPolicy.getExcludePasswordsInDictionary())) {
@@ -114,16 +117,17 @@ public class PasswordServiceImpl implements PasswordService {
 
     /**
      * Check the user password status
-     * @param user Authenticated user
+     *
+     * @param user           Authenticated user
      * @param passwordPolicy password policy
      * @return True if the password has expired or False if not
      */
     public boolean checkAccountPasswordExpiry(User user, PasswordPolicy passwordPolicy) {
 
-        /** If the expiryDate is null or set to 0 so it's disabled */
+        /* If the expiryDate is null or set to 0 so it's disabled */
         if (passwordPolicy == null ||
                 (passwordPolicy.getExpiryDuration() == null
-                                || passwordPolicy.getExpiryDuration() <= 0)) {
+                        || passwordPolicy.getExpiryDuration() <= 0)) {
             return false;
         }
 
