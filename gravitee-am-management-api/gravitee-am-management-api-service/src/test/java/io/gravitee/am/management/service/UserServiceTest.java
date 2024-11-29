@@ -65,6 +65,7 @@ import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
+import io.gravitee.am.service.validators.password.PasswordSettingsStatus;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.gravitee.am.service.validators.user.UserValidatorImpl;
 import io.reactivex.rxjava3.core.Completable;
@@ -247,7 +248,6 @@ public class UserServiceTest {
         when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.empty());
         when(applicationService.findByDomainAndClientId(domainId, newUser.getClient())).thenReturn(Maybe.empty());
-        when(passwordService.isValid(anyString(), eq(null), any())).thenReturn(true);
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
         when(userProvider.create(any())).thenReturn(Single.just(idpUser));
         User user = new User();
@@ -255,6 +255,7 @@ public class UserServiceTest {
         user.setReferenceId("domain");
         when(commonUserService.create(any())).thenReturn(Single.just(user));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
+        when(passwordService.evaluate(anyString(),any(),any())).thenReturn(PasswordSettingsStatus.builder().build());
 
         userService.create(domain, newUser, null)
                 .test()
@@ -517,7 +518,6 @@ public class UserServiceTest {
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
         when(userProvider.updatePassword(any(), any())).thenReturn(Single.just(idpUser));
 
-        doReturn(true).when(passwordService).isValid(eq(PASSWORD), eq(null), any());
         when(commonUserService.findById(eq(DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
@@ -525,7 +525,7 @@ public class UserServiceTest {
         when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
-
+        when(passwordService.evaluate(anyString(),any(),any())).thenReturn(PasswordSettingsStatus.builder().build());
 
         userService.resetPassword(domain, user.getId(), PASSWORD, null)
                 .test()
@@ -553,7 +553,6 @@ public class UserServiceTest {
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.empty());
         when(userProvider.create(any())).thenReturn(Single.just(idpUser));
 
-        when(passwordService.isValid(eq(PASSWORD), eq(null), any())).thenReturn(true);
         when(commonUserService.findById(eq(DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
@@ -561,6 +560,7 @@ public class UserServiceTest {
         when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
+        when(passwordService.evaluate(anyString(),any(),any())).thenReturn(PasswordSettingsStatus.builder().build());
 
         userService.resetPassword(domain, user.getId(), PASSWORD, null)
                 .test()
@@ -674,14 +674,17 @@ public class UserServiceTest {
         newUser.setSource("source");
         newUser.setPassword(password);
 
+        PasswordSettingsStatus passwordEvaluation = PasswordSettingsStatus.builder().defaultPolicy(false).build();
+
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
         doReturn(Maybe.empty()).when(commonUserService).findByDomainAndUsernameAndSource(anyString(), anyString(), anyString());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
+        when(passwordService.evaluate(anyString(),any(),any())).thenReturn(passwordEvaluation);
         userService.create(domain, newUser, null)
                 .test()
                 .assertNotComplete()
-                .assertError(InvalidPasswordException.class);
-        verify(passwordService, times(1)).isValid(eq(password), eq(null), any());
+                .assertError(InvalidPasswordException.class)
+                .assertError(ex -> ex.getMessage().equals(InvalidPasswordException.of(passwordEvaluation, null, "invalid_password_value").getMessage()));
         verify(userValidator, never()).validate(any());
         verify(auditService).report(argThat(builder -> Status.FAILURE.equals(builder.build(new ObjectMapper()).getOutcome().getStatus())));
     }
@@ -697,15 +700,18 @@ public class UserServiceTest {
         user.setReferenceId("domain");
         user.setReferenceType(DOMAIN);
 
+        var passwordEvaluation = PasswordSettingsStatus.builder().defaultPolicy(false).build();
+
         when(commonUserService.findById(eq(DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
+        when(passwordService.evaluate(anyString(), any(), any())).thenReturn(passwordEvaluation);
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
 
         userService.resetPassword(domain, user.getId(), PASSWORD, null)
                 .test()
                 .assertNotComplete()
-                .assertError(InvalidPasswordException.class);
-        verify(passwordService, times(1)).isValid(eq(PASSWORD), eq(null), any());
+                .assertError(InvalidPasswordException.class)
+                .assertError(ex -> ex.getMessage().equals(InvalidPasswordException.of(passwordEvaluation, null, "invalid_password_value").getMessage()));
     }
 
     @Test
@@ -720,10 +726,11 @@ public class UserServiceTest {
         user.setReferenceId("domain");
 
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
-        when(passwordService.isValid(eq(PASSWORD), eq(null), any())).thenReturn(true);
         when(commonUserService.findById(DOMAIN, domain.getId(), "user-id")).thenReturn(Single.just(user));
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.error(PasswordHistoryException::passwordAlreadyInHistory));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
+        when(passwordService.evaluate(anyString(),any(),any())).thenReturn(PasswordSettingsStatus.builder().build());
+
 
         var observer = userService.resetPassword(domain, user.getId(), PASSWORD, null)
                 .test();

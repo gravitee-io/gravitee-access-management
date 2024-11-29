@@ -314,12 +314,14 @@
                     RESET PASSWORD
                   </button>
                 </div>
-                <password-policy-status
-                  [policy]="passwordPolicy"
-                  [password]="password"
-                  [profile]="user"
-                  (valid)="passwordValid = $event"
-                ></password-policy-status>
+                @if (!passwordForm.pristine) {
+                  <password-policy-status
+                    [policy]="passwordPolicy"
+                    [password]="password"
+                    [profile]="user"
+                    (valid)="passwordValid = $event"
+                  ></password-policy-status>
+                }
               </form>
             </div>
           </div>

@@ -96,8 +96,8 @@ export class PasswordPolicyStatusComponent implements OnChanges, OnDestroy {
   private getRules(policy: MaybeDefaultPasswordPolicy) {
     const _rules: PasswordRule[] = [];
     if (policy.regex) {
-      _rules.push(this.regexRule('regex', policy.regex));
-      // special case for the default policy, there shouldn't be any other rules then
+      _rules.push(this.regexRule('regex', policy.regex, 'matches the regular expression configured by admin'));
+      // special case for the default fallback policy, there shouldn't be any other rules
       return _rules;
     }
     if (policy.minLength) {

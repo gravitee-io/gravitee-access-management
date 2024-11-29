@@ -47,31 +47,31 @@ public class InvalidPasswordException extends InvalidParameterException {
     public static InvalidPasswordException of(PasswordSettingsStatus evaluation, PasswordPolicy policy, String errorKey) {
         var message = new StringBuilder("Password doesn't match policy\n");
         if (evaluation.getDefaultPolicy() == Boolean.FALSE) {
-            message.append("Must match the default policy\n");
+            message.append("- Must match the default policy\n");
         }
         if (evaluation.getMinLength() == Boolean.FALSE) {
-            message.append("Must have at least ").append(policy.getMinLength()).append(" characters\n");
+            message.append("- Must have at least ").append(policy.getMinLength()).append(" characters\n");
         }
         if (evaluation.getIncludeNumbers() == Boolean.FALSE) {
-            message.append("Must contain a number\n");
+            message.append("- Must contain a number\n");
         }
         if (evaluation.getIncludeSpecialCharacters() == Boolean.FALSE) {
-            message.append("Must contain a special character\n");
+            message.append("- Must contain a special character\n");
         }
         if (evaluation.getLettersInMixedCase() == Boolean.FALSE) {
-            message.append("Must contain a lower- and upper-case letter\n");
+            message.append("- Must contain a lower- and upper-case letter\n");
         }
         if (evaluation.getMaxConsecutiveLetters() == Boolean.FALSE) {
-            message.append("Can't have any character repeated ").append(policy.getMaxConsecutiveLetters()).append(" times in a row\n");
+            message.append("- Can't have any character repeated ").append(policy.getMaxConsecutiveLetters()).append(" times in a row\n");
         }
         if (evaluation.getExcludePasswordsInDictionary() == Boolean.FALSE) {
-            message.append("Can't be a common password\n");
+            message.append("- Can't be a common password\n");
         }
         if (evaluation.getExcludeUserProfileInfoInPassword() == Boolean.FALSE) {
-            message.append("Can't contain information from user's profile\n");
+            message.append("- Can't contain information from user's profile\n");
         }
         if (evaluation.getRecentPasswordsNotReused() == Boolean.FALSE) {
-            message.append("Can't be a recent password\n");
+            message.append("- Can't be a recent password\n");
         }
         return new InvalidPasswordException(message.toString(), errorKey);
     }
