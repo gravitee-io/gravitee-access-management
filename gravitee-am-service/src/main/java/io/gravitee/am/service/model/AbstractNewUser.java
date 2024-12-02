@@ -79,6 +79,9 @@ public abstract class AbstractNewUser implements IUser {
 
     private Boolean forceResetPassword;
 
+    @Schema(type = "java.lang.Long")
+    private Date lastPasswordReset;
+
     @Override
     @JsonIgnore
     public String getDisplayName() {
