@@ -121,7 +121,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
     }
 
     private Single<User> updateUser(ReferenceType referenceType, String referenceId, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal) {
-        if(id == null){
+        if (id == null) {
             return Single.error(new InvalidUserException("User id is required"));
         }
         return getUserService().findById(referenceType, referenceId, id).flatMap(user -> {
@@ -227,8 +227,8 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                                         .flatMapCompletable(membership -> membershipService.delete(membership.getId())))
                         .andThen(passwordHistoryService.deleteByUser(userId))
                         .toSingleDefault(user))
-                        .doOnSuccess(u -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(u)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
+                .doOnSuccess(u -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(u)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
     }
 
     protected io.gravitee.am.identityprovider.api.User convert(AbstractNewUser newUser) {
@@ -277,7 +277,11 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
         user.setForceResetPassword(newUser.getForceResetPassword());
         user.setCreatedAt(new Date());
         user.setUpdatedAt(user.getCreatedAt());
-        user.setLastPasswordReset(user.getCreatedAt());
+        if (newUser.getLastPasswordReset() != null) {
+            user.setLastPasswordReset(newUser.getLastPasswordReset());
+        } else if(!newUser.isPreRegistration()){
+            user.setLastPasswordReset(user.getCreatedAt());
+        }
         user.setServiceAccount(false);
         return user;
     }

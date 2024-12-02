@@ -1511,13 +1511,15 @@ public class UserServiceTest {
         when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(Optional.of(new IdentityProvider()));
         when(applicationService.findById(user.getClient())).thenReturn(Maybe.just(client));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.just(new PasswordPolicy()));
-        when(passwordService.evaluate(anyString(),any(),any())).thenReturn(PasswordSettingsStatus.builder().defaultPolicy(false).build());
+        PasswordSettingsStatus passwordSettingsStatus = mock(PasswordSettingsStatus.class);
+        when(passwordSettingsStatus.isValid()).thenReturn(false);
+        when(passwordService.evaluate(anyString(),any(),any())).thenReturn(passwordSettingsStatus);
 
         TestObserver<Void> observer = new TestObserver<>();
         userService.resetPassword(domain, user.getId(),"123", new DefaultUser()).subscribe(observer);
 
         // then
-        observer.assertError(throwable -> throwable.getMessage().startsWith("The provided password does not meet the password policy requirements"));
+        observer.assertError(throwable -> throwable instanceof InvalidPasswordException);
         verify(auditService,atMostOnce()).report(any());
         verify(auditService).report(argThat(builder -> Status.FAILURE.equals(builder.build(new ObjectMapper()).getOutcome().getStatus())));
         verify(auditService).report(argThat(builder -> builder.build(new ObjectMapper()).getType().equals(EventType.USER_PASSWORD_VALIDATION)));
