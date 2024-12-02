@@ -26,12 +26,15 @@ import io.gravitee.am.gateway.handler.scim.model.Meta;
 import io.gravitee.am.gateway.handler.scim.model.Name;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.service.exception.UserInvalidException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +51,8 @@ import static java.util.stream.Collectors.toList;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserMapper {
+
+    public static final String LAST_PASSWORD_RESET_KEY = "lastPasswordReset";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserMapper.class);
 
@@ -193,6 +198,20 @@ public class UserMapper {
 
         // set additional information
         if (scimUser instanceof GraviteeUser graviteeUser && graviteeUser.getAdditionalInformation() != null) {
+            var lastPasswordReset = graviteeUser.getAdditionalInformation().get(LAST_PASSWORD_RESET_KEY);
+            if (lastPasswordReset != null) {
+                if (lastPasswordReset instanceof String) {
+                    try {
+                        user.setLastPasswordReset(Date.from(Instant.parse((String) lastPasswordReset)));
+                    } catch (Exception e) {
+                        LOGGER.error("Cannot parse lastPasswordReset. Be sure it is in ISO 8601 format.", e);
+                        throw new UserInvalidException("Unable to parse lastPasswordReset date. Be sure it is in ISO 8601 format.", e);
+                    }
+                } else {
+                    LOGGER.error("lastPasswordReset must be in ISO 8601 format");
+                    throw new UserInvalidException("Unable to parse lastPasswordReset. lastPasswordReset must be in ISO 8601 format.");
+                }
+            }
             additionalInformation.putAll(graviteeUser.getAdditionalInformation());
         }
         user.setAdditionalInformation(additionalInformation);
