@@ -16,8 +16,9 @@
 package io.gravitee.am.gateway.handler.scim.model;
 
 import io.gravitee.am.common.scim.Schema;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -28,9 +29,11 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public class User extends Resource {
 
-    public static final List<String> SCHEMAS = Arrays.asList(Schema.SCHEMA_URI_USER);
+    public static final List<String> SCHEMAS = List.of(Schema.SCHEMA_URI_USER);
     public static String RESOURCE_TYPE = "User";
 
     /**
@@ -286,179 +289,4 @@ public class User extends Resource {
      */
     private String source;
 
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public Name getName() {
-        return name;
-    }
-
-    public void setName(Name name) {
-        this.name = name;
-    }
-
-    public String getDisplayName() {
-        return displayName;
-    }
-
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
-    }
-
-    public String getNickName() {
-        return nickName;
-    }
-
-    public void setNickName(String nickName) {
-        this.nickName = nickName;
-    }
-
-    public String getProfileUrl() {
-        return profileUrl;
-    }
-
-    public void setProfileUrl(String profileUrl) {
-        this.profileUrl = profileUrl;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getUserType() {
-        return userType;
-    }
-
-    public void setUserType(String userType) {
-        this.userType = userType;
-    }
-
-    public String getPreferredLanguage() {
-        return preferredLanguage;
-    }
-
-    public void setPreferredLanguage(String preferredLanguage) {
-        this.preferredLanguage = preferredLanguage;
-    }
-
-    public String getLocale() {
-        return locale;
-    }
-
-    public void setLocale(String locale) {
-        this.locale = locale;
-    }
-
-    public String getTimezone() {
-        return timezone;
-    }
-
-    public void setTimezone(String timezone) {
-        this.timezone = timezone;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public List<Attribute> getEmails() {
-        return emails;
-    }
-
-    public void setEmails(List<Attribute> emails) {
-        this.emails = emails;
-    }
-
-    public List<Attribute> getPhoneNumbers() {
-        return phoneNumbers;
-    }
-
-    public void setPhoneNumbers(List<Attribute> phoneNumbers) {
-        this.phoneNumbers = phoneNumbers;
-    }
-
-    public List<Attribute> getIms() {
-        return ims;
-    }
-
-    public void setIms(List<Attribute> ims) {
-        this.ims = ims;
-    }
-
-    public List<Attribute> getPhotos() {
-        return photos;
-    }
-
-    public void setPhotos(List<Attribute> photos) {
-        this.photos = photos;
-    }
-
-    public List<Address> getAddresses() {
-        return addresses;
-    }
-
-    public void setAddresses(List<Address> addresses) {
-        this.addresses = addresses;
-    }
-
-    public List<Member> getGroups() {
-        return groups;
-    }
-
-    public void setGroups(List<Member> groups) {
-        this.groups = groups;
-    }
-
-    public List<String> getEntitlements() {
-        return entitlements;
-    }
-
-    public void setEntitlements(List<String> entitlements) {
-        this.entitlements = entitlements;
-    }
-
-    public List<String> getRoles() {
-        return roles;
-    }
-
-    public void setRoles(List<String> roles) {
-        this.roles = roles;
-    }
-
-    public List<Certificate> getX509Certificates() {
-        return x509Certificates;
-    }
-
-    public void setX509Certificates(List<Certificate> x509Certificates) {
-        this.x509Certificates = x509Certificates;
-    }
-
-    public String getSource() {
-        return source;
-    }
-
-    public void setSource(String source) {
-        this.source = source;
-    }
 }
