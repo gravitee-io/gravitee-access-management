@@ -125,6 +125,7 @@ public class UserMapper {
             scimUser.setSchemas(GraviteeUser.SCHEMAS);
             scimUser.setAdditionalInformation(customClaims);
         }
+        scimUser.setLastPasswordReset(user.getLastPasswordReset());
 
         return scimUser;
     }
@@ -196,6 +197,7 @@ public class UserMapper {
             additionalInformation.putAll(graviteeUser.getAdditionalInformation());
         }
         user.setAdditionalInformation(additionalInformation);
+        user.setLastPasswordReset(scimUser.getLastPasswordReset());
         return user;
     }
 

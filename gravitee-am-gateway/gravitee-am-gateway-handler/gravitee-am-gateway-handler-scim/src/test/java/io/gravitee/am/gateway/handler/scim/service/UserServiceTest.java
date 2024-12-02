@@ -67,6 +67,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -729,5 +730,36 @@ public class UserServiceTest {
         verify(userRepository, times(1)).delete(userId);
         verify(identityProviderManager, times(1)).getUserProvider(anyString());
         verify(userProvider, never()).delete(anyString());
+    }
+
+    @Test
+    public void shouldCreateUser_with_lastPasswordReset() {
+
+        Date lastPasswordResetDate = new Date();
+
+        User newUser = mock(User.class);
+        when(newUser.getSource()).thenReturn("unknown-idp");
+        when(newUser.getUserName()).thenReturn("username");
+        when(newUser.getPassword()).thenReturn(null);
+        when(newUser.getLastPasswordReset()).thenReturn(lastPasswordResetDate);
+
+        when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
+
+        ArgumentCaptor<io.gravitee.am.model.User> newUserDefinition = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN_ID);
+        user.setLastPasswordReset(lastPasswordResetDate);
+        when(userRepository.create(newUserDefinition.capture())).thenReturn(Single.just(user));
+
+        TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        testObserver.assertValue(createdUser -> createdUser.getLastPasswordReset() != null);
+        assertFalse(newUserDefinition.getValue().isInternal());
+        assertTrue(newUserDefinition.getValue().isEnabled());
     }
 }
