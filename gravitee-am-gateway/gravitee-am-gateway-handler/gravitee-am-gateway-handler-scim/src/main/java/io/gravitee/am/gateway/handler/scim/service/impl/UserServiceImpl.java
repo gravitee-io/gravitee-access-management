@@ -182,7 +182,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Maybe<User> get(String userId, String baseUrl) {
-        LOGGER.debug("Find user by id : {}", userId);
         return innerGet(userId, baseUrl).map(UserContainer::getScimUser);
     }
 
@@ -206,8 +205,12 @@ public class UserServiceImpl implements UserService {
         }
         // set user idp source
         final String source = user.getSource() != null ? user.getSource() : (idp != null ? idp : DEFAULT_IDP_PREFIX + domain.getId());
-
-        io.gravitee.am.model.User userModel = UserMapper.convert(user);
+        io.gravitee.am.model.User userModel;
+        try {
+            userModel = UserMapper.convert(user);
+        } catch (Exception e) {
+            return Single.error(e);
+        }
         // set technical ID
         userModel.setId(RandomString.generate());
         userModel.setReferenceType(ReferenceType.DOMAIN);
@@ -446,38 +449,36 @@ public class UserServiceImpl implements UserService {
         LOGGER.debug("Delete user {}", userId);
         return userRepository.findById(userId)
                 .switchIfEmpty(Maybe.error(() -> new UserNotFoundException(userId)))
-                .flatMapCompletable(user -> {
-                    return identityProviderManager.getUserProvider(user.getSource())
-                            .switchIfEmpty(Maybe.error(() -> new UserProviderNotFoundException(user.getSource())))
-                            .flatMapCompletable(userProvider -> userProvider.delete(user.getExternalId()))
-                            .onErrorResumeNext(ex -> {
-                                if (ex instanceof UserNotFoundException || ex instanceof UserProviderNotFoundException) {
-                                    // idp user does not exist, only remove AM user
-                                    return Completable.complete();
-                                } else if (ex instanceof AbstractManagementException) {
-                                    return Completable.error(ex);
-                                } else {
-                                    LOGGER.error("An error has occurred when trying to delete user: {}", userId, ex);
-                                    return Completable.error(new TechnicalManagementException(
-                                            String.format("An error has occurred when trying to delete user: %s", userId), ex));
-                                }
-                            })
-                            .andThen(userActivityService.deleteByDomainAndUser(domain.getId(), userId))
-                            .andThen(rateLimiterService.deleteByUser(user))
-                            .andThen(passwordHistoryService.deleteByUser(userId))
-                            .andThen(verifyAttemptService.deleteByUser(user))
-                            .andThen(userRepository.delete(userId))
-                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
-                                    .principal(principal)
-                                    .reference(Reference.domain(domain.getId()))
-                                    .type(EventType.USER_DELETED)
-                                    .user(user)))
-                            .doOnError(error -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
-                                    .principal(principal)
-                                    .reference(Reference.domain(domain.getId()))
-                                    .type(EventType.USER_DELETED)
-                                    .throwable(error)));
-                });
+                .flatMapCompletable(user -> identityProviderManager.getUserProvider(user.getSource())
+                        .switchIfEmpty(Maybe.error(() -> new UserProviderNotFoundException(user.getSource())))
+                        .flatMapCompletable(userProvider -> userProvider.delete(user.getExternalId()))
+                        .onErrorResumeNext(ex -> {
+                            if (ex instanceof UserNotFoundException || ex instanceof UserProviderNotFoundException) {
+                                // idp user does not exist, only remove AM user
+                                return Completable.complete();
+                            } else if (ex instanceof AbstractManagementException) {
+                                return Completable.error(ex);
+                            } else {
+                                LOGGER.error("An error has occurred when trying to delete user: {}", userId, ex);
+                                return Completable.error(new TechnicalManagementException(
+                                        String.format("An error has occurred when trying to delete user: %s", userId), ex));
+                            }
+                        })
+                        .andThen(userActivityService.deleteByDomainAndUser(domain.getId(), userId))
+                        .andThen(rateLimiterService.deleteByUser(user))
+                        .andThen(passwordHistoryService.deleteByUser(userId))
+                        .andThen(verifyAttemptService.deleteByUser(user))
+                        .andThen(userRepository.delete(userId))
+                        .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
+                                .principal(principal)
+                                .reference(Reference.domain(domain.getId()))
+                                .type(EventType.USER_DELETED)
+                                .user(user)))
+                        .doOnError(error -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
+                                .principal(principal)
+                                .reference(Reference.domain(domain.getId()))
+                                .type(EventType.USER_DELETED)
+                                .throwable(error))));
     }
 
     private boolean isInvalidUserPassword(String password, io.gravitee.am.model.User user, Client client, io.gravitee.am.identityprovider.api.User principal) {
