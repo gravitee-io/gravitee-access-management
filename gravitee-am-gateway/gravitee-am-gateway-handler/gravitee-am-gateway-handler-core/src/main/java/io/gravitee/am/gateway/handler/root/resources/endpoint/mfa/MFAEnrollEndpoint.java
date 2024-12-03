@@ -39,6 +39,7 @@ import io.gravitee.am.model.factor.EnrolledFactorChannel.Type;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.exception.EnrollmentChannelValidationException;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.rxjava3.core.Observable;
@@ -311,8 +312,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
             // redirect to the original request
             redirectToAuthorize(routingContext);
         } else {
-            // parameters are invalid
-            routingContext.fail(400);
+            routingContext.fail(new EnrollmentChannelValidationException("Invalid parameters"));
         }
     }
 
