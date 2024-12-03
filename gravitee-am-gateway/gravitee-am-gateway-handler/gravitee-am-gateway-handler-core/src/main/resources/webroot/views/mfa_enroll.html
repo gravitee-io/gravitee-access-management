@@ -117,6 +117,12 @@
                         </div>
                     </div>
                 </div>
+                <div th:if="${error}" class="item error-text">
+                  <span>
+                      <span class="error" th:text="${error}"></span>
+                      <small th:text="*{error_description}?: #{mfa_enroll.error.default.message}"></small>
+                  </span>
+                </div>
                 <button id="next" type="button" class="button primary" th:text="#{mfa_enroll.button.submit}"></button>
 
             </div>
