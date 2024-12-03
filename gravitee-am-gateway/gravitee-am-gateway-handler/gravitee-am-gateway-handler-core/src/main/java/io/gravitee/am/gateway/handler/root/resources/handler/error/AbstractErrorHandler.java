@@ -88,6 +88,8 @@ public abstract class AbstractErrorHandler implements Handler<RoutingContext> {
     protected abstract void doHandle(RoutingContext routingContext);
 
     protected void doRedirect(HttpServerResponse response, String url) {
-        response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
+        response.putHeader(HttpHeaders.LOCATION, url);
+        response.setStatusCode(302);
+        response.end();
     }
 }

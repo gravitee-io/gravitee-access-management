@@ -281,7 +281,8 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
                 })
-                .handler(mfaEnrollEndpoint);
+                .handler(mfaEnrollEndpoint)
+                .failureHandler(new MFAEnrollFailureHandler());
 
 
         FactorProvider factorProvider = mock(FactorProvider.class);
@@ -292,16 +293,30 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
         when(factorManager.get(any())).thenReturn(factorProvider);
         when(factorManager.getFactor(any())).thenReturn(factor);
 
-        testRequest(HttpMethod.POST,
+        testRequest(
+                HttpMethod.POST,
                 REQUEST_PATH,
                 req -> {
-                    req.setChunked(true);
-                    req.putHeader(CONTENT_TYPE, APPLICATION_X_WWW_FORM_URLENCODED);
-                    req.write(Buffer.buffer("user_mfa_enrollment=true&factorId=factor-id"));
+                    Buffer buffer = Buffer.buffer();
+                    buffer
+                            .appendString(ConstantKeys.MFA_ENROLLMENT_FACTOR_ID+"=factor-id")
+                            .appendString("&")
+                            .appendString(ConstantKeys.USER_MFA_ENROLLMENT+"="+true)
+                            .appendString("&")
+                            .appendString(ConstantKeys.MFA_ENROLLMENT_SHARED_SECRET+"="+UUID.randomUUID())
+                            .appendString("&")
+                            .appendString(ConstantKeys.MFA_ENROLLMENT_PHONE+"=%2B33691766742");
+                    req.headers().set("content-length", String.valueOf(buffer.length()));
+                    req.headers().set("content-type", "application/x-www-form-urlencoded");
+                    req.write(buffer);
                 },
-                null,
-                400,
-                "Bad Request", null);
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.contains("/mfa/enroll"));
+                    assertTrue(location.contains("mfa_enroll_failed"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
     }
 
     @Test
@@ -542,7 +557,7 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                     ctx.next();
                 })
                 .handler(new MFAEnrollEndpoint(factorManager, engine, userService, domain, applicationContext))
-                .failureHandler(new ErrorHandler(RootProvider.PATH_ERROR));
+                .failureHandler(new MFAEnrollFailureHandler());
 
         testRequest(
                 HttpMethod.POST,
@@ -564,7 +579,7 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.contains("/error"));
+                    assertTrue(location.contains("/mfa/enroll"));
                     assertTrue(location.contains("factor+already+enrolled"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
