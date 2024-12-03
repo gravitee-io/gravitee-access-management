@@ -32,6 +32,7 @@ export class DomainSettingsCertificatesComponent implements OnInit {
     'javakeystore-am-certificate': 'Java Keystore (.jks)',
     'pkcs12-am-certificate': 'PKCS#12 (.p12)',
     'aws-am-certificate': 'AWS Secret Manager',
+    'aws-hsm-am-certificate': 'AWS CloudHSM',
   };
   private certificateIcons: any = {
     'javakeystore-am-certificate': 'security',
@@ -101,7 +102,9 @@ export class DomainSettingsCertificatesComponent implements OnInit {
       return `${cert.usage.length} usages`;
     } else if (cert?.usage?.length == 1) {
       return this.certificateUsage.get(cert.usage[0]);
-    } else return 'Undefined';
+    } else {
+      return 'Undefined';
+    }
   }
 
   usageBadgeTooltip(cert: any): string {
