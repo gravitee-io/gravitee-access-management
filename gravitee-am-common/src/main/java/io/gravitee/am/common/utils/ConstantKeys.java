@@ -47,6 +47,7 @@ public interface ConstantKeys {
     String SERVER_ERROR = "server_error";
     String INVALID_TOKEN = "invalid_token";
     String MFA_CHALLENGE_FAILED = "mfa_challenge_failed";
+    String MFA_ENROLL_VALIDATION_FAILED = "mfa_enroll_failed";
     String LOGIN_FAILED = "login_failed";
     String USER_CONSENT_FAILED = "user_consent_failed";
     String RATE_LIMIT_ERROR_PARAM_KEY = "request_limit_error";
