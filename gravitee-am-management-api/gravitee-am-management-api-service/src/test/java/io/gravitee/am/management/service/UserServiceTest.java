@@ -1472,13 +1472,13 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.just(new PasswordPolicy()));
-        when(passwordService.isValid(anyString(),any(),any())).thenReturn(false);
+        when(passwordService.evaluate(anyString(),any(),any())).thenReturn(PasswordSettingsStatus.builder().defaultPolicy(false).build());
 
         TestObserver<User> observer = new TestObserver<>();
         userService.create(domain, newUser, new DefaultUser()).subscribe(observer);
 
         // then
-        observer.assertError(throwable -> throwable.getMessage().equals("The provided password does not meet the password policy requirements."));
+        observer.assertError(throwable -> throwable.getMessage().startsWith("The provided password does not meet the password policy requirements"));
         verify(auditService,atMostOnce()).report(any());
         verify(auditService).report(argThat(builder -> Status.FAILURE.equals(builder.build(new ObjectMapper()).getOutcome().getStatus())));
         verify(auditService).report(argThat(builder -> builder.build(new ObjectMapper()).getType().equals(EventType.USER_PASSWORD_VALIDATION)));
@@ -1511,13 +1511,13 @@ public class UserServiceTest {
         when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(Optional.of(new IdentityProvider()));
         when(applicationService.findById(user.getClient())).thenReturn(Maybe.just(client));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.just(new PasswordPolicy()));
-        when(passwordService.isValid(anyString(),any(),any())).thenReturn(false);
+        when(passwordService.evaluate(anyString(),any(),any())).thenReturn(PasswordSettingsStatus.builder().defaultPolicy(false).build());
 
         TestObserver<Void> observer = new TestObserver<>();
         userService.resetPassword(domain, user.getId(),"123", new DefaultUser()).subscribe(observer);
 
         // then
-        observer.assertError(throwable -> throwable.getMessage().equals("The provided password does not meet the password policy requirements."));
+        observer.assertError(throwable -> throwable.getMessage().startsWith("The provided password does not meet the password policy requirements"));
         verify(auditService,atMostOnce()).report(any());
         verify(auditService).report(argThat(builder -> Status.FAILURE.equals(builder.build(new ObjectMapper()).getOutcome().getStatus())));
         verify(auditService).report(argThat(builder -> builder.build(new ObjectMapper()).getType().equals(EventType.USER_PASSWORD_VALIDATION)));

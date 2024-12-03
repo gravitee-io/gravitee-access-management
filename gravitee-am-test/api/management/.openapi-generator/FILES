@@ -145,6 +145,7 @@ models/NotifierPlugin.ts
 models/OIDCSettings.ts
 models/OrganizationUserBulkRequest.ts
 models/Page.ts
+models/PasswordEvaluationRequest.ts
 models/PasswordPolicy.ts
 models/PasswordPolicyEntity.ts
 models/PasswordSettings.ts

@@ -135,6 +135,7 @@ export * from './NotifierPlugin';
 export * from './OIDCSettings';
 export * from './OrganizationUserBulkRequest';
 export * from './Page';
+export * from './PasswordEvaluationRequest';
 export * from './PasswordPolicy';
 export * from './PasswordPolicyEntity';
 export * from './PasswordSettings';

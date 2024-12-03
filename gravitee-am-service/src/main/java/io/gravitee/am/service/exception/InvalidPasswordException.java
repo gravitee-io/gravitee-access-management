@@ -45,7 +45,7 @@ public class InvalidPasswordException extends InvalidParameterException {
     }
 
     public static InvalidPasswordException of(PasswordSettingsStatus evaluation, PasswordPolicy policy, String errorKey) {
-        var message = new StringBuilder("Password doesn't match policy\n");
+        var message = new StringBuilder("The provided password does not meet the password policy requirements\n");
         if (evaluation.getDefaultPolicy() == Boolean.FALSE) {
             message.append("- Must match the default policy\n");
         }
