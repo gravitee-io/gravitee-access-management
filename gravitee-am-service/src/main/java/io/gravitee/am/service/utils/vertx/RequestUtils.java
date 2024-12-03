@@ -98,9 +98,10 @@ public class RequestUtils {
 
     public static MultiMap cleanParams(MultiMap params) {
         params.remove(ConstantKeys.ERROR_PARAM_KEY);
+        params.remove(ConstantKeys.ERROR_CODE_PARAM_KEY);
+        params.remove(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY);
         params.remove(ConstantKeys.RATE_LIMIT_ERROR_PARAM_KEY);
         params.remove(ConstantKeys.VERIFY_ATTEMPT_ERROR_PARAM_KEY);
-        params.remove(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY);
         params.remove(ConstantKeys.WARNING_PARAM_KEY);
         params.remove(SUCCESS_PARAM_KEY);
         return params;

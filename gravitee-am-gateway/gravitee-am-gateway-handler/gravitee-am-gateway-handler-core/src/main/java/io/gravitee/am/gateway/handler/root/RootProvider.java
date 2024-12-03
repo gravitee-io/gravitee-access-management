@@ -49,11 +49,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginPostEnd
 import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginSSOPOSTEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutCallbackEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutEndpoint;
-import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeAlternativesEndpoint;
-import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeEndpoint;
-import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeFailureHandler;
-import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollEndpoint;
-import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFARecoveryCodeEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.*;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ForgotPasswordEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ForgotPasswordSubmissionEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ResetPasswordEndpoint;
@@ -472,7 +468,8 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
                 .handler(localeHandler)
-                .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine, userService, domain, applicationContext, ruleEngine));
+                .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine, userService, domain, applicationContext, ruleEngine))
+                .failureHandler(new MFAEnrollFailureHandler());
         rootRouter.route(PATH_MFA_CHALLENGE)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
@@ -894,7 +891,6 @@ public class RootProvider extends AbstractProtocolProvider {
         router.route(PATH_WEBAUTHN_RESPONSE).failureHandler(errorHandler);
         router.route(PATH_VERIFY_REGISTRATION).failureHandler(errorHandler);
 
-        router.route(PATH_MFA_ENROLL).failureHandler(errorHandler);
         router.route(PATH_MFA_CHALLENGE_ALTERNATIVES).failureHandler(errorHandler);
         router.route(PATH_MFA_RECOVERY_CODE).failureHandler(errorHandler);
 

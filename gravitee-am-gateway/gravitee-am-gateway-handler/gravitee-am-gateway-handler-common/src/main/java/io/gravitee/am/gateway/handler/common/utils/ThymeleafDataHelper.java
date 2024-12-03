@@ -91,7 +91,7 @@ public class ThymeleafDataHelper {
     }
 
     private static void setServerError(Map<String, Object> data) {
-        data.put(ERROR_PARAM_KEY, SERVER_ERROR);
+        data.put(ERROR_PARAM_KEY, SERVER_ERROR );
         data.put(ERROR_CODE_PARAM_KEY, null);
         data.put(ERROR_DESCRIPTION_PARAM_KEY, "Unknown error occurred");
     }
