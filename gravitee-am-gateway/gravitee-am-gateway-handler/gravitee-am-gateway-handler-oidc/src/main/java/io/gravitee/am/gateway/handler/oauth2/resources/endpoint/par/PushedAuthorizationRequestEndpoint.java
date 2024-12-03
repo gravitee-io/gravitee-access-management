@@ -19,7 +19,7 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.exception.oauth2.MethodNotAllowedException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
-import io.gravitee.am.identityprovider.common.oauth2.utils.URLEncodedUtils;
+import io.gravitee.am.common.web.URLEncodedUtils;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.model.PushedAuthorizationRequest;
 import io.gravitee.common.http.HttpStatusCode;

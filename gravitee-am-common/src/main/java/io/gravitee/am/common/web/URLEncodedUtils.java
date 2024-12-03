@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.common.oauth2.utils;
+package io.gravitee.am.common.web;
 
-import io.gravitee.am.model.http.NameValuePair;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -50,7 +49,7 @@ public class URLEncodedUtils {
         return result.toString();
     }
 
-    public static Map<String, String> format(String query) {
+    public static Map<String, String> parse(String query) {
         Map<String, String> queryPairs = new LinkedHashMap<>();
         String[] pairs = query.split("&");
         for (String pair : pairs) {

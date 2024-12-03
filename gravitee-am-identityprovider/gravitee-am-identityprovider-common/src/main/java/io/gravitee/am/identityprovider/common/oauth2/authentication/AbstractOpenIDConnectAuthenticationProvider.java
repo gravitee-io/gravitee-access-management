@@ -31,6 +31,8 @@ import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.utils.SecureRandomString;
+import io.gravitee.am.common.web.NameValuePair;
+import io.gravitee.am.common.web.URLEncodedUtils;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
@@ -39,6 +41,8 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectAuthenticationProvider;
 import io.gravitee.am.identityprovider.api.oidc.jwt.KeyResolver;
+import io.gravitee.am.identityprovider.api.social.ProviderResponseMode;
+import io.gravitee.am.identityprovider.api.social.ProviderResponseType;
 import io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.hmac.MACJWKSourceResolver;
 import io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.remote.RemoteJWKSourceResolver;
 import io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.rsa.RSAJWKSourceResolver;
@@ -46,11 +50,11 @@ import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.AbstractKeyPr
 import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.HMACKeyProcessor;
 import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.JWKSKeyProcessor;
 import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.RSAKeyProcessor;
-import io.gravitee.am.identityprovider.common.oauth2.utils.URLEncodedUtils;
 import io.gravitee.am.model.http.BasicNameValuePair;
-import io.gravitee.am.model.http.NameValuePair;
 import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.MediaType;
+import io.gravitee.common.util.MultiValueMap;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.buffer.Buffer;
@@ -66,6 +70,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
@@ -81,7 +86,6 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
 
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
 
-    public static final String HASH_VALUE_PARAMETER = "urlHash";
     public static final String ID_TOKEN_PARAMETER = "id_token";
 
     protected JWTProcessor jwtProcessor;
@@ -146,14 +150,16 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
                 builder.addParameter(Parameters.CODE_CHALLENGE_METHOD, getConfiguration().getCodeChallengeMethod().getUriValue());
             }
 
+            var callbackMethod = getConfiguration().getResponseMode().getCallbackMethod();
+
             if (state == null || state.isEmpty()) {
-                return Maybe.just(Request.get(builder.buildString()));
+                return Maybe.just(new Request(callbackMethod, builder.buildString()));
             }
 
             return stateEncoder.encode(state)
                     .flatMapMaybe(encodedState -> {
                         builder.addParameter(Parameters.STATE, encodedState);
-                        return Maybe.just(Request.get(builder.buildString()));
+                        return Maybe.just(new Request(callbackMethod, builder.buildString()));
                     });
         } catch (Exception e) {
             LOGGER.error("An error has occurred while building OpenID Connect Sign In URL", e);
@@ -169,7 +175,8 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
 
         UriBuilder builder = UriBuilder.fromHttpUrl(getConfiguration().getUserAuthorizationUri())
                 .addParameter(Parameters.CLIENT_ID, getConfiguration().getClientId())
-                .addParameter(Parameters.RESPONSE_TYPE, getConfiguration().getResponseType());
+                .addParameter(Parameters.RESPONSE_TYPE, getConfiguration().getProviderResponseType().value());
+
         // append scopes
         if (getConfiguration().getScopes() != null && !getConfiguration().getScopes().isEmpty()) {
             builder.addParameter(Parameters.SCOPE, String.join(SCOPE_DELIMITER, getConfiguration().getScopes()));
@@ -179,41 +186,41 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
             builder.addParameter(io.gravitee.am.common.oidc.Parameters.NONCE, SecureRandomString.generate());
         }
 
+        // using response_mode parameter with the default value for selected resposne_type is not recommended
+        // https://openid.net/specs/oauth-v2-multiple-response-types-1_0.html#ResponseModes
+        if (getConfiguration().getResponseMode() != getConfiguration().getProviderResponseType().defaultResponseMode()) {
+            builder.addParameter(Parameters.RESPONSE_MODE, getConfiguration().getResponseMode().name());
+        }
+
         builder.addParameter(Parameters.REDIRECT_URI, getConfiguration().isEncodeRedirectUri() ? encodeURIComponent(redirectUri) : redirectUri);
         return builder;
     }
 
     protected Maybe<Token> authenticate(Authentication authentication) {
+
+        var responseMode = getConfiguration().getResponseMode();
+
+        var authorizationParameters = responseMode.extractParameters(authentication.getContext().request());
+
         // implicit flow, retrieve the hashValue of the URL (#access_token=....&token_type=...)
-        if (AuthenticationFlow.IMPLICIT_FLOW.equals(authenticationFlow())) {
-            final String hashValue = authentication.getContext().request().parameters().getFirst(HASH_VALUE_PARAMETER);
-            Map<String, String> hashValues = getParams(hashValue.substring(1));
-
-            // implicit flow was used with response_type=id_token token, access token is already fetched, continue
-            if (ResponseType.ID_TOKEN_TOKEN.equals(getConfiguration().getResponseType())) {
-                String accessToken = hashValues.get(ACCESS_TOKEN_PARAMETER);
-                // We store the token is option is enabled
-                if (getConfiguration().isStoreOriginalTokens() && !Strings.isNullOrEmpty(accessToken)) {
-                    authentication.getContext().set(ACCESS_TOKEN_PARAMETER, accessToken);
-                }
-
-                // put the id_token in context for later use
-                authentication.getContext().set(ID_TOKEN_PARAMETER, hashValues.get(ID_TOKEN_PARAMETER));
-                return Maybe.just(new Token(accessToken, TokenTypeHint.ACCESS_TOKEN));
-            }
-
-            // implicit flow was used with response_type=id_token, id token is already fetched, continue
-            if (ResponseType.ID_TOKEN.equals(getConfiguration().getResponseType())) {
-                String idToken = hashValues.get(ID_TOKEN_PARAMETER);
-                // put the id_token in context for later use
-                authentication.getContext().set(ID_TOKEN_PARAMETER, idToken);
-                return Maybe.just(new Token(idToken, TokenTypeHint.ID_TOKEN));
-            }
+        if (AuthenticationFlow.IMPLICIT_FLOW == authenticationFlow()) {
+            return authenticateImplicitFlow(
+                    authorizationParameters,
+                    getConfiguration().getProviderResponseType(),
+                    authentication.getContext()::set);
+        } else {
+            authorizationParameters.add(Parameters.REDIRECT_URI, String.valueOf(authentication.getContext().get(Parameters.REDIRECT_URI)));
+            authorizationParameters.add(ConstantKeys.IDP_CODE_VERIFIER,(String) authentication.getContext().get(ConstantKeys.IDP_CODE_VERIFIER));
+            return authenticateAuthorizationCodeFlow(authorizationParameters, authentication.getContext()::set);
         }
 
+    }
+
+    private Maybe<Token> authenticateAuthorizationCodeFlow(MultiValueMap<String, String> authorizationParameters,
+                                                           BiConsumer<String, String> storeInContext) {
         // authorization code flow, exchange code for an access token
         // prepare body request parameters
-        final String authorizationCode = authentication.getContext().request().parameters().getFirst(getConfiguration().getCodeParameter());
+        final String authorizationCode = authorizationParameters.getFirst(getConfiguration().getCodeParameter());
         if (authorizationCode == null || authorizationCode.isEmpty()) {
             LOGGER.debug("Authorization code is missing, skip authentication");
             return Maybe.error(new BadCredentialsException("Missing authorization code"));
@@ -229,17 +236,16 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
         }
 
         urlParameters.add(new BasicNameValuePair(Parameters.CLIENT_ID, getConfiguration().getClientId()));
-        urlParameters.add(new BasicNameValuePair(Parameters.REDIRECT_URI, String.valueOf(authentication.getContext().get(Parameters.REDIRECT_URI))));
+        urlParameters.add(new BasicNameValuePair(Parameters.REDIRECT_URI, authorizationParameters.getFirst(Parameters.REDIRECT_URI)));
         urlParameters.add(new BasicNameValuePair(Parameters.CODE, authorizationCode));
         urlParameters.add(new BasicNameValuePair(Parameters.GRANT_TYPE, GrantType.AUTHORIZATION_CODE));
         if (getConfiguration().usePkce()) {
-            Optional.ofNullable((String) authentication.getContext().get(ConstantKeys.IDP_CODE_VERIFIER))
+            Optional.ofNullable(authorizationParameters.getFirst(ConstantKeys.IDP_CODE_VERIFIER))
                     .ifPresentOrElse(codeVerifier -> urlParameters.add(new BasicNameValuePair(Parameters.CODE_VERIFIER, codeVerifier)),
                             () -> LOGGER.warn("PKCE is enabled, but there's no code verifier available for the request"));
         }
 
         String bodyRequest = URLEncodedUtils.format(urlParameters);
-
 
         return tokenRequest
                 .putHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(bodyRequest.length()))
@@ -255,17 +261,43 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
                     String accessToken = response.getString(ACCESS_TOKEN_PARAMETER);
                     // We store the token is option is enabled
                     if (getConfiguration().isStoreOriginalTokens() && !Strings.isNullOrEmpty(accessToken)) {
-                        authentication.getContext().set(ACCESS_TOKEN_PARAMETER, accessToken);
+                        storeInContext.accept(ACCESS_TOKEN_PARAMETER, accessToken);
                     }
 
                     // ID Token is always stored for SSO
                     String idToken = response.getString(ID_TOKEN_PARAMETER);
                     if (!Strings.isNullOrEmpty(idToken)) {
-                        authentication.getContext().set(ID_TOKEN_PARAMETER, idToken);
+                        storeInContext.accept(ID_TOKEN_PARAMETER, idToken);
                     }
                     return new Token(accessToken, TokenTypeHint.ACCESS_TOKEN);
                 });
+    }
 
+    private Maybe<Token> authenticateImplicitFlow(MultiValueMap<String, String> authorizationParams, ProviderResponseType providerResponseType,
+                                                  BiConsumer<String, String> storeInContext) {
+
+        // implicit flow was used with response_type=id_token token, access token is already fetched, continue
+        if (providerResponseType.equals(ProviderResponseType.ID_TOKEN_TOKEN)) {
+            String accessToken = authorizationParams.getFirst(ACCESS_TOKEN_PARAMETER);
+            // We store the token is option is enabled
+            if (getConfiguration().isStoreOriginalTokens() && !Strings.isNullOrEmpty(accessToken)) {
+                storeInContext.accept(ACCESS_TOKEN_PARAMETER, accessToken);
+            }
+
+            // put the id_token in context for later use
+            storeInContext.accept(ID_TOKEN_PARAMETER, authorizationParams.getFirst(ID_TOKEN_PARAMETER));
+            return Maybe.just(new Token(accessToken, TokenTypeHint.ACCESS_TOKEN));
+        }
+
+        // implicit flow was used with response_type=id_token, id token is already fetched, continue
+        if (ResponseType.ID_TOKEN.equals(getConfiguration().getResponseType())) {
+            String idToken = authorizationParams.getFirst(ID_TOKEN_PARAMETER);
+            // put the id_token in context for later use
+            storeInContext.accept(ID_TOKEN_PARAMETER, idToken);
+            return Maybe.just(new Token(idToken, TokenTypeHint.ID_TOKEN));
+        }
+
+        return Maybe.error(new IllegalStateException("Wrong response_type for implicit flow: %s".formatted(providerResponseType.value())));
     }
 
     protected Maybe<User> profile(Token token, Authentication authentication) {
@@ -354,10 +386,6 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
             Assert.notNull(keyProcessor, "A key processor must be set");
             jwtProcessor = keyProcessor.create(signature);
         }
-    }
-
-    private Map<String, String> getParams(String query) {
-        return URLEncodedUtils.format(query);
     }
 
 }

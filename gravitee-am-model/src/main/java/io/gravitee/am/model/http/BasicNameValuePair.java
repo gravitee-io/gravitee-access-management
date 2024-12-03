@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model.http;
 
+import io.gravitee.am.common.web.NameValuePair;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team

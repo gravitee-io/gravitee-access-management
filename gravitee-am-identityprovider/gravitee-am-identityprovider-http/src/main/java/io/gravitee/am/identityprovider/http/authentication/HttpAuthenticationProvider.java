@@ -18,6 +18,7 @@ package io.gravitee.am.identityprovider.http.authentication;
 import io.gravitee.am.common.exception.authentication.AuthenticationException;
 import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.web.URLEncodedUtils;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
@@ -61,7 +62,6 @@ import java.lang.reflect.Constructor;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -234,7 +234,7 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
                         responseHandler = httpRequest.rxSendJsonObject(new JsonObject(bodyRequest));
                         break;
                     case(MediaType.APPLICATION_FORM_URLENCODED):
-                        Map<String, String> queryParameters = format(bodyRequest);
+                        Map<String, String> queryParameters = parse(bodyRequest);
                         MultiMap multiMap = MultiMap.caseInsensitiveMultiMap();
                         multiMap.setAll(queryParameters);
                         responseHandler = httpRequest.rxSendForm(multiMap);
@@ -347,13 +347,7 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
         return this.groupMapper != null;
     }
 
-    private static Map<String, String> format(String query) {
-        Map<String, String> queryPairs = new LinkedHashMap<>();
-        String[] pairs = query.split("&");
-        for (String pair : pairs) {
-            int idx = pair.indexOf("=");
-            queryPairs.put(pair.substring(0, idx), pair.substring(idx + 1));
-        }
-        return queryPairs;
+    private static Map<String, String> parse(String query) {
+        return URLEncodedUtils.parse(query);
     }
 }

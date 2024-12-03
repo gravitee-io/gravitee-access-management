@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.linkedin;
 
+import io.gravitee.am.identityprovider.api.social.ProviderResponseType;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfiguration;
 
 import java.util.Set;
@@ -30,7 +31,7 @@ public class LinkedinIdentityProviderConfiguration implements SocialIdentityProv
     private String userProfileUri = "https://api.linkedin.com/v2/me?projection=(*,profilePicture(displayImage~:playableStreams))";
     private String userEmailAddressUri = "https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))";
     private String codeParameter = "code";
-    private String responseType = "code";
+    private ProviderResponseType responseType = ProviderResponseType.CODE;
     private String clientId;
     private String clientSecret;
     private Set<String> scopes;
@@ -82,7 +83,7 @@ public class LinkedinIdentityProviderConfiguration implements SocialIdentityProv
         return codeParameter;
     }
 
-    public String getResponseType() {
+    public ProviderResponseType getProviderResponseType() {
         return responseType;
     }
 

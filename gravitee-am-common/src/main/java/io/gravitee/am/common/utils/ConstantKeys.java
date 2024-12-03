@@ -75,6 +75,7 @@ public interface ConstantKeys {
     String _CSRF = "_csrf";
     String SOCIAL_PROVIDER_CONTEXT_KEY = "socialProviders";
     String INTERNAL_PROVIDER_CONTEXT_KEY = "identityProviders";
+    String URL_HASH_PARAMETER = "urlHash";
     String ERROR_HASH = "errorHash";
 
 

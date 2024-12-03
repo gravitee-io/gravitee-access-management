@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.facebook;
 
+import io.gravitee.am.identityprovider.api.social.ProviderResponseType;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfiguration;
 
 import java.util.Set;
@@ -78,8 +79,9 @@ public class FacebookIdentityProviderConfiguration implements SocialIdentityProv
         return CODE_PARAMETER;
     }
 
-    public String getResponseType() {
-        return RESPONSE_TYPE;
+    @Override
+    public ProviderResponseType getProviderResponseType() {
+        return ProviderResponseType.CODE;
     }
 
     public Integer getConnectTimeout() {

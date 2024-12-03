@@ -21,7 +21,7 @@ import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.identityprovider.common.oauth2.utils.URLEncodedUtils;
+import io.gravitee.am.common.web.URLEncodedUtils;
 import io.gravitee.am.identityprovider.github.GithubIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.github.authentication.spring.GithubAuthenticationProviderConfiguration;
 import io.gravitee.common.http.HttpHeaders;

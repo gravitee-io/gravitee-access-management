@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.github;
 
+import io.gravitee.am.identityprovider.api.social.ProviderResponseType;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfiguration;
 
 import java.util.Set;
@@ -78,8 +79,12 @@ public class GithubIdentityProviderConfiguration implements SocialIdentityProvid
         return codeParameter;
     }
 
+    public ProviderResponseType getProviderResponseType() {
+        return ProviderResponseType.CODE;
+    }
+
     public String getResponseType() {
-        return responseType;
+        return getProviderResponseType().value();
     }
 
     public void setUserAuthorizationUri(String userAuthorizationUri) {

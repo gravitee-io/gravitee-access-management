@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.http;
+package io.gravitee.am.common.web;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
