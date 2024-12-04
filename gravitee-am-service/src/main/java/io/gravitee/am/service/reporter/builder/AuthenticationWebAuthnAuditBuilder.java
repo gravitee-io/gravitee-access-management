@@ -13,24 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.common.analytics;
+package io.gravitee.am.service.reporter.builder;
 
-import java.util.Arrays;
-import java.util.Collection;
+import io.gravitee.am.common.audit.EventType;
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface Field {
-    String USER_STATUS = "user_status";
-    String USER_REGISTRATION = "user_registration";
-    String APPLICATION = "application";
-    String USER = "user";
-    String USER_LOGIN = "user_login";
-    String WEBAUTHN = "webauthn";
-
-    static Collection<String> types() {
-        return Arrays.asList(USER_STATUS, USER_REGISTRATION, APPLICATION, USER, USER_LOGIN, WEBAUTHN);
+public class AuthenticationWebAuthnAuditBuilder extends AuthenticationAuditBuilder{
+    public AuthenticationWebAuthnAuditBuilder() {
+        super();
+        type(EventType.USER_WEBAUTHN_LOGIN);
     }
 }

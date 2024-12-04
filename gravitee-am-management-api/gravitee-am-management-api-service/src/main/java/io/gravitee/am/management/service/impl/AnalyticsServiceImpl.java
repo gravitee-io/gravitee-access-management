@@ -42,6 +42,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.common.audit.EventType.USER_LOGIN;
+import static io.gravitee.am.common.audit.EventType.USER_WEBAUTHN_LOGIN;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -60,20 +63,20 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
     @Override
     public Single<AnalyticsResponse> execute(AnalyticsQuery query) {
-        switch (query.getType()) {
-            case DATE_HISTO:
-                return executeDateHistogram(query);
-            case GROUP_BY:
-                return executeGroupBy(query);
-            case COUNT:
-                return executeCount(query);
-        }
-        return Single.just(new AnalyticsResponse() {});
+        return switch (query.getType()) {
+            case DATE_HISTO -> executeDateHistogram(query);
+            case GROUP_BY -> executeGroupBy(query);
+            case COUNT -> executeCount(query);
+        };
     }
 
     private Single<AnalyticsResponse> executeDateHistogram(AnalyticsQuery query) {
-        AuditReportableCriteria.Builder queryBuilder = new AuditReportableCriteria.Builder()
-                .types(Collections.singletonList(query.getField().toUpperCase()));
+        AuditReportableCriteria.Builder queryBuilder = new AuditReportableCriteria.Builder();
+        if (query.getField().equalsIgnoreCase(USER_LOGIN)) {
+            queryBuilder.types(EventType.loginTypes());
+        } else {
+            queryBuilder.types(Collections.singletonList(query.getField().toUpperCase()));
+        }
         queryBuilder.from(query.getFrom());
         queryBuilder.to(query.getTo());
         queryBuilder.interval(query.getInterval());
@@ -108,13 +111,23 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         switch (query.getField()) {
             case Field.APPLICATION:
                 // applications are group by login attempts
-                queryBuilder.types(Collections.singletonList(EventType.USER_LOGIN));
+                queryBuilder.types(List.of(USER_LOGIN, EventType.USER_WEBAUTHN_LOGIN));
                 queryBuilder.status(Status.SUCCESS.name());
                 queryBuilder.field("accessPoint.id");
                 return executeGroupBy(query.getDomain(), queryBuilder.build(), query.getType())
                         .flatMap(analyticsResponse -> fetchMetadata((AnalyticsGroupByResponse) analyticsResponse));
             case Field.USER_STATUS, Field.USER_REGISTRATION:
                 return userService.statistics(query).map(AnalyticsGroupByResponse::new);
+            case Field.USER_LOGIN:
+                queryBuilder.types(List.of(USER_LOGIN, EventType.USER_WEBAUTHN_LOGIN));
+                queryBuilder.field("type");
+                return executeGroupBy(query.getDomain(), queryBuilder.build(), query.getType())
+                        .flatMap(response -> Single.just(transformKeys((AnalyticsGroupByResponse) response)));
+            case Field.WEBAUTHN:
+                queryBuilder.types(List.of(EventType.USER_WEBAUTHN_LOGIN));
+                queryBuilder.field("outcome.status");
+                return executeGroupBy(query.getDomain(), queryBuilder.build(), query.getType())
+                        .flatMap(response -> Single.just(transformKeys((AnalyticsGroupByResponse) response)));
             default:
                 return executeGroupBy(query.getDomain(), queryBuilder.build(), query.getType());
         }
@@ -147,8 +160,12 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     }
 
     private Single<AnalyticsResponse> executeCount(AnalyticsQuery query) {
-        AuditReportableCriteria.Builder queryBuilder = new AuditReportableCriteria.Builder()
-                .types(Collections.singletonList(query.getField().toUpperCase()));
+        AuditReportableCriteria.Builder queryBuilder = new AuditReportableCriteria.Builder();
+        if (query.getField().equalsIgnoreCase(USER_LOGIN)) {
+            queryBuilder.types(EventType.loginTypes());
+        } else {
+            queryBuilder.types(Collections.singletonList(query.getField().toUpperCase()));
+        }
         queryBuilder.from(query.getFrom());
         queryBuilder.to(query.getTo());
         queryBuilder.status(Status.SUCCESS.name());
@@ -173,5 +190,26 @@ public class AnalyticsServiceImpl implements AnalyticsService {
             metadata.put("deleted", true);
         }
         return metadata;
+    }
+
+    private static AnalyticsGroupByResponse transformKeys(AnalyticsGroupByResponse response) {
+        Map<Object, Object> transformedValues = response.getValues().entrySet().stream()
+                .collect(Collectors.toMap(
+                        entry -> transformKey(entry.getKey()),
+                        Map.Entry::getValue
+                ));
+        response.setValues(transformedValues);
+        return response;
+    }
+
+    private static Object transformKey(Object key) {
+        if (key instanceof String) {
+            return switch ((String) key) {
+                case USER_LOGIN -> "username login";
+                case USER_WEBAUTHN_LOGIN -> "webauthn login";
+                default -> ((String) key).toLowerCase();
+            };
+        }
+        return key;
     }
 }

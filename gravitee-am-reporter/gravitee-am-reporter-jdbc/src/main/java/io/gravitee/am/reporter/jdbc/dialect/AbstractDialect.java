@@ -49,6 +49,7 @@ public abstract class AbstractDialect implements DialectHelper {
     private static final String STATUS = "status";
     private static final String SLOT = "slot";
     private static final String ATTEMPTS = "attempts";
+    private static final String TYPE = "type";
     private String auditsTable;
     private String auditAccessPointsTable;
     private String auditOutcomesTable;
@@ -117,10 +118,11 @@ public abstract class AbstractDialect implements DialectHelper {
     }
 
     protected String groupByConcatQueryParts(AuditReportableCriteria criteria, StringBuilder queryBuilder, StringBuilder whereClauseBuilder, String field) {
+        String limit = (criteria.size() != null && criteria.size() > 0) ? (" LIMIT " + (criteria.size() == null ? 50 : + criteria.size()) + " "): " ";
         return "SELECT " + field + ", COUNT(DISTINCT a.id) as counter " +
                 queryBuilder.toString() +
                 whereClauseBuilder.toString() + " GROUP BY " + field + " " +
-                " LIMIT " + (criteria.size() == null ? 50 : + criteria.size()) + " ";
+                limit;
     }
 
     @Override
@@ -240,7 +242,7 @@ public abstract class AbstractDialect implements DialectHelper {
     }
 
     protected Map<String, Object> toHistogramSlotValue(Row row, RowMetadata rowMetadata) {
-        return Map.of(SLOT, row.get(SLOT), STATUS, row.get(STATUS), ATTEMPTS, row.get(ATTEMPTS));
+        return Map.of(SLOT, row.get(SLOT), STATUS, row.get(STATUS), ATTEMPTS, row.get(ATTEMPTS), TYPE, row.get(TYPE));
     }
 
 }

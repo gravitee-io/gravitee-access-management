@@ -22,5 +22,7 @@ package io.gravitee.am.gateway.handler.common.auth.event;
 public enum AuthenticationEvent {
 
     SUCCESS,
-    FAILURE
+    SUCCESS_WEBAUTHN,
+    FAILURE,
+    FAILURE_WEBAUTHN
 }
