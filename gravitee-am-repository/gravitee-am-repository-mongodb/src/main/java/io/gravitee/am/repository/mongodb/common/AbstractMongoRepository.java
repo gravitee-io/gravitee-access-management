@@ -18,6 +18,7 @@ package io.gravitee.am.repository.mongodb.common;
 import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
+<<<<<<< HEAD
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.common.UserIdFields;
 import io.reactivex.rxjava3.core.Completable;
@@ -25,17 +26,26 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Function;
+=======
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Predicate;
+>>>>>>> 54f179d6b4 (fix: removed unused indexes)
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+<<<<<<< HEAD
 import java.util.Map;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.or;
 import static java.util.Objects.requireNonNullElse;
+=======
+>>>>>>> 54f179d6b4 (fix: removed unused indexes)
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -78,6 +88,7 @@ public abstract class AbstractMongoRepository {
         }
     }
 
+<<<<<<< HEAD
     protected <D, T> Maybe<T> findOne(MongoCollection<D> collection, Bson query, Function<D, T> convertFromMongo) {
         return Observable.fromPublisher(
                         collection
@@ -108,4 +119,14 @@ public abstract class AbstractMongoRepository {
         }
     }
 
+=======
+    protected Completable dropIndexes(MongoCollection<?> collection, Predicate<String> nameMatcher) {
+        return Observable.fromPublisher(collection.listIndexes())
+                .map(document -> document.getString("name"))
+                .filter(nameMatcher)
+                .flatMapCompletable(indexName -> Completable
+                        .fromPublisher(collection.dropIndex(indexName))
+                        .doOnError(e -> logger.error("An error has occurred while deleting index {}", indexName, e)));
+    }
+>>>>>>> 54f179d6b4 (fix: removed unused indexes)
 }

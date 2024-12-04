@@ -33,6 +33,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 
+import java.util.Set;
+
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 
@@ -51,10 +53,16 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
 
     private MongoCollection<CredentialMongo> credentialsCollection;
 
+    private final Set<String> UNUSED_INDEXES = Set.of(
+            "rt1ri1",
+            "rt1ri1un1"
+    );
+
     @PostConstruct
     public void init() {
         credentialsCollection = mongoOperations.getCollection("webauthn_credentials", CredentialMongo.class);
         super.init(credentialsCollection);
+<<<<<<< HEAD
 
         final var indexes = new HashMap<Document, IndexOptions>();
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
@@ -64,6 +72,15 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_AAGUID, 1), new IndexOptions().name("rt1ri1a1"));
 
         super.createIndex(credentialsCollection, indexes);
+=======
+        super.createIndex(credentialsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USER_ID, 1), new IndexOptions().name("rt1ri1uid1"));
+        super.createIndex(credentialsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1).append(FIELD_CREATED_AT, -1), new IndexOptions().name("rt1ri1un1c_1"));
+        super.createIndex(credentialsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CREDENTIAL_ID, 1), new IndexOptions().name("rt1ri1cid1"));
+        super.createIndex(credentialsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_AAGUID, 1), new IndexOptions().name("rt1ri1a1"));
+        if (ensureIndexOnStart) {
+            dropIndexes(credentialsCollection, UNUSED_INDEXES::contains).subscribe();
+        }
+>>>>>>> 54f179d6b4 (fix: removed unused indexes)
     }
 
     @Override
@@ -220,4 +237,5 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
         credentialMongo.setLastCheckedAt(credential.getLastCheckedAt());
         return credentialMongo;
     }
+
 }
