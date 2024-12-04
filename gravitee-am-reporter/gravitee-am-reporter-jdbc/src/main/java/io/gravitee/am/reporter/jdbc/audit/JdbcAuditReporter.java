@@ -84,6 +84,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.reporter.jdbc.dialect.AbstractDialect.intervals;
+import static java.util.stream.Collectors.toMap;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static reactor.adapter.rxjava.RxJava3Adapter.flowableToFlux;
 import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
@@ -256,41 +257,35 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
 
     protected Single<Map<Object, Object>> executeHistogramAggregation(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria) {
         Map<Long, Long> intervals = intervals(criteria);
-        String fieldSuccess = (criteria.types().get(0) + "_" + Status.SUCCESS).toLowerCase();
-        String fieldFailure = (criteria.types().get(0) + "_" + Status.FAILURE).toLowerCase();
+        Map<String, String> types = new HashMap<>();
+        for (String type : criteria.types()) {
+            types.put(composeKey(type, Status.SUCCESS.name()), type);
+            types.put(composeKey(type, Status.FAILURE.name()), type);
+        }
 
         if (!ready) {
             LOGGER.debug(NOT_BOOTSTRAPPED);
-            Map<Object, Object> result = new HashMap<>();
-            result.put(fieldSuccess, new ArrayList<>(intervals.values()));
-            result.put(fieldFailure, new ArrayList<>(intervals.values()));
-            return Single.just(result);
+            return Single.just(types.entrySet().stream().collect(toMap(Map.Entry::getKey, e->new ArrayList<>(intervals.values()))));
         }
 
         return dialectHelper.buildAndProcessHistogram(template.getDatabaseClient(), referenceType, referenceId, criteria).map(stats -> {
-            Map<Long, Long> successResult = new TreeMap<>();
-            Map<Long, Long> failureResult = new TreeMap<>();
+            Map<String, Map<Long, Long>> results = new HashMap<>();
+            types.forEach((key, value) -> results.put(key, new TreeMap<>()));
             stats.forEach(slotValue -> {
                 Long timestamp = ((Number) slotValue.get("slot")).longValue();
                 Long attempts = ((Number) slotValue.get("attempts")).longValue();
-                if (((String)slotValue.get(COL_STATUS)).equalsIgnoreCase("success")) {
-                    successResult.put(timestamp, attempts);
-                } else {
-                    failureResult.put(timestamp, attempts);
-                }
+                String status = (String) slotValue.get(COL_STATUS);
+                String type = (String) slotValue.get(COL_TYPE);
+                results.get(composeKey(type, status)).put(timestamp, attempts);
             });
             // complete result with remaining intervals
-            intervals.forEach((k, v) -> {
-                successResult.putIfAbsent(k, v);
-                failureResult.putIfAbsent(k, v);
-            });
-            List<Long> successData = successResult.entrySet().stream().map(Map.Entry::getValue).toList();
-            List<Long> failureData = failureResult.entrySet().stream().map(Map.Entry::getValue).toList();
-            Map<Object, Object> result = new HashMap<>();
-            result.put(fieldSuccess, successData);
-            result.put(fieldFailure, failureData);
-            return result;
+            intervals.forEach((k, v) -> results.forEach((k1, v1) -> v1.putIfAbsent(k, v)));
+            return results.entrySet().stream().collect(toMap(Map.Entry::getKey, entry -> entry.getValue().entrySet().stream().sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue).collect(Collectors.toList())));
         });
+    }
+
+    private String composeKey(String type, String status){
+        return (type + "_" + status).toLowerCase();
     }
 
     /**

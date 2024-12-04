@@ -19,6 +19,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.Accumulators;
 import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.BsonField;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
@@ -101,6 +102,7 @@ import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporter
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_TYPE_STATUS_SUCCESS_TIMESTAMP_NAME;
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_TYPE_TIMESTAMP_NAME;
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.OLD_INDICES;
+import static java.util.stream.Collectors.toMap;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -141,6 +143,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
     public boolean canSearch() {
         return true;
     }
+
     @Override
     public Single<Page<Audit>> search(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria, int page, int size) {
         // build query
@@ -149,8 +152,8 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
         // run search query
         Single<Long> countOperation = Observable.fromPublisher(reportableCollection.countDocuments(query, new CountOptions().maxTime(cursorMaxTimeInMs, TimeUnit.MILLISECONDS))).first(0l);
         Single<List<Audit>> auditsOperation = Observable.fromPublisher(withMaxTimeout(reportableCollection.find(query))
-                .sort(new BasicDBObject(FIELD_TIMESTAMP, -1))
-                .skip(size * page).limit(size))
+                        .sort(new BasicDBObject(FIELD_TIMESTAMP, -1))
+                        .skip(size * page).limit(size))
                 .map(this::convert).collect(LinkedList::new, List::add);
         return Single.zip(countOperation, auditsOperation, (count, audits) -> new Page<>(audits, page, count));
     }
@@ -194,12 +197,12 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
 
         // init bulk processor
         disposable = bulkProcessor.buffer(
-                configuration.getFlushInterval(),
-                TimeUnit.SECONDS,
-                configuration.getBulkActions())
+                        configuration.getFlushInterval(),
+                        TimeUnit.SECONDS,
+                        configuration.getBulkActions())
                 .flatMap(this::bulk)
                 .doOnError(throwable -> logger.error("An error occurs while indexing data into MongoDB", throwable))
-                .retry() 
+                .retry()
                 .subscribe();
     }
 
@@ -250,8 +253,8 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
             indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR, 1).append(FIELD_TARGET, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME).background(true)));
             indexes.add(new IndexModel(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR_ID, 1).append(FIELD_TARGET_ID, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_ID_TARGET_ID_TIMESTAMP_NAME).background(true)));
             Completable createNewIndexes = Completable.fromPublisher(reportableCollection.createIndexes(indexes))
-                            .doOnComplete(() -> logger.debug("{} Reporter indexes created", indexes.size()))
-                            .doOnError(throwable -> logger.error("An error has occurred during creation of indexes", throwable));
+                    .doOnComplete(() -> logger.debug("{} Reporter indexes created", indexes.size()))
+                    .doOnError(throwable -> logger.error("An error has occurred during creation of indexes", throwable));
 
             // process indexes
             deleteOldIndexes
@@ -264,46 +267,59 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
     private Single<Map<Object, Object>> executeHistogram(AuditReportableCriteria criteria, Bson query) {
         // NOTE : MongoDB does not return count : 0 if there is no matching document in the given time range, we need to add it by hand
         Map<Long, Long> intervals = intervals(criteria);
-        String fieldSuccess = (criteria.types().get(0) + "_" + Status.SUCCESS).toLowerCase();
-        String fieldFailure = (criteria.types().get(0) + "_" + Status.FAILURE).toLowerCase();
+        Map<String, String> types = new HashMap<>();
+        for (String type : criteria.types()) {
+            types.put((type + "_" + Status.SUCCESS).toLowerCase(), type);
+            types.put((type + "_" + Status.FAILURE).toLowerCase(), type);
+        }
         BasicDBObject subTractTimestamp = new BasicDBObject("$subtract", Arrays.asList("$timestamp", new Date(0)));
+        List<BsonField> condition = types.entrySet().stream().map(es -> Accumulators.sum(es.getKey(),
+                        new BasicDBObject("$cond",
+                                Arrays.asList(
+                                        new BasicDBObject("$and", Arrays.asList(
+                                                new BasicDBObject("$eq", Arrays.asList("$outcome.status", es.getKey().contains(Status.SUCCESS.name().toLowerCase()) ? Status.SUCCESS.name() : Status.FAILURE.name())),
+                                                new BasicDBObject("$eq", Arrays.asList("$type", es.getValue()))
+                                        )),
+                                        1,
+                                        0
+                                )
+                        )
+                )
+        ).toList();
+
         return Observable.fromPublisher(withMaxTimeout(reportableCollection.aggregate(Arrays.asList(
                         Aggregates.match(query),
                         Aggregates.group(
                                 new BasicDBObject("_id",
                                         new BasicDBObject("$subtract",
                                                 Arrays.asList(subTractTimestamp, new BasicDBObject("$mod", Arrays.asList(subTractTimestamp, criteria.interval()))))),
-                                Accumulators.sum(fieldSuccess, new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$outcome.status", Status.SUCCESS.name())), 1, 0))),
-                                Accumulators.sum(fieldFailure, new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$outcome.status", Status.FAILURE.name())), 1, 0))))), Document.class))
+                                condition
+                        )), Document.class))
                 ).toList()
                 .map(docs -> {
-                    Map<Long, Long> successResult = new HashMap<>();
-                    Map<Long, Long> failureResult = new HashMap<>();
+                    Map<String, Map<Long, Long>> results = new HashMap<>();
+                    types.forEach((key, value) -> results.put(key, new HashMap<>()));
                     docs.forEach(document -> {
                         Long timestamp = ((Number) ((Document) document.get("_id")).get("_id")).longValue();
-                        successResult.put(timestamp, ((Number) document.get(fieldSuccess)).longValue());
-                        failureResult.put(timestamp, ((Number) document.get(fieldFailure)).longValue());
+                        results.forEach((k, v) -> v.put(timestamp, ((Number) document.get(k)).longValue()));
                     });
                     // complete result with remaining intervals
-                    intervals.forEach((k, v) -> {
-                        successResult.putIfAbsent(k, v);
-                        failureResult.putIfAbsent(k, v);
-                    });
-                    return Map.of(
-                            fieldSuccess, successResult.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue).collect(Collectors.toList()),
-                            fieldFailure, failureResult.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue).collect(Collectors.toList()));
+                    intervals.forEach((k, v) -> results.forEach((k1, v1) -> v1.putIfAbsent(k, v)));
+                    return results.entrySet().stream().collect(toMap(Map.Entry::getKey, entry -> entry.getValue().entrySet().stream().sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue).collect(Collectors.toList())));
                 });
     }
 
     private Single<Map<Object, Object>> executeGroupBy(AuditReportableCriteria criteria, Bson query) {
-        return Observable.fromPublisher(withMaxTimeout(reportableCollection.aggregate(
-                Arrays.asList(
-                        Aggregates.match(query),
-                        Aggregates.group(new BasicDBObject("_id", "$" + criteria.field()), Accumulators.sum("count", 1)),
-                        Aggregates.limit(criteria.size() != null ? criteria.size() : 50)), Document.class
-        )))
+        List<Bson> aggregates = new ArrayList<>(Arrays.asList(
+                Aggregates.match(query),
+                Aggregates.group(new BasicDBObject("_id", "$" + criteria.field()), Accumulators.sum("count", 1))));
+        if (criteria.size() != null && criteria.size() != 0) {
+            aggregates.add(Aggregates.limit(criteria.size()));
+        }
+        return Observable.fromPublisher(withMaxTimeout(reportableCollection.aggregate(aggregates, Document.class
+                )))
                 .toList()
-                .map(docs -> docs.stream().collect(Collectors.toMap(d -> ((Document) d.get("_id")).get("_id"), d -> d.get("count"))));
+                .map(docs -> docs.stream().collect(toMap(d -> ((Document) d.get("_id")).get("_id"), d -> d.get("count"))));
     }
 
     private Single<Map<Object, Object>> executeCount(Bson query) {

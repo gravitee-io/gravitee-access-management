@@ -51,10 +51,10 @@ public class MariaDBDialect extends AbstractDialect {
                 " FROM_UNIXTIME(seq * "+ intervalInSeconds +" + " + bucketStartDate + ") startDate, " +
                 " FROM_UNIXTIME( ( seq + 1 ) * "+ intervalInSeconds +" + " + bucketStartDate + ") endDate FROM seq_0_to_" + (intervals.size() - 1) + " "
                 + ")\n" +
-                " SELECT b.slot, o.status, COUNT(o.status) as attempts " + queryBuilder.toString()
+                " SELECT b.slot, o.status, a.type, COUNT(o.status) as attempts " + queryBuilder.toString()
                 + " RIGHT JOIN time_buckets b ON b.startDate <= a.timestamp and b.endDate >= a.timestamp "
                 + whereClauseBuilder.toString() +
-                " GROUP BY b.slot, o.status ORDER BY b.slot ASC, o.status ";
+                " GROUP BY b.slot, o.status, a.type ORDER BY b.slot ASC, o.status, a.type ";
 
         for (Map.Entry<String, Object> bind : bindings.entrySet()) {
             Object value = bind.getValue();
