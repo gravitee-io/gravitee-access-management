@@ -25,6 +25,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Function;
+import io.reactivex.rxjava3.functions.Predicate;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
@@ -108,4 +109,12 @@ public abstract class AbstractMongoRepository {
         }
     }
 
+    protected Completable dropIndexes(MongoCollection<?> collection, Predicate<String> nameMatcher) {
+        return Observable.fromPublisher(collection.listIndexes())
+                .map(document -> document.getString("name"))
+                .filter(nameMatcher)
+                .flatMapCompletable(indexName -> Completable
+                        .fromPublisher(collection.dropIndex(indexName))
+                        .doOnError(e -> logger.error("An error has occurred while deleting index {}", indexName, e)));
+    }
 }
