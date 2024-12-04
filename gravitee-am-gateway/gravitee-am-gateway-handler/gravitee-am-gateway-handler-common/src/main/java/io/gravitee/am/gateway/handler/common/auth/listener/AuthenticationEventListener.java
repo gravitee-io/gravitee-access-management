@@ -23,12 +23,10 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.AuthenticationAuditBuilder;
+import io.gravitee.am.service.reporter.builder.AuthenticationWebAuthnAuditBuilder;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
-
-import java.util.Objects;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,10 +52,11 @@ public class AuthenticationEventListener extends AbstractService<AuthenticationE
     public void onEvent(Event<AuthenticationEvent, AuthenticationDetails> event) {
         if (domain.getId().equals(event.content().getDomain().getId())) {
             AuthenticationEvent type = event.type();
-            if (Objects.requireNonNull(type) == AuthenticationEvent.SUCCESS) {
-                onAuthenticationSuccess(event.content());
-            } else if (type == AuthenticationEvent.FAILURE) {
-                onAuthenticationFailure(event.content());
+            switch (type) {
+                case SUCCESS -> onAuthenticationSuccess(event.content());
+                case SUCCESS_WEBAUTHN -> onWebAuthNAuthenticationSuccess(event.content());
+                case FAILURE -> onAuthenticationFailure(event.content());
+                case FAILURE_WEBAUTHN -> onWebAuthNAuthenticationFailure(event.content());
             }
         }
     }
@@ -70,8 +69,23 @@ public class AuthenticationEventListener extends AbstractService<AuthenticationE
                 .user(authenticationDetails.getUser()));
     }
 
+    private void onWebAuthNAuthenticationSuccess(AuthenticationDetails authenticationDetails) {
+        auditService.report(AuditBuilder.builder(AuthenticationWebAuthnAuditBuilder.class)
+                .principal(authenticationDetails.getPrincipal())
+                .reference(Reference.domain(authenticationDetails.getDomain().getId()))
+                .client(authenticationDetails.getClient())
+                .user(authenticationDetails.getUser()));
+    }
+
     private void onAuthenticationFailure(AuthenticationDetails authenticationDetails) {
         auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class)
+                .principal(authenticationDetails.getPrincipal())
+                .reference(Reference.domain(authenticationDetails.getDomain().getId()))
+                .client(authenticationDetails.getClient())
+                .throwable(authenticationDetails.getThrowable()));
+    }
+    private void onWebAuthNAuthenticationFailure(AuthenticationDetails authenticationDetails) {
+        auditService.report(AuditBuilder.builder(AuthenticationWebAuthnAuditBuilder.class)
                 .principal(authenticationDetails.getPrincipal())
                 .reference(Reference.domain(authenticationDetails.getDomain().getId()))
                 .client(authenticationDetails.getClient())

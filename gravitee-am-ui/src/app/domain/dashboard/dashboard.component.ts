@@ -138,6 +138,30 @@ export class DomainDashboardComponent implements OnInit {
           },
         },
       },
+      {
+        flex: 50,
+        title: 'Login type',
+        subhead: 'Kind of login',
+        chart: {
+          type: 'pie',
+          request: {
+            type: 'group_by',
+            field: 'user_login',
+          },
+        },
+      },
+      {
+        flex: 50,
+        title: 'WebAuthN Logins',
+        subhead: 'Latest WebAuthN logins',
+        chart: {
+          type: 'pie',
+          request: {
+            type: 'group_by',
+            field: 'webauthn',
+          },
+        },
+      },
     ],
   };
 
