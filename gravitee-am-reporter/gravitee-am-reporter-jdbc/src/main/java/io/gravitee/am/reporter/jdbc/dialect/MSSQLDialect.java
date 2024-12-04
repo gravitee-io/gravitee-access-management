@@ -65,10 +65,10 @@ public class MSSQLDialect extends AbstractDialect {
                                 "[endDate] = DATEADD(MILLISECOND, "+ (slot+criteria.interval()) +" % 1000, DATEADD(SECOND, "+ (slot + criteria.interval())+" / 1000, '19700101'))" )
                         .collect(Collectors.joining(" UNION "))
                 + ")\n" +
-                " SELECT b.slot, o.status, COUNT(o.status) as attempts " + queryBuilder.toString()
+                " SELECT b.slot, o.status, a.type, COUNT(o.status) as attempts " + queryBuilder.toString()
                 + " RIGHT JOIN time_buckets b ON b.startDate <= a.timestamp and b.endDate >= a.timestamp "
                 + whereClauseBuilder.toString() +
-                " GROUP BY b.slot, o.status ORDER BY b.slot ASC, o.status ";
+                " GROUP BY b.slot, o.status, a.type ORDER BY b.slot ASC, o.status, a.type";
 
         for (Map.Entry<String, Object> bind : bindings.entrySet()) {
             Object value = bind.getValue();

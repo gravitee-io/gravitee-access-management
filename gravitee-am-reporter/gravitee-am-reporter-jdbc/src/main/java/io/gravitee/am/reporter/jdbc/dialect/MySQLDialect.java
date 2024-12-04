@@ -53,10 +53,10 @@ public class MySQLDialect extends AbstractDialect {
             String beginSlot = dateTimeFormatter.format(LocalDateTime.ofInstant(Instant.ofEpochMilli(slot), ZoneId.of(ZoneOffset.UTC.getId())));
             String endSlot = dateTimeFormatter.format(LocalDateTime.ofInstant(Instant.ofEpochMilli(slot + criteria.interval()), ZoneId.of(ZoneOffset.UTC.getId())));
             String query =
-                    " SELECT " + slot + " as slot, o.status, COUNT(o.status) as attempts " + queryBuilder
+                    " SELECT " + slot + " as slot, o.status, a.type, COUNT(o.status) as attempts " + queryBuilder
                             + whereClauseBuilder +
                             " AND '" + beginSlot + "' <= a.timestamp and '" + endSlot + "' >= a.timestamp " +
-                            " GROUP BY o.status ORDER BY o.status ";
+                            " GROUP BY o.status, a.type ORDER BY o.status ";
 
             for (Map.Entry<String, Object> bind : bindings.entrySet()) {
                 Object value = bind.getValue();
