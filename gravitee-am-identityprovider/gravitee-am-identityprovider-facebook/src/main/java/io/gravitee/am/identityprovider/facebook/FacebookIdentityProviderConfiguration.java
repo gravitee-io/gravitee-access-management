@@ -17,6 +17,7 @@ package io.gravitee.am.identityprovider.facebook;
 
 import io.gravitee.am.identityprovider.api.social.ProviderResponseType;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfiguration;
+import lombok.Data;
 
 import java.util.Set;
 
@@ -24,13 +25,13 @@ import java.util.Set;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Data
 public class FacebookIdentityProviderConfiguration implements SocialIdentityProviderConfiguration {
 
-    private static final String USER_AUTHORIZATION_URI = "https://www.facebook.com/v8.0/dialog/oauth";
-    private static final String ACCESS_TOKEN_URI = "https://graph.facebook.com/v8.0/oauth/access_token";
-    private static final String USER_PROFILE_URI = "https://graph.facebook.com/v8.0/me";
-    private static final String CODE_PARAMETER = "code";
-    private static final String RESPONSE_TYPE = "code";
+    private String userAuthorizationUri = "https://www.facebook.com/v8.0/dialog/oauth";
+    private String accessTokenUri = "https://graph.facebook.com/v8.0/oauth/access_token";
+    private String userProfileUri = "https://graph.facebook.com/v8.0/me";
+    private String codeParameter = "code";
 
     private String clientId;
     private String clientSecret;
@@ -39,73 +40,9 @@ public class FacebookIdentityProviderConfiguration implements SocialIdentityProv
     private Integer idleTimeout = 10000;
     private Integer maxPoolSize = 200;
 
-    public String getClientId() {
-        return clientId;
-    }
-
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    public String getClientSecret() {
-        return clientSecret;
-    }
-
-    public void setClientSecret(String clientSecret) {
-        this.clientSecret = clientSecret;
-    }
-
-    public Set<String> getScopes() {
-        return scopes;
-    }
-
-    public void setScopes(Set<String> scopes) {
-        this.scopes = scopes;
-    }
-
-    public String getUserAuthorizationUri() {
-        return USER_AUTHORIZATION_URI;
-    }
-
-    public String getAccessTokenUri() {
-        return ACCESS_TOKEN_URI;
-    }
-
-    public String getUserProfileUri() {
-        return USER_PROFILE_URI;
-    }
-
-    public String getCodeParameter() {
-        return CODE_PARAMETER;
-    }
-
     @Override
     public ProviderResponseType getProviderResponseType() {
         return ProviderResponseType.CODE;
-    }
-
-    public Integer getConnectTimeout() {
-        return connectTimeout;
-    }
-
-    public void setConnectTimeout(Integer connectTimeout) {
-        this.connectTimeout = connectTimeout;
-    }
-
-    public Integer getIdleTimeout() {
-        return idleTimeout;
-    }
-
-    public void setIdleTimeout(Integer idleTimeout) {
-        this.idleTimeout = idleTimeout;
-    }
-
-    public Integer getMaxPoolSize() {
-        return maxPoolSize;
-    }
-
-    public void setMaxPoolSize(Integer maxPoolSize) {
-        this.maxPoolSize = maxPoolSize;
     }
 
     @Override
