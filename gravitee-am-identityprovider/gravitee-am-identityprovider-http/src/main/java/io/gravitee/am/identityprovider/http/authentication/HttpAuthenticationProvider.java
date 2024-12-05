@@ -18,7 +18,7 @@ package io.gravitee.am.identityprovider.http.authentication;
 import io.gravitee.am.common.exception.authentication.AuthenticationException;
 import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.common.web.URLEncodedUtils;
+import io.gravitee.am.common.web.URLParametersUtils;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
@@ -348,6 +348,6 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
     }
 
     private static Map<String, String> parse(String query) {
-        return URLEncodedUtils.parse(query);
+        return URLParametersUtils.parse(query);
     }
 }

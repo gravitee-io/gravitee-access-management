@@ -19,7 +19,7 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.exception.oauth2.MethodNotAllowedException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
-import io.gravitee.am.common.web.URLEncodedUtils;
+import io.gravitee.am.common.web.URLParametersUtils;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.model.PushedAuthorizationRequest;
 import io.gravitee.common.http.HttpStatusCode;
@@ -56,7 +56,7 @@ public class PushedAuthorizationRequestEndpoint implements Handler<RoutingContex
         }
 
         final String contentType = context.request().getHeader(HttpHeaders.CONTENT_TYPE);
-        if (contentType == null || !contentType.startsWith(URLEncodedUtils.CONTENT_TYPE)) {
+        if (contentType == null || !contentType.startsWith(URLParametersUtils.CONTENT_TYPE)) {
             throw new InvalidRequestException("Unsupported Content-Type");
         }
 

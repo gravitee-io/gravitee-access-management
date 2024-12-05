@@ -18,7 +18,7 @@ package io.gravitee.am.identityprovider.api.social;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.common.web.URLEncodedUtils;
+import io.gravitee.am.common.web.URLParametersUtils;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
@@ -31,24 +31,24 @@ import java.util.Map;
 
 @RequiredArgsConstructor
 public enum ProviderResponseMode {
-    QUERY("query", HttpMethod.GET) {
+    QUERY("query") {
         @Override
         public MultiValueMap<String, String> extractParameters(Request request) {
             return new LinkedMultiValueMap<>(request.parameters());
         }
     },
-    FRAGMENT("fragment", HttpMethod.POST) {
+    FRAGMENT("fragment") {
         @Override
         public MultiValueMap<String, String> extractParameters(Request request) {
             final String hashValue = request.parameters().getFirst(ConstantKeys.URL_HASH_PARAMETER);
-            Map<String, String> hashValues = URLEncodedUtils.parse(hashValue.substring(1));
+            Map<String, String> hashValues = URLParametersUtils.parse(hashValue.substring(1));
 
             var map = new LinkedMultiValueMap<String, String>();
             hashValues.forEach(map::add);
             return map;
         }
     },
-    DEFAULT("default", null) {
+    DEFAULT("default") {
         @Override
         public MultiValueMap<String, String> extractParameters(Request request) {
             throw new IllegalStateException("can't extract parameters");
@@ -57,9 +57,6 @@ public enum ProviderResponseMode {
 
     @Getter
     private final String value;
-
-    @Getter
-    private final HttpMethod callbackMethod;
 
     @JsonValue
     public String toJson() {

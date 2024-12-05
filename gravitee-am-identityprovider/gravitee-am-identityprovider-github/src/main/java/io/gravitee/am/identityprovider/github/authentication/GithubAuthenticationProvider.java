@@ -29,12 +29,12 @@ import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.common.oauth2.authentication.AbstractSocialAuthenticationProvider;
-import io.gravitee.am.common.web.URLEncodedUtils;
+import io.gravitee.am.common.web.URLParametersUtils;
 import io.gravitee.am.identityprovider.github.GithubIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.github.authentication.spring.GithubAuthenticationProviderConfiguration;
 import io.gravitee.am.identityprovider.github.model.GithubUser;
 import io.gravitee.am.model.http.BasicNameValuePair;
-import io.gravitee.am.common.web.NameValuePair;
+import io.gravitee.am.model.http.NameValuePair;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
@@ -119,7 +119,7 @@ public class GithubAuthenticationProvider extends AbstractSocialAuthenticationPr
         urlParameters.add(new BasicNameValuePair(CLIENT_SECRET, configuration.getClientSecret()));
         urlParameters.add(new BasicNameValuePair(REDIRECT_URI, (String) authentication.getContext().get(REDIRECT_URI)));
         urlParameters.add(new BasicNameValuePair(CODE, authorizationCode));
-        String bodyRequest = URLEncodedUtils.format(urlParameters);
+        String bodyRequest = URLParametersUtils.format(urlParameters);
 
         return client.postAbs(configuration.getAccessTokenUri())
                 .putHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(bodyRequest.length()))
@@ -132,7 +132,7 @@ public class GithubAuthenticationProvider extends AbstractSocialAuthenticationPr
                         throw new BadCredentialsException(httpResponse.statusMessage());
                     }
 
-                    Map<String, String> bodyResponse = URLEncodedUtils.parse(httpResponse.bodyAsString());
+                    Map<String, String> bodyResponse = URLParametersUtils.parse(httpResponse.bodyAsString());
                     // Set original token if allowed
                     final String tokenValue = bodyResponse.get(ACCESS_TOKEN_PARAMETER);
                     if (configuration.isStoreOriginalTokens()) {

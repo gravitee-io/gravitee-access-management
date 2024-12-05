@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.handler.login;
 import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.common.web.URLEncodedUtils;
+import io.gravitee.am.common.web.URLParametersUtils;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
@@ -104,6 +104,6 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
     }
 
     private Map<String, String> getParams(String query) {
-        return URLEncodedUtils.parse(query);
+        return URLParametersUtils.parse(query);
     }
 }

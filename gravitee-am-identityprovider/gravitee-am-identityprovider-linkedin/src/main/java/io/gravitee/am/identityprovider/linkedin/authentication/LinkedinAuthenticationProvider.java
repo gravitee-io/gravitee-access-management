@@ -29,12 +29,12 @@ import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.common.oauth2.authentication.AbstractSocialAuthenticationProvider;
-import io.gravitee.am.common.web.URLEncodedUtils;
+import io.gravitee.am.common.web.URLParametersUtils;
 import io.gravitee.am.identityprovider.linkedin.LinkedinIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.linkedin.authentication.model.LinkedinUser;
 import io.gravitee.am.identityprovider.linkedin.authentication.spring.LinkedinAuthenticationProviderConfiguration;
 import io.gravitee.am.model.http.BasicNameValuePair;
-import io.gravitee.am.common.web.NameValuePair;
+import io.gravitee.am.model.http.NameValuePair;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
@@ -129,7 +129,7 @@ public class LinkedinAuthenticationProvider extends AbstractSocialAuthentication
         urlParameters.add(new BasicNameValuePair(REDIRECT_URI, (String) authentication.getContext().get(REDIRECT_URI)));
         urlParameters.add(new BasicNameValuePair(CODE, authorizationCode));
         urlParameters.add(new BasicNameValuePair(GRANT_TYPE, "authorization_code"));
-        String bodyRequest = URLEncodedUtils.format(urlParameters);
+        String bodyRequest = URLParametersUtils.format(urlParameters);
 
         return client.postAbs(configuration.getAccessTokenUri())
                 .putHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(bodyRequest.length()))

@@ -30,9 +30,9 @@ import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.Pair;
 import io.gravitee.am.common.utils.SecureRandomString;
-import io.gravitee.am.common.web.NameValuePair;
-import io.gravitee.am.common.web.URLEncodedUtils;
+import io.gravitee.am.common.web.URLParametersUtils;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
@@ -41,7 +41,6 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectAuthenticationProvider;
 import io.gravitee.am.identityprovider.api.oidc.jwt.KeyResolver;
-import io.gravitee.am.identityprovider.api.social.ProviderResponseMode;
 import io.gravitee.am.identityprovider.api.social.ProviderResponseType;
 import io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.hmac.MACJWKSourceResolver;
 import io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.remote.RemoteJWKSourceResolver;
@@ -50,9 +49,7 @@ import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.AbstractKeyPr
 import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.HMACKeyProcessor;
 import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.JWKSKeyProcessor;
 import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.RSAKeyProcessor;
-import io.gravitee.am.model.http.BasicNameValuePair;
 import io.gravitee.common.http.HttpHeaders;
-import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.MediaType;
 import io.gravitee.common.util.MultiValueMap;
 import io.reactivex.rxjava3.core.Maybe;
@@ -150,16 +147,14 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
                 builder.addParameter(Parameters.CODE_CHALLENGE_METHOD, getConfiguration().getCodeChallengeMethod().getUriValue());
             }
 
-            var callbackMethod = getConfiguration().getResponseMode().getCallbackMethod();
-
             if (state == null || state.isEmpty()) {
-                return Maybe.just(new Request(callbackMethod, builder.buildString()));
+                return Maybe.just(Request.get(builder.buildString()));
             }
 
             return stateEncoder.encode(state)
                     .flatMapMaybe(encodedState -> {
                         builder.addParameter(Parameters.STATE, encodedState);
-                        return Maybe.just(new Request(callbackMethod, builder.buildString()));
+                        return Maybe.just(Request.get(builder.buildString()));
                     });
         } catch (Exception e) {
             LOGGER.error("An error has occurred while building OpenID Connect Sign In URL", e);
@@ -226,26 +221,26 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
             return Maybe.error(new BadCredentialsException("Missing authorization code"));
         }
 
-        final List<NameValuePair> urlParameters = new ArrayList<>();
+        final List<Pair<String,String>> urlParameters = new ArrayList<>();
         final HttpRequest<Buffer> tokenRequest = getClient().postAbs(getConfiguration().getAccessTokenUri());
 
         if (ClientAuthenticationMethod.CLIENT_SECRET_BASIC.equals(this.getConfiguration().getClientAuthenticationMethod())) {
             tokenRequest.basicAuthentication(getConfiguration().getClientId(), getConfiguration().getClientSecret());
         } else {
-            urlParameters.add(new BasicNameValuePair(Parameters.CLIENT_SECRET, getConfiguration().getClientSecret()));
+            urlParameters.add(Pair.of(Parameters.CLIENT_SECRET, getConfiguration().getClientSecret()));
         }
 
-        urlParameters.add(new BasicNameValuePair(Parameters.CLIENT_ID, getConfiguration().getClientId()));
-        urlParameters.add(new BasicNameValuePair(Parameters.REDIRECT_URI, authorizationParameters.getFirst(Parameters.REDIRECT_URI)));
-        urlParameters.add(new BasicNameValuePair(Parameters.CODE, authorizationCode));
-        urlParameters.add(new BasicNameValuePair(Parameters.GRANT_TYPE, GrantType.AUTHORIZATION_CODE));
+        urlParameters.add(Pair.of(Parameters.CLIENT_ID, getConfiguration().getClientId()));
+        urlParameters.add(Pair.of(Parameters.REDIRECT_URI, authorizationParameters.getFirst(Parameters.REDIRECT_URI)));
+        urlParameters.add(Pair.of(Parameters.CODE, authorizationCode));
+        urlParameters.add(Pair.of(Parameters.GRANT_TYPE, GrantType.AUTHORIZATION_CODE));
         if (getConfiguration().usePkce()) {
             Optional.ofNullable(authorizationParameters.getFirst(ConstantKeys.IDP_CODE_VERIFIER))
-                    .ifPresentOrElse(codeVerifier -> urlParameters.add(new BasicNameValuePair(Parameters.CODE_VERIFIER, codeVerifier)),
+                    .ifPresentOrElse(codeVerifier -> urlParameters.add(Pair.of(Parameters.CODE_VERIFIER, codeVerifier)),
                             () -> LOGGER.warn("PKCE is enabled, but there's no code verifier available for the request"));
         }
 
-        String bodyRequest = URLEncodedUtils.format(urlParameters);
+        String bodyRequest = URLParametersUtils.format(urlParameters);
 
         return tokenRequest
                 .putHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(bodyRequest.length()))

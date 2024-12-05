@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.identityprovider.http.user;
 
-import io.gravitee.am.common.web.URLEncodedUtils;
+import io.gravitee.am.common.web.URLParametersUtils;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
@@ -58,7 +58,6 @@ import java.lang.reflect.Constructor;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -392,6 +391,6 @@ public class HttpUserProvider implements UserProvider {
     }
 
     private static Map<String, String> parse(String query) {
-        return URLEncodedUtils.parse(query);
+        return URLParametersUtils.parse(query);
     }
 }

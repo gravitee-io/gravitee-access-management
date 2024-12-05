@@ -19,7 +19,7 @@ import com.nimbusds.jwt.JWT;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
-import io.gravitee.am.common.web.URLEncodedUtils;
+import io.gravitee.am.common.web.URLParametersUtils;
 import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.service.utils.WildcardUtils;
 import io.vertx.core.json.Json;
@@ -149,7 +149,7 @@ public class ParamUtils {
     public static String appendQueryParameter(String redirectTo, MultiMap queryParams) {
         try {
             final var query = new URL(redirectTo).getQuery();
-            final var redirectQueryParams = isNullOrEmpty(query) ? Collections.emptyMap() : URLEncodedUtils.parse(query);
+            final var redirectQueryParams = isNullOrEmpty(query) ? Collections.emptyMap() : URLParametersUtils.parse(query);
 
             final var uriBuilder = UriBuilder.fromHttpUrl(redirectTo);
             queryParams.forEach(entry -> {

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.common.web;
 
+import io.gravitee.am.common.utils.Pair;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -26,16 +27,16 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class URLEncodedUtils {
+public class URLParametersUtils {
 
     public static final String CONTENT_TYPE = "application/x-www-form-urlencoded";
     private static final char QP_SEP_A = '&';
     private static final String NAME_VALUE_SEPARATOR = "=";
 
-    public static String format(final Iterable<? extends NameValuePair> parameters) {
+    public static String format(final Iterable<? extends Pair<String,String>> parameters) {
         final StringBuilder result = new StringBuilder();
-        for (final NameValuePair parameter : parameters) {
-            final String parameterName = parameter.getName();
+        for (final var parameter : parameters) {
+            final String parameterName = parameter.getKey();
             final String parameterValue = parameter.getValue();
             if (!result.isEmpty()) {
                 result.append(QP_SEP_A);
