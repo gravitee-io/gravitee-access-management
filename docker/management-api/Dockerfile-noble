@@ -21,7 +21,8 @@ ARG GRAVITEEAM_VERSION=0
 RUN apk update \
 	&& apk add --update --no-cache zip unzip netcat-openbsd wget \
 	&& wget --no-check-certificate  -O /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip https://download.gravitee.io/graviteeio-am/components/gravitee-am-management-api/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip \
-    && unzip /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/
+    && unzip /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
+    && rm /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip
 
 FROM eclipse-temurin:17.0.13_11-jre-noble
 LABEL maintainer="contact@graviteesource.com"
@@ -32,9 +33,6 @@ RUN groupmod --new-name graviteeio ubuntu && \
  adduser --disabled-password --no-create-home -uid 1001 graviteeio --ingroup graviteeio
 
 COPY --from=build-env --chown=1001:1000 /tmp/gravitee-am-management-api-standalone-* /opt/graviteeio-am-management-api/
-
-RUN chgrp -R 0 ${GRAVITEEIO_HOME} \
-    && chmod -R g=u ${GRAVITEEIO_HOME}
 
 WORKDIR ${GRAVITEEIO_HOME}
 EXPOSE 8093
