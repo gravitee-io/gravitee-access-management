@@ -26,6 +26,8 @@ import { UserService } from '../../../../../services/user.service';
 import { UserClaimComponent } from '../../creation/user-claim.component';
 import { AuthService } from '../../../../../services/auth.service';
 import { OrganizationService } from '../../../../../services/organization.service';
+import { DomainPasswordPolicy } from '../../../password-policy/domain-password-policy.model';
+import { PasswordPolicyService } from '../../../../../services/password-policy.service';
 
 import { AccountTokenCreationDialogComponent, AccountTokenCreationDialogResult } from './token/account-token-creation-dialog.component';
 import { AccountTokenCopyDialogComponent, AccountTokenCopyDialogData } from './token/account-token-copy-dialog.component';
@@ -54,6 +56,8 @@ export class UserProfileComponent implements OnInit {
   accountTokens: any[] = [];
   emailRequired: boolean = true;
   private domainId: string;
+  passwordValid: boolean;
+  passwordPolicy: DomainPasswordPolicy;
 
   constructor(
     private route: ActivatedRoute,
@@ -63,23 +67,30 @@ export class UserProfileComponent implements OnInit {
     private userService: UserService,
     private organizationService: OrganizationService,
     private authService: AuthService,
+    private passwordPolicyService: PasswordPolicyService,
     private readonly matDialog: MatDialog,
-  ) {}
+  ) {
+    this.domainId = this.route.snapshot.data['domain']?.id;
+    this.user = this.route.snapshot.data['user'];
+  }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.data['domain']?.id;
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
       this.canEdit = this.authService.hasPermissions(['organization_user_update']);
       this.canDelete = this.authService.hasPermissions(['organization_user_delete']);
+      this.passwordPolicy = {};
     } else {
       this.canEdit = this.authService.hasPermissions(['domain_user_update']);
       this.canDelete = this.authService.hasPermissions(['domain_user_delete']);
       this.userService.isEmailRequired().subscribe((response: boolean) => {
         this.emailRequired = response;
       });
+      if (this.editMode()) {
+        this.passwordPolicyService.getPolicyForIdp(this.domainId, this.user.sourceId).subscribe((policy) => (this.passwordPolicy = policy));
+      }
     }
-    this.user = this.route.snapshot.data['user'];
+
     this.organizationService.getAccountTokens(this.route.snapshot.data['user'].id).subscribe((tokens) => {
       this.accountTokens = tokens;
     });

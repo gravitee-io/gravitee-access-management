@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.service.exception;
 
+import io.gravitee.am.model.PasswordPolicy;
+import io.gravitee.am.service.validators.password.PasswordSettingsStatus;
+
 /**
  * @author Boualem DJELAILI (boualem.djelaili at graviteesource.com)
  * @author GraviteeSource Team
@@ -39,6 +42,38 @@ public class InvalidPasswordException extends InvalidParameterException {
     }
     public static InvalidPasswordException of(String message) {
         return new InvalidPasswordException(message);
+    }
+
+    public static InvalidPasswordException of(PasswordSettingsStatus evaluation, PasswordPolicy policy, String errorKey) {
+        var message = new StringBuilder("The provided password does not meet the password policy requirements\n");
+        if (evaluation.getDefaultPolicy() == Boolean.FALSE) {
+            message.append("- Must match the default policy\n");
+        }
+        if (evaluation.getMinLength() == Boolean.FALSE) {
+            message.append("- Must have at least ").append(policy.getMinLength()).append(" characters\n");
+        }
+        if (evaluation.getIncludeNumbers() == Boolean.FALSE) {
+            message.append("- Must contain a number\n");
+        }
+        if (evaluation.getIncludeSpecialCharacters() == Boolean.FALSE) {
+            message.append("- Must contain a special character\n");
+        }
+        if (evaluation.getLettersInMixedCase() == Boolean.FALSE) {
+            message.append("- Must contain a lower- and upper-case letter\n");
+        }
+        if (evaluation.getMaxConsecutiveLetters() == Boolean.FALSE) {
+            message.append("- Can't have any character repeated ").append(policy.getMaxConsecutiveLetters()).append(" times in a row\n");
+        }
+        if (evaluation.getExcludePasswordsInDictionary() == Boolean.FALSE) {
+            message.append("- Can't be a common password\n");
+        }
+        if (evaluation.getExcludeUserProfileInfoInPassword() == Boolean.FALSE) {
+            message.append("- Can't contain information from user's profile\n");
+        }
+        if (evaluation.getRecentPasswordsNotReused() == Boolean.FALSE) {
+            message.append("- Can't be a recent password\n");
+        }
+        return new InvalidPasswordException(message.toString(), errorKey);
     }
 
     public String getErrorKey() {

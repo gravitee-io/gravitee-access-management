@@ -17,13 +17,14 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.model.AssignPasswordPolicy;
@@ -65,6 +66,9 @@ public class IdentityProviderResource extends AbstractResource {
 
     @Autowired
     private IdentityProviderServiceProxy identityProviderService;
+
+    @Autowired
+    private PasswordPolicyService passwordPolicyService;
 
     @Autowired
     private DomainService domainService;
@@ -147,7 +151,6 @@ public class IdentityProviderResource extends AbstractResource {
                 .subscribe(response::resume, response::resume);
     }
 
-
     @PUT
     @Path("/password-policy")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -174,9 +177,9 @@ public class IdentityProviderResource extends AbstractResource {
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(__ -> identityProviderService.findById(identity))
                         .flatMap(identityProvider ->
-                            // only IDP with a UserProvider can contain password policy assigned
-                            identityProviderManager.getUserProvider(identityProvider.getId())
-                                    .switchIfEmpty(Maybe.error(new IdentityProviderNotFoundException(identity)))
+                                // only IDP with a UserProvider can contain password policy assigned
+                                identityProviderManager.getUserProvider(identityProvider.getId())
+                                        .switchIfEmpty(Maybe.error(new IdentityProviderNotFoundException(identity)))
                         )
                         .flatMapSingle(__ -> identityProviderService.updatePasswordPolicy(domain, identity, assignPasswordPolicy)))
                 .map(this::hideConfiguration)

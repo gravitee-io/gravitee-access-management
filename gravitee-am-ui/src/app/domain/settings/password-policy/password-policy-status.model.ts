@@ -14,20 +14,13 @@
  * limitations under the License.
  */
 
-export interface DomainPasswordPolicy {
-  id?: string;
-  referenceId?: string;
-  referenceType?: string;
-  name?: string;
-  minLength?: number;
-  maxLength?: number;
+export interface PasswordPolicyStatus {
+  minLength?: boolean;
   includeNumbers?: boolean;
   includeSpecialCharacters?: boolean;
   lettersInMixedCase?: boolean;
-  maxConsecutiveLetters?: number;
+  maxConsecutiveLetters?: boolean;
   excludePasswordsInDictionary?: boolean;
   excludeUserProfileInfoInPassword?: boolean;
-  expiryDuration?: number;
-  passwordHistoryEnabled?: boolean;
-  oldPasswords?: number;
+  recentPasswordsNotReused?: boolean;
 }

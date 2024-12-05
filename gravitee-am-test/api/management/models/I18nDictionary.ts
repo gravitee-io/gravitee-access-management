@@ -26,6 +26,13 @@
 /* tslint:disable */
 /* eslint-disable */
 import { exists, mapValues } from '../runtime';
+import {
+    Reference,
+    ReferenceFromJSON,
+    ReferenceFromJSONTyped,
+    ReferenceToJSON,
+} from './Reference';
+
 /**
  * 
  * @export
@@ -80,6 +87,12 @@ export interface I18nDictionary {
      * @memberof I18nDictionary
      */
     entries?: { [key: string]: string; };
+    /**
+     * 
+     * @type {Reference}
+     * @memberof I18nDictionary
+     */
+    reference?: Reference;
 }
 
 
@@ -114,6 +127,7 @@ export function I18nDictionaryFromJSONTyped(json: any, ignoreDiscriminator: bool
         'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
         'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
         'entries': !exists(json, 'entries') ? undefined : json['entries'],
+        'reference': !exists(json, 'reference') ? undefined : ReferenceFromJSON(json['reference']),
     };
 }
 
@@ -134,6 +148,7 @@ export function I18nDictionaryToJSON(value?: I18nDictionary | null): any {
         'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
         'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
         'entries': value.entries,
+        'reference': ReferenceToJSON(value.reference),
     };
 }
 

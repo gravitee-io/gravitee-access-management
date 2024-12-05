@@ -1285,7 +1285,7 @@
 													"",
 													"pm.test(\"UM - create user - password too long\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"The provided password does not meet the password policy requirements.\");",
+													"    pm.expect(jsonData.message).to.match(/The provided password does not meet the password policy requirements.*/);",
 													"});"
 												],
 												"type": "text/javascript"

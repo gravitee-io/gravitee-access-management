@@ -202,13 +202,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                                 return passwordPolicyService.retrievePasswordPolicy(transform, client, identityProvider.orElse(null))
                                                         .map(Optional::ofNullable)
                                                         .switchIfEmpty(Maybe.just(Optional.empty()))
-                                                        .flatMapSingle(optPolicy -> {
-                                                            var password = newUser.getPassword();
-                                                            if (password != null && isInvalidUserPassword(password, optPolicy.orElse(null), transform)) {
-                                                                return Single.error(InvalidPasswordException.of("The provided password does not meet the password policy requirements."));
-                                                            }
-                                                            return Single.just(transform);
-                                                        })
+                                                        .flatMapSingle(optPolicy -> ensurePasswordMatchesPolicy(newUser.getPassword(), transform, optPolicy))
                                                         .flatMapCompletable(user -> userValidator.validate(user))
                                                         .doOnError(throwable -> {
                                                             if (throwable instanceof InvalidPasswordException) {
@@ -255,20 +249,20 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                                             }
                                                         })
                                                         .flatMap(newUser1 -> Single.just(transform(newUser1)).flatMapMaybe(user -> {
-                                                               AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
-                                                               if (TRUE.equals(newUser.isPreRegistration() && accountSettings != null) && accountSettings.isDynamicUserRegistration()) {
-                                                                   return getUserRegistrationToken(user).map(token -> {
-                                                                       user.setRegistrationUserUri(domainService.buildUrl(domain, "/confirmRegistration"));
-                                                                       user.setRegistrationAccessToken(token);
-                                                                       return user;
-                                                                   }).defaultIfEmpty(user).toMaybe();
-                                                               }
-                                                               return Maybe.just(user);
-                                                           })
-                                                                   .toSingle()
-                                                                   .flatMap(user -> userService.create(user)
-                                                                    .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
-                                                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).reference(Reference.domain(domain.getId())).throwable(throwable)))))
+                                                                    AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
+                                                                    if (TRUE.equals(newUser.isPreRegistration() && accountSettings != null) && accountSettings.isDynamicUserRegistration()) {
+                                                                        return getUserRegistrationToken(user).map(token -> {
+                                                                            user.setRegistrationUserUri(domainService.buildUrl(domain, "/confirmRegistration"));
+                                                                            user.setRegistrationAccessToken(token);
+                                                                            return user;
+                                                                        }).defaultIfEmpty(user).toMaybe();
+                                                                    }
+                                                                    return Maybe.just(user);
+                                                                })
+                                                                .toSingle()
+                                                                .flatMap(user -> userService.create(user)
+                                                                        .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
+                                                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).reference(Reference.domain(domain.getId())).throwable(throwable)))))
                                                         .flatMap(user -> {
                                                             // end pre-registration user if required
                                                             AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
@@ -284,7 +278,6 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                     }
                 });
     }
-
 
     @Override
     public Single<User> update(String domain, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal) {
@@ -319,9 +312,8 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                             return passwordPolicyService.retrievePasswordPolicy(user, client, identityProvider.orElse(null))
                                                     .map(Optional::ofNullable)
                                                     .switchIfEmpty(Maybe.just(Optional.empty()))
-                                                    .filter(optPolicy -> !isInvalidUserPassword(password, optPolicy.orElse(null), user))
-                                                    .switchIfEmpty(Maybe.error(() -> new InvalidPasswordException("The provided password does not meet the password policy requirements.")))
-                                                    .flatMap(optPolicy -> passwordHistoryService.addPasswordToHistory(DOMAIN, domain.getId(), user, password, principal, optPolicy.orElse(null)))
+                                                    .flatMap(optPolicy -> ensurePasswordMatchesPolicy(password, user, optPolicy)
+                                                            .flatMapMaybe(ignore -> passwordHistoryService.addPasswordToHistory(DOMAIN, domain.getId(), user, password, principal, optPolicy.orElse(null))))
                                                     .ignoreElement()
                                                     .andThen(Single.defer(() -> userProvider.findByUsername(user.getUsername())
                                                             .switchIfEmpty(Single.error(() -> new UserNotFoundException(user.getUsername())))
@@ -335,28 +327,28 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                                                 return Single.error(ex);
                                                             })));
                                         }).flatMap(idpUser -> {
-                                              // update 'users' collection for management and audit purpose
-                                              // if user was in pre-registration mode, end the registration process
-                                              if (user.isPreRegistration()) {
-                                                  user.setRegistrationCompleted(true);
-                                                  user.setEnabled(true);
-                                              }
-                                              user.setPassword(null);
-                                              user.setExternalId(idpUser.getId());
-                                              user.setLastPasswordReset(new Date());
-                                              user.setUpdatedAt(new Date());
-                                              return userService.update(user);
-                                          })
+                                            // update 'users' collection for management and audit purpose
+                                            // if user was in pre-registration mode, end the registration process
+                                            if (user.isPreRegistration()) {
+                                                user.setRegistrationCompleted(true);
+                                                user.setEnabled(true);
+                                            }
+                                            user.setPassword(null);
+                                            user.setExternalId(idpUser.getId());
+                                            user.setLastPasswordReset(new Date());
+                                            user.setUpdatedAt(new Date());
+                                            return userService.update(user);
+                                        })
                                         // after audit, invalidate tokens whatever is the domain or app settings
-                                       // as it is an admin action here, we want to force the user to login
-                                       .flatMap(updatedUser -> Single.defer(() -> tokenService.deleteByUser(updatedUser)
-                                                                             .toSingleDefault(updatedUser)
-                                                                             .onErrorResumeNext(err -> {
-                                                                                 logger.warn("Tokens not invalidated for user {} due to : {}", userId, err.getMessage());
-                                                                                 return Single.just(updatedUser);
-                                                                             })))
-                                       .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user)))
-                                       .doOnError(throwable -> {
+                                        // as it is an admin action here, we want to force the user to login
+                                        .flatMap(updatedUser -> Single.defer(() -> tokenService.deleteByUser(updatedUser)
+                                                .toSingleDefault(updatedUser)
+                                                .onErrorResumeNext(err -> {
+                                                    logger.warn("Tokens not invalidated for user {} due to : {}", userId, err.getMessage());
+                                                    return Single.just(updatedUser);
+                                                })))
+                                        .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user)))
+                                        .doOnError(throwable -> {
                                             if(throwable instanceof InvalidPasswordException){
                                                 auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).user(user).principal(principal).type(EventType.USER_PASSWORD_VALIDATION).reference(Reference.domain(domain.getId())).throwable(throwable));
                                             } else {
@@ -373,6 +365,16 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                             .build();
                     return loginAttemptService.reset(criteria);
                 });
+    }
+
+    private Single<User> ensurePasswordMatchesPolicy(String password, User user, Optional<PasswordPolicy> optPolicy) {
+        var policy = optPolicy.orElse(null);
+        var passEvaluation = passwordService.evaluate(password, policy, user);
+        if (password == null || passEvaluation.isValid()) {
+            return Single.just(user);
+        } else {
+            return Single.error(InvalidPasswordException.of(passEvaluation, policy, "invalid_password_value"));
+        }
     }
 
     @Override
@@ -552,10 +554,6 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                 }).ignoreElement();
     }
 
-    private boolean isInvalidUserPassword(String password, PasswordPolicy policy, User user) {
-        return !passwordService.isValid(password, policy, user);
-    }
-
     private Maybe<String> getUserRegistrationToken(User user) {
         // fetch email to get the custom expiresAfter time
         return emailService.getEmailTemplate(Template.REGISTRATION_CONFIRMATION, user)
@@ -582,11 +580,11 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
     @SuppressWarnings("ResultOfMethodCallIgnored")
     private void createPasswordHistory(Domain domain, Application client, User user, String rawPassword, io.gravitee.am.identityprovider.api.User principal, IdentityProvider provider) {
         passwordPolicyService.retrievePasswordPolicy(user, client, provider)
-                        .map(Optional::of)
-                        .switchIfEmpty(Maybe.just(Optional.empty()))
-                        .flatMap(optPolicy -> passwordHistoryService.addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword , principal, optPolicy.orElse(null)))
+                .map(Optional::of)
+                .switchIfEmpty(Maybe.just(Optional.empty()))
+                .flatMap(optPolicy -> passwordHistoryService.addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword, principal, optPolicy.orElse(null)))
                 .subscribe(passwordHistory -> logger.debug("Created password history for user with ID {}", user),
-                           throwable -> logger.debug("Failed to create password history", throwable));
+                        throwable -> logger.debug("Failed to create password history", throwable));
     }
 
     private static Template getTemplate(Domain domain, Optional<Application> optClient, User user) {
