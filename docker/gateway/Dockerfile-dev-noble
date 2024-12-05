@@ -22,7 +22,8 @@ RUN apk add --update zip unzip
 
 ADD ./gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip /tmp/
 
-RUN unzip /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/
+RUN unzip /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
+    && rm /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip
 
 FROM eclipse-temurin:17.0.13_11-jre-noble
 LABEL maintainer="contact@graviteesource.com"
@@ -30,9 +31,7 @@ LABEL maintainer="contact@graviteesource.com"
 ENV GRAVITEE_AM_HOME /opt/graviteeio-am-gateway
 
 RUN groupmod --new-name graviteeio ubuntu && \
- adduser --disabled-password --no-create-home -uid 1001 graviteeio --ingroup graviteeio && \
- chgrp -R graviteeio ${GRAVITEE_AM_HOME} && \
- chmod -R g=u ${GRAVITEE_AM_HOME}
+ adduser --disabled-password --no-create-home -uid 1001 graviteeio --ingroup graviteeio
 
 COPY --from=build-env --chown=1001:1000 /tmp/gravitee-am-gateway-standalone-* /opt/graviteeio-am-gateway/
 
