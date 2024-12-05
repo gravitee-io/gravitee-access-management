@@ -77,6 +77,7 @@ import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.impl.I18nDictionaryService;
+import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.validators.email.UserEmail;
 import io.gravitee.am.service.validators.email.UserEmailConstraintValidator;
 import io.gravitee.am.service.validators.email.resource.EmailTemplateValidator;
@@ -343,6 +344,11 @@ public abstract class JerseySpringTest {
         @Bean
         public io.gravitee.am.management.service.UserService userService() {
             return mock(io.gravitee.am.management.service.UserService.class);
+        }
+
+        @Bean
+        public io.gravitee.am.management.service.UserService managementUserService() {
+            return mock();
         }
 
         @Bean
@@ -613,6 +619,11 @@ public abstract class JerseySpringTest {
         @Bean
         public PasswordPolicyService passwordPolicyService() {
             return mock(PasswordPolicyService.class);
+        }
+
+        @Bean
+        public PasswordHistoryService passwordHistoryService() {
+            return mock();
         }
 
         @Bean

@@ -19,8 +19,10 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.management.handlers.management.api.model.PasswordPolicyEntity;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordPolicy;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.PasswordPolicyService;
@@ -44,6 +46,7 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
@@ -110,6 +113,37 @@ public class PasswordPoliciesResource extends AbstractDomainResource {
                         response.resume(policies);
                     }
                 }, response::resume);
+    }
+
+    @GET
+    @Path("activePolicy")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public void getEffectivePasswordPolicy(@PathParam("organizationId") String organizationId,
+                                           @PathParam("environmentId") String environmentId,
+                                           @PathParam("domain") String domain,
+                                           @QueryParam("identity") String identity,
+                                           @Suspended AsyncResponse response) {
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_SETTINGS, Acl.READ)
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapSingle(d -> getPasswordPolicy(d, identity)))
+                .subscribe(response::resume, response::resume);
+    }
+
+    private Single<PasswordPolicy> getPasswordPolicy(Domain domain, String identity) {
+        var domainId = domain.getId();
+        if (identity == null) {
+                return passwordPolicyService.getDefaultPasswordPolicy(Reference.domain(domainId));
+        }
+        return identityProviderService.findById(ReferenceType.DOMAIN, domainId, identity)
+                .flatMap(idp -> {
+                    if (idp.getPasswordPolicy() != null) {
+                        return passwordPolicyService.findByReferenceAndId(ReferenceType.DOMAIN, domainId, idp.getPasswordPolicy()).toSingle();
+                    } else {
+                        return passwordPolicyService.getDefaultPasswordPolicy(Reference.domain(domainId));
+                    }
+                });
     }
 
     @POST

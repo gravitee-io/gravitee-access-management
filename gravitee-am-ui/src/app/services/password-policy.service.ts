@@ -18,6 +18,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { AppConfig } from '../../config/app.config';
+import { DomainPasswordPolicy } from '../domain/settings/password-policy/domain-password-policy.model';
+import { PasswordPolicyStatus } from '../domain/settings/password-policy/password-policy-status.model';
 
 @Injectable()
 export class PasswordPolicyService {
@@ -48,5 +50,17 @@ export class PasswordPolicyService {
 
   setDefaultPolicy(domainId: string, policyId: string): Observable<any> {
     return this.http.post<any>(`${this.domainsURL}${domainId}${this.passwordPolicyURL}/${policyId}/default`, null);
+  }
+
+  getPolicyForIdp(domainId: string, idpId): Observable<DomainPasswordPolicy> {
+    const params = idpId ? { identity: idpId } : {};
+    return this.http.get(`${this.domainsURL}${domainId}${this.passwordPolicyURL}/activePolicy`, { params });
+  }
+
+  evaluatePassword(domainId: string, policyId: string, userId: string, password: string): Observable<PasswordPolicyStatus> {
+    return this.http.post(`${this.domainsURL}${domainId}${this.passwordPolicyURL}/${policyId}/evaluate`, {
+      userId,
+      password,
+    });
   }
 }

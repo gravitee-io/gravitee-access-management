@@ -56,6 +56,20 @@ export interface DeletePasswordPolicyRequest {
     policy: string;
 }
 
+export interface EvaluatePolicyRequest {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+    policy: string;
+}
+
+export interface GetEffectivePasswordPolicyRequest {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+    identity?: string;
+}
+
 export interface GetPasswordPolicyRequest {
     organizationId: string;
     environmentId: string;
@@ -193,6 +207,100 @@ export class PasswordPolicyApi extends runtime.BaseAPI {
      */
     async deletePasswordPolicy(requestParameters: DeletePasswordPolicyRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
         await this.deletePasswordPolicyRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     */
+    async evaluatePolicyRaw(requestParameters: EvaluatePolicyRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling evaluatePolicy.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling evaluatePolicy.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling evaluatePolicy.');
+        }
+
+        if (requestParameters.policy === null || requestParameters.policy === undefined) {
+            throw new runtime.RequiredError('policy','Required parameter requestParameters.policy was null or undefined when calling evaluatePolicy.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("gravitee-auth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/password-policies/{policy}/evaluate`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"policy"}}`, encodeURIComponent(String(requestParameters.policy))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     */
+    async evaluatePolicy(requestParameters: EvaluatePolicyRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.evaluatePolicyRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     */
+    async getEffectivePasswordPolicyRaw(requestParameters: GetEffectivePasswordPolicyRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling getEffectivePasswordPolicy.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling getEffectivePasswordPolicy.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling getEffectivePasswordPolicy.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.identity !== undefined) {
+            queryParameters['identity'] = requestParameters.identity;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("gravitee-auth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/password-policies/activePolicy`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     */
+    async getEffectivePasswordPolicy(requestParameters: GetEffectivePasswordPolicyRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.getEffectivePasswordPolicyRaw(requestParameters, initOverrides);
     }
 
     /**

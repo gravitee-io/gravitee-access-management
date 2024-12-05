@@ -69,60 +69,65 @@ public class PasswordServiceImpl implements PasswordService {
         } else {
             // check password settings
             Stream.of(
-                    new MaxLengthPasswordValidator(passwordPolicy.getMaxLength()),
-                    new MinLengthPasswordValidator(passwordPolicy.getMinLength()),
-                    new IncludeNumbersPasswordValidator(TRUE.equals(passwordPolicy.getIncludeNumbers())),
-                    new IncludeSpecialCharactersPasswordValidator(TRUE.equals(passwordPolicy.getIncludeSpecialCharacters())),
-                    new MixedCasePasswordValidator(passwordPolicy.getLettersInMixedCase()),
-                    new ConsecutiveCharacterPasswordValidator(passwordPolicy.getMaxConsecutiveLetters()),
-                    new DictionaryPasswordValidator(TRUE.equals(passwordPolicy.getExcludePasswordsInDictionary()), passwordDictionary),
-                    new UserProfilePasswordValidator(TRUE.equals(passwordPolicy.getExcludeUserProfileInfoInPassword()), user)
-            ).filter(not(passwordValidator -> passwordValidator.validate(password)))
-            .findFirst().ifPresent(validator -> {
-                throw validator.getCause();
-            });
+                            new MaxLengthPasswordValidator(passwordPolicy.getMaxLength()),
+                            new MinLengthPasswordValidator(passwordPolicy.getMinLength()),
+                            new IncludeNumbersPasswordValidator(TRUE.equals(passwordPolicy.getIncludeNumbers())),
+                            new IncludeSpecialCharactersPasswordValidator(TRUE.equals(passwordPolicy.getIncludeSpecialCharacters())),
+                            new MixedCasePasswordValidator(passwordPolicy.getLettersInMixedCase()),
+                            new ConsecutiveCharacterPasswordValidator(passwordPolicy.getMaxConsecutiveLetters()),
+                            new DictionaryPasswordValidator(TRUE.equals(passwordPolicy.getExcludePasswordsInDictionary()), passwordDictionary),
+                            new UserProfilePasswordValidator(TRUE.equals(passwordPolicy.getExcludeUserProfileInfoInPassword()), user)
+                    ).filter(not(passwordValidator -> passwordValidator.validate(password)))
+                    .findFirst().ifPresent(validator -> {
+                        throw validator.getCause();
+                    });
         }
     }
 
     @Override
     public PasswordSettingsStatus evaluate(String password, PasswordPolicy passwordPolicy, User user) {
-        var result = new PasswordSettingsStatus();
-        if (password != null && passwordPolicy != null) {
-            result.setMinLength(new MinLengthPasswordValidator(passwordPolicy.getMinLength()).validate(password));
-            if (TRUE.equals(passwordPolicy.getExcludePasswordsInDictionary())) {
-                result.setExcludePasswordsInDictionary(new DictionaryPasswordValidator(passwordPolicy.getExcludePasswordsInDictionary(), passwordDictionary).validate(password));
-            }
-            if (TRUE.equals(passwordPolicy.getIncludeNumbers())) {
-                result.setIncludeNumbers(new IncludeNumbersPasswordValidator(passwordPolicy.getIncludeNumbers()).validate(password));
-            }
-            if (TRUE.equals(passwordPolicy.getIncludeSpecialCharacters())) {
-                result.setIncludeSpecialCharacters(new IncludeSpecialCharactersPasswordValidator(passwordPolicy.getIncludeSpecialCharacters()).validate(password));
-            }
-            if (TRUE.equals(passwordPolicy.getLettersInMixedCase())) {
-                result.setLettersInMixedCase(new MixedCasePasswordValidator(passwordPolicy.getLettersInMixedCase()).validate(password));
-            }
-            if (passwordPolicy.getMaxConsecutiveLetters() != null) {
-                result.setMaxConsecutiveLetters(new ConsecutiveCharacterPasswordValidator(passwordPolicy.getMaxConsecutiveLetters()).validate(password));
-            }
-            if (TRUE.equals(passwordPolicy.getExcludeUserProfileInfoInPassword())) {
-                result.setExcludeUserProfileInfoInPassword(new UserProfilePasswordValidator(passwordPolicy.getExcludeUserProfileInfoInPassword(), user).validate(password));
-            }
+        var result = PasswordSettingsStatus.builder();
+        if (password == null) {
+            return result.build();
         }
-        return result;
+        if (passwordPolicy == null) {
+            return result.defaultPolicy(defaultPasswordValidator.validate(password)).build();
+        }
+        result.minLength(new MinLengthPasswordValidator(passwordPolicy.getMinLength()).validate(password));
+        if (TRUE.equals(passwordPolicy.getExcludePasswordsInDictionary())) {
+            result.excludePasswordsInDictionary(new DictionaryPasswordValidator(passwordPolicy.getExcludePasswordsInDictionary(), passwordDictionary).validate(password));
+        }
+        if (TRUE.equals(passwordPolicy.getIncludeNumbers())) {
+            result.includeNumbers(new IncludeNumbersPasswordValidator(passwordPolicy.getIncludeNumbers()).validate(password));
+        }
+        if (TRUE.equals(passwordPolicy.getIncludeSpecialCharacters())) {
+            result.includeSpecialCharacters(new IncludeSpecialCharactersPasswordValidator(passwordPolicy.getIncludeSpecialCharacters()).validate(password));
+        }
+        if (TRUE.equals(passwordPolicy.getLettersInMixedCase())) {
+            result.lettersInMixedCase(new MixedCasePasswordValidator(passwordPolicy.getLettersInMixedCase()).validate(password));
+        }
+        if (passwordPolicy.getMaxConsecutiveLetters() != null) {
+            result.maxConsecutiveLetters(new ConsecutiveCharacterPasswordValidator(passwordPolicy.getMaxConsecutiveLetters()).validate(password));
+        }
+        if (TRUE.equals(passwordPolicy.getExcludeUserProfileInfoInPassword())) {
+            result.excludeUserProfileInfoInPassword(new UserProfilePasswordValidator(passwordPolicy.getExcludeUserProfileInfoInPassword(), user).validate(password));
+        }
+        return result.build();
     }
 
     /**
      * Check the user password status
-     * @param user Authenticated user
+     *
+     * @param user           Authenticated user
      * @param passwordPolicy password policy
      * @return True if the password has expired or False if not
      */
     public boolean checkAccountPasswordExpiry(User user, PasswordPolicy passwordPolicy) {
 
-        /** If the expiryDate is null or set to 0 so it's disabled */
+        /* If the expiryDate is null or set to 0 so it's disabled */
         if (passwordPolicy == null ||
                 (passwordPolicy.getExpiryDuration() == null
-                                || passwordPolicy.getExpiryDuration() <= 0)) {
+                        || passwordPolicy.getExpiryDuration() <= 0)) {
             return false;
         }
 

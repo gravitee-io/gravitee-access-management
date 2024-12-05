@@ -22,6 +22,8 @@ import { SnackbarService } from '../../../../services/snackbar.service';
 import { UserService } from '../../../../services/user.service';
 import { ProviderService } from '../../../../services/provider.service';
 import { OrganizationService } from '../../../../services/organization.service';
+import { DomainPasswordPolicy } from '../../password-policy/domain-password-policy.model';
+import { PasswordPolicyService } from '../../../../services/password-policy.service';
 
 import { UserClaimComponent } from './user-claim.component';
 enum AccountType {
@@ -49,6 +51,9 @@ export class UserCreationComponent implements OnInit {
   @ViewChild('dynamic', { read: ViewContainerRef }) viewContainerRef: ViewContainerRef;
   private domainId: string;
 
+  passwordPolicy: DomainPasswordPolicy;
+  passwordValid: boolean;
+
   constructor(
     private userService: UserService,
     private router: Router,
@@ -56,11 +61,11 @@ export class UserCreationComponent implements OnInit {
     private snackbarService: SnackbarService,
     private providerService: ProviderService,
     private organizationService: OrganizationService,
+    private passwordPolicyService: PasswordPolicyService,
   ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
-
     if (!this.isOrganizationUserAction()) {
       this.providerService.findUserProvidersByDomain(this.domainId).subscribe((response) => {
         this.userProviders = response;
@@ -69,10 +74,15 @@ export class UserCreationComponent implements OnInit {
         this.emailRequired = response;
       });
     }
+    this.loadPasswordPolicy();
   }
 
   isOrganizationUserAction() {
     return !this.domainId;
+  }
+
+  togglePreRegistration() {
+    this.preRegistration = !this.preRegistration;
   }
 
   create() {
@@ -167,5 +177,11 @@ export class UserCreationComponent implements OnInit {
 
   isServiceAccount(): boolean {
     return this.selectedAccountType === AccountType.ServiceAccount;
+  }
+
+  loadPasswordPolicy() {
+    this.passwordPolicyService.getPolicyForIdp(this.domainId, this.user.source).subscribe((policy) => {
+      this.passwordPolicy = policy;
+    });
   }
 }

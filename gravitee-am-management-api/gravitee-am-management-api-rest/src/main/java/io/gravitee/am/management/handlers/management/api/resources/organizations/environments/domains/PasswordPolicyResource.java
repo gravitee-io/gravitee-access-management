@@ -17,20 +17,26 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 
+import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.PasswordPolicyService;
+import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.PasswordPolicyNotFoundException;
+import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.model.UpdatePasswordPolicy;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -48,6 +54,7 @@ import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -59,6 +66,13 @@ public class PasswordPolicyResource extends AbstractDomainResource {
 
     @Autowired
     private PasswordPolicyService passwordPolicyService;
+    @Autowired
+    private PasswordService passwordService;
+    @Autowired
+    private PasswordHistoryService passwordHistoryService;
+    @Autowired
+    @Qualifier("managementUserService")
+    private UserService userService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -163,6 +177,44 @@ public class PasswordPolicyResource extends AbstractDomainResource {
                         .flatMapCompletable(d -> passwordPolicyService.deleteAndUpdateIdp(ReferenceType.DOMAIN, d.getId(), policy, authenticatedUser))
                         .doOnError(error -> log.error("Delete Password Policy fails: ", error)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
+    }
+
+
+    @POST
+    @Path("/evaluate")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiResponse(responseCode = "200", description = "Result of evaluating the password against the policy")
+    public void evaluatePolicy(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domainId,
+            @PathParam("policy") String policyId,
+            @RequestBody PasswordEvaluationRequest request,
+            @Suspended final AsyncResponse response
+    ) {
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_SETTINGS, Acl.UPDATE)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(() -> new DomainNotFoundException(domainId)))
+                        .flatMap(d -> passwordPolicyService.findByReferenceAndId(ReferenceType.DOMAIN, d.getId(), policyId))
+                        .flatMapSingle(policy -> {
+                            if (request.userId() == null) {
+                                return Single.just(passwordService.evaluate(request.password(), policy, new User()));
+                            } else {
+                                return userService.findById(request.userId())
+                                        .defaultIfEmpty(new User())
+                                        .flatMap(u -> passwordHistoryService.passwordAlreadyUsed(ReferenceType.DOMAIN, domainId, request.userId(), request.password(), policy)
+                                                .map(historyResult -> {
+                                                    var evaluationResult = passwordService.evaluate(request.password(), policy, u);
+                                                    return evaluationResult.toBuilder().recentPasswordsNotReused(historyResult).build();
+                                                }));
+
+                            }
+                        }))
+                .subscribe(response::resume,response::resume);
+    }
+
+    public record PasswordEvaluationRequest(String password, String userId) {
+
     }
 
 }

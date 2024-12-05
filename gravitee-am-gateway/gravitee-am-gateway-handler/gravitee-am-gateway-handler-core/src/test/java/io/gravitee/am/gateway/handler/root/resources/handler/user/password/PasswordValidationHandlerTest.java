@@ -67,7 +67,7 @@ class PasswordValidationHandlerTest {
         user.setId(UUID.randomUUID().toString());
         var userToken = new UserToken(user, null);
         given(userService.verifyToken(any())).willReturn(Maybe.just(userToken));
-        given(passwordService.evaluate(any(),any(),any())).willReturn(pwdSettingsStatus);
+        given(passwordService.evaluate(any(), any(), any())).willReturn(pwdSettingsStatus);
 
         var context = mock(RoutingContext.class);
         var request = mock(HttpServerRequest.class);
@@ -85,13 +85,15 @@ class PasswordValidationHandlerTest {
     }
 
     static Stream<Arguments> shouldReturnAppropriateStatusCode() {
-        var pwdStatusOK = new PasswordSettingsStatus();
-        pwdStatusOK.setIncludeSpecialCharacters(true);
-        pwdStatusOK.setMinLength(true);
+        var pwdStatusOK = PasswordSettingsStatus.builder()
+                .includeSpecialCharacters(true)
+                .minLength(true)
+                .build();
 
-        var pwdStatusKO = new PasswordSettingsStatus();
-        pwdStatusKO.setIncludeSpecialCharacters(false);
-        pwdStatusKO.setMinLength(true);
+        var pwdStatusKO = PasswordSettingsStatus.builder()
+                .includeSpecialCharacters(false)
+                .minLength(false)
+                .build();
 
         return Stream.of(arguments(pwdStatusKO, HttpStatusCode.BAD_REQUEST_400), arguments(pwdStatusOK, HttpStatusCode.OK_200));
     }

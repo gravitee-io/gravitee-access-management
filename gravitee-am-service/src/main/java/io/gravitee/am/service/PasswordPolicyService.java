@@ -20,6 +20,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.PasswordSettingsAware;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.model.UpdatePasswordPolicy;
 import io.reactivex.rxjava3.core.Completable;
@@ -114,4 +115,6 @@ public interface PasswordPolicyService {
      * @return a Single emitting the updated PasswordPolicy that has been set as default
      */
     Single<PasswordPolicy> setDefaultPasswordPolicy(ReferenceType referenceType, String referenceId, String policyId, User principal);
+
+    Single<PasswordPolicy> getDefaultPasswordPolicy(Reference domain);
 }

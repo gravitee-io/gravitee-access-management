@@ -29,50 +29,39 @@ import { exists, mapValues } from '../runtime';
 /**
  * 
  * @export
- * @interface AuditOutcome
+ * @interface PasswordEvaluationRequest
  */
-export interface AuditOutcome {
+export interface PasswordEvaluationRequest {
     /**
      * 
      * @type {string}
-     * @memberof AuditOutcome
+     * @memberof PasswordEvaluationRequest
      */
-    status?: AuditOutcomeStatusEnum;
+    password?: string;
     /**
      * 
      * @type {string}
-     * @memberof AuditOutcome
+     * @memberof PasswordEvaluationRequest
      */
-    message?: string;
+    userId?: string;
 }
 
-
-/**
- * @export
- */
-export const AuditOutcomeStatusEnum = {
-    Success: 'SUCCESS',
-    Failure: 'FAILURE'
-} as const;
-export type AuditOutcomeStatusEnum = typeof AuditOutcomeStatusEnum[keyof typeof AuditOutcomeStatusEnum];
-
-
-export function AuditOutcomeFromJSON(json: any): AuditOutcome {
-    return AuditOutcomeFromJSONTyped(json, false);
+export function PasswordEvaluationRequestFromJSON(json: any): PasswordEvaluationRequest {
+    return PasswordEvaluationRequestFromJSONTyped(json, false);
 }
 
-export function AuditOutcomeFromJSONTyped(json: any, ignoreDiscriminator: boolean): AuditOutcome {
+export function PasswordEvaluationRequestFromJSONTyped(json: any, ignoreDiscriminator: boolean): PasswordEvaluationRequest {
     if ((json === undefined) || (json === null)) {
         return json;
     }
     return {
         
-        'status': !exists(json, 'status') ? undefined : json['status'],
-        'message': !exists(json, 'message') ? undefined : json['message'],
+        'password': !exists(json, 'password') ? undefined : json['password'],
+        'userId': !exists(json, 'userId') ? undefined : json['userId'],
     };
 }
 
-export function AuditOutcomeToJSON(value?: AuditOutcome | null): any {
+export function PasswordEvaluationRequestToJSON(value?: PasswordEvaluationRequest | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -81,8 +70,8 @@ export function AuditOutcomeToJSON(value?: AuditOutcome | null): any {
     }
     return {
         
-        'status': value.status,
-        'message': value.message,
+        'password': value.password,
+        'userId': value.userId,
     };
 }
 

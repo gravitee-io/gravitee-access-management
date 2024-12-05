@@ -11,3 +11,7 @@
 .selected-card {
   border: 2px solid mat.get-color-from-palette(gio.$mat-accent-palette, 'default');
 }
+
+password-policy-status {
+  margin-bottom: 1em;
+}
