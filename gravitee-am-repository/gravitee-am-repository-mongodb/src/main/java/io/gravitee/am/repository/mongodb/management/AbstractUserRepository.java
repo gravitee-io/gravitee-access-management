@@ -82,20 +82,22 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
     protected static final String FIELD_EXTERNAL_ID = "externalId";
     protected static final String FIELD_IDENTITIES_USERNAME = "identities.username";
     protected static final String FIELD_IDENTITIES_PROVIDER_ID = "identities.providerId";
-    private static final String INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE = "referenceType_1_referenceId_1_username_1_source_1";
-    private static final String INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE_NAME = "rt1ri1u1s1";
     private static final String INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE_NAME_UNIQUE = "rt1ri1u1s1_unique";
 
-    protected MongoCollection<T> usersCollection;
+    private final Set<String> UNUSED_INDEXES = Set.of(
+            "referenceType_1_referenceId_1_username_1_source_1",
+            "rt1ri1u1s1",
+            "rt1ri1"
+    );
 
-    @Value("${management.mongodb.ensureIndexOnStart:true}")
-    private boolean ensureIndexOnStart;
+    protected MongoCollection<T> usersCollection;
 
     protected abstract Class<T> getMongoClass();
 
     protected void initCollection(String collectionName) {
         usersCollection = mongoOperations.getCollection(collectionName, getMongoClass());
         super.init(usersCollection);
+<<<<<<< HEAD
 
         final var indexes = new HashMap<Document, IndexOptions>();
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
@@ -109,6 +111,17 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EXTERNAL_ID, 1).append(FIELD_SOURCE, 1), new IndexOptions().name("rt1ri1ext1s1"));
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_IDENTITIES_USERNAME, 1).append(FIELD_IDENTITIES_PROVIDER_ID, 1), new IndexOptions().name("rt1ri1iu1ip1"));
         super.createIndex(usersCollection, indexes);
+=======
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EMAIL, 1), new IndexOptions().name("rt1ri1e1"));
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ADDITIONAL_INFO_EMAIL, 1), new IndexOptions().name("rt1ri1ae1"));
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1), new IndexOptions().name("rt1ri1u1"));
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_DISPLAY_NAME, 1), new IndexOptions().name("rt1ri1d1"));
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_FIRST_NAME, 1), new IndexOptions().name("rt1ri1f1"));
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_LAST_NAME, 1), new IndexOptions().name("rt1ri1l1"));
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EXTERNAL_ID, 1), new IndexOptions().name("rt1ri1ext1"));
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EXTERNAL_ID, 1).append(FIELD_SOURCE, 1), new IndexOptions().name("rt1ri1ext1s1"));
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_IDENTITIES_USERNAME, 1).append(FIELD_IDENTITIES_PROVIDER_ID, 1), new IndexOptions().name("rt1ri1iu1ip1"));
+>>>>>>> 54f179d6b4 (fix: removed unused indexes)
         createOrUpdateIndex();
     }
 
@@ -589,7 +602,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
 
     private void createOrUpdateIndex() {
         if (ensureIndexOnStart) {
-            getDeletableIndex()
+            dropIndexes(usersCollection, UNUSED_INDEXES::contains)
                     .doOnComplete(() -> {
                         try {
                             super.createIndex(usersCollection, Map.of(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1).append(FIELD_SOURCE, 1),
@@ -597,21 +610,9 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
                         } catch (Exception e) {
                             logger.error("An error has occurred while creating index {} with unique constraints", INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE_NAME_UNIQUE, e);
                         }
-                    }).doOnError(e -> logger.error("An error has occurred while deleting index {}", INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE, e))
+                    })
                     .subscribe();
         }
     }
 
-    private Completable getDeletableIndex() {
-        return Observable.fromPublisher(usersCollection.listIndexes())
-                .map(document -> document.getString("name"))
-                .flatMapCompletable(indexName -> {
-                    if (indexName.equals(AbstractUserRepository.INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE) ||
-                            indexName.equals(INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE_NAME)) {
-                        return Completable.fromPublisher(usersCollection.dropIndex(indexName));
-                    } else {
-                        return Completable.complete();
-                    }
-                });
-    }
 }
