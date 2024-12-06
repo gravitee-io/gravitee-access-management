@@ -941,6 +941,11 @@ jobs:
 
             az login --service-principal -u $AZURE_APPLICATION_ID --tenant $AZURE_TENANT -p $AZURE_APPLICATION_SECRET
             az aks get-credentials --admin --resource-group Devs-Preprod-Hosted --name gravitee-devs-preprod-aks-cluster
+            
+            # install helm chart dependency 
+            helm repo add bitnami https://charts.bitnami.com/bitnami
+            helm dependency build helm/
+
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
               helm upgrade \
                           --install am-master \
@@ -981,7 +986,6 @@ jobs:
               sed -i 's#__BRANCH_NAME_SANITIZED__#'${CIRCLE_BRANCH//./-}'#g' ./cloud-am/devs-preprod/values-maint.yaml
               helm upgrade \
                                       --install am-${CIRCLE_BRANCH//./-} \
-                                      --version $HELM_VERSION \
                                       -n am-${CIRCLE_BRANCH//./-}-dev \
                                       -f ./cloud-am/devs-preprod/values-maint.yaml ./helm/ \
                                       --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
@@ -996,7 +1000,6 @@ jobs:
               sed -i 's#__BRANCH_NAME_SANITIZED__#'${CIRCLE_BRANCH//./-}'#g' ./cloud-am/devs-preprod/values-ce-maint.yaml
               helm upgrade \
                                       --install am-${CIRCLE_BRANCH//./-}-ce \
-                                      --version $HELM_VERSION \
                                       -n am-${CIRCLE_BRANCH//./-}-ce-dev \
                                       -f ./cloud-am/devs-preprod/values-ce-maint.yaml ./helm/ \
                                       --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
