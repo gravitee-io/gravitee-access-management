@@ -38,6 +38,7 @@ import java.util.stream.Stream;
 
 import static com.nimbusds.jose.JWEAlgorithm.RSA_OAEP;
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.*;
+import static io.gravitee.am.gateway.core.LegacySettingsKeys.OIDC_FILTER_CUSTOM_PROMPT;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -123,7 +124,7 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService, Initi
         openIDProviderMetadata.setGrantTypesSupported(GrantTypeUtils.getSupportedGrantTypes());
         openIDProviderMetadata.setClaimTypesSupported(ClaimType.supportedValues());
         openIDProviderMetadata.setSubjectTypesSupported(SubjectTypeUtils.getSupportedSubjectTypes());
-        final Boolean filterCustomValues = env.getProperty("legacy.openid.filterCustomPrompt", Boolean.class, false);
+        final Boolean filterCustomValues = OIDC_FILTER_CUSTOM_PROMPT.from(env);
         openIDProviderMetadata.setPromptValuesSupported(Prompt.supportedValues(filterCustomValues));
 
         // id_token

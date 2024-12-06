@@ -20,6 +20,7 @@ import org.springframework.core.env.Environment;
 
 import org.junit.Test;
 
+import static io.gravitee.am.gateway.core.LegacySettingsKeys.OIDC_SANITIZE_PARAM_ENCODING;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.*;
 
@@ -29,7 +30,7 @@ public class StaticEnvironmentProviderTest {
 
     @BeforeClass
     public static void setup() {
-        when(env.getProperty("legacy.openid.sanitizeParametersEncoding", boolean.class, true))
+        when(env.getProperty(OIDC_SANITIZE_PARAM_ENCODING.getKey(), Boolean.class, OIDC_SANITIZE_PARAM_ENCODING.getDefaultValue()))
                 .thenReturn(false)
                 .thenReturn(true);
         StaticEnvironmentProvider.setEnvironment(env);
@@ -41,6 +42,6 @@ public class StaticEnvironmentProviderTest {
 
         // Call method twice to test cached value is used
         assertFalse(StaticEnvironmentProvider.sanitizeParametersEncoding());
-        verify(env).getProperty("legacy.openid.sanitizeParametersEncoding", boolean.class, true);
+        verify(env).getProperty(OIDC_SANITIZE_PARAM_ENCODING.getKey(), Boolean.class, OIDC_SANITIZE_PARAM_ENCODING.getDefaultValue());
     }
 }
