@@ -292,6 +292,10 @@ if (listOfCollections.includes("users")) {
     db.users.createIndex({"_id": 1}, {"name": "_id1"}, "majority");
     db.users.createIndex({
         "referenceType": 1,
+        "referenceId": 1
+    }, {"name": "rt1ri1"}, "majority");
+    db.users.createIndex({
+        "referenceType": 1,
         "referenceId": 1,
         "email": 1
     }, {"name": "rt1ri1e1"}, "majority");
@@ -344,6 +348,10 @@ if (listOfCollections.includes("organization_users")) {
     console.log("Update organization_users indexes");
     db.organization_users.dropIndexes();
     db.organization_users.createIndex({"_id": 1}, {"name": "_id1"}, "majority");
+    db.organization_users.createIndex({
+        "referenceType": 1,
+        "referenceId": 1
+    }, {"name": "rt1ri1"}, "majority");
     db.organization_users.createIndex({
         "referenceType": 1,
         "referenceId": 1,
@@ -440,6 +448,10 @@ if (listOfCollections.includes("webauthn_credentials")) {
     console.log("Update webauthn_credentials indexes");
     db.webauthn_credentials.dropIndexes();
     db.webauthn_credentials.createIndex({"_id": 1}, {"name": "_id1"}, "majority");
+    db.webauthn_credentials.createIndex({
+        "referenceType": 1,
+        "referenceId": 1
+    }, {"name": "rt1ri1"}, "majority");
     db.webauthn_credentials.createIndex({
         "referenceType": 1,
         "referenceId": 1,

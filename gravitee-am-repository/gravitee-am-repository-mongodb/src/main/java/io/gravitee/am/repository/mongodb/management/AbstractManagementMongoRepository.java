@@ -52,10 +52,10 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
     protected MongoDatabase mongoOperations;
 
     @Value("${management.mongodb.ensureIndexOnStart:true}")
-    protected boolean ensureIndexOnStart;
+    private boolean ensureIndexOnStart;
 
     @Value("${management.mongodb.cursorMaxTime:60000}")
-    protected int cursorMaxTimeInMs;
+    private int cursorMaxTimeInMs;
 
     protected void createIndex(MongoCollection<?> collection, Document document) {
         super.createIndex(collection, document, new IndexOptions(), ensureIndexOnStart);

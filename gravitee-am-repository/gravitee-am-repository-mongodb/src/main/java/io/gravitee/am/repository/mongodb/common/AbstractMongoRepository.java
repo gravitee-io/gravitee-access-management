@@ -17,14 +17,10 @@ package io.gravitee.am.repository.mongodb.common;
 
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.functions.Predicate;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -55,14 +51,5 @@ public abstract class AbstractMongoRepository {
                             s -> logger.debug("Created an index named: {}", s),
                             throwable -> logger.error("Error occurs during creation of index", throwable));
         }
-    }
-
-    protected Completable dropIndexes(MongoCollection<?> collection, Predicate<String> nameMatcher) {
-        return Observable.fromPublisher(collection.listIndexes())
-                .map(document -> document.getString("name"))
-                .filter(nameMatcher)
-                .flatMapCompletable(indexName -> Completable
-                        .fromPublisher(collection.dropIndex(indexName))
-                        .doOnError(e -> logger.error("An error has occurred while deleting index {}", indexName, e)));
     }
 }
