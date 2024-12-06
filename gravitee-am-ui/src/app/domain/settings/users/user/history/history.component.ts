@@ -111,7 +111,7 @@ export class UserHistoryComponent implements OnInit {
 
   auditDetails(row) {
     if (row.outcome.message) {
-      if (row.outcome.status === 'SUCCESS') {
+      if (row.outcome.status === 'success') {
         return JSON.stringify(JSON.parse(row.outcome.message), null, '  ');
       } else {
         return row.outcome.message;

@@ -33,7 +33,7 @@ export class AuditComponent implements OnInit {
 
   auditDetails() {
     if (this.audit.outcome.message) {
-      if (this.audit.outcome.status === 'SUCCESS') {
+      if (this.audit.outcome.status === 'success') {
         return JSON.stringify(JSON.parse(this.audit.outcome.message), null, '  ');
       } else {
         return this.audit.outcome.message;

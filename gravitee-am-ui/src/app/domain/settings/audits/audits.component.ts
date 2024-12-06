@@ -290,7 +290,7 @@ export class AuditsComponent implements OnInit {
 
   auditDetails(row) {
     if (row.outcome.message) {
-      if (row.outcome.status === 'SUCCESS') {
+      if (row.outcome.status === 'success') {
         return JSON.stringify(JSON.parse(row.outcome.message), null, '  ');
       } else {
         return row.outcome.message;
@@ -332,7 +332,7 @@ export class AuditsComponent implements OnInit {
   }
 
   hasLinkableTarget(row: any) {
-    const isSuccessfulDeleteEvent = row.outcome.status === 'SUCCESS' && this.isDeletionEventType(row.type);
+    const isSuccessfulDeleteEvent = row.outcome.status === 'success' && this.isDeletionEventType(row.type);
     return !this.isDomainAuditOnOrganizationLevel(row) && !isSuccessfulDeleteEvent;
   }
 
