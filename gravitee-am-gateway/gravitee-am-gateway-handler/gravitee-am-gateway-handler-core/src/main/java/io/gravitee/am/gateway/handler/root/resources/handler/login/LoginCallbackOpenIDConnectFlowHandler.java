@@ -17,6 +17,8 @@ package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.common.web.URLParametersUtils;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
@@ -28,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -41,7 +42,6 @@ import java.util.Map;
 public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(LoginCallbackOpenIDConnectFlowHandler.class);
-    private static final String HASH_VALUE_PARAMETER = "urlHash";
     private static final String RELAY_STATE_PARAM_KEY = "RelayState";
     private final ThymeleafTemplateEngine engine;
 
@@ -77,7 +77,7 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
                 return;
             }
             // else check OpenID Connect flow validity
-            final String hashValue = request.getParam(HASH_VALUE_PARAMETER);
+            final String hashValue = request.getParam(ConstantKeys.URL_HASH_PARAMETER);
             if (hashValue == null) {
                 context.fail(new InternalAuthenticationServiceException("No URL hash value found"));
                 return;
@@ -90,7 +90,7 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
         }
 
         // implicit flow, we need to retrieve hash url from the browser to get access_token, id_token, ...
-        engine.render(new HashMap<>(), "login_callback")
+        engine.render(new HashMap<>(Map.of(ConstantKeys.CSP_SCRIPT_INLINE_NONCE, context.get(ConstantKeys.CSP_SCRIPT_INLINE_NONCE))), "login_callback")
                 .subscribe(
                         buffer -> {
                             context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
@@ -104,12 +104,6 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
     }
 
     private Map<String, String> getParams(String query) {
-        Map<String, String> query_pairs = new LinkedHashMap<>();
-        String[] pairs = query.split("&");
-        for (String pair : pairs) {
-            int idx = pair.indexOf("=");
-            query_pairs.put(pair.substring(0, idx), pair.substring(idx + 1));
-        }
-        return query_pairs;
+        return URLParametersUtils.parse(query);
     }
 }

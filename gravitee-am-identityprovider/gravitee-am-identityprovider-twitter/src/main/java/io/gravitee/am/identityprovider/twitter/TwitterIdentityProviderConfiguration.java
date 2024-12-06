@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.twitter;
 
+import io.gravitee.am.identityprovider.api.social.ProviderResponseType;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfiguration;
 
 import java.util.Collections;
@@ -86,8 +87,8 @@ public class TwitterIdentityProviderConfiguration implements SocialIdentityProvi
     }
 
     @Override
-    public String getResponseType() {
-        return "code";
+    public ProviderResponseType getProviderResponseType() {
+        return ProviderResponseType.CODE;
     }
 
     public boolean isEncodeRedirectUri() {
