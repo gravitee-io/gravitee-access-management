@@ -72,6 +72,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -396,8 +398,8 @@ public class UserServiceTest {
         io.gravitee.am.model.User existingUser = new io.gravitee.am.model.User();
         existingUser.setId("user-id");
         existingUser.setSource("user-idp");
-        existingUser.setRoles(Arrays.asList("r1"));
-        existingUser.setEntitlements(Arrays.asList("e1"));
+        existingUser.setRoles(List.of("r1"));
+        existingUser.setEntitlements(List.of("e1"));
         existingUser.setSource("user-idp");
         existingUser.setUsername("username");
         existingUser.setReferenceType(ReferenceType.DOMAIN);
@@ -406,7 +408,7 @@ public class UserServiceTest {
         User scimUser = mock(User.class);
         when(scimUser.getPassword()).thenReturn(PASSWORD);
         when(scimUser.isActive()).thenReturn(true);
-        when(scimUser.getRoles()).thenReturn(Arrays.asList("r2"));
+        when(scimUser.getRoles()).thenReturn(List.of("r2"));
         when(scimUser.getEntitlements()).thenReturn(Arrays.asList("e1", "e2"));
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
@@ -548,7 +550,7 @@ public class UserServiceTest {
         Operation operation = mock(Operation.class);
         doAnswer(invocation -> {
             ObjectNode arg0 = invocation.getArgument(0);
-            Assert.assertTrue(arg0.get("displayName").asText().equals("my user"));
+            Assert.assertEquals("my user", arg0.get("displayName").asText());
             return null;
         }).when(operation).apply(any());
 
@@ -579,7 +581,7 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         doAnswer(invocation -> {
             io.gravitee.am.model.User userToUpdate = invocation.getArgument(0);
-            Assert.assertTrue(userToUpdate.getDisplayName().equals("my user 2"));
+            Assert.assertEquals("my user 2", userToUpdate.getDisplayName());
             Assert.assertTrue(userToUpdate.getAdditionalInformation().containsKey("attr1"));
             return Single.just(userToUpdate);
         }).when(userRepository).update(any(), any());
@@ -640,7 +642,7 @@ public class UserServiceTest {
         Operation operation = mock(Operation.class);
         doAnswer(invocation -> {
             ObjectNode arg0 = invocation.getArgument(0);
-            Assert.assertTrue(arg0.get(Schema.SCHEMA_URI_CUSTOM_USER).asText().equals("test"));
+            Assert.assertEquals("test", arg0.get(Schema.SCHEMA_URI_CUSTOM_USER).asText());
             return null;
         }).when(operation).apply(any());
 
@@ -843,5 +845,55 @@ public class UserServiceTest {
         verify(auditService,atMostOnce()).report(any());
         verify(auditService).report(argThat(builder -> Status.FAILURE.equals(builder.build(new ObjectMapper()).getOutcome().getStatus())));
         verify(auditService).report(argThat(builder -> builder.build(new ObjectMapper()).getType().equals(EventType.USER_PASSWORD_VALIDATION)));
+    }
+
+    @Test
+    public void shouldCreateUser_with_lastPasswordReset() {
+
+        String lastPasswordResetDate = new Date().toInstant().toString();
+
+        GraviteeUser newUser = mock(GraviteeUser.class);
+        when(newUser.getSource()).thenReturn("unknown-idp");
+        when(newUser.getUserName()).thenReturn("username");
+        when(newUser.getPassword()).thenReturn(null);
+        Map<String, Object> ai = new HashMap<>();
+        ai.put("lastPasswordReset", lastPasswordResetDate);
+        when(newUser.getAdditionalInformation()).thenReturn(ai);
+
+        when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
+
+        ArgumentCaptor<io.gravitee.am.model.User> newUserDefinition = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN_ID);
+        user.setAdditionalInformation(ai);
+        when(userRepository.create(newUserDefinition.capture())).thenReturn(Single.just(user));
+
+        TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        testObserver.assertValue(u -> ((GraviteeUser) u).getAdditionalInformation().get("lastPasswordReset") != null);
+        assertFalse(newUserDefinition.getValue().isInternal());
+        assertTrue(newUserDefinition.getValue().isEnabled());
+    }
+
+    @Test
+    public void shouldThrowExceptionOnCreateUser_with_invalidLastPasswordReset() {
+
+        String lastPasswordResetDate = "123";
+
+        GraviteeUser newUser = mock(GraviteeUser.class);
+        when(newUser.getSource()).thenReturn("unknown-idp");
+        when(newUser.getUserName()).thenReturn("username");
+        when(newUser.getPassword()).thenReturn(null);
+        Map<String, Object> ai = new HashMap<>();
+        ai.put("lastPasswordReset", lastPasswordResetDate);
+        when(newUser.getAdditionalInformation()).thenReturn(ai);
+
+        TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
+        testObserver.assertError(err -> err instanceof UserInvalidException);
     }
 }

@@ -65,6 +65,7 @@ import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
+import io.gravitee.am.service.validators.password.PasswordSettingsStatus;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.gravitee.am.service.validators.user.UserValidatorImpl;
 import io.reactivex.rxjava3.core.Completable;
@@ -1504,13 +1505,15 @@ public class UserServiceTest {
         when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(Optional.of(new IdentityProvider()));
         when(applicationService.findById(user.getClient())).thenReturn(Maybe.just(client));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.just(new PasswordPolicy()));
-        when(passwordService.isValid(anyString(),any(),any())).thenReturn(false);
+        PasswordSettingsStatus passwordSettingsStatus = mock(PasswordSettingsStatus.class);
+        when(passwordSettingsStatus.isValid()).thenReturn(false);
+        when(passwordService.evaluate(anyString(),any(),any())).thenReturn(passwordSettingsStatus);
 
         TestObserver<Void> observer = new TestObserver<>();
         userService.resetPassword(domain, user.getId(),"123", new DefaultUser()).subscribe(observer);
 
         // then
-        observer.assertError(throwable -> throwable.getMessage().equals("The provided password does not meet the password policy requirements."));
+        observer.assertError(throwable -> throwable instanceof InvalidPasswordException);
         verify(auditService,atMostOnce()).report(any());
         verify(auditService).report(argThat(builder -> Status.FAILURE.equals(builder.build(new ObjectMapper()).getOutcome().getStatus())));
         verify(auditService).report(argThat(builder -> builder.build(new ObjectMapper()).getType().equals(EventType.USER_PASSWORD_VALIDATION)));
