@@ -19,6 +19,7 @@ import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.common.oauth2.CodeChallengeMethod;
 import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.api.oidc.jwt.KeyResolver;
+import io.gravitee.am.identityprovider.api.social.ProviderResponseType;
 
 import java.util.Set;
 
@@ -28,7 +29,6 @@ import java.util.Set;
  */
 public class GoogleIdentityProviderConfiguration implements OpenIDConnectIdentityProviderConfiguration {
 
-    private static final String DEFAULT_RESPONSE_TYPE = "code";
 
     public static final String CODE_PARAMETER = "code";
 
@@ -162,8 +162,8 @@ public class GoogleIdentityProviderConfiguration implements OpenIDConnectIdentit
     }
 
     @Override
-    public String getResponseType() {
-        return DEFAULT_RESPONSE_TYPE;
+    public ProviderResponseType getProviderResponseType() {
+        return ProviderResponseType.CODE;
     }
 
     @Override

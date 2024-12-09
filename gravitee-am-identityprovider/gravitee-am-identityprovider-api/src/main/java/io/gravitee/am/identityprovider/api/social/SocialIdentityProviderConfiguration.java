@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.api.social;
 
+import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 
 import java.util.Set;
@@ -40,7 +41,23 @@ public interface SocialIdentityProviderConfiguration extends IdentityProviderCon
 
     String getCodeParameter();
 
-    String getResponseType();
+    /**
+     * @deprecated implement {@link #getProviderResponseType()} instead
+     */
+    @Deprecated(since="4.7.0")
+    default String getResponseType() {
+        return getProviderResponseType().value();
+    }
+
+    ProviderResponseType getProviderResponseType();
+
+    default ProviderResponseMode getResponseMode() {
+        if (getResponseType().equals(ResponseType.TOKEN)) {
+            return ProviderResponseMode.FRAGMENT;
+        } else {
+            return ProviderResponseMode.QUERY;
+        }
+    }
 
     Integer getConnectTimeout();
 
