@@ -34,6 +34,7 @@ import org.springframework.core.env.Environment;
 
 import java.util.Collections;
 
+import static io.gravitee.am.gateway.core.LegacySettingsKeys.REGISTRATION_KEEP_PARAMS;
 import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static org.mockito.ArgumentMatchers.any;
@@ -55,7 +56,7 @@ public class RegisterConfirmationSubmissionEndpointTest extends RxWebTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        when(environment.getProperty(eq(RegisterSubmissionEndpoint.GATEWAY_ENDPOINT_REGISTRATION_KEEP_PARAMS), any(), eq(true))).thenReturn(true);
+        when(environment.getProperty(eq(REGISTRATION_KEEP_PARAMS.getKey()), any(), eq(REGISTRATION_KEEP_PARAMS.getDefaultValue()))).thenReturn(true);
         RegisterConfirmationSubmissionEndpoint registerConfirmationSubmissionEndpoint = new RegisterConfirmationSubmissionEndpoint(userService, environment);
         router.route(HttpMethod.POST, "/confirmRegistration")
                 .handler(BodyHandler.create())

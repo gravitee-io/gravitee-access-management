@@ -47,8 +47,9 @@ import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.rxjava3.core.Single;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -59,6 +60,7 @@ import java.util.Set;
 
 import static io.gravitee.am.common.oidc.Scope.FULL_PROFILE;
 import static io.gravitee.am.common.utils.ConstantKeys.ID_TOKEN_EXCLUDED_CLAIMS;
+import static io.gravitee.am.gateway.core.LegacySettingsKeys.OIDC_SCOPE_FULL_PROFILE;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ID_TOKEN;
 
 /**
@@ -66,7 +68,7 @@ import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ID_
  * @author GraviteeSource Team
  */
 @Slf4j
-public class IDTokenServiceImpl implements IDTokenService {
+public class IDTokenServiceImpl implements IDTokenService, InitializingBean {
 
     private static final String DEFAULT_DIGEST_ALGORITHM = "SHA-512";
 
@@ -94,9 +96,16 @@ public class IDTokenServiceImpl implements IDTokenService {
     @Autowired
     private SubjectManager subjectManager;
 
+    @Autowired
+    private Environment environment;
+
     @Deprecated
-    @Value("${legacy.openid.openid_scope_full_profile:false}")
     private boolean legacyOpenidScope;
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        this.legacyOpenidScope = OIDC_SCOPE_FULL_PROFILE.from(environment);
+    }
 
     @Override
     public Single<String> create(OAuth2Request oAuth2Request, Client client, User user, ExecutionContext executionContext) {
