@@ -52,18 +52,7 @@ export class CertificateCreationStep2Component implements OnInit, OnChanges {
   private clearFormWithErrors(): void {
     this.organizationService.certificateSchema(this.certificate.type).subscribe((data) => {
       this.certificateSchema = data;
-      this.configuration = {
-        storepass: ' ',
-        keypass: ' ',
-        alias: ' ',
-      };
-      setTimeout(() => {
-        this.configuration = {
-          storepass: '',
-          keypass: '',
-          alias: '',
-        };
-      }, 0);
+      this.configuration = {};
     });
   }
 }
