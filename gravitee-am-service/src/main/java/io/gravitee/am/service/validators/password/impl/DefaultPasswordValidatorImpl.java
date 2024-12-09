@@ -34,7 +34,7 @@ public class DefaultPasswordValidatorImpl implements PasswordValidator {
 
     private static final String DEFAULT_PASSWORD_PATTERN_VALUE = "^(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z])(?=.*[!~<>.,;:_=?/*+\\-#\\\"'&§`£€%°()|\\[\\]$^@])(?!.*(.)\\1{2,}).{12,128}$";
 
-    private static final String MESSAGE = "Field [password] is invalid";
+    private static final String MESSAGE = "The provided password does not meet the password policy requirements";
     private static final String ERROR_KEY = "invalid_password_value";
     private static final InvalidPasswordException INVALID_PASSWORD_VALUE = InvalidPasswordException.of(MESSAGE, ERROR_KEY);
 
