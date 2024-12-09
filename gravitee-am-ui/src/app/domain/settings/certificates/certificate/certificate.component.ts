@@ -60,7 +60,7 @@ export class CertificateComponent implements OnInit {
     this.submissionPending = true;
     this.certificateService
       .update(this.domainId, this.certificate.id, this.certificate)
-      .pipe(finalize(() => (this.submissionPending = true)))
+      .pipe(finalize(() => (this.submissionPending = false)))
       .subscribe((data) => {
         this.snackbarService.open('Certificate successfully updated');
         this.certificate = data;
