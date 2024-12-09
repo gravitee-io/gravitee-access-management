@@ -885,7 +885,7 @@
 											"    pm.response.to.have.status(400);",
 											"    var body = pm.response.json();",
 											"    pm.expect(body.http_status).to.be.equals(400);",
-											"    pm.expect(body.message).to.be.equals(\"Field [password] is invalid\");",
+											"    pm.expect(body.message).to.be.equals(\"The provided password does not meet the password policy requirements\");",
 											"});"
 										],
 										"type": "text/javascript"
