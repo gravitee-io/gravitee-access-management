@@ -46,6 +46,7 @@ import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidPasswordException;
+import io.gravitee.am.service.exception.PasswordHistoryException;
 import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserInvalidException;
@@ -349,7 +350,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                                 })))
                                         .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user)))
                                         .doOnError(throwable -> {
-                                            if(throwable instanceof InvalidPasswordException){
+                                            if(throwable instanceof InvalidPasswordException || throwable instanceof PasswordHistoryException){
                                                 auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).user(user).principal(principal).type(EventType.USER_PASSWORD_VALIDATION).reference(Reference.domain(domain.getId())).throwable(throwable));
                                             } else {
                                                 auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user).throwable(throwable));
