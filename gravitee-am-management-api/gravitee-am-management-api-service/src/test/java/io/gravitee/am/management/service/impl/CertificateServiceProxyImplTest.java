@@ -52,12 +52,13 @@ class CertificateServiceProxyImplTest {
             .withinRange('a', 'a')
             .build();
 
+    CertificateService certService = mock();
+    IdentityProviderService idpService = mock();
+    ApplicationService appService = mock();
+    CertificatePluginService certPluginService = mock();
+
     @Test
     void shouldFindCertsWithUsages() {
-        CertificateService certService = mock();
-        IdentityProviderService idpService = mock();
-        ApplicationService appService = mock();
-        CertificatePluginService certPluginService = mock();
         when(certService.findByDomain(TEST_DOMAIN)).thenReturn(Flowable.fromIterable(List.of(systemCert(), validCert(), expiredCert())));
         when(certPluginService.getSchema(any())).thenReturn(Maybe.just("{\"content\":{}}"));
         when(appService.findByCertificate(any())).thenAnswer(i -> someRandomApps());
@@ -75,6 +76,32 @@ class CertificateServiceProxyImplTest {
                 .hasSize(3)
                 .anySatisfy(cert -> assertThat(cert.status()).isEqualTo(CertificateStatus.VALID))
                 .anySatisfy(cert -> assertThat(cert.status()).isEqualTo(CertificateStatus.EXPIRED))
+                .allSatisfy(cert -> assertThat(cert.applications()).isNotEmpty())
+                .allSatisfy(cert -> assertThat(cert.identityProviders()).isNotEmpty())
+        ;
+
+    }
+
+    @Test
+    void shouldReturnStubIfSchemaIsMissing() {
+        String missingSchema = "missing-schema";
+        when(certService.findByDomain(TEST_DOMAIN)).thenReturn(Flowable.fromIterable(List.of(missingSchemaCert(missingSchema))));
+        when(certPluginService.getSchema(missingSchema)).thenReturn(Maybe.empty());
+        when(appService.findByCertificate(any())).thenAnswer(i -> someRandomApps());
+        when(idpService.findByCertificate(eq(Reference.domain(TEST_DOMAIN)), any())).thenAnswer(i -> someRandomIdps());
+
+        var service = new CertificateServiceProxyImpl(certService, idpService, appService, certPluginService, mock(), new ObjectMapper(), new MockEnvironment());
+
+        var foundCerts = service.findByDomainAndUse(TEST_DOMAIN, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .values()
+                .get(0);
+        assertThat(foundCerts)
+                .hasSize(1)
+                .anySatisfy(cert -> assertThat(cert.status()).isEqualTo(CertificateStatus.WILL_EXPIRE))
                 .allSatisfy(cert -> assertThat(cert.applications()).isNotEmpty())
                 .allSatisfy(cert -> assertThat(cert.identityProviders()).isNotEmpty())
         ;
@@ -111,7 +138,7 @@ class CertificateServiceProxyImplTest {
         var cert = new Certificate();
         cert.setDomain(TEST_DOMAIN);
         cert.setName("cert-" + randomIdGen.generate(10));
-        cert.setConfiguration("{}");
+        cert.setConfiguration("{\"name\": \"value\"}");
         return cert;
     }
 
@@ -125,6 +152,13 @@ class CertificateServiceProxyImplTest {
     private Certificate expiredCert() {
         var cert = minimalCert();
         cert.setExpiresAt(Date.from(Instant.now().minus(1, ChronoUnit.DAYS)));
+        return cert;
+    }
+
+    private Certificate missingSchemaCert(String schema) {
+        var cert = minimalCert();
+        cert.setExpiresAt(Date.from(Instant.now().plus(1, ChronoUnit.DAYS)));
+        cert.setType(schema);
         return cert;
     }
 }
