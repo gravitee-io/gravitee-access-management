@@ -19,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.URLParametersUtils;
-import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.gateway.api.Request;
@@ -41,6 +40,9 @@ public enum ProviderResponseMode {
         @Override
         public MultiValueMap<String, String> extractParameters(Request request) {
             final String hashValue = request.parameters().getFirst(ConstantKeys.URL_HASH_PARAMETER);
+            if (hashValue == null || hashValue.length() <= 1) { //missing param or we just got the '#'
+                return new LinkedMultiValueMap<>();
+            }
             Map<String, String> hashValues = URLParametersUtils.parse(hashValue.substring(1));
 
             var map = new LinkedMultiValueMap<String, String>();

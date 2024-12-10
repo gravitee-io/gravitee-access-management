@@ -65,6 +65,7 @@ import org.springframework.util.Assert;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -181,10 +182,10 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
             builder.addParameter(io.gravitee.am.common.oidc.Parameters.NONCE, SecureRandomString.generate());
         }
 
-        // using response_mode parameter with the default value for selected resposne_type is not recommended
+        // including the response_mode parameter with the default value for selected response_type is not recommended
         // https://openid.net/specs/oauth-v2-multiple-response-types-1_0.html#ResponseModes
         if (getConfiguration().getResponseMode() != getConfiguration().getProviderResponseType().defaultResponseMode()) {
-            builder.addParameter(Parameters.RESPONSE_MODE, getConfiguration().getResponseMode().name());
+            builder.addParameter(Parameters.RESPONSE_MODE, getConfiguration().getResponseMode().name().toLowerCase(Locale.ROOT));
         }
 
         builder.addParameter(Parameters.REDIRECT_URI, getConfiguration().isEncodeRedirectUri() ? encodeURIComponent(redirectUri) : redirectUri);
