@@ -15,7 +15,7 @@
  */
 
 import { waitFor } from '@management-commands/domain-management-commands';
-import { expect } from '@jest/globals';
+import { expect,jest } from '@jest/globals';
 import { performGet } from '@gateway-commands/oauth-oidc-commands';
 import faker from 'faker';
 import { BulkResponse } from '@management-models/BulkResponse';
@@ -54,12 +54,25 @@ export async function timeout<T>(millis: number, promise: Promise<T>): Promise<T
   return Promise.race([timeLimit, promise]);
 }
 
-export type BasicResponse = { status: number; header: { [x: string]: string }; headers: { [x: string]: string } };
+export type BasicResponse = { status: number; header: { [x: string]: string }; headers: { [x: string]: string }, text: string, [x: string]: any };
+
+export function followRedirectTag(tag?:string) {
+  return (redirectResponse: BasicResponse) => {
+    if (redirectResponse.status != 302) {
+      throw new Error(`expected 302 response, but got ${redirectResponse.status}. Full response: ${JSON.stringify(redirectResponse)}`)
+    }
+    const headers = redirectResponse.header['set-cookie'] ? { Cookie: redirectResponse.header['set-cookie'] } : {};
+    if (tag) {
+      console.log(`[${tag}] redirecting to ${redirectResponse.header['location']}`)
+    } else {
+      console.log(`redirecting to ${redirectResponse.header['location']}`)
+    }
+    return performGet(redirectResponse.header['location'], '', headers);
+  }
+}
 
 export async function followRedirect(redirectResponse: BasicResponse) {
-  expect(redirectResponse.status).toBe(302);
-  const headers = redirectResponse.header['set-cookie'] ? { Cookie: redirectResponse.header['set-cookie'] } : {};
-  return performGet(redirectResponse.header['location'], '', headers);
+  return followRedirectTag()(redirectResponse)
 }
 
 export function checkBulkResponse(

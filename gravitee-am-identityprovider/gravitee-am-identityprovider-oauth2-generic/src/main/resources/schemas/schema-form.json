@@ -69,6 +69,17 @@
       ],
       "default": "code"
     },
+    "responseMode": {
+      "type": "string",
+      "title": "OpenID response mode",
+      "description": "Specifies how the OIDC provider should return the authorization params to AM.</br>Leave default to pick automatically based on the response_type",
+      "enum": [
+        "default",
+        "query",
+        "fragment"
+      ],
+      "default": "default"
+    },
     "encodeRedirectUri": {
       "type": "boolean",
       "title": "Should the redirect_uri parameter be url-encoded ?"

@@ -24,7 +24,7 @@ import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.DummyAuthenticationContext;
 import io.gravitee.am.identityprovider.api.DummyRequest;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.identityprovider.common.oauth2.utils.URLEncodedUtils;
+import io.gravitee.am.common.web.URLParametersUtils;
 import io.gravitee.am.identityprovider.oauth2.authentication.spring.OAuth2GenericAuthenticationProviderConfiguration;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -73,7 +73,7 @@ public class OAuth2GenericAuthenticationProviderTest {
     @Test
     public void shouldLoadUserByUsername_authentication() {
         stubFor(any(urlPathEqualTo("/oauth/token"))
-                .withHeader(HttpHeaders.CONTENT_TYPE, containing(URLEncodedUtils.CONTENT_TYPE))
+                .withHeader(HttpHeaders.CONTENT_TYPE, containing(URLParametersUtils.CONTENT_TYPE))
                 .withRequestBody(matching(".*"))
                 .willReturn(okJson("{\"access_token\" : \"test_token\" }")));
 
@@ -112,7 +112,7 @@ public class OAuth2GenericAuthenticationProviderTest {
     @Test
     public void shouldLoadUserByUsername_authentication_badCredentials() {
         stubFor(any(urlPathEqualTo("/oauth/token"))
-                .withHeader(HttpHeaders.CONTENT_TYPE, containing(URLEncodedUtils.CONTENT_TYPE))
+                .withHeader(HttpHeaders.CONTENT_TYPE, containing(URLParametersUtils.CONTENT_TYPE))
                 .withRequestBody(matching(".*"))
                 .willReturn(unauthorized()));
 
@@ -144,7 +144,7 @@ public class OAuth2GenericAuthenticationProviderTest {
     @Test
     public void shouldLoadUserByUsername_authentication_usernameNotFound() {
         stubFor(any(urlPathEqualTo("/oauth/token"))
-                .withHeader(HttpHeaders.CONTENT_TYPE, containing(URLEncodedUtils.CONTENT_TYPE))
+                .withHeader(HttpHeaders.CONTENT_TYPE, containing(URLParametersUtils.CONTENT_TYPE))
                 .withRequestBody(matching(".*"))
                 .willReturn(okJson("{\"access_token\" : \"test_token\" }")));
 
@@ -185,7 +185,7 @@ public class OAuth2GenericAuthenticationProviderTest {
         roleMapper.setRoles(roles);
 
         stubFor(any(urlPathEqualTo("/oauth/token"))
-                .withHeader(HttpHeaders.CONTENT_TYPE, containing(URLEncodedUtils.CONTENT_TYPE))
+                .withHeader(HttpHeaders.CONTENT_TYPE, containing(URLParametersUtils.CONTENT_TYPE))
                 .withRequestBody(matching(".*"))
                 .willReturn(okJson("{\"access_token\" : \"test_token\" }")));
 

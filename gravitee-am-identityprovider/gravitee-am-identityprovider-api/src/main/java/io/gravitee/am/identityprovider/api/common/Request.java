@@ -17,7 +17,9 @@ package io.gravitee.am.identityprovider.api.common;
 
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpMethod;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -26,6 +28,8 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Request {
 
     private HttpMethod method;
@@ -36,10 +40,13 @@ public class Request {
 
     private String body;
 
-    public static Request get(String uri) {
-        var request = new Request();
-        request.method = HttpMethod.GET;
-        request.uri = uri;
-        return request;
+    public Request(HttpMethod method, String uri) {
+        this.method = method;
+        this.uri = uri;
     }
+
+    public static Request get(String uri) {
+       return new Request(HttpMethod.GET, uri);
+    }
+
 }

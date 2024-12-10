@@ -139,7 +139,7 @@ public class PasswordPolicyManagerImpl extends AbstractService implements Passwo
         Optional<PasswordPolicy> idpPasswordPolicy = ofNullable(identityProvider)
                 .map(IdentityProvider::getPasswordPolicy)
                 .map(this.policies::get);
-        return clientPasswordPolicy
+            return clientPasswordPolicy
                 .or(() -> idpPasswordPolicy)
                 .or(this::getDefaultPolicy);
     }

@@ -19,6 +19,7 @@ import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.api.social.ProviderResponseType;
 import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderConfiguration;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.http.WebClientBuilder;
@@ -44,7 +45,7 @@ public class OAuth2GenericAuthenticationProviderTestConfiguration {
     @Bean
     public OAuth2GenericIdentityProviderConfiguration oAuth2GenericIdentityProviderConfiguration() {
         OAuth2GenericIdentityProviderConfiguration configuration = new OAuth2GenericIdentityProviderConfiguration();
-        configuration.setResponseType("code");
+        configuration.setResponseType(ProviderResponseType.CODE);
         configuration.setClientId("test-client-id");
         configuration.setClientSecret("test-client-secret");
         configuration.setAccessTokenUri("http://localhost:19999/oauth/token");
