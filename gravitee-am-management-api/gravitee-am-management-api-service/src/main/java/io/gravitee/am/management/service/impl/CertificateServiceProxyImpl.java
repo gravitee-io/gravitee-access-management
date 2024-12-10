@@ -202,7 +202,6 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
 
     private Single<Certificate> filterSensitiveData(Certificate cert) {
         return certificatePluginService.getSchema(cert.getType())
-                .switchIfEmpty(Single.error(() -> new CertificatePluginSchemaNotFoundException(cert.getType())))
                 .map(schema -> {
                     // Duplicate the object to avoid side effect
                     var filteredEntity = new Certificate(cert);
@@ -210,7 +209,12 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
                     var configurationNode = objectMapper.readTree(filteredEntity.getConfiguration());
                     super.filterSensitiveData(schemaNode, configurationNode, filteredEntity::setConfiguration);
                     return filteredEntity;
-                });
+                })
+                .switchIfEmpty(Single.fromSupplier(() -> {
+                    Certificate stub = new Certificate(cert);
+                    stub.setConfiguration("{}");
+                    return stub;
+                }));
     }
 
     private Single<UpdateCertificate> updateSensitiveData(UpdateCertificate updateCertificate, Certificate oldCertificate) {
