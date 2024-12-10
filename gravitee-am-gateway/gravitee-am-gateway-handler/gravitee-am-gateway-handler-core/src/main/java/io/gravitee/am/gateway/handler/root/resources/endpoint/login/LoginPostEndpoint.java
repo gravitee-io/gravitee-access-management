@@ -17,13 +17,11 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.login;
 
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
-import io.gravitee.am.service.utils.vertx.RequestUtils;
-import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
-import io.vertx.rxjava3.core.MultiMap;
-import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
+
+import static io.gravitee.am.gateway.handler.common.vertx.utils.RedirectHelper.doRedirect;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -34,20 +32,12 @@ public class LoginPostEndpoint extends AbstractEndpoint implements Handler<Routi
     @Override
     public void handle(RoutingContext context) {
         final Session session = context.session();
-        final MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request());
-        final String redirectUri = getReturnUrl(context, queryParams);
 
         // save that the user has just been signed in
         session.put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, true);
 
         // the login process is done
         // redirect the user to the original request
-        doRedirect(context.response(), redirectUri);
-    }
-
-    private void doRedirect(HttpServerResponse response, String url) {
-        response.putHeader(HttpHeaders.LOCATION, url)
-                .setStatusCode(302)
-                .end();
+        doRedirect(context);
     }
 }

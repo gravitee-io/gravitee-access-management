@@ -31,6 +31,8 @@ import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
+import static io.gravitee.am.gateway.handler.common.vertx.utils.RedirectHelper.getReturnUrl;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team

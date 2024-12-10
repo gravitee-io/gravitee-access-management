@@ -31,7 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -39,6 +39,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import static io.gravitee.am.gateway.core.LegacySettingsKeys.OIDC_ALWAYS_ENHANCE_SCOPE;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -58,8 +60,10 @@ public class ScopeManagerImpl extends AbstractService implements ScopeManager, I
     @Autowired
     private EventManager eventManager;
 
+    @Autowired
+    private Environment environment;
+
     @Deprecated
-    @Value("${legacy.openid.always_enhance_scopes:false}")
     private boolean alwaysProvideEnhancedScopes;
 
     @Override
@@ -75,7 +79,7 @@ public class ScopeManagerImpl extends AbstractService implements ScopeManager, I
 
         logger.info("Register event listener for scopes events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, ScopeEvent.class, domain.getId());
-
+        this.alwaysProvideEnhancedScopes = OIDC_ALWAYS_ENHANCE_SCOPE.from(environment);
     }
 
     @Override

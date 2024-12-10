@@ -37,6 +37,7 @@ import org.springframework.core.env.Environment;
 
 import java.util.Collections;
 
+import static io.gravitee.am.gateway.core.LegacySettingsKeys.REGISTRATION_KEEP_PARAMS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -60,7 +61,7 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        when(environment.getProperty(eq(RegisterSubmissionEndpoint.GATEWAY_ENDPOINT_REGISTRATION_KEEP_PARAMS), any(), eq(true))).thenReturn(true);
+        when(environment.getProperty(eq(REGISTRATION_KEEP_PARAMS.getKey()), any(), eq(REGISTRATION_KEEP_PARAMS.getDefaultValue()))).thenReturn(true);
         router.route(HttpMethod.POST, "/register")
                 .handler(BodyHandler.create())
                 .handler(new RegisterProcessHandler(userService, domain))
