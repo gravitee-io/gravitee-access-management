@@ -212,9 +212,9 @@ export class PasswordPolicyStatusComponent implements OnChanges, OnDestroy {
       rule.check(input).then((ruleResults) => {
         for (const result of ruleResults) {
           this.ruleResults[result.id] = result;
+          this.checkAllRulesValid();
         }
       });
-      this.checkAllRulesValid();
     });
   }
   private checkAllRulesValid() {
