@@ -71,7 +71,7 @@ public class PasswordPolicyRequestParseHandlerTest extends RxWebTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordValidator, passwordPolicyManager, identityProviderManager, new Domain(), auditService);
+        passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordValidator, passwordPolicyManager, identityProviderManager, new Domain(), auditService, EventType.USER_PASSWORD_RESET);
 
         router.route()
                 .handler(BodyHandler.create())
@@ -111,7 +111,7 @@ public class PasswordPolicyRequestParseHandlerTest extends RxWebTestBase {
         
         verify(auditService,atMostOnce()).report(any());
         verify(auditService).report(argThat(builder -> Status.FAILURE.equals(builder.build(new ObjectMapper()).getOutcome().getStatus())));
-        verify(auditService).report(argThat(builder -> builder.build(new ObjectMapper()).getType().equals(EventType.USER_PASSWORD_VALIDATION)));
+        verify(auditService).report(argThat(builder -> builder.build(new ObjectMapper()).getType().equals(EventType.USER_PASSWORD_RESET)));
     }
 
     @Test
