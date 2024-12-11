@@ -111,7 +111,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         switch (query.getField()) {
             case Field.APPLICATION:
                 // applications are group by login attempts
-                queryBuilder.types(List.of(USER_LOGIN, EventType.USER_WEBAUTHN_LOGIN));
+                queryBuilder.types(List.of(USER_LOGIN, USER_WEBAUTHN_LOGIN));
                 queryBuilder.status(Status.SUCCESS.name());
                 queryBuilder.field("accessPoint.id");
                 return executeGroupBy(query.getDomain(), queryBuilder.build(), query.getType())
@@ -119,7 +119,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
             case Field.USER_STATUS, Field.USER_REGISTRATION:
                 return userService.statistics(query).map(AnalyticsGroupByResponse::new);
             case Field.USER_LOGIN:
-                queryBuilder.types(List.of(USER_LOGIN, EventType.USER_WEBAUTHN_LOGIN));
+                queryBuilder.types(List.of(USER_LOGIN, USER_WEBAUTHN_LOGIN));
                 queryBuilder.field("type");
                 return executeGroupBy(query.getDomain(), queryBuilder.build(), query.getType())
                         .flatMap(response -> Single.just(transformKeys((AnalyticsGroupByResponse) response)));
