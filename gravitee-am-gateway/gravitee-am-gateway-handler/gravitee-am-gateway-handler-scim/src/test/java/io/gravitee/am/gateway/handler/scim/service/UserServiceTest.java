@@ -766,7 +766,7 @@ public class UserServiceTest {
         observer.assertError(throwable -> throwable.getMessage().equals("The provided password does not meet the password policy requirements."));
         verify(auditService,atMostOnce()).report(any());
         verify(auditService).report(argThat(builder -> Status.FAILURE.equals(builder.build(new ObjectMapper()).getOutcome().getStatus())));
-        verify(auditService).report(argThat(builder -> builder.build(new ObjectMapper()).getType().equals(EventType.USER_PASSWORD_VALIDATION)));
+        verify(auditService).report(argThat(builder -> builder.build(new ObjectMapper()).getType().equals(EventType.USER_CREATED)));
     }
 
     @Test
@@ -816,7 +816,7 @@ public class UserServiceTest {
         observer.assertError(throwable -> throwable.getMessage().equals("The provided password does not meet the password policy requirements."));
         verify(auditService,atMostOnce()).report(any());
         verify(auditService).report(argThat(builder -> Status.FAILURE.equals(builder.build(new ObjectMapper()).getOutcome().getStatus())));
-        verify(auditService).report(argThat(builder -> builder.build(new ObjectMapper()).getType().equals(EventType.USER_PASSWORD_VALIDATION)));
+        verify(auditService).report(argThat(builder -> builder.build(new ObjectMapper()).getType().equals(EventType.USER_UPDATED)));
     }
 
     @Test
@@ -844,7 +844,7 @@ public class UserServiceTest {
         testObserver.assertError(throwable -> throwable.getMessage().equals("The provided password does not meet the password policy requirements."));
         verify(auditService,atMostOnce()).report(any());
         verify(auditService).report(argThat(builder -> Status.FAILURE.equals(builder.build(new ObjectMapper()).getOutcome().getStatus())));
-        verify(auditService).report(argThat(builder -> builder.build(new ObjectMapper()).getType().equals(EventType.USER_PASSWORD_VALIDATION)));
+        verify(auditService).report(argThat(builder -> builder.build(new ObjectMapper()).getType().equals(EventType.USER_UPDATED)));
     }
 
     @Test

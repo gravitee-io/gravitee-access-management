@@ -205,7 +205,7 @@ public class AccountServiceImpl implements AccountService {
             try {
                 passwordService.validate(password, passwordPolicy, user);
             } catch (InvalidPasswordException e){
-                auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(EventType.USER_PASSWORD_VALIDATION).user(user).throwable(e));
+                auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user).throwable(e));
                 return Single.error(e);
             }
             user.setPassword(password);

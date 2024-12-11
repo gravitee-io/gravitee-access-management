@@ -407,7 +407,7 @@ public class AccountServiceTest {
         observable.assertError(throwable -> throwable.getMessage().equals("invalid password minimum length"));
         verify(auditService,atMostOnce()).report(any());
         verify(auditService).report(argThat(builder -> Status.FAILURE.equals(builder.build(new ObjectMapper()).getOutcome().getStatus())));
-        verify(auditService).report(argThat(builder -> builder.build(new ObjectMapper()).getType().equals(EventType.USER_PASSWORD_VALIDATION)));
+        verify(auditService).report(argThat(builder -> builder.build(new ObjectMapper()).getType().equals(EventType.USER_PASSWORD_RESET)));
     }
 
 

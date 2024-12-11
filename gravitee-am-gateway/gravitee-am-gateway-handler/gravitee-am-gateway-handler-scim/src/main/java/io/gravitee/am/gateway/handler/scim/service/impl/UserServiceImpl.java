@@ -221,7 +221,7 @@ public class UserServiceImpl implements UserService {
         userModel.setUpdatedAt(userModel.getCreatedAt());
         userModel.setEnabled(userModel.getPassword() != null);
         // check password
-        if (isInvalidUserPassword(user.getPassword(), userModel, client, principal)) {
+        if (isInvalidUserPassword(user.getPassword(), userModel, client, principal, EventType.USER_CREATED)) {
             return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
         }
 
@@ -331,7 +331,7 @@ public class UserServiceImpl implements UserService {
                                 userToUpdate.setSource(source);
 
                                 // check password
-                                if (isInvalidUserPassword(userToUpdate.getPassword(), userToUpdate, client, principal)) {
+                                if (isInvalidUserPassword(userToUpdate.getPassword(), userToUpdate, client, principal, EventType.USER_UPDATED)) {
                                     return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
                                 }
 
@@ -423,7 +423,7 @@ public class UserServiceImpl implements UserService {
                         userToPatch.setSource(source);
 
                         // check password
-                        if (isInvalidUserPassword(scimUser.getPassword(), userContainer.getAmUser(), client, principal)) {
+                        if (isInvalidUserPassword(scimUser.getPassword(), userContainer.getAmUser(), client, principal, EventType.USER_UPDATED)) {
                             return Single.error(new InvalidValueException(FIELD_PASSWORD_IS_INVALID));
                         }
 
@@ -481,14 +481,14 @@ public class UserServiceImpl implements UserService {
                                 .throwable(error))));
     }
 
-    private boolean isInvalidUserPassword(String password, io.gravitee.am.model.User user, Client client, io.gravitee.am.identityprovider.api.User principal) {
+    private boolean isInvalidUserPassword(String password, io.gravitee.am.model.User user, Client client, io.gravitee.am.identityprovider.api.User principal, String eventType) {
         final var provider = identityProviderManager.getIdentityProvider(user.getSource());
         if (isNull(password)) {
             return false;
         }
         else if(!passwordService.isValid(password, passwordPolicyManager.getPolicy(client, provider).orElse(null), user)) {
             Throwable exception = new InvalidPasswordException("The provided password does not meet the password policy requirements.");
-            auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(EventType.USER_PASSWORD_VALIDATION).user(user).throwable(exception));
+            auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(eventType).user(user).throwable(exception));
             return true;
         }
         return false;

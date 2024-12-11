@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.user;
 
-import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -49,13 +48,15 @@ public class PasswordPolicyRequestParseHandler extends UserRequestHandler {
     private final PasswordPolicyManager passwordPolicyManager;
     private final IdentityProviderManager identityProviderManager;
     private final AuditService auditService;
+    private final String eventType;
 
-    public PasswordPolicyRequestParseHandler(PasswordService passwordService, PasswordPolicyManager passwordPolicyManager, IdentityProviderManager identityProviderManager, Domain domain, AuditService auditService) {
+    public PasswordPolicyRequestParseHandler(PasswordService passwordService, PasswordPolicyManager passwordPolicyManager, IdentityProviderManager identityProviderManager, Domain domain, AuditService auditService, String eventType) {
         this.identityProviderManager = identityProviderManager;
         this.passwordPolicyManager = passwordPolicyManager;
         this.passwordService = passwordService;
         this.domain = domain;
         this.auditService = auditService;
+        this.eventType = eventType;
     }
 
     @Override
@@ -80,7 +81,7 @@ public class PasswordPolicyRequestParseHandler extends UserRequestHandler {
                 user.setReferenceId(domain.getId());
             }
             Throwable exception = new InvalidPasswordException("The provided password does not meet the password policy requirements.");
-            auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_PASSWORD_VALIDATION).user(user).throwable(exception));
+            auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(eventType).user(user).throwable(exception));
             warningRedirection(context, queryParams, e.getErrorKey());
         }
     }
