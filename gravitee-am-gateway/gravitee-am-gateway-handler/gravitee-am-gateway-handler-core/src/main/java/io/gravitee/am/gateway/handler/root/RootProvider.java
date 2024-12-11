@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
@@ -351,7 +352,6 @@ public class RootProvider extends AbstractProtocolProvider {
         Handler<RoutingContext> userTokenRequestParseHandler = new UserTokenRequestParseHandler(userService);
         Handler<RoutingContext> clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService).setRequired(true);
         Handler<RoutingContext> clientRequestParseHandlerOptional = new ClientRequestParseHandler(clientSyncService);
-        Handler<RoutingContext> passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordService, passwordPolicyManager, identityProviderManager, domain, auditService);
         Handler<RoutingContext> botDetectionHandler = new BotDetectionHandler(domain, botDetectionManager);
         Handler<RoutingContext> dataConsentHandler = new DataConsentHandler(environment);
         Handler<RoutingContext> geoIpHandler = new GeoIpHandler(userActivityService, vertx.eventBus());
@@ -567,7 +567,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(clientRequestParseHandlerOptional)
                 .handler(botDetectionHandler)
                 .handler(registerAccessHandler)
-                .handler(passwordPolicyRequestParseHandler)
+                .handler(new PasswordPolicyRequestParseHandler(passwordService, passwordPolicyManager, identityProviderManager, domain, auditService, EventType.USER_REGISTERED))
                 .handler(new RegisterProcessHandler(userService, domain))
                 .handler(deviceIdentifierHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_REGISTER))
@@ -584,7 +584,7 @@ public class RootProvider extends AbstractProtocolProvider {
         rootRouter.route(HttpMethod.POST, PATH_CONFIRM_REGISTRATION)
                 .handler(new RegisterConfirmationSubmissionRequestParseHandler())
                 .handler(userTokenRequestParseHandler)
-                .handler(passwordPolicyRequestParseHandler)
+                .handler(new PasswordPolicyRequestParseHandler(passwordService, passwordPolicyManager, identityProviderManager, domain, auditService, EventType.REGISTRATION_CONFIRMATION))
                 .handler(deviceIdentifierHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_REGISTRATION_CONFIRMATION))
                 .handler(new RegisterConfirmationSubmissionEndpoint(userService, environment));
@@ -627,7 +627,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(new ResetPasswordSubmissionRequestParseHandler())
                 .handler(userTokenRequestParseHandler)
                 .handler(new ResetPasswordOneTimeTokenHandler())
-                .handler(passwordPolicyRequestParseHandler)
+                .handler(new PasswordPolicyRequestParseHandler(passwordService, passwordPolicyManager, identityProviderManager, domain, auditService, EventType.USER_PASSWORD_RESET))
                 .handler(deviceIdentifierHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_RESET_PASSWORD))
                 .handler(new ResetPasswordSubmissionEndpoint(userService, environment));
