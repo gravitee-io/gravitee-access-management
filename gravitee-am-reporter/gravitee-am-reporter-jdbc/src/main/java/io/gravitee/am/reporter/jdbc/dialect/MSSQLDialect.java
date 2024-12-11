@@ -33,19 +33,20 @@ public class MSSQLDialect extends AbstractDialect {
 
     @Override
     public String tableExists(String table) {
-        return "SELECT 1 FROM sysobjects WHERE name = '"+table+"' AND xtype = 'U'";
+        return "SELECT 1 FROM sysobjects WHERE name = '" + table + "' AND xtype = 'U'";
     }
 
     @Override
     public String buildPagingClause(int page, int size) {
-        return " ORDER BY a.timestamp DESC OFFSET "+ (page * size) +" ROWS FETCH NEXT " + size + " ROWS ONLY ";
+        return " ORDER BY a.timestamp DESC OFFSET " + (page * size) + " ROWS FETCH NEXT " + size + " ROWS ONLY ";
     }
 
     @Override
     protected String groupByConcatQueryParts(AuditReportableCriteria criteria, StringBuilder queryBuilder, StringBuilder whereClauseBuilder, String field) {
-        return "SELECT TOP " + (criteria.size() == null ? 50 : + criteria.size()) + " " + field + ", COUNT(DISTINCT a.id) as counter, MAX(a.timestamp) " +
+        String top = (criteria.size() != null && criteria.size() > 0) ? "TOP " + criteria.size() + " " : "";
+        return "SELECT " + top + field + ", COUNT(DISTINCT a.id) as counter, MAX(a.timestamp) " +
                 queryBuilder.toString() +
-                whereClauseBuilder.toString() + " GROUP BY " + field ;
+                whereClauseBuilder.toString() + " GROUP BY " + field;
     }
 
     @Override
@@ -61,8 +62,8 @@ public class MSSQLDialect extends AbstractDialect {
         String query = "WITH time_buckets AS (\n" +
                 intervals.keySet().stream()
                         .map(slot -> " SELECT [slot] = " + slot + ", " +
-                                "[startDate] = DATEADD(MILLISECOND, "+slot+" % 1000, DATEADD(SECOND, "+slot+" / 1000, '19700101'))," +
-                                "[endDate] = DATEADD(MILLISECOND, "+ (slot+criteria.interval()) +" % 1000, DATEADD(SECOND, "+ (slot + criteria.interval())+" / 1000, '19700101'))" )
+                                "[startDate] = DATEADD(MILLISECOND, " + slot + " % 1000, DATEADD(SECOND, " + slot + " / 1000, '19700101'))," +
+                                "[endDate] = DATEADD(MILLISECOND, " + (slot + criteria.interval()) + " % 1000, DATEADD(SECOND, " + (slot + criteria.interval()) + " / 1000, '19700101'))")
                         .collect(Collectors.joining(" UNION "))
                 + ")\n" +
                 " SELECT b.slot, o.status, a.type, COUNT(o.status) as attempts " + queryBuilder.toString()
@@ -73,12 +74,12 @@ public class MSSQLDialect extends AbstractDialect {
         for (Map.Entry<String, Object> bind : bindings.entrySet()) {
             Object value = bind.getValue();
             if (value instanceof List) {
-                String types = ((List<String>)value).stream().collect(Collectors.joining("','", "'", "'"));
-                query = query.replaceAll(":"+bind.getKey(), types);
+                String types = ((List<String>) value).stream().collect(Collectors.joining("','", "'", "'"));
+                query = query.replaceAll(":" + bind.getKey(), types);
             } else if (value instanceof LocalDateTime) {
-                query = query.replaceAll(":"+bind.getKey(), "'" + dateTimeFormatter.format((LocalDateTime)value) + "'");
+                query = query.replaceAll(":" + bind.getKey(), "'" + dateTimeFormatter.format((LocalDateTime) value) + "'");
             } else {
-                query = query.replaceAll(":"+bind.getKey(), "'" + value + "'");
+                query = query.replaceAll(":" + bind.getKey(), "'" + value + "'");
             }
         }
 

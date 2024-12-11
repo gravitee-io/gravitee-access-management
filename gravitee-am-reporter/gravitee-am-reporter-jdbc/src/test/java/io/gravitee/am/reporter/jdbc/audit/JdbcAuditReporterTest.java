@@ -41,13 +41,15 @@ import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
+import static io.gravitee.am.common.audit.EventType.USER_LOGIN;
+import static io.gravitee.am.common.audit.EventType.USER_WEBAUTHN_LOGIN;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -87,24 +89,39 @@ public class JdbcAuditReporterTest {
         int loop = 10;
         Instant now = Instant.now();
         for (int i = 0; i < loop; ++i) {
-            Audit reportable = buildRandomAudit(ReferenceType.DOMAIN, "testReporter_aggregationHistogram");
-            reportable.setType("FIXED_TYPE");
+            Audit reportable = buildRandomAudit("testReporter_aggregationHistogram");
+            reportable.setType("FIXED_TYPE1");
             reportable.setTimestamp(now.plusMillis((i * 60000)));
             // first insert doesn't match the criteria
             auditReporter.report(reportable);
 
             // second insert match criteria with success status
-            reportable = buildRandomAudit(ReferenceType.DOMAIN, "testReporter_aggregationHistogram");
+            reportable = buildRandomAudit("testReporter_aggregationHistogram");
             reportable.getTarget().setAlternativeId(MY_USER);
-            reportable.setType("FIXED_TYPE");
+            reportable.setType("FIXED_TYPE1");
             reportable.setTimestamp(now.plusMillis((i * 60000)));
             auditReporter.report(reportable);
 
             // third insert match criteria with failure status
-            reportable = buildRandomAudit(ReferenceType.DOMAIN, "testReporter_aggregationHistogram");
+            reportable = buildRandomAudit("testReporter_aggregationHistogram");
             reportable.getTarget().setAlternativeId(MY_USER);
             reportable.getOutcome().setStatus(Status.FAILURE);
-            reportable.setType("FIXED_TYPE");
+            reportable.setType("FIXED_TYPE1");
+            reportable.setTimestamp(now.plusMillis((i * 60000)));
+            auditReporter.report(reportable);
+
+            // fourth insert match criteria with success status with another type
+            reportable = buildRandomAudit("testReporter_aggregationHistogram");
+            reportable.getTarget().setAlternativeId(MY_USER);
+            reportable.setType("FIXED_TYPE2");
+            reportable.setTimestamp(now.plusMillis((i * 60000)));
+            auditReporter.report(reportable);
+
+            // fifth insert match criteria with failure status with another type
+            reportable = buildRandomAudit("testReporter_aggregationHistogram");
+            reportable.getTarget().setAlternativeId(MY_USER);
+            reportable.getOutcome().setStatus(Status.FAILURE);
+            reportable.setType("FIXED_TYPE2");
             reportable.setTimestamp(now.plusMillis((i * 60000)));
             auditReporter.report(reportable);
         }
@@ -116,19 +133,25 @@ public class JdbcAuditReporterTest {
                 .from(now.toEpochMilli())
                 .to(now.plusMillis((loop * 60000)).toEpochMilli())
                 .interval(60000)
-                .types(Arrays.asList("FIXED_TYPE"))
+                .types(List.of("FIXED_TYPE1", "FIXED_TYPE2"))
                 .build();
         TestObserver<Map<Object, Object>> test = auditReporter.aggregate(ReferenceType.DOMAIN, "testReporter_aggregationHistogram", criteria, Type.DATE_HISTO).test();
         test.awaitDone(10, TimeUnit.SECONDS);
         test.assertNoErrors();
 
-        test.assertValue(map -> map.size() == 2);
-        final String failureKey = "FIXED_TYPE_FAILURE".toLowerCase();
-        final String successKey = "FIXED_TYPE_SUCCESS".toLowerCase();
-        test.assertValue(map -> map.get(failureKey) != null && ((List<Long>) map.get(failureKey)).stream().distinct().filter(i -> i != 0).count() == 1);
-        test.assertValue(map -> map.get(failureKey) != null && ((List<Long>) map.get(failureKey)).stream().distinct().filter(i -> i != 0).findFirst().get() == 1);
-        test.assertValue(map -> map.get(successKey) != null && ((List<Long>) map.get(successKey)).stream().distinct().filter(i -> i != 0).count() == 1);
-        test.assertValue(map -> map.get(successKey) != null && ((List<Long>) map.get(successKey)).stream().distinct().filter(i -> i != 0).findFirst().get() == 1);
+        test.assertValue(map -> map.size() == 4);
+        final String failureKey1 = "FIXED_TYPE1_FAILURE".toLowerCase();
+        final String successKey1 = "FIXED_TYPE1_SUCCESS".toLowerCase();
+        final String failureKey2 = "FIXED_TYPE2_FAILURE".toLowerCase();
+        final String successKey2 = "FIXED_TYPE2_SUCCESS".toLowerCase();
+        test.assertValue(map -> map.get(failureKey1) != null && ((List<Long>) map.get(failureKey1)).stream().distinct().filter(i -> i != 0).count() == 1);
+        test.assertValue(map -> map.get(failureKey1) != null && ((List<Long>) map.get(failureKey1)).stream().distinct().filter(i -> i != 0).findFirst().get() == 1);
+        test.assertValue(map -> map.get(successKey1) != null && ((List<Long>) map.get(successKey1)).stream().distinct().filter(i -> i != 0).count() == 1);
+        test.assertValue(map -> map.get(successKey1) != null && ((List<Long>) map.get(successKey1)).stream().distinct().filter(i -> i != 0).findFirst().get() == 1);
+        test.assertValue(map -> map.get(failureKey2) != null && ((List<Long>) map.get(failureKey2)).stream().distinct().filter(i -> i != 0).count() == 1);
+        test.assertValue(map -> map.get(failureKey2) != null && ((List<Long>) map.get(failureKey2)).stream().distinct().filter(i -> i != 0).findFirst().get() == 1);
+        test.assertValue(map -> map.get(successKey2) != null && ((List<Long>) map.get(successKey2)).stream().distinct().filter(i -> i != 0).count() == 1);
+        test.assertValue(map -> map.get(successKey2) != null && ((List<Long>) map.get(successKey2)).stream().distinct().filter(i -> i != 0).findFirst().get() == 1);
     }
 
     @Test
@@ -138,7 +161,7 @@ public class JdbcAuditReporterTest {
         int accSuccess = 0;
         Random random = new Random();
         for (int i = 0; i < loop; ++i) {
-            Audit reportable = buildRandomAudit(ReferenceType.DOMAIN, "testReporter_aggregationGroupBy");
+            Audit reportable = buildRandomAudit("testReporter_aggregationGroupBy");
             if (i % 2 == 0) {
                 if (random.nextBoolean()) {
                     reportable.getActor().setAlternativeId(MY_USER);
@@ -172,13 +195,101 @@ public class JdbcAuditReporterTest {
     }
 
     @Test
+    public void testReporter_aggregationGroupBy_loginType() {
+        int loop = 10;
+        int webauthnLogin = 0;
+        int userLogin = 0;
+        Random random = new Random();
+        for (int i = 0; i < loop; ++i) {
+            Audit reportable = buildRandomAudit("testReporter_aggregationGroupBy_loginType");
+            if (i % 2 == 0) {
+                if (random.nextBoolean()) {
+                    reportable.setType(USER_LOGIN);
+                    reportable.getActor().setAlternativeId(MY_USER);
+                    userLogin++;
+                } else {
+                    reportable.setType(USER_WEBAUTHN_LOGIN);
+                    reportable.getTarget().setAlternativeId(MY_USER);
+                    reportable.getOutcome().setStatus(Status.FAILURE);
+                    webauthnLogin++;
+                }
+            }
+            auditReporter.report(reportable);
+        }
+
+        waitBulkLoadFlush();
+
+        AuditReportableCriteria criteria = new AuditReportableCriteria.Builder()
+                .user(MY_USER)
+                .field("type")
+                .build();
+        TestObserver<Map<Object, Object>> test = auditReporter.aggregate(ReferenceType.DOMAIN, "testReporter_aggregationGroupBy_loginType", criteria, Type.GROUP_BY).test();
+        test.awaitDone(10, TimeUnit.SECONDS);
+        test.assertNoErrors();
+
+        int expectedUserLogin = userLogin;
+        int expectedWebauthnLogin = webauthnLogin;
+        test.assertValue(map -> map.size() == ((expectedWebauthnLogin > 0 && expectedUserLogin > 0) ? 2 : 1));
+        test.assertValue(map -> expectedWebauthnLogin == 0 || map.containsKey("USER_WEBAUTHN_LOGIN"));
+        test.assertValue(map -> expectedUserLogin == 0 || map.containsKey("USER_LOGIN"));
+        test.assertValue(map -> expectedWebauthnLogin == 0 || ((Number) map.get("USER_WEBAUTHN_LOGIN")).intValue() == expectedWebauthnLogin);
+        test.assertValue(map -> expectedUserLogin == 0 || ((Number) map.get("USER_LOGIN")).intValue() == expectedUserLogin);
+    }
+
+    @Test
+    public void testReporter_aggregationGroupBy_webauthnLogin() {
+        int loop = 10;
+        int accFailure = 0;
+        int accSuccess = 0;
+        Random random = new Random();
+        for (int i = 0; i < loop; ++i) {
+            Audit reportable = buildRandomAudit("testReporter_aggregationGroupBy_webauthnLogin");
+            reportable.setType(USER_WEBAUTHN_LOGIN);
+            if (i % 2 == 0) {
+                if (random.nextBoolean()) {
+                    reportable.getActor().setAlternativeId(MY_USER);
+                    accSuccess++;
+                } else {
+                    reportable.getTarget().setAlternativeId(MY_USER);
+                    reportable.getOutcome().setStatus(Status.FAILURE);
+                    accFailure++;
+                }
+            }
+            auditReporter.report(reportable);
+        }
+        Audit reportable = buildRandomAudit("testReporter_aggregationGroupBy_webauthnLogin");
+        reportable.setType(USER_LOGIN);
+        reportable.getActor().setAlternativeId(MY_USER);
+        auditReporter.report(reportable);
+
+        waitBulkLoadFlush();
+
+        AuditReportableCriteria criteria = new AuditReportableCriteria.Builder()
+                .user(MY_USER)
+                .types(List.of(USER_WEBAUTHN_LOGIN))
+                .field("outcome.status")
+                .build();
+        TestObserver<Map<Object, Object>> test = auditReporter.aggregate(ReferenceType.DOMAIN, "testReporter_aggregationGroupBy_webauthnLogin", criteria, Type.GROUP_BY).test();
+        test.awaitDone(10, TimeUnit.SECONDS);
+        test.assertNoErrors();
+
+        int expectedFailure = accFailure;
+        int expectedSuccess = accSuccess;
+        test.assertValue(map -> map.size() == ((expectedFailure > 0 && expectedSuccess > 0) ? 2 : 1));
+        test.assertValue(map -> expectedFailure == 0 || map.containsKey("FAILURE"));
+        test.assertValue(map -> expectedSuccess == 0 || map.containsKey("SUCCESS"));
+        test.assertValue(map -> expectedFailure == 0 || ((Number) map.get("FAILURE")).intValue() == expectedFailure);
+        test.assertValue(map -> expectedSuccess == 0 || ((Number) map.get("SUCCESS")).intValue() == expectedSuccess);
+    }
+
+    @Test
     public void testReporter_aggregationCount() {
         int loop = 10;
         int acc = 0;
 
         Random random = new Random();
         for (int i = 0; i < loop; ++i) {
-            Audit reportable = buildRandomAudit(ReferenceType.DOMAIN, "testReporter_aggregationCount");
+            Audit reportable = buildRandomAudit("testReporter_aggregationCount");
             if (i % 2 == 0) {
                 if (random.nextBoolean()) {
                     reportable.getActor().setAlternativeId(MY_USER);
@@ -210,7 +321,7 @@ public class JdbcAuditReporterTest {
         String accessPointId = UUID.randomUUID().toString();
 
         for (int i = 0; i < loop; ++i) {
-            Audit reportable = buildRandomAudit(ReferenceType.DOMAIN, "testReporter_aggregationCount");
+            Audit reportable = buildRandomAudit("testReporter_aggregationCount");
             if (i % 2 == 0) {
                 reportable.getAccessPoint().setId(accessPointId);
                 acc++;
@@ -236,7 +347,7 @@ public class JdbcAuditReporterTest {
         int acc = 0;
         Random random = new Random();
         for (int i = 0; i < loop; ++i) {
-            Audit reportable = buildRandomAudit(ReferenceType.DOMAIN, "testReporter_searchUser");
+            Audit reportable = buildRandomAudit("testReporter_searchUser");
             if (i % 2 == 0) {
                 if (random.nextBoolean()) {
                     reportable.getActor().setAlternativeId(MY_USER);
@@ -253,7 +364,7 @@ public class JdbcAuditReporterTest {
         AuditReportableCriteria criteria = new AuditReportableCriteria.Builder().user(MY_USER).build();
         TestObserver<Page<Audit>> test = auditReporter.search(ReferenceType.DOMAIN, "testReporter_searchUser", criteria, 0, 20).test();
         test.awaitDone(10, TimeUnit.SECONDS);
-         test.assertNoErrors();
+        test.assertNoErrors();
         int expectedResult = acc;
         test.assertValue(page -> page.getTotalCount() == expectedResult);
         test.assertValue(page -> page.getCurrentPage() == 0);
@@ -266,7 +377,7 @@ public class JdbcAuditReporterTest {
         int loop = 10;
         List<String> types = new ArrayList<>();
         for (int i = 0; i < loop; ++i) {
-            Audit reportable = buildRandomAudit(ReferenceType.DOMAIN, "testReporter_searchTypes");
+            Audit reportable = buildRandomAudit("testReporter_searchTypes");
             if (i % 2 == 0) {
                 types.add(reportable.getType());
             }
@@ -290,7 +401,7 @@ public class JdbcAuditReporterTest {
     public void test_reporter_search() {
         int loop = 10;
         for (int i = 0; i < loop; ++i) {
-            Audit reportable = buildRandomAudit(ReferenceType.DOMAIN, "testReporter_search");
+            Audit reportable = buildRandomAudit("testReporter_search");
             auditReporter.report(reportable);
         }
 
@@ -311,7 +422,7 @@ public class JdbcAuditReporterTest {
         List<Audit> reportables = new ArrayList<>();
         int loop = 10;
         for (int i = 0; i < loop; ++i) {
-            Audit reportable = buildRandomAudit(ReferenceType.DOMAIN, "testReporter_findById");
+            Audit reportable = buildRandomAudit("testReporter_findById");
             reportables.add(reportable);
             auditReporter.report(reportable);
         }
@@ -341,14 +452,14 @@ public class JdbcAuditReporterTest {
         test.assertValue(a -> a.getAccessPoint().getId().equals(audit.getAccessPoint().getId()));
     }
 
-    protected Audit buildRandomAudit(ReferenceType refType, String refId) {
+    protected Audit buildRandomAudit(String refId) {
         String random = UUID.randomUUID().toString();
 
         Audit reportable = new Audit();
         reportable.setId(random);
         reportable.setType("type" + random);
         reportable.setTransactionId("transaction" + random);
-        reportable.setReferenceType(refType);
+        reportable.setReferenceType(ReferenceType.DOMAIN);
         reportable.setReferenceId(refId);
         reportable.setTimestamp(Instant.now());
 
@@ -385,6 +496,7 @@ public class JdbcAuditReporterTest {
         try {
             Thread.sleep(3000); // bulk load set to
         } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 }
