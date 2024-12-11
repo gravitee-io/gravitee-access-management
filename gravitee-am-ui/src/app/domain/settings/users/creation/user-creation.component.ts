@@ -26,6 +26,7 @@ import { DomainPasswordPolicy } from '../../password-policy/domain-password-poli
 import { PasswordPolicyService } from '../../../../services/password-policy.service';
 
 import { UserClaimComponent } from './user-claim.component';
+import { NgForm } from '@angular/forms';
 enum AccountType {
   User = 'user',
   ServiceAccount = 'service',
@@ -183,5 +184,13 @@ export class UserCreationComponent implements OnInit {
     this.passwordPolicyService.getPolicyForIdp(this.domainId, this.user.source).subscribe((policy) => {
       this.passwordPolicy = policy;
     });
+  }
+  setPasswordValid(value: boolean) {
+    console.log('passwordValid: ', value);
+    this.passwordValid = value;
+  }
+  canCreateUser(userForm: NgForm) {
+    const formValid = userForm.valid && !userForm.pristine;
+    return formValid && (this.passwordValid || this.preRegistration);
   }
 }

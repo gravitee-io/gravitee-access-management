@@ -188,7 +188,7 @@
                 [policy]="passwordPolicy"
                 [password]="user.password"
                 [profile]="{ id: user.id, firstName: user.firstName, lastName: user.lastName, email: user.email }"
-                (valid)="passwordValid = $event"
+                (valid)="setPasswordValid($event)"
               />
             }
           </div>
@@ -236,7 +236,7 @@
       </div>
       <div fxLayout="row" fxLayoutAlign="end">
         <a mat-button [routerLink]="['..']" style="margin-right: 20px">CANCEL</a>
-        <button mat-raised-button [disabled]="!(userForm.valid && passwordValid) || userForm.pristine" type="submit">CREATE</button>
+        <button mat-raised-button [disabled]="!canCreateUser(userForm)" type="submit">CREATE</button>
       </div>
     </form>
     <div class="gv-page-description" fxFlex>
