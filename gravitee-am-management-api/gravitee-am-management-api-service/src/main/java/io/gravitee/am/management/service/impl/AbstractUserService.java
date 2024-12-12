@@ -38,6 +38,7 @@ import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.InvalidUserException;
+import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
@@ -53,6 +54,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -278,6 +280,9 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
         user.setCreatedAt(new Date());
         user.setUpdatedAt(user.getCreatedAt());
         if (newUser.getLastPasswordReset() != null) {
+            if (newUser.getLastPasswordReset().toInstant().isAfter(Instant.now())) {
+                throw new UserInvalidException("lastPasswordReset cannot be in the future");
+            }
             user.setLastPasswordReset(newUser.getLastPasswordReset());
         } else if(!newUser.isPreRegistration()){
             user.setLastPasswordReset(user.getCreatedAt());
