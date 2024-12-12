@@ -45,8 +45,6 @@ databaseChangeLog:
               - column:
                   name: client_id
               - column:
-                  name: user_id
-              - column:
                   name: user_source
               - column:
                   name: user_external_id

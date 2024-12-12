@@ -3,14 +3,14 @@ databaseChangeLog:
   - changeSet:
       id: 4.5.5-scope-approval-index
       author: GraviteeSource Team
-      dbms: mssql
+      validCheckSum: ANY
       onError: MARK_RAN
       preConditions:
         - onFail: MARK_RAN
         - not:
-          - indexExists:
-              tableName: scope_approvals
-              indexName: idx_scope_approvals_domain_client_user_id_extid_scope
+            - indexExists:
+                tableName: scope_approvals
+                indexName: idx_scope_approvals_domain_client_user_id_extid_scope
       changes:
         - createIndex:
             columns:
@@ -18,8 +18,6 @@ databaseChangeLog:
                   name: domain
               - column:
                   name: client_id
-              - column:
-                  name: user_id
               - column:
                   name: user_source
               - column:

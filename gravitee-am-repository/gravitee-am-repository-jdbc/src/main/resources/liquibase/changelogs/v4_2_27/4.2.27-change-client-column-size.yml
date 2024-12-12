@@ -1,9 +1,8 @@
 # Change client column from 64 to 255 characters.
 databaseChangeLog:
   - changeSet:
-      id: 4.2.27-change-client-column-size-scope-approval-new-field # remove index introduced in 4.5.0
+      id: 4.2.27-change-client-column-size-scope-approval-remove-index # remove index introduced in 4.5.0
       author: GraviteeSource Team
-      dbms: mssql
       onError: MARK_RAN
       preConditions:
         - onFail: MARK_RAN
