@@ -173,5 +173,18 @@ public class CibaAuthRequestRepositoryTest extends AbstractOAuthTest {
         observer.assertNoErrors();
     }
 
+    @Test
+    public void shouldCreateWithLongClientName() {
+        final String id = RandomString.generate();
+        CibaAuthRequest authRequest = buildCibaAuthRequest(id);
+        authRequest.setClientId("very-long-client-very-long-client-very-long-client-very-long-client-very-long-client-very-long-client");
+
+        TestObserver<CibaAuthRequest> observer = repository.create(authRequest).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+    }
+
 
 }

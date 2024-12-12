@@ -122,6 +122,8 @@ databaseChangeLog:
   - include:
       - file: liquibase/changelogs/v4_2_0/4.2.0-update-applications-table.yml
   - include:
+      - file: liquibase/changelogs/v4_2_27/4.2.27-change-client-column-size.yml
+  - include:
       - file: liquibase/changelogs/v4_3_0/4.3.0-license-notification-permission.yml
   - include:
       - file: liquibase/changelogs/v4_4_0/4.4.0-add-password-policies-table.yml
@@ -146,8 +148,10 @@ databaseChangeLog:
   - include:
       - file: liquibase/changelogs/v4_5_0/4.5.0-external-id-resized.yml
   - include:
-      - file: liquibase/changelogs/v4_5_0/4.5.0-scope-approval-external-user-id.yml
-  - include:
       - file: liquibase/changelogs/v4_5_0/4.5.0-identity-group-mapper.yml
   - include:
+      - file: liquibase/changelogs/v4_5_0/4.5.0-scope-approval-external-user-id.yml
+  - include:
       - file: liquibase/changelogs/v4_5_0/4.5.0-add-node-monitoring-index.yml
+  - include:
+      - file: liquibase/changelogs/v4_5_5/4.5.5-scope-approval-index.yml
