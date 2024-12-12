@@ -1,0 +1,183 @@
+# Change client column from 64 to 255 characters.
+databaseChangeLog:
+  - changeSet:
+      id: 4.2.27-change-client-column-size-scope-approval-new-field # remove index introduced in 4.5.0
+      author: GraviteeSource Team
+      dbms: mssql
+      onError: MARK_RAN
+      preConditions:
+        - onFail: MARK_RAN
+        - indexExists:
+            tableName: scope_approvals
+            indexName: idx_scope_approvals_domain_client_user_id_extid_scope
+      changes:
+        - dropIndex:
+            indexName: idx_scope_approvals_domain_client_user_id_extid_scope
+            tableName: scope_approvals
+  - changeSet:
+      id: 4.2.27-change-client-column-size-remove-indexes # MSSQL SERVER needs to first remove index before changing type
+      author: GraviteeSource Team
+      dbms: mssql
+      changes:
+        # device
+        - dropIndex:
+            tableName: devices
+            indexName: idx_devices_domain_client_user
+        # scope_approvals
+        - dropIndex:
+            indexName: idx_scope_approvals_domain_client_user_scope
+            tableName: scope_approvals
+
+        #access_tokens
+        - dropIndex:
+            indexName: idx_access_tokens_client
+            tableName: access_tokens
+        - dropIndex:
+            indexName: idx_access_tokens_domain_client_subject
+            tableName: access_tokens
+
+        #refresh_tokens
+        - dropIndex:
+            indexName: idx_refresh_tokens_client
+            tableName: refresh_tokens
+        - dropIndex:
+            indexName: idx_refresh_tokens_domain_client_subject
+            tableName: refresh_tokens
+
+  - changeSet:
+      id: 4.2.27-change-client-column-size
+      author: GraviteeSource Team
+      changes:
+        #devices
+        - dropIndex:
+            tableName: devices
+            indexName: idx_devices_domain_client_user_remember_device_device_id
+        - modifyDataType:
+            tableName: devices
+            columnName: client
+            newDataType: VARCHAR(255)
+        - createIndex: # removed index for reference type to be able to change data type of client and not exceed max index length
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: client
+              - column:
+                  name: user_id
+              - column:
+                  name: device_identifier_id
+              - column:
+                  name: device_id
+            indexName: idx_devices_domain_client_user_remember_device_device_id
+            tableName: devices
+            unique: false
+
+        # scope_approvals
+        - modifyDataType:
+            tableName: scope_approvals
+            columnName: client_id
+            newDataType: VARCHAR(255)
+
+        #access_tokens
+        - modifyDataType:
+            tableName: access_tokens
+            columnName: client
+            newDataType: VARCHAR(255)
+
+        #refresh_tokens
+        - modifyDataType:
+            tableName: refresh_tokens
+            columnName: client
+            newDataType: VARCHAR(255)
+
+        #authorization_codes
+        - modifyDataType:
+            tableName: authorization_codes
+            columnName: client_id
+            newDataType: VARCHAR(255)
+
+        #pushed_authorization_requests
+        - modifyDataType:
+            tableName: pushed_authorization_requests
+            columnName: client
+            newDataType: VARCHAR(255)
+
+        #ciba_auth_requests
+        - modifyDataType:
+            tableName: ciba_auth_requests
+            columnName: client
+            newDataType: VARCHAR(255)
+
+  - changeSet:
+      id: 4.2.27-change-client-column-size-recreate-indexes # recreating indexes for MS SQL SERVER
+      author: GraviteeSource Team
+      dbms: mssql
+      changes:
+        # device
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: client
+              - column:
+                  name: user_id
+            indexName: idx_devices_domain_client_user
+            tableName: devices
+            unique: false
+        # scope_approvals
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: client_id
+              - column:
+                  name: user_id
+              - column:
+                  name: scope
+            indexName: idx_scope_approvals_domain_client_user_scope
+            tableName: scope_approvals
+            unique: true
+
+        #access_tokens
+        - createIndex:
+            columns:
+              - column:
+                  name: client
+            indexName: idx_access_tokens_client
+            tableName: access_tokens
+            unique: false
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: client
+              - column:
+                  name: subject
+            indexName: idx_access_tokens_domain_client_subject
+            tableName: access_tokens
+            unique: false
+
+        #refresh_tokens
+        - createIndex:
+            columns:
+              - column:
+                  name: client
+            indexName: idx_refresh_tokens_client
+            tableName: refresh_tokens
+            unique: false
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: client
+              - column:
+                  name: subject
+            indexName: idx_refresh_tokens_domain_client_subject
+            tableName: refresh_tokens
+            unique: false
