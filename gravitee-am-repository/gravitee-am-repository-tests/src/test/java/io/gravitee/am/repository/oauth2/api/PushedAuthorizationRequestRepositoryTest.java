@@ -92,5 +92,21 @@ public class PushedAuthorizationRequestRepositoryTest extends AbstractOAuthTest 
         observer.assertNoErrors();
     }
 
+    @Test
+    public void shouldCreateWithLongClientName() {
+        PushedAuthorizationRequest par = new PushedAuthorizationRequest();
+        final String id = RandomString.generate();
+        par.setId(id);
+        par.setDomain("domain");
+        par.setClient("very-long-client-very-long-client-very-long-client-very-long-client-very-long-client-very-long-client");
+        final LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("key", "value");
+        par.setParameters(parameters);
+
+        TestObserver<PushedAuthorizationRequest> observer = repository.create(par).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+    }
 
 }

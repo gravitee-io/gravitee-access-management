@@ -251,4 +251,14 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoValues();
         testObserver.assertNoErrors();
     }
+
+    @Test
+    public void createWithLongClient(){
+        Device device = buildDevice();
+        device.setClient("very-long-client-very-long-client-very-long-client-very-long-client-very-long-client-very-long-client");
+        TestObserver<Device> deviceTestObserver = repository.create(device).test().awaitDone(10, TimeUnit.SECONDS);
+        deviceTestObserver.awaitDone(10, TimeUnit.SECONDS);
+        deviceTestObserver.assertComplete();
+        deviceTestObserver.assertNoErrors();
+    }
 }
