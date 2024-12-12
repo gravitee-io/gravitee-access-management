@@ -253,6 +253,7 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+<<<<<<< HEAD
     public void shouldFindByReferenceAndUserId() {
         var device = buildDevice();
 
@@ -267,5 +268,14 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
                 .test().awaitDone(5, TimeUnit.SECONDS)
                 .assertComplete()
         ;
+=======
+    public void createWithLongClient(){
+        Device device = buildDevice();
+        device.setClient("very-long-client-very-long-client-very-long-client-very-long-client-very-long-client-very-long-client");
+        TestObserver<Device> deviceTestObserver = repository.create(device).test().awaitDone(10, TimeUnit.SECONDS);
+        deviceTestObserver.awaitDone(10, TimeUnit.SECONDS);
+        deviceTestObserver.assertComplete();
+        deviceTestObserver.assertNoErrors();
+>>>>>>> d0b4f902f3 (fix: change field size for client)
     }
 }
