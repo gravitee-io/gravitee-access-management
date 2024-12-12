@@ -207,11 +207,9 @@ export class PasswordPolicyStatusComponent implements OnChanges, OnDestroy {
     }
     this.rules.forEach((rule) => {
       if (this.ruleResults[rule.id]) {
-        console.log(`setting rule ${rule.id} to CHECKING`);
         this.ruleResults[rule.id].status = RuleStatus.CHECKING;
       }
       rule.check(input).then((ruleResults) => {
-        console.log(`results for rule ${rule.id}: ${JSON.stringify(ruleResults, null, 2)}`);
         for (const result of ruleResults) {
           this.ruleResults[result.id] = result;
         }
@@ -221,14 +219,10 @@ export class PasswordPolicyStatusComponent implements OnChanges, OnDestroy {
   }
   private checkAllRulesValid() {
     let allRulesValid = true;
-    console.log('all results: ', this.ruleResults);
     for (const result of Object.values(this.ruleResults)) {
-      console.log('rule result', result);
       allRulesValid &&= result.status === RuleStatus.VALID;
     }
-    console.log(`emitting valid=${allRulesValid}`);
     setTimeout(() => {
-      console.log('do emit');
       this.valid.emit(allRulesValid);
     }, 0);
   }

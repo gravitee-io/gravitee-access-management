@@ -186,7 +186,6 @@ export class UserCreationComponent implements OnInit {
     });
   }
   setPasswordValid(value: boolean) {
-    console.log('passwordValid: ', value);
     this.passwordValid = value;
   }
   canCreateUser(userForm: NgForm) {
