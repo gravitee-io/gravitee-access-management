@@ -66,6 +66,22 @@ public class AccessTokenRepositoryTest extends AbstractOAuthTest {
     }
 
     @Test
+    public void shouldCreateWithLongClientId() {
+        AccessToken token = new AccessToken();
+        token.setId(RandomString.generate());
+        token.setToken("my-token");
+        token.setClient("very-long-client-very-long-client-very-long-client-very-long-client-very-long-client-very-long-client");
+
+        TestObserver<AccessToken> observer = accessTokenRepository
+                        .create(token).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+
+        observer.assertComplete();
+        observer.assertNoErrors();
+    }
+
+    @Test
     public void shouldDeleteByToken() {
         AccessToken token = new AccessToken();
         token.setId(RandomString.generate());

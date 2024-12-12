@@ -135,4 +135,19 @@ public class RefreshTokenRepositoryTest extends AbstractOAuthTest {
         assertNotNull(refreshTokenRepository.findByToken("my-token2").blockingGet());
     }
 
+    @Test
+    public void shouldCreateWithLongClientId() {
+        RefreshToken token = new RefreshToken();
+        token.setId(RandomString.generate());
+        token.setToken("my-token");
+        token.setClient("very-long-client-very-long-client-very-long-client-very-long-client-very-long-client-very-long-client");
+
+        TestObserver<RefreshToken> observer = refreshTokenRepository
+                .create(token).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+    }
+
 }

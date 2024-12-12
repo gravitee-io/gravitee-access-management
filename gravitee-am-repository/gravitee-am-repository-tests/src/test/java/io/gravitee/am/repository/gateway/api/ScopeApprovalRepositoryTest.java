@@ -18,6 +18,7 @@ package io.gravitee.am.repository.gateway.api;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.gateway.AbstractGatewayTest;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -94,6 +95,16 @@ public class ScopeApprovalRepositoryTest extends AbstractGatewayTest {
                 // an error is thrown
                 .isInstanceOf(IllegalArgumentException.class);
    }
+
+    @Test
+    public void shouldCreateWithLongClientName(){
+        ScopeApproval scopeApproval = basicApproval();
+        scopeApproval.setClientId("very-long-client-very-long-client-very-long-client-very-long-client-very-long-client-very-long-client");
+        TestObserver<ScopeApproval> testObserver = repository.create(scopeApproval).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+    }
 
     // common test data
     private void givenStandardTestApprovalsExist() {
