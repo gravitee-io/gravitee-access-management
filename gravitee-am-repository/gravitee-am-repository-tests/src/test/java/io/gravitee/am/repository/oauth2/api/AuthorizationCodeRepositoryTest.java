@@ -81,4 +81,19 @@ public class AuthorizationCodeRepositoryTest extends AbstractOAuthTest {
         deletionValidationObserver.assertNoValues();
     }
 
+    @Test
+    public void shouldCreateWithLongClientId() {
+        AuthorizationCode authorizationCode = new AuthorizationCode();
+        authorizationCode.setId("test");
+        authorizationCode.setCode("test");
+        authorizationCode.setClientId("very-long-client-very-long-client-very-long-client-very-long-client-very-long-client-very-long-client");
+
+        TestObserver<AuthorizationCode> observer = authorizationCodeRepository
+                .create(authorizationCode).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+    }
+
 }
