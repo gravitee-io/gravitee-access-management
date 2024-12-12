@@ -1,0 +1,29 @@
+# Recreate index for scope approval if not exit.
+databaseChangeLog:
+  - changeSet:
+      id: 4.5.5-scope-approval-index
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      onError: MARK_RAN
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                tableName: scope_approvals
+                indexName: idx_scope_approvals_domain_client_user_id_extid_scope
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: client_id
+              - column:
+                  name: user_source
+              - column:
+                  name: user_external_id
+              - column:
+                  name: scope
+            indexName: idx_scope_approvals_domain_client_user_id_extid_scope
+            tableName: scope_approvals
+            unique: false
