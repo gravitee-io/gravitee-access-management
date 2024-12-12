@@ -203,7 +203,11 @@ export class PasswordPolicyStatusComponent implements OnChanges, OnDestroy {
   private checkRules(input: PasswordInput) {
     if (input.pass == null) {
       this.ruleResults = {};
+      setTimeout(() => this.valid.emit(false));
       return;
+    }
+    if (this.rules.length == 0) {
+      setTimeout(() => this.valid.emit(true));
     }
     this.rules.forEach((rule) => {
       if (this.ruleResults[rule.id]) {
