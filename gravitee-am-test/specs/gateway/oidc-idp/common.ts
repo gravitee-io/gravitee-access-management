@@ -150,7 +150,7 @@ export async function setupOidcProviderTest(domainSuffix: string): Promise<OIDCF
     const action = dom('#callbackForm').attr('action');
     const url = action.startsWith('http:') ? action : `${process.env.AM_GATEWAY_URL}/${clientDomain.hrid}/login/` + action;
     const headers = response.header['set-cookie'] ? { Cookie: response.header['set-cookie'] } : {};
-    return performFormPost(url, '', { urlhash: new URL(response.request.url).hash }, headers);
+    return performFormPost(url, '', { urlHash: new URL(response.request.url).hash }, headers);
   };
 
   const expectRedirectToClient = async (clientAuthorizeResponse: BasicResponse, otherAssertions: UrlAssertions) => {
