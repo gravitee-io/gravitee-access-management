@@ -32,7 +32,9 @@ import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -198,12 +200,18 @@ public class UserMapper {
 
         // set additional information
         if (scimUser instanceof GraviteeUser graviteeUser && graviteeUser.getAdditionalInformation() != null) {
-            var lastPasswordReset = graviteeUser.getAdditionalInformation().get(LAST_PASSWORD_RESET_KEY);
-            if (lastPasswordReset != null) {
-                if (lastPasswordReset instanceof String) {
+            var lastPasswordResetRaw = graviteeUser.getAdditionalInformation().get(LAST_PASSWORD_RESET_KEY);
+            if (lastPasswordResetRaw != null) {
+                if (lastPasswordResetRaw instanceof String lastResetIso8601) {
                     try {
-                        user.setLastPasswordReset(Date.from(Instant.parse((String) lastPasswordReset)));
-                    } catch (Exception e) {
+                        var lastPasswordReset = Instant.parse(lastResetIso8601);
+                        var now = Instant.now();
+                        if (lastPasswordReset.isAfter(now)) {
+                            LOGGER.error("Invalid lastPasswordReset - timestamp is in the future. Got {} which is {} ahead of the current time ({})", lastPasswordReset, Duration.between(lastPasswordReset, now), now);
+                            throw new UserInvalidException("lastPasswordReset cannot be in the future");
+                        }
+                        user.setLastPasswordReset(Date.from(lastPasswordReset));
+                    } catch (DateTimeParseException e) {
                         LOGGER.error("Cannot parse lastPasswordReset. Be sure it is in ISO 8601 format.", e);
                         throw new UserInvalidException("Unable to parse lastPasswordReset date. Be sure it is in ISO 8601 format.", e);
                     }
@@ -217,6 +225,7 @@ public class UserMapper {
         user.setAdditionalInformation(additionalInformation);
         return user;
     }
+
 
     public static <T> T get(Map<String, Object> additionalInformation, String key) {
         if (!additionalInformation.containsKey(key)) {
