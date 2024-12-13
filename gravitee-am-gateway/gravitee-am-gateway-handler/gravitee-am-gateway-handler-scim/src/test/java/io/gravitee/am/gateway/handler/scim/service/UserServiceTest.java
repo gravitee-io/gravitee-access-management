@@ -70,6 +70,8 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -160,7 +162,7 @@ public class UserServiceTest {
     @Mock
     private RoleService roleService;
 
-    private final static String DOMAIN_ID = "domain";
+    private static final String DOMAIN_ID = "domain";
 
 
     @Before
@@ -223,8 +225,6 @@ public class UserServiceTest {
 
     @Test
     public void shouldCreateUser_invalid_roles() {
-        final String domainId = "domain";
-
         User newUser = mock(User.class);
         when(newUser.getSource()).thenReturn("unknown-idp");
         when(newUser.getUserName()).thenReturn("username");
@@ -878,6 +878,28 @@ public class UserServiceTest {
         testObserver.assertValue(u -> ((GraviteeUser) u).getAdditionalInformation().get("lastPasswordReset") != null);
         assertFalse(newUserDefinition.getValue().isInternal());
         assertTrue(newUserDefinition.getValue().isEnabled());
+    }
+
+    @Test
+    public void shouldNotCreateUser_with_lastPasswordResetInFuture() {
+        final var aLongTime = Duration.ofDays(4);
+        String lastPasswordResetDate = Instant.now().plus(aLongTime).toString();
+
+        GraviteeUser newUser = mock(GraviteeUser.class);
+        when(newUser.getSource()).thenReturn("unknown-idp");
+        when(newUser.getUserName()).thenReturn("username");
+        when(newUser.getPassword()).thenReturn(null);
+        Map<String, Object> ai = new HashMap<>();
+        ai.put("lastPasswordReset", lastPasswordResetDate);
+        when(newUser.getAdditionalInformation()).thenReturn(ai);
+
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN_ID);
+        user.setAdditionalInformation(ai);
+
+        userService.create(newUser, null, "/", null, new Client()).test()
+                .assertError(ex -> ex instanceof UserInvalidException && ex.getMessage().equals("lastPasswordReset cannot be in the future"));
     }
 
     @Test
