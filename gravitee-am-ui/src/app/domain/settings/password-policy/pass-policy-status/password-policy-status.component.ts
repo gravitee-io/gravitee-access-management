@@ -203,7 +203,11 @@ export class PasswordPolicyStatusComponent implements OnChanges, OnDestroy {
   private checkRules(input: PasswordInput) {
     if (input.pass == null) {
       this.ruleResults = {};
+      setTimeout(() => this.valid.emit(false));
       return;
+    }
+    if (this.rules.length == 0) {
+      setTimeout(() => this.valid.emit(true));
     }
     this.rules.forEach((rule) => {
       if (this.ruleResults[rule.id]) {
@@ -214,6 +218,7 @@ export class PasswordPolicyStatusComponent implements OnChanges, OnDestroy {
           this.ruleResults[result.id] = result;
           this.checkAllRulesValid();
         }
+        this.checkAllRulesValid();
       });
     });
   }
@@ -222,7 +227,9 @@ export class PasswordPolicyStatusComponent implements OnChanges, OnDestroy {
     for (const result of Object.values(this.ruleResults)) {
       allRulesValid &&= result.status === RuleStatus.VALID;
     }
-    this.valid.emit(allRulesValid);
+    setTimeout(() => {
+      this.valid.emit(allRulesValid);
+    }, 0);
   }
 
   private excludeUserProfileInfoRule() {
