@@ -166,6 +166,7 @@
           <mat-slide-toggle (change)="preRegistration = !preRegistration">Enable pre-registration</mat-slide-toggle>
           <mat-hint style="font-size: 75%">The user will receive an email to complete his profile and activate account. </mat-hint>
         </div>
+<<<<<<< HEAD
         <div *ngIf="!preRegistration" [@fadeInOut]>
           <div fxLayout="row">
             <mat-form-field appearance="outline" floatLabel="always">
@@ -177,6 +178,31 @@
                 [type]="hidePassword ? 'password' : 'text'"
                 [(ngModel)]="user.password"
                 [required]="!preRegistration"
+=======
+        @if (!preRegistration) {
+          <div [@fadeInOut]>
+            <div fxLayout="row">
+              <mat-form-field appearance="outline" floatLabel="always">
+                <input
+                  matInput
+                  #password="ngModel"
+                  placeholder="Password"
+                  name="password"
+                  [type]="hidePassword ? 'password' : 'text'"
+                  [(ngModel)]="user.password"
+                  [required]="!preRegistration"
+                />
+                <mat-icon matSuffix (click)="hidePassword = !hidePassword">{{ hidePassword ? 'visibility_off' : 'visibility' }} </mat-icon>
+                <mat-hint>Password for the User.</mat-hint>
+              </mat-form-field>
+            </div>
+            @if (!password.pristine) {
+              <password-policy-status
+                [policy]="passwordPolicy"
+                [password]="user.password"
+                [profile]="{ id: user.id, firstName: user.firstName, lastName: user.lastName, email: user.email }"
+                (valid)="setPasswordValid($event)"
+>>>>>>> f2e32901c (fix: avoid change-after-check error in password policy component (#5244))
               />
               <mat-icon matSuffix (click)="hidePassword = !hidePassword">{{ hidePassword ? 'visibility_off' : 'visibility' }} </mat-icon>
               <mat-hint>Password for the User.</mat-hint>
@@ -227,7 +253,11 @@
       </div>
       <div fxLayout="row" fxLayoutAlign="end">
         <a mat-button [routerLink]="['..']" style="margin-right: 20px">CANCEL</a>
+<<<<<<< HEAD
         <button mat-raised-button [disabled]="!userForm.valid || userForm.pristine" type="submit">CREATE</button>
+=======
+        <button mat-raised-button [disabled]="!canCreateUser(userForm)" type="submit">CREATE</button>
+>>>>>>> f2e32901c (fix: avoid change-after-check error in password policy component (#5244))
       </div>
     </form>
     <div class="gv-page-description" fxFlex>

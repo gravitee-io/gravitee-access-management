@@ -17,6 +17,7 @@ import { Component, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { each } from 'lodash';
+import { NgForm } from '@angular/forms';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { UserService } from '../../../../services/user.service';
@@ -49,6 +50,12 @@ export class UserCreationComponent implements OnInit {
   @ViewChild('dynamic', { read: ViewContainerRef }) viewContainerRef: ViewContainerRef;
   private domainId: string;
 
+<<<<<<< HEAD
+=======
+  passwordPolicy: DomainPasswordPolicy = {};
+  passwordValid: boolean;
+
+>>>>>>> f2e32901c (fix: avoid change-after-check error in password policy component (#5244))
   constructor(
     private userService: UserService,
     private router: Router,
@@ -168,4 +175,26 @@ export class UserCreationComponent implements OnInit {
   isServiceAccount(): boolean {
     return this.selectedAccountType === AccountType.ServiceAccount;
   }
+<<<<<<< HEAD
+=======
+
+  loadPasswordPolicy() {
+    if (this.domainId == null) {
+      this.passwordPolicy = {};
+    } else {
+      this.passwordPolicyService.getPolicyForIdp(this.domainId, this.user.source).subscribe((policy) => {
+        this.passwordPolicy = policy;
+      });
+    }
+  }
+
+  setPasswordValid(value: boolean) {
+    this.passwordValid = value;
+  }
+
+  canCreateUser(userForm: NgForm) {
+    const formValid = userForm.valid && !userForm.pristine;
+    return formValid && (this.passwordValid || this.preRegistration);
+  }
+>>>>>>> f2e32901c (fix: avoid change-after-check error in password policy component (#5244))
 }
