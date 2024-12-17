@@ -191,7 +191,9 @@ public class OrganizationUserResource extends AbstractResource {
         final var authenticatedUser = getAuthenticatedUser();
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.UPDATE)
                 .andThen(organizationUserService.revokeToken(organizationId, userId, tokenId, authenticatedUser))
-                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
+                .subscribe(revoked -> response.resume(Response.noContent().build()),
+                        response::resume,
+                        () -> response.resume(Response.status(Response.Status.NOT_FOUND).build()));
     }
 
     @PUT
@@ -261,7 +263,7 @@ public class OrganizationUserResource extends AbstractResource {
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.DELETE)
                 .andThen(organizationUserService.delete(ReferenceType.ORGANIZATION, organizationId, user, authenticatedUser))
-                .subscribe(u-> response.resume(Response.noContent().build()), response::resume);
+                .subscribe(u -> response.resume(Response.noContent().build()), response::resume);
     }
 
     @POST

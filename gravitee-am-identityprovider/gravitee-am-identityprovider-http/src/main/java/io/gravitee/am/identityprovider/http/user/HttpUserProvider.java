@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.http.user;
 
+import io.gravitee.am.common.web.URLParametersUtils;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
@@ -57,7 +58,6 @@ import java.lang.reflect.Constructor;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -340,7 +340,7 @@ public class HttpUserProvider implements UserProvider {
                         responseHandler = httpRequest.rxSendJsonObject(new JsonObject(bodyRequest));
                         break;
                     case(MediaType.APPLICATION_FORM_URLENCODED):
-                        Map<String, String> queryParameters = format(bodyRequest);
+                        Map<String, String> queryParameters = parse(bodyRequest);
                         MultiMap multiMap = MultiMap.caseInsensitiveMultiMap();
                         multiMap.setAll(queryParameters);
                         responseHandler = httpRequest.rxSendForm(multiMap);
@@ -390,13 +390,7 @@ public class HttpUserProvider implements UserProvider {
                 new JsonArray(responseBody).getJsonObject(0).getMap() : new JsonObject(responseBody).getMap();
     }
 
-    private static Map<String, String> format(String query) {
-        Map<String, String> queryPairs = new LinkedHashMap<>();
-        String[] pairs = query.split("&");
-        for (String pair : pairs) {
-            int idx = pair.indexOf("=");
-            queryPairs.put(pair.substring(0, idx), pair.substring(idx + 1));
-        }
-        return queryPairs;
+    private static Map<String, String> parse(String query) {
+        return URLParametersUtils.parse(query);
     }
 }

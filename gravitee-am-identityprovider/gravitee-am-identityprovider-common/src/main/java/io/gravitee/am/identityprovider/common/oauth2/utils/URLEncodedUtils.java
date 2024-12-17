@@ -15,49 +15,30 @@
  */
 package io.gravitee.am.identityprovider.common.oauth2.utils;
 
+import io.gravitee.am.common.web.URLParametersUtils;
 import io.gravitee.am.model.http.NameValuePair;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
+ * @deprecated use {@link URLParametersUtils} instead. This class is only left for compatibility reasons
  */
+@Deprecated(since = "4.6.0")
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class URLEncodedUtils {
 
-    public static final String CONTENT_TYPE = "application/x-www-form-urlencoded";
-    private static final char QP_SEP_A = '&';
-    private static final String NAME_VALUE_SEPARATOR = "=";
+    public static final String CONTENT_TYPE = URLParametersUtils.CONTENT_TYPE;
 
     public static String format(final Iterable<? extends NameValuePair> parameters) {
-        final StringBuilder result = new StringBuilder();
-        for (final NameValuePair parameter : parameters) {
-            final String parameterName = parameter.getName();
-            final String parameterValue = parameter.getValue();
-            if (!result.isEmpty()) {
-                result.append(QP_SEP_A);
-            }
-            result.append(parameterName);
-            if (parameterValue != null) {
-                result.append(NAME_VALUE_SEPARATOR);
-                result.append(parameterValue);
-            }
-        }
-        return result.toString();
+        return URLParametersUtils.format(parameters);
     }
 
     public static Map<String, String> format(String query) {
-        Map<String, String> queryPairs = new LinkedHashMap<>();
-        String[] pairs = query.split("&");
-        for (String pair : pairs) {
-            int idx = pair.indexOf("=");
-            queryPairs.put(pair.substring(0, idx), pair.substring(idx + 1));
-        }
-        return queryPairs;
+        return URLParametersUtils.parse(query);
     }
 
 }

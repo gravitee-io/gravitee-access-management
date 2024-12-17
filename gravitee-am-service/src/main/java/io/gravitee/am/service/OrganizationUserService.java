@@ -21,6 +21,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.service.model.NewAccountAccessToken;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
 /**
@@ -52,5 +53,5 @@ public interface OrganizationUserService extends CommonUserService {
 
     Single<User> findByAccessToken(String token, String tokenValue);
 
-    Single<AccountAccessToken> revokeToken(String organizationId, String userId, String tokenId);
+    Maybe<AccountAccessToken> revokeToken(String organizationId, String userId, String tokenId);
 }

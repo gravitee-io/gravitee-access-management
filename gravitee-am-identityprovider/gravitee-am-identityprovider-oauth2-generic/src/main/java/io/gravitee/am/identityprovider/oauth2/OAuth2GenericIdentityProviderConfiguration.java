@@ -20,10 +20,13 @@ import io.gravitee.am.common.oauth2.CodeChallengeMethod;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.api.oidc.jwt.KeyResolver;
+import io.gravitee.am.identityprovider.api.social.ProviderResponseMode;
+import io.gravitee.am.identityprovider.api.social.ProviderResponseType;
 import io.gravitee.am.identityprovider.oauth2.jwt.algo.Signature;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -43,7 +46,8 @@ public class OAuth2GenericIdentityProviderConfiguration implements OpenIDConnect
     private String userProfileUri;
     private String logoutUri;
     private Set<String> scopes;
-    private String responseType;
+    private ProviderResponseType responseType;
+    private ProviderResponseMode responseMode;
     private boolean useIdTokenForUserInfo;
     private Signature signature = Signature.RSA_RS256;
     private KeyResolver publicKeyResolver;
@@ -56,6 +60,25 @@ public class OAuth2GenericIdentityProviderConfiguration implements OpenIDConnect
     private String clientAuthenticationCertificate;
     private boolean storeOriginalTokens;
     private CodeChallengeMethod codeChallengeMethod;
+
+    @Override
+    public String getResponseType() {
+        return responseType.value();
+    }
+
+    @Override
+    public ProviderResponseType getProviderResponseType() {
+        return responseType;
+    }
+
+
+    public ProviderResponseMode getResponseMode() {
+        if (responseMode == null || responseMode == ProviderResponseMode.DEFAULT) {
+            return getProviderResponseType().defaultResponseMode();
+        } else {
+            return responseMode;
+        }
+    }
 
     public String getCodeParameter() {
         return CODE_PARAMETER;

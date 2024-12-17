@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.identityprovider.linkedin;
 
+import io.gravitee.am.identityprovider.api.social.ProviderResponseType;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfiguration;
+import lombok.Data;
 
 import java.util.Set;
 
@@ -23,6 +25,7 @@ import java.util.Set;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Data
 public class LinkedinIdentityProviderConfiguration implements SocialIdentityProviderConfiguration {
 
     private String userAuthorizationUri = "https://www.linkedin.com/oauth/v2/authorization";
@@ -30,7 +33,7 @@ public class LinkedinIdentityProviderConfiguration implements SocialIdentityProv
     private String userProfileUri = "https://api.linkedin.com/v2/me?projection=(*,profilePicture(displayImage~:playableStreams))";
     private String userEmailAddressUri = "https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))";
     private String codeParameter = "code";
-    private String responseType = "code";
+
     private String clientId;
     private String clientSecret;
     private Set<String> scopes;
@@ -38,93 +41,15 @@ public class LinkedinIdentityProviderConfiguration implements SocialIdentityProv
     private Integer idleTimeout = 10000;
     private Integer maxPoolSize = 200;
 
-    public String getClientId() {
-        return clientId;
-    }
 
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
 
-    public String getClientSecret() {
-        return clientSecret;
-    }
-
-    public void setClientSecret(String clientSecret) {
-        this.clientSecret = clientSecret;
-    }
-
-    public Set<String> getScopes() {
-        return scopes;
-    }
-
-    public void setScopes(Set<String> scopes) {
-        this.scopes = scopes;
-    }
-
-    public String getUserAuthorizationUri() {
-        return userAuthorizationUri;
-    }
-
-    public String getAccessTokenUri() {
-        return accessTokenUri;
-    }
-
-    public String getUserProfileUri() {
-        return userProfileUri;
-    }
-
-    public String getUserEmailAddressUri() {
-        return userEmailAddressUri;
-    }
-
-    public String getCodeParameter() {
-        return codeParameter;
-    }
-
-    public String getResponseType() {
-        return responseType;
-    }
-
-    public void setUserAuthorizationUri(String userAuthorizationUri) {
-        this.userAuthorizationUri = userAuthorizationUri;
-    }
-
-    public void setAccessTokenUri(String accessTokenUri) {
-        this.accessTokenUri = accessTokenUri;
-    }
-
-    public void setUserProfileUri(String userProfileUri) {
-        this.userProfileUri = userProfileUri;
-    }
-
-    public Integer getConnectTimeout() {
-        return connectTimeout;
-    }
-
-    public void setConnectTimeout(Integer connectTimeout) {
-        this.connectTimeout = connectTimeout;
-    }
-
-    public Integer getIdleTimeout() {
-        return idleTimeout;
-    }
-
-    public void setIdleTimeout(Integer idleTimeout) {
-        this.idleTimeout = idleTimeout;
-    }
-
-    public Integer getMaxPoolSize() {
-        return maxPoolSize;
-    }
-
-    public void setMaxPoolSize(Integer maxPoolSize) {
-        this.maxPoolSize = maxPoolSize;
+    @Override
+    public ProviderResponseType getProviderResponseType() {
+        return ProviderResponseType.CODE;
     }
 
     @Override
     public String getLogoutUri() {
         return null;
     }
-
 }

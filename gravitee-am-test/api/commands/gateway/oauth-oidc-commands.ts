@@ -62,7 +62,13 @@ export const getWellKnownOpenIdConfiguration = (domainHrid: string) =>
 
 export const extractXsrfTokenAndActionResponse = async (response) => {
   const headers = response.headers['set-cookie'] ? { Cookie: response.headers['set-cookie'] } : {};
-  const result = await performGet(response.headers['location'], '', headers).expect(200);
+  const result = await performGet(response.headers['location'], '', headers);
+  if (result.status == 302) {
+    console.error(` Expected 200 from ${result.request.url}, got 302 location=${result.headers['location']}`);
+    throw new Error('Expected 200, got 302')
+  } else if (result.status != 200) {
+    throw new Error(`Expected 200 from ${result.request.url}, got ${result.status}`)
+  }
   const dom = cheerio.load(result.text);
   const xsrfToken = dom('[name=X-XSRF-TOKEN]').val();
   const action = dom('form').attr('action');

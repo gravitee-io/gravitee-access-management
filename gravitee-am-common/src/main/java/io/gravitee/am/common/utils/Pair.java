@@ -13,23 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.http;
+package io.gravitee.am.common.utils;
 
-import io.gravitee.am.common.utils.Pair;
+public interface Pair<K, V> {
+    K getKey();
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface NameValuePair extends Pair<String, String> {
+    V getValue();
 
-    @Override
-    default String getKey() {
-        return getName();
+    static <A,B> Pair<A,B> of(A key, B value) {
+        return new BasicPair<>(key, value);
     }
 
-    String getName();
+    record BasicPair<K, V>(K key, V value) implements Pair<K, V> {
+        @Override
+        public K getKey() {
+            return key();
+        }
 
-    String getValue();
-
+        @Override
+        public V getValue() {
+            return value();
+        }
+    }
 }
