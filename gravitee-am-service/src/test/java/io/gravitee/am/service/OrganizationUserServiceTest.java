@@ -479,7 +479,8 @@ public class OrganizationUserServiceTest {
         when(accessTokenRepository.findById("tokenId")).thenReturn(Maybe.just(tokenToDelete));
         userService.revokeToken("wrongOrgId", "userId", "tokenId")
                 .test()
-                .assertError(NoSuchElementException.class);
+                .assertNoValues()
+                .assertComplete();
     }
 
     @Test
@@ -488,6 +489,7 @@ public class OrganizationUserServiceTest {
         when(accessTokenRepository.findById("tokenId")).thenReturn(Maybe.just(tokenToDelete));
         userService.revokeToken("orgId", "wrongUserId", "tokenId")
                 .test()
-                .assertError(NoSuchElementException.class);
+                .assertNoValues()
+                .assertComplete();
     }
 }

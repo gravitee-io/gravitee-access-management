@@ -226,13 +226,11 @@ public class OrganizationUserServiceImpl extends AbstractUserService<Organizatio
     }
 
     @Override
-    public Single<AccountAccessToken> revokeToken(String organizationId, String userId, String tokenId) {
+    public Maybe<AccountAccessToken> revokeToken(String organizationId, String userId, String tokenId) {
         return accessTokenRepository.findById(tokenId)
                 .filter(token -> token.referenceId().equals(organizationId))
                 .filter(token -> token.userId().equals(userId))
-                .flatMapSingle(token -> accessTokenRepository.delete(token.tokenId())
-                        .andThen(Single.just(token)))
-                .toSingle();
+                .flatMap(token -> accessTokenRepository.delete(token.tokenId()).andThen(Maybe.just(token)));
     }
 
     @Override

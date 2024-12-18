@@ -253,9 +253,9 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
     }
 
     @Override
-    public Completable revokeToken(String organizationId, String userId, String tokenId, io.gravitee.am.identityprovider.api.User principal) {
+    public Maybe<AccountAccessToken> revokeToken(String organizationId, String userId, String tokenId, io.gravitee.am.identityprovider.api.User principal) {
         return getUserService().findById(Reference.organization(organizationId), UserId.internal(userId))
-                .flatMap(user ->
+                .flatMapMaybe(user ->
                         getUserService().revokeToken(organizationId, userId, tokenId)
                                 .doOnSuccess(revoked -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
                                         .principal(principal)
@@ -267,9 +267,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                                         .type(EventType.ACCOUNT_ACCESS_TOKEN_REVOKED)
                                         .user(user)
                                         .accountToken(tokenId)
-                                        .throwable(x)))
-                )
-                .ignoreElement();
+                                        .throwable(x))));
     }
 
     @Override
