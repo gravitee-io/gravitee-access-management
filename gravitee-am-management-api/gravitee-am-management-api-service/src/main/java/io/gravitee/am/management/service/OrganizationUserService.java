@@ -23,6 +23,7 @@ import io.gravitee.am.service.model.NewAccountAccessToken;
 import io.gravitee.am.service.model.NewOrganizationUser;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
 /**
@@ -45,5 +46,5 @@ public interface OrganizationUserService extends CommonUserService {
 
     Single<User> findByAccessToken(String tokenId, String tokenValue);
 
-    Completable revokeToken(String organizationId, String userId, String tokenId, io.gravitee.am.identityprovider.api.User authenticatedUser);
+    Maybe<AccountAccessToken> revokeToken(String organizationId, String userId, String tokenId, io.gravitee.am.identityprovider.api.User authenticatedUser);
 }
