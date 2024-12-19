@@ -48,7 +48,7 @@
     "asciidoctor": "3.0.4",
     "asciidoctor-highlight.js": "0.4.0",
     "bcryptjs": "2.4.3",
-    "codemirror": "5.65.14",
+    "codemirror": "5.65.18",
     "codemirror-asciidoc": "1.0.4",
     "highcharts": "9.3.3",
     "highcharts-angular": "3.0.0",
