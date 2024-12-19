@@ -7279,10 +7279,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"codemirror@npm:5.65.14":
-  version: 5.65.14
-  resolution: "codemirror@npm:5.65.14"
-  checksum: 10c0/4bc251d656c4780011588b9aba74302ecaaf31fbc37595789d667796a227908afccba8b7e47dbf4d4cfbbc873d35755c2feb048218a6c931de33ced050aabfdf
+"codemirror@npm:5.65.18":
+  version: 5.65.18
+  resolution: "codemirror@npm:5.65.18"
+  checksum: 10c0/806e00c7081f9a5ba6bc59205d0cf5ada273bc977da9967d04a78e94e27cdfbd41a10409fcf74eea4b12eebe1972e05120771780729a8bc04eef14b1ed20ac98
   languageName: node
   linkType: hard
 
@@ -9721,7 +9721,7 @@ __metadata:
     asciidoctor: "npm:3.0.4"
     asciidoctor-highlight.js: "npm:0.4.0"
     bcryptjs: "npm:2.4.3"
-    codemirror: "npm:5.65.14"
+    codemirror: "npm:5.65.18"
     codemirror-asciidoc: "npm:1.0.4"
     eslint: "npm:8.57.0"
     eslint-config-prettier: "npm:9.1.0"
