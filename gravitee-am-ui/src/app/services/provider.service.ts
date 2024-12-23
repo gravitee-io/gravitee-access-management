@@ -58,6 +58,7 @@ export class ProviderService {
     }
     return this.http.put<any>(this.providersURL + domainId + '/identities/' + id, {
       name: provider.name,
+      type: provider.type,
       configuration: provider.configuration,
       domainWhitelist: provider.domainWhitelist,
       mappers: provider.mappers,

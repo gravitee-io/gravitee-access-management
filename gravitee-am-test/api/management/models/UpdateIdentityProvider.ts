@@ -25,7 +25,8 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { exists } from '../runtime';
+
 /**
  * 
  * @export
@@ -38,6 +39,12 @@ export interface UpdateIdentityProvider {
      * @memberof UpdateIdentityProvider
      */
     name: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateIdentityProvider
+     */
+    type: string;
     /**
      * 
      * @type {string}
@@ -87,6 +94,7 @@ export function UpdateIdentityProviderFromJSONTyped(json: any, ignoreDiscriminat
     return {
         
         'name': json['name'],
+        'type': json['type'],
         'configuration': json['configuration'],
         'mappers': !exists(json, 'mappers') ? undefined : json['mappers'],
         'roleMapper': !exists(json, 'roleMapper') ? undefined : json['roleMapper'],
@@ -106,6 +114,7 @@ export function UpdateIdentityProviderToJSON(value?: UpdateIdentityProvider | nu
     return {
         
         'name': value.name,
+        'type': value.type,
         'configuration': value.configuration,
         'mappers': value.mappers,
         'roleMapper': value.roleMapper,

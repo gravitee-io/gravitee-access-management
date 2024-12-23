@@ -24,7 +24,6 @@ import jakarta.validation.ConstraintValidatorContext;
 import jakarta.validation.ConstraintValidatorContext.ConstraintViolationBuilder;
 import lombok.SneakyThrows;
 import lombok.Value;
-import org.junit.BeforeClass;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,9 +32,7 @@ import org.mockito.Mockito;
 import org.mockito.internal.util.io.IOUtil;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.mockito.ArgumentMatchers.anyString;
@@ -55,7 +52,7 @@ class PluginJsonFormValidatorTest {
     @BeforeEach
     public void setUp() {
         registry = new PluginConfigurationValidatorsRegistry();
-        jsonFormValidator = new PluginJsonFormValidator(List.of(registry));
+        jsonFormValidator = new PluginJsonFormValidator(registry);
     }
 
     @Test

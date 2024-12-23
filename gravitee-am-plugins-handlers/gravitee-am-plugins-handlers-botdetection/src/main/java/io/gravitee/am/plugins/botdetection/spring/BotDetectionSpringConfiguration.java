@@ -42,4 +42,5 @@ public class BotDetectionSpringConfiguration {
     public ConfigurationFactory<BotDetectionConfiguration> botDetectionConfigurationFactory() {
         return new ConfigurationFactoryImpl<>();
     }
+
 }

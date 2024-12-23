@@ -33,13 +33,13 @@ public class PluginConfigurationValidatorsRegistryTest {
         registry.put(validator);
 
         // expect
-        Assertions.assertEquals(validator, registry.get("id"));
+        Assertions.assertEquals(validator, registry.get("id").get());
     }
 
     @Test
     public void should_return_null_if_validator_is_not_found() {
         // expect
-        Assertions.assertNull(registry.get("id"));
+        Assertions.assertTrue(registry.get("id").isEmpty());
     }
 
 }

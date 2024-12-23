@@ -42,4 +42,5 @@ public class AuthenticationDeviceNotifierSpringConfiguration {
     public ConfigurationFactory<AuthenticationDeviceNotifierConfiguration> authDeviceNotifierConfigurationFactory() {
         return new ConfigurationFactoryImpl<>();
     }
+
 }

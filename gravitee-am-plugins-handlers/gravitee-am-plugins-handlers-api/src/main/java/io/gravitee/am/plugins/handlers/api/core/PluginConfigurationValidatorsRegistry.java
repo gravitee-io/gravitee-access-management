@@ -15,12 +15,10 @@
  */
 package io.gravitee.am.plugins.handlers.api.core;
 
-import lombok.RequiredArgsConstructor;
-
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-@RequiredArgsConstructor
 public class PluginConfigurationValidatorsRegistry {
     private final Map<String, PluginConfigurationValidator> validators = new ConcurrentHashMap<>();
 
@@ -28,11 +26,7 @@ public class PluginConfigurationValidatorsRegistry {
         this.validators.put(validator.getPluginIdentifier(), validator);
     }
 
-    public PluginConfigurationValidator get(String id){
-        return validators.get(id);
-    }
-
-    public boolean contains(String id){
-        return validators.containsKey(id);
+    public Optional<PluginConfigurationValidator> get(String id){
+        return Optional.ofNullable(validators.get(id));
     }
 }

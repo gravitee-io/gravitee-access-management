@@ -16,6 +16,8 @@
 package io.gravitee.am.plugins.handlers.api.core;
 
 import io.gravitee.am.common.plugin.AmPlugin;
+import io.gravitee.am.common.plugin.AmPluginProvider;
+import io.gravitee.am.common.plugin.ValidationResult;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.common.service.Service;
@@ -29,11 +31,13 @@ import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 
 import java.util.List;
 
+import static java.util.Optional.ofNullable;
+
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class ProviderPluginManager<INSTANCE extends AmPlugin<?, PROVIDER>, PROVIDER, PROVIDER_CONFIG extends ProviderConfiguration>
+public abstract class ProviderPluginManager<INSTANCE extends AmPlugin<?, PROVIDER>, PROVIDER extends AmPluginProvider, PROVIDER_CONFIG extends ProviderConfiguration>
         extends AbstractConfigurablePluginManager<INSTANCE> {
 
     private final static Logger logger = LoggerFactory.getLogger(ProviderPluginManager.class);
@@ -45,6 +49,10 @@ public abstract class ProviderPluginManager<INSTANCE extends AmPlugin<?, PROVIDE
     }
 
     public abstract PROVIDER create(PROVIDER_CONFIG config);
+
+    public ValidationResult validate(PROVIDER_CONFIG config) {
+        return ValidationResult.SUCCEEDED;
+    }
 
     public Plugin findById(String pluginId) {
         return get(pluginId);
@@ -58,7 +66,17 @@ public abstract class ProviderPluginManager<INSTANCE extends AmPlugin<?, PROVIDE
         if (plugin.provider() == null) {
             return null;
         }
+
         return createProvider(new AmPluginContextConfigurer<>(plugin.getDelegate(), (Class<T>) plugin.provider(), postProcessors));
+    }
+
+    protected ValidationResult validateProvider(INSTANCE plugin, List<? extends BeanFactoryPostProcessor> postProcessors) {
+        try (var provider = createProvider(plugin, postProcessors)) {
+            return provider.validate();
+        } catch (Exception e) {
+            logger.error("Plugin configuration error", e);
+            return ValidationResult.invalid("The configuration details entered are incorrect. Please check those and try again.");
+        }
     }
 
     private <T extends PROVIDER> T createProvider(AmPluginContextConfigurer<T> amPluginContextConfigurer) {
@@ -95,4 +113,14 @@ public abstract class ProviderPluginManager<INSTANCE extends AmPlugin<?, PROVIDE
     public boolean isPluginDeployed(String pluginTypeId) {
         return this.findAll().stream().anyMatch(p -> p.getDelegate().id().equals(pluginTypeId));
     }
+
+    protected INSTANCE getOrThrow(PROVIDER_CONFIG providerConfig) {
+        logger.debug("Looking for a provider for [{}]", providerConfig.getType());
+
+        return ofNullable(get(providerConfig.getType())).orElseGet(() -> {
+            logger.error("No plugin is registered for type {}", providerConfig.getType());
+            throw new IllegalStateException("No plugin is registered for type " + providerConfig.getType());
+        });
+    }
+
 }

@@ -42,4 +42,5 @@ public class ExtensionGrantSpringConfiguration {
     public ConfigurationFactory<ExtensionGrantConfiguration> extensionGrantConfigurationFactory() {
         return new ConfigurationFactoryImpl<>();
     }
+
 }

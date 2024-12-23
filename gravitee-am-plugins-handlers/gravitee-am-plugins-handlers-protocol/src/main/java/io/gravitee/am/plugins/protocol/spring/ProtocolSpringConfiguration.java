@@ -36,4 +36,5 @@ public class ProtocolSpringConfiguration {
     ) {
         return new ProtocolPluginManager(pluginContextFactory, pluginClassLoaderFactory);
     }
+
 }

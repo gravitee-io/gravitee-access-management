@@ -15,8 +15,9 @@
  */
 package io.gravitee.am.service.model;
 
-import io.gravitee.am.service.validators.jsonstring.JsonString;
 import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
@@ -24,7 +25,9 @@ import java.util.List;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class NewIdentityProvider {
+@Getter
+@Setter
+public class NewIdentityProvider implements PluginConfigurationPayload {
 
     private String id;
 
@@ -35,60 +38,11 @@ public class NewIdentityProvider {
     private String name;
 
     @NotNull
-    @JsonString
     private String configuration;
 
     private List<String> domainWhitelist;
 
     private boolean external;
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getConfiguration() {
-        return configuration;
-    }
-
-    public void setConfiguration(String configuration) {
-        this.configuration = configuration;
-    }
-
-    public boolean isExternal() {
-        return external;
-    }
-
-    public void setExternal(boolean external) {
-        this.external = external;
-    }
-
-    public List<String> getDomainWhitelist() {
-        return domainWhitelist;
-    }
-
-    public void setDomainWhitelist(List<String> domainWhitelist) {
-        this.domainWhitelist = domainWhitelist;
-    }
 
     @Override
     public String toString() {

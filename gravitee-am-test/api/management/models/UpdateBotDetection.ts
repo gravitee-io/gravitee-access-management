@@ -24,8 +24,8 @@
  */
 
 /* tslint:disable */
+
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
 /**
  * 
  * @export
@@ -38,6 +38,12 @@ export interface UpdateBotDetection {
      * @memberof UpdateBotDetection
      */
     name: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateBotDetection
+     */
+    type: string;
     /**
      * 
      * @type {string}
@@ -57,6 +63,7 @@ export function UpdateBotDetectionFromJSONTyped(json: any, ignoreDiscriminator: 
     return {
         
         'name': json['name'],
+        'type': json['type'],
         'configuration': json['configuration'],
     };
 }
@@ -71,6 +78,7 @@ export function UpdateBotDetectionToJSON(value?: UpdateBotDetection | null): any
     return {
         
         'name': value.name,
+        'type': value.type,
         'configuration': value.configuration,
     };
 }
