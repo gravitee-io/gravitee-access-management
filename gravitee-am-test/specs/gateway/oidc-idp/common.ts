@@ -30,7 +30,7 @@ import { Application } from '@management-models/Application';
 import { initiateLoginFlow, login, postConsent } from '@gateway-commands/login-commands';
 import { patchApplication } from '@management-commands/application-management-commands';
 import { BasicResponse, followRedirect, followRedirectTag } from '@utils-commands/misc';
-import {performFormPost, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
+import { performFormPost, performGet } from '@gateway-commands/oauth-oidc-commands';
 import cheerio from 'cheerio';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import faker from 'faker';
@@ -200,12 +200,11 @@ export async function setupOidcProviderTest(domainSuffix: string): Promise<OIDCF
                 // .then(followRedirectTag('login-2'))
                 .then((response) => {
                   if (flow == 'code') {
-                    return followRedirectTag('login-code')(response)
-                        .then(followRedirect);
+                    return followRedirectTag('login-code')(response).then(followRedirect);
                   } else {
                     return followRedirectTag('login-implicit-1')(response)
-                        .then(submitFragmentForm)
-                        .then(followRedirectTag('login-implicit-2'));
+                      .then(submitFragmentForm)
+                      .then(followRedirectTag('login-implicit-2'));
                   }
                 })
             );
@@ -242,7 +241,7 @@ export async function setupOidcProviderTest(domainSuffix: string): Promise<OIDCF
       },
     },
     cleanup: async () => {
-      console.log(`Cleaning up domains: ${clientDomain.hrid}, ${providerDomain.hrid}`)
+      console.log(`Cleaning up domains: ${clientDomain.hrid}, ${providerDomain.hrid}`);
       return Promise.all([deleteDomain(clientDomain.id, accessToken), deleteDomain(providerDomain.id, accessToken)]).then((ok) =>
         console.log('Cleanup complete'),
       );
@@ -253,6 +252,7 @@ export async function setupOidcProviderTest(domainSuffix: string): Promise<OIDCF
 async function updateIdpConfiguration(idp: IdentityProvider, newConfig: any, domain: Domain, accessToken: string) {
   let updatedIdp = {
     name: idp.name,
+    type: idp.type,
     configuration: JSON.stringify(newConfig),
     mappers: idp.mappers,
     roleMapper: idp.roleMapper,

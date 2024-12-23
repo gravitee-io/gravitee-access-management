@@ -15,15 +15,18 @@
  */
 package io.gravitee.am.service.model;
 
-import io.gravitee.am.service.validators.jsonstring.JsonString;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class NewExtensionGrant {
+@Getter
+@Setter
+public class NewExtensionGrant implements PluginConfigurationPayload {
 
     @NotNull
     private String type;
@@ -32,7 +35,6 @@ public class NewExtensionGrant {
     private String name;
 
     @NotNull
-    @JsonString
     private String configuration;
 
     @NotNull
@@ -44,62 +46,6 @@ public class NewExtensionGrant {
     private boolean createUser;
 
     private boolean userExists;
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getConfiguration() {
-        return configuration;
-    }
-
-    public void setConfiguration(String configuration) {
-        this.configuration = configuration;
-    }
-
-    public String getGrantType() {
-        return grantType;
-    }
-
-    public void setGrantType(String grantType) {
-        this.grantType = grantType;
-    }
-
-    public String getIdentityProvider() {
-        return identityProvider;
-    }
-
-    public void setIdentityProvider(String identityProvider) {
-        this.identityProvider = identityProvider;
-    }
-
-    public boolean isCreateUser() {
-        return createUser;
-    }
-
-    public void setCreateUser(boolean createUser) {
-        this.createUser = createUser;
-    }
-
-    public boolean isUserExists() {
-        return userExists;
-    }
-
-    public void setUserExists(boolean userExists) {
-        this.userExists = userExists;
-    }
 
     @Override
     public String toString() {

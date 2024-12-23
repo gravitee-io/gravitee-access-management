@@ -25,7 +25,8 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { exists } from '../runtime';
+
 /**
  * 
  * @export
@@ -44,6 +45,12 @@ export interface UpdateReporter {
      * @memberof UpdateReporter
      */
     name: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateReporter
+     */
+    type: string;
     /**
      * 
      * @type {string}
@@ -70,6 +77,7 @@ export function UpdateReporterFromJSONTyped(json: any, ignoreDiscriminator: bool
         
         'enabled': !exists(json, 'enabled') ? undefined : json['enabled'],
         'name': json['name'],
+        'type': json['type'],
         'configuration': json['configuration'],
         'inherited': !exists(json, 'inherited') ? undefined : json['inherited'],
     };
@@ -86,6 +94,7 @@ export function UpdateReporterToJSON(value?: UpdateReporter | null): any {
         
         'enabled': value.enabled,
         'name': value.name,
+        'type': value.type,
         'configuration': value.configuration,
         'inherited': value.inherited,
     };

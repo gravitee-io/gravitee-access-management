@@ -17,7 +17,6 @@ package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.alert.AlertNotifier;
-import io.gravitee.am.service.validators.jsonstring.JsonString;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
@@ -25,7 +24,7 @@ import jakarta.validation.constraints.NotNull;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class NewAlertNotifier {
+public class NewAlertNotifier implements PluginConfigurationPayload {
 
     @NotEmpty
     private String type;
@@ -36,7 +35,6 @@ public class NewAlertNotifier {
     private boolean enabled;
 
     @NotNull
-    @JsonString
     private String configuration;
 
     public AlertNotifier toAlertNotifier(ReferenceType refType, String refId) {

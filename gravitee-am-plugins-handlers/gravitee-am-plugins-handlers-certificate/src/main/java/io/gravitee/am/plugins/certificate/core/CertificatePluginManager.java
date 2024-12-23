@@ -19,17 +19,14 @@ import io.gravitee.am.certificate.api.Certificate;
 import io.gravitee.am.certificate.api.CertificateConfiguration;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.CertificateProvider;
+import io.gravitee.am.common.plugin.ValidationResult;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
 import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
 import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
 import io.gravitee.plugin.core.api.PluginContextFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
-
-import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -39,9 +36,6 @@ import static java.util.Optional.ofNullable;
 public class CertificatePluginManager
         extends ProviderPluginManager<Certificate<?, CertificateProvider>, CertificateProvider, CertificateProviderConfiguration>
         implements AmPluginManager<Certificate<?, CertificateProvider>> {
-
-    private final Logger logger = LoggerFactory.getLogger(CertificatePluginManager.class);
-
     private final ConfigurationFactory<CertificateConfiguration> configurationFactory;
 
     public CertificatePluginManager(
@@ -54,14 +48,21 @@ public class CertificatePluginManager
 
     @Override
     public CertificateProvider create(CertificateProviderConfiguration providerConfig) {
-        logger.debug("Looking for a certificate provider for [{}]", providerConfig.getType());
-        var certificatePlugin = ofNullable(get(providerConfig.getType())).orElseGet(() -> {
-            logger.error("No certificate provider is registered for type {}", providerConfig.getType());
-            throw new IllegalStateException("No certificate provider is registered for type " + providerConfig.getType());
-        });
+        Certificate<?, CertificateProvider> certificatePlugin = getOrThrow(providerConfig);
 
-        var certificateConfiguration = configurationFactory.create(certificatePlugin.configuration(), providerConfig.getConfiguration());
+        CertificateConfiguration certificateConfiguration = configurationFactory.create(certificatePlugin.configuration(), providerConfig.getConfiguration());
         return createProvider(certificatePlugin, List.of(
+                new CertificateConfigurationBeanFactoryPostProcessor(certificateConfiguration),
+                new CertificateMetadataBeanFactoryPostProcessor(getCertificateMetadata(providerConfig))
+        ));
+    }
+
+    @Override
+    public ValidationResult validate(CertificateProviderConfiguration providerConfig) {
+        Certificate<?, CertificateProvider> certificatePlugin = getOrThrow(providerConfig);
+
+        CertificateConfiguration certificateConfiguration = configurationFactory.create(certificatePlugin.configuration(), providerConfig.getConfiguration());
+        return validateProvider(certificatePlugin, List.of(
                 new CertificateConfigurationBeanFactoryPostProcessor(certificateConfiguration),
                 new CertificateMetadataBeanFactoryPostProcessor(getCertificateMetadata(providerConfig))
         ));
@@ -72,6 +73,8 @@ public class CertificatePluginManager
         certificateMetadata.setMetadata(providerConfig.getMetadata());
         return certificateMetadata;
     }
+
+
 
     private static class CertificateMetadataBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<CertificateMetadata> {
         private CertificateMetadataBeanFactoryPostProcessor(CertificateMetadata metadata) {

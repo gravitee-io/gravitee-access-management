@@ -24,8 +24,8 @@
  */
 
 /* tslint:disable */
+
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
 /**
  * 
  * @export
@@ -38,6 +38,12 @@ export interface UpdateServiceResource {
      * @memberof UpdateServiceResource
      */
     name: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateServiceResource
+     */
+    type: string;
     /**
      * 
      * @type {string}
@@ -57,6 +63,7 @@ export function UpdateServiceResourceFromJSONTyped(json: any, ignoreDiscriminato
     return {
         
         'name': json['name'],
+        'type': json['type'],
         'configuration': json['configuration'],
     };
 }
@@ -71,6 +78,7 @@ export function UpdateServiceResourceToJSON(value?: UpdateServiceResource | null
     return {
         
         'name': value.name,
+        'type': value.type,
         'configuration': value.configuration,
     };
 }

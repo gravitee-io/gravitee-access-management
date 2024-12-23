@@ -40,6 +40,7 @@ export class FactorService {
   update(domainId, id, factor): Observable<any> {
     return this.http.put<any>(this.factorsURL + domainId + '/factors/' + id, {
       name: factor.name,
+      type: factor.type,
       configuration: factor.configuration,
     });
   }

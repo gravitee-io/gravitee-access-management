@@ -87,9 +87,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateExpiredException;
 import java.security.cert.X509Certificate;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
@@ -211,7 +209,7 @@ public class CertificateServiceImpl implements CertificateService {
                         var certificate = schema.getFileKey()
                                 .map(fileKey -> createCertificateWithEmbeddedKeys(domain, newCertificate, isSystem, fileKey))
                                 .orElseGet(() -> createCertificate(domain, newCertificate, isSystem));
-                        return certificateRepository.create(getValid(certificate));
+                        return certificateRepository.create(validate(certificate));
                     } catch (CertificateException ex) {
                         log.error("An error occurs while trying to create certificate configuration", ex);
                         return Single.error(ex);
@@ -290,7 +288,7 @@ public class CertificateServiceImpl implements CertificateService {
                 .flatMap(oldCertificate -> {
                     try {
                         var certificate = getCertificateToUpdate(updateCertificate, oldCertificate);
-                        return certificateRepository.update(getValid(certificate));
+                        return certificateRepository.update(validate(certificate));
                     } catch (IOException | CertificateException ex) {
                         log.error("An error occurs while trying to update certificate binaries", ex);
                         return Single.error(ex);
@@ -563,22 +561,14 @@ public class CertificateServiceImpl implements CertificateService {
         return new JcaX509CertificateConverter().setProvider(BouncyCastleProviderSingleton.getInstance()).getCertificate(certBuilder.build(contentSigner));
     }
 
-    private Certificate getValid(Certificate certificate) throws CertificateException {
+    private Certificate validate(Certificate certificate) throws CertificateException {
         var providerConfig = new CertificateProviderConfiguration(certificate);
-        var certificateProvider = certificatePluginManager.create(providerConfig);
-        if (certificateProvider == null) {
-            throw new CertificateException("The configuration details entered are incorrect. Please check those and try again.");
+        var validationResult = certificatePluginManager.validate(providerConfig);
+        if (validationResult.failed()) {
+            throw new CertificateException(validationResult.failedMessage());
         }
-        var expiryDate = certificateProvider.getExpirationDate().orElse(null);
-        if (expiryDate != null) {
-            if (Instant.now().isAfter(expiryDate.toInstant())) {
-                throw new CertificateExpiredException("The certificate you uploaded has already expired. Please select a different certificate to upload.");
-            }
-            if (certificate.getExpiresAt() == null) {
-                certificate.setExpiresAt(expiryDate);
-            }
-        }
-        certificateProvider.unregister();
+        validationResult.getAdditionalInformation("expDate", Date.class)
+            .ifPresent(certificate::setExpiresAt);
         return certificate;
     }
 }

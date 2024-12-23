@@ -40,6 +40,7 @@ export class DeviceIdentifierService {
   update(domainId, id, deviceIdentifier): Observable<any> {
     return this.http.put<any>(this.deviceIdentifierUrl + domainId + '/device-identifiers/' + id, {
       name: deviceIdentifier.name,
+      type: deviceIdentifier.type,
       configuration: deviceIdentifier.configuration,
     });
   }

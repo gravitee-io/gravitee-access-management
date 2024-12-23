@@ -18,12 +18,19 @@ package io.gravitee.am.certificate.pkcs12.provider;
 import io.gravitee.am.certificate.api.AbstractCertificateProvider;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.pkcs12.PKCS12Configuration;
+import io.gravitee.am.common.plugin.ValidationResult;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.time.Instant;
+import java.util.Date;
+import java.util.Map;
 import java.util.Set;
+
+import static io.gravitee.am.common.plugin.ValidationResult.invalid;
+import static io.gravitee.am.common.plugin.ValidationResult.valid;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -78,5 +85,17 @@ public class PKCS12Provider extends AbstractCertificateProvider implements Initi
     @Override
     protected String getAlgorithm() {
         return configuration.getAlgorithm();
+    }
+
+    @Override
+    public ValidationResult validate() {
+        Date expDate = getExpirationDate().orElse(null);
+        if(expDate == null) {
+            return invalid("The certificate you uploaded lacks expiration date.");
+        }
+        if (Instant.now().isAfter(expDate.toInstant())) {
+            return invalid("The certificate you uploaded has already expired. Please select a different certificate to upload.");
+        }
+        return valid(Map.of("expDate", expDate));
     }
 }

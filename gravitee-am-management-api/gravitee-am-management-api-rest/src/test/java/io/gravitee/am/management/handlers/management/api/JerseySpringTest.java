@@ -48,6 +48,7 @@ import io.gravitee.am.management.service.ResourcePluginService;
 import io.gravitee.am.management.service.TagService;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.BotDetectionService;
@@ -82,7 +83,6 @@ import io.gravitee.am.service.validators.email.UserEmail;
 import io.gravitee.am.service.validators.email.UserEmailConstraintValidator;
 import io.gravitee.am.service.validators.email.resource.EmailTemplateValidator;
 import io.gravitee.am.service.validators.flow.FlowValidator;
-import io.gravitee.am.service.validators.jsonstring.JsonStringValidator;
 import io.gravitee.am.service.validators.plugincfg.PluginJsonFormValidator;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.core.Completable;
@@ -308,12 +308,7 @@ public abstract class JerseySpringTest {
 
         @Bean
         public PluginJsonFormValidator pluginJsonFormValidator(){
-            return new PluginJsonFormValidator(List.of());
-        }
-
-        @Bean
-        public JsonStringValidator jsonStringValidator(ObjectMapper objectMapper){
-            return new JsonStringValidator(objectMapper);
+            return new PluginJsonFormValidator(new PluginConfigurationValidatorsRegistry());
         }
 
         @Bean

@@ -33,6 +33,7 @@ import io.gravitee.am.plugins.certificate.spring.CertificateSpringConfiguration;
 import io.gravitee.am.plugins.deviceidentifier.spring.DeviceIdentifierSpringConfiguration;
 import io.gravitee.am.plugins.extensiongrant.spring.ExtensionGrantSpringConfiguration;
 import io.gravitee.am.plugins.factor.spring.FactorSpringConfiguration;
+import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
 import io.gravitee.am.plugins.idp.spring.IdentityProviderSpringConfiguration;
 import io.gravitee.am.plugins.policy.spring.PolicySpringConfiguration;
 import io.gravitee.am.plugins.protocol.spring.ProtocolSpringConfiguration;
@@ -138,5 +139,10 @@ public class StandaloneConfiguration {
     @Qualifier("EnvironmentWithFallback")
     public RepositoriesEnvironment repositoriesEnvironment(Environment environment){
         return new RepositoriesEnvironment(environment);
+    }
+
+    @Bean
+    public PluginConfigurationValidatorsRegistry pluginConfigurationValidatorsRegistry(){
+        return new PluginConfigurationValidatorsRegistry();
     }
 }

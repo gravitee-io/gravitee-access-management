@@ -13,15 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.reporter.api.audit;
+package io.gravitee.am.common.plugin;
 
-import io.gravitee.am.common.plugin.AmPluginProvider;
-import io.gravitee.am.reporter.api.audit.model.Audit;
-import io.gravitee.am.reporter.api.provider.Reporter;
+import java.io.Closeable;
+import java.io.IOException;
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface AuditReporter extends Reporter<Audit, AuditReportableCriteria>, AmPluginProvider {
+public interface AmPluginProvider extends Closeable {
+
+    default ValidationResult validate() {
+        return ValidationResult.SUCCEEDED;
+    }
+
+    default void unregister() {}
+
+    @Override
+    default void close() throws IOException {
+        unregister();
+    }
+
 }

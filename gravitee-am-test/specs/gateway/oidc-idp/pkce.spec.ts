@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 import { beforeAll, expect, jest } from '@jest/globals';
-import { BasicResponse,uniqueName } from '@utils-commands/misc';
+import { BasicResponse, uniqueName } from '@utils-commands/misc';
 import { OIDCFixture, setupOidcProviderTest, TEST_USER } from './common';
+
 jest.setTimeout(200000);
 
 let fixture: OIDCFixture;
@@ -25,7 +26,7 @@ beforeAll(async function () {
 });
 
 function expectRedirectToClientWithAuthCode(res) {
-  return res => fixture.expectRedirectToClient(res, (uri: string) => expect(uri).toMatch(/\?code=[^&]*/));
+  return (res) => fixture.expectRedirectToClient(res, (uri: string) => expect(uri).toMatch(/\?code=[^&]*/));
 }
 
 describe('The OIDC provider', () => {
@@ -48,14 +49,14 @@ describe('The OIDC provider', () => {
         .then((code) => expect(code).not.toBeNull());
     });
     it('should login with S256 challenge', async () => {
-      await fixture.idpPluginInClient.setPkceMethod('s256');
+      await fixture.idpPluginInClient.setPkceMethod('S256');
       await fixture
         .login(TEST_USER.username, TEST_USER.password, { oidcSignInUrlAssertions: expectCodeChallenge('S256') })
         .then(expectRedirectToClientWithAuthCode)
         .then((code) => expect(code).not.toBeNull());
     });
     it('should fail with challenge unsupported by provider', async () => {
-      await fixture.idpPluginInClient.setPkceMethod('non-existing-method');
+      await fixture.idpPluginInClient.setPkceMethod('non-existing-method').catch((e) => expect(e.response.status).toBe(400));
     });
   });
 

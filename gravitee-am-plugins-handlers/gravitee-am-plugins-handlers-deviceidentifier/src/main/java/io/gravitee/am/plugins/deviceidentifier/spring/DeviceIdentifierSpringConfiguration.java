@@ -42,4 +42,5 @@ public class DeviceIdentifierSpringConfiguration {
     public ConfigurationFactory<DeviceIdentifierConfiguration> deviceIdentifierConfigurationFactory() {
         return new ConfigurationFactoryImpl<>();
     }
+
 }

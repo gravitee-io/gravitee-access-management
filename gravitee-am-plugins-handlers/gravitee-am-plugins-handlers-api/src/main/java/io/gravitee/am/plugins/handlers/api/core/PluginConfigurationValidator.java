@@ -15,23 +15,29 @@
  */
 package io.gravitee.am.plugins.handlers.api.core;
 
-import io.gravitee.json.validation.InvalidJsonException;
 import io.gravitee.json.validation.JsonSchemaValidator;
+import io.gravitee.json.validation.JsonSchemaValidatorImpl;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class PluginConfigurationValidator {
+    private static final JsonSchemaValidatorImpl SCHEMA_VALIDATOR = new JsonSchemaValidatorImpl();
+
     @Getter
     private final String pluginIdentifier;
     private final String schema;
     private final JsonSchemaValidator jsonSchemaValidator;
 
+    public static PluginConfigurationValidator defaultSchemaValidator(String pluginIdentifier, String schema){
+        return new PluginConfigurationValidator(pluginIdentifier, schema, SCHEMA_VALIDATOR);
+    }
+
     public Result validate(String pluginData) {
         try {
             jsonSchemaValidator.validate(schema, pluginData);
             return Result.VALID_RESPONSE;
-        } catch (InvalidJsonException e) {
+        } catch (Exception e) {
             return new Result(false, e.getMessage());
         }
     }

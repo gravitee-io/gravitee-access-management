@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 import fetch from 'cross-fetch';
-import * as faker from 'faker';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain,setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
+import { deleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
 import {
   createExtensionGrant,
   deleteExtensionGrant,
@@ -26,10 +25,10 @@ import {
   updateExtensionGrant,
 } from '@management-commands/extension-grant-commands';
 import { createApplication, patchApplication } from '@management-commands/application-management-commands';
-import { getWellKnownOpenIdConfiguration, performPost } from '@gateway-commands/oauth-oidc-commands';
+import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { buildCreateAndTestUser, deleteUser, getAllUsers } from '@management-commands/user-management-commands';
-import { delay,uniqueName } from '@utils-commands/misc';
+import { delay, uniqueName } from '@utils-commands/misc';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { generateSignedJwt, getPublicKey } from '@utils-commands/jwt';
 
@@ -47,10 +46,10 @@ let user: any;
 jest.setTimeout(200000);
 
 beforeAll(async () => {
-  accessToken = await requestAdminAccessToken()
-  const startedDomain = await setupDomainForTest(uniqueName("domain-extension-grant"), {accessToken, waitForStart: true})
-  domain = startedDomain.domain
-  tokenEndpoint = startedDomain.oidcConfig.token_endpoint
+  accessToken = await requestAdminAccessToken();
+  const startedDomain = await setupDomainForTest(uniqueName('domain-extension-grant'), { accessToken, waitForStart: true });
+  domain = startedDomain.domain;
+  tokenEndpoint = startedDomain.oidcConfig.token_endpoint;
 
   const appBody = {
     name: 'app',

@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.service.model;
 
-import io.gravitee.am.service.validators.jsonstring.JsonString;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -24,7 +23,7 @@ import lombok.Data;
  * @author GraviteeSource Team
  */
 @Data
-public class NewReporter {
+public class NewReporter implements PluginConfigurationPayload {
 
     private String id;
 
@@ -37,7 +36,6 @@ public class NewReporter {
     private String name;
 
     @NotNull
-    @JsonString(message = "configuration must be json form")
     private String configuration;
 
     private boolean inherited;

@@ -24,8 +24,8 @@
  */
 
 /* tslint:disable */
+
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
 /**
  * 
  * @export
@@ -38,6 +38,12 @@ export interface UpdateDeviceIdentifier {
      * @memberof UpdateDeviceIdentifier
      */
     name: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateDeviceIdentifier
+     */
+    type: string;
     /**
      * 
      * @type {string}
@@ -57,6 +63,7 @@ export function UpdateDeviceIdentifierFromJSONTyped(json: any, ignoreDiscriminat
     return {
         
         'name': json['name'],
+        'type': json['type'],
         'configuration': json['configuration'],
     };
 }
@@ -71,6 +78,7 @@ export function UpdateDeviceIdentifierToJSON(value?: UpdateDeviceIdentifier | nu
     return {
         
         'name': value.name,
+        'type': value.type,
         'configuration': value.configuration,
     };
 }

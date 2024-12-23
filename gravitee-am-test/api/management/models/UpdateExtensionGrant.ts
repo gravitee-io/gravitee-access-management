@@ -25,7 +25,8 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { exists } from '../runtime';
+
 /**
  * 
  * @export
@@ -38,6 +39,12 @@ export interface UpdateExtensionGrant {
      * @memberof UpdateExtensionGrant
      */
     name: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateExtensionGrant
+     */
+    type: string;
     /**
      * 
      * @type {string}
@@ -81,6 +88,7 @@ export function UpdateExtensionGrantFromJSONTyped(json: any, ignoreDiscriminator
     return {
         
         'name': json['name'],
+        'type': json['type'],
         'configuration': json['configuration'],
         'grantType': !exists(json, 'grantType') ? undefined : json['grantType'],
         'identityProvider': !exists(json, 'identityProvider') ? undefined : json['identityProvider'],
@@ -99,6 +107,7 @@ export function UpdateExtensionGrantToJSON(value?: UpdateExtensionGrant | null):
     return {
         
         'name': value.name,
+        'type': value.type,
         'configuration': value.configuration,
         'grantType': value.grantType,
         'identityProvider': value.identityProvider,

@@ -17,6 +17,7 @@ package io.gravitee.am.certificate.javakeystore;
 
 import io.gravitee.am.certificate.api.Certificate;
 import io.gravitee.am.certificate.javakeystore.provider.JavaKeyStoreProvider;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -32,4 +33,5 @@ public class JavaKeyStore extends Certificate<JavaKeyStoreConfiguration, JavaKey
     public Class<JavaKeyStoreProvider> provider() {
         return JavaKeyStoreProvider.class;
     }
+
 }
