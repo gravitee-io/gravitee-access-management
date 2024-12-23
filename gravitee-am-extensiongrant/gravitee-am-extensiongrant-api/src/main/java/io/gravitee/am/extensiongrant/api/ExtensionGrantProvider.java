@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.extensiongrant.api;
 
+import io.gravitee.am.common.plugin.AmPluginProvider;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
 import io.reactivex.rxjava3.core.Maybe;
@@ -23,7 +24,7 @@ import io.reactivex.rxjava3.core.Maybe;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ExtensionGrantProvider {
+public interface ExtensionGrantProvider extends AmPluginProvider {
 
     /**
      * Grant OAuth2 access tokens by validating the assertion stored inside the incoming token request

@@ -40,6 +40,7 @@ export class ResourceService {
   update(domainId, id, resource): Observable<any> {
     return this.http.put<any>(this.resourcesURL + domainId + '/resources/' + id, {
       name: resource.name,
+      type: resource.type,
       configuration: resource.configuration,
     });
   }

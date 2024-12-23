@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
-import io.gravitee.am.service.validators.jsonstring.JsonString;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -24,15 +24,17 @@ import lombok.Data;
  * @author GraviteeSource Team
  */
 @Data
-public class UpdateReporter {
+public class UpdateReporter implements PluginConfigurationPayload {
 
     private boolean enabled;
 
     @NotNull
     private String name;
 
+    @NotBlank
+    private String type;
+
     @NotNull
-    @JsonString
     private String configuration;
 
     private boolean inherited;
@@ -41,7 +43,8 @@ public class UpdateReporter {
     @Override
     public String toString() {
         return "UpdateReporter{" +
-                ", name='" + name + '\'' +
+                "name='" + name + '\'' +
+                ", type='" + type + '\'' +
                 '}';
     }
 }

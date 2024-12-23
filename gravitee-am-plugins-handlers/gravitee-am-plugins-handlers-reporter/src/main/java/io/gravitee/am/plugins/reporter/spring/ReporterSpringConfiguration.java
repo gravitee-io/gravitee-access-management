@@ -42,4 +42,5 @@ public class ReporterSpringConfiguration {
     public ConfigurationFactory<ReporterConfiguration> reporterConfigurationFactory() {
         return new ConfigurationFactoryImpl<>();
     }
+
 }

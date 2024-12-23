@@ -19,6 +19,7 @@ import io.gravitee.am.authdevice.notifier.api.model.ADCallbackContext;
 import io.gravitee.am.authdevice.notifier.api.model.ADNotificationRequest;
 import io.gravitee.am.authdevice.notifier.api.model.ADNotificationResponse;
 import io.gravitee.am.authdevice.notifier.api.model.ADUserResponse;
+import io.gravitee.am.common.plugin.AmPluginProvider;
 import io.gravitee.common.component.Lifecycle;
 import io.gravitee.common.service.Service;
 import io.reactivex.rxjava3.core.Single;
@@ -29,7 +30,7 @@ import java.util.Optional;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface AuthenticationDeviceNotifierProvider extends Service<AuthenticationDeviceNotifierProvider> {
+public interface AuthenticationDeviceNotifierProvider extends Service<AuthenticationDeviceNotifierProvider>, AmPluginProvider {
 
     @Override
     default Lifecycle.State lifecycleState() {

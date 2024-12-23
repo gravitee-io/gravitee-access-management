@@ -40,6 +40,7 @@ export class DeviceNotifiersService {
   update(domainId, id, deviceNotifier): Observable<any> {
     return this.http.put<any>(this.notfiersURL + domainId + '/auth-device-notifiers/' + id, {
       name: deviceNotifier.name,
+      type: deviceNotifier.type,
       configuration: deviceNotifier.configuration,
     });
   }

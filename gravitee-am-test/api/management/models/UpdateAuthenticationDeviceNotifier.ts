@@ -24,8 +24,8 @@
  */
 
 /* tslint:disable */
+
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
 /**
  * 
  * @export
@@ -38,6 +38,12 @@ export interface UpdateAuthenticationDeviceNotifier {
      * @memberof UpdateAuthenticationDeviceNotifier
      */
     name: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateAuthenticationDeviceNotifier
+     */
+    type: string;
     /**
      * 
      * @type {string}
@@ -57,6 +63,7 @@ export function UpdateAuthenticationDeviceNotifierFromJSONTyped(json: any, ignor
     return {
         
         'name': json['name'],
+        'type': json['type'],
         'configuration': json['configuration'],
     };
 }
@@ -71,6 +78,7 @@ export function UpdateAuthenticationDeviceNotifierToJSON(value?: UpdateAuthentic
     return {
         
         'name': value.name,
+        'type': value.type,
         'configuration': value.configuration,
     };
 }

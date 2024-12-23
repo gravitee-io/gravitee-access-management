@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.certificate.api;
 
+import io.gravitee.am.common.plugin.AmPluginProvider;
 import io.gravitee.am.model.jose.JWK;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
@@ -30,7 +31,7 @@ import java.util.Optional;
  * @author GraviteeSource Team
  */
 
-public interface CertificateProvider {
+public interface CertificateProvider extends AmPluginProvider {
 
     Optional<Date> getExpirationDate();
 
@@ -53,7 +54,5 @@ public interface CertificateProvider {
     default Single<List<CertificateKey>> publicKeys() {
         return Single.just(Collections.emptyList());
     }
-
-    default void unregister() { }
 
 }

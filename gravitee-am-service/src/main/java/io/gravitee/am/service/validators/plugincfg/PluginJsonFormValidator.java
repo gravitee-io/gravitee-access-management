@@ -15,27 +15,22 @@
  */
 package io.gravitee.am.service.validators.plugincfg;
 
-import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidator;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidator.Result;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
 import io.gravitee.am.service.model.PluginConfigurationPayload;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.Optional;
-
 @Component
+@RequiredArgsConstructor
 public class PluginJsonFormValidator implements ConstraintValidator<PluginJsonForm, PluginConfigurationPayload> {
-    private final List<PluginConfigurationValidatorsRegistry> pluginValidatorsRegistry;
-    public PluginJsonFormValidator(List<PluginConfigurationValidatorsRegistry> pluginValidatorsRegistry) {
-        this.pluginValidatorsRegistry = pluginValidatorsRegistry;
-    }
+    private final PluginConfigurationValidatorsRegistry pluginValidatorsRegistry;
 
     @Override
     public boolean isValid(PluginConfigurationPayload newPluginInstance, ConstraintValidatorContext ctx) {
-        return validator(newPluginInstance.getType())
+        return pluginValidatorsRegistry.get(newPluginInstance.getType())
                 .map(validator -> validator.validate(newPluginInstance.getConfiguration()))
                 .map(result -> processResult(result, ctx))
                 .orElse(Boolean.TRUE);
@@ -51,10 +46,4 @@ public class PluginJsonFormValidator implements ConstraintValidator<PluginJsonFo
         }
     }
 
-    private Optional<PluginConfigurationValidator> validator(String id){
-        return pluginValidatorsRegistry.stream()
-                .filter(reg -> reg.contains(id))
-                .findFirst()
-                .map(reg -> reg.get(id));
-    }
 }

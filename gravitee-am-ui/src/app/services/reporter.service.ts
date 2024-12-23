@@ -51,6 +51,7 @@ export class ReporterService {
     }
     return this.http.put<any>(this.reportersURL + domainId + '/reporters/' + id, {
       name: reporter.name,
+      type: reporter.type,
       enabled: reporter.enabled,
       configuration: reporter.configuration,
     });

@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
-import io.gravitee.am.service.validators.jsonstring.JsonString;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,13 +29,15 @@ import java.util.Map;
  */
 @Getter
 @Setter
-public class UpdateIdentityProvider {
+public class UpdateIdentityProvider implements PluginConfigurationPayload {
 
     @NotNull
     private String name;
 
+    @NotBlank
+    private String type;
+
     @NotNull
-    @JsonString
     private String configuration;
 
     private Map<String, String> mappers;
@@ -51,7 +53,8 @@ public class UpdateIdentityProvider {
     @Override
     public String toString() {
         return "UpdateIdentityProvider{" +
-                ", name='" + name + '\'' +
+                "name='" + name + '\'' +
+                ", type='" + type + '\'' +
                 '}';
     }
 }

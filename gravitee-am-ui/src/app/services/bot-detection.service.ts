@@ -33,14 +33,15 @@ export class BotDetectionService {
     return this.http.get<any>(this.botDetectionsURL + domainId + '/bot-detections/' + id);
   }
 
-  create(domainId, factor): Observable<any> {
-    return this.http.post<any>(this.botDetectionsURL + domainId + '/bot-detections', factor);
+  create(domainId, botDetection): Observable<any> {
+    return this.http.post<any>(this.botDetectionsURL + domainId + '/bot-detections', botDetection);
   }
 
-  update(domainId, id, dection): Observable<any> {
+  update(domainId, id, botDetection): Observable<any> {
     return this.http.put<any>(this.botDetectionsURL + domainId + '/bot-detections/' + id, {
-      name: dection.name,
-      configuration: dection.configuration,
+      name: botDetection.name,
+      type: botDetection.type,
+      configuration: botDetection.configuration,
     });
   }
 

@@ -26,6 +26,8 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
 
+import static io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidator.defaultSchemaValidator;
+
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
@@ -65,8 +67,9 @@ public abstract class AmPluginHandler<T extends AmPlugin<?, ?>> extends Abstract
 
             Assert.isAssignable(getClazz(), pluginClass);
             pluginManager.register(createInstance(pluginClass, plugin));
+            registerValidator(plugin);
         } catch (Exception iae) {
-            getLogger().error("Unexpected error while create bot detection instance", iae);
+            getLogger().error("Unexpected error while create plugin instance", iae);
         }
     }
 
@@ -83,6 +86,15 @@ public abstract class AmPluginHandler<T extends AmPlugin<?, ?>> extends Abstract
         } catch (InstantiationException | IllegalAccessException ex) {
             getLogger().error("Unable to instantiate class: {}", pluginClass.getName(), ex);
             throw ex;
+        }
+    }
+
+    private void registerValidator(Plugin plugin){
+        try {
+            getLogger().info("Registering a new plugin validator: {} [{}]", plugin.id(), plugin.clazz());
+            validatorsRegistry.put(defaultSchemaValidator(plugin.id(), pluginManager.getSchema(plugin.id())));
+        } catch (Exception iae) {
+            getLogger().error("Unexpected error while creating plugin schema validator", iae);
         }
     }
 
