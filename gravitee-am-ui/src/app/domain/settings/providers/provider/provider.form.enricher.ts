@@ -24,7 +24,7 @@ const LDAP_JSON_FORM = {
 };
 
 export function enrichFormWithCerts(schema: FormSchema, certs: Certificate[]): FormSchema {
-  const mTlsCerts = certs?.filter((c) => c?.usage.includes('mtls'));
+  const mTlsCerts = certs?.filter((c) => c?.usage?.includes('mtls'));
   if (mTlsCerts?.length > 0 && supportsMTls(schema)) {
     const updatedSchema = { ...schema };
     updatedSchema.properties.clientAuthenticationCertificate.enum = mTlsCerts.map((c) => c.id);
