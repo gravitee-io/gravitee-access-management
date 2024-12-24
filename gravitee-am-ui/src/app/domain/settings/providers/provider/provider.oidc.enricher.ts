@@ -17,7 +17,7 @@ const OIDC_JSON_FORM_ID: string = 'urn:jsonschema:io:gravitee:am:identityprovide
 const OIDC_JSON_FORM_VERSION: string = '05-2024';
 
 export function enrichOIDCFormWithCerts(schema: OIDCFormSchema, certs: Certificate[]): OIDCFormSchema {
-  const mTlsCerts = certs?.filter((c) => c?.usage.includes('mtls'));
+  const mTlsCerts = certs?.filter((c) => c?.usage?.includes('mtls'));
   if (mTlsCerts?.length > 0 && schema.id === OIDC_JSON_FORM_ID && schema?.version == OIDC_JSON_FORM_VERSION) {
     const updatedSchema = { ...schema };
     updatedSchema.properties.clientAuthenticationCertificate.enum = mTlsCerts.map((c) => c.id);
