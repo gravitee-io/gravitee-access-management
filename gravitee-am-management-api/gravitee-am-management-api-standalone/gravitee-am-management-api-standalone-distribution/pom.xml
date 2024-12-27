@@ -433,6 +433,21 @@
             <scope>runtime</scope>
         </dependency>
 
+        <dependency>
+            <groupId>io.gravitee.am.resource.mock</groupId>
+            <artifactId>gravitee-am-resource-mfa-mock</artifactId>
+            <version>${gravitee-resource-mfa-mock.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.gravitee.am.factor.mock</groupId>
+            <artifactId>gravitee-am-factor-mock</artifactId>
+            <version>${gravitee-factor-mock.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -895,22 +910,6 @@
     <profiles>
         <profile>
             <id>with-mocks</id>
-            <dependencies>
-                <dependency>
-                    <groupId>io.gravitee.am.resource.mock</groupId>
-                    <artifactId>gravitee-am-resource-mfa-mock</artifactId>
-                    <version>${gravitee-resource-mfa-mock.version}</version>
-                    <type>zip</type>
-                    <scope>runtime</scope>
-                </dependency>
-                <dependency>
-                    <groupId>io.gravitee.am.factor.mock</groupId>
-                    <artifactId>gravitee-am-factor-mock</artifactId>
-                    <version>${gravitee-factor-mock.version}</version>
-                    <type>zip</type>
-                    <scope>runtime</scope>
-                </dependency>
-            </dependencies>
             <build>
                 <plugins>
                     <plugin>
@@ -918,13 +917,13 @@
                         <artifactId>maven-dependency-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>copy-plugins</id>
+                                <id>copy-mocks</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>copy</goal>
                                 </goals>
                                 <configuration>
-                                    <outputDirectory>${basedir}/target/staging</outputDirectory>
+                                    <outputDirectory>${basedir}/target/staging-mocks</outputDirectory>
                                     <artifactItems>
                                         <artifactItem>
                                             <groupId>io.gravitee.am.resource.mock</groupId>
@@ -943,8 +942,10 @@
                             </execution>
                         </executions>
                     </plugin>
+
                 </plugins>
             </build>
         </profile>
     </profiles>
+
 </project>

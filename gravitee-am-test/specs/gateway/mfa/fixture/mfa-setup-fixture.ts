@@ -16,7 +16,6 @@
 import { requestAccessToken } from '@management-commands/token-management-commands';
 import { createDomain, deleteDomain, startDomain } from '@management-commands/domain-management-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
-import { createResource } from '@management-commands/resource-management-commands';
 import { createFactor } from '@management-commands/factor-management-commands';
 import { createApplication, patchApplication } from '@management-commands/application-management-commands';
 import { createDevice } from '@management-commands/device-management-commands';
@@ -106,16 +105,10 @@ export async function createTestUser(ctx: Domain): Promise<any> {
 }
 
 export async function createMockFactors(ctx: Domain): Promise<any> {
-  const createResourceBody = {
-    type: 'mock-mfa-am-resource',
-    configuration: '{"code": "1234"}',
-    name: 'mock-resource',
-  };
-  const resource = await createResource(ctx.domain.domainId, ctx.admin.accessToken, createResourceBody);
   const createFactorBody = {
     type: 'mock-am-factor',
     factorType: 'MOCK',
-    configuration: `{"graviteeResource": "${resource.id}"}`,
+    configuration: `{"code": "1234"}`,
     name: 'mock-factor',
   };
   const factor1 = await createFactor(ctx.domain.domainId, ctx.admin.accessToken, createFactorBody);

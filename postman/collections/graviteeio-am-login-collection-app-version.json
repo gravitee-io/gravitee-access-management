@@ -3219,61 +3219,6 @@
                     "name": "Prepare",
                     "item": [
                         {
-                            "name": "Create Resource",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "exec": [
-                                            "pm.test(\"Status code is 201\", function () {",
-                                            "    pm.response.to.have.status(201);",
-                                            "});",
-                                            "",
-                                            "var body = JSON.parse(responseBody);",
-                                            "pm.environment.set('mfaResourceId', body.id);"
-                                        ],
-                                        "type": "text/javascript"
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{token}}",
-                                        "type": "text"
-                                    }
-                                ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n    \"type\": \"mock-mfa-am-resource\",\n    \"configuration\": \"{\\\"code\\\":\\\"333-333\\\"}\",\n    \"name\": \"Mock Resource\"\n}",
-                                    "options": {
-                                        "raw": {
-                                            "language": "json"
-                                        }
-                                    }
-                                },
-                                "url": {
-                                    "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/resources",
-                                    "host": [
-                                        "{{management_url}}"
-                                    ],
-                                    "path": [
-                                        "management",
-                                        "organizations",
-                                        "{{defaultOrganizationId}}",
-                                        "environments",
-                                        "{{defaultEnvironmentId}}",
-                                        "domains",
-                                        "{{domain}}",
-                                        "resources"
-                                    ]
-                                }
-                            },
-                            "response": []
-                        },
-                        {
                             "name": "Create Factor",
                             "event": [
                                 {
@@ -3307,7 +3252,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\n    \"type\": \"mock-am-factor\",\n    \"factorType\": \"MOCK\",\n    \"configuration\": \"{\\\"graviteeResource\\\":\\\"{{mfaResourceId}}\\\"}\",\n    \"name\": \"Mock Factor\"\n}",
+                                    "raw": "{\n    \"type\": \"mock-am-factor\",\n    \"factorType\": \"MOCK\",\n    \"configuration\": \"{\\\"code\\\":\\\"333-333\\\"}\",\n    \"name\": \"Mock Factor\"\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
