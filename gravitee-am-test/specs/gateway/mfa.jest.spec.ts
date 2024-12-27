@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
-import {createDomain, deleteDomain, setupDomainForTest,startDomain, waitFor, waitForDomainStart } from '@management-commands/domain-management-commands';
+import { createDomain, deleteDomain, startDomain, waitFor, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 
@@ -61,11 +61,9 @@ jest.setTimeout(200000);
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
-  domain = await createDomain(accessToken,uniqueName('mfa-test-domain'), 'mfa test domain')
+  domain = await createDomain(accessToken, uniqueName('mfa-test-domain'), 'mfa test domain');
 
-  mockFactor = await createSMSResource(validMFACode, domain, accessToken).then((smsResource) =>
-    createMockFactor(smsResource, domain, accessToken),
-  );
+  mockFactor = await createMockFactor(validMFACode, domain, accessToken);
 
   emailFactor = await createSMTPResource(domain, accessToken).then((smtpResource) => createEmailFactor(smtpResource, domain, accessToken));
 
@@ -123,10 +121,10 @@ describe('MFA', () => {
       const expectedCode = [200, 200, 302];
 
       for (const responseCode of expectedCode) {
-        console.log("Getting " + authorize2.headers['location'])
+        console.log('Getting ' + authorize2.headers['location']);
         const rateLimitException = await performGet(authorize2.headers['location'], '', {
           Cookie: authorize2.headers['set-cookie'],
-        })
+        });
         expect(rateLimitException.status).toBe(responseCode);
 
         if (responseCode === 302) {
@@ -546,11 +544,11 @@ const createSMSResource = async (validMFACode, domain, accessToken) => {
   return smsResource;
 };
 
-const createMockFactor = async (smsResource, domain, accessToken) => {
+const createMockFactor = async (code, domain, accessToken) => {
   const factor = await createFactor(domain.id, accessToken, {
     type: 'mock-am-factor',
     factorType: 'MOCK',
-    configuration: `{\"graviteeResource\":\"${smsResource.id}\"}`,
+    configuration: `{\"code\":\"${code}\"}`,
     name: 'Mock Factor',
   });
 
@@ -683,7 +681,7 @@ const createBruteForceTestApp = async (smsFactor, domain, accessToken, mfaChalle
     }),
   );
 
-  await waitFor(1000)
+  await waitFor(1000);
   expect(application).toBeDefined();
   expect(application.settings.oauth.clientId).toBeDefined();
 
