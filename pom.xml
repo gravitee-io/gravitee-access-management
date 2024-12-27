@@ -143,6 +143,8 @@
         <gravitee-notifier-api.version>1.4.3</gravitee-notifier-api.version>
         <gravitee-risk-assessment-api.version>2.0.0</gravitee-risk-assessment-api.version>
         <gravitee-secretprovider-kubernetes.version>1.0.1</gravitee-secretprovider-kubernetes.version>
+        <gravitee-resource-mfa-mock.version>1.0.0</gravitee-resource-mfa-mock.version>
+        <gravitee-factor-mock.version>1.0.0</gravitee-factor-mock.version>
 
         <!-- EE plugin included in default bundle -->
         <gravitee-am-idp-saml2.version>4.0.1</gravitee-am-idp-saml2.version>

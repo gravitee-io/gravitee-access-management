@@ -438,12 +438,6 @@ jobs:
             export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
             
-            cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
-            cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
-            
-            cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
-            cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
-            
             # EXPORT env var to start AM using SMTP Server
             export GRAVITEE_EMAIL_ENABLED=true
             export GRAVITEE_EMAIL_HOST=localhost
@@ -528,12 +522,6 @@ jobs:
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
             export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
-            
-            cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
-            cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
-            
-            cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
-            cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
             
             # copy r2dbc & jdbc drivers
             curl --retry 4 --retry-delay 10 --retry-all-errors https://jdbc.postgresql.org/download/postgresql-42.6.0.jar -o postgresql-jdbc.jar
@@ -645,12 +633,6 @@ jobs:
             export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
             
-            cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
-            cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
-            
-            cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
-            cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
-            
             # Reduce the sync frequency to avoid flaky test due to synchronization delay
             export gravitee_services_sync_cron="*/2 * * * * *"
             export gravitee_services_sync_timeframeBeforeDelay=5000
@@ -713,12 +695,6 @@ jobs:
             unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
             export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
-            
-            cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
-            cp /tmp/workspace/gravitee-am-resource-mfa-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
-            
-            cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
-            cp /tmp/workspace/gravitee-am-factor-mock-*.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/
             
             # copy r2dbc & jdbc drivers
             curl --retry 4 --retry-delay 10 --retry-all-errors https://jdbc.postgresql.org/download/postgresql-42.6.0.jar -o postgresql-jdbc.jar
@@ -1127,7 +1103,7 @@ jobs:
       - run:
           name: "Maven Package and install"
           command: |
-            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot clean install
+            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot,with-mocks clean install
       - save-maven-job-cache:
           jobName: pull_requests
       - run:
@@ -1144,16 +1120,12 @@ jobs:
             cp ./gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-ui/target/*.zip ~/
-            cp ./gravitee-am-resource/gravitee-am-resource-mfa-mock/target/*.zip ~/
-            cp ./gravitee-am-factor/gravitee-am-factor-mock/target/*.zip ~/
       - persist_to_workspace:
           root: ~/
           paths:
             - ./gravitee-am-gateway-standalone-*.zip
             - ./gravitee-am-management-api-standalone-*.zip
             - ./gravitee-am-webui-*.zip
-            - ./gravitee-am-resource-mfa-mock-*.zip
-            - ./gravitee-am-factor-mock-*.zip
 
   release:
     parameters:
