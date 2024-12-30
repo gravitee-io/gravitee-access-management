@@ -80,7 +80,7 @@
         <gravitee-node.version>3.0.7</gravitee-node.version>
         <gravitee-reporter.version>1.17.1</gravitee-reporter.version>
         <gravitee-gateway-api.version>1.31.2</gravitee-gateway-api.version>
-        <gravitee-expression-language.version>1.5.0</gravitee-expression-language.version>
+        <gravitee-expression-language.version>4.0.0</gravitee-expression-language.version>
         <gravitee-platform-repository-api.version>1.0.0</gravitee-platform-repository-api.version>
         <gravitee-cockpit-api.version>2.0.0</gravitee-cockpit-api.version>
         <logback.version>1.2.13</logback.version>
