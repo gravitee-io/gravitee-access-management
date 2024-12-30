@@ -16,8 +16,11 @@
 package io.gravitee.am.authdevice.notifier.http;
 
 import io.gravitee.am.authdevice.notifier.api.AuthenticationDeviceNotifierConfiguration;
+import io.gravitee.common.http.HttpHeader;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.List;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -33,5 +36,6 @@ public class HttpAuthenticationDeviceNotifierConfiguration implements Authentica
     private Integer connectTimeout = 5000;
     private Integer idleTimeout = 10000;
     private Integer maxPoolSize = 10;
+    private List<HttpHeader> httpHeaders;
 
 }

@@ -74,6 +74,12 @@ public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationD
         MultiMap formData = prepareFormData(request);
 
         final HttpRequest<Buffer> notificationRequest = this.client.requestAbs(HttpMethod.POST, this.configuration.getEndpoint());
+        if (this.configuration.getHttpHeaders() != null && !this.configuration.getHttpHeaders().isEmpty()) {
+            notificationRequest.putHeaders(this.configuration.getHttpHeaders().stream()
+                    .collect(MultiMap::caseInsensitiveMultiMap,
+                            (map, header) -> map.add(header.getName(), header.getValue()),
+                            MultiMap::addAll));
+        }
         if (hasText(this.configuration.getHeaderValue())) {
             notificationRequest
                     .putHeader(this.configuration.getHeaderName(), this.configuration.getHeaderValue());
@@ -95,7 +101,7 @@ public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationD
                         } else {
                             LOGGER.info("Device notification fails for tid '{}' with status '{}'", request.getTransactionId(), status);
                         }
-                        
+
                         return Single.error(new DeviceNotificationException("Device notification fails"));
                     }
 
@@ -108,7 +114,7 @@ public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationD
                                 result);
                     }
 
-                    if ( !request.getTransactionId().equals(result.getString(TRANSACTION_ID)) || !request.getState().equals(result.getString(STATE))) {
+                    if (!request.getTransactionId().equals(result.getString(TRANSACTION_ID)) || !request.getState().equals(result.getString(STATE))) {
                         LOGGER.warn("Device notification response contains invalid tid or state. Request {} with status {}", request.getTransactionId(), status);
                         return Single.error(new DeviceNotificationException("Invalid device notification response"));
                     }
