@@ -211,6 +211,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setIdentities(domainMongo.getIdentities());
         domain.setMaster(domainMongo.isMaster());
         domain.setCorsSettings(domainMongo.getCorsSettings());
+        domain.setDataPlaneId(domainMongo.getDataPlaneId());
 
         return domain;
     }
@@ -248,7 +249,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setIdentities(domain.getIdentities());
         domainMongo.setMaster(domain.isMaster());
         domainMongo.setCorsSettings(domain.getCorsSettings());
-
+        domainMongo.setDataPlaneId(domain.getDataPlaneId());
         return domainMongo;
     }
 
