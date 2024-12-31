@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
+import static io.gravitee.am.gateway.handler.common.vertx.utils.RedirectHelper.doRedirect;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -135,12 +136,7 @@ public class WebAuthnRegisterSuccessEndpoint extends WebAuthnHandler {
                 .subscribe(__ -> {
                             // at this stage the registration has been done
                             // redirect the user to the original request
-                            final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-                            final String redirectUri = getReturnUrl(routingContext, queryParams);
-                            routingContext.response()
-                                    .putHeader(HttpHeaders.LOCATION, redirectUri)
-                                    .setStatusCode(302)
-                                    .end();
+                            doRedirect(routingContext);
                         },
                         error -> {
                             logger.error("An error has occurred when updating the webauthn credential {}", credentialId, error);

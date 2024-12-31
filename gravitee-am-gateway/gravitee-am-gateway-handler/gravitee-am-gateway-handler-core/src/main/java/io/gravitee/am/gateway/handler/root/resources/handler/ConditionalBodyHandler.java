@@ -21,6 +21,8 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import org.springframework.core.env.Environment;
 
+import static io.gravitee.am.gateway.core.LegacySettingsKeys.HANDLER_ALWAYS_APPLY_BODY_HDL;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -35,7 +37,7 @@ public class ConditionalBodyHandler implements Handler<RoutingContext> {
 
     ConditionalBodyHandler(Environment env, Handler<RoutingContext> bodyHandler) {
         this.delegatedBodyHandler = bodyHandler;
-        this.alwaysApplyBodyHandler = env.getProperty("legacy.handler.alwaysApplyBodyHandler", Boolean.class, false);
+        this.alwaysApplyBodyHandler = HANDLER_ALWAYS_APPLY_BODY_HDL.from(env);
     }
 
     @Override
