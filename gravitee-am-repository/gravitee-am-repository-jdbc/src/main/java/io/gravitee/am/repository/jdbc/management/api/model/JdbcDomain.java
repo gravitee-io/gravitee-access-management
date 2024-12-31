@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.jdbc.management.api.model;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -26,6 +28,8 @@ import java.time.LocalDateTime;
  * @author GraviteeSource Team
  */
 @Table("domains")
+@Getter
+@Setter
 public class JdbcDomain {
     @Id
     private String id;
@@ -63,202 +67,15 @@ public class JdbcDomain {
     private boolean master = false;
     @Column("cors_settings")
     private String corsSettings;
+    @Column("data_plane_id")
+    private String dataPlaneId;
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getHrid() {
-        return hrid;
-    }
-
-    public void setHrid(String hrid) {
-        this.hrid = hrid;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
-
-    public boolean isVhostMode() {
-        return vhostMode;
-    }
-
-    public void setVhostMode(boolean vhostMode) {
-        this.vhostMode = vhostMode;
-    }
-
-    public String getOidc() {
-        return oidc;
-    }
-
-    public void setOidc(String oidc) {
-        this.oidc = oidc;
-    }
-
-    public String getUma() {
-        return uma;
-    }
-
-    public void setUma(String uma) {
-        this.uma = uma;
-    }
-
-    public String getSaml() {
-        return saml;
-    }
-
-    public void setSaml(String saml) {
-        this.saml = saml;
-    }
-
-    public String getLoginSettings() {
-        return loginSettings;
-    }
-
-    public void setLoginSettings(String loginSettings) {
-        this.loginSettings = loginSettings;
-    }
-
-    public String getWebAuthnSettings() {
-        return webAuthnSettings;
-    }
-
-    public void setWebAuthnSettings(String webAuthnSettings) {
-        this.webAuthnSettings = webAuthnSettings;
-    }
-
-    public String getScim() {
-        return scim;
-    }
-
-    public void setScim(String scim) {
-        this.scim = scim;
-    }
-
-    public String getAccountSettings() {
-        return accountSettings;
-    }
-
-    public void setAccountSettings(String accountSettings) {
-        this.accountSettings = accountSettings;
-    }
-
-    public String getPasswordSettings() {
-        return passwordSettings;
-    }
-
-    public void setPasswordSettings(String passwordSettings) {
-        this.passwordSettings = passwordSettings;
-    }
-
-    public String getSelfServiceAccountManagementSettings() {
-        return selfServiceAccountManagementSettings;
-    }
-
-    public void setSelfServiceAccountManagementSettings(String selfServiceAccountManagementSettings) {
-        this.selfServiceAccountManagementSettings = selfServiceAccountManagementSettings;
-    }
-
-    public String getReferenceType() {
-        return referenceType;
-    }
-
-    public void setReferenceType(String referenceType) {
-        this.referenceType = referenceType;
-    }
-
-    public String getReferenceId() {
-        return referenceId;
-    }
-
-    public void setReferenceId(String referenceId) {
-        this.referenceId = referenceId;
-    }
-
-    public boolean isAlertEnabled() {
-        return alertEnabled;
-    }
-
-    public void setAlertEnabled(boolean alertEnabled) {
-        this.alertEnabled = alertEnabled;
-    }
-
-    public boolean isMaster() {
-        return master;
-    }
-
-    public void setMaster(boolean master) {
-        this.master = master;
-    }
-
-    public String getCorsSettings() {
-        return corsSettings;
-    }
-
-    public void setCorsSettings(String corsSettings) {
-        this.corsSettings = corsSettings;
-    }
 
     /**
      * Bean class to provide list of identity providers linked to the Domain
      */
+    @Getter
+    @Setter
     @Table("domain_identities")
     public static class Identity {
         @Column("domain_id")
@@ -286,74 +103,26 @@ public class JdbcDomain {
     /**
      * Bean class to provide list of tags linked to the Domain
      */
+    @Getter
+    @Setter
     @Table("domain_tags")
     public static class Tag {
         @Column("domain_id")
         String domainId;
-
         String tag;
-
-        public String getDomainId() {
-            return domainId;
-        }
-
-        public void setDomainId(String domainId) {
-            this.domainId = domainId;
-        }
-
-        public String getTag() {
-            return tag;
-        }
-
-        public void setTag(String tag) {
-            this.tag = tag;
-        }
     }
     /**
      * Bean class to provide list of vhost linked to the Domain
      */
+    @Getter
+    @Setter
     @Table("domain_vhosts")
     public static class Vhost {
         @Column("domain_id")
         String domainId;
-
         String host;
-
         String path;
-
         @Column("override_entrypoint")
         boolean overrideEntrypoint;
-
-        public String getDomainId() {
-            return domainId;
-        }
-
-        public void setDomainId(String domainId) {
-            this.domainId = domainId;
-        }
-
-        public String getHost() {
-            return host;
-        }
-
-        public void setHost(String host) {
-            this.host = host;
-        }
-
-        public String getPath() {
-            return path;
-        }
-
-        public void setPath(String path) {
-            this.path = path;
-        }
-
-        public boolean isOverrideEntrypoint() {
-            return overrideEntrypoint;
-        }
-
-        public void setOverrideEntrypoint(boolean overrideEntrypoint) {
-            this.overrideEntrypoint = overrideEntrypoint;
-        }
     }
 }
