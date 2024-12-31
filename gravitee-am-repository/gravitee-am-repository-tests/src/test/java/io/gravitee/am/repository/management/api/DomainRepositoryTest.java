@@ -338,4 +338,24 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         testObserver1.assertValueCount(1);
 
     }
+
+    @Test
+    public void createDomain_withDataPlaneId() {
+        // create domain
+        Domain domain = initDomain();
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId("environment#dataPlane");
+        domain.setDataPlaneId("dataPlaneId");
+        domainRepository.create(domain).blockingGet();
+
+        // fetch domains
+        TestSubscriber<Domain> testObserver1 = domainRepository.findAllByReferenceId("environment#dataPlane").test();
+        testObserver1.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver1.assertComplete();
+        testObserver1.assertNoErrors();
+        testObserver1.assertValueCount(1);
+        testObserver1.assertValue(d -> d.getDataPlaneId().equals("dataPlaneId"));
+
+    }
 }
