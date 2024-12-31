@@ -35,7 +35,6 @@
 
     <modules>
         <module>gravitee-am-resource-api</module>
-        <module>gravitee-am-resource-mfa-mock</module>
         <module>gravitee-am-resource-smtp</module>
         <module>gravitee-am-resource-infobip</module>
     </modules>
