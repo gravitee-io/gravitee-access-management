@@ -24,9 +24,6 @@ for %%B in (%~dp0\.) do set GRAVITEE_HOME=%%~dpB
 
 IF "%JAVA_HOME%"=="" GOTO nojavahome
 
-set JAVA_OPTS="-Djava.net.preferIPv4Stack=true"
-
-
 set JAVA="%JAVA_HOME%/bin/java"
 
 rem Setup the classpath
