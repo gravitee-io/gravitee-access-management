@@ -56,6 +56,13 @@
             <artifactId>gravitee-node-cluster-plugin-standalone</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>io.gravitee.am.plugins.handlers</groupId>
+            <artifactId>gravitee-am-plugins-handlers-dataplane</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+
         <!-- Gravitee.io Access Management -->
         <dependency>
             <groupId>io.gravitee.am.gateway</groupId>

@@ -25,7 +25,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.env.Environment;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
@@ -153,6 +152,19 @@ public class R2DBCConnectionProvider implements ConnectionProvider<ConnectionFac
     @Override
     public ClientWrapper<ConnectionFactory> getClientFromConfiguration(R2DBCConnectionConfiguration configuration) {
         return new R2DBCPoolWrapper(configuration, ConnectionFactoryProvider.createClient(configuration));
+    }
+
+    @Override
+    public ClientWrapper<ConnectionFactory> getClientWrapperFromPrefix(String prefix) {
+        if (GATEWAY.getRepositoryPropertyKey().equals(prefix)) {
+            if (notUseMngSettingsForGateway) {
+                return gatewayConnectionFactory;
+            } else {
+                return commonConnectionFactory;
+            }
+        }
+        // mAPI, create a connection pool for each DP
+        return new R2DBCPoolWrapper(new ConnectionFactoryProvider(environment, prefix));
     }
 
     @Override
