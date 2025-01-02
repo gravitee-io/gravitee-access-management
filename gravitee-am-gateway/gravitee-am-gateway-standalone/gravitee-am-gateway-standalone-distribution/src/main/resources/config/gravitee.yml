@@ -366,6 +366,14 @@ repositories:
       port: ${ds.mongodb.port}
   #    ensureIndexOnStart: true
 
+dataPlane:
+  id: default
+  type: mongodb
+  mongodb:
+    dbname: ${ds.mongodb.dbname}
+    host: ${ds.mongodb.host}
+    port: ${ds.mongodb.port}
+
 # Gateway entry point used in emails
 gateway:
   url: http://localhost:8092

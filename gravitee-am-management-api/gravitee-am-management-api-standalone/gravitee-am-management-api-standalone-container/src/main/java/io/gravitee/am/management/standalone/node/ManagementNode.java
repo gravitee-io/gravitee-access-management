@@ -22,6 +22,7 @@ import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.impl.upgrades.system.spring.SystemUpgraderConfiguration;
 import io.gravitee.am.management.service.tasks.TasksLoader;
+import io.gravitee.am.plugins.dataplane.core.MultiDataPlaneLoader;
 import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.node.api.NodeMetadataResolver;
 import io.gravitee.node.jetty.node.JettyNode;
@@ -67,6 +68,7 @@ public class ManagementNode extends JettyNode {
     @Override
     public List<Class<? extends LifecycleComponent>> components() {
         List<Class<? extends LifecycleComponent>> components = super.components();
+        components.add(MultiDataPlaneLoader.class);
         components.addAll(SystemUpgraderConfiguration.getComponents());
         components.addAll(UpgraderConfiguration.getComponents());
         components.add(PluginEventListener.class);
