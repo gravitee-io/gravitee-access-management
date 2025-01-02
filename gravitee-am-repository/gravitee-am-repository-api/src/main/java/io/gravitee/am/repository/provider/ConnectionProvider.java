@@ -41,5 +41,7 @@ public interface ConnectionProvider<T, C extends ConnectionConfiguration> extend
 
     ClientWrapper<T> getClientFromConfiguration(C configuration);
 
+    ClientWrapper<T> getClientWrapperFromPrefix(String prefix);
+
     boolean canHandle(String backendType);
 }
