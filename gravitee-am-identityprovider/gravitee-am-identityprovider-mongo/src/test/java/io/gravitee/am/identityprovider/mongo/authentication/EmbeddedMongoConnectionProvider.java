@@ -42,6 +42,11 @@ public class EmbeddedMongoConnectionProvider implements ConnectionProvider<Mongo
             public void releaseClient() {
                 mongoClient.close();
             }
+
+            @Override
+            public String getDatabaseName() {
+                return configuration.getDatabase();
+            }
         };
     }
 
@@ -57,6 +62,11 @@ public class EmbeddedMongoConnectionProvider implements ConnectionProvider<Mongo
 
     @Override
     public ClientWrapper getClientFromConfiguration(MongoConnectionConfiguration configuration) {
+        return this.wrapper;
+    }
+
+    @Override
+    public ClientWrapper<MongoClient> getClientWrapperFromPrefix(String prefix) {
         return this.wrapper;
     }
 
