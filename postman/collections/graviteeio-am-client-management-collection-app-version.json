@@ -102,7 +102,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"applications-app-version\", \n\t\"description\": \"test application management through Access Management API\"\n}"
+							"raw": "{\n\t\"name\": \"applications-app-version\", \n\t\"description\": \"test application management through Access Management API\", \n\t\"dataPlaneId\": \"default\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",

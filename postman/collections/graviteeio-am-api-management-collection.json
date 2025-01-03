@@ -751,7 +751,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"name\": \"social\", \n\t\"description\": \"test management login with social provider\"\n}"
+									"raw": "{\n\t\"name\": \"social\", \n\t\"description\": \"test management login with social provider\", \n\t\"dataPlaneId\": \"default\"\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",
@@ -1941,7 +1941,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"name\": \"alert\", \n\t\"description\": \"test alerting on domain\"\n}"
+									"raw": "{\n\t\"name\": \"alert\", \n\t\"description\": \"test alerting on domain\", \n\t\"dataPlaneId\": \"default\"\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",
