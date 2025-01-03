@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,32 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.model;
+import { TestBed } from '@angular/core/testing';
+import { ResolveFn } from '@angular/router';
 
-import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
+import { dataPlanesResolver } from './data-planes.resolver';
 
-/**
- * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author GraviteeSource Team
- */
-@Getter
-@Setter
-public class NewDomain {
+describe('dataPlanesResolver', () => {
+  const executeResolver: ResolveFn<boolean> = (...resolverParameters) =>
+    TestBed.runInInjectionContext(() => dataPlanesResolver(...resolverParameters));
 
-    @NotNull
-    private String name;
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+  });
 
-    private String description;
-
-    @NotNull
-    private String dataPlaneId;
-
-    @Override
-    public String toString() {
-        return "NewDomain{" +
-                "name='" + name + '\'' +
-                '}';
-    }
-}
+  it('should be created', () => {
+    expect(executeResolver).toBeTruthy();
+  });
+});

@@ -103,7 +103,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"user-domain-app-version\", \n\t\"description\": \"test System for User Management specifications\"\n}"
+							"raw": "{\n\t\"name\": \"user-domain-app-version\", \n\t\"description\": \"test System for User Management specifications\", \n\t\"dataPlaneId\": \"default\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",

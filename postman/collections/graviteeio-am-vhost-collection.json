@@ -102,7 +102,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"vhost\", \n\t\"description\": \"test Virtual Hosts\"\n}"
+							"raw": "{\n\t\"name\": \"vhost\", \n\t\"description\": \"test Virtual Hosts\", \n\t\"dataPlaneId\": \"default\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",
@@ -255,7 +255,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"otherVhost\", \n\t\"description\": \"test Virtual Hosts\"\n}"
+							"raw": "{\n\t\"name\": \"otherVhost\", \n\t\"description\": \"test Virtual Hosts\", \n\t\"dataPlaneId\": \"default\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",

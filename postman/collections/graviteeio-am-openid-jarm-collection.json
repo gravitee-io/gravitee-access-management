@@ -111,7 +111,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"jarm\", \n\t\"description\": \"Test OpenID JARM specification\"\n}"
+							"raw": "{\n\t\"name\": \"jarm\", \n\t\"description\": \"Test OpenID JARM specification\", \n\t\"dataPlaneId\": \"default\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",

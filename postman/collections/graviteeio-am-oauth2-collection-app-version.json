@@ -104,7 +104,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"oauth2-app-version\", \n\t\"description\": \"test oauth2 authorization framework specifications\"\n}"
+							"raw": "{\n\t\"name\": \"oauth2-app-version\", \n\t\"description\": \"test oauth2 authorization framework specifications\", \n\t\"dataPlaneId\": \"default\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",
@@ -13487,7 +13487,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"name\": \"cross-app-version\", \n\t\"description\": \"test cross domain authorization framework specifications\"\n}"
+									"raw": "{\n\t\"name\": \"cross-app-version\", \n\t\"description\": \"test cross domain authorization framework specifications\", \n\t\"dataPlaneId\": \"default\"\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",

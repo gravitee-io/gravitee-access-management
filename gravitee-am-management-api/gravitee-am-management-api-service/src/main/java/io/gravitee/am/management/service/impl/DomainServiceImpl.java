@@ -148,6 +148,8 @@ public class DomainServiceImpl implements DomainService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(DomainServiceImpl.class);
 
+//    @Autowired
+//    private MultiDataPlaneLoader multiDataPlaneLoader; // TODO: uncomment when AM-4591 merged.
 
     @Lazy
     @Autowired
@@ -337,6 +339,9 @@ public class DomainServiceImpl implements DomainService {
         LOGGER.debug("Create a new domain: {}", newDomain);
         // generate hrid
         String hrid = IdGenerator.generate(newDomain.getName());
+//        if(multiDataPlaneLoader.getDataPlanes().stream().map(DataPlane::getId).noneMatch(id->id.equals(newDomain.getDataPlaneId()))){
+//            return Single.error(new TechnicalManagementException("An error occurred while trying to create a domain. Data plane with provided Id doesn't exist"));
+//        } // TODO: uncomment when AM-4591 merged.
         return domainRepository.findByHrid(ReferenceType.ENVIRONMENT, environmentId, hrid)
                 .isEmpty()
                 .flatMap(empty -> {
@@ -357,6 +362,7 @@ public class DomainServiceImpl implements DomainService {
                         domain.setReferenceId(environmentId);
                         domain.setCreatedAt(new Date());
                         domain.setUpdatedAt(domain.getCreatedAt());
+                        domain.setDataPlaneId(newDomain.getDataPlaneId());
 
                         return environmentService.findById(domain.getReferenceId())
                                 .doOnSuccess(environment -> setDeployMode(domain, environment))

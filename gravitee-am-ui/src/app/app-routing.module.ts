@@ -245,6 +245,7 @@ import { DomainPasswordPolicyComponent } from './domain/settings/password-policy
 import { PasswordPolicyResolver } from './resolvers/password-policy-resolver';
 import { PasswordPoliciesResolver } from './resolvers/password-policies-resolver.service';
 import { ProviderGroupsComponent } from './domain/settings/providers/provider/groups/groups/groups.component';
+import { DataPlanesResolver } from './resolvers/data-planes.resolver';
 
 const applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -850,6 +851,7 @@ export const routes: Routes = [
                 component: DomainCreationComponent,
                 resolve: {
                   environment: EnvironmentResolver,
+                  dataPlanes: DataPlanesResolver,
                 },
                 canActivate: [AuthGuard],
                 data: {

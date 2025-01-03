@@ -103,7 +103,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"logout-app-version\", \n\t\"description\": \"test logout flows\"\n}"
+							"raw": "{\n\t\"name\": \"logout-app-version\", \n\t\"description\": \"test logout flows\", \n\t\"dataPlaneId\": \"default\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",
