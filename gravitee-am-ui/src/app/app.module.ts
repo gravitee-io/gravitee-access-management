@@ -449,6 +449,8 @@ import { PasswordPolicyService } from './services/password-policy.service';
 import { CreateGroupMapperComponent, ProviderGroupsComponent } from './domain/settings/providers/provider/groups/groups/groups.component';
 import { IdentitiesOrganizationResolver } from './resolvers/identities-organization.resolver';
 import { PasswordPolicyStatusComponent } from './domain/settings/password-policy/pass-policy-status/password-policy-status.component';
+import { DataPlaneService } from './services/data-plane.service';
+import { DataPlanesResolver } from './resolvers/data-planes.resolver';
 
 @NgModule({
   declarations: [
@@ -893,6 +895,8 @@ import { PasswordPolicyStatusComponent } from './domain/settings/password-policy
     PasswordPoliciesResolver,
     PasswordPolicyResolver,
     PasswordPolicyService,
+    DataPlaneService,
+    DataPlanesResolver,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,

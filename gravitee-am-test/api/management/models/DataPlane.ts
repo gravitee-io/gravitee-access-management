@@ -29,46 +29,39 @@ import { exists, mapValues } from '../runtime';
 /**
  * 
  * @export
- * @interface NewDomain
+ * @interface DataPlane
  */
-export interface NewDomain {
+export interface DataPlane {
     /**
      * 
      * @type {string}
-     * @memberof NewDomain
+     * @memberof DataPlane
      */
-    name: string;
+    id?: string;
     /**
      * 
      * @type {string}
-     * @memberof NewDomain
+     * @memberof DataPlane
      */
-    description?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof NewDomain
-     */
-    dataPlaneId: string;
+    name?: string;
 }
 
-export function NewDomainFromJSON(json: any): NewDomain {
-    return NewDomainFromJSONTyped(json, false);
+export function DataPlaneFromJSON(json: any): DataPlane {
+    return DataPlaneFromJSONTyped(json, false);
 }
 
-export function NewDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewDomain {
+export function DataPlaneFromJSONTyped(json: any, ignoreDiscriminator: boolean): DataPlane {
     if ((json === undefined) || (json === null)) {
         return json;
     }
     return {
         
-        'name': json['name'],
-        'description': !exists(json, 'description') ? undefined : json['description'],
-        'dataPlaneId': json['dataPlaneId'],
+        'id': !exists(json, 'id') ? undefined : json['id'],
+        'name': !exists(json, 'name') ? undefined : json['name'],
     };
 }
 
-export function NewDomainToJSON(value?: NewDomain | null): any {
+export function DataPlaneToJSON(value?: DataPlane | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -77,9 +70,8 @@ export function NewDomainToJSON(value?: NewDomain | null): any {
     }
     return {
         
+        'id': value.id,
         'name': value.name,
-        'description': value.description,
-        'dataPlaneId': value.dataPlaneId,
     };
 }
 

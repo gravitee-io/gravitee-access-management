@@ -71,6 +71,7 @@ export * from './ClientSecret';
 export * from './CookieSettings';
 export * from './CorsSettings';
 export * from './Credential';
+export * from './DataPlane';
 export * from './DeviceIdentifier';
 export * from './Domain';
 export * from './DomainUserBulkRequest';
