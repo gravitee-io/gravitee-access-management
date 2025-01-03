@@ -4,6 +4,7 @@ apis/AuditApi.ts
 apis/AuthenticationDeviceNotifierApi.ts
 apis/BotDetectionApi.ts
 apis/CertificateApi.ts
+apis/DataPlaneApi.ts
 apis/DefaultApi.ts
 apis/DeviceIdentifierApi.ts
 apis/DeviceIdentifiersApi.ts
@@ -81,6 +82,7 @@ models/ClientSecret.ts
 models/CookieSettings.ts
 models/CorsSettings.ts
 models/Credential.ts
+models/DataPlane.ts
 models/DeviceIdentifier.ts
 models/Domain.ts
 models/DomainUserBulkRequest.ts
