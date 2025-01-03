@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,32 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.model;
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
-import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
+import { AppConfig } from '../../config/app.config';
 
-/**
- * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author GraviteeSource Team
- */
-@Getter
-@Setter
-public class NewDomain {
+@Injectable()
+export class DataPlaneService {
+  private baseURL: string = AppConfig.settings.environmentBaseURL;
+  constructor(private http: HttpClient) {}
 
-    @NotNull
-    private String name;
-
-    private String description;
-
-    @NotNull
-    private String dataPlaneId;
-
-    @Override
-    public String toString() {
-        return "NewDomain{" +
-                "name='" + name + '\'' +
-                '}';
-    }
+  list(): Observable<any> {
+    return this.http.get<any>(this.baseURL + '/data-planes');
+  }
 }

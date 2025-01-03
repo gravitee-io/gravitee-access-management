@@ -104,7 +104,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"uma2_postman\", \n\t\"description\": \"test user-managed access specifications\"\n}"
+							"raw": "{\n\t\"name\": \"uma2_postman\", \n\t\"description\": \"test user-managed access specifications\", \n\t\"dataPlaneId\": \"default\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",

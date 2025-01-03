@@ -104,7 +104,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"oauth2-par\", \n\t\"description\": \"test oauth2 authorization framework specifications using PAR\"\n}"
+							"raw": "{\n\t\"name\": \"oauth2-par\", \n\t\"description\": \"test oauth2 authorization framework specifications using PAR\", \n\t\"dataPlaneId\": \"default\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",
