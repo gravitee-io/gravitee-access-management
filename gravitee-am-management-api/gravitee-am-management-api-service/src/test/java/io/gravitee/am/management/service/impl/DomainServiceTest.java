@@ -17,6 +17,7 @@ package io.gravitee.am.management.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.utils.GraviteeContext;
+import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
 import io.gravitee.am.model.Application;
@@ -50,6 +51,7 @@ import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.model.uma.Resource;
+import io.gravitee.am.plugins.dataplane.core.MultiDataPlaneLoader;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
@@ -162,6 +164,9 @@ public class DomainServiceTest {
 
     @InjectMocks
     private DomainServiceImpl domainService = new DomainServiceImpl();
+
+    @Mock
+    private MultiDataPlaneLoader multiDataPlaneLoader;
 
     @Mock
     private DomainValidator domainValidator;
@@ -354,6 +359,7 @@ public class DomainServiceTest {
     public void shouldCreate() {
         NewDomain newDomain = new NewDomain();
         newDomain.setName("my-domain");
+        newDomain.setDataPlaneId("default");
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainReadService.listAll()).thenReturn(Flowable.empty());
         Domain domain = new Domain();
@@ -361,6 +367,8 @@ public class DomainServiceTest {
         domain.setReferenceId(ENVIRONMENT_ID);
         domain.setId("domain-id");
         domain.setVersion(DomainVersion.V2_0);
+        domain.setDataPlaneId("default");
+        when(multiDataPlaneLoader.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
         when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
@@ -401,6 +409,7 @@ public class DomainServiceTest {
 
         NewDomain newDomain = new NewDomain();
         newDomain.setName("my-domain");
+        newDomain.setDataPlaneId("default");
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainReadService.listAll()).thenReturn(Flowable.empty());
         Domain domain = new Domain();
@@ -408,6 +417,8 @@ public class DomainServiceTest {
         domain.setReferenceId(ENVIRONMENT_ID);
         domain.setId("domain-id");
         domain.setVersion(DomainVersion.V2_0);
+        domain.setDataPlaneId("default");
+        when(multiDataPlaneLoader.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
         when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
@@ -447,6 +458,7 @@ public class DomainServiceTest {
 
         NewDomain newDomain = new NewDomain();
         newDomain.setName("my-domain");
+        newDomain.setDataPlaneId("default");
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainReadService.listAll()).thenReturn(Flowable.empty());
         Domain domain = new Domain();
@@ -454,6 +466,8 @@ public class DomainServiceTest {
         domain.setReferenceId(ENVIRONMENT_ID);
         domain.setId("domain-id");
         domain.setVersion(DomainVersion.V2_0);
+        domain.setDataPlaneId("default");
+        when(multiDataPlaneLoader.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
         when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
@@ -492,6 +506,8 @@ public class DomainServiceTest {
     public void shouldCreate_technicalException() {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
+        when(newDomain.getDataPlaneId()).thenReturn("default");
+        when(multiDataPlaneLoader.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver<Domain> testObserver = new TestObserver<>();
@@ -507,6 +523,8 @@ public class DomainServiceTest {
     public void shouldCreate2_technicalException() {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
+        when(newDomain.getDataPlaneId()).thenReturn("default");
+        when(multiDataPlaneLoader.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
 
@@ -523,6 +541,8 @@ public class DomainServiceTest {
     public void shouldCreate_existingDomain() {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
+        when(newDomain.getDataPlaneId()).thenReturn("default");
+        when(multiDataPlaneLoader.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.just(new Domain()));
 
         TestObserver<Domain> testObserver = new TestObserver<>();

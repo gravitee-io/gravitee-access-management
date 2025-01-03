@@ -440,13 +440,13 @@ export interface UserEntity {
      * @type {string}
      * @memberof UserEntity
      */
-    zoneInfo?: string;
+    locale?: string;
     /**
      * 
      * @type {string}
      * @memberof UserEntity
      */
-    locale?: string;
+    zoneInfo?: string;
     /**
      * 
      * @type {string}
@@ -586,8 +586,8 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'applicationEntity': !exists(json, 'applicationEntity') ? undefined : ApplicationEntityFromJSON(json['applicationEntity']),
         'sourceId': !exists(json, 'sourceId') ? undefined : json['sourceId'],
         'address': !exists(json, 'address') ? undefined : json['address'],
-        'zoneInfo': !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
         'locale': !exists(json, 'locale') ? undefined : json['locale'],
+        'zoneInfo': !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
         'middleName': !exists(json, 'middleName') ? undefined : json['middleName'],
         'lastIdentityInformation': !exists(json, 'lastIdentityInformation') ? undefined : json['lastIdentityInformation'],
         'identitiesAsMap': !exists(json, 'identitiesAsMap') ? undefined : json['identitiesAsMap'],
@@ -668,8 +668,8 @@ export function UserEntityToJSON(value?: UserEntity | null): any {
         'applicationEntity': ApplicationEntityToJSON(value.applicationEntity),
         'sourceId': value.sourceId,
         'address': value.address,
-        'zoneInfo': value.zoneInfo,
         'locale': value.locale,
+        'zoneInfo': value.zoneInfo,
         'middleName': value.middleName,
         'lastIdentityInformation': value.lastIdentityInformation,
         'identitiesAsMap': value.identitiesAsMap,
