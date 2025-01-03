@@ -18,7 +18,7 @@ package io.gravitee.am.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.gravitee.am.certificate.api.CertificateProvider;
+import io.gravitee.am.common.plugin.ValidationResult;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
@@ -42,9 +42,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
-
-import static java.time.temporal.ChronoUnit.DAYS;
-
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -61,18 +58,14 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.security.cert.CertificateException;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Base64;
 import java.util.Date;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.service.impl.CertificateServiceImpl.DEFAULT_CERTIFICATE_PLUGIN;
-import static java.time.temporal.ChronoUnit.HOURS;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doReturn;
@@ -289,9 +282,7 @@ public class CertificateServiceTest {
         var newCertificate = new NewCertificate();
         newCertificate.setType(type);
         newCertificate.setConfiguration(certificateNode.toString());
-        var certificateProvider = mock(CertificateProvider.class);
-        when(certificateProvider.getExpirationDate()).thenReturn(Optional.of(new Date(Instant.now().plus(30, DAYS).toEpochMilli())));
-        when(certificatePluginManager.create(any())).thenReturn(certificateProvider);
+        when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.valid());
         when(certificateRepository.create(any())).thenReturn(Single.just(new Certificate()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -300,7 +291,7 @@ public class CertificateServiceTest {
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertComplete();
 
-        verify(certificatePluginManager, times(1)).create(any());
+        verify(certificatePluginManager, times(1)).validate(any());
         verify(certificateRepository, times(1)).create(any());
         verify(eventService, times(1)).create(any());
     }
@@ -314,9 +305,7 @@ public class CertificateServiceTest {
         certificateNode.put("secretname", "aws-secret-name");
         var newCertificate = new UpdateCertificate();
         newCertificate.setConfiguration(certificateNode.toString());
-        var certificateProvider = mock(CertificateProvider.class);
-        when(certificateProvider.getExpirationDate()).thenReturn(Optional.of(new Date(Instant.now().plus(30, DAYS).toEpochMilli())));
-        when(certificatePluginManager.create(any())).thenReturn(certificateProvider);
+        when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.valid());
         var certificate = new Certificate();
         certificate.setType(type);
         when(certificateRepository.findById(any())).thenReturn(Maybe.just(certificate));
@@ -328,7 +317,7 @@ public class CertificateServiceTest {
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertComplete();
 
-        verify(certificatePluginManager, times(1)).create(any());
+        verify(certificatePluginManager, times(1)).validate(any());
         verify(certificateRepository, times(1)).update(any());
         verify(eventService, times(1)).create(any());
     }
@@ -349,9 +338,7 @@ public class CertificateServiceTest {
         newCertificate.setName("expired-certificate");
         newCertificate.setType(DEFAULT_CERTIFICATE_PLUGIN);
         newCertificate.setConfiguration(certificateNode.toString());
-        var certificateProvider = mock(CertificateProvider.class);
-        when(certificateProvider.getExpirationDate()).thenReturn(Optional.of(new Date(Instant.now().minus(1, HOURS).toEpochMilli())));
-        when(certificatePluginManager.create(any())).thenReturn(certificateProvider);
+        when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.invalid("The certificate you uploaded has already expired. Please select a different certificate to upload."));
 
         TestObserver<Certificate> testObserver = certificateService.create(DOMAIN_NAME, newCertificate, Mockito.mock(User.class)).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -374,7 +361,8 @@ public class CertificateServiceTest {
         newCertificate.setName("certificate");
         newCertificate.setType(DEFAULT_CERTIFICATE_PLUGIN);
         newCertificate.setConfiguration(certificateNode.toString());
-        when(certificatePluginManager.create(any())).thenReturn(null);
+        when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.invalid("The configuration details entered are incorrect. Please check those and try again."));
+
 
         TestObserver<Certificate> testObserver = certificateService.create(DOMAIN_NAME, newCertificate, Mockito.mock(User.class)).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -405,9 +393,7 @@ public class CertificateServiceTest {
         doReturn(mock(ObjectNode.class)).when(objectMapper).createObjectNode();
         when(certificatePluginService.getSchema(CertificateServiceImpl.DEFAULT_CERTIFICATE_PLUGIN))
                 .thenReturn(Maybe.just(certificateSchemaDefinition));
-        var certificateProvider = mock(CertificateProvider.class);
-        when(certificateProvider.getExpirationDate()).thenReturn(Optional.of(new Date(Instant.now().plus(1, HOURS).toEpochMilli())));
-        when(certificatePluginManager.create(any())).thenReturn(certificateProvider);
+        when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.valid());
 
         TestObserver<Certificate> testObserver = certificateService.create(DOMAIN_NAME).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -484,9 +470,7 @@ public class CertificateServiceTest {
         when(certificatePluginService.getSchema(DEFAULT_CERTIFICATE_PLUGIN))
                 .thenReturn(Maybe.just(certificateSchemaDefinition));
 
-        var certificateProvider = mock(CertificateProvider.class);
-        when(certificateProvider.getExpirationDate()).thenReturn(Optional.of(new Date(Instant.now().plus(1, HOURS).toEpochMilli())));
-        when(certificatePluginManager.create(any())).thenReturn(certificateProvider);
+        when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.valid());
 
         TestObserver<Certificate> testObserver = certificateService.rotate(DOMAIN, mock(User.class)).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -537,9 +521,8 @@ public class CertificateServiceTest {
         when(certificatePluginService.getSchema(DEFAULT_CERTIFICATE_PLUGIN))
                 .thenReturn(Maybe.just(certificateSchemaDefinition));
 
-        var certificateProvider = mock(CertificateProvider.class);
-        when(certificateProvider.getExpirationDate()).thenReturn(Optional.of(new Date(Instant.now().plus(1, HOURS).toEpochMilli())));
-        when(certificatePluginManager.create(any())).thenReturn(certificateProvider);
+        when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.valid());
+
 
         TestObserver<Certificate> testObserver = certificateService.rotate(DOMAIN, mock(User.class)).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);

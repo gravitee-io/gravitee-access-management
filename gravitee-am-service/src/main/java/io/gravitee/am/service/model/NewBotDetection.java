@@ -15,14 +15,18 @@
  */
 package io.gravitee.am.service.model;
 
-import io.gravitee.am.service.validators.jsonstring.JsonString;
 import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class NewBotDetection {
+
+@Getter
+@Setter
+public class NewBotDetection implements PluginConfigurationPayload {
 
     private String id;
 
@@ -36,48 +40,7 @@ public class NewBotDetection {
     private String name;
 
     @NotNull
-    @JsonString
     private String configuration;
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getDetectionType() {
-        return detectionType;
-    }
-
-    public void setDetectionType(String detectionType) {
-        this.detectionType = detectionType;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getConfiguration() {
-        return configuration;
-    }
-
-    public void setConfiguration(String configuration) {
-        this.configuration = configuration;
-    }
 
     @Override
     public String toString() {

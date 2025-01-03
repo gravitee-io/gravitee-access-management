@@ -15,13 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.api;
 
+import io.gravitee.am.common.plugin.AmPluginProvider;
 import io.gravitee.common.service.Service;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ProtocolProvider extends Service<ProtocolProvider> {
+public interface ProtocolProvider extends Service<ProtocolProvider>, AmPluginProvider {
 
     String path();
 }

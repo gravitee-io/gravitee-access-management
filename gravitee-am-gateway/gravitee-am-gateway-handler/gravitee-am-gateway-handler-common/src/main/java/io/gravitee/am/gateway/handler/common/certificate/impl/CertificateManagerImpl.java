@@ -15,12 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.common.certificate.impl;
 
-import io.gravitee.am.certificate.api.CertificateMetadata;
-import io.gravitee.am.certificate.api.DefaultKey;
-import io.gravitee.am.certificate.api.Keys;
+import io.gravitee.am.certificate.api.CertificateProviders;
 import io.gravitee.am.common.event.CertificateEvent;
 import io.gravitee.am.common.event.EventManager;
-import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.certificate.CertificateProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderCertificateReloader;
@@ -29,25 +26,19 @@ import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.node.api.configuration.Configuration;
-import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.security.InvalidKeyException;
-import java.security.Key;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -237,96 +228,11 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     }
 
     private void initDefaultCertificateProvider() throws InvalidKeyException {
-        // create default signing HMAC key
-        byte[] keySecretBytes = signingKeySecret().getBytes();
-        Key key = Keys.hmacShaKeyFor(keySecretBytes);
-        SignatureAlgorithm signatureAlgorithm = Keys.hmacShaSignatureAlgorithmFor(keySecretBytes);
-        io.gravitee.am.certificate.api.Key certificateKey = new DefaultKey(signingKeyId(), key);
-
-        // create default certificate provider
-        CertificateMetadata certificateMetadata = new CertificateMetadata();
-        certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, signatureAlgorithm.getDigestName()));
-
-        io.gravitee.am.certificate.api.CertificateProvider defaultProvider = new io.gravitee.am.certificate.api.CertificateProvider() {
-            @Override
-            public Optional<Date> getExpirationDate() {
-                return Optional.empty();
-            }
-
-            @Override
-            public Single<io.gravitee.am.certificate.api.Key> key() {
-                return Single.just(certificateKey);
-            }
-
-            @Override
-            public Flowable<JWK> privateKey() {
-                return null;
-            }
-
-            @Override
-            public Single<String> publicKey() {
-                return null;
-            }
-
-            @Override
-            public Flowable<JWK> keys() {
-                return null;
-            }
-
-            @Override
-            public String signatureAlgorithm() {
-                return signatureAlgorithm.getValue();
-            }
-
-            @Override
-            public CertificateMetadata certificateMetadata() {
-                return certificateMetadata;
-            }
-        };
-        this.defaultCertificateProvider = certificateProviderManager.create(defaultProvider);
+        this.defaultCertificateProvider = certificateProviderManager.create(CertificateProviders.createShaCertificateProvider(signingKeyId(), signingKeySecret()));
     }
 
     private void initNoneAlgorithmCertificateProvider() {
-        CertificateMetadata certificateMetadata = new CertificateMetadata();
-        certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, SignatureAlgorithm.NONE.getValue()));
-
-        io.gravitee.am.certificate.api.CertificateProvider noneProvider = new io.gravitee.am.certificate.api.CertificateProvider() {
-            @Override
-            public Optional<Date> getExpirationDate() {
-                return Optional.empty();
-            }
-
-            @Override
-            public Flowable<JWK> privateKey() {
-                throw new UnsupportedOperationException("No private key for \"none\" algorithm");
-            }
-
-            @Override
-            public Single<io.gravitee.am.certificate.api.Key> key() {
-                throw new UnsupportedOperationException("No key for \"none\" algorithm");
-            }
-
-            @Override
-            public Single<String> publicKey() {
-                throw new UnsupportedOperationException("No public key for \"none\" algorithm");
-            }
-
-            @Override
-            public Flowable<JWK> keys() {
-                throw new UnsupportedOperationException("No keys for \"none\" algorithm");
-            }
-
-            @Override
-            public String signatureAlgorithm() {
-                return SignatureAlgorithm.NONE.getValue();
-            }
-
-            @Override
-            public CertificateMetadata certificateMetadata() {
-                return certificateMetadata;
-            }
-        };
-        this.noneAlgorithmCertificateProvider = certificateProviderManager.create(noneProvider);
+        this.noneAlgorithmCertificateProvider = certificateProviderManager.create(CertificateProviders.createNoneCertificateProvider());
     }
 
     private String signingKeySecret() {

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.botdetection.api;
 
+import io.gravitee.am.common.plugin.AmPluginProvider;
 import io.gravitee.common.component.Lifecycle;
 import io.gravitee.common.service.Service;
 import io.reactivex.rxjava3.core.Single;
@@ -23,7 +24,7 @@ import io.reactivex.rxjava3.core.Single;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface BotDetectionProvider extends Service<BotDetectionProvider> {
+public interface BotDetectionProvider extends Service<BotDetectionProvider>, AmPluginProvider {
     @Override
     default Lifecycle.State lifecycleState() {
         return Lifecycle.State.INITIALIZED;

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.resource.api;
 
+import io.gravitee.am.common.plugin.AmPluginProvider;
 import io.gravitee.common.component.Lifecycle;
 import io.gravitee.common.service.Service;
 
@@ -22,7 +23,7 @@ import io.gravitee.common.service.Service;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ResourceProvider extends Service<ResourceProvider> {
+public interface ResourceProvider extends Service<ResourceProvider>, AmPluginProvider {
 
     @Override
     default Lifecycle.State lifecycleState() {

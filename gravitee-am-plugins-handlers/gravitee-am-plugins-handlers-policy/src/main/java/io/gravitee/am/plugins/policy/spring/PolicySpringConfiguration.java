@@ -39,4 +39,5 @@ public class PolicySpringConfiguration {
     public ConfigurationFactory<PolicyConfiguration> policyConfigurationFactory() {
         return new ConfigurationFactoryImpl<>();
     }
+
 }

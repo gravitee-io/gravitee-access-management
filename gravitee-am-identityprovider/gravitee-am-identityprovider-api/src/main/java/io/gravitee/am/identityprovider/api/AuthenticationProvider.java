@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.api;
 
+import io.gravitee.am.common.plugin.AmPluginProvider;
 import io.gravitee.common.component.Lifecycle;
 import io.gravitee.common.service.Service;
 import io.reactivex.rxjava3.core.Maybe;
@@ -24,7 +25,7 @@ import io.reactivex.rxjava3.core.Maybe;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface AuthenticationProvider extends Service<AuthenticationProvider> {
+public interface AuthenticationProvider extends Service<AuthenticationProvider>, AmPluginProvider {
 
     String ACTUAL_USERNAME = "actual_username";
 

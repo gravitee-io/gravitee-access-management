@@ -81,4 +81,5 @@ public class IdentityProviderSpringConfiguration {
     public IdentityProviderGroupMapperFactory identityProviderGroupMapperFactory() {
         return new IdentityProviderGroupMapperFactoryImpl();
     }
+
 }

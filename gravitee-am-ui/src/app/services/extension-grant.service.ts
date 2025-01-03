@@ -40,6 +40,7 @@ export class ExtensionGrantService {
   update(domainId, id, tokenGranter): Observable<any> {
     return this.http.put<any>(this.extensionGrantsUrl + domainId + '/extensionGrants/' + id, {
       name: tokenGranter.name,
+      type: tokenGranter.type,
       configuration: tokenGranter.configuration,
       grantType: tokenGranter.grantType,
       identityProvider: tokenGranter.identityProvider,

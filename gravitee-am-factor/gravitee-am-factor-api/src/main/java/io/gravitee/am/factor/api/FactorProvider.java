@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.factor.api;
 
+import io.gravitee.am.common.plugin.AmPluginProvider;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.reactivex.rxjava3.core.Completable;
@@ -25,7 +26,7 @@ import io.reactivex.rxjava3.core.Single;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface FactorProvider {
+public interface FactorProvider extends AmPluginProvider {
 
     Completable verify(FactorContext context);
 
