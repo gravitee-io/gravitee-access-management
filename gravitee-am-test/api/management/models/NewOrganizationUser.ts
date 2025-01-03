@@ -166,6 +166,12 @@ export interface NewOrganizationUser {
     forceResetPassword?: boolean;
     /**
      * 
+     * @type {Date}
+     * @memberof NewOrganizationUser
+     */
+    lastPasswordReset?: Date;
+    /**
+     * 
      * @type {string}
      * @memberof NewOrganizationUser
      */
@@ -210,6 +216,7 @@ export function NewOrganizationUserFromJSONTyped(json: any, ignoreDiscriminator:
         'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
         'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
         'forceResetPassword': !exists(json, 'forceResetPassword') ? undefined : json['forceResetPassword'],
+        'lastPasswordReset': !exists(json, 'lastPasswordReset') ? undefined : (new Date(json['lastPasswordReset'])),
         'email': !exists(json, 'email') ? undefined : json['email'],
         'serviceAccount': !exists(json, 'serviceAccount') ? undefined : json['serviceAccount'],
     };
@@ -246,6 +253,7 @@ export function NewOrganizationUserToJSON(value?: NewOrganizationUser | null): a
         'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
         'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
         'forceResetPassword': value.forceResetPassword,
+        'lastPasswordReset': value.lastPasswordReset === undefined ? undefined : (value.lastPasswordReset.toISOString()),
         'email': value.email,
         'serviceAccount': value.serviceAccount,
     };

@@ -155,7 +155,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"ciba\", \n\t\"description\": \"test OpenID Connect Client-Initiated Backchannel Authentication Flow specifications\"\n}"
+							"raw": "{\n\t\"name\": \"ciba\", \n\t\"description\": \"test OpenID Connect Client-Initiated Backchannel Authentication Flow specifications\", \n\t\"dataPlaneId\": \"default\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",
@@ -211,7 +211,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"notciba\", \n\t\"description\": \"standard domain without CIBA enabled\"\n}"
+							"raw": "{\n\t\"name\": \"notciba\", \n\t\"description\": \"standard domain without CIBA enabled\", \n\t\"dataPlaneId\": \"default\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",

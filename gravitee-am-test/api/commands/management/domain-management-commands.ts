@@ -55,6 +55,7 @@ export const createDomain = (accessToken, name, description): Promise<Domain> =>
     newDomain: {
       name: name,
       description: description,
+      dataPlaneId: "default"
     },
   });
 
