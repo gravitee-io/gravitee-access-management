@@ -1464,6 +1464,7 @@ export const routes: Routes = [
                         canActivate: [AuthGuard],
                         resolve: {
                           tags: TagsResolver,
+                          dataPlanes: DataPlanesResolver,
                         },
                         data: {
                           menu: {
