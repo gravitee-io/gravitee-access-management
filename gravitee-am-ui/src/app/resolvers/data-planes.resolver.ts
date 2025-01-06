@@ -22,7 +22,7 @@ import { DataPlaneService } from '../services/data-plane.service';
 export class DataPlanesResolver {
   constructor(private dataPlaneService: DataPlaneService) {}
 
-  resolve(): Observable<any> {
+  resolve(): Observable<any[]> {
     return this.dataPlaneService.list();
   }
 }
