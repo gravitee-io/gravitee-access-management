@@ -40,7 +40,7 @@
 
         <maven-dependency-plugin.version>2.10</maven-dependency-plugin.version>
         <dozer-jaxb-runtime.version>2.4.0-b180830.0438</dozer-jaxb-runtime.version>
-        <jdbcType>postgresql-tc~15.1</jdbcType>
+        <jdbcType>postgresql-tc~17.2</jdbcType>
     </properties>
 
     <dependencyManagement>
@@ -362,25 +362,25 @@
         <profile>
             <id>postgres</id>
             <properties>
-                <jdbcType>postgresql-tc~15.1</jdbcType>
+                <jdbcType>postgresql-tc~17.2</jdbcType>
             </properties>
         </profile>
         <profile>
             <id>mysql</id>
             <properties>
-                <jdbcType>mysql-tc~8.0.27</jdbcType>
+                <jdbcType>mysql-tc~8.4</jdbcType>
             </properties>
         </profile>
         <profile>
             <id>mariadb</id>
             <properties>
-                <jdbcType>mariadb-tc~10.6.5</jdbcType>
+                <jdbcType>mariadb-tc~11.6.2</jdbcType>
             </properties>
         </profile>
         <profile>
             <id>mssql</id>
             <properties>
-                <jdbcType>mssql-tc~2019-latest</jdbcType>
+                <jdbcType>mssql-tc~2022-latest</jdbcType>
             </properties>
         </profile>
         <profile>

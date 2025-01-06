@@ -217,7 +217,7 @@
                             <argLine>-Xmx1024m</argLine>
                             <skipTests>false</skipTests>
                             <systemPropertyVariables>
-                                <jdbcType>postgresql-tc~15.1</jdbcType>
+                                <jdbcType>postgresql-tc~17.2</jdbcType>
                             </systemPropertyVariables>
                         </configuration>
                         <executions>
@@ -228,7 +228,7 @@
                                 </goals>
                                 <configuration>
                                     <systemPropertyVariables>
-                                        <jdbcType>mysql-tc~8.0.27</jdbcType>
+                                        <jdbcType>mysql-tc~8.4</jdbcType>
                                     </systemPropertyVariables>
                                 </configuration>
                             </execution>
@@ -239,7 +239,7 @@
                                 </goals>
                                 <configuration>
                                     <systemPropertyVariables>
-                                        <jdbcType>mariadb-tc~10.6.5</jdbcType>
+                                        <jdbcType>mariadb-tc~11.6.2</jdbcType>
                                     </systemPropertyVariables>
                                 </configuration>
                             </execution>
@@ -250,7 +250,7 @@
                                 </goals>
                                 <configuration>
                                     <systemPropertyVariables>
-                                        <jdbcType>mssql-tc~2019-latest</jdbcType>
+                                        <jdbcType>mssql-tc~2022-latest</jdbcType>
                                     </systemPropertyVariables>
                                 </configuration>
                             </execution>
