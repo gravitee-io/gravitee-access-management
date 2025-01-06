@@ -20,13 +20,13 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class SingleDataPlaneLoader extends DataPlaneLoader {
-    private static final String DATA_PLANE_KEY = "dataPlane";
-    private static final String DATA_PLANE_ID_KEY = DATA_PLANE_KEY + ".id";
+    private static final String DATA_PLANE_KEY = "repositories.gateway";
+    private static final String DATA_PLANE_ID_KEY = DATA_PLANE_KEY + ".dataPlane";
     private static final String DATA_PLANE_TYPE_KEY = DATA_PLANE_KEY + ".type";
 
     @Override
     protected void register() {
-        var dataPlaneId = configuration.getProperty(DATA_PLANE_ID_KEY, String.class);
+        var dataPlaneId = configuration.getProperty(DATA_PLANE_ID_KEY, String.class, "default");
         var dataPlaneType = configuration.getProperty(DATA_PLANE_TYPE_KEY, String.class, "mongodb");
         var description = new DataPlaneDescription(dataPlaneId, dataPlaneId, dataPlaneType, DATA_PLANE_KEY);
         create(description);
