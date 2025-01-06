@@ -1939,28 +1939,28 @@ workflows:
             - process_pull_request
           matrix:
             parameters:
-              mongo_version: ["4.4", "7.0"]
+              mongo_version: ["4.4", "8.0"]
       - run_postman_tests_psql:
           context: cicd-orchestrator
           requires:
             - process_pull_request
           matrix:
             parameters:
-              psql_version: ["11.18-bullseye", "15.1"]
+              psql_version: ["11.18-bullseye", "17.2"]
       - run_jest_tests_mongo:
           context: cicd-orchestrator
           requires:
             - process_pull_request
           matrix:
             parameters:
-              mongo_version: ["4.4", "7.0"]
+              mongo_version: ["4.4", "8.0"]
       - run_jest_tests_psql:
           context: cicd-orchestrator
           requires:
             - process_pull_request
           matrix:
             parameters:
-              psql_version: ["11.18-bullseye", "15.1"]
+              psql_version: ["11.18-bullseye", "17.2"]
 
   testcontainer_tests:
     when: << pipeline.parameters.run-container-test >>
