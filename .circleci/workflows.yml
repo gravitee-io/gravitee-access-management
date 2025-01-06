@@ -811,7 +811,7 @@ jobs:
     parameters:
       jdbcType:
         type: enum
-        enum: [ "postgres", "mysql", "mariadb", "mssql" ]
+        enum: ["postgres", "mysql", "mariadb", "mssql", "postgres-min", "mysql-min", "mariadb-min", "mssql-min"]
     steps:
       - attach_workspace:
           at: /tmp
@@ -1993,7 +1993,7 @@ workflows:
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
           matrix:
             parameters:
-              jdbcType: ["postgres", "mysql", "mariadb", "mssql"]
+              jdbcType: ["postgres", "mysql", "mariadb", "mssql", "postgres-min", "mysql-min", "mariadb-min", "mssql-min"]
 
   build_branch:
     when:

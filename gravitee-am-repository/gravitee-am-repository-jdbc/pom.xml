@@ -362,25 +362,49 @@
         <profile>
             <id>postgres</id>
             <properties>
-                <jdbcType>postgresql-tc~17.2</jdbcType>
+                <jdbcType>${testcontainer-upper-version-psql}</jdbcType>
             </properties>
         </profile>
         <profile>
             <id>mysql</id>
             <properties>
-                <jdbcType>mysql-tc~8.4</jdbcType>
+                <jdbcType>${testcontainer-upper-version-mysql}</jdbcType>
             </properties>
         </profile>
         <profile>
             <id>mariadb</id>
             <properties>
-                <jdbcType>mariadb-tc~11.6.2</jdbcType>
+                <jdbcType>${testcontainer-upper-version-maria}</jdbcType>
             </properties>
         </profile>
         <profile>
             <id>mssql</id>
             <properties>
-                <jdbcType>mssql-tc~2022-latest</jdbcType>
+                <jdbcType>${testcontainer-upper-version-mssql}</jdbcType>
+            </properties>
+        </profile>
+        <profile>
+            <id>postgres-min</id>
+            <properties>
+                <jdbcType>${testcontainer-lower-version-psql}</jdbcType>
+            </properties>
+        </profile>
+        <profile>
+            <id>mysql-min</id>
+            <properties>
+                <jdbcType>${testcontainer-lower-version-mysql}</jdbcType>
+            </properties>
+        </profile>
+        <profile>
+            <id>mariadb-min</id>
+            <properties>
+                <jdbcType>${testcontainer-lower-version-maria}</jdbcType>
+            </properties>
+        </profile>
+        <profile>
+            <id>mssql-min</id>
+            <properties>
+                <jdbcType>${testcontainer-lower-version-mssql}</jdbcType>
             </properties>
         </profile>
         <profile>
@@ -412,7 +436,7 @@
                             <skipTests>false</skipTests>
                             <argLine>-Xmx1024m</argLine>
                             <systemPropertyVariables>
-                                <jdbcType>postgresql-tc~15.1</jdbcType>
+                                <jdbcType>${testcontainer-upper-version-psql}</jdbcType>
                             </systemPropertyVariables>
                         </configuration>
                         <executions>
@@ -423,7 +447,7 @@
                                 </goals>
                                 <configuration>
                                     <systemPropertyVariables>
-                                        <jdbcType>mysql-tc~8.0.27</jdbcType>
+                                        <jdbcType>${testcontainer-upper-version-mysql}</jdbcType>
                                     </systemPropertyVariables>
                                 </configuration>
                             </execution>
@@ -434,7 +458,7 @@
                                 </goals>
                                 <configuration>
                                     <systemPropertyVariables>
-                                        <jdbcType>mariadb-tc~10.6.5</jdbcType>
+                                        <jdbcType>${testcontainer-upper-version-maria}</jdbcType>
                                     </systemPropertyVariables>
                                 </configuration>
                             </execution>
@@ -445,7 +469,7 @@
                                 </goals>
                                 <configuration>
                                     <systemPropertyVariables>
-                                        <jdbcType>mssql-tc~2019-latest</jdbcType>
+                                        <jdbcType>${testcontainer-upper-version-mssql}</jdbcType>
                                     </systemPropertyVariables>
                                 </configuration>
                             </execution>

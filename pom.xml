@@ -128,6 +128,15 @@
         <jdbc-mysql.version>8.0.33</jdbc-mysql.version>
         <jdbc-mariadb.version>2.4.0</jdbc-mariadb.version>
 
+        <testcontainer-upper-version-psql>postgresql-tc~17.2</testcontainer-upper-version-psql>
+        <testcontainer-upper-version-mysql>mysql-tc~8.4</testcontainer-upper-version-mysql>
+        <testcontainer-upper-version-maria>mariadb-tc~11.6.2</testcontainer-upper-version-maria>
+        <testcontainer-upper-version-mssql>mssql-tc~2022-latest</testcontainer-upper-version-mssql>
+        <testcontainer-lower-version-psql>postgresql-tc~11.20-bullseye</testcontainer-lower-version-psql>
+        <testcontainer-lower-version-mysql>mysql-tc~8.0</testcontainer-lower-version-mysql>
+        <testcontainer-lower-version-maria>mariadb-tc~10.3</testcontainer-lower-version-maria>
+        <testcontainer-lower-version-mssql>mssql-tc~2019-latest</testcontainer-lower-version-mssql>
+
         <!-- External plugins versions -->
         <gravitee-policy-callout-http.version>3.0.0</gravitee-policy-callout-http.version>
         <gravitee-policy-groovy.version>2.5.2</gravitee-policy-groovy.version>

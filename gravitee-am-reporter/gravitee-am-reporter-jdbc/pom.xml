@@ -33,6 +33,7 @@
 
     <properties>
         <skip-reporters-tests>true</skip-reporters-tests>
+        <jdbcType>postgresql-tc~17.2</jdbcType>
     </properties>
 
     <dependencies>
@@ -207,17 +208,83 @@
 
     <profiles>
         <profile>
-            <id>cicd</id>
+            <id>postgres</id>
+            <properties>
+                <jdbcType>${testcontainer-upper-version-psql}</jdbcType>
+            </properties>
+        </profile>
+        <profile>
+            <id>mysql</id>
+            <properties>
+                <jdbcType>${testcontainer-upper-version-mysql}</jdbcType>
+            </properties>
+        </profile>
+        <profile>
+            <id>mariadb</id>
+            <properties>
+                <jdbcType>${testcontainer-upper-version-maria}</jdbcType>
+            </properties>
+        </profile>
+        <profile>
+            <id>mssql</id>
+            <properties>
+                <jdbcType>${testcontainer-upper-version-mssql}</jdbcType>
+            </properties>
+        </profile>
+        <profile>
+            <id>postgres-min</id>
+            <properties>
+                <jdbcType>${testcontainer-lower-version-psql}</jdbcType>
+            </properties>
+        </profile>
+        <profile>
+            <id>mysql-min</id>
+            <properties>
+                <jdbcType>${testcontainer-lower-version-mysql}</jdbcType>
+            </properties>
+        </profile>
+        <profile>
+            <id>mariadb-min</id>
+            <properties>
+                <jdbcType>${testcontainer-lower-version-maria}</jdbcType>
+            </properties>
+        </profile>
+        <profile>
+            <id>mssql-min</id>
+            <properties>
+                <jdbcType>${testcontainer-lower-version-mssql}</jdbcType>
+            </properties>
+        </profile>
+        <profile>
+            <id>cicd-jdbc</id>
             <build>
-              <plugins>
+                <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
-                            <argLine>-Xmx1024m</argLine>
                             <skipTests>false</skipTests>
+                            <argLine>-Xmx1024m</argLine>
                             <systemPropertyVariables>
-                                <jdbcType>postgresql-tc~17.2</jdbcType>
+                                <jdbcType>${jdbcType}</jdbcType>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>cicd-full</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <skipTests>false</skipTests>
+                            <argLine>-Xmx1024m</argLine>
+                            <systemPropertyVariables>
+                                <jdbcType>${testcontainer-upper-version-psql}</jdbcType>
                             </systemPropertyVariables>
                         </configuration>
                         <executions>
@@ -228,18 +295,18 @@
                                 </goals>
                                 <configuration>
                                     <systemPropertyVariables>
-                                        <jdbcType>mysql-tc~8.4</jdbcType>
+                                        <jdbcType>${testcontainer-upper-version-mysql}</jdbcType>
                                     </systemPropertyVariables>
                                 </configuration>
                             </execution>
                             <execution>
-                                <id>mariadb-10.6</id>
+                                <id>mariadb-10.5</id>
                                 <goals>
                                     <goal>test</goal>
                                 </goals>
                                 <configuration>
                                     <systemPropertyVariables>
-                                        <jdbcType>mariadb-tc~11.6.2</jdbcType>
+                                        <jdbcType>${testcontainer-upper-version-maria}</jdbcType>
                                     </systemPropertyVariables>
                                 </configuration>
                             </execution>
@@ -250,7 +317,7 @@
                                 </goals>
                                 <configuration>
                                     <systemPropertyVariables>
-                                        <jdbcType>mssql-tc~2022-latest</jdbcType>
+                                        <jdbcType>${testcontainer-upper-version-mssql}</jdbcType>
                                     </systemPropertyVariables>
                                 </configuration>
                             </execution>
