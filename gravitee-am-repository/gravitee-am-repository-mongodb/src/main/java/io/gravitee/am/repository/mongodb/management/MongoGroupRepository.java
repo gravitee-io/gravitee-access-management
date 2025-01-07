@@ -43,10 +43,13 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-import static io.gravitee.am.model.common.Page.pageFromOffset;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.in;
+import static io.gravitee.am.model.common.Page.pageFromOffset;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -54,6 +57,7 @@ import static com.mongodb.client.model.Filters.in;
  */
 @Component
 public class MongoGroupRepository extends AbstractManagementMongoRepository implements GroupRepository {
+    // TODO [DP] class to remove
     private final static Logger LOGGER = LoggerFactory.getLogger(MongoGroupRepository.class);
     private static final String FIELD_MEMBERS = "members";
     private static final String FIELD_NAME = "name";

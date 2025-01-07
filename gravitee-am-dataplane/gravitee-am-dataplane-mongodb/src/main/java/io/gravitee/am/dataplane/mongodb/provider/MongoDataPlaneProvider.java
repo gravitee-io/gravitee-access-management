@@ -18,13 +18,22 @@ package io.gravitee.am.dataplane.mongodb.provider;
 import com.mongodb.reactivestreams.client.MongoClient;
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.dataplane.api.DataPlaneProvider;
+import io.gravitee.am.dataplane.api.repository.CredentialRepository;
+import io.gravitee.am.dataplane.api.repository.DeviceRepository;
+import io.gravitee.am.dataplane.api.repository.GroupRepository;
+import io.gravitee.am.dataplane.api.repository.ScopeApprovalRepository;
+import io.gravitee.am.dataplane.api.repository.UserActivityRepository;
+import io.gravitee.am.dataplane.api.repository.UserRepository;
+import io.gravitee.am.dataplane.mongodb.spring.MongoDataPlaneSpringConfiguration;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 
 @Slf4j
+@Import({MongoDataPlaneSpringConfiguration.class})
 public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBean {
 
     @Autowired
@@ -33,22 +42,66 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
     @Autowired
     private DataPlaneDescription dataPlaneDescription;
 
-    private ClientWrapper<MongoClient> clientWrapper;
+    @Autowired
+    private ClientWrapper<MongoClient> mongoClient;
+
+    @Autowired
+    private CredentialRepository credentialRepository;
+
+    @Autowired
+    private DeviceRepository deviceRepository;
+
+    @Autowired
+    private GroupRepository groupRepository;
+
+    @Autowired
+    private ScopeApprovalRepository scopeApprovalRepository;
+
+    @Autowired
+    private UserActivityRepository userActivityRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        clientWrapper = connectionProvider.getClientWrapperFromPrefix(dataPlaneDescription.propertiesBase());
-        final MongoClient mongo = clientWrapper.getClient();
-        final var mongoDb = mongo.getDatabase(clientWrapper.getDatabaseName());
-        log.info("Init " + mongoDb);
+        log.info("DataPlane provider loaded for id " + dataPlaneDescription.id());
     }
 
     @Override
     public void stop() {
-        if (clientWrapper != null) {
-            clientWrapper.releaseClient();
+        if (mongoClient != null) {
+            mongoClient.releaseClient();
         }
     }
 
+    @Override
+    public CredentialRepository getCredentialRepository() {
+        return credentialRepository;
+    }
 
+    @Override
+    public DeviceRepository getDeviceRepository() {
+        return deviceRepository;
+    }
+
+    @Override
+    public GroupRepository getGroupRepository() {
+        return groupRepository;
+    }
+
+    @Override
+    public ScopeApprovalRepository getScopeApprovalRepository() {
+        return scopeApprovalRepository;
+    }
+
+    @Override
+    public UserActivityRepository getUserActivityRepository() {
+        return userActivityRepository;
+    }
+
+    @Override
+    public UserRepository getUserRepository() {
+        return userRepository;
+    }
 }

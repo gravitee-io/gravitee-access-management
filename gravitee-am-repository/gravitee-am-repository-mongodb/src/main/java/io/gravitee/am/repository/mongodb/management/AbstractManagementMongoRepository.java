@@ -22,6 +22,7 @@ import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.repository.mongodb.common.AbstractMongoRepository;
+import io.gravitee.am.repository.mongodb.common.MongoUtils;
 import io.reactivex.rxjava3.core.Maybe;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -29,19 +30,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Filters.in;
-import static com.mongodb.client.model.Filters.or;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -77,35 +68,10 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
     }
 
     protected Bson toBsonFilter(String name, Optional<?> optional) {
-
-        return optional.map(value -> {
-            if (value instanceof Enum) {
-                return eq(name, ((Enum<?>) value).name());
-            }
-
-            if (value instanceof Collection) {
-                if (((Collection<?>) value).isEmpty()) {
-                    return null;
-                }
-                return in(name, (Collection<?>) value);
-            }
-
-            return eq(name, value);
-        }).orElse(null);
+        return MongoUtils.toBsonFilter(name, optional);
     }
 
     protected Maybe<Bson> toBsonFilter(boolean logicalOr, Bson... filter) {
-
-        List<Bson> filterCriteria = Stream.of(filter).filter(Objects::nonNull).collect(Collectors.toList());
-
-        if (filterCriteria.isEmpty()) {
-            return Maybe.empty();
-        }
-
-        if (logicalOr) {
-            return Maybe.just(or(filterCriteria));
-        } else {
-            return Maybe.just(and(filterCriteria));
-        }
+        return MongoUtils.toBsonFilter(logicalOr, filter);
     }
 }
