@@ -19,8 +19,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
-import io.gravitee.am.management.service.DomainService;
-import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.AuthenticationDeviceNotifier;
 import io.gravitee.am.model.Certificate;
@@ -115,6 +113,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -839,6 +838,147 @@ public class DomainServiceTest {
 
         verify(domainRepository, times(1)).findById(anyString());
         verify(domainRepository, never()).update(any(Domain.class));
+    }
+
+    @Test
+    public void shouldNotPatch_newDataPlaneId() {
+        PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+        when(patchDomain.getDataPlaneId()).thenReturn(Optional.of("new-data-plane-id"));
+        Domain domain = new Domain();
+        final var DOMAIN_ID = "my-domain";
+        domain.setId(DOMAIN_ID);
+        domain.setHrid(DOMAIN_ID);
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName(DOMAIN_ID);
+        domain.setPath("/test");
+        domain.setVersion(DomainVersion.V2_0);
+        domain.setDataPlaneId("default");
+
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
+
+        TestObserver<Domain> testObserver = domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID), DOMAIN_ID, patchDomain, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidParameterException.class);
+    }
+
+    @Test
+    public void shouldPatch_theSameDataPlaneId(){
+        PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+        when(patchDomain.getDataPlaneId()).thenReturn(Optional.of("default"));
+
+        Domain domain = new Domain();
+        final var DOMAIN_ID = "my-domain";
+        domain.setId(DOMAIN_ID);
+        domain.setHrid(DOMAIN_ID);
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName(DOMAIN_ID);
+        domain.setPath("/test");
+        domain.setDataPlaneId("default");
+
+        Domain updatedDomain = new Domain(domain);
+        updatedDomain.setName(UUID.randomUUID().toString());
+        updatedDomain.setDataPlaneId("default");
+
+        when(patchDomain.patch(any())).thenReturn(updatedDomain);
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
+        when(domainRepository.findByHrid(any(), anyString(), anyString())).thenReturn(Maybe.just(domain));
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainReadService.listAll()).thenReturn(Flowable.empty());
+        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(updatedDomain));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
+        doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+        doReturn(true).when(accountSettingsValidator).validate(any());
+
+        domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID), DOMAIN_ID, patchDomain, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(domainRepository, times(1)).findById(anyString());
+        verify(domainRepository, times(1)).update(any(Domain.class));
+        verify(eventService, times(1)).create(any());
+        verify(auditService).report(argThat(builder -> {
+            var audit = builder.build(OBJECT_MAPPER);
+            return audit.getReferenceType().equals(DOMAIN) && audit.getReferenceId().equals(DOMAIN_ID);
+        }));
+        verify(auditService).report(argThat(builder -> {
+            var audit = builder.build(OBJECT_MAPPER);
+            return audit.getReferenceType().equals(ORGANIZATION) && audit.getReferenceId().equals(ORGANIZATION_ID);
+        }));
+    }
+
+    @Test
+    public void shouldNotUpdate_newDataPlaneId() {
+        Domain updateDomain = Mockito.mock(Domain.class);
+        when(updateDomain.getDataPlaneId()).thenReturn("new-data-plane-id");
+        Domain domain = new Domain();
+        final var DOMAIN_ID = "my-domain";
+        domain.setId(DOMAIN_ID);
+        domain.setHrid(DOMAIN_ID);
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName(DOMAIN_ID);
+        domain.setPath("/test");
+        domain.setVersion(DomainVersion.V2_0);
+        domain.setDataPlaneId("default");
+
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
+
+        TestObserver<Domain> testObserver = domainService.update(DOMAIN_ID, updateDomain).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidParameterException.class);
+    }
+
+    @Test
+    public void shouldUpdate_theSameDataPlaneId(){
+        final var DOMAIN_ID = "my-domain";
+        Domain updateDomain = new Domain();
+
+        updateDomain.setId(DOMAIN_ID);
+        updateDomain.setHrid(DOMAIN_ID);
+        updateDomain.setReferenceType(ReferenceType.ENVIRONMENT);
+        updateDomain.setReferenceId(ENVIRONMENT_ID);
+        updateDomain.setName(DOMAIN_ID + "1");
+        updateDomain.setPath("/test");
+        updateDomain.setDataPlaneId("default");
+
+        Domain domain = new Domain();
+        domain.setId(DOMAIN_ID);
+        domain.setHrid(DOMAIN_ID);
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName(DOMAIN_ID);
+        domain.setPath("/test");
+        domain.setDataPlaneId("default");
+
+        Domain updatedDomain = new Domain(domain);
+        updatedDomain.setName(UUID.randomUUID().toString());
+        updatedDomain.setDataPlaneId("default");
+
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
+        when(domainRepository.findByHrid(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainReadService.listAll()).thenReturn(Flowable.empty());
+        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(updatedDomain));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
+        doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+
+        domainService.update(DOMAIN_ID, updateDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(domainRepository, times(1)).findById(anyString());
+        verify(domainRepository, times(1)).update(any(Domain.class));
+        verify(eventService, times(1)).create(any());
     }
 
     @Test

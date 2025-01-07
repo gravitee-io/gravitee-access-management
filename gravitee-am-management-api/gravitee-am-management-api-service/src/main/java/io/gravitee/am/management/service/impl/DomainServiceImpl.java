@@ -435,6 +435,11 @@ public class DomainServiceImpl implements DomainService {
         return domainRepository.findById(domainId)
                 .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)))
                 .flatMap(existingDomain -> {
+                    if(domain.getDataPlaneId() != null){
+                        if(!domain.getDataPlaneId().equals(existingDomain.getDataPlaneId())){
+                            return Single.error(new InvalidParameterException("Once domain is created, [dataPlaneId] cannot be changed."));
+                        }
+                    }
                     domain.setId(existingDomain.getId());
                     domain.setVersion(existingDomain.getVersion());
                     domain.setReferenceId(existingDomain.getReferenceId());
@@ -464,6 +469,11 @@ public class DomainServiceImpl implements DomainService {
         return domainRepository.findById(domainId)
                 .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)))
                 .flatMap(oldDomain -> {
+                    if(patchDomain.getDataPlaneId() != null && patchDomain.getDataPlaneId().isPresent()){
+                        if(!patchDomain.getDataPlaneId().get().equals(oldDomain.getDataPlaneId())){
+                            return Single.error(new InvalidParameterException("Once domain is created, [dataPlaneId] cannot be changed."));
+                        }
+                    }
                     Domain toPatch = patchDomain.patch(oldDomain);
                     final AccountSettings accountSettings = toPatch.getAccountSettings();
                     if (Boolean.FALSE.equals(accountSettingsValidator.validate(accountSettings))) {
