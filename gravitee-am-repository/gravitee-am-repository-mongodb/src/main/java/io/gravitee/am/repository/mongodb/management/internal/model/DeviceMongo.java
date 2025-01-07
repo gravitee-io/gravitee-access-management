@@ -30,7 +30,7 @@ import java.util.Date;
 @Data
 @Accessors(chain = true)
 public class DeviceMongo {
-
+    // TODO [DP] class to remove
     @BsonId
     private String id;
 
