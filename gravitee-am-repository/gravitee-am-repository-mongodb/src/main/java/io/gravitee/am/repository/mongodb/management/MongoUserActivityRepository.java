@@ -41,15 +41,17 @@ import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gte;
 import static io.gravitee.am.model.UserActivity.Type.valueOf;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
 import static java.util.Objects.isNull;
-
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Repository
 public class MongoUserActivityRepository extends AbstractManagementMongoRepository implements UserActivityRepository {
-
+    // TODO [DP] class to remove
     private static final String FIELD_USER_ACTIVITY_KEY = "userActivityKey";
     private static final String FIELD_USER_ACTIVITY_TYPE = "userActivityType";
     private static final String FIELD_CREATED_AT = "createdAt";

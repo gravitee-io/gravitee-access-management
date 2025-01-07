@@ -50,7 +50,6 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -65,7 +64,9 @@ import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.in;
 import static com.mongodb.client.model.Filters.or;
-
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team

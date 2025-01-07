@@ -36,6 +36,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.eq;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_DOMAIN;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

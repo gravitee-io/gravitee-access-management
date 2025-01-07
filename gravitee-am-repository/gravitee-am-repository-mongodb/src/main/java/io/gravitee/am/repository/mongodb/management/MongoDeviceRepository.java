@@ -30,7 +30,6 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
-import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -40,6 +39,10 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gte;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_CLIENT;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
 import static java.util.Optional.ofNullable;
 
 /**

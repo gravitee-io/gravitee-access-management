@@ -52,6 +52,7 @@ public class DataPlanePluginManager extends AbstractConfigurablePluginManager<Da
         postProcessors.add(beanFactory -> beanFactory.registerSingleton("dataPlanDescription", dataPlanDescription));
         return createProvider(new AmPluginContextConfigurer<>(dataPlan.getDelegate(), dataPlan.provider(), postProcessors));
     }
+
     private Optional<DataPlaneProvider> createProvider(AmPluginContextConfigurer<DataPlaneProvider> amPluginContextConfigurer) {
         try {
             var pluginApplicationContext = pluginContextFactory.create(amPluginContextConfigurer);

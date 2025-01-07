@@ -24,7 +24,6 @@ import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
