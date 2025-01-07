@@ -26,7 +26,7 @@ import java.util.Objects;
  * @author GraviteeSource Team
  */
 public class GroupMongo extends Auditable {
-
+    // TODO [DP] class to remove
     @BsonId
     private String id;
 

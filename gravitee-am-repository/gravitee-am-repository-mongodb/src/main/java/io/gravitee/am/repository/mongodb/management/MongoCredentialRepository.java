@@ -32,11 +32,13 @@ import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
-
 import java.util.Set;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -44,7 +46,7 @@ import static com.mongodb.client.model.Filters.eq;
  */
 @Component
 public class MongoCredentialRepository extends AbstractManagementMongoRepository implements CredentialRepository {
-
+    // TODO [DP] class to remove
     private static final String FIELD_USER_ID = "userId";
     private static final String FIELD_USERNAME = "username";
     private static final String FIELD_CREDENTIAL_ID = "credentialId";
