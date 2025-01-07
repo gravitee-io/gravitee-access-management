@@ -38,6 +38,9 @@ import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.in;
 import static com.mongodb.client.model.Filters.or;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
