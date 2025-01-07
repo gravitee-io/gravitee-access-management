@@ -42,6 +42,10 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gte;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_DOMAIN;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_USER_EXTERNAL_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_USER_SOURCE;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -50,7 +54,7 @@ import static com.mongodb.client.model.Filters.gte;
  */
 @Component
 public class MongoScopeApprovalRepository extends AbstractGatewayMongoRepository implements ScopeApprovalRepository {
-
+    // TODO [DP] class to remove
     private static final String FIELD_TRANSACTION_ID = "transactionId";
     private static final String FIELD_USER_ID = "userId";
     private static final String FIELD_CLIENT_ID = "clientId";

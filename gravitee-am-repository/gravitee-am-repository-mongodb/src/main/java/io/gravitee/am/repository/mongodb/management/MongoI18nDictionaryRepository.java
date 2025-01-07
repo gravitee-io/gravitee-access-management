@@ -37,6 +37,10 @@ import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static io.gravitee.am.common.utils.RandomString.generate;
 import static io.gravitee.am.model.ReferenceType.valueOf;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_NAME;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
 
 @Component
 public class MongoI18nDictionaryRepository extends AbstractManagementMongoRepository implements I18nDictionaryRepository {

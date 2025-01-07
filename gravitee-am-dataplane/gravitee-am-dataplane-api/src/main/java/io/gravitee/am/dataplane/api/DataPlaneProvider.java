@@ -15,7 +15,26 @@
  */
 package io.gravitee.am.dataplane.api;
 
+import io.gravitee.am.dataplane.api.repository.CredentialRepository;
+import io.gravitee.am.dataplane.api.repository.DeviceRepository;
+import io.gravitee.am.dataplane.api.repository.GroupRepository;
+import io.gravitee.am.dataplane.api.repository.ScopeApprovalRepository;
+import io.gravitee.am.dataplane.api.repository.UserActivityRepository;
+import io.gravitee.am.dataplane.api.repository.UserRepository;
+
 public interface DataPlaneProvider {
 
     void stop();
+
+    CredentialRepository getCredentialRepository();
+
+    DeviceRepository getDeviceRepository();
+
+    GroupRepository getGroupRepository();
+
+    ScopeApprovalRepository getScopeApprovalRepository();
+
+    UserActivityRepository getUserActivityRepository();
+
+    UserRepository getUserRepository();
 }
