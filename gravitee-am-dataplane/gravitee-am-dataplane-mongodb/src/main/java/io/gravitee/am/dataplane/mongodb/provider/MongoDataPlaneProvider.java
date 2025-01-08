@@ -26,7 +26,6 @@ import io.gravitee.am.dataplane.api.repository.UserActivityRepository;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.dataplane.mongodb.spring.MongoDataPlaneSpringConfiguration;
 import io.gravitee.am.repository.provider.ClientWrapper;
-import io.gravitee.am.repository.provider.ConnectionProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,13 +36,10 @@ import org.springframework.context.annotation.Import;
 public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBean {
 
     @Autowired
-    private ConnectionProvider connectionProvider;
-
-    @Autowired
     private DataPlaneDescription dataPlaneDescription;
 
     @Autowired
-    private ClientWrapper<MongoClient> mongoClient;
+    private ClientWrapper<MongoClient> mongoClientWrapper;
 
     @Autowired
     private CredentialRepository credentialRepository;
@@ -65,13 +61,13 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        log.info("DataPlane provider loaded for id " + dataPlaneDescription.id());
+        log.info("DataPlane provider loaded with id {}", dataPlaneDescription.id());
     }
 
     @Override
     public void stop() {
-        if (mongoClient != null) {
-            mongoClient.releaseClient();
+        if (mongoClientWrapper != null) {
+            mongoClientWrapper.releaseClient();
         }
     }
 
