@@ -67,7 +67,8 @@ public class ManagementNode extends JettyNode {
     @Override
     public List<Class<? extends LifecycleComponent>> components() {
         List<Class<? extends LifecycleComponent>> components = super.components();
-
+        components.addAll(SystemUpgraderConfiguration.getComponents());
+        components.addAll(UpgraderConfiguration.getComponents());
         components.add(PluginEventListener.class);
         components.add(AuditReporterManager.class);
         components.add(IdentityProviderManager.class);
@@ -77,8 +78,6 @@ public class ManagementNode extends JettyNode {
         components.add(AlertTriggerProviderManager.class);
         components.add(AlertEventProducerManager.class);
         components.add(TasksLoader.class);
-        components.addAll(SystemUpgraderConfiguration.getComponents());
-        components.addAll(UpgraderConfiguration.getComponents());
         return components;
     }
 }
