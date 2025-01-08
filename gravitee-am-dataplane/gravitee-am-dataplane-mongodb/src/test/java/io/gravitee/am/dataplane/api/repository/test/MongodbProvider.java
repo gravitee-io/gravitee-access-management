@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb;
+package io.gravitee.am.dataplane.api.repository.test;
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
@@ -22,6 +22,9 @@ import com.mongodb.connection.ClusterSettings;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoDatabase;
+import io.gravitee.am.repository.mongodb.provider.impl.MongoClientWrapper;
+import io.gravitee.am.repository.provider.ClientWrapper;
+import lombok.Getter;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.springframework.beans.factory.DisposableBean;
@@ -38,6 +41,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
 public class MongodbProvider implements InitializingBean, DisposableBean {
 
     private MongoDBContainer mongoDBContainer = null;
@@ -45,6 +49,7 @@ public class MongodbProvider implements InitializingBean, DisposableBean {
     private String databaseName;
     private MongoClient mongoClient;
     private MongoDatabase mongoDatabase;
+    private ClientWrapper<MongoClient> clientWrapper;
 
     public MongodbProvider(String databaseName) {
         this.databaseName = databaseName;
@@ -72,6 +77,7 @@ public class MongodbProvider implements InitializingBean, DisposableBean {
 
         mongoClient = MongoClients.create(settings);
         mongoDatabase = mongoClient.getDatabase(databaseName);
+        clientWrapper = new MongoClientWrapper(mongoClient, databaseName);
     }
 
     @Override
@@ -83,9 +89,5 @@ public class MongodbProvider implements InitializingBean, DisposableBean {
         if (mongoDBContainer != null) {
             mongoDBContainer.stop();
         }
-    }
-
-    public MongoDatabase mongoDatabase() {
-        return mongoDatabase;
     }
 }
