@@ -33,8 +33,15 @@
     <name>Gravitee IO - Access Management - DataPlane</name>
     <modules>
         <module>gravitee-am-dataplane-api</module>
+        <module>gravitee-am-dataplane-test</module>
         <module>gravitee-am-dataplane-mongodb</module>
     </modules>
+
+    <properties>
+        <skip-dataplane-tests>true</skip-dataplane-tests>
+        <maven-dependency-plugin.version>2.10</maven-dependency-plugin.version>
+    </properties>
+
 
     <dependencies>
         <dependency>
