@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.plugins.dataplane.spring;
 
-import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
-import io.gravitee.plugin.core.api.PluginContextFactory;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
+package io.gravitee.am.dataplane.exceptions;
 
-@Configuration
-@ComponentScan({"io.gravitee.am.plugins.dataplane"})
-public class DataPlaneSpringConfiguration {
 
-    @Bean
-    public DataPlanePluginManager dataPlanePluginManager(PluginContextFactory pluginContextFactory) {
-        return new DataPlanePluginManager(pluginContextFactory);
+/**
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * @author GraviteeSource Team
+ */
+public class IllegalDataPlaneIdException extends RuntimeException {
+    public IllegalDataPlaneIdException(String id) {
+        super(String.format("No DataPlane instance referenced with id '%s'", id));
     }
 }

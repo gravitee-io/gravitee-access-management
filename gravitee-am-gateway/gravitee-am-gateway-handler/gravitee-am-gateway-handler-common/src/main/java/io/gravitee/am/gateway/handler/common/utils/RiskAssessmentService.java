@@ -135,7 +135,7 @@ public class RiskAssessmentService {
         return assessmentMessage -> {
             var geoVelocityAssessment = ofNullable(riskAssessmentSettings.getGeoVelocityAssessment()).orElse(new AssessmentSettings());
             if (geoVelocityAssessment.isEnabled()) {
-                return userActivityService.findByDomainAndTypeAndUserAndLimit(domain.getId(), UserActivity.Type.LOGIN, user.getId(), 2)
+                return userActivityService.findByDomainAndTypeAndUserAndLimit(domain, UserActivity.Type.LOGIN, user.getId(), 2)
                         .toList()
                         .flatMap(activityList -> {
                             assessmentMessage.getData().setGeoTimeCoordinates(computeGeoTimeCoordinates(activityList));
