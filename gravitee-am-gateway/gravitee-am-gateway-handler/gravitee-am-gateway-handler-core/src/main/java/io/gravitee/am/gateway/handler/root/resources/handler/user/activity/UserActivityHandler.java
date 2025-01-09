@@ -17,6 +17,7 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.user.activity;
 
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserActivity.Type;
 import io.gravitee.am.service.UserActivityService;
@@ -42,8 +43,10 @@ public class UserActivityHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(UserActivityHandler.class);
     private final UserActivityService userActivityService;
+    private final Domain domain;
 
-    public UserActivityHandler(UserActivityService userActivityService) {
+    public UserActivityHandler(UserActivityService userActivityService, Domain domain) {
+        this.domain = domain;
         this.userActivityService = userActivityService;
     }
 
@@ -66,7 +69,7 @@ public class UserActivityHandler implements Handler<RoutingContext> {
         addUserAgent(context, data);
         addLoginAttempt(context, data);
 
-        userActivityService.save(user.getReferenceId(), user.getId(), Type.LOGIN, data)
+        userActivityService.save(domain, user.getId(), Type.LOGIN, data)
                 .doOnComplete(() -> logger.debug("User Activity saved successfully"))
                 .doOnError(err -> logger.error("An unexpected error has occurred '{}'", err.getMessage(), err))
                 .doFinally(context::next)
