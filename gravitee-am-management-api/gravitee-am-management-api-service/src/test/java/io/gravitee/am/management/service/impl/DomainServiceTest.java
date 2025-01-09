@@ -51,7 +51,7 @@ import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.model.uma.Resource;
-import io.gravitee.am.plugins.dataplane.core.MultiDataPlaneLoader;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
@@ -166,7 +166,7 @@ public class DomainServiceTest {
     private DomainServiceImpl domainService = new DomainServiceImpl();
 
     @Mock
-    private MultiDataPlaneLoader multiDataPlaneLoader;
+    private DataPlaneRegistry dataPlaneRegistry;
 
     @Mock
     private DomainValidator domainValidator;
@@ -368,7 +368,7 @@ public class DomainServiceTest {
         domain.setId("domain-id");
         domain.setVersion(DomainVersion.V2_0);
         domain.setDataPlaneId("default");
-        when(multiDataPlaneLoader.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
         when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
@@ -418,7 +418,7 @@ public class DomainServiceTest {
         domain.setId("domain-id");
         domain.setVersion(DomainVersion.V2_0);
         domain.setDataPlaneId("default");
-        when(multiDataPlaneLoader.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
         when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
@@ -467,7 +467,7 @@ public class DomainServiceTest {
         domain.setId("domain-id");
         domain.setVersion(DomainVersion.V2_0);
         domain.setDataPlaneId("default");
-        when(multiDataPlaneLoader.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
         when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
@@ -507,7 +507,7 @@ public class DomainServiceTest {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
         when(newDomain.getDataPlaneId()).thenReturn("default");
-        when(multiDataPlaneLoader.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver<Domain> testObserver = new TestObserver<>();
@@ -524,7 +524,7 @@ public class DomainServiceTest {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
         when(newDomain.getDataPlaneId()).thenReturn("default");
-        when(multiDataPlaneLoader.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
 
@@ -542,7 +542,7 @@ public class DomainServiceTest {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
         when(newDomain.getDataPlaneId()).thenReturn("default");
-        when(multiDataPlaneLoader.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.just(new Domain()));
 
         TestObserver<Domain> testObserver = new TestObserver<>();
@@ -1043,7 +1043,7 @@ public class DomainServiceTest {
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singleton(role)));
         when(roleService.delete(eq(DOMAIN), eq(DOMAIN_ID), anyString())).thenReturn(complete());
         when(userService.deleteByDomain(DOMAIN_ID)).thenReturn(complete());
-        when(userActivityService.deleteByDomain(DOMAIN_ID)).thenReturn(complete());
+        when(userActivityService.deleteByDomain(any())).thenReturn(complete());
         when(scope.getId()).thenReturn(SCOPE_ID);
         when(scopeService.findByDomain(DOMAIN_ID, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.singleton(scope), 0, 1)));
         when(scopeService.delete(SCOPE_ID, true)).thenReturn(complete());
@@ -1099,7 +1099,7 @@ public class DomainServiceTest {
         verify(extensionGrantService, times(1)).delete(DOMAIN_ID, EXTENSION_GRANT_ID);
         verify(roleService, times(1)).delete(eq(DOMAIN), eq(DOMAIN_ID), eq(ROLE_ID));
         verify(userService, times(1)).deleteByDomain(DOMAIN_ID);
-        verify(userActivityService, times(1)).deleteByDomain(DOMAIN_ID);
+        verify(userActivityService, times(1)).deleteByDomain(any());
         verify(scopeService, times(1)).delete(SCOPE_ID, true);
         verify(groupService, times(1)).delete(eq(DOMAIN), eq(DOMAIN_ID), eq(GROUP_ID));
         verify(formService, times(1)).delete(eq(DOMAIN_ID), eq(FORM_ID));
@@ -1126,7 +1126,7 @@ public class DomainServiceTest {
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
         when(scopeService.findByDomain(DOMAIN_ID, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.emptySet(), 0, 1)));
         when(userService.deleteByDomain(DOMAIN_ID)).thenReturn(complete());
-        when(userActivityService.deleteByDomain(DOMAIN_ID)).thenReturn(complete());
+        when(userActivityService.deleteByDomain(any())).thenReturn(complete());
         when(groupService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(formService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(emailTemplateService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());

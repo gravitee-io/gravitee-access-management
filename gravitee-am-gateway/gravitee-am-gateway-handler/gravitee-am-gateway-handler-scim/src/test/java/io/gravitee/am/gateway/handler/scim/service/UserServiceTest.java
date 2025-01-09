@@ -700,7 +700,7 @@ public class UserServiceTest {
         when(userRepository.findById(userId)).thenReturn(Maybe.just(endUser));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(userRepository.delete(userId)).thenReturn(complete());
-        when(userActivityService.deleteByDomainAndUser(domain.getId(), userId)).thenReturn(complete());
+        when(userActivityService.deleteByDomainAndUser(domain, userId)).thenReturn(complete());
         when(rateLimiterService.deleteByUser(any())).thenReturn(complete());
         when(passwordHistoryService.deleteByUser(userId)).thenReturn(complete());
         when(verifyAttemptService.deleteByUser(any())).thenReturn(complete());
@@ -729,7 +729,7 @@ public class UserServiceTest {
         when(userRepository.findById(userId)).thenReturn(Maybe.just(endUser));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
         when(userRepository.delete(userId)).thenReturn(complete());
-        when(userActivityService.deleteByDomainAndUser(domain.getId(), userId)).thenReturn(complete());
+        when(userActivityService.deleteByDomainAndUser(domain, userId)).thenReturn(complete());
         when(rateLimiterService.deleteByUser(any())).thenReturn(complete());
         when(passwordHistoryService.deleteByUser(any())).thenReturn(complete());
         when(verifyAttemptService.deleteByUser(any())).thenReturn(complete());
