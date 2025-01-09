@@ -66,13 +66,7 @@
         </div>
       </div>
       <div fxLayout="row">
-        <button
-          mat-raised-button
-          [disabled]="!reporterForm.valid || reporterForm.pristine || !configurationIsValid || !hasName"
-          (click)="save()"
-        >
-          SAVE
-        </button>
+        <button mat-raised-button [disabled]="!readyToSave()" (click)="save()">SAVE</button>
       </div>
       <ng-template [ngIf]="!createMode">
         <!-- use ng-template otherwise *ngIf can't be used into the div -->
