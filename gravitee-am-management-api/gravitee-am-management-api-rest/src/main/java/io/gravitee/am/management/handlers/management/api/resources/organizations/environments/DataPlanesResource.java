@@ -19,7 +19,7 @@ import io.gravitee.am.dataplane.api.DataPlane;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.plugins.dataplane.core.MultiDataPlaneLoader;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,7 +45,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class DataPlanesResource extends AbstractResource {
 
     @Autowired
-    private MultiDataPlaneLoader multiDataPlaneLoader;
+    private DataPlaneRegistry dataPlaneRegistry;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -65,7 +65,7 @@ public class DataPlanesResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, Permission.DOMAIN, Acl.CREATE)
-                .andThen(Maybe.just(multiDataPlaneLoader.getDataPlanes()))
+                .andThen(Maybe.just(dataPlaneRegistry.getDataPlanes()))
                 .subscribe(response::resume, response::resume);
     }
 

@@ -16,15 +16,15 @@
 
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.UserActivity;
 import io.gravitee.am.model.UserActivity.Type;
-import io.gravitee.am.repository.management.api.UserActivityRepository;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.impl.user.activity.configuration.UserActivityConfiguration;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -54,14 +54,14 @@ public class UserActivityServiceImpl implements UserActivityService {
     private static final int LATITUDE_BOUNDARY = 90;
 
     private final UserActivityConfiguration configuration;
-    private final UserActivityRepository userActivityRepository;
+    private final DataPlaneRegistry dataPlaneRegistry;
 
     public UserActivityServiceImpl(
             UserActivityConfiguration configuration,
-            @Lazy UserActivityRepository userActivityRepository
+            @Lazy DataPlaneRegistry dataPlaneRegistry
     ) {
         this.configuration = configuration;
-        this.userActivityRepository = userActivityRepository;
+        this.dataPlaneRegistry = dataPlaneRegistry;
     }
 
     public boolean canSaveUserActivity() {
@@ -76,45 +76,52 @@ public class UserActivityServiceImpl implements UserActivityService {
         return this.configuration.getRetentionUnit();
     }
 
-    public Flowable<UserActivity> findByDomainAndTypeAndUserAndLimit(String domain, Type type, String userId, int limit) {
-        return userActivityRepository.findByDomainAndTypeAndKeyAndLimit(domain, type, buildKey(userId), limit);
+    public Flowable<UserActivity> findByDomainAndTypeAndUserAndLimit(Domain domain, Type type, String userId, int limit) {
+        return dataPlaneRegistry.getUserActivityRepository(domain)
+                .flatMapPublisher(repository -> repository.findByDomainAndTypeAndKeyAndLimit(domain.getId(), type, buildKey(userId), limit));
     }
 
     public Completable save(
-            String domain,
+            Domain domain,
             String userId,
             UserActivity.Type type,
             Map<String, Object> data) {
         final Date createdAt = new Date();
-        return Single.defer(() -> Single.just(new UserActivity()
-                                .setReferenceType(ReferenceType.DOMAIN)
-                                .setReferenceId(domain)
-                                .setUserActivityType(type)
-                                .setUserActivityKey(buildKey(userId))
-                                .setLatitude(buildLatitude(data))
-                                .setLongitude(buildLongitude(data))
-                                .setUserAgent((String) data.get(USER_AGENT))
-                                .setLoginAttempts((Integer) data.getOrDefault(LOGIN_ATTEMPTS, 0))
-                                .setCreatedAt(createdAt)
-                                .setExpireAt(getExpireAtDate(createdAt))
-                        )
-                ).flatMap(userActivityRepository::create)
+
+        final var activity = new UserActivity()
+                .setReferenceType(ReferenceType.DOMAIN)
+                .setReferenceId(domain.getId())
+                .setUserActivityType(type)
+                .setUserActivityKey(buildKey(userId))
+                .setLatitude(buildLatitude(data))
+                .setLongitude(buildLongitude(data))
+                .setUserAgent((String) data.get(USER_AGENT))
+                .setLoginAttempts((Integer) data.getOrDefault(LOGIN_ATTEMPTS, 0))
+                .setCreatedAt(createdAt)
+                .setExpireAt(getExpireAtDate(createdAt));
+
+        return dataPlaneRegistry.getUserActivityRepository(domain)
+                .flatMap(repository -> repository.create(activity))
                 .doOnSuccess(ua -> LOGGER.debug("UserActivity with id '{}' created", ua.getId()))
                 .doOnError(err ->
                         LOGGER.error("An unexpected error has occurred while saving UserActivity '{}'", err.getMessage(), err)
                 ).ignoreElement();
     }
 
-    public Completable deleteByDomainAndUser(String domain, String userId) {
-        return userActivityRepository.deleteByDomainAndKey(domain, buildKey(userId)).doOnError(err ->
-                LOGGER.error("An unexpected error has occurred while deleting userActivity '{}'", err.getMessage(), err)
-        );
+    public Completable deleteByDomainAndUser(Domain domain, String userId) {
+        return dataPlaneRegistry.getUserActivityRepository(domain)
+                .flatMapCompletable(repository -> repository.deleteByDomainAndKey(domain.getId(), buildKey(userId)))
+                .doOnError(err ->
+                        LOGGER.error("An unexpected error has occurred while deleting userActivity '{}'", err.getMessage(), err)
+                );
     }
 
-    public Completable deleteByDomain(String domain) {
-        return userActivityRepository.deleteByDomain(domain).doOnError(err ->
-                LOGGER.error("An unexpected error has occurred while deleting userActivity '{}'", err.getMessage(), err)
-        );
+    public Completable deleteByDomain(Domain domain) {
+        return dataPlaneRegistry.getUserActivityRepository(domain)
+                .flatMapCompletable(repository -> repository.deleteByDomain(domain.getId()))
+                .doOnError(err ->
+                        LOGGER.error("An unexpected error has occurred while deleting userActivity '{}'", err.getMessage(), err)
+                );
     }
 
     private String buildKey(String userId) {

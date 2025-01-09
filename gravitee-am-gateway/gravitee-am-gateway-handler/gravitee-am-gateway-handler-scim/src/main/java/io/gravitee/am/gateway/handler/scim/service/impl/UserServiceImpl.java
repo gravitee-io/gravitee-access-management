@@ -473,7 +473,7 @@ public class UserServiceImpl implements UserService {
                                         String.format("An error has occurred when trying to delete user: %s", userId), ex));
                             }
                         })
-                        .andThen(userActivityService.deleteByDomainAndUser(domain.getId(), userId))
+                        .andThen(userActivityService.deleteByDomainAndUser(domain, userId))
                         .andThen(rateLimiterService.deleteByUser(user))
                         .andThen(passwordHistoryService.deleteByUser(userId))
                         .andThen(verifyAttemptService.deleteByUser(user))

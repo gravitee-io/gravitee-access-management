@@ -25,6 +25,10 @@ import io.gravitee.am.password.dictionary.spring.PasswordDictionaryConfiguration
 import io.gravitee.am.plugins.authdevice.notifier.spring.AuthenticationDeviceNotifierSpringConfiguration;
 import io.gravitee.am.plugins.botdetection.spring.BotDetectionSpringConfiguration;
 import io.gravitee.am.plugins.certificate.spring.CertificateSpringConfiguration;
+import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistryImpl;
+import io.gravitee.am.plugins.dataplane.core.MultiDataPlaneLoader;
 import io.gravitee.am.plugins.dataplane.spring.DataPlaneSpringConfiguration;
 import io.gravitee.am.plugins.deviceidentifier.spring.DeviceIdentifierSpringConfiguration;
 import io.gravitee.am.plugins.extensiongrant.spring.ExtensionGrantSpringConfiguration;
@@ -142,4 +146,8 @@ public class StandaloneConfiguration {
         return new PluginConfigurationValidatorsRegistry();
     }
 
+    @Bean
+    public DataPlaneRegistry dataPlaneRegistry(MultiDataPlaneLoader loader, DataPlanePluginManager manager) {
+        return new DataPlaneRegistryImpl(loader, manager);
+    }
 }
