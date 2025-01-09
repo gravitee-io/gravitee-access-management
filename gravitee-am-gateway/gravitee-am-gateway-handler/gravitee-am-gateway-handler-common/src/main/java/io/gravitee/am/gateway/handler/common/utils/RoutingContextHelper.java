@@ -38,7 +38,7 @@ public class RoutingContextHelper {
                     MFA_ENROLLMENT_COMPLETED_KEY,
                     ENROLLED_FACTOR_ID_KEY,
                     MFA_CHALLENGE_COMPLETED_KEY,
-                    STRONG_AUTH_COMPLETED_KEY,
+                    STRONG_AUTH_CLIENTS_KEY,
                     WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY,
                     PASSWORDLESS_AUTH_ACTION_KEY);
 

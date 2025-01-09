@@ -210,7 +210,7 @@ public class MfaChallengeFilter_RememberDevice_Test {
         public void should_return_SAFE_when_adaptiveMFA_return_true_and_user_strongly_authenticate() {
             lenient().when(ruleEngine.evaluate(any(), anyMap(), any(), eq(false))).thenReturn(true);
             lenient().when(mfaFilterContext.isUserStronglyAuth()).thenReturn(true);
-            lenient().when(mfaFilterContext.isUserFullyAuthenticated()).thenReturn(true);
+            lenient().when(mfaFilterContext.isUserFullyAuthenticatedWithClient()).thenReturn(true);
             lenient().when(mfaFilterContext.isMfaSkipped()).thenReturn(false);
             lenient().when(mfaFilterContext.isAmfaActive()).thenReturn(true);
             lenient().when(mfaFilterContext.isAmfaRuleTrue()).thenReturn(true);

@@ -18,12 +18,12 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 import io.gravitee.am.common.factor.FactorSecurityType;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.ruleengine.SpELRuleEngine;
-import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
@@ -48,26 +48,17 @@ import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSetting
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
-import java.util.Set;
-
-import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
-import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.RISK_ASSESSMENT_KEY;
-import static org.mockito.ArgumentMatchers.*;
 import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
 import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
 /**
@@ -124,6 +115,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
@@ -148,6 +140,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
@@ -175,6 +168,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
@@ -202,6 +196,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
@@ -229,11 +224,13 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
+
     @Test
     public void shouldRedirectToMFAChallengePage_adaptiveMFA_no_active_enroll_and_endUser_is_enrolling() throws Exception {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
@@ -268,6 +265,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 
@@ -300,6 +298,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 
@@ -327,6 +326,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             rc.session().put(ENROLLED_FACTOR_ID_KEY, "factor-1");
@@ -352,6 +352,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
@@ -380,6 +381,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
@@ -389,7 +391,9 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            List<String> clients = new ArrayList<>();
+            clients.add("client-id");
+            rc.session().put(STRONG_AUTH_CLIENTS_KEY, clients);
             rc.next();
         });
 
@@ -404,6 +408,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
@@ -420,7 +425,9 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            List<String> clients = new ArrayList<>();
+            clients.add("client-id");
+            rc.session().put(STRONG_AUTH_CLIENTS_KEY, clients);
             rc.next();
         });
 
@@ -436,6 +443,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
@@ -452,7 +460,9 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            List<String> clients = new ArrayList<>();
+            clients.add("client-id");
+            rc.session().put(STRONG_AUTH_CLIENTS_KEY, clients);
             rc.next();
         });
 
@@ -472,6 +482,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
@@ -488,7 +499,9 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            List<String> clients = new ArrayList<>();
+            clients.add("client-id");
+            rc.session().put(STRONG_AUTH_CLIENTS_KEY, clients);
             rc.session().put(ENROLLED_FACTOR_ID_KEY, "factor-1");
             rc.next();
         });
@@ -509,6 +522,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Set.of("factor-recovery-code", "factor-id"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
@@ -532,7 +546,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(List.of(enrolledRecovery, enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, false);
             rc.next();
         });
 
@@ -546,11 +559,13 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
+
     @Test
     public void shouldRedirectToMFAChallengePage_device_remembered_but_active_factor_is_recovery_code_and_endUser_is_enrolling() throws Exception {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Set.of("factor-recovery-code", "factor-id"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
@@ -574,7 +589,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(List.of(enrolledRecovery, enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, false);
             rc.session().put(ENROLLED_FACTOR_ID_KEY, "factor-id");
             rc.next();
         });
@@ -595,6 +609,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
@@ -612,7 +627,9 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            List<String> clients = new ArrayList<>();
+            clients.add("client-id");
+            rc.session().put(STRONG_AUTH_CLIENTS_KEY, clients);
             rc.next();
         });
 
@@ -633,6 +650,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
@@ -650,7 +668,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, false);
             rc.next();
         });
 
@@ -665,6 +682,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // set user
@@ -689,6 +707,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
@@ -701,7 +720,9 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            List<String> clients = new ArrayList<>();
+            clients.add("client-id");
+            rc.session().put(STRONG_AUTH_CLIENTS_KEY, clients);
             rc.next();
         });
 
@@ -721,6 +742,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
@@ -734,7 +756,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, false);
             rc.next();
         });
 
@@ -754,6 +775,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
@@ -772,8 +794,10 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
-            rc.session().put(AUTH_FLOW_FINALIZED_KEY, true);
+            List<String> clients = new ArrayList<>();
+            clients.add("client-id");
+            rc.session().put(STRONG_AUTH_CLIENTS_KEY, clients);
+            rc.session().put(FULLY_AUTH_CLIENTS_KEY, clients);
             rc.next();
         });
 
@@ -793,6 +817,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
@@ -811,7 +836,9 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            List<String> clients = new ArrayList<>();
+            clients.add("client-id");
+            rc.session().put(STRONG_AUTH_CLIENTS_KEY, clients);
             rc.next();
         });
 
@@ -825,6 +852,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
@@ -859,6 +887,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
 
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
@@ -889,6 +918,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             client.setRiskAssessment(
@@ -926,6 +956,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             client.setRiskAssessment(
@@ -963,6 +994,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
@@ -975,7 +1007,9 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            List<String> clients = new ArrayList<>();
+            clients.add("client-id");
+            rc.session().put(STRONG_AUTH_CLIENTS_KEY, clients);
             rc.next();
         });
 
@@ -995,6 +1029,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
@@ -1008,7 +1043,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, false);
             rc.next();
         });
 
@@ -1028,6 +1062,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
@@ -1061,6 +1096,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
@@ -1096,6 +1132,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
@@ -1112,7 +1149,6 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
             rc.session().put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, true);
-            rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
 
@@ -1126,6 +1162,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
@@ -1166,6 +1203,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
@@ -1178,8 +1216,10 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
-            rc.session().put(AUTH_FLOW_FINALIZED_KEY, true);
+            List<String> clients = new ArrayList<>();
+            clients.add("client-id");
+            rc.session().put(STRONG_AUTH_CLIENTS_KEY, clients);
+            rc.session().put(FULLY_AUTH_CLIENTS_KEY, clients);
             rc.next();
         });
 
@@ -1193,6 +1233,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             MFASettings mfaSettings = new MFASettings();
@@ -1206,7 +1247,9 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
-            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            List<String> clients = new ArrayList<>();
+            clients.add("client-id");
+            rc.session().put(STRONG_AUTH_CLIENTS_KEY, clients);
             rc.next();
         });
 
@@ -1221,6 +1264,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 
             final Factor recoveryFactor = new Factor();
@@ -1240,7 +1284,9 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             endUser.setFactors(List.of(enrolledFactor, factorRecovery));
             rc.getDelegate().setUser(new User(endUser));
 
-            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            List<String> clients = new ArrayList<>();
+            clients.add("client-id");
+            rc.session().put(STRONG_AUTH_CLIENTS_KEY, clients);
             rc.next();
         });
 
@@ -1260,6 +1306,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(rc -> {
             // set client
             Client client = new Client();
+            client.setClientId("client-id");
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 
             client.setFactors(Set.of("factor-1", "factor-2"));
@@ -1278,7 +1325,9 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             endUser.setFactors(List.of(enrolledFactor, factorRecovery));
             rc.getDelegate().setUser(new User(endUser));
 
-            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            List<String> clients = new ArrayList<>();
+            clients.add("client-id");
+            rc.session().put(STRONG_AUTH_CLIENTS_KEY, clients);
             rc.next();
         });
 

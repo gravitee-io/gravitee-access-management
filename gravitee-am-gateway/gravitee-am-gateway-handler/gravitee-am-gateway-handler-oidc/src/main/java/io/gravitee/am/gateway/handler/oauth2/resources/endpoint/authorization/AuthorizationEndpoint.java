@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization;
 
 import io.gravitee.am.common.oauth2.ResponseMode;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
@@ -37,7 +38,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.AUTH_FLOW_FINALIZED_KEY;
 
 /**
  * The authorization endpoint is used to interact with the resource owner and obtain an authorization grant.
@@ -92,7 +92,7 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
                             try {
                                 // final step of the authorization flow, we can clean the session and redirect the user
                                 cleanSession(context);
-                                context.session().put(AUTH_FLOW_FINALIZED_KEY, true);
+                                MfaUtils.setFullyAuthClient(context, client);
                                 doRedirect(context, request, authorizationResponse);
                             } catch (Exception e) {
                                 logger.error("Unable to redirect to client redirect_uri", e);

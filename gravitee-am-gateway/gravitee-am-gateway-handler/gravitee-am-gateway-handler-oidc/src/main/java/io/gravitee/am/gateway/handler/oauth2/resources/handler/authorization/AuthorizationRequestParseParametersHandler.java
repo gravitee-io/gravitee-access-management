@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
-import io.gravitee.am.common.exception.oauth2.RedirectMismatchException;
 import io.gravitee.am.common.oauth2.CodeChallengeMethod;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.ResponseType;
@@ -39,15 +38,10 @@ import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.auth.User;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.getOAuthParameter;
-import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.redirectMatches;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.requireNonce;
 
 /**
@@ -126,8 +120,9 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
 
     private void clearUser(RoutingContext ctx){
         ctx.clearUser();
-        ctx.session().remove(STRONG_AUTH_COMPLETED_KEY);
+        ctx.session().remove(FULLY_AUTH_CLIENTS_KEY);
         ctx.session().remove(USER_ID_KEY);
+        ctx.session().remove(STRONG_AUTH_CLIENTS_KEY);
     }
 
     private void parsePKCEParameter(RoutingContext context, Client client) {

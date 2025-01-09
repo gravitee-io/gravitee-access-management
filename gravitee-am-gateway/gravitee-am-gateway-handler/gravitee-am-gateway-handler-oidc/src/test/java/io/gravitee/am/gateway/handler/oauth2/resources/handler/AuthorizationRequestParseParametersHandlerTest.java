@@ -40,7 +40,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static io.gravitee.am.common.utils.ConstantKeys.STRONG_AUTH_COMPLETED_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.STRONG_AUTH_CLIENTS_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_ID_KEY;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
@@ -407,6 +407,7 @@ public class AuthorizationRequestParseParametersHandlerTest extends RxWebTestBas
         OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
         openIDProviderMetadata.setResponseTypesSupported(Arrays.asList(ResponseType.CODE));
         Client client = new Client();
+        client.setClientId("client-id");
         client.setAuthorizedGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
         client.setResponseTypes(Collections.singletonList(ResponseType.CODE));
         router.route().order(-1)
@@ -419,7 +420,7 @@ public class AuthorizationRequestParseParametersHandlerTest extends RxWebTestBas
                     routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
                     routingContext.put(ConstantKeys.USER_ID_KEY, "111");
-                    routingContext.put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+                    routingContext.put(STRONG_AUTH_CLIENTS_KEY, Arrays.asList("client-id"));
                     routingContext.next();
                 });
         testRequest(
@@ -428,7 +429,7 @@ public class AuthorizationRequestParseParametersHandlerTest extends RxWebTestBas
                 null,
                 HttpStatusCode.OK_200, "OK", null);
 
-        Mockito.verify(session, times(1)).remove(STRONG_AUTH_COMPLETED_KEY);
+        Mockito.verify(session, times(1)).remove(STRONG_AUTH_CLIENTS_KEY);
         Mockito.verify(session, times(1)).remove(USER_ID_KEY);
     }
 

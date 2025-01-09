@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter;
 
 
@@ -42,7 +41,7 @@ public class MfaChallengeFilter extends MfaContextHolder implements Supplier<Boo
         }
 
         // skip mfa Challenge if user authenticated and step is disabled
-        if (context.isUserFullyAuthenticated()) {
+        if (context.isUserFullyAuthenticatedWithClient()) {
             String mfaStepUpRule = context.getStepUpRule();
             return !context.isStepUpActive() || (context.isStepUpActive() && !isStepUpAuthentication(mfaStepUpRule));
         } else {
@@ -65,14 +64,14 @@ public class MfaChallengeFilter extends MfaContextHolder implements Supplier<Boo
         }
 
         // user already fully authenticated and StepUp is disabled
-        if (context.isUserFullyAuthenticated() && !context.isStepUpActive() &&
-                !context.isStepUpRuleTrue()){
+        if (context.isUserFullyAuthenticatedWithClient() && !context.isStepUpActive() &&
+                !context.isStepUpRuleTrue()) {
             return true;
         }
 
         // We make sure that the rule can be triggered if we come from an already enrolled user
         // And that the user is not trying to challenge to an alternative factor
-        if (context.userHasMatchingActivatedFactors() && !context.hasUserChosenAlternativeFactor()){
+        if (context.userHasMatchingActivatedFactors() && !context.hasUserChosenAlternativeFactor()) {
             // We are retaining the value since other features will use it in the chain
             context.setAmfaRuleTrue(ruleEngine.evaluate(context.getAmfaRule(), context.getEvaluableContext(), Boolean.class, false));
         }
@@ -116,7 +115,7 @@ public class MfaChallengeFilter extends MfaContextHolder implements Supplier<Boo
         final boolean userStronglyAuth = context.isUserStronglyAuth();
         final boolean mfaSkipped = context.isMfaSkipped();
         //If user has not matching activated factors, we enforce MFA
-        if (!mfaSkipped && !context.userHasMatchingActivatedFactors()){
+        if (!mfaSkipped && !context.userHasMatchingActivatedFactors()) {
             return false;
         }
         // We need to check whether the AMFA, Device and Step Up rule is false since we don't know of other MFA return False
@@ -141,6 +140,7 @@ public class MfaChallengeFilter extends MfaContextHolder implements Supplier<Boo
         // We check then if StepUp is not active and of user is strongly auth or mfa is skipped to skip MFA
         return !context.isStepUpActive() && (userStronglyAuth || mfaSkipped);
     }
+
     protected boolean isStepUpAuthentication(String selectionRule) {
         return ruleEngine.evaluate(selectionRule, context.getEvaluableContext(), Boolean.class, false);
     }
