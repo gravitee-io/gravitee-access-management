@@ -138,7 +138,7 @@
         <testcontainer-lower-version-mssql>mssql-tc~2019-latest</testcontainer-lower-version-mssql>
 
         <!-- External plugins versions -->
-        <gravitee-policy-callout-http.version>3.0.0</gravitee-policy-callout-http.version>
+        <gravitee-policy-callout-http.version>3.0.1</gravitee-policy-callout-http.version>
         <gravitee-policy-groovy.version>2.5.2</gravitee-policy-groovy.version>
         <gravitee-policy-ipfiltering.version>1.14.1</gravitee-policy-ipfiltering.version>
         <gravitee-policy-request-validation.version>1.15.1</gravitee-policy-request-validation.version>
