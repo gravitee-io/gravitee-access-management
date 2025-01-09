@@ -34,6 +34,7 @@ export class ReporterComponent implements OnInit {
   organizationContext: boolean;
   createMode;
   configurationIsValid = true;
+  configurationPristine = true;
   reporterSchema: any;
   reporter: any;
   plugins: any;
@@ -77,11 +78,10 @@ export class ReporterComponent implements OnInit {
       };
     } else {
       this.reporter = this.route.snapshot.data['reporter'];
-      this.reporterConfiguration = JSON.parse(this.reporter.configuration);
+      this.reporterConfiguration = this.reporter.configuration ? JSON.parse(this.reporter.configuration) : {};
       this.updateReporterConfiguration = this.reporterConfiguration;
-      this.validateName();
     }
-
+    this.validateName();
     this.getSchemaFor(this.reporter.type);
   }
 
@@ -134,6 +134,7 @@ export class ReporterComponent implements OnInit {
         this.reporter = data;
         this.reporterConfiguration = JSON.parse(this.reporter.configuration);
         this.updateReporterConfiguration = this.reporterConfiguration;
+        this.formChanged = false;
         this.form.reset(this.reporter);
         this.snackbarService.open('Reporter updated');
       });
@@ -157,14 +158,15 @@ export class ReporterComponent implements OnInit {
 
   enableReporterUpdate(configurationWrapper) {
     window.setTimeout(() => {
-      const configurationPristine = this.reporter.configuration === JSON.stringify(configurationWrapper.configuration);
-      this.configurationIsValid = configurationWrapper.isValid && !configurationPristine;
+      this.configurationPristine = this.reporter.configuration === JSON.stringify(configurationWrapper.configuration);
+      this.configurationIsValid = configurationWrapper.isValid;
       this.updateReporterConfiguration = configurationWrapper.configuration;
     });
   }
 
   enableReporter(event) {
     this.reporter.enabled = event.checked;
+    this.formChanged = true;
   }
 
   setInherited(event): void {
@@ -179,7 +181,13 @@ export class ReporterComponent implements OnInit {
   isDefaultReporter() {
     return this.reporter.system;
   }
+
   isOrganizationContext() {
     return this.organizationContext;
+  }
+
+  readyToSave() {
+    const anyChanged = !this.form.pristine || !this.configurationPristine || this.formChanged;
+    return this.form.valid && anyChanged && this.configurationIsValid && this.hasName;
   }
 }
