@@ -169,7 +169,7 @@ export class ReporterComponent implements OnInit {
   }
 
   validateName() {
-    this.hasName = this.reporter.name !== '' && this.reporter.name.trim() !== '';
+    this.hasName = this.reporter?.name && this.reporter.name !== '' && this.reporter.name.trim() !== '';
   }
 
   isDefaultReporter() {
