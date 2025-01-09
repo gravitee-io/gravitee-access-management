@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
@@ -203,8 +204,8 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
     }
 
     protected void updateSessionAuthAndChallengeStatus(RoutingContext ctx) {
-        ctx.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
         ctx.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
+        MfaUtils.updateStronglyAuthClient(ctx);
     }
 
     protected void updateSessionLoginCompletedStatus(RoutingContext ctx, Credential credential) {

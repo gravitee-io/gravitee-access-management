@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils;
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.model.EnrollmentSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.RememberDeviceSettings;
-import io.gravitee.am.model.EnrollmentSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.FULLY_AUTH_CLIENTS_KEY;
 import static java.lang.Boolean.TRUE;
 import static java.util.Optional.ofNullable;
 
@@ -35,9 +38,30 @@ import static java.util.Optional.ofNullable;
  */
 public class MfaUtils {
 
-    public static boolean isUserStronglyAuth(Session session) {
-        return TRUE.equals(session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY));
+
+    public static void updateStronglyAuthClient(RoutingContext routingContext) {
+        Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+        var clients = routingContext.session().get(ConstantKeys.STRONG_AUTH_CLIENTS_KEY);
+        if (clients instanceof ArrayList<?>) {
+            if (!((ArrayList<String>) clients).contains(client.getClientId())) {
+                ((ArrayList<String>) clients).add(client.getClientId());
+            }
+        } else {
+            List<String> clientIds = new ArrayList<>();
+            clientIds.add(client.getClientId());
+
+            routingContext.session().put(ConstantKeys.STRONG_AUTH_CLIENTS_KEY, clientIds);
+        }
     }
+
+    public static boolean isUserStronglyAuth(Client client, Session session) {
+        var clients = session.get(ConstantKeys.STRONG_AUTH_CLIENTS_KEY);
+        if (clients instanceof ArrayList<?>) {
+            return ((ArrayList<String>) clients).contains(client.getClientId());
+        }
+        return false;
+    }
+
 
     public static String getMfaStepUpRule(Client client) {
         return ofNullable(client.getMfaSettings()).orElse(new MFASettings()).getStepUpAuthenticationRule();
@@ -62,5 +86,27 @@ public class MfaUtils {
                 .filter(Objects::nonNull)
                 .map(MFASettings::getEnrollment)
                 .orElse(new EnrollmentSettings());
+    }
+
+    public static boolean isFullyAuthClient(Client client, Session session) {
+        var clients = session.get(FULLY_AUTH_CLIENTS_KEY);
+        if (clients instanceof ArrayList<?>) {
+            return ((ArrayList<String>) clients).contains(client.getClientId());
+        }
+        return false;
+    }
+
+    public static void setFullyAuthClient(RoutingContext context, Client client) {
+        var clients = context.session().get(ConstantKeys.FULLY_AUTH_CLIENTS_KEY);
+        if (clients instanceof ArrayList<?>) {
+            if (!((ArrayList<String>) clients).contains(client.getClientId())) {
+                ((ArrayList<String>) clients).add(client.getClientId());
+            }
+
+        } else {
+            List<String> clientIds = new ArrayList<>();
+            clientIds.add(client.getClientId());
+            context.session().put(ConstantKeys.FULLY_AUTH_CLIENTS_KEY, clientIds);
+        }
     }
 }

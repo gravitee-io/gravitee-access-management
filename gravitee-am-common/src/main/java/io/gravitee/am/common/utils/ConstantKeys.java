@@ -84,10 +84,10 @@ public interface ConstantKeys {
     String AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY = "authFlow";
 
     // MFA keys.
-    String MFA_SKIPPED_KEY = "mfaEnrollmentSkipped";
+    String FULLY_AUTH_CLIENTS_KEY = "fullyAuthClients";
+    String STRONG_AUTH_CLIENTS_KEY = "stronglyAuthClients";
     String MFA_ENROLLMENT_COMPLETED_KEY = "mfaEnrollmentCompleted";
     String MFA_CHALLENGE_COMPLETED_KEY = "mfaChallengeCompleted";
-    String STRONG_AUTH_COMPLETED_KEY = "strongAuthCompleted";
     String ENROLLED_FACTOR_ID_KEY = "enrolledFactorId";
     String ENROLLED_FACTOR_SECURITY_VALUE_KEY = "enrolledFactorSecurityValue";
     String ENROLLED_FACTOR_PHONE_NUMBER = "enrolledFactorPhoneNumber";
@@ -98,7 +98,6 @@ public interface ConstantKeys {
     String FACTOR_KEY = "factor";
     String MFA_FACTOR_ID_CONTEXT_KEY = "mfaFactorId";
     String MFA_ENROLLING_FIDO2_FACTOR = "enrollingFido2Factor";
-    String AUTH_FLOW_FINALIZED_KEY = "auth_flow_finalized";
 
     String MFA_ALTERNATIVES_ACTION_KEY = "mfaAlternativesAction";
 

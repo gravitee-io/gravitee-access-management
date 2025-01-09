@@ -32,19 +32,16 @@ import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSetting
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 
-import java.util.Map;
-
-import java.util.Date;
-import java.util.Optional;
+import java.util.*;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.common.factor.FactorType.RECOVERY_CODE;
 import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
 import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
-import static java.util.Objects.isNull;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 
@@ -121,11 +118,11 @@ public class MfaFilterContext {
     }
 
     public boolean isUserStronglyAuth() {
-        return MfaUtils.isUserStronglyAuth(session);
+        return MfaUtils.isUserStronglyAuth(client, session);
     }
 
-    public boolean isUserFullyAuthenticated() {
-        return nonNull(session.get(AUTH_FLOW_FINALIZED_KEY)) && TRUE.equals(session.get(AUTH_FLOW_FINALIZED_KEY));
+    public boolean isUserFullyAuthenticatedWithClient() {
+        return MfaUtils.isFullyAuthClient(client, session);
     }
 
     public RememberDeviceSettings getRememberDeviceSettings() {
