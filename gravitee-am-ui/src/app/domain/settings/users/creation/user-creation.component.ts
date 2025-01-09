@@ -27,10 +27,12 @@ import { DomainPasswordPolicy } from '../../password-policy/domain-password-poli
 import { PasswordPolicyService } from '../../../../services/password-policy.service';
 
 import { UserClaimComponent } from './user-claim.component';
+
 enum AccountType {
   User = 'user',
   ServiceAccount = 'service',
 }
+
 @Component({
   selector: 'user-creation',
   animations: [trigger('fadeInOut', [transition(':leave', [animate(500, style({ opacity: 0 }))])])],
@@ -196,6 +198,6 @@ export class UserCreationComponent implements OnInit {
 
   canCreateUser(userForm: NgForm) {
     const formValid = userForm.valid && !userForm.pristine;
-    return formValid && (this.passwordValid || this.preRegistration);
+    return formValid && (this.passwordValid || this.preRegistration || this.isServiceAccount());
   }
 }
