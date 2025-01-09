@@ -359,7 +359,7 @@ public class RootProvider extends AbstractProtocolProvider {
         Handler<RoutingContext> loginAttemptHandler = new LoginAttemptHandler(domain, identityProviderManager, loginAttemptService, userActivityService);
         Handler<RoutingContext> rememberDeviceSettingsHandler = new RememberDeviceSettingsHandler();
         Handler<RoutingContext> deviceIdentifierHandler = new DeviceIdentifierHandler(deviceService);
-        Handler<RoutingContext> userActivityHandler = new UserActivityHandler(userActivityService);
+        Handler<RoutingContext> userActivityHandler = new UserActivityHandler(userActivityService, domain);
         Handler<RoutingContext> localeHandler = new LocaleHandler(messageResolver);
         Handler<RoutingContext> loginPostWebAuthnHandler = new LoginPostWebAuthnHandler(webAuthnCookieService);
         Handler<RoutingContext> userRememberMeHandler = new UserRememberMeRequestHandler(jwtService, domain, rememberMeCookieName);
