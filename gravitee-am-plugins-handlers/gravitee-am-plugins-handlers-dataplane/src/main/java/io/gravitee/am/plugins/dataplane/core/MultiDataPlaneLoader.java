@@ -13,34 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.gravitee.am.plugins.dataplane.core;
 
+
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
+import io.gravitee.node.api.configuration.Configuration;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static org.springframework.util.StringUtils.hasText;
 
+/**
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 @Component
-public class MultiDataPlaneLoader extends DataPlaneLoader {
+public class MultiDataPlaneLoader implements DataPlaneLoader {
     private static final String DATA_PLANES_KEY = "dataPlanes";
 
-    private Map<String, DataPlaneDescription> dataPlanDescriptions = new ConcurrentHashMap<>();
-
-    public List<DataPlaneDescription> getDataPlanes() {
-        return dataPlanDescriptions.values().stream().toList();
-    }
+    @Autowired
+    protected Configuration configuration;
 
     @Override
-    protected void register() {
+    public void load(Consumer<DataPlaneDescription> storage) {
         for (var desc : readList()) {
-            create(desc);
-            dataPlanDescriptions.put(desc.id(), desc);
+            storage.accept(desc);
         }
     }
 
@@ -54,7 +57,7 @@ public class MultiDataPlaneLoader extends DataPlaneLoader {
             result.add(readSingle(base));
             base = propertyResolver.apply(++i);
         }
-        if(result.stream().noneMatch(DataPlaneDescription::isDefault)){
+        if (result.stream().noneMatch(DataPlaneDescription::isDefault)) {
             throw new IllegalStateException("Default dataPlane is missing");
         }
         return result;

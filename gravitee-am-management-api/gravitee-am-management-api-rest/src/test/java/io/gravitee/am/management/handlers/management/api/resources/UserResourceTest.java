@@ -259,7 +259,7 @@ public class UserResourceTest extends JerseySpringTest {
         final String userId = "userId";
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(Mockito.mock(User.class))).when(userService).delete(eq(ReferenceType.DOMAIN), eq(domainId), eq(userId), any());
-        doReturn(Completable.complete()).when(userActivityService).deleteByDomainAndUser(domainId, userId);
+        doReturn(Completable.complete()).when(userActivityService).deleteByDomainAndUser(mockDomain, userId);
 
         final Response response = target("domains").path(domainId).path("users").path(userId).request().delete();
         assertEquals(HttpStatusCode.NO_CONTENT_204, response.getStatus());

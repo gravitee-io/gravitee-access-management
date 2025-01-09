@@ -41,7 +41,7 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.permissions.SystemRole;
-import io.gravitee.am.plugins.dataplane.core.MultiDataPlaneLoader;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
 import io.gravitee.am.repository.management.api.search.AlertTriggerCriteria;
@@ -151,7 +151,7 @@ public class DomainServiceImpl implements DomainService {
     private final Logger LOGGER = LoggerFactory.getLogger(DomainServiceImpl.class);
 
     @Autowired
-    private MultiDataPlaneLoader multiDataPlaneLoader;
+    private DataPlaneRegistry dataPlaneRegistry;
 
     @Lazy
     @Autowired
@@ -341,7 +341,7 @@ public class DomainServiceImpl implements DomainService {
         LOGGER.debug("Create a new domain: {}", newDomain);
         // generate hrid
         String hrid = IdGenerator.generate(newDomain.getName());
-        if (multiDataPlaneLoader.getDataPlanes().stream().map(DataPlaneDescription::id).noneMatch(id -> id.equals(newDomain.getDataPlaneId()))) {
+        if (dataPlaneRegistry.getDataPlanes().stream().map(DataPlaneDescription::id).noneMatch(id -> id.equals(newDomain.getDataPlaneId()))) {
             return Single.error(new TechnicalManagementException("An error occurred while trying to create a domain. Data plane with provided Id doesn't exist"));
         }
         return domainRepository.findByHrid(ReferenceType.ENVIRONMENT, environmentId, hrid)
@@ -569,7 +569,7 @@ public class DomainServiceImpl implements DomainService {
                                     })
                             )
                             //Delete all trace of activity of users for this domain
-                            .andThen(userActivityService.deleteByDomain(domainId))
+                            .andThen(userActivityService.deleteByDomain(domain))
                             // delete users
                             // do not delete one by one for memory consumption issue
                             // https://github.com/gravitee-io/issues/issues/6999
