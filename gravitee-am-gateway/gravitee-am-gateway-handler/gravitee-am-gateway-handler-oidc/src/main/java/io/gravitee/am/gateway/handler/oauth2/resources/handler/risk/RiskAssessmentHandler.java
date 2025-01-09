@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.model.Device;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.UserActivity;
@@ -69,17 +70,20 @@ public class RiskAssessmentHandler implements Handler<RoutingContext> {
     private final ObjectMapper objectMapper;
     private final EventBus eventBus;
     private final UserActivityService userActivityService;
+    private final Domain domain;
 
     public RiskAssessmentHandler(
             DeviceService deviceService,
             UserActivityService userActivityService,
             EventBus eventBus,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            Domain domain
     ) {
         this.deviceService = deviceService;
         this.eventBus = eventBus;
         this.userActivityService = userActivityService;
         this.objectMapper = objectMapper;
+        this.domain = domain;
     }
 
     @Override
@@ -102,7 +106,7 @@ public class RiskAssessmentHandler implements Handler<RoutingContext> {
         assessmentMessage
                 .flatMap(buildDeviceMessage(client, user.getFullId(), deviceId))
                 .flatMap(buildIpReputationMessage(context.request()))
-                .flatMap(buildGeoVelocityMessage(client.getDomain(), user.getId()))
+                .flatMap(buildGeoVelocityMessage(domain, user.getId()))
                 .subscribe(message -> decorateWithRiskAssessment(context, message), throwable -> {
                     logger.error("An unexpected error has occurred while trying to apply risk assessment: ", throwable);
                     context.next();
@@ -149,12 +153,12 @@ public class RiskAssessmentHandler implements Handler<RoutingContext> {
         };
     }
 
-    private Function<AssessmentMessage, Single<AssessmentMessage>> buildGeoVelocityMessage(String domainId, String userId) {
+    private Function<AssessmentMessage, Single<AssessmentMessage>> buildGeoVelocityMessage(Domain domain, String userId) {
         return assessmentMessage -> {
             var settings = assessmentMessage.getSettings();
             var geoVelocityAssessment = ofNullable(settings.getGeoVelocityAssessment()).orElse(new AssessmentSettings());
             if (geoVelocityAssessment.isEnabled()) {
-                return userActivityService.findByDomainAndTypeAndUserAndLimit(domainId, Type.LOGIN, userId, 2)
+                return userActivityService.findByDomainAndTypeAndUserAndLimit(domain, Type.LOGIN, userId, 2)
                         .toList()
                         .flatMap(activityList -> {
                             assessmentMessage.getData().setGeoTimeCoordinates(computeGeoTimeCoordinates(activityList));

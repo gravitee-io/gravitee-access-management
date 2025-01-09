@@ -13,22 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.gravitee.am.plugins.dataplane.core;
 
+
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
+import io.gravitee.node.api.configuration.Configuration;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.function.Consumer;
+
+/**
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 @Component
-public class SingleDataPlaneLoader extends DataPlaneLoader {
+public class SingleDataPlaneLoader implements DataPlaneLoader {
     private static final String DATA_PLANE_KEY = "repositories.gateway";
     private static final String DATA_PLANE_ID_KEY = DATA_PLANE_KEY + ".dataPlane";
     private static final String DATA_PLANE_TYPE_KEY = DATA_PLANE_KEY + ".type";
 
+    @Autowired
+    protected Configuration configuration;
+
     @Override
-    protected void register() {
+    public void load(Consumer<DataPlaneDescription> storage) {
         var dataPlaneId = configuration.getProperty(DATA_PLANE_ID_KEY, String.class, "default");
         var dataPlaneType = configuration.getProperty(DATA_PLANE_TYPE_KEY, String.class, "mongodb");
-        var description = new DataPlaneDescription(dataPlaneId, dataPlaneId, dataPlaneType, DATA_PLANE_KEY);
-        create(description);
+        storage.accept(new DataPlaneDescription(dataPlaneId, dataPlaneId, dataPlaneType, DATA_PLANE_KEY));
     }
 }

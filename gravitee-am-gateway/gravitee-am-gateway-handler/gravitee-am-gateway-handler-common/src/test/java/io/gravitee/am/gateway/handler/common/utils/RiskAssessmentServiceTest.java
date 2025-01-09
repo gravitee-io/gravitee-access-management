@@ -154,7 +154,7 @@ public class RiskAssessmentServiceTest {
         doReturn(Flowable.just(
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date()),
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date())
-        )).when(userActivityService).findByDomainAndTypeAndUserAndLimit(anyString(), any(), anyString(), eq(2));
+        )).when(userActivityService).findByDomainAndTypeAndUserAndLimit(any(Domain.class), any(), anyString(), eq(2));
 
         var testObserver = riskAssessmentService.computeRiskAssessment(authDetailsStub()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -189,7 +189,7 @@ public class RiskAssessmentServiceTest {
         doReturn(Flowable.just(
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date()),
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date())
-        )).when(userActivityService).findByDomainAndTypeAndUserAndLimit(anyString(), any(), anyString(), eq(2));
+        )).when(userActivityService).findByDomainAndTypeAndUserAndLimit(any(Domain.class), any(), anyString(), eq(2));
 
         var testObserver = riskAssessmentService.computeRiskAssessment(authDetailsStub()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -224,7 +224,7 @@ public class RiskAssessmentServiceTest {
         doReturn(Flowable.just(
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date()),
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date())
-        )).when(userActivityService).findByDomainAndTypeAndUserAndLimit(anyString(), any(), anyString(), eq(2));
+        )).when(userActivityService).findByDomainAndTypeAndUserAndLimit(any(Domain.class), any(), anyString(), eq(2));
 
         var testObserver = riskAssessmentService.computeRiskAssessment(authDetailsStub()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);

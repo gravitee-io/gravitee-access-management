@@ -16,6 +16,7 @@
 
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserActivity;
 import io.gravitee.am.model.UserActivity.Type;
 import io.reactivex.rxjava3.core.Completable;
@@ -36,11 +37,11 @@ public interface UserActivityService {
 
     ChronoUnit getRetentionUnit();
 
-    Flowable<UserActivity> findByDomainAndTypeAndUserAndLimit(String domain, Type type, String userId, int limit);
+    Flowable<UserActivity> findByDomainAndTypeAndUserAndLimit(Domain domain, Type type, String userId, int limit);
 
-    Completable save(String domain, String userId, UserActivity.Type type, Map<String, Object> data);
+    Completable save(Domain domain, String userId, UserActivity.Type type, Map<String, Object> data);
 
-    Completable deleteByDomainAndUser(String domain, String userId);
+    Completable deleteByDomainAndUser(Domain domain, String userId);
 
-    Completable deleteByDomain(String domain);
+    Completable deleteByDomain(Domain domain);
 }

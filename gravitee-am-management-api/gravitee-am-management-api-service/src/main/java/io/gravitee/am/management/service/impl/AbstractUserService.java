@@ -22,6 +22,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.management.service.CommonUserService;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Reference;
@@ -104,6 +105,10 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
 
     @Autowired
     private LoginAttemptService loginAttemptService;
+
+    // FIXME : when we will manage to use the DataPlane for the users, this injection may not be useful anymore.
+    @Autowired
+    private DomainService domainService;
 
     @Autowired
     private TokenService tokenService;
@@ -218,7 +223,8 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                                     });
                         })
                         // Delete trace of user activity
-                        .andThen((DOMAIN.equals(referenceType)) ? userActivityService.deleteByDomainAndUser(referenceId, userId) : Completable.complete())
+                        .andThen((DOMAIN.equals(referenceType)) ? domainService.findById(referenceId) // FIXME domainService shouldn't be used here, the domain should be provided as parameter instead
+                                .flatMapCompletable(domain -> userActivityService.deleteByDomainAndUser(domain, userId)) : Completable.complete())
                         // Delete rate limit
                         .andThen(rateLimiterService.deleteByUser(user))
                         .andThen(verifyAttemptService.deleteByUser(user))
