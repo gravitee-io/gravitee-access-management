@@ -165,9 +165,9 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
     }
 
     @Override
-    public Single<User> updateStatus(ReferenceType referenceType, String referenceId, String id, boolean status, io.
+    public Single<User> updateStatus(ReferenceType referenceType, String referenceId, String userId, boolean status, io.
             gravitee.am.identityprovider.api.User principal) {
-        return getUserService().findById(referenceType, referenceId, id)
+        return getUserService().findById(referenceType, referenceId, userId)
                 .flatMap(user -> {
                     user.setEnabled(status);
                     return getUserService().update(user);
