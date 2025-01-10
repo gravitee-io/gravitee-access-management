@@ -35,6 +35,7 @@ import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
+import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.InvalidUserException;
@@ -156,9 +157,9 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
     }
 
     @Override
-    public Single<User> updateStatus(ReferenceType referenceType, String referenceId, String id, boolean status, io.
+    public Single<User> updateStatus(ReferenceType referenceType, String referenceId, String userId, boolean status, io.
             gravitee.am.identityprovider.api.User principal) {
-        return getUserService().findById(referenceType, referenceId, id)
+        return getUserService().findById(referenceType, referenceId, userId)
                 .flatMap(user -> {
                     user.setEnabled(status);
                     return getUserService().update(user);

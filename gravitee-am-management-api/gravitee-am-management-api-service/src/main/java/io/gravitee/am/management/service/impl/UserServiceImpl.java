@@ -84,11 +84,10 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
     private DomainService domainService;
 
     @Autowired
-    protected io.gravitee.am.service.UserService userService;
+    private io.gravitee.am.service.UserService userService;
 
     @Autowired
-    protected TokenService tokenService;
-
+    private TokenService tokenService;
 
     @Override
     protected io.gravitee.am.service.UserService getUserService() {
@@ -250,8 +249,21 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
     }
 
     @Override
-    public Single<User> updateStatus(String domain, String id, boolean status, io.gravitee.am.identityprovider.api.User principal) {
-        return updateStatus(DOMAIN, domain, id, status, principal);
+    public Single<User> updateStatus(String domainId, String userId, boolean status, io.gravitee.am.identityprovider.api.User principal) {
+        return updateStatus(DOMAIN, domainId, userId, status, principal);
+    }
+
+    @Override
+    public Single<User> updateStatus(ReferenceType referenceType, String referenceId, String userId, boolean status, io.
+            gravitee.am.identityprovider.api.User principal) {
+        Completable removeTokens = status ? Completable.complete() : tokenService.deleteByUser(User.simpleUser(userId, referenceType, referenceId));
+        return getUserService().findById(referenceType, referenceId, userId)
+                .flatMap(user -> {
+                    user.setEnabled(status);
+                    return removeTokens.andThen(getUserService().update(user));
+                })
+                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).user(user1)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).throwable(throwable)));
     }
 
     @Override

@@ -64,9 +64,6 @@ public interface UserService extends CommonUserService {
         return update(domain, id, updateUser, null);
     }
 
-    default Single<User> updateStatus(String domain, String userId, boolean status) {
-        return updateStatus(domain, userId, status, null);
-    }
     default Completable unlock(ReferenceType referenceType, String referenceId, String userId) {
         return unlock(referenceType, referenceId, userId, null);
     }
@@ -77,10 +74,6 @@ public interface UserService extends CommonUserService {
 
     default Single<User> revokeRoles(ReferenceType referenceType, String referenceId, String userId, List<String> roles) {
         return revokeRoles(referenceType, referenceId, userId, roles, null);
-    }
-
-    default Single<User> enrollFactors(String userId, List<EnrolledFactor> factors) {
-        return enrollFactors(userId, factors, null);
     }
 
 }

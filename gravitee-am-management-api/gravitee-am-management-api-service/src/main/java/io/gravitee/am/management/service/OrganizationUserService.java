@@ -35,4 +35,7 @@ public interface OrganizationUserService extends CommonUserService {
     Completable resetPassword(String organizationId, User user, String password, io.gravitee.am.identityprovider.api.User principal);
 
     Single<User> updateLogoutDate(ReferenceType referenceType, String referenceId, String id);
+
+    Single<User> updateStatus(String organizationId, String id, boolean status, io.gravitee.am.identityprovider.api.User principal);
+
 }

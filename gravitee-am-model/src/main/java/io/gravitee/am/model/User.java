@@ -849,4 +849,16 @@ public class User implements IUser {
         setAccountLockedAt(null);
         setAccountLockedUntil(null);
     }
+
+    public boolean isDisabled(){
+        return Boolean.FALSE.equals(enabled);
+    }
+
+    public static User simpleUser(String userId, ReferenceType referenceType, String refId){
+        User user = new User();
+        user.setId(userId);
+        user.setReferenceType(referenceType);
+        user.setReferenceId(refId);
+        return user;
+    }
 }
