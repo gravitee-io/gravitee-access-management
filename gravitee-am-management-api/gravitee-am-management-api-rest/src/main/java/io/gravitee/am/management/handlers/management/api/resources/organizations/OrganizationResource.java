@@ -27,6 +27,7 @@ import io.gravitee.am.management.handlers.management.api.resources.organizations
 import io.gravitee.am.management.handlers.management.api.resources.organizations.settings.SettingsResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.tags.TagsResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.users.OrganizationUsersResource;
+
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.core.Context;
