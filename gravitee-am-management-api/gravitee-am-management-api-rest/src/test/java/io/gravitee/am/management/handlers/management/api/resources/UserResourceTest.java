@@ -34,6 +34,7 @@ import jakarta.ws.rs.core.Response;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -45,6 +46,7 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -293,7 +295,7 @@ public class UserResourceTest extends JerseySpringTest {
     }
 
     @Test
-    public void shouldUpdateStatus() {
+    public void shouldUpdateStatus_enabled() {
         final String domainId = "domain-id";
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);
@@ -316,6 +318,35 @@ public class UserResourceTest extends JerseySpringTest {
         final User user = readEntity(response, User.class);
         assertEquals(domainId, user.getReferenceId());
         assertEquals(statusEntity.isEnabled(), user.isEnabled());
+        Mockito.verifyNoInteractions(tokenService);
+    }
+
+    @Test
+    public void shouldUpdateStatus_disabled() {
+        final String domainId = "domain-id";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        final String userId = "userId";
+        final User mockUser = new User();
+        mockUser.setId(userId);
+        mockUser.setUsername("user-username");
+        mockUser.setReferenceType(ReferenceType.DOMAIN);
+        mockUser.setReferenceId(domainId);
+        mockUser.setEnabled(false);
+
+        var statusEntity = new StatusEntity();
+        statusEntity.setEnabled(false);
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Completable.complete()).when(tokenService).deleteByUserId(Mockito.eq(userId));
+        doReturn(Single.just(mockUser)).when(userService).updateStatus(eq(ReferenceType.DOMAIN), eq(domainId), eq(userId), eq(statusEntity.isEnabled()), any());
+
+        final Response response = target("domains").path(domainId).path("users").path(userId).path("status").request().put(Entity.json(statusEntity));
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        final User user = readEntity(response, User.class);
+        assertEquals(domainId, user.getReferenceId());
+        assertEquals(statusEntity.isEnabled(), user.isEnabled());
+        Mockito.verify(tokenService, times(1)).deleteByUserId(Mockito.eq(userId));
     }
 
     @Test
@@ -345,6 +376,8 @@ public class UserResourceTest extends JerseySpringTest {
         assertEquals(mockUser.getUsername(), user.getUsername());
         assertNull(user.getPassword());
         assertEquals(statusEntity.isEnabled(), user.isEnabled());
+        Mockito.verifyNoInteractions(tokenService);
+
     }
 
     @Test

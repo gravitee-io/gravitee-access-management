@@ -40,6 +40,8 @@ import java.util.Date;
 import java.util.function.BiFunction;
 
 import static io.gravitee.am.management.service.impl.IdentityProviderManagerImpl.IDP_GRAVITEE;
+import static io.gravitee.am.model.ReferenceType.DOMAIN;
+import static io.gravitee.am.model.ReferenceType.ORGANIZATION;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -186,5 +188,10 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                     user.setUpdatedAt(now);
                     return getUserService().update(user);
                 });
+    }
+
+    @Override
+    public Single<User> updateStatus(String organizationId, String userId, boolean status, io.gravitee.am.identityprovider.api.User principal) {
+        return updateStatus(ORGANIZATION, organizationId, userId, status, principal);
     }
 }
