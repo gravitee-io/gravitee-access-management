@@ -849,4 +849,8 @@ public class User implements IUser {
         setAccountLockedAt(null);
         setAccountLockedUntil(null);
     }
+
+    public boolean isDisabled(){
+        return Boolean.FALSE.equals(enabled);
+    }
 }
