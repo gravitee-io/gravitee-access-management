@@ -37,12 +37,14 @@ import jakarta.ws.rs.core.Response;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static io.gravitee.am.model.User.simpleUser;
 import static jakarta.ws.rs.HttpMethod.PATCH;
 import static org.glassfish.jersey.client.HttpUrlConnectorProvider.SET_METHOD_WORKAROUND;
 import static org.junit.Assert.assertEquals;
@@ -52,6 +54,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -256,7 +259,8 @@ public class UserResourceTest extends JerseySpringTest {
 
         final String userId = "userId";
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Completable.complete()).when(userService).delete(eq(ReferenceType.DOMAIN), eq(domainId), eq(userId), any());
+        doReturn(Single.just(simpleUser("id", ReferenceType.DOMAIN, domainId)))
+                .when(userService).delete(eq(ReferenceType.DOMAIN), eq(domainId), eq(userId), any());
         doReturn(Completable.complete()).when(userActivityService).deleteByDomainAndUser(domainId, userId);
 
         final Response response = target("domains").path(domainId).path("users").path(userId).request().delete();
@@ -300,7 +304,7 @@ public class UserResourceTest extends JerseySpringTest {
     }
 
     @Test
-    public void shouldUpdateStatus() {
+    public void shouldUpdateStatus_enabled() {
         final String domainId = "domain-id";
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);
@@ -317,6 +321,33 @@ public class UserResourceTest extends JerseySpringTest {
         statusEntity.setEnabled(false);
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(mockUser)).when(userService).updateStatus(eq(ReferenceType.DOMAIN), eq(domainId), eq(userId), eq(statusEntity.isEnabled()), any());
+
+        final Response response = target("domains").path(domainId).path("users").path(userId).path("status").request().put(Entity.json(statusEntity));
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        final User user = readEntity(response, User.class);
+        assertEquals(domainId, user.getReferenceId());
+        assertEquals(statusEntity.isEnabled(), user.isEnabled());
+        Mockito.verifyNoInteractions(tokenService);
+    }
+
+    @Test
+    public void shouldUpdateStatus_disabled() {
+        final String domainId = "domain-id";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        final String userId = "userId";
+        final User mockUser = new User();
+        mockUser.setId(userId);
+        mockUser.setUsername("user-username");
+        mockUser.setReferenceType(ReferenceType.DOMAIN);
+        mockUser.setReferenceId(domainId);
+        mockUser.setEnabled(false);
+
+        var statusEntity = new StatusEntity();
+        statusEntity.setEnabled(false);
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.just(mockUser)).when(userService).updateStatus(eq(domainId), eq(userId), eq(statusEntity.isEnabled()), any());
 
         final Response response = target("domains").path(domainId).path("users").path(userId).path("status").request().put(Entity.json(statusEntity));
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -341,7 +372,7 @@ public class UserResourceTest extends JerseySpringTest {
         var statusEntity = new StatusEntity();
         statusEntity.setEnabled(false);
         doReturn(Single.just(mockUser)).when(organizationUserService)
-                .updateStatus(eq(ReferenceType.ORGANIZATION), eq(referenceId), eq(userId), eq(statusEntity.isEnabled()), any());
+                .updateStatus(eq(referenceId), eq(userId), eq(statusEntity.isEnabled()), any());
 
         final Response response = target("organizations").path(referenceId).path("users").path(userId).path("status").request().put(Entity.json(statusEntity));
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -352,6 +383,8 @@ public class UserResourceTest extends JerseySpringTest {
         assertEquals(mockUser.getUsername(), user.getUsername());
         assertNull(user.getPassword());
         assertEquals(statusEntity.isEnabled(), user.isEnabled());
+        Mockito.verifyNoInteractions(tokenService);
+
     }
 
     @Test
@@ -472,20 +505,17 @@ public class UserResourceTest extends JerseySpringTest {
 
     @Test
     public void shouldGetUserTokens() {
-        final String domainId = "domain-id";
-        final Domain mockDomain = new Domain();
-        mockDomain.setId(domainId);
+        final String organizationId = "DEFAULT";
 
         final String userId = "user-id";
         doReturn(Maybe.empty()).when(identityProviderService).findById(any());
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
 
         var accessToken1 = AccountAccessToken.builder().tokenId("1").build();
         var accessToken2 = AccountAccessToken.builder().tokenId("2").build();
 
-        doReturn(Flowable.just(List.of(accessToken1, accessToken2))).when(organizationUserService).findAccountAccessTokens("DEFAULT", userId);
+        doReturn(Flowable.just(accessToken1, accessToken2)).when(organizationUserService).findAccountAccessTokens(organizationId, userId);
 
-        final Response response = target("domains").path(domainId).path("users").path(userId).path("tokens").request().get();
+        final Response response = target("organizations").path(organizationId).path("users").path(userId).path("tokens").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final List<AccountAccessToken> tokens = readListEntity(response, AccountAccessToken.class);

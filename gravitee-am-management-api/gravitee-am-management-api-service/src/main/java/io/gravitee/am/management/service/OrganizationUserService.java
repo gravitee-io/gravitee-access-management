@@ -46,4 +46,7 @@ public interface OrganizationUserService extends CommonUserService {
     Single<User> findByAccessToken(String tokenId, String tokenValue);
 
     Completable revokeToken(String organizationId, String userId, String tokenId, io.gravitee.am.identityprovider.api.User authenticatedUser);
+
+    Single<User> updateStatus(String organizationId, String id, boolean status, io.gravitee.am.identityprovider.api.User principal);
+
 }

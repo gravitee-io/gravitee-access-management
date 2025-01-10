@@ -47,6 +47,7 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -147,6 +148,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private PasswordPolicyManager passwordPolicyManager;
+
+    @Autowired
+    private TokenService tokenService;
 
     @Override
     public Single<ListResponse<User>> list(Filter filter, int page, int size, String baseUrl) {
@@ -403,7 +407,7 @@ public class UserServiceImpl implements UserService {
                                                         userToUpdate.setLastPasswordReset(new Date());
                                                     }
 
-                                                    return userRepository.update(userToUpdate, UpdateActions.build(existingUser, userToUpdate));
+                                                    return updateUser(userToUpdate, UpdateActions.build(existingUser, userToUpdate));
                                                 })
                                                 .onErrorResumeNext(ex -> {
                                                     if (ex instanceof UserNotFoundException ||
@@ -412,7 +416,7 @@ public class UserServiceImpl implements UserService {
                                                         // idp user does not exist, only update AM user
                                                         // clear password
                                                         userToUpdate.setPassword(null);
-                                                        return userRepository.update(userToUpdate, UpdateActions.build(existingUser, userToUpdate));
+                                                        return updateUser(userToUpdate, UpdateActions.build(existingUser, userToUpdate));
                                                     }
                                                     return Single.error(ex);
                                                 })
@@ -439,6 +443,11 @@ public class UserServiceImpl implements UserService {
                     LOGGER.error("An error occurs while trying to update a user", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a user", ex));
                 });
+    }
+
+    private Single<io.gravitee.am.model.User> updateUser(io.gravitee.am.model.User userToUpdate, UpdateActions updateActions){
+        Completable revokeTokens = userToUpdate.isDisabled() ? tokenService.deleteByUser(userToUpdate) : Completable.complete();
+        return revokeTokens.andThen(userRepository.update(userToUpdate, updateActions));
     }
 
     @Override
