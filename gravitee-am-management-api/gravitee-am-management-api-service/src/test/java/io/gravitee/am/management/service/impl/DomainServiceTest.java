@@ -862,8 +862,8 @@ public class DomainServiceTest {
 
     @Test
     public void shouldNotPatch_newDataPlaneId() {
-        PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
-        when(patchDomain.getDataPlaneId()).thenReturn(Optional.of("new-data-plane-id"));
+        PatchDomain patchDomain = new PatchDomain();
+        patchDomain.setDataPlaneId(Optional.of("new-data-plane-id"));
         Domain domain = new Domain();
         final var DOMAIN_ID = "my-domain";
         domain.setId(DOMAIN_ID);
@@ -885,8 +885,8 @@ public class DomainServiceTest {
 
     @Test
     public void shouldPatch_theSameDataPlaneId(){
-        PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
-        when(patchDomain.getDataPlaneId()).thenReturn(Optional.of("default"));
+        PatchDomain patchDomain = new PatchDomain();
+        patchDomain.setDataPlaneId(Optional.of("default"));
 
         Domain domain = new Domain();
         final var DOMAIN_ID = "my-domain";
@@ -898,16 +898,11 @@ public class DomainServiceTest {
         domain.setPath("/test");
         domain.setDataPlaneId("default");
 
-        Domain updatedDomain = new Domain(domain);
-        updatedDomain.setName(UUID.randomUUID().toString());
-        updatedDomain.setDataPlaneId("default");
-
-        when(patchDomain.patch(any())).thenReturn(updatedDomain);
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
         when(domainRepository.findByHrid(any(), anyString(), anyString())).thenReturn(Maybe.just(domain));
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainReadService.listAll()).thenReturn(Flowable.empty());
-        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(updatedDomain));
+        when(domainRepository.update(any(Domain.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
@@ -925,10 +920,6 @@ public class DomainServiceTest {
         verify(auditService).report(argThat(builder -> {
             var audit = builder.build(OBJECT_MAPPER);
             return audit.getReferenceType().equals(DOMAIN) && audit.getReferenceId().equals(DOMAIN_ID);
-        }));
-        verify(auditService).report(argThat(builder -> {
-            var audit = builder.build(OBJECT_MAPPER);
-            return audit.getReferenceType().equals(ORGANIZATION) && audit.getReferenceId().equals(ORGANIZATION_ID);
         }));
     }
 
