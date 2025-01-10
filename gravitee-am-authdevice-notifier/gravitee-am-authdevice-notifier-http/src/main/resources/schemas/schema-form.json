@@ -54,7 +54,7 @@
                     },
                     "value": {
                         "title": "Value",
-                        "description": "HTTP Header value",
+                        "description": "HTTP Header value (support EL)",
                         "type": "string"
                     }
                 },

@@ -15,11 +15,19 @@
  */
 package io.gravitee.am.authdevice.notifier.api.model;
 
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.gateway.handler.context.EvaluableExecutionContext;
+import io.gravitee.am.gateway.handler.context.EvaluableRequest;
+import io.gravitee.el.TemplateContext;
+import io.gravitee.el.TemplateEngine;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
 import java.util.Set;
+
+import static io.gravitee.am.gateway.handler.common.utils.RoutingContextUtils.getEvaluableAttributes;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -28,6 +36,10 @@ import java.util.Set;
 @Setter
 @Getter
 public class ADNotificationRequest {
+
+    private static final String TEMPLATE_ATTRIBUTE_REQUEST = "request";
+    private static final String TEMPLATE_ATTRIBUTE_CONTEXT = "context";
+
     private String deviceNotifierId;
     private String transactionId;
     private String subject;
@@ -36,4 +48,17 @@ public class ADNotificationRequest {
     private List<String> acrValues;
     private String state;
     private String message;
+    private RoutingContext context;
+
+    private TemplateEngine templateEngine;
+
+    public TemplateEngine getTemplateEngine() {
+        if (templateEngine == null) {
+            templateEngine = TemplateEngine.templateEngine();
+            TemplateContext templateContext = templateEngine.getTemplateContext();
+            templateContext.setVariable(TEMPLATE_ATTRIBUTE_REQUEST, new EvaluableRequest(new VertxHttpServerRequest(this.context.request().getDelegate())));
+            templateContext.setVariable(TEMPLATE_ATTRIBUTE_CONTEXT, new EvaluableExecutionContext(getEvaluableAttributes(this.context)));
+        }
+        return templateEngine;
+    }
 }

@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.ciba.ad;
 
-import io.gravitee.am.gateway.handler.ciba.ad.model.ADNotificationRequest;
-import io.gravitee.am.gateway.handler.ciba.ad.model.ADNotificationResponse;
+import io.gravitee.am.authdevice.notifier.api.model.ADNotificationRequest;
+import io.gravitee.am.authdevice.notifier.api.model.ADNotificationResponse;
 import io.reactivex.rxjava3.core.Single;
 
 /**

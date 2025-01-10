@@ -61,6 +61,12 @@
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>io.gravitee.am.authdevice.notifier</groupId>
+            <artifactId>gravitee-am-authdevice-notifier-api</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
 
         <!-- Testing -->
         <dependency>

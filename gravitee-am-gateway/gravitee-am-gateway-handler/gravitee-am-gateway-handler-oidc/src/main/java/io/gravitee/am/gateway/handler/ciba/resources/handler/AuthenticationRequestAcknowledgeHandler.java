@@ -113,6 +113,7 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
                                         adRequest.setState(stateJwt);
                                         adRequest.setTransactionId(externalTrxId);
                                         adRequest.setDeviceNotifierId(authDeviceNotifierId);
+                                        adRequest.setContext(context);
 
                                         return authRequestService.notify(adRequest)
                                                 .flatMap(adResponse -> {
