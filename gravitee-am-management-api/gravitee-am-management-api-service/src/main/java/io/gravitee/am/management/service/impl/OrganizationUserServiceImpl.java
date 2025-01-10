@@ -53,6 +53,8 @@ import java.util.function.BiFunction;
 
 import static io.gravitee.am.management.service.impl.IdentityProviderManagerImpl.IDP_GRAVITEE;
 import static org.springframework.util.StringUtils.hasText;
+import static io.gravitee.am.model.ReferenceType.DOMAIN;
+import static io.gravitee.am.model.ReferenceType.ORGANIZATION;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -276,5 +278,9 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
     public Single<User> delete(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal) {
         return super.delete(referenceType, referenceId, userId, principal)
                 .flatMap(user -> getUserService().revokeUserAccessTokens(user.getReferenceType(), user.getReferenceId(), user.getId()).toSingleDefault(user));
+    }
+    @Override
+    public Single<User> updateStatus(String organizationId, String userId, boolean status, io.gravitee.am.identityprovider.api.User principal) {
+        return updateStatus(ORGANIZATION, organizationId, userId, status, principal);
     }
 }
