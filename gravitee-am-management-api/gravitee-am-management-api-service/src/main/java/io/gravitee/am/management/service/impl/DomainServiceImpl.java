@@ -443,10 +443,9 @@ public class DomainServiceImpl implements DomainService {
         return domainRepository.findById(domainId)
                 .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)))
                 .flatMap(existingDomain -> {
-                    if(domain.getDataPlaneId() != null){
-                        if(!domain.getDataPlaneId().equals(existingDomain.getDataPlaneId())){
-                            return Single.error(new InvalidParameterException("Once domain is created, [dataPlaneId] cannot be changed."));
-                        }
+                    if(existingDomain.getDataPlaneId() != null &&
+                            !existingDomain.getDataPlaneId().equals(domain.getDataPlaneId())){
+                        return Single.error(new InvalidParameterException("Once domain is created, [dataPlaneId] cannot be changed."));
                     }
                     domain.setId(existingDomain.getId());
                     domain.setVersion(existingDomain.getVersion());
@@ -477,12 +476,12 @@ public class DomainServiceImpl implements DomainService {
         return domainRepository.findById(domainId)
                 .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)))
                 .flatMap(oldDomain -> {
-                    if(patchDomain.getDataPlaneId() != null && patchDomain.getDataPlaneId().isPresent()){
-                        if(!patchDomain.getDataPlaneId().get().equals(oldDomain.getDataPlaneId())){
-                            return Single.error(new InvalidParameterException("Once domain is created, [dataPlaneId] cannot be changed."));
-                        }
-                    }
                     Domain toPatch = patchDomain.patch(oldDomain);
+                    if(oldDomain.getDataPlaneId() != null &&
+                            !oldDomain.getDataPlaneId().equals(toPatch.getDataPlaneId())){
+                        return Single.error(new InvalidParameterException("Once domain is created, [dataPlaneId] cannot be changed."));
+                    }
+
                     final AccountSettings accountSettings = toPatch.getAccountSettings();
                     if (Boolean.FALSE.equals(accountSettingsValidator.validate(accountSettings))) {
                         return Single.error(new InvalidParameterException("Unexpected forgot password field"));
