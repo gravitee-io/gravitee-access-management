@@ -53,9 +53,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
-import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
-import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -68,9 +66,6 @@ import java.net.URI;
  */
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class OrganizationUserResource extends AbstractResource {
-
-    @Context
-    private ResourceContext resourceContext;
 
     @Autowired
     @Named("managementOrganizationUserService")
@@ -216,8 +211,8 @@ public class OrganizationUserResource extends AbstractResource {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.UPDATE)
-                .andThen(organizationUserService.updateStatus(ReferenceType.ORGANIZATION, organizationId, user, status.isEnabled(), authenticatedUser)
-                        .map(UserEntity::new))
+                .andThen(organizationUserService.updateStatus(organizationId, user, status.isEnabled(), authenticatedUser)
+                    .map(UserEntity::new))
                 .subscribe(response::resume, response::resume);
     }
 
