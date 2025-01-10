@@ -24,6 +24,7 @@ import io.gravitee.am.authdevice.notifier.api.model.ADUserResponse;
 import io.gravitee.am.authdevice.notifier.http.HttpAuthenticationDeviceNotifierConfiguration;
 import io.gravitee.am.authdevice.notifier.http.provider.spring.HttpAuthenticationDeviceProviderSpringConfiguration;
 import io.gravitee.common.http.HttpStatusCode;
+import io.gravitee.el.exceptions.ExpressionEvaluationException;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
@@ -69,16 +70,24 @@ public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationD
 
     @Override
     public Single<ADNotificationResponse> notify(ADNotificationRequest request) {
+
         LOGGER.debug("Call notifier service '{}' (tid: {}) ", this.configuration.getEndpoint(), request.getTransactionId());
 
         MultiMap formData = prepareFormData(request);
 
         final HttpRequest<Buffer> notificationRequest = this.client.requestAbs(HttpMethod.POST, this.configuration.getEndpoint());
         if (this.configuration.getHttpHeaders() != null && !this.configuration.getHttpHeaders().isEmpty()) {
-            notificationRequest.putHeaders(this.configuration.getHttpHeaders().stream()
-                    .collect(MultiMap::caseInsensitiveMultiMap,
-                            (map, header) -> map.add(header.getName(), header.getValue()),
-                            MultiMap::addAll));
+            MultiMap headers = MultiMap.caseInsensitiveMultiMap();
+            for (var header : this.configuration.getHttpHeaders()) {
+                try {
+                    String value = request.getTemplateEngine().eval(header.getValue(), String.class).blockingGet();
+                    headers.add(header.getName(), value);
+                } catch (ExpressionEvaluationException e) {
+                    LOGGER.error("Failed to evaluate header '{}'", header.getName(), e);
+                    return Single.error(new DeviceNotificationException("Failed to evaluate header"));
+                }
+            }
+            notificationRequest.putHeaders(headers);
         }
         if (hasText(this.configuration.getHeaderValue())) {
             notificationRequest

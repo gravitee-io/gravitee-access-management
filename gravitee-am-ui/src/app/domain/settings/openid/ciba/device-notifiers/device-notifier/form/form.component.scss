@@ -5,3 +5,16 @@
 :host ::ng-deep mat-error {
   padding-left: 12px;
 }
+
+:host {
+  ::ng-deep {
+    fieldset {
+      flex-layout-root-widget {
+        display: initial !important;
+        max-height: 100% !important;
+        box-sizing: border-box !important;
+        flex-flow: column nowrap !important;
+      }
+    }
+  }
+}

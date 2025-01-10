@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.ciba.ad.impl;
 
+import io.gravitee.am.authdevice.notifier.api.model.ADNotificationRequest;
+import io.gravitee.am.authdevice.notifier.api.model.ADNotificationResponse;
 import io.gravitee.am.gateway.handler.ciba.ad.AuthenticationDeviceNotifier;
-import io.gravitee.am.gateway.handler.ciba.ad.model.ADNotificationRequest;
-import io.gravitee.am.gateway.handler.ciba.ad.model.ADNotificationResponse;
 import io.gravitee.am.gateway.handler.ciba.exception.DeviceNotificationException;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.http.WebClientBuilder;
@@ -103,7 +103,7 @@ public class AuthenticationDeviceNotifierImpl implements AuthenticationDeviceNot
 
                     final JsonObject result = response.bodyAsJsonObject();
                     if ( !request.getTransactionId().equals(result.getString(TRANSACTION_ID)) || !request.getState().equals(result.getString(STATE))) {
-                        LOGGER.warn("Device notification response contains invalid tid or state", request.getTransactionId(), response.statusCode());
+                        LOGGER.warn("Device notification response contains invalid tid '{}' or state '{}'", request.getTransactionId(), request.getState());
                         throw new DeviceNotificationException("Invalid device notification response");
                     }
 
