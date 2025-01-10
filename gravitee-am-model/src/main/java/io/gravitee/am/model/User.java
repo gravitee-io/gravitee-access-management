@@ -252,6 +252,7 @@ public class User implements IUser {
         this.forceResetPassword = other.forceResetPassword;
     }
 
+
     public UserId getFullId() {
         return new UserId(id, externalId, source);
     }
@@ -546,5 +547,17 @@ public class User implements IUser {
         setAccountNonLocked(true);
         setAccountLockedAt(null);
         setAccountLockedUntil(null);
+    }
+
+    public boolean isDisabled(){
+        return Boolean.FALSE.equals(enabled);
+    }
+
+    public static User simpleUser(String userId, ReferenceType referenceType, String referenceId) {
+        User user = new User();
+        user.setId(userId);
+        user.setReferenceType(referenceType);
+        user.setReferenceId(referenceId);
+        return user;
     }
 }

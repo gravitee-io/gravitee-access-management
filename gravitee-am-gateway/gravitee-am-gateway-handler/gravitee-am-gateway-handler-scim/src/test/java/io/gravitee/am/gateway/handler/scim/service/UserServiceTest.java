@@ -43,6 +43,7 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.UserInvalidException;
@@ -50,6 +51,7 @@ import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.gravitee.am.service.validators.user.UserValidatorImpl;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -152,6 +154,8 @@ public class UserServiceTest {
 
     private final static String DOMAIN_ID = "domain";
 
+    @Mock
+    private TokenService tokenService;
 
     @Before
     public void setUp() {
@@ -380,7 +384,55 @@ public class UserServiceTest {
         verify(userProvider).create(any());
         verify(userProvider, never()).update(anyString(), any());
         verify(userProvider, never()).updatePassword(any(), eq(PASSWORD));
+        verify(tokenService, never()).deleteByUser(any());
         assertTrue(userCaptor.getValue().isEnabled());
+    }
+
+    @Test
+    public void shouldUpdateUser_status_disabled_and_tokens_revoked() {
+        io.gravitee.am.model.User existingUser = new io.gravitee.am.model.User();
+        existingUser.setId("user-id");
+        existingUser.setSource("user-idp");
+        existingUser.setUsername("username");
+        existingUser.setReferenceType(ReferenceType.DOMAIN);
+        existingUser.setReferenceId("DEFAULT");
+
+        User scimUser = mock(User.class);
+        when(scimUser.getPassword()).thenReturn(PASSWORD);
+        when(scimUser.isActive()).thenReturn(false);
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.create(any())).thenReturn(Single.just(idpUser));
+
+        Set<Role> roles = new HashSet<>();
+        Role role1 = new Role();
+        role1.setId("role-1");
+        Role role2 = new Role();
+        role2.setId("role-2");
+        roles.add(role1);
+        roles.add(role2);
+
+        when(userRepository.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
+        ArgumentCaptor<io.gravitee.am.model.User> userCaptor = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
+        when(userRepository.update(any(), any())).thenReturn(Single.just(existingUser));
+        when(groupService.findByMember(existingUser.getId())).thenReturn(Flowable.empty());
+        when(passwordService.isValid(eq(PASSWORD), any(), any())).thenReturn(true);
+
+        TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null, null).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        verify(userRepository, times(1)).update(userCaptor.capture(), any());
+        verify(userProvider).create(any());
+        verify(userProvider, never()).update(anyString(), any());
+        verify(userProvider, never()).updatePassword(any(), eq(PASSWORD));
+        verify(tokenService, times(1)).deleteByUser(any());
+        assertFalse(userCaptor.getValue().isEnabled());
     }
 
     @Test
@@ -566,6 +618,7 @@ public class UserServiceTest {
         when(userRepository.findById(userId)).thenReturn(Maybe.just(patchedUser));
         when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
         doAnswer(invocation -> {
             io.gravitee.am.model.User userToUpdate = invocation.getArgument(0);
             Assert.assertTrue(userToUpdate.getDisplayName().equals("my user 2"));
@@ -620,6 +673,7 @@ public class UserServiceTest {
         when(userRepository.findById(userId)).thenReturn(Maybe.just(patchedUser));
         when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
         doAnswer(invocation -> {
             io.gravitee.am.model.User userToUpdate = invocation.getArgument(0);
             Assert.assertTrue(userToUpdate.getAdditionalInformation().containsKey("customClaim"));

@@ -63,7 +63,7 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 @Tags({@Tag(name= "user")})
-public class UsersResource extends AbstractUsersResource {
+public class OrganizationUsersResource extends AbstractUsersResource {
 
     @Context
     private ResourceContext resourceContext;
@@ -139,8 +139,8 @@ public class UsersResource extends AbstractUsersResource {
     }
 
     @Path("{user}")
-    public UserResource getUserResource() {
-        return resourceContext.getResource(UserResource.class);
+    public OrganizationUserResource getUserResource() {
+        return resourceContext.getResource(OrganizationUserResource.class);
     }
 
     private Single<User> filterUserInfos(Map<Permission, Set<Acl>> organizationPermissions, User user) {
