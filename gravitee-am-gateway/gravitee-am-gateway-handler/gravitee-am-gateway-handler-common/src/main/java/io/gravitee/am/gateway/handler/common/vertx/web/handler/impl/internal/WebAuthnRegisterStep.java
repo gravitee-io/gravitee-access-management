@@ -17,12 +17,12 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.dataplane.CredentialService;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -41,9 +41,9 @@ public class WebAuthnRegisterStep extends AuthenticationFlowStep {
 
     private final Domain domain;
     private final FactorManager factorManager;
-    private final CredentialService credentialService;
+    private final CredentialGatewayService credentialService;
 
-    public WebAuthnRegisterStep(Domain domain, Handler<RoutingContext> wrapper, FactorManager factorManager, CredentialService credentialService) {
+    public WebAuthnRegisterStep(Domain domain, Handler<RoutingContext> wrapper, FactorManager factorManager, CredentialGatewayService credentialService) {
         super(wrapper);
         this.domain = domain;
         this.factorManager = factorManager;

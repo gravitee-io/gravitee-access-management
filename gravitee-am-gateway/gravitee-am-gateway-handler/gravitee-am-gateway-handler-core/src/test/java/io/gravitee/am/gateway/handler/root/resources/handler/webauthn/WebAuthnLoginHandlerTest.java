@@ -19,6 +19,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginFailureHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
@@ -28,7 +29,6 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuthenticationFlowContextService;
-import io.gravitee.am.service.dataplane.CredentialService;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
@@ -73,7 +73,7 @@ public class WebAuthnLoginHandlerTest extends RxWebTestBase {
     @Mock
     private FactorManager factorManager;
     @Mock
-    private CredentialService credentialService;
+    private CredentialGatewayService credentialService;
     @Mock
     private UserAuthenticationManager userAuthenticationManager;
     @Mock

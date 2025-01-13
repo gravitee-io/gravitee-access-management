@@ -23,6 +23,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
@@ -38,7 +39,6 @@ import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.reactivex.rxjava3.core.Completable;
@@ -66,8 +66,8 @@ import static io.gravitee.am.common.utils.ConstantKeys.USER_LOGIN_COMPLETED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnAuthenticatorIntegrity.authIntegrity;
 import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
-import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
-import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
+import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveIp;
+import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveUserAgent;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -78,7 +78,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnHandler.class);
     private FactorManager factorManager;
     private UserService userService;
-    protected CredentialService credentialService;
+    protected CredentialGatewayService credentialService;
     private UserAuthenticationManager userAuthenticationManager;
     protected Domain domain;
 
@@ -97,7 +97,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
         this.userService = userService;
     }
 
-    public void setCredentialService(CredentialService credentialService) {
+    public void setCredentialService(CredentialGatewayService credentialService) {
         this.credentialService = credentialService;
     }
 
