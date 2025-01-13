@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service.impl;
 
 import com.google.common.base.Strings;
+import io.gravitee.am.business.UpdateUsernameOrganizationRule;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.management.service.OrganizationUserService;
@@ -27,6 +28,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
 import io.gravitee.am.service.exception.InvalidParameterException;
@@ -35,6 +37,7 @@ import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.am.service.exception.NotImplementedException;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserInvalidException;
+import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewAccountAccessToken;
 import io.gravitee.am.service.model.NewOrganizationUser;
@@ -49,12 +52,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.Optional;
 import java.util.function.BiFunction;
 
 import static io.gravitee.am.management.service.impl.IdentityProviderManagerImpl.IDP_GRAVITEE;
-import static org.springframework.util.StringUtils.hasText;
-import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static io.gravitee.am.model.ReferenceType.ORGANIZATION;
+import static org.springframework.util.StringUtils.hasText;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -274,8 +277,47 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
 
     @Override
     public Single<User> delete(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal) {
-        return super.delete(referenceType, referenceId, userId, principal)
+        return getUserService().findById(referenceType, referenceId, userId)
+                .flatMap(user -> identityProviderManager.getUserProvider(user.getSource())
+                        .map(Optional::ofNullable)
+                        .flatMapCompletable(optUserProvider -> {
+                            // no user provider found, continue
+                            if (optUserProvider.isEmpty()) {
+                                return Completable.complete();
+                            }
+                            // user has never been created in the identity provider, continue
+                            if (user.getExternalId() == null || user.getExternalId().isEmpty()) {
+                                return Completable.complete();
+                            }
+                            return optUserProvider.get().delete(user.getExternalId())
+                                    .onErrorResumeNext(ex -> {
+                                        if (ex instanceof UserNotFoundException) {
+                                            // idp user does not exist, continue
+                                            return Completable.complete();
+                                        }
+                                        return Completable.error(ex);
+                                    });
+                        })
+                        .andThen(getUserService().delete(userId).ignoreElement())
+                        // remove from memberships if user is an administrative user
+                        .andThen(membershipService.findByMember(userId, MemberType.USER)
+                                .flatMapCompletable(membership -> membershipService.delete(membership.getId())))
+                        .andThen(passwordHistoryService.deleteByUser(userId))
+                        .toSingleDefault(user))
+                .doOnSuccess(u -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(u)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).reference(new Reference(referenceType, referenceId)).throwable(throwable)))
                 .flatMap(user -> getUserService().revokeUserAccessTokens(user.getReferenceType(), user.getReferenceId(), user.getId()).toSingleDefault(user));
+    }
+
+    @Override
+    public Single<User> updateUsername(ReferenceType referenceType, String referenceId, String id, String
+            username, io.gravitee.am.identityprovider.api.User principal) {
+        return new UpdateUsernameOrganizationRule(userValidator,
+                getUserService(),
+                auditService)
+                .updateUsername(username, principal,
+                        (User user) -> identityProviderManager.getUserProvider(user.getSource()).switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(user.getSource()))),
+                        () -> getUserService().findById(referenceType, referenceId, id));
     }
 
     @Override

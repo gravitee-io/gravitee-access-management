@@ -33,6 +33,7 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 public interface UserService extends CommonUserService {
+    Single<User> updateUsername(Domain domain, String id, String username, io.gravitee.am.identityprovider.api.User principal);
 
     Single<Page<User>> findByDomain(String domain, int page, int size);
 
@@ -75,5 +76,6 @@ public interface UserService extends CommonUserService {
     default Single<User> revokeRoles(ReferenceType referenceType, String referenceId, String userId, List<String> roles) {
         return revokeRoles(referenceType, referenceId, userId, roles, null);
     }
+    Single<User> delete(Domain domain, String userId, io.gravitee.am.identityprovider.api.User principal);
 
 }

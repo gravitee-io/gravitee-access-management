@@ -27,7 +27,7 @@ import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.LoginAttemptService;
-import io.gravitee.am.service.UserActivityService;
+import io.gravitee.am.service.dataplane.UserActivityService;
 import io.reactivex.rxjava3.core.Maybe;
 import org.junit.Before;
 import org.junit.Test;

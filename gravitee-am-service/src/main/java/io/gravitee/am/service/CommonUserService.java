@@ -63,7 +63,5 @@ public interface CommonUserService {
 
     Single<User> update(User user);
 
-    Single<User> delete(String userId);
-
     Single<User> enhance(User user);
 }

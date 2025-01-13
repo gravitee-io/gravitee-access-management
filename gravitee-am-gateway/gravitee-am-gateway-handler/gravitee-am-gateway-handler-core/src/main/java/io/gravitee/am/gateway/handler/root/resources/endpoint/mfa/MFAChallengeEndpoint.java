@@ -34,7 +34,6 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.Reference;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
@@ -48,10 +47,10 @@ import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.EnrolledFactorProperties;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.VerifyAttemptService;
+import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.exception.FactorNotFoundException;
 import io.gravitee.am.service.exception.MFAValidationAttemptException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -726,7 +725,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         credential.setUserAgent(RequestUtils.userAgent(request));
         credential.setIpAddress(RequestUtils.remoteAddress(request));
 
-        credentialService.update(ReferenceType.DOMAIN, domain.getId(), credentialId, credential)
+        credentialService.update(domain, credentialId, credential)
                 .subscribe(
                         updatedCredential -> handler.handle(Future.succeededFuture(updatedCredential)),
                         error -> handler.handle(Future.failedFuture(error))

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.service.impl.user.activity;
+package io.gravitee.am.service.dataplane.user.activity;
 
 import io.gravitee.am.service.impl.user.activity.configuration.UserActivityConfiguration;
 import io.gravitee.am.service.impl.user.activity.configuration.UserActivityConfiguration.Algorithm;

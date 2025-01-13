@@ -28,7 +28,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria.Builder;
 import io.gravitee.am.service.LoginAttemptService;
-import io.gravitee.am.service.UserActivityService;
+import io.gravitee.am.service.dataplane.UserActivityService;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
