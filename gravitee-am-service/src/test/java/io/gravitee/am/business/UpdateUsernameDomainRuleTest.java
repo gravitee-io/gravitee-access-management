@@ -28,8 +28,8 @@ import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -72,14 +72,12 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @ExtendWith(MockitoExtension.class)
-public class UpdateUsernameRuleTest {
+public class UpdateUsernameDomainRuleTest {
 
     public static final String DOMAIN_ID = "domain#1";
     public static final String PASSWORD = "password";
     public static final String NEW_USERNAME = "newUsername";
     public static final String USERNAME = "username";
-
-    private UpdateUsernameRule cut;
 
     @Mock
     private io.gravitee.am.service.UserService commonUserService;
@@ -96,7 +94,7 @@ public class UpdateUsernameRuleTest {
     @Mock
     private UserProvider userProvider;
 
-    private UpdateUsernameRule rule;
+    private UpdateUsernameDomainRule rule;
 
     private UserValidator userValidator = new UserValidatorImpl(
             NAME_STRICT_PATTERN,
@@ -107,7 +105,7 @@ public class UpdateUsernameRuleTest {
 
     @BeforeEach
     public void initRule() {
-        this.rule = new UpdateUsernameRule(userValidator, commonUserService, auditService, credentialService, loginAttemptService);
+        this.rule = new UpdateUsernameDomainRule(userValidator, commonUserService, auditService, credentialService, loginAttemptService);
     }
 
     @Test
@@ -125,7 +123,7 @@ public class UpdateUsernameRuleTest {
         when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
                 .thenReturn(Maybe.just(user));
 
-        var observer = rule.updateUsername(NEW_USERNAME, null, (User user1) -> Single.just(userProvider), () -> Single.just(user)).test();
+        var observer = rule.updateUsername(domain, NEW_USERNAME, null, (User user1) -> Single.just(userProvider), () -> Single.just(user)).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidUserException.class);
@@ -148,7 +146,7 @@ public class UpdateUsernameRuleTest {
         when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
                 .thenReturn(Maybe.empty());
 
-        var observer = rule.updateUsername(NEW_USERNAME, null, (User user1) -> Single.error(new UserProviderNotFoundException("")), () -> Single.just(user)).test();
+        var observer = rule.updateUsername(domain, NEW_USERNAME, null, (User user1) -> Single.error(new UserProviderNotFoundException("")), () -> Single.just(user)).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(UserProviderNotFoundException.class);
@@ -173,7 +171,7 @@ public class UpdateUsernameRuleTest {
         final UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.findByUsername(anyString())).thenReturn(Maybe.error(new UserNotFoundException("Could not find user")));
 
-        var observer = rule.updateUsername(NEW_USERNAME, null, (User user1) -> Single.just(userProvider), () -> Single.just(user)).test();
+        var observer = rule.updateUsername(domain, NEW_USERNAME, null, (User user1) -> Single.just(userProvider), () -> Single.just(user)).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(UserNotFoundException.class);
@@ -202,7 +200,7 @@ public class UpdateUsernameRuleTest {
         when(userProvider.findByUsername(anyString())).thenReturn(Maybe.just(defaultUser));
         when(userProvider.updateUsername(any(), anyString())).thenReturn(Single.error(new InvalidUserException("Could not update find user")));
 
-        var observer = rule.updateUsername(NEW_USERNAME, null, (User user1) -> Single.just(userProvider), () -> Single.just(user)).test();
+        var observer = rule.updateUsername(domain, NEW_USERNAME, null, (User user1) -> Single.just(userProvider), () -> Single.just(user)).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidUserException.class);
@@ -240,10 +238,10 @@ public class UpdateUsernameRuleTest {
         var credential = new Credential();
         credential.setUsername(user.getUsername());
 
-        when(credentialService.findByUsername(any(), anyString(), eq(user.getUsername()))).thenReturn(Flowable.just(credential));
-        when(credentialService.update(credential)).thenReturn(Single.just(credential));
+        when(credentialService.findByUsername(any(), eq(user.getUsername()))).thenReturn(Flowable.just(credential));
+        when(credentialService.update(domain, credential)).thenReturn(Single.just(credential));
 
-        var observer = rule.updateUsername(NEW_USERNAME, null, (User user1) -> Single.just(userProvider), () -> Single.just(user)).test();
+        var observer = rule.updateUsername(domain, NEW_USERNAME, null, (User user1) -> Single.just(userProvider), () -> Single.just(user)).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(TechnicalManagementException.class);
@@ -251,8 +249,8 @@ public class UpdateUsernameRuleTest {
         verify(commonUserService, times(1)).update(any());
         verify(userProvider, times(2)).updateUsername(any(), anyString());
 
-        verify(credentialService, times(2)).findByUsername(any(), anyString(), eq(USERNAME));
-        verify(credentialService, times(2)).update(any());
+        verify(credentialService, times(2)).findByUsername(any(), eq(USERNAME));
+        verify(credentialService, times(2)).update(any(), any());
     }
 
     @Test
@@ -284,17 +282,17 @@ public class UpdateUsernameRuleTest {
 
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
 
-        when(credentialService.findByUsername(any(), anyString(), eq(user.getUsername()))).thenReturn(Flowable.empty());
+        when(credentialService.findByUsername(any(), eq(user.getUsername()))).thenReturn(Flowable.empty());
 
-        var observer = rule.updateUsername(NEW_USERNAME, null, (User user1) -> Single.just(userProvider), () -> Single.just(user)).test();
+        var observer = rule.updateUsername(domain, NEW_USERNAME, null, (User user1) -> Single.just(userProvider), () -> Single.just(user)).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
 
         verify(commonUserService, times(1)).update(any());
         verify(userProvider, times(1)).updateUsername(any(), anyString());
-        verify(credentialService, times(1)).findByUsername(any(), anyString(), eq(USERNAME));
-        verify(credentialService, never()).update(any());
+        verify(credentialService, times(1)).findByUsername(any(), eq(USERNAME));
+        verify(credentialService, never()).update(any(), any());
         verify(loginAttemptService, times(1)).reset(any());
     }
 
@@ -330,10 +328,10 @@ public class UpdateUsernameRuleTest {
         var credential = new Credential();
         credential.setUsername(user.getUsername());
 
-        when(credentialService.findByUsername(any(), anyString(), eq(user.getUsername()))).thenReturn(Flowable.just(credential));
-        when(credentialService.update(credential)).thenReturn(Single.just(credential));
+        when(credentialService.findByUsername(any(), eq(user.getUsername()))).thenReturn(Flowable.just(credential));
+        when(credentialService.update(domain, credential)).thenReturn(Single.just(credential));
 
-        var observer = rule.updateUsername(NEW_USERNAME, null, (User user1) -> Single.just(userProvider), () -> Single.just(user)).test();
+        var observer = rule.updateUsername(domain, NEW_USERNAME, null, (User user1) -> Single.just(userProvider), () -> Single.just(user)).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
@@ -341,8 +339,8 @@ public class UpdateUsernameRuleTest {
         verify(commonUserService, times(1)).update(any());
         verify(userProvider, times(1)).updateUsername(any(), anyString());
         verify(loginAttemptService, times(1)).reset(any());
-        verify(credentialService, times(1)).findByUsername(any(), anyString(), eq(USERNAME));
-        verify(credentialService, times(1)).update(argThat(argument -> NEW_USERNAME.equals(argument.getUsername())));
+        verify(credentialService, times(1)).findByUsername(any(), eq(USERNAME));
+        verify(credentialService, times(1)).update(any(), argThat(argument -> NEW_USERNAME.equals(argument.getUsername())));
     }
 
     @Test
@@ -382,9 +380,9 @@ public class UpdateUsernameRuleTest {
         when(userProvider.updateUsername(any(), anyString())).thenReturn(Single.just(idpUserUpdated));
 
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
-        when(credentialService.findByUsername(any(), anyString(), eq(user.getUsername()))).thenReturn(Flowable.empty());
+        when(credentialService.findByUsername(any(), eq(user.getUsername()))).thenReturn(Flowable.empty());
 
-        var observer = rule.updateUsername(NEW_USERNAME, null, (User user1) -> Single.just(userProvider), () -> Single.just(user)).test();
+        var observer = rule.updateUsername(domain, NEW_USERNAME, null, (User user1) -> Single.just(userProvider), () -> Single.just(user)).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
@@ -392,7 +390,7 @@ public class UpdateUsernameRuleTest {
         verify(commonUserService, times(1)).update(any());
         verify(userProvider, times(1)).updateUsername(any(), anyString());
         verify(loginAttemptService, times(1)).reset(any());
-        verify(credentialService, times(1)).findByUsername(any(), anyString(), eq(USERNAME));
+        verify(credentialService, times(1)).findByUsername(any(), eq(USERNAME));
 
         assertEquals(1, user.getFactors().size());
         assertNotEquals(

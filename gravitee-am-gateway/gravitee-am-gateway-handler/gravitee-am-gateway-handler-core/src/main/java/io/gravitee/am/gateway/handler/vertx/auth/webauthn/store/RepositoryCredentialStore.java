@@ -23,7 +23,7 @@ import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.dataplane.CredentialService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
@@ -122,18 +122,18 @@ public class RepositoryCredentialStore {
     private Single<List<Credential>> fetchCredentials(Authenticator query){
         if (query.getUserName() != null) {
             if (maxAllowCredentials > 0) {
-                return credentialService.findByUsername(ReferenceType.DOMAIN, domain.getId(), query.getUserName(), maxAllowCredentials).toList();
+                return credentialService.findByUsername(domain, query.getUserName(), maxAllowCredentials).toList();
             } else {
-                return credentialService.findByUsername(ReferenceType.DOMAIN, domain.getId(), query.getUserName()).toList();
+                return credentialService.findByUsername(domain, query.getUserName()).toList();
             }
         } else {
-            return credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), query.getCredID()).toList();
+            return credentialService.findByCredentialId(domain, query.getCredID()).toList();
         }
     }
 
     public Completable store(Authenticator authenticator) {
 
-        return credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), authenticator.getCredID())
+        return credentialService.findByCredentialId(domain, authenticator.getCredID())
                 .toList()
                 .flatMapCompletable(credentials -> {
                     if (credentials.isEmpty()) {
@@ -145,7 +145,7 @@ public class RepositoryCredentialStore {
                                 .flatMapCompletable(credential -> {
                                     credential.setCounter(authenticator.getCounter());
                                     credential.setUpdatedAt(new Date());
-                                    return credentialService.update(credential).ignoreElement();
+                                    return credentialService.update(domain, credential).ignoreElement();
                                 });
                     }
                 });
@@ -169,7 +169,7 @@ public class RepositoryCredentialStore {
         credential.setAttestationStatement(authenticator.getAttestationCertificates().toString());
         credential.setCreatedAt(new Date());
         credential.setUpdatedAt(credential.getCreatedAt());
-        return credentialService.create(credential).ignoreElement();
+        return credentialService.create(domain, credential).ignoreElement();
     }
 
     private Authenticator convert(Credential credential) {

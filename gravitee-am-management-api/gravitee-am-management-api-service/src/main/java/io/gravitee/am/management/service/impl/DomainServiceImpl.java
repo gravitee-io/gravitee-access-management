@@ -70,7 +70,7 @@ import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.ThemeService;
-import io.gravitee.am.service.UserActivityService;
+import io.gravitee.am.service.dataplane.UserActivityService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -572,7 +572,7 @@ public class DomainServiceImpl implements DomainService {
                             // delete users
                             // do not delete one by one for memory consumption issue
                             // https://github.com/gravitee-io/issues/issues/6999
-                            .andThen(userService.deleteByDomain(domainId))
+                            .andThen(userService.deleteByDomain(domain))
                             // delete groups
                             .andThen(groupService.findByDomain(domainId)
                                     .flatMapCompletable(group ->

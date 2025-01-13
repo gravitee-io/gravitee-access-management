@@ -21,11 +21,9 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.Web
 import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.CredentialService;
-import io.reactivex.rxjava3.core.Completable;
+import io.gravitee.am.service.dataplane.CredentialService;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
@@ -44,7 +42,12 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.List;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -81,7 +84,6 @@ public class WebAuthnLoginStepTest {
 
         when(webAuthnCookieService.getRememberDeviceCookieName()).thenReturn("cookieName");
         when(routingContext.request()).thenReturn(httpServerRequest);
-        when(domain.getId()).thenReturn("domainId");
         doNothing().when(authenticationFlowChain).exit(Mockito.any());
         doNothing().when(authenticationFlowChain).doNext(Mockito.any());
     }
@@ -180,7 +182,7 @@ public class WebAuthnLoginStepTest {
         when(routingContext.get(CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(httpServerRequest.getCookie("cookieName")).thenReturn(Cookie.cookie("cookieName", "cookieValue"));
         when(webAuthnCookieService.extractUserIdFromRememberDeviceCookieValue("cookieValue")).thenReturn(Single.just("userId"));
-        when(credentialService.findByUserId(ReferenceType.DOMAIN, "domainId", "userId")).thenReturn(Flowable
+        when(credentialService.findByUserId(domain, "userId")).thenReturn(Flowable
                 .just(mock(Credential.class)));
 
         webAuthnLoginStep.execute(routingContext, authenticationFlowChain);
@@ -199,7 +201,7 @@ public class WebAuthnLoginStepTest {
         when(routingContext.get(CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(httpServerRequest.getCookie("cookieName")).thenReturn(Cookie.cookie("cookieName", "cookieValue"));
         when(webAuthnCookieService.extractUserIdFromRememberDeviceCookieValue("cookieValue")).thenReturn(Single.just("userId"));
-        when(credentialService.findByUserId(ReferenceType.DOMAIN, "domainId", "userId")).thenReturn(Flowable
+        when(credentialService.findByUserId(domain, "userId")).thenReturn(Flowable
                 .empty());
 
         webAuthnLoginStep.execute(routingContext, authenticationFlowChain);

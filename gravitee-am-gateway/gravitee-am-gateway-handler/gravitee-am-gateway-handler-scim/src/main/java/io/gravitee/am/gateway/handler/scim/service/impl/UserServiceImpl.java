@@ -49,6 +49,7 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.dataplane.UserActivityService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.VerifyAttemptService;

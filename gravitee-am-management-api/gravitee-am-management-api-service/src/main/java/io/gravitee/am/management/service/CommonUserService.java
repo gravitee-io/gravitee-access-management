@@ -40,12 +40,4 @@ public interface CommonUserService {
 
     Single<User> updateStatus(ReferenceType referenceType, String referenceId, String id, boolean status, io.gravitee.am.identityprovider.api.User principal);
 
-    Single<User> updateUsername(ReferenceType referenceType, String referenceId, String id, String username, io.gravitee.am.identityprovider.api.User principal);
-
-    default Single<User> delete(ReferenceType referenceType, String referenceId, String userId) {
-        return delete(referenceType, referenceId, userId, null);
-    }
-
-    Single<User> delete(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal);
-
 }
