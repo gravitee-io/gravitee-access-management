@@ -19,6 +19,7 @@ package io.gravitee.am.gateway.handler.risk;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.risk.RiskAssessmentHandler;
 import io.gravitee.am.model.Device;
@@ -29,7 +30,6 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserActivity;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.DeviceService;
-import io.gravitee.am.service.dataplane.UserActivityService;
 import io.gravitee.risk.assessment.api.assessment.Assessment;
 import io.gravitee.risk.assessment.api.assessment.AssessmentMessageResult;
 import io.gravitee.risk.assessment.api.assessment.AssessmentResult;
@@ -76,7 +76,7 @@ public class RiskAssessmentHandlerTest {
     private DeviceService deviceService;
 
     @Mock
-    private UserActivityService userActivityService;
+    private UserActivityGatewayService userActivityService;
 
     @Mock
     private EventBus eventBus;

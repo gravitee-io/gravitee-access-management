@@ -20,6 +20,7 @@ import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
+import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.AuthenticationDeviceNotifier;
 import io.gravitee.am.model.Certificate;
@@ -81,7 +82,6 @@ import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.ThemeService;
-import io.gravitee.am.service.dataplane.UserActivityService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
@@ -241,7 +241,7 @@ public class DomainServiceTest {
     private UserService userService;
 
     @Mock
-    private UserActivityService userActivityService;
+    private UserActivityManagementService userActivityService;
 
     @Mock
     private RoleService roleService;

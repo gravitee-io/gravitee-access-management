@@ -27,6 +27,7 @@ import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
 import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
@@ -70,7 +71,6 @@ import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.ThemeService;
-import io.gravitee.am.service.dataplane.UserActivityService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -161,7 +161,7 @@ public class DomainServiceImpl implements DomainService {
     private DomainReadService domainReadService;
 
     @Autowired
-    private UserActivityService userActivityService;
+    private UserActivityManagementService userActivityService;
 
     @Autowired
     private DomainValidator domainValidator;
