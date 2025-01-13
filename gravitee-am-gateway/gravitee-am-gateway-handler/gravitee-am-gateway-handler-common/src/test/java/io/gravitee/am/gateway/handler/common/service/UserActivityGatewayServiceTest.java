@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.service.dataplane.user.activity;
+package io.gravitee.am.gateway.handler.common.service;
 
 import io.gravitee.am.dataplane.api.repository.UserActivityRepository;
+import io.gravitee.am.gateway.handler.common.service.impl.UserActivityGatewayServiceImpl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserActivity;
 import io.gravitee.am.model.UserActivity.Type;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
-import io.gravitee.am.service.dataplane.UserActivityService;
-import io.gravitee.am.service.dataplane.impl.UserActivityServiceImpl;
 import io.gravitee.am.service.impl.user.activity.configuration.UserActivityConfiguration;
 import io.gravitee.am.service.impl.user.activity.configuration.UserActivityConfiguration.Algorithm;
 import io.reactivex.rxjava3.core.Completable;
@@ -51,11 +50,11 @@ import static org.mockito.Mockito.when;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UserActivityServiceTest {
+public class UserActivityGatewayServiceTest {
 
     private UserActivityRepository userActivityRepository;
     private DataPlaneRegistry dataPlaneRegistry;
-    private UserActivityService userActivityService;
+    private UserActivityGatewayService userActivityService;
     private final Domain domain = new Domain();
 
     @Before
@@ -70,7 +69,7 @@ public class UserActivityServiceTest {
         userActivityRepository = Mockito.mock(UserActivityRepository.class);
         dataPlaneRegistry = Mockito.mock(DataPlaneRegistry.class);
         when(dataPlaneRegistry.getUserActivityRepository(any())).thenReturn(Single.just(userActivityRepository));
-        userActivityService = new UserActivityServiceImpl(configuration, dataPlaneRegistry);
+        userActivityService = new UserActivityGatewayServiceImpl(configuration, dataPlaneRegistry);
     }
 
     @Test
@@ -107,16 +106,6 @@ public class UserActivityServiceTest {
     }
 
     @Test
-    public void must_delete_by_domain() {
-        doReturn(Completable.complete()).when(userActivityRepository).deleteByDomain(anyString());
-        final TestObserver<Void> testObserver = userActivityService.deleteByDomain(domain).test();
-
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-    }
-
-    @Test
     public void must_delete_by_domain_and_key() {
         doReturn(Completable.complete()).when(userActivityRepository).deleteByDomainAndKey(anyString(), anyString());
         final TestObserver<Void> testObserver = userActivityService.deleteByDomainAndUser(domain, "user-id").test();
@@ -130,15 +119,6 @@ public class UserActivityServiceTest {
     public void must_throw_error_when_delete_by_domain_and_key() {
         doReturn(Completable.error(new IllegalArgumentException("An Error"))).when(userActivityRepository).deleteByDomainAndKey(anyString(), anyString());;
         final TestObserver<Void> testObserver = userActivityService.deleteByDomainAndUser(domain, "user-id").test();
-
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-        testObserver.assertError(IllegalArgumentException.class);
-    }
-
-    @Test
-    public void must_throw_error_when_delete_by_domain() {
-        doReturn(Completable.error(new IllegalArgumentException("An Error"))).when(userActivityRepository).deleteByDomain(anyString());
-        final TestObserver<Void> testObserver = userActivityService.deleteByDomain(domain).test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(IllegalArgumentException.class);

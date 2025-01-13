@@ -33,7 +33,6 @@ import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.VerifyAttemptService;
-import io.gravitee.am.service.dataplane.UserActivityService;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -79,9 +78,6 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
 
     @Autowired
     protected MembershipService membershipService;
-
-    @Autowired
-    protected UserActivityService userActivityService;
 
     @Autowired
     protected RateLimiterService rateLimiterService;
