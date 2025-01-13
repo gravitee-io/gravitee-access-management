@@ -29,7 +29,7 @@ import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.LoginAttemptService;
-import io.gravitee.am.service.dataplane.CredentialService;
+import io.gravitee.am.service.dataplane.CredentialCommonService;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -86,7 +86,7 @@ public class UpdateUsernameDomainRuleTest {
     private LoginAttemptService loginAttemptService;
 
     @Mock
-    private CredentialService credentialService;
+    private CredentialCommonService credentialService;
 
     @Mock
     private AuditService auditService;

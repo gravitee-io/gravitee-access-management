@@ -26,7 +26,6 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.AccountAccessTokenRepository;
 import io.gravitee.am.repository.management.api.OrganizationUserRepository;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
-import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -98,9 +97,6 @@ public class OrganizationUserServiceTest {
 
     @Mock
     private AccountAccessTokenRepository accessTokenRepository;
-
-    @Mock
-    private CredentialService credentialService;
 
     @Mock
     private AuditService auditService;

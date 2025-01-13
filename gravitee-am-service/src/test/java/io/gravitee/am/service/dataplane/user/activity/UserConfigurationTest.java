@@ -16,8 +16,8 @@
 
 package io.gravitee.am.service.dataplane.user.activity;
 
-import io.gravitee.am.service.impl.user.activity.configuration.UserActivityConfiguration;
-import io.gravitee.am.service.impl.user.activity.configuration.UserActivityConfiguration.Algorithm;
+import io.gravitee.am.service.dataplane.user.activity.configuration.UserActivityConfiguration;
+import io.gravitee.am.service.dataplane.user.activity.configuration.UserActivityConfiguration.Algorithm;
 import org.junit.Test;
 
 import java.time.temporal.ChronoUnit;

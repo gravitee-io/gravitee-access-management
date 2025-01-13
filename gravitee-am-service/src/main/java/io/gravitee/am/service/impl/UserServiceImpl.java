@@ -28,6 +28,7 @@ import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.dataplane.CredentialCommonService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -69,6 +70,10 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
 
     @Autowired
     private UserEnhancer userEnhancer;
+
+    @Autowired
+    @Lazy
+    protected CredentialCommonService credentialService;
 
     @Override
     protected UserRepository getUserRepository() {

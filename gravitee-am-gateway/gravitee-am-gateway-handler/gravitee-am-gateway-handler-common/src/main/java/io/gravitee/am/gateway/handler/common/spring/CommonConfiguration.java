@@ -55,6 +55,10 @@ import io.gravitee.am.gateway.handler.common.role.impl.DefaultRoleManager;
 import io.gravitee.am.gateway.handler.common.role.impl.InMemoryRoleManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.ruleengine.SpELRuleEngine;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
+import io.gravitee.am.gateway.handler.common.service.impl.CredentialGatewayServiceImpl;
+import io.gravitee.am.gateway.handler.common.service.impl.UserActivityGatewayServiceImpl;
 import io.gravitee.am.gateway.handler.common.spring.web.WebConfiguration;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.gateway.handler.common.user.UserStore;
@@ -77,8 +81,10 @@ import io.gravitee.am.gateway.handler.context.spring.ContextConfiguration;
 import io.gravitee.am.gateway.policy.spring.PolicyConfiguration;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
+import io.gravitee.am.service.dataplane.user.activity.configuration.UserActivityConfiguration;
 import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.gravitee.node.api.cache.CacheManager;
 import io.vertx.ext.web.client.WebClientOptions;
@@ -326,5 +332,13 @@ public class CommonConfiguration {
         return new UserEnhancerFacade(groupManager, roleManager);
     }
 
+    @Bean
+    public CredentialGatewayService credentialGatewayService() {
+        return new CredentialGatewayServiceImpl();
+    }
 
+    @Bean
+    public UserActivityGatewayService userActivityGatewayService(UserActivityConfiguration configuration, DataPlaneRegistry dataPlaneRegistry) {
+        return new UserActivityGatewayServiceImpl(configuration, dataPlaneRegistry);
+    }
 }

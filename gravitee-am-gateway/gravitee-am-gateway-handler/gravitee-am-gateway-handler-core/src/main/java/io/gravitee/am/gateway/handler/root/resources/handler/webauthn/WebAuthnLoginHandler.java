@@ -19,6 +19,7 @@ import io.gravitee.am.common.exception.authentication.AccountDeviceIntegrityExce
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.utils.Tuple;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
@@ -27,7 +28,6 @@ import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Completable;
@@ -66,7 +66,7 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
                                 FactorManager factorManager,
                                 Domain domain,
                                 WebAuthn webAuthn,
-                                CredentialService credentialService,
+                                CredentialGatewayService credentialService,
                                 UserAuthenticationManager userAuthenticationManager) {
         setUserService(userService);
         setFactorManager(factorManager);

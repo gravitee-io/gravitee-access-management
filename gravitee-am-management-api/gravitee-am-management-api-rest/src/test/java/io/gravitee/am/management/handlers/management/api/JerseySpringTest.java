@@ -46,6 +46,7 @@ import io.gravitee.am.management.service.PolicyPluginService;
 import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.management.service.ResourcePluginService;
 import io.gravitee.am.management.service.TagService;
+import io.gravitee.am.management.service.dataplane.CredentialManagementService;
 import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
@@ -76,7 +77,6 @@ import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.validators.email.UserEmail;
@@ -234,7 +234,7 @@ public abstract class JerseySpringTest {
     protected EntrypointService entrypointService;
 
     @Autowired
-    protected CredentialService credentialService;
+    protected CredentialManagementService credentialService;
 
     @Autowired
     protected FlowService flowService;
@@ -515,8 +515,8 @@ public abstract class JerseySpringTest {
         }
 
         @Bean
-        public CredentialService credentialService() {
-            return mock(CredentialService.class);
+        public CredentialManagementService credentialService() {
+            return mock(CredentialManagementService.class);
         }
 
         @Bean

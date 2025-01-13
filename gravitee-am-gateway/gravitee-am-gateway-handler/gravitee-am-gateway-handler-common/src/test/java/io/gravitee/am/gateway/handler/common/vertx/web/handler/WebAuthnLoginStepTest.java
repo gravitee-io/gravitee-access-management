@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
 import io.gravitee.am.common.exception.jwt.SignatureException;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.WebAuthnLoginStep;
 import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService;
@@ -23,7 +24,6 @@ import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.dataplane.CredentialService;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
@@ -71,7 +71,7 @@ public class WebAuthnLoginStepTest {
     private Domain domain;
 
     @Mock
-    private CredentialService credentialService;
+    private CredentialGatewayService credentialService;
 
     private AuthenticationFlowChain authenticationFlowChain;
 
