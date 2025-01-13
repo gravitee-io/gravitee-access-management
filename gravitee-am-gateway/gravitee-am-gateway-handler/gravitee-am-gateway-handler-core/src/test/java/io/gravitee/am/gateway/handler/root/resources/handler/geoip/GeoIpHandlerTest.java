@@ -17,13 +17,13 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.geoip;
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.MockHttpServerRequest;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.AsyncErrorCollector;
 import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.dataplane.UserActivityService;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.JsonObject;
@@ -63,7 +63,7 @@ public class GeoIpHandlerTest {
     private EventBus eventBus;
 
     @Mock
-    private UserActivityService userActivityService;
+    private UserActivityGatewayService userActivityService;
 
     @Mock
     private Message<Object> message;

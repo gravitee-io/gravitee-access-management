@@ -23,6 +23,7 @@ import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
@@ -122,6 +123,9 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
 
     @Autowired
     protected CredentialService credentialService;
+
+    @Autowired
+    protected UserActivityManagementService userActivityService;
 
     @Override
     protected io.gravitee.am.service.UserService getUserService() {

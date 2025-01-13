@@ -46,6 +46,7 @@ import io.gravitee.am.management.service.PolicyPluginService;
 import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.management.service.ResourcePluginService;
 import io.gravitee.am.management.service.TagService;
+import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
@@ -54,7 +55,6 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.BotDetectionService;
 import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.CertificateService;
-import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.DeviceIdentifierService;
 import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.EmailTemplateService;
@@ -76,7 +76,7 @@ import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.dataplane.UserActivityService;
+import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.validators.email.UserEmail;
@@ -144,7 +144,7 @@ public abstract class JerseySpringTest {
     protected io.gravitee.am.management.service.UserService userService;
 
     @Autowired
-    protected UserActivityService userActivityService;
+    protected UserActivityManagementService userActivityService;
 
     @Autowired
     protected ScopeService scopeService;
@@ -347,8 +347,8 @@ public abstract class JerseySpringTest {
         }
 
         @Bean
-        public UserActivityService userActivityService() {
-            return mock(UserActivityService.class);
+        public UserActivityManagementService userActivityService() {
+            return mock(UserActivityManagementService.class);
         }
 
         @Bean
