@@ -28,7 +28,7 @@ import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CommonUserService;
 import io.gravitee.am.service.LoginAttemptService;
-import io.gravitee.am.service.dataplane.CredentialService;
+import io.gravitee.am.service.dataplane.CredentialCommonService;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -46,8 +46,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static io.gravitee.am.model.ReferenceType.DOMAIN;
-
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -58,7 +56,7 @@ public class UpdateUsernameDomainRule {
     private UserValidator validator;
     private CommonUserService userService;
     private AuditService auditService;
-    private CredentialService credentialService;
+    private CredentialCommonService credentialService;
     private LoginAttemptService loginAttemptService;
 
     public Single<User> updateUsername(Domain domain, String username, io.gravitee.am.identityprovider.api.User principal, Function<User, Single<UserProvider>> userProviderSupplier, Supplier<Single<User>> userSupplier) {
@@ -77,38 +75,36 @@ public class UpdateUsernameDomainRule {
                                     return Single.error(ex);
                                 })
                         ).flatMap(user -> userProviderSupplier.apply(user).flatMap(userProvider -> userProvider.findByUsername(user.getUsername())
-                                        .switchIfEmpty(Single.error(UserNotFoundException::new))
-                                        .flatMap(idpUser -> userProvider.updateUsername(idpUser, username))
-                                        .flatMap(idpUser -> {
-                                            oldUsername.set(user.getUsername());
-                                            return updateCredentialUsername(domain, oldUsername.get(), idpUser);
-                                        })
-                                        .flatMap(idpUser -> {
-                                            user.updateUsername(username);
+                                .switchIfEmpty(Single.error(UserNotFoundException::new))
+                                .flatMap(idpUser -> userProvider.updateUsername(idpUser, username))
+                                .flatMap(idpUser -> {
+                                    oldUsername.set(user.getUsername());
+                                    return updateCredentialUsername(domain, oldUsername.get(), idpUser);
+                                })
+                                .flatMap(idpUser -> {
+                                    user.updateUsername(username);
 
-                                            // Generate a new moving factor based on user id instead of username. Necessary
-                                            // since username can be changed.
-                                            generateNewMovingFactorBasedOnUserId(user);
+                                    // Generate a new moving factor based on user id instead of username. Necessary
+                                    // since username can be changed.
+                                    generateNewMovingFactorBasedOnUserId(user);
 
-                                            return userService.update(user).onErrorResumeNext(ex -> {
-                                                // In the case we cannot update on our side, we rollback the username on the iDP and these credentials
-                                                ((DefaultUser) idpUser).setUsername(oldUsername.get());
-                                                return userProvider.updateUsername(idpUser, idpUser.getUsername())
-                                                        .flatMap(idpUser1 -> updateCredentialUsername(domain, idpUser1.getUsername(), oldUsername.get()))
-                                                        .flatMap(rolledBackUser -> Single.error(ex));
-                                            });
-                                        })
-                                ))
+                                    return userService.update(user).onErrorResumeNext(ex -> {
+                                        // In the case we cannot update on our side, we rollback the username on the iDP and these credentials
+                                        ((DefaultUser) idpUser).setUsername(oldUsername.get());
+                                        return userProvider.updateUsername(idpUser, idpUser.getUsername())
+                                                .flatMap(idpUser1 -> updateCredentialUsername(domain, idpUser1.getUsername(), oldUsername.get()))
+                                                .flatMap(rolledBackUser -> Single.error(ex));
+                                    });
+                                })
+                        ))
                         .doOnSuccess(user1 -> {
                             auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USERNAME_UPDATED).user(user1));
-                            if (DOMAIN.equals(user1.getReferenceType())) {
-                                loginAttemptService.reset(createLoginAttemptCriteria(user1.getReferenceId(), oldUsername.get()))
-                                        .onErrorResumeNext(error -> {
-                                            log.warn("Could not delete login attempt {}", error.getMessage());
-                                            return Completable.complete();
-                                        })
-                                        .subscribe();
-                            }
+                            loginAttemptService.reset(createLoginAttemptCriteria(user1.getReferenceId(), oldUsername.get()))
+                                    .onErrorResumeNext(error -> {
+                                        log.warn("Could not delete login attempt {}", error.getMessage());
+                                        return Completable.complete();
+                                    })
+                                    .subscribe();
                         })
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USERNAME_UPDATED).throwable(throwable)))
         ));
@@ -121,13 +117,12 @@ public class UpdateUsernameDomainRule {
                 .build();
     }
 
-        private Single<io.gravitee.am.identityprovider.api.User> updateCredentialUsername(Domain domain, String oldUsername, io.gravitee.am.identityprovider.api.User user) {
-            return updateCredentialUsername(domain, oldUsername, user.getUsername())
+    private Single<io.gravitee.am.identityprovider.api.User> updateCredentialUsername(Domain domain, String oldUsername, io.gravitee.am.identityprovider.api.User user) {
+        return updateCredentialUsername(domain, oldUsername, user.getUsername())
                 .flatMap(__ -> Single.just(user));
     }
 
-    private Single<String> updateCredentialUsername(Domain domain, String
-            oldUsername, String newUsername) {
+    private Single<String> updateCredentialUsername(Domain domain, String oldUsername, String newUsername) {
         return credentialService.findByUsername(domain, oldUsername)
                 .map(credential -> {
                     credential.setUsername(newUsername);

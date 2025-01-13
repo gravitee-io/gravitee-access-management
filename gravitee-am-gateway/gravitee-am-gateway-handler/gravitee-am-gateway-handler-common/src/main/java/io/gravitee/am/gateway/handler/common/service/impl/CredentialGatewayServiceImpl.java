@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.dataplane.impl;
 
+package io.gravitee.am.gateway.handler.common.service.impl;
+
+
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.UserService;
-import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.CredentialCurrentlyUsedException;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
@@ -30,11 +32,9 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.List;
@@ -44,13 +44,11 @@ import static io.gravitee.am.common.factor.FactorSecurityType.WEBAUTHN_CREDENTIA
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Component
-public class CredentialServiceImpl implements CredentialService {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(CredentialServiceImpl.class);
+@Slf4j
+public class CredentialGatewayServiceImpl implements CredentialGatewayService {
 
     @Lazy
     @Autowired
@@ -63,11 +61,11 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Override
     public Maybe<Credential> findById(Domain domain, String id) {
-        LOGGER.debug("Find credential by ID: {}", id);
+        log.debug("Find credential by ID: {}", id);
         return dataPlaneRegistry.getCredentialRepository(domain)
                 .flatMapMaybe(credentialRepository -> credentialRepository.findById(id))
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a credential using its ID: {}", id, ex);
+                    log.error("An error occurs while trying to find a credential using its ID: {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a credential using its ID: %s", id), ex));
                 });
@@ -75,11 +73,11 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Override
     public Flowable<Credential> findByUserId(Domain domain, String userId) {
-        LOGGER.debug("Find credentials by Domain {} and user id: {}", domain.getId(), userId);
+        log.debug("Find credentials by Domain {} and user id: {}", domain.getId(), userId);
         return dataPlaneRegistry.getCredentialRepository(domain)
                 .flatMapPublisher(credentialRepository -> credentialRepository.findByUserId(DOMAIN, domain.getId(), userId))
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a credential using Domain {} and user id: {}", domain.getId(), userId, ex);
+                    log.error("An error occurs while trying to find a credential using Domain {} and user id: {}", domain.getId(), userId, ex);
                     return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a credential using Domain %s and user id: %s", domain.getId(), userId), ex));
                 });
@@ -87,11 +85,11 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Override
     public Flowable<Credential> findByUsername(Domain domain, String username) {
-        LOGGER.debug("Find credentials by Domain {} and username: {}", domain.getId(), username);
+        log.debug("Find credentials by Domain {} and username: {}", domain.getId(), username);
         return dataPlaneRegistry.getCredentialRepository(domain)
                 .flatMapPublisher(credentialRepository -> credentialRepository.findByUsername(DOMAIN, domain.getId(), username))
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a credential using Domain {} and username: {}", domain.getId(), username, ex);
+                    log.error("An error occurs while trying to find a credential using Domain {} and username: {}", domain.getId(), username, ex);
                     return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a credential using Domain %s and username: %s", domain.getId(), username), ex));
                 });
@@ -99,11 +97,11 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Override
     public Flowable<Credential> findByUsername(Domain domain, String username, int limit) {
-        LOGGER.debug("Find credentials by Domain {} and username: {}, returning {}", domain.getId(), username, limit);
+        log.debug("Find credentials by Domain {} and username: {}, returning {}", domain.getId(), username, limit);
         return dataPlaneRegistry.getCredentialRepository(domain)
                 .flatMapPublisher(credentialRepository -> credentialRepository.findByUsername(DOMAIN, domain.getId(), username, limit))
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a credential using Domain {} and username: {} and limit: {}", domain.getId(), username, limit, ex);
+                    log.error("An error occurs while trying to find a credential using Domain {} and username: {} and limit: {}", domain.getId(), username, limit, ex);
                     return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a credential using Domain %s and username: %s", domain.getId(), username), ex));
                 });
@@ -111,11 +109,11 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Override
     public Flowable<Credential> findByCredentialId(Domain domain, String credentialId) {
-        LOGGER.debug("Find credentials by Domain {} and credential ID: {}", domain.getId(), credentialId);
+        log.debug("Find credentials by Domain {} and credential ID: {}", domain.getId(), credentialId);
         return dataPlaneRegistry.getCredentialRepository(domain)
                 .flatMapPublisher(credentialRepository -> credentialRepository.findByCredentialId(DOMAIN, domain.getId(), credentialId))
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a credential using Domain {} and credential ID: {}", domain.getId(), credentialId, ex);
+                    log.error("An error occurs while trying to find a credential using Domain {} and credential ID: {}", domain.getId(), credentialId, ex);
                     return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a credential using Domain %s and credential ID: %s", domain.getId(), credentialId), ex));
                 });
@@ -123,21 +121,21 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Override
     public Single<Credential> create(Domain domain, Credential credential) {
-        LOGGER.debug("Create a new credential {}", credential);
+        log.debug("Create a new credential {}", credential);
         return dataPlaneRegistry.getCredentialRepository(domain)
                 .flatMap(credentialRepository -> credentialRepository.create(credential))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to create a credential", ex);
+                    log.error("An error occurs while trying to create a credential", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a credential", ex));
                 });
     }
 
     @Override
     public Single<Credential> update(Domain domain, Credential credential) {
-        LOGGER.debug("Update a credential {}", credential);
+        log.debug("Update a credential {}", credential);
         return dataPlaneRegistry.getCredentialRepository(domain)
                 .flatMap(credentialRepository ->
                         // FIXME: check if we really need to do a find here. Maybe useless if already call i higher method call
@@ -148,14 +146,14 @@ public class CredentialServiceImpl implements CredentialService {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to update a credential", ex);
+                    log.error("An error occurs while trying to update a credential", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a credential", ex));
                 });
     }
 
     @Override
     public Single<Credential> update(Domain domain, String credentialId, Credential credential) {
-        LOGGER.debug("Update a credential {}", credentialId);
+        log.debug("Update a credential {}", credentialId);
         return dataPlaneRegistry.getCredentialRepository(domain)
                 .flatMap(credentialRepository ->
                         credentialRepository.findByCredentialId(DOMAIN, domain.getId(), credentialId)
@@ -184,7 +182,7 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Override
     public Completable delete(Domain domain, String id, boolean enforceFactorDelete) {
-        LOGGER.debug("Delete credential {}", id);
+        log.debug("Delete credential {}", id);
         return dataPlaneRegistry.getCredentialRepository(domain)
                 .flatMapCompletable(credentialRepository -> credentialRepository.findById(id)
                         .switchIfEmpty(Maybe.error(new CredentialNotFoundException(id)))
@@ -219,7 +217,7 @@ public class CredentialServiceImpl implements CredentialService {
                             if (ex instanceof AbstractManagementException) {
                                 return Completable.error(ex);
                             }
-                            LOGGER.error("An error occurs while trying to delete credential: {}", id, ex);
+                            log.error("An error occurs while trying to delete credential: {}", id, ex);
                             return Completable.error(new TechnicalManagementException(
                                     String.format("An error occurs while trying to delete credential: %s", id), ex));
                         })
@@ -228,14 +226,14 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Override
     public Completable deleteByUserId(Domain domain, String userId) {
-        LOGGER.debug("Delete credentials by {} {} and user id: {}", domain.getId(), userId);
+        log.debug("Delete credentials by domain {} and user id: {}", domain.getId(), userId);
         return dataPlaneRegistry.getCredentialRepository(domain)
                 .flatMapCompletable(credentialRepository -> credentialRepository.deleteByUserId(DOMAIN, domain.getId(), userId))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     }
-                    LOGGER.error("An error has occurred while trying to delete credentials using {} {} and user id: {}", domain.getId(), userId, ex);
+                    log.error("An error has occurred while trying to delete credentials using {} and user id: {}", domain.getId(), userId, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error has occurred while trying to delete credentials using: %s %s and user id: %s", domain.getId(), userId), ex));
                 });
@@ -243,16 +241,16 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Override
     public Completable deleteByDomain(Domain domain) {
-        LOGGER.debug("Delete credentials by reference {} {}", domain.getId());
+        log.debug("Delete credentials by reference {}", domain.getId());
         return dataPlaneRegistry.getCredentialRepository(domain)
                 .flatMapCompletable(credentialRepository ->  credentialRepository.deleteByReference(DOMAIN, domain.getId()))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     }
-                    LOGGER.error("An error has occurred while trying to delete credentials for {} {}", domain.getId(), ex);
+                    log.error("An error has occurred while trying to delete credentials for domain {}", domain.getId(), ex);
                     return Completable.error(new TechnicalManagementException(
-                            String.format("An error has occurred while trying to delete credentials for: %s %s", domain.getId()), ex));
+                            String.format("An error has occurred while trying to delete credentials for: domain %s", domain.getId()), ex));
                 });
     }
 }

@@ -17,13 +17,14 @@ package io.gravitee.am.gateway.handler.root.resources.handler.webauthn;
 
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.dataplane.CredentialService;
+import io.gravitee.am.service.dataplane.CredentialCommonService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.json.Json;
@@ -54,7 +55,7 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
                                    FactorManager factorManager,
                                    Domain domain,
                                    WebAuthn webAuthn,
-                                   CredentialService credentialService) {
+                                   CredentialGatewayService credentialService) {
         setUserService(userService);
         setFactorManager(factorManager);
         setCredentialService(credentialService);

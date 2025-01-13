@@ -16,13 +16,13 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.reactivex.rxjava3.core.Single;
@@ -51,7 +51,7 @@ public class WebAuthnRegisterSuccessEndpoint extends WebAuthnHandler {
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnRegisterSuccessEndpoint.class);
 
     public WebAuthnRegisterSuccessEndpoint(TemplateEngine templateEngine,
-                                           CredentialService credentialService,
+                                           CredentialGatewayService credentialService,
                                            Domain domain) {
         super(templateEngine);
         setCredentialService(credentialService);
