@@ -17,10 +17,10 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.user.activity;
 
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserActivity.Type;
-import io.gravitee.am.service.dataplane.UserActivityService;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -42,10 +42,10 @@ import static java.util.Optional.ofNullable;
 public class UserActivityHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(UserActivityHandler.class);
-    private final UserActivityService userActivityService;
+    private final UserActivityGatewayService userActivityService;
     private final Domain domain;
 
-    public UserActivityHandler(UserActivityService userActivityService, Domain domain) {
+    public UserActivityHandler(UserActivityGatewayService userActivityService, Domain domain) {
         this.domain = domain;
         this.userActivityService = userActivityService;
     }

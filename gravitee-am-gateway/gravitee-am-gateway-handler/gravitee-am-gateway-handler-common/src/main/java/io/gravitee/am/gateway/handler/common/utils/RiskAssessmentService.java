@@ -19,12 +19,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.model.Device;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserActivity;
 import io.gravitee.am.service.DeviceService;
-import io.gravitee.am.service.dataplane.UserActivityService;
 import io.gravitee.risk.assessment.api.assessment.AssessmentMessage;
 import io.gravitee.risk.assessment.api.assessment.AssessmentMessageResult;
 import io.gravitee.risk.assessment.api.assessment.AssessmentResult;
@@ -63,14 +63,14 @@ public class RiskAssessmentService {
     private static final String RISK_ASSESSMENT_SERVICE = "service:risk-assessment";
 
     private final DeviceService deviceService;
-    private final UserActivityService userActivityService;
+    private final UserActivityGatewayService userActivityService;
     private final ObjectMapper objectMapper;
     private final EventBus eventBus;
     private final RiskAssessmentSettings riskAssessmentSettings;
 
     public RiskAssessmentService(
             DeviceService deviceService,
-            UserActivityService userActivityService,
+            UserActivityGatewayService userActivityService,
             ObjectMapper objectMapper,
             RiskAssessmentSettings riskAssessmentSettings,
             Vertx vertx) {
