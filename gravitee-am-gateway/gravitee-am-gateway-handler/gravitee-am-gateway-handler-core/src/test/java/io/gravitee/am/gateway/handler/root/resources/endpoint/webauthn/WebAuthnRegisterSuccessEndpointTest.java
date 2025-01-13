@@ -16,12 +16,12 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
@@ -59,7 +59,7 @@ public class WebAuthnRegisterSuccessEndpointTest extends RxWebTestBase {
     private TemplateEngine templateEngine;
 
     @Mock
-    private CredentialService credentialService;
+    private CredentialGatewayService credentialService;
 
     @Mock
     private Domain domain;

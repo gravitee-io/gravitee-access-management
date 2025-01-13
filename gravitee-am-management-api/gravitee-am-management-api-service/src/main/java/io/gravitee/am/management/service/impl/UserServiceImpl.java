@@ -23,6 +23,7 @@ import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.management.service.dataplane.CredentialManagementService;
 import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
@@ -46,7 +47,6 @@ import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidPasswordException;
@@ -122,7 +122,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
     protected PasswordPolicyService passwordPolicyService;
 
     @Autowired
-    protected CredentialService credentialService;
+    protected CredentialManagementService credentialService;
 
     @Autowired
     protected UserActivityManagementService userActivityService;

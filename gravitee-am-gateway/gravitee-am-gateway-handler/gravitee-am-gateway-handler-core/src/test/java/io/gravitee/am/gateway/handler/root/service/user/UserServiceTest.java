@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.root.service.user.impl.UserServiceImpl;
 import io.gravitee.am.gateway.handler.root.service.user.model.ForgotPasswordParameters;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
@@ -49,7 +50,6 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.exception.EnforceUserIdentityException;
 import io.gravitee.am.service.exception.PasswordHistoryException;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
@@ -122,7 +122,7 @@ public class UserServiceTest {
     private LoginAttemptService loginAttemptService;
 
     @Mock
-    private CredentialService credentialService;
+    private CredentialGatewayService credentialService;
 
     @Mock
     private TokenService tokenService;
