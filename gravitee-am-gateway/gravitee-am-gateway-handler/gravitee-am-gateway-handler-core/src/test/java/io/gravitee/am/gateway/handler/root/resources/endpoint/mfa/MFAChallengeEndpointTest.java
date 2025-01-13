@@ -36,7 +36,7 @@ import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
-import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.VerifyAttemptService;
@@ -136,7 +136,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         when(factor.is(FactorType.FIDO2)).thenReturn(true);
         when(factorManager.get("factorId")).thenReturn(factorProvider);
         when(factorManager.getFactor("factorId")).thenReturn(factor);
-        when(credentialService.update(any(), any(), any(), any())).thenReturn(Single.just(new Credential()));
+        when(credentialService.update(any(), any(), any())).thenReturn(Single.just(new Credential()));
         when(verifyAttemptService.checkVerifyAttempt(any(), any(), any(), any())).thenReturn(Maybe.empty());
         when(userService.upsertFactor(any(), any(), any())).thenReturn(Single.just(mock(User.class)));
 

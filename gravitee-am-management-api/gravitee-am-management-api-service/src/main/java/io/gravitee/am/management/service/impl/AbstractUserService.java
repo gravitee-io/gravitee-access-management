@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.management.service.impl;
 
-import io.gravitee.am.business.UpdateUsernameRule;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.RandomString;
@@ -28,27 +27,22 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
-import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.CredentialService;
-import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.VerifyAttemptService;
+import io.gravitee.am.service.dataplane.UserActivityService;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
-import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.model.AbstractNewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.validators.user.UserValidator;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
@@ -59,11 +53,9 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.BiFunction;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static io.gravitee.am.model.ReferenceType.DOMAIN;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -99,12 +91,6 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
 
     @Autowired
     protected VerifyAttemptService verifyAttemptService;
-
-    @Autowired
-    protected CredentialService credentialService;
-
-    @Autowired
-    private LoginAttemptService loginAttemptService;
 
     // FIXME : when we will manage to use the DataPlane for the users, this injection may not be useful anymore.
     @Autowired
@@ -182,61 +168,6 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                 })
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).user(user1)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
-    }
-
-    @Override
-    public Single<User> updateUsername(ReferenceType referenceType, String referenceId, String id, String
-            username, io.gravitee.am.identityprovider.api.User principal) {
-        return new UpdateUsernameRule(userValidator,
-                getUserService(),
-                auditService,
-                credentialService,
-                loginAttemptService)
-                .updateUsername(username, principal,
-                        (User user) -> identityProviderManager.getUserProvider(user.getSource()).switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(user.getSource()))),
-                        () -> getUserService().findById(referenceType, referenceId, id));
-    }
-
-    @SuppressWarnings("ReactiveStreamsUnusedPublisher")
-    @Override
-    public Single<User> delete(ReferenceType referenceType, String referenceId, String
-            userId, io.gravitee.am.identityprovider.api.User principal) {
-        return getUserService().findById(referenceType, referenceId, userId)
-                .flatMap(user -> identityProviderManager.getUserProvider(user.getSource())
-                        .map(Optional::ofNullable)
-                        .flatMapCompletable(optUserProvider -> {
-                            // no user provider found, continue
-                            if (optUserProvider.isEmpty()) {
-                                return Completable.complete();
-                            }
-                            // user has never been created in the identity provider, continue
-                            if (user.getExternalId() == null || user.getExternalId().isEmpty()) {
-                                return Completable.complete();
-                            }
-                            return optUserProvider.get().delete(user.getExternalId())
-                                    .onErrorResumeNext(ex -> {
-                                        if (ex instanceof UserNotFoundException) {
-                                            // idp user does not exist, continue
-                                            return Completable.complete();
-                                        }
-                                        return Completable.error(ex);
-                                    });
-                        })
-                        // Delete trace of user activity
-                        .andThen((DOMAIN.equals(referenceType)) ? domainService.findById(referenceId) // FIXME domainService shouldn't be used here, the domain should be provided as parameter instead
-                                .flatMapCompletable(domain -> userActivityService.deleteByDomainAndUser(domain, userId)) : Completable.complete())
-                        // Delete rate limit
-                        .andThen(rateLimiterService.deleteByUser(user))
-                        .andThen(verifyAttemptService.deleteByUser(user))
-                        .andThen(getUserService().delete(userId).ignoreElement())
-                        // remove from memberships if user is an administrative user
-                        .andThen((ReferenceType.ORGANIZATION != referenceType) ? Completable.complete() :
-                                membershipService.findByMember(userId, MemberType.USER)
-                                        .flatMapCompletable(membership -> membershipService.delete(membership.getId())))
-                        .andThen(passwordHistoryService.deleteByUser(userId))
-                        .toSingleDefault(user))
-                .doOnSuccess(u -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(u)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
     }
 
     protected io.gravitee.am.identityprovider.api.User convert(AbstractNewUser newUser) {

@@ -47,4 +47,12 @@ public interface OrganizationUserService extends CommonUserService {
     Single<User> findByAccessToken(String tokenId, String tokenValue);
 
     Maybe<AccountAccessToken> revokeToken(String organizationId, String userId, String tokenId, io.gravitee.am.identityprovider.api.User authenticatedUser);
+
+    default Single<User> delete(ReferenceType referenceType, String referenceId, String userId) {
+        return delete(referenceType, referenceId, userId, null);
+    }
+
+    Single<User> delete(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal);
+
+    Single<User> updateUsername(ReferenceType referenceType, String referenceId, String id, String username, io.gravitee.am.identityprovider.api.User principal);
 }
