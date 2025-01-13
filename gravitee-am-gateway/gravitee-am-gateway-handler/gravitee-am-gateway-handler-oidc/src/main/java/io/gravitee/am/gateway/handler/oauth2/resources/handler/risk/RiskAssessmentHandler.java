@@ -19,6 +19,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.risk;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.model.Device;
 import io.gravitee.am.model.Domain;
@@ -29,7 +30,6 @@ import io.gravitee.am.model.UserActivity.Type;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.DeviceService;
-import io.gravitee.am.service.dataplane.UserActivityService;
 import io.gravitee.risk.assessment.api.assessment.AssessmentMessage;
 import io.gravitee.risk.assessment.api.assessment.AssessmentMessageResult;
 import io.gravitee.risk.assessment.api.assessment.AssessmentResult;
@@ -69,12 +69,12 @@ public class RiskAssessmentHandler implements Handler<RoutingContext> {
     private final DeviceService deviceService;
     private final ObjectMapper objectMapper;
     private final EventBus eventBus;
-    private final UserActivityService userActivityService;
+    private final UserActivityGatewayService userActivityService;
     private final Domain domain;
 
     public RiskAssessmentHandler(
             DeviceService deviceService,
-            UserActivityService userActivityService,
+            UserActivityGatewayService userActivityService,
             EventBus eventBus,
             ObjectMapper objectMapper,
             Domain domain

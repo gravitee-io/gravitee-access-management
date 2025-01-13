@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.handler.loginattempt;
 
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.Domain;
@@ -27,7 +28,6 @@ import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.LoginAttemptService;
-import io.gravitee.am.service.dataplane.UserActivityService;
 import io.reactivex.rxjava3.core.Maybe;
 import org.junit.Before;
 import org.junit.Test;
@@ -62,7 +62,7 @@ public class LoginAttemptHandlerTest {
     private LoginAttemptService loginAttemptService;
 
     @Mock
-    private UserActivityService userActivityService;
+    private UserActivityGatewayService userActivityService;
 
     private Domain domain;
     private Client client;

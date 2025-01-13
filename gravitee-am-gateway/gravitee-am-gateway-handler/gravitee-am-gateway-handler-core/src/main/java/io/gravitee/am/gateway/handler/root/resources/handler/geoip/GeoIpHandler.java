@@ -17,10 +17,10 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.geoip;
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.dataplane.UserActivityService;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
@@ -45,10 +45,10 @@ public class GeoIpHandler implements Handler<RoutingContext> {
     private static final String GEOIP_SERVICE = "service:geoip";
     private final Logger logger = LoggerFactory.getLogger(GeoIpHandler.class);
     private final EventBus eventBus;
-    private final UserActivityService userActivityService;
+    private final UserActivityGatewayService userActivityService;
 
     public GeoIpHandler(
-            UserActivityService userActivityService,
+            UserActivityGatewayService userActivityService,
             EventBus eventBus
     ) {
         this.eventBus = eventBus;

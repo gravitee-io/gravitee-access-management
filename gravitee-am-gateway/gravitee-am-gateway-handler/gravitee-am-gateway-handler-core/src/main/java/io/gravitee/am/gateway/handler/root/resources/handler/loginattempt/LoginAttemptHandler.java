@@ -17,6 +17,7 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.loginattempt;
 
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
@@ -28,7 +29,6 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria.Builder;
 import io.gravitee.am.service.LoginAttemptService;
-import io.gravitee.am.service.dataplane.UserActivityService;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -54,13 +54,13 @@ public class LoginAttemptHandler implements Handler<RoutingContext> {
     private final Domain domain;
     private final IdentityProviderManager identityProviderManager;
     private final LoginAttemptService loginAttemptService;
-    private final UserActivityService userActivityService;
+    private final UserActivityGatewayService userActivityService;
 
     public LoginAttemptHandler(
             Domain domain,
             IdentityProviderManager identityProviderManager,
             LoginAttemptService loginAttemptService,
-            UserActivityService userActivityService
+            UserActivityGatewayService userActivityService
     ) {
         this.domain = domain;
         this.identityProviderManager = identityProviderManager;

@@ -14,34 +14,17 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.service.dataplane;
+package io.gravitee.am.management.service.dataplane;
+
 
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.UserActivity;
-import io.gravitee.am.model.UserActivity.Type;
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Flowable;
-
-import java.time.temporal.ChronoUnit;
-import java.util.Map;
 
 /**
- * @author Rémi SULTAN (remi.sultan at graviteesource.com)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UserActivityService {
-
-    boolean canSaveUserActivity();
-
-    long getRetentionTime();
-
-    ChronoUnit getRetentionUnit();
-
-    Flowable<UserActivity> findByDomainAndTypeAndUserAndLimit(Domain domain, Type type, String userId, int limit);
-
-    Completable save(Domain domain, String userId, UserActivity.Type type, Map<String, Object> data);
-
-    Completable deleteByDomainAndUser(Domain domain, String userId);
-
+public interface UserActivityManagementService {
     Completable deleteByDomain(Domain domain);
+    Completable deleteByDomainAndUser(Domain domain, String userId);
 }
