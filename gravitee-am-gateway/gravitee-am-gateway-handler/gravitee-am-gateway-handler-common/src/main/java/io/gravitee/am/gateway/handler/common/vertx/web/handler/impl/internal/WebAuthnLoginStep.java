@@ -16,11 +16,11 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.dataplane.CredentialService;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.http.Cookie;
@@ -33,10 +33,10 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 public class WebAuthnLoginStep extends AuthenticationFlowStep {
 
     private final Domain domain;
-    private final CredentialService credentialService;
+    private final CredentialGatewayService credentialService;
     private final WebAuthnCookieService webAuthnCookieService;
 
-    public WebAuthnLoginStep(Handler<RoutingContext> handler, Domain domain, CredentialService credentialService, WebAuthnCookieService webAuthnCookieService) {
+    public WebAuthnLoginStep(Handler<RoutingContext> handler, Domain domain, CredentialGatewayService credentialService, WebAuthnCookieService webAuthnCookieService) {
         super(handler);
         this.domain = domain;
         this.credentialService = credentialService;

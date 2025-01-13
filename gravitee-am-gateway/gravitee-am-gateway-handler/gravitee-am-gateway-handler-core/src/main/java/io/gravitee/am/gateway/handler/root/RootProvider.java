@@ -29,6 +29,7 @@ import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
@@ -136,7 +137,6 @@ import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.VerifyAttemptService;
-import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.vertx.core.Handler;
@@ -256,7 +256,7 @@ public class RootProvider extends AbstractProtocolProvider {
     private CertificateManager certificateManager;
 
     @Autowired
-    private CredentialService credentialService;
+    private CredentialGatewayService credentialService;
 
     @Autowired
     private EventManager eventManager;

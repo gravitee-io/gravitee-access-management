@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.RedirectHandler;
@@ -37,7 +38,6 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFARecoveryCodeStep;
 import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.dataplane.CredentialService;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,7 +68,7 @@ public class AuthenticationFlowHandlerImpl implements AuthenticationFlowHandler 
     private FactorManager factorManager;
 
     @Autowired
-    private CredentialService credentialService;
+    private CredentialGatewayService credentialService;
 
     @Autowired
     private WebAuthnCookieService webAuthnCookieService;

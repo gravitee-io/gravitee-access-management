@@ -21,6 +21,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
@@ -37,7 +38,6 @@ import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
-import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.VerifyAttemptService;
@@ -105,7 +105,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
     @Mock
     private Domain domain;
     @Mock
-    private CredentialService credentialService;
+    private CredentialGatewayService credentialService;
     @Mock
     private RateLimiterService rateLimiterService;
     @Mock

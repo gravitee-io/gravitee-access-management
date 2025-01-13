@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.dataplane;
+package io.gravitee.am.management.service.dataplane;
 
 import io.gravitee.am.common.factor.FactorSecurityType;
 import io.gravitee.am.dataplane.api.repository.CredentialRepository;
+import io.gravitee.am.management.service.dataplane.impl.CredentialManagementServiceImpl;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
@@ -30,7 +31,6 @@ import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.CredentialCurrentlyUsedException;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.dataplane.impl.CredentialServiceImpl;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -50,7 +50,6 @@ import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -61,10 +60,10 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
-public class CredentialServiceTest {
+public class CredentialManagementServiceTest {
 
     @InjectMocks
-    private CredentialService credentialService = new CredentialServiceImpl();
+    private CredentialManagementService credentialService = new CredentialManagementServiceImpl();
 
     @Mock
     private CredentialRepository credentialRepository;
@@ -190,32 +189,6 @@ public class CredentialServiceTest {
     }
 
     @Test
-    public void shouldCreate() {
-        Credential newCredential = Mockito.mock(Credential.class);
-        when(credentialRepository.create(any(Credential.class))).thenReturn(Single.just(new Credential()));
-
-        TestObserver testObserver = credentialService.create(domain, newCredential).test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-
-        verify(credentialRepository, times(1)).create(any(Credential.class));
-    }
-
-    @Test
-    public void shouldCreate_technicalException() {
-        Credential newCredential = Mockito.mock(Credential.class);
-        when(credentialRepository.create(any(Credential.class))).thenReturn(Single.error(TechnicalException::new));
-
-        TestObserver<Credential> testObserver = new TestObserver<>();
-        credentialService.create(domain, newCredential).subscribe(testObserver);
-
-        testObserver.assertError(TechnicalManagementException.class);
-        testObserver.assertNotComplete();
-    }
-
-    @Test
     public void shouldUpdate() {
         Credential updateCredential = Mockito.mock(Credential.class);
         when(updateCredential.getId()).thenReturn("my-credential");
@@ -327,75 +300,6 @@ public class CredentialServiceTest {
 
         testObserver.assertError(CredentialCurrentlyUsedException.class);
         verify(credentialRepository, never()).delete("my-credential");
-    }
-    @Test
-    public void shouldUpdate_byCredentialId_idPresent() {
-        Credential updateCredential = new Credential();
-        updateCredential.setId("my-credential-internal-id");
-        updateCredential.setCredentialId("my-credential-id");
-        Credential existingCredential = new Credential();
-        existingCredential.setCredentialId(updateCredential.getCredentialId());
-
-        when(credentialRepository.findByCredentialId(any(), any(), any())).thenReturn(Flowable.just(existingCredential));
-        when(credentialRepository.update(any(Credential.class))).thenReturn(Single.just(new Credential()));
-
-        TestObserver testObserver = credentialService.update(domain, updateCredential.getCredentialId(), updateCredential).test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-
-        verify(credentialRepository, times(1)).findByCredentialId(any(), any(), any());
-        verify(credentialRepository, times(1)).update(any(Credential.class));
-    }
-
-    @Test
-    public void shouldUpdate_byCredentialId_idPresent_filterUserId() {
-        Credential updateCredential = new Credential();
-        updateCredential.setId("my-credential-internal-id");
-        updateCredential.setCredentialId("my-credential-id");
-        updateCredential.setUserId("user01");
-
-        Credential existingCredential = new Credential();
-        existingCredential.setCredentialId(updateCredential.getCredentialId());
-        existingCredential.setUserId("user01");
-
-        Credential existingCredential2 = new Credential();
-        existingCredential2.setCredentialId(updateCredential.getCredentialId());
-        existingCredential2.setUserId("user02");
-
-        when(credentialRepository.findByCredentialId(any(), any(), any())).thenReturn(Flowable.just(existingCredential2, existingCredential));
-        when(credentialRepository.update(any(Credential.class))).thenReturn(Single.just(new Credential()));
-
-        TestObserver testObserver = credentialService.update(domain, updateCredential.getCredentialId(), updateCredential).test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-
-        verify(credentialRepository, times(1)).findByCredentialId(any(), any(), any());
-        verify(credentialRepository, times(1)).update(argThat(cred -> cred.getUserId().equals(existingCredential.getUserId())));
-    }
-
-    @Test
-    public void shouldUpdate_byCredentialId_idMissing() {
-        Credential updateCredential = new Credential();
-        updateCredential.setId("my-credential-internal-id");
-        updateCredential.setCredentialId("my-credential-id");
-        Credential existingCredential = new Credential();
-        existingCredential.setCredentialId(null);
-
-        when(credentialRepository.findByCredentialId(any(), any(), any())).thenReturn(Flowable.just(existingCredential));
-        when(credentialRepository.update(any(Credential.class))).thenReturn(Single.just(new Credential()));
-
-        TestObserver testObserver = credentialService.update(domain, updateCredential.getCredentialId(), updateCredential).test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-
-        verify(credentialRepository, times(1)).findByCredentialId(any(), any(), any());
-        verify(credentialRepository, times(1)).update(any(Credential.class));
     }
 
 }
