@@ -17,12 +17,12 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.user.activity;
 
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserActivity.Type;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.dataplane.UserActivityService;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.rxjava3.core.Completable;
 import org.junit.Before;
@@ -53,7 +53,7 @@ import static org.mockito.Mockito.verify;
 public class UserActivityHandlerTest {
 
     @Mock
-    private UserActivityService userActivityService;
+    private UserActivityGatewayService userActivityService;
 
     private UserActivityHandler userActivityHandler;
     private Client client;

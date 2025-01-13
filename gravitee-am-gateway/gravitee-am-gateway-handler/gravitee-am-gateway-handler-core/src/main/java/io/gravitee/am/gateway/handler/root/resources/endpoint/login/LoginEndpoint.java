@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.login;
 
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
@@ -28,7 +29,6 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
-import io.gravitee.am.service.dataplane.UserActivityService;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.MultiMap;
@@ -70,14 +70,14 @@ public class LoginEndpoint extends AbstractEndpoint implements Handler<RoutingCo
     private final Domain domain;
     private final BotDetectionManager botDetectionManager;
     private final DeviceIdentifierManager deviceIdentifierManager;
-    private final UserActivityService userActivityService;
+    private final UserActivityGatewayService userActivityService;
 
     public LoginEndpoint(
             TemplateEngine templateEngine,
             Domain domain,
             BotDetectionManager botDetectionManager,
             DeviceIdentifierManager deviceIdentifierManager,
-            UserActivityService userActivityService) {
+            UserActivityGatewayService userActivityService) {
         super(templateEngine);
         this.domain = domain;
         this.botDetectionManager = botDetectionManager;
