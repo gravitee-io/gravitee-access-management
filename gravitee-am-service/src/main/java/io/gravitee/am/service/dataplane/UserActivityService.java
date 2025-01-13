@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.service;
+package io.gravitee.am.service.dataplane;
 
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserActivity;

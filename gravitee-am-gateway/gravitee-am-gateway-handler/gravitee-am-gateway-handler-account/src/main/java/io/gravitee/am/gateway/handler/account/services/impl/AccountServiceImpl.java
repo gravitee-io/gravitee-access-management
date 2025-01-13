@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.account.services.impl;
 
-import io.gravitee.am.business.UpdateUsernameRule;
+import io.gravitee.am.business.UpdateUsernameDomainRule;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.JWT;
@@ -43,12 +43,12 @@ import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.InvalidPasswordException;
 import io.gravitee.am.service.exception.InvalidUserException;
@@ -186,11 +186,12 @@ public class AccountServiceImpl implements AccountService {
         if (newUsername == null || StringUtils.isBlank(newUsername.getUsername())) {
             return Single.error(new InvalidUserException("Username is required") );
         }
-        return new UpdateUsernameRule(userValidator,
+        return new UpdateUsernameDomainRule(userValidator,
                 userService,
                 auditService,
                 credentialService,
                 loginAttemptService).updateUsername(
+                        domain,
                         newUsername.getUsername(),
                         principal,
                         (User u) -> identityProviderManager.getUserProvider(u.getSource()).switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(u.getSource()))),
@@ -242,7 +243,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Single<List<Credential>> getWebAuthnCredentials(User user) {
-        return credentialService.findByUserId(ReferenceType.DOMAIN, user.getReferenceId(), user.getId())
+        return credentialService.findByUserId(domain, user.getId())
                 .map(credential -> {
                     removeSensitiveData(credential);
                     return credential;
@@ -252,7 +253,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Single<Credential> getWebAuthnCredential(String id) {
-        return credentialService.findById(id)
+        return credentialService.findById(domain, id)
                 .switchIfEmpty(Single.error(new CredentialNotFoundException(id)))
                 .map(credential -> {
                     removeSensitiveData(credential);
@@ -262,13 +263,13 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Completable removeWebAuthnCredential(String userId, String id, io.gravitee.am.identityprovider.api.User principal) {
-        return credentialService.findById(id)
+        return credentialService.findById(domain, id)
                 .flatMapCompletable(credential -> {
                     if (!userId.equals(credential.getUserId())) {
                         LOGGER.debug("Webauthn credential ID {} does not belong to the user ID {}, skip delete action", id, userId);
                         return Completable.complete();
                     }
-                    return credentialService.delete(id)
+                    return credentialService.delete(domain, id)
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(CredentialAuditBuilder.class).principal(principal).type(EventType.CREDENTIAL_DELETED).credential(credential)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(CredentialAuditBuilder.class).principal(principal).type(EventType.CREDENTIAL_DELETED).reference(new Reference(credential.getReferenceType(), credential.getReferenceId())).credential(credential).throwable(throwable)));
                 });
@@ -276,7 +277,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Single<Credential> updateWebAuthnCredential(String userId, String id, String deviceName, io.gravitee.am.identityprovider.api.User principal) {
-        return credentialService.findById(id)
+        return credentialService.findById(domain, id)
                 .switchIfEmpty(Single.error(new CredentialNotFoundException(id)))
                 .flatMap(credential -> {
                     if (!userId.equals(credential.getUserId())) {
@@ -285,7 +286,7 @@ public class AccountServiceImpl implements AccountService {
                     }
                     credential.setDeviceName(deviceName);
                     credential.setUpdatedAt(new Date());
-                    return credentialService.update(credential)
+                    return credentialService.update(domain, credential)
                             .doOnSuccess(credential1 -> auditService.report(AuditBuilder.builder(CredentialAuditBuilder.class).principal(principal).type(EventType.CREDENTIAL_UPDATED).oldValue(credential).credential(credential1)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(CredentialAuditBuilder.class).principal(principal).type(EventType.CREDENTIAL_UPDATED).reference(new Reference(credential.getReferenceType(), credential.getReferenceId())).throwable(throwable)));
                 });

@@ -257,7 +257,7 @@ public class UserResourceTest extends JerseySpringTest {
 
         final String userId = "userId";
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(Mockito.mock(User.class))).when(userService).delete(eq(ReferenceType.DOMAIN), eq(domainId), eq(userId), any());
+        doReturn(Single.just(Mockito.mock(User.class))).when(userService).delete(any(), eq(userId), any());
         doReturn(Completable.complete()).when(userActivityService).deleteByDomainAndUser(mockDomain, userId);
 
         final Response response = target("domains").path(domainId).path("users").path(userId).request().delete();
@@ -279,7 +279,7 @@ public class UserResourceTest extends JerseySpringTest {
         var usernameEntity = new UsernameEntity();
         usernameEntity.setUsername(username);
         doReturn(Maybe.just(domain)).when(domainService).findById(domainId);
-        doReturn(Single.just(userToUpdate)).when(userService).updateUsername(eq(ReferenceType.DOMAIN), eq(domainId), eq(userId), eq(usernameEntity.getUsername()), any());
+        doReturn(Single.just(userToUpdate)).when(userService).updateUsername(any(), eq(userId), eq(usernameEntity.getUsername()), any());
 
         final var response = target("domains").path(domainId).path("users").path(userId).path("username").request()
                 .property(SET_METHOD_WORKAROUND, true)

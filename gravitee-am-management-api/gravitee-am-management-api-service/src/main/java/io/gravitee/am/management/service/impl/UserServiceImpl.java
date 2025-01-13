@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl;
 
+import io.gravitee.am.business.UpdateUsernameDomainRule;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
@@ -31,6 +32,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.Page;
@@ -43,6 +45,7 @@ import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.TokenService;
+import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidPasswordException;
@@ -117,6 +120,8 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
     @Autowired
     protected PasswordPolicyService passwordPolicyService;
 
+    @Autowired
+    protected CredentialService credentialService;
 
     @Override
     protected io.gravitee.am.service.UserService getUserService() {
@@ -275,12 +280,6 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
     @Override
     public Single<User> update(String domain, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal) {
         return update(DOMAIN, domain, id, updateUser, principal);
-    }
-
-    @Override
-    public Single<User> delete(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal) {
-        return super.delete(referenceType, referenceId, userId, principal)
-                .flatMap(user -> tokenService.deleteByUser(user).toSingleDefault(user));
     }
 
     @Override
@@ -604,4 +603,53 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
         return null;
     }
 
+    @Override
+    public Single<User> updateUsername(Domain domain, String id, String
+            username, io.gravitee.am.identityprovider.api.User principal) {
+        return new UpdateUsernameDomainRule(userValidator,
+                getUserService(),
+                auditService,
+                credentialService,
+                loginAttemptService)
+                .updateUsername(domain, username, principal,
+                        (User user) -> identityProviderManager.getUserProvider(user.getSource()).switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(user.getSource()))),
+                        () -> getUserService().findById(DOMAIN, domain.getId(), id));
+    }
+
+    @SuppressWarnings("ReactiveStreamsUnusedPublisher")
+    @Override
+    public Single<User> delete(Domain domain, String userId, io.gravitee.am.identityprovider.api.User principal) {
+        return getUserService().findById(Reference.domain(domain.getId()), UserId.internal(userId))
+                .flatMap(user -> identityProviderManager.getUserProvider(user.getSource())
+                        .map(Optional::ofNullable)
+                        .flatMapCompletable(optUserProvider -> {
+                            // no user provider found, continue
+                            if (optUserProvider.isEmpty()) {
+                                return Completable.complete();
+                            }
+                            // user has never been created in the identity provider, continue
+                            if (user.getExternalId() == null || user.getExternalId().isEmpty()) {
+                                return Completable.complete();
+                            }
+                            return optUserProvider.get().delete(user.getExternalId())
+                                    .onErrorResumeNext(ex -> {
+                                        if (ex instanceof UserNotFoundException) {
+                                            // idp user does not exist, continue
+                                            return Completable.complete();
+                                        }
+                                        return Completable.error(ex);
+                                    });
+                        })
+                        // Delete trace of user activity
+                        .andThen(userActivityService.deleteByDomainAndUser(domain, userId))
+                        // Delete rate limit
+                        .andThen(rateLimiterService.deleteByUser(user))
+                        .andThen(verifyAttemptService.deleteByUser(user))
+                        .andThen(getUserService().delete(domain, userId).ignoreElement())
+                        .andThen(passwordHistoryService.deleteByUser(userId))
+                        .toSingleDefault(user))
+                .doOnSuccess(u -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(u)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).reference(Reference.domain(domain.getId())).throwable(throwable)))
+                .flatMap(user -> tokenService.deleteByUser(user).toSingleDefault(user));
+    }
 }

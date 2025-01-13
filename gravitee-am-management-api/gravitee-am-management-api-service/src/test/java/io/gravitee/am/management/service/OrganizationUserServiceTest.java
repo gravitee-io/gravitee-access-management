@@ -128,9 +128,7 @@ public class OrganizationUserServiceTest {
         when(commonUserService.delete(anyString())).thenReturn(Single.just(user));
         when(commonUserService.revokeUserAccessTokens(any(), any(), any())).thenReturn(Completable.complete());
         when(membershipService.findByMember(any(), any())).thenReturn(Flowable.empty());
-        when(rateLimiterService.deleteByUser(any())).thenReturn(Completable.complete());
         when(passwordHistoryService.deleteByUser(any())).thenReturn(Completable.complete());
-        when(verifyAttemptService.deleteByUser(any())).thenReturn(Completable.complete());
 
         organizationUserService.delete(ReferenceType.ORGANIZATION, organization, userId)
                 .test()
@@ -164,9 +162,7 @@ public class OrganizationUserServiceTest {
         when(commonUserService.revokeUserAccessTokens(any(), any(), any())).thenReturn(Completable.complete());
         when(membershipService.findByMember(any(), any())).thenReturn(Flowable.just(m1, m2, m3));
         when(membershipService.delete(anyString())).thenReturn(Completable.complete());
-        when(rateLimiterService.deleteByUser(any())).thenReturn(Completable.complete());
         when(passwordHistoryService.deleteByUser(any())).thenReturn(Completable.complete());
-        when(verifyAttemptService.deleteByUser(any())).thenReturn(Completable.complete());
 
         organizationUserService.delete(ReferenceType.ORGANIZATION, organization, userId)
                 .test()
