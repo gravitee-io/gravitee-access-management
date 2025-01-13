@@ -24,6 +24,7 @@ import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
@@ -49,9 +50,7 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.dataplane.UserActivityService;
 import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.AbstractNotFoundException;
@@ -139,7 +138,7 @@ public class UserServiceImpl implements UserService {
     private AuditService auditService;
 
     @Autowired
-    private UserActivityService userActivityService;
+    private UserActivityGatewayService userActivityService;
 
     @Autowired
     private RateLimiterService rateLimiterService;
