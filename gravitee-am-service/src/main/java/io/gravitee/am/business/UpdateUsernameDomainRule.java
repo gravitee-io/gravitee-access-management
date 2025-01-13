@@ -22,13 +22,13 @@ import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.common.utils.MovingFactorUtils;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
-import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CommonUserService;
-import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -54,14 +54,14 @@ import static io.gravitee.am.model.ReferenceType.DOMAIN;
  */
 @Slf4j
 @AllArgsConstructor
-public class UpdateUsernameRule {
+public class UpdateUsernameDomainRule {
     private UserValidator validator;
     private CommonUserService userService;
     private AuditService auditService;
     private CredentialService credentialService;
     private LoginAttemptService loginAttemptService;
 
-    public Single<User> updateUsername(String username, io.gravitee.am.identityprovider.api.User principal, Function<User, Single<UserProvider>> userProviderSupplier, Supplier<Single<User>> userSupplier) {
+    public Single<User> updateUsername(Domain domain, String username, io.gravitee.am.identityprovider.api.User principal, Function<User, Single<UserProvider>> userProviderSupplier, Supplier<Single<User>> userSupplier) {
         final AtomicReference<String> oldUsername = new AtomicReference<>();
         return validator.validateUsername(username).andThen(Single.defer(() ->
                 userSupplier.get().flatMap(user -> userService
@@ -81,7 +81,7 @@ public class UpdateUsernameRule {
                                         .flatMap(idpUser -> userProvider.updateUsername(idpUser, username))
                                         .flatMap(idpUser -> {
                                             oldUsername.set(user.getUsername());
-                                            return updateCredentialUsername(user.getReferenceType(), user.getReferenceId(), oldUsername.get(), idpUser);
+                                            return updateCredentialUsername(domain, oldUsername.get(), idpUser);
                                         })
                                         .flatMap(idpUser -> {
                                             user.updateUsername(username);
@@ -94,7 +94,7 @@ public class UpdateUsernameRule {
                                                 // In the case we cannot update on our side, we rollback the username on the iDP and these credentials
                                                 ((DefaultUser) idpUser).setUsername(oldUsername.get());
                                                 return userProvider.updateUsername(idpUser, idpUser.getUsername())
-                                                        .flatMap(idpUser1 -> updateCredentialUsername(user.getReferenceType(), user.getReferenceId(), idpUser1.getUsername(), oldUsername.get()))
+                                                        .flatMap(idpUser1 -> updateCredentialUsername(domain, idpUser1.getUsername(), oldUsername.get()))
                                                         .flatMap(rolledBackUser -> Single.error(ex));
                                             });
                                         })
@@ -121,18 +121,17 @@ public class UpdateUsernameRule {
                 .build();
     }
 
-    private Single<io.gravitee.am.identityprovider.api.User> updateCredentialUsername(ReferenceType
-                                                                                              referenceType, String referenceId, String oldUsername, io.gravitee.am.identityprovider.api.User user) {
-        return updateCredentialUsername(referenceType, referenceId, oldUsername, user.getUsername())
+        private Single<io.gravitee.am.identityprovider.api.User> updateCredentialUsername(Domain domain, String oldUsername, io.gravitee.am.identityprovider.api.User user) {
+            return updateCredentialUsername(domain, oldUsername, user.getUsername())
                 .flatMap(__ -> Single.just(user));
     }
 
-    private Single<String> updateCredentialUsername(ReferenceType referenceType, String referenceId, String
+    private Single<String> updateCredentialUsername(Domain domain, String
             oldUsername, String newUsername) {
-        return credentialService.findByUsername(referenceType, referenceId, oldUsername)
+        return credentialService.findByUsername(domain, oldUsername)
                 .map(credential -> {
                     credential.setUsername(newUsername);
-                    return credentialService.update(credential).subscribe();
+                    return credentialService.update(domain, credential).subscribe();
                 })
                 .toList()
                 .flatMapMaybe(singles -> Maybe.just(newUsername))

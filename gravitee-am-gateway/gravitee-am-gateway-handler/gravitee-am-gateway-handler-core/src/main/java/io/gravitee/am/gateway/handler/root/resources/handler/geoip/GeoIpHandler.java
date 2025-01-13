@@ -20,7 +20,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.UserActivityService;
+import io.gravitee.am.service.dataplane.UserActivityService;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;

@@ -75,7 +75,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.DeviceService;
-import io.gravitee.am.service.UserActivityService;
+import io.gravitee.am.service.dataplane.UserActivityService;
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.am.service.impl.ApplicationClientSecretService;
 import io.gravitee.common.http.MediaType;

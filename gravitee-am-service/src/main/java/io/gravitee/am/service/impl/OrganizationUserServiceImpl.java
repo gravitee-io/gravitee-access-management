@@ -66,8 +66,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<Organizatio
 
     @Lazy
     @Autowired
-    private AccountAccessTokenRepository accessTokenRepository;
-
+    private AccountAccessTokenRepository accountAccessTokenRepository;
 
     @Autowired
     protected MembershipService membershipService;
@@ -182,14 +181,14 @@ public class OrganizationUserServiceImpl extends AbstractUserService<Organizatio
                 .name(newAccountToken.name())
                 .token(accountAccessTokenEncoder.encode(rawToken))
                 .build();
-        return accessTokenRepository.findByUserId(ORGANIZATION, user.getReferenceId(), user.getId())
+        return accountAccessTokenRepository.findByUserId(ORGANIZATION, user.getReferenceId(), user.getId())
                 .count()
                 .flatMap(count -> {
                     if (count >= tokensLimit) {
                         LOGGER.debug("Limit of account token per user reached ({})", count);
                         return Single.error(new TooManyAccountTokenException(tokensLimit));
                     }
-                    return accessTokenRepository.create(token)
+                    return accountAccessTokenRepository.create(token)
                             .map(created -> created.toCreateResponse(rawToken))
                             .flatMap(i -> prepareTokenToGet(i, true));
                 });
@@ -197,13 +196,13 @@ public class OrganizationUserServiceImpl extends AbstractUserService<Organizatio
 
     @Override
     public Flowable<AccountAccessToken> findUserAccessTokens(String organisationId, String userId) {
-        return accessTokenRepository.findByUserId(ORGANIZATION, organisationId, userId)
+        return accountAccessTokenRepository.findByUserId(ORGANIZATION, organisationId, userId)
                 .flatMap(token -> prepareTokenToGet(token).toFlowable());
     }
 
     @Override
     public Completable revokeUserAccessTokens(ReferenceType referenceType, String referenceId, String userId) {
-        return accessTokenRepository.deleteByUserId(referenceType, referenceId, userId);
+        return accountAccessTokenRepository.deleteByUserId(referenceType, referenceId, userId);
     }
 
     private Single<AccountAccessToken> prepareTokenToGet(AccountAccessToken token) {
@@ -219,7 +218,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<Organizatio
 
     @Override
     public Single<User> findByAccessToken(String tokenId, String tokenValue) {
-        return accessTokenRepository.findById(tokenId)
+        return accountAccessTokenRepository.findById(tokenId)
                 .filter(token -> accountAccessTokenEncoder.matches(tokenValue, token.token()))
                 .flatMapSingle(token -> findById(token.referenceType(), token.referenceId(), token.userId()))
                 .toSingle();
@@ -227,15 +226,26 @@ public class OrganizationUserServiceImpl extends AbstractUserService<Organizatio
 
     @Override
     public Maybe<AccountAccessToken> revokeToken(String organizationId, String userId, String tokenId) {
-        return accessTokenRepository.findById(tokenId)
+        return accountAccessTokenRepository.findById(tokenId)
                 .filter(token -> token.referenceId().equals(organizationId))
                 .filter(token -> token.userId().equals(userId))
-                .flatMap(token -> accessTokenRepository.delete(token.tokenId()).andThen(Maybe.just(token)));
+                .flatMap(token -> accountAccessTokenRepository.delete(token.tokenId()).andThen(Maybe.just(token)));
     }
 
     @Override
     public Single<User> delete(String userId) {
-        return super.delete(userId)
-                .flatMap(user -> accessTokenRepository.deleteByUserId(user.getReferenceType(), user.getReferenceId(), user.getId()).toSingleDefault(user));
+        LOGGER.debug("Delete user {}", userId);
+        return getUserRepository().findById(userId)
+                .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
+                .flatMap(user -> getUserRepository().delete(userId).toSingleDefault(user))
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+
+                    LOGGER.error("An error occurs while trying to delete user: {}", userId, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to delete user: %s", userId), ex));
+                }).flatMap(user -> accountAccessTokenRepository.deleteByUserId(user.getReferenceType(), user.getReferenceId(), user.getId()).toSingleDefault(user));
     }
 }

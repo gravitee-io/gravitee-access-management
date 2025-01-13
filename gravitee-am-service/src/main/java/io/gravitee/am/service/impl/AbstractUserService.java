@@ -26,7 +26,7 @@ import io.gravitee.am.repository.management.api.CommonUserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CommonUserService;
-import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -289,27 +289,6 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
 
                     LOGGER.error("An error occurs while trying to update a user", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a user", ex));
-                });
-    }
-
-    @Override
-    public Single<User> delete(String userId) {
-        LOGGER.debug("Delete user {}", userId);
-
-        return getUserRepository().findById(userId)
-                .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
-                .flatMap(user -> credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())
-                            .flatMapCompletable(credential -> credentialService.delete(credential.getId(), false))
-                            .andThen(getUserRepository().delete(userId))
-                            .toSingleDefault(user))
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
-                    }
-
-                    LOGGER.error("An error occurs while trying to delete user: {}", userId, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to delete user: %s", userId), ex));
                 });
     }
 

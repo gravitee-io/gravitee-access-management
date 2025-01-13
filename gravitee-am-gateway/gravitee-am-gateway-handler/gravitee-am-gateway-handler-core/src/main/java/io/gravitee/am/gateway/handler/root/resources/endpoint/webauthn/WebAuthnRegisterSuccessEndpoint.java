@@ -19,11 +19,10 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnHandler;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.reactivex.rxjava3.core.Single;
@@ -124,13 +123,13 @@ public class WebAuthnRegisterSuccessEndpoint extends WebAuthnHandler {
             return;
         }
 
-        credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), credentialId)
+        credentialService.findByCredentialId(domain, credentialId)
                 .firstElement()
                 .switchIfEmpty(Single.error(new CredentialNotFoundException(credentialId)))
                 .flatMap(credential -> {
                     credential.setDeviceName(deviceName);
                     credential.setUpdatedAt(new Date());
-                    return credentialService.update(credential);
+                    return credentialService.update(domain, credential);
                 })
                 .subscribe(__ -> {
                             // at this stage the registration has been done

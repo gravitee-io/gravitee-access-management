@@ -47,7 +47,7 @@ public class UserCredentialResourceTest extends JerseySpringTest {
         mockUser.setId("user-id");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockCredential)).when(credentialService).findById("credential-id");
+        doReturn(Maybe.just(mockCredential)).when(credentialService).findById(mockDomain, "credential-id");
 
         final Response response = target("domains")
                 .path(domainId)
@@ -71,7 +71,7 @@ public class UserCredentialResourceTest extends JerseySpringTest {
         mockUser.setId("user-id");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Completable.complete()).when(credentialService).delete("credential-id");
+        doReturn(Completable.complete()).when(credentialService).delete(mockDomain, "credential-id");
 
         final Response response = target("domains")
                 .path(domainId)
