@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.service.impl.user.activity.utils;
+package io.gravitee.am.service.dataplane.user.activity.utils;
 
 import io.gravitee.am.service.impl.user.activity.configuration.UserActivityConfiguration.Algorithm;
+import io.gravitee.am.service.impl.user.activity.utils.HashedKeyUtils;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

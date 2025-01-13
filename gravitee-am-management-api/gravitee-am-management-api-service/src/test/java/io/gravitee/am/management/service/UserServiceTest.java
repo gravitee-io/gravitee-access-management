@@ -43,13 +43,13 @@ import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.TokenService;
+import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidPasswordException;
@@ -740,7 +740,9 @@ public class UserServiceTest {
 
     @Test
     void must_not_reset_username_username_invalid() {
-        var observer = userService.updateUsername(DOMAIN, "domain", "any-id", "", null).test();
+        Domain domain = new Domain();
+        domain.setId("domain");
+        var observer = userService.updateUsername(domain, "any-id", "", null).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidUserException.class);
@@ -761,7 +763,7 @@ public class UserServiceTest {
 
         when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
                 .thenReturn(Single.error(new UserNotFoundException(user.getId())));
-        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), NEW_USERNAME, null).test();
+        var observer = userService.updateUsername(domain, user.getId(), NEW_USERNAME, null).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(UserNotFoundException.class);
@@ -786,7 +788,7 @@ public class UserServiceTest {
         when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
                 .thenReturn(Maybe.just(user));
 
-        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), NEW_USERNAME, null).test();
+        var observer = userService.updateUsername(domain, user.getId(), NEW_USERNAME, null).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidUserException.class);
@@ -812,7 +814,7 @@ public class UserServiceTest {
                 .thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
 
-        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), NEW_USERNAME, null).test();
+        var observer = userService.updateUsername(domain, user.getId(), NEW_USERNAME, null).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(UserProviderNotFoundException.class);
@@ -840,7 +842,7 @@ public class UserServiceTest {
         when(userProvider.findByUsername(anyString())).thenReturn(Maybe.error(new UserNotFoundException("Could not find user")));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
 
-        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), NEW_USERNAME, null).test();
+        var observer = userService.updateUsername(domain, user.getId(), NEW_USERNAME, null).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(UserNotFoundException.class);
@@ -873,7 +875,7 @@ public class UserServiceTest {
 
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
 
-        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), NEW_USERNAME, null).test();
+        var observer = userService.updateUsername(domain, user.getId(), NEW_USERNAME, null).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidUserException.class);
@@ -915,10 +917,10 @@ public class UserServiceTest {
         var credential = new Credential();
         credential.setUsername(user.getUsername());
 
-        when(credentialService.findByUsername(any(), anyString(), eq(user.getUsername()))).thenReturn(Flowable.just(credential));
-        when(credentialService.update(credential)).thenReturn(Single.just(credential));
+        when(credentialService.findByUsername(any(), eq(user.getUsername()))).thenReturn(Flowable.just(credential));
+        when(credentialService.update(domain, credential)).thenReturn(Single.just(credential));
 
-        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), NEW_USERNAME, null).test();
+        var observer = userService.updateUsername(domain, user.getId(), NEW_USERNAME, null).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(TechnicalManagementException.class);
@@ -926,8 +928,8 @@ public class UserServiceTest {
         verify(commonUserService, times(1)).update(any());
         verify(userProvider, times(2)).updateUsername(any(), anyString());
 
-        verify(credentialService, times(2)).findByUsername(any(), anyString(), eq(USERNAME));
-        verify(credentialService, times(2)).update(any());
+        verify(credentialService, times(2)).findByUsername(any(), eq(USERNAME));
+        verify(credentialService, times(2)).update(any(), any());
     }
 
     @Test
@@ -963,17 +965,17 @@ public class UserServiceTest {
 
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
 
-        when(credentialService.findByUsername(any(), anyString(), eq(user.getUsername()))).thenReturn(Flowable.empty());
+        when(credentialService.findByUsername(any(), eq(user.getUsername()))).thenReturn(Flowable.empty());
 
-        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), NEW_USERNAME, null).test();
+        var observer = userService.updateUsername(domain, user.getId(), NEW_USERNAME, null).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
 
         verify(commonUserService, times(1)).update(any());
         verify(userProvider, times(1)).updateUsername(any(), anyString());
-        verify(credentialService, times(1)).findByUsername(any(), anyString(), eq(USERNAME));
-        verify(credentialService, never()).update(any());
+        verify(credentialService, times(1)).findByUsername(any(), eq(USERNAME));
+        verify(credentialService, never()).update(any(), any());
         verify(loginAttemptService, times(1)).reset(any());
     }
 
@@ -1013,10 +1015,10 @@ public class UserServiceTest {
         var credential = new Credential();
         credential.setUsername(user.getUsername());
 
-        when(credentialService.findByUsername(any(), anyString(), eq(user.getUsername()))).thenReturn(Flowable.just(credential));
-        when(credentialService.update(credential)).thenReturn(Single.just(credential));
+        when(credentialService.findByUsername(any(), eq(user.getUsername()))).thenReturn(Flowable.just(credential));
+        when(credentialService.update(any(), any())).thenReturn(Single.just(credential));
 
-        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), NEW_USERNAME, null).test();
+        var observer = userService.updateUsername(domain, user.getId(), NEW_USERNAME, null).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
@@ -1024,8 +1026,8 @@ public class UserServiceTest {
         verify(commonUserService, times(1)).update(any());
         verify(userProvider, times(1)).updateUsername(any(), anyString());
         verify(loginAttemptService, times(1)).reset(any());
-        verify(credentialService, times(1)).findByUsername(any(), anyString(), eq(USERNAME));
-        verify(credentialService, times(1)).update(argThat(argument -> NEW_USERNAME.equals(argument.getUsername())));
+        verify(credentialService, times(1)).findByUsername(any(), eq(USERNAME));
+        verify(credentialService, times(1)).update(any(), argThat(argument -> NEW_USERNAME.equals(argument.getUsername())));
     }
 
     @Test
@@ -1069,9 +1071,9 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
 
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
-        when(credentialService.findByUsername(any(), anyString(), eq(user.getUsername()))).thenReturn(Flowable.empty());
+        when(credentialService.findByUsername(any(), eq(user.getUsername()))).thenReturn(Flowable.empty());
 
-        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), NEW_USERNAME, null).test();
+        var observer = userService.updateUsername(domain, user.getId(), NEW_USERNAME, null).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
@@ -1079,7 +1081,7 @@ public class UserServiceTest {
         verify(commonUserService, times(1)).update(any());
         verify(userProvider, times(1)).updateUsername(any(), anyString());
         verify(loginAttemptService, times(1)).reset(any());
-        verify(credentialService, times(1)).findByUsername(any(), anyString(), eq(USERNAME));
+        verify(credentialService, times(1)).findByUsername(any(), eq(USERNAME));
 
         assertEquals(1, user.getFactors().size());
         assertNotEquals(
@@ -1267,9 +1269,9 @@ public class UserServiceTest {
 
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
-        when(credentialService.findByUsername(any(), anyString(), eq(user.getUsername()))).thenReturn(Flowable.empty());
+        when(credentialService.findByUsername(any(), eq(user.getUsername()))).thenReturn(Flowable.empty());
 
-        var observer = userService.updateUsername(DOMAIN, domain.getId(), user.getId(), NEW_USERNAME, null).test();
+        var observer = userService.updateUsername(domain, user.getId(), NEW_USERNAME, null).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();

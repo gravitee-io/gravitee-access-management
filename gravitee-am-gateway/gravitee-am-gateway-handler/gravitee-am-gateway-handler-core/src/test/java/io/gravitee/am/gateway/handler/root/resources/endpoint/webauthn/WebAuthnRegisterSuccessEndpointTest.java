@@ -21,7 +21,7 @@ import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
@@ -243,7 +243,7 @@ public class WebAuthnRegisterSuccessEndpointTest extends RxWebTestBase {
                 })
                 .handler(webAuthnRegisterSuccessEndpoint);
 
-        when(credentialService.findByCredentialId(any(), any(), any())).thenReturn(Flowable.empty());
+        when(credentialService.findByCredentialId(any(), any())).thenReturn(Flowable.empty());
 
         testRequest(HttpMethod.POST,
                 "/webauthn/register/success",
@@ -266,8 +266,8 @@ public class WebAuthnRegisterSuccessEndpointTest extends RxWebTestBase {
                 })
                 .handler(webAuthnRegisterSuccessEndpoint);
 
-        when(credentialService.findByCredentialId(any(), any(), any())).thenReturn(Flowable.just(new Credential()));
-        when(credentialService.update(any())).thenReturn(Single.just(new Credential()));
+        when(credentialService.findByCredentialId(any(), any())).thenReturn(Flowable.just(new Credential()));
+        when(credentialService.update(any(), any())).thenReturn(Single.just(new Credential()));
 
         testRequest(HttpMethod.POST,
                 "/webauthn/register/success",

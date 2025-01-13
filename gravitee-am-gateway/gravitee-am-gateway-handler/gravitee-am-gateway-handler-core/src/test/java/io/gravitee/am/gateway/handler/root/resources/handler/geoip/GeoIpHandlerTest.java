@@ -23,7 +23,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.error.AsyncErrorCol
 import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.UserActivityService;
+import io.gravitee.am.service.dataplane.UserActivityService;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.JsonObject;
