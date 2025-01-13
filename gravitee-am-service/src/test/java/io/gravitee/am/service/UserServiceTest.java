@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.model.Credential;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
@@ -24,6 +25,7 @@ import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.UserRepository;
+import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -58,6 +60,7 @@ import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_P
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_LAX_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_STRICT_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.USERNAME_PATTERN;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
@@ -462,19 +465,22 @@ public class UserServiceTest {
         user.setReferenceType(ReferenceType.DOMAIN);
         user.setReferenceId(DOMAIN);
 
+        Domain domain = new Domain();
+        domain.setId(DOMAIN);
+
         when(userRepository.findById("my-user")).thenReturn(Maybe.just(user));
         when(userRepository.delete("my-user")).thenReturn(Completable.complete());
-        when(credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())).thenReturn(Flowable.empty());
+        when(credentialService.findByUserId(any(), eq(user.getId()))).thenReturn(Flowable.empty());
         when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
 
-        TestObserver testObserver = userService.delete("my-user").test();
+        TestObserver testObserver = userService.delete(domain, "my-user").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
         verify(userRepository, times(1)).delete("my-user");
-        verify(credentialService, never()).delete(anyString());
+        verify(credentialService, never()).delete(any(), anyString());
     }
 
     @Test
@@ -487,20 +493,23 @@ public class UserServiceTest {
         Credential credential = new Credential();
         credential.setId("credential-id");
 
+        Domain domain = new Domain();
+        domain.setId(DOMAIN);
+
         when(userRepository.findById("my-user")).thenReturn(Maybe.just(user));
         when(userRepository.delete("my-user")).thenReturn(Completable.complete());
-        when(credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())).thenReturn(Flowable.just(credential));
-        when(credentialService.delete(credential.getId(), false)).thenReturn(Completable.complete());
+        when(credentialService.findByUserId(domain, user.getId())).thenReturn(Flowable.just(credential));
+        when(credentialService.delete(any(), any(), eq(false))).thenReturn(Completable.complete());
         when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
 
-        TestObserver testObserver = userService.delete("my-user").test();
+        TestObserver testObserver = userService.delete(domain, "my-user").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
         verify(userRepository, times(1)).delete("my-user");
-        verify(credentialService, times(1)).delete("credential-id", false);
+        verify(credentialService, times(1)).delete(any(), any(), eq(false));
     }
 
     @Test
@@ -508,7 +517,7 @@ public class UserServiceTest {
         when(userRepository.findById("my-user")).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
-        userService.delete("my-user").subscribe(testObserver);
+        userService.delete(any(), "my-user").subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -519,7 +528,7 @@ public class UserServiceTest {
         when(userRepository.findById("my-user")).thenReturn(Maybe.empty());
 
         TestObserver testObserver = new TestObserver();
-        userService.delete("my-user").subscribe(testObserver);
+        userService.delete(any(), "my-user").subscribe(testObserver);
 
         testObserver.assertError(UserNotFoundException.class);
         testObserver.assertNotComplete();

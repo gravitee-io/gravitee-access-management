@@ -54,4 +54,6 @@ public interface OrganizationUserService extends CommonUserService {
     Single<User> findByAccessToken(String token, String tokenValue);
 
     Maybe<AccountAccessToken> revokeToken(String organizationId, String userId, String tokenId);
+
+    Single<User> delete(String userId);
 }

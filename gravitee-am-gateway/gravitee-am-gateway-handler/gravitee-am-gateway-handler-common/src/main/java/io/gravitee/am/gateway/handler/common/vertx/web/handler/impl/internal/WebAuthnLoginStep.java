@@ -18,10 +18,9 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.dataplane.CredentialService;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.http.Cookie;
@@ -93,7 +92,7 @@ public class WebAuthnLoginStep extends AuthenticationFlowStep {
 
     private Single<Long> getCredentialCount(String userId) {
         // FIXME: provide a count method so entity doesn't need to be read
-        return credentialService.findByUserId(ReferenceType.DOMAIN, domain.getId(), userId)
+        return credentialService.findByUserId(domain, userId)
                 .count();
     }
 

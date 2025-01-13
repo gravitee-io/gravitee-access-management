@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.service.impl;
+package io.gravitee.am.service.dataplane.impl;
 
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.UserActivity;
 import io.gravitee.am.model.UserActivity.Type;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
-import io.gravitee.am.service.UserActivityService;
+import io.gravitee.am.service.dataplane.UserActivityService;
 import io.gravitee.am.service.impl.user.activity.configuration.UserActivityConfiguration;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;

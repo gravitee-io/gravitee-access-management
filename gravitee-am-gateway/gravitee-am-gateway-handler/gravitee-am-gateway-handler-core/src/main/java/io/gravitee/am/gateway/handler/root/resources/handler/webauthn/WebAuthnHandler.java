@@ -33,13 +33,12 @@ import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.reactivex.rxjava3.core.Completable;
@@ -263,7 +262,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
                                                                                                       AuthenticationContext authenticationContext,
                                                                                                       String username,
                                                                                                       String credentialId) {
-        return credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), credentialId)
+        return credentialService.findByCredentialId(domain, credentialId)
                 .firstElement()
                 .switchIfEmpty(Single.error(() -> new CredentialNotFoundException(credentialId)))
                 .flatMap(credential -> userAuthenticationManager.connectWithPasswordless(client, credential.getUserId(), new EndUserAuthentication(username, null, authenticationContext)))
@@ -303,7 +302,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
                                            String credentialId,
                                            String userId,
                                            boolean afterLogin) {
-        return credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), credentialId)
+        return credentialService.findByCredentialId(domain, credentialId)
                 // filter on userId to restrict the credential to the current user.
                 // if credentialToUpdate has null userid, we are in the registration phase
                 // we want to assign this credential to the user profile, so we accept it.
@@ -323,7 +322,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
                         return credential;
                     }
                 })
-                .flatMapSingle(credential -> credentialService.update(ReferenceType.DOMAIN, domain.getId(), credentialId, credential))
+                .flatMapSingle(credential -> credentialService.update(domain, credentialId, credential))
                 .firstElement()
                 .switchIfEmpty(Single.error(() -> new CredentialNotFoundException(credentialId)))
                 .doOnError(error -> logger.error("An error has occurred while updating user {} webauthn credential", userId, error));

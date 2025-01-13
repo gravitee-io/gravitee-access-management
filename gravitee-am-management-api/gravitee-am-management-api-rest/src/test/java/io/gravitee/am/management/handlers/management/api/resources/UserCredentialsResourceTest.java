@@ -18,7 +18,6 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.http.HttpStatusCode;
@@ -49,7 +48,7 @@ public class UserCredentialsResourceTest extends JerseySpringTest {
         mockCredential.setId("credential-id");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Flowable.just(mockCredential)).when(credentialService).findByUserId(ReferenceType.DOMAIN, domainId, mockUser.getId());
+        doReturn(Flowable.just(mockCredential)).when(credentialService).findByUserId(mockDomain, mockUser.getId());
 
         final Response response = target("domains")
                 .path(domainId)

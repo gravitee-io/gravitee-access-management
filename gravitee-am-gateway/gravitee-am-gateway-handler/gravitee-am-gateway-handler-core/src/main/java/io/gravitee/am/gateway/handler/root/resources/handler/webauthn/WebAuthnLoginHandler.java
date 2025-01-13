@@ -25,10 +25,9 @@ import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Completable;
@@ -236,7 +235,7 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
             return Completable.complete();
         }
 
-        return credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), credentialId)
+        return credentialService.findByCredentialId(domain, credentialId)
                 .filter(credential -> {
                     final String fmt = credential.getAttestationStatementFormat();
                     final Date lastCheckedAt = credential.getLastCheckedAt();
