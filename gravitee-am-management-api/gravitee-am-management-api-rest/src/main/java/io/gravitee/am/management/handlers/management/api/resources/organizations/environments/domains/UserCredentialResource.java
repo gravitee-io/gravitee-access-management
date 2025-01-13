@@ -16,11 +16,11 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.dataplane.CredentialManagementService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.dataplane.CredentialService;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
@@ -49,7 +49,7 @@ public class UserCredentialResource extends AbstractResource {
     private DomainService domainService;
 
     @Autowired
-    private CredentialService credentialService;
+    private CredentialManagementService credentialService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

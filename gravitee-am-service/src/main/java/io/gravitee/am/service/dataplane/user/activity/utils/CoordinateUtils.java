@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.service.impl.user.activity.utils;
+package io.gravitee.am.service.dataplane.user.activity.utils;
 
 import java.security.SecureRandom;
 import java.util.Map;

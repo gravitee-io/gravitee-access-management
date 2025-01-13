@@ -20,7 +20,7 @@ import org.junit.Test;
 
 import java.util.Map;
 
-import static io.gravitee.am.service.impl.user.activity.utils.CoordinateUtils.computeCoordinate;
+import static io.gravitee.am.service.dataplane.user.activity.utils.CoordinateUtils.computeCoordinate;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;

@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.service.impl.user.activity.utils;
+package io.gravitee.am.service.dataplane.user.activity.utils;
 
 
-import io.gravitee.am.service.impl.user.activity.configuration.UserActivityConfiguration;
+import io.gravitee.am.service.dataplane.user.activity.configuration.UserActivityConfiguration;
 import lombok.AllArgsConstructor;
 
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Map;
 
-import static io.gravitee.am.service.impl.user.activity.utils.CoordinateUtils.computeCoordinate;
-import static io.gravitee.am.service.impl.user.activity.utils.HashedKeyUtils.computeHash;
+import static io.gravitee.am.service.dataplane.user.activity.utils.CoordinateUtils.computeCoordinate;
+import static io.gravitee.am.service.dataplane.user.activity.utils.HashedKeyUtils.computeHash;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

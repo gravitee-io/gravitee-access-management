@@ -25,7 +25,7 @@ import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.UserRepository;
-import io.gravitee.am.service.dataplane.CredentialService;
+import io.gravitee.am.service.dataplane.CredentialCommonService;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -91,7 +91,7 @@ public class UserServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private CredentialService credentialService;
+    private CredentialCommonService credentialService;
 
     @Mock
     private AuditService auditService;
@@ -480,7 +480,7 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
 
         verify(userRepository, times(1)).delete("my-user");
-        verify(credentialService, never()).delete(any(), anyString());
+        verify(credentialService, never()).delete(any(), anyString(), any(boolean.class));
     }
 
     @Test

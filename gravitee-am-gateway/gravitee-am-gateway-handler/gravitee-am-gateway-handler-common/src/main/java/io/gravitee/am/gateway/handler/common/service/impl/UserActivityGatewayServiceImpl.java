@@ -22,30 +22,25 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.UserActivity;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
-import io.gravitee.am.service.impl.user.activity.configuration.UserActivityConfiguration;
-import io.gravitee.am.service.impl.user.activity.utils.UserActivityFunctions;
+import io.gravitee.am.service.dataplane.user.activity.configuration.UserActivityConfiguration;
+import io.gravitee.am.service.dataplane.user.activity.utils.UserActivityFunctions;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Map;
 
-import static io.gravitee.am.service.impl.user.activity.utils.UserActivityFunctions.LOGIN_ATTEMPTS;
-import static io.gravitee.am.service.impl.user.activity.utils.UserActivityFunctions.USER_AGENT;
+import static io.gravitee.am.service.dataplane.user.activity.utils.UserActivityFunctions.LOGIN_ATTEMPTS;
+import static io.gravitee.am.service.dataplane.user.activity.utils.UserActivityFunctions.USER_AGENT;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Component
-@AllArgsConstructor
 @Slf4j
 public class UserActivityGatewayServiceImpl implements UserActivityGatewayService {
-
 
     private final UserActivityConfiguration configuration;
     private final UserActivityFunctions activityFunctions;

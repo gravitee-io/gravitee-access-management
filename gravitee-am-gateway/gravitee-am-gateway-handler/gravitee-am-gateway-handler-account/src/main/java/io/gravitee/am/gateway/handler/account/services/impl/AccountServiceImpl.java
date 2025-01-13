@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Credential;
@@ -48,7 +49,6 @@ import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.UserService;
-import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.InvalidPasswordException;
 import io.gravitee.am.service.exception.InvalidUserException;
@@ -113,7 +113,7 @@ public class AccountServiceImpl implements AccountService {
     private AuditReporterManager auditReporterManager;
 
     @Autowired
-    private CredentialService credentialService;
+    private CredentialGatewayService credentialService;
 
     @Autowired
     private ScopeApprovalService scopeApprovalService;
