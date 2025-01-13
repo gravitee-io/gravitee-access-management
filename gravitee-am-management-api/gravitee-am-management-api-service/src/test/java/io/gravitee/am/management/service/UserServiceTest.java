@@ -23,6 +23,7 @@ import io.gravitee.am.common.utils.MovingFactorUtils;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.jwt.JWTBuilder;
+import io.gravitee.am.management.service.dataplane.CredentialManagementService;
 import io.gravitee.am.management.service.impl.UserServiceImpl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Credential;
@@ -49,7 +50,6 @@ import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidPasswordException;
@@ -181,7 +181,7 @@ public class UserServiceTest {
     private PasswordHistoryService passwordHistoryService;
 
     @Mock
-    private CredentialService credentialService;
+    private CredentialManagementService credentialService;
 
     @Mock
     private PasswordPolicyService passwordPolicyService;

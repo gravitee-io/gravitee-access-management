@@ -26,7 +26,6 @@ import io.gravitee.am.repository.management.api.CommonUserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CommonUserService;
-import io.gravitee.am.service.dataplane.CredentialService;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -72,9 +71,6 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
 
     @Autowired
     private AuditService auditService;
-
-    @Autowired
-    protected CredentialService credentialService;
 
     @Autowired
     protected RoleService roleService;

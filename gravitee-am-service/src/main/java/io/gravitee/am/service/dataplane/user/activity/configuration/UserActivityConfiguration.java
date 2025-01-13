@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.service.impl.user.activity.configuration;
+package io.gravitee.am.service.dataplane.user.activity.configuration;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;

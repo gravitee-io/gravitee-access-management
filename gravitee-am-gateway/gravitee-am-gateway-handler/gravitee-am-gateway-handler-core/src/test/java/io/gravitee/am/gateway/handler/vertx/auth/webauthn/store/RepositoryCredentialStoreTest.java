@@ -15,10 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.vertx.auth.webauthn.store;
 
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.dataplane.CredentialService;
 import io.reactivex.rxjava3.core.Flowable;
 import io.vertx.ext.auth.webauthn.Authenticator;
 import org.junit.Assert;
@@ -50,7 +50,7 @@ public class RepositoryCredentialStoreTest {
     private RepositoryCredentialStore repositoryCredentialStore = new RepositoryCredentialStore();
 
     @Mock
-    private CredentialService credentialService;
+    private CredentialGatewayService credentialService;
 
     @Mock
     private JWTBuilder jwtBuilder;
