@@ -15,8 +15,9 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
-import io.gravitee.am.management.handlers.management.api.resources.AbstractUsersResource;
+import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
@@ -47,7 +48,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author GraviteeSource Team
  */
 @Tag(name = "devices")
-public class DevicesResource extends AbstractUsersResource {
+public class DevicesResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
@@ -57,6 +58,9 @@ public class DevicesResource extends AbstractUsersResource {
 
     @Autowired
     private DeviceService deviceService;
+
+    @Autowired
+    private UserService userService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
