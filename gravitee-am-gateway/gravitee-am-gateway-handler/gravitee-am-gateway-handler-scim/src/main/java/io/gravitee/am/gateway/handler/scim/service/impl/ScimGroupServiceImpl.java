@@ -27,11 +27,11 @@ import io.gravitee.am.gateway.handler.scim.model.ListResponse;
 import io.gravitee.am.gateway.handler.scim.model.Member;
 import io.gravitee.am.gateway.handler.scim.model.Meta;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
-import io.gravitee.am.gateway.handler.scim.service.GroupService;
+import io.gravitee.am.gateway.handler.scim.service.ScimGroupService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.repository.management.api.GroupRepository;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
@@ -61,12 +61,12 @@ import static org.springframework.util.StringUtils.hasText;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class GroupServiceImpl implements GroupService {
+public class ScimGroupServiceImpl implements ScimGroupService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(GroupServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ScimGroupServiceImpl.class);
 
     @Autowired
-    private GroupRepository groupRepository;
+    private DataPlaneRegistry dataPlaneRegistry;
 
     @Autowired
     private UserRepository userRepository;
@@ -85,8 +85,8 @@ public class GroupServiceImpl implements GroupService {
         LOGGER.debug("Find groups by domain : {}", domain.getId());
 
         Single<Page<io.gravitee.am.model.Group>> groupResult = filter != null ?
-                groupRepository.searchScim(ReferenceType.DOMAIN, domain.getId(), FilterCriteria.convert(filter), startIndex, size) :
-                groupRepository.findAllScim(ReferenceType.DOMAIN, domain.getId(), startIndex, size);
+                dataPlaneRegistry.getGroupRepository(domain).flatMap(groupRepository -> groupRepository.searchScim(ReferenceType.DOMAIN, domain.getId(), FilterCriteria.convert(filter), startIndex, size)) :
+                dataPlaneRegistry.getGroupRepository(domain).flatMap(groupRepository -> groupRepository.findAllScim(ReferenceType.DOMAIN, domain.getId(), startIndex, size));
 
         return groupResult
                 .concatMap(groupPage -> {
@@ -113,7 +113,7 @@ public class GroupServiceImpl implements GroupService {
     @Override
     public Flowable<Group> findByMember(String memberId) {
         LOGGER.debug("Find groups by member : {}", memberId);
-        return groupRepository.findByMember(memberId)
+        return dataPlaneRegistry.getGroupRepository(domain).flatMapPublisher(groupRepository -> groupRepository.findByMember(memberId))
                 .map(group -> convert(group, null, true))
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a groups using member ", memberId, ex);
@@ -125,7 +125,7 @@ public class GroupServiceImpl implements GroupService {
     @Override
     public Maybe<Group> get(String groupId, String baseUrl) {
         LOGGER.debug("Find group by id : {}", groupId);
-        return groupRepository.findById(groupId)
+        return dataPlaneRegistry.getGroupRepository(domain).flatMapMaybe(groupRepository -> groupRepository.findById(groupId))
                 .map(group -> convert(group, baseUrl, false))
                 // set members
                 .flatMap(group -> setMembers(group, baseUrl).toMaybe())
@@ -149,7 +149,8 @@ public class GroupServiceImpl implements GroupService {
         groupModel.setUpdatedAt(groupModel.getCreatedAt());
 
         // check if user is unique
-        return groupRepository.findByName(ReferenceType.DOMAIN, domain.getId(), group.getDisplayName())
+        return dataPlaneRegistry.getGroupRepository(domain)
+                .flatMapMaybe(groupRepository -> groupRepository.findByName(ReferenceType.DOMAIN, domain.getId(), group.getDisplayName()))
                 .isEmpty()
                 .map(isEmpty -> {
                     if (!isEmpty) {
@@ -160,7 +161,7 @@ public class GroupServiceImpl implements GroupService {
                 // set members
                 .flatMap(__ -> setMembers(group, baseUrl))
                 .flatMap(group1 -> {
-                    return groupRepository.create(groupModel);
+                    return dataPlaneRegistry.getGroupRepository(domain).flatMap(groupRepository -> groupRepository.create(groupModel));
                 })
                 .doOnSuccess(grp -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_CREATED).group(grp)))
                 .map(group1 -> convert(group1, baseUrl, true))
@@ -180,9 +181,9 @@ public class GroupServiceImpl implements GroupService {
     @Override
     public Single<Group> update(String groupId, Group group, String baseUrl, io.gravitee.am.identityprovider.api.User principal) {
         LOGGER.debug("Update a group {} for domain {}", groupId, domain.getName());
-        return groupRepository.findById(groupId)
+        return dataPlaneRegistry.getGroupRepository(domain).flatMapMaybe(groupRepository -> groupRepository.findById(groupId))
                 .switchIfEmpty(Single.error(new GroupNotFoundException(groupId)))
-                .flatMap(existingGroup -> groupRepository.findByName(ReferenceType.DOMAIN, domain.getId(), group.getDisplayName())
+                .flatMap(existingGroup -> dataPlaneRegistry.getGroupRepository(domain).flatMapMaybe(groupRepository -> groupRepository.findByName(ReferenceType.DOMAIN, domain.getId(), group.getDisplayName()))
                         .map(group1 -> {
                             // if display name has changed check uniqueness
                             if (!existingGroup.getId().equals(group1.getId())) {
@@ -203,7 +204,7 @@ public class GroupServiceImpl implements GroupService {
                             groupToUpdate.setUpdatedAt(new Date());
                             groupToUpdate.setRoles(existingGroup.getRoles());
                             groupToUpdate.setDescription(existingGroup.getDescription());
-                            return groupRepository.update(groupToUpdate);
+                            return dataPlaneRegistry.getGroupRepository(domain).flatMap(groupRepository -> groupRepository.update(groupToUpdate));
                         })
                         .doOnSuccess(grp -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_UPDATED).oldValue(existingGroup).group(grp)))
                         .doOnError(error -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_UPDATED).group(existingGroup).throwable(error))))
@@ -244,9 +245,9 @@ public class GroupServiceImpl implements GroupService {
     @Override
     public Completable delete(String groupId, io.gravitee.am.identityprovider.api.User principal) {
         LOGGER.debug("Delete group {}", groupId);
-        return groupRepository.findById(groupId)
+        return dataPlaneRegistry.getGroupRepository(domain).flatMapMaybe(groupRepository -> groupRepository.findById(groupId))
                 .switchIfEmpty(Maybe.error(new GroupNotFoundException(groupId)))
-                .flatMapCompletable(group -> groupRepository.delete(groupId)
+                .flatMapCompletable(group -> dataPlaneRegistry.getGroupRepository(domain).flatMapCompletable(groupRepository -> groupRepository.delete(groupId))
                         .andThen(Completable.fromAction(() -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).group(group)))))
                 .doOnError(error -> {
                     io.gravitee.am.model.Group group = new io.gravitee.am.model.Group();
