@@ -80,7 +80,7 @@ public class GroupMembersResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.READ)
-                .andThen(orgGroupService.findMembers(ReferenceType.ORGANIZATION, organizationId, group, page, Integer.min(size, MAX_MEMBERS_SIZE_PER_PAGE))
+                .andThen(orgGroupService.findMembers(organizationId, group, page, Integer.min(size, MAX_MEMBERS_SIZE_PER_PAGE))
                         .flatMap(pagedMembers -> {
                             if (pagedMembers.getData() == null) {
                                 return Single.just(pagedMembers);

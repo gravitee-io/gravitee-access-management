@@ -44,7 +44,7 @@ public class UserActivityManagementServiceImpl implements UserActivityManagement
 
     public Completable deleteByDomainAndUser(Domain domain, String userId) {
         return dataPlaneRegistry.getUserActivityRepository(domain)
-                .flatMapCompletable(repository -> repository.deleteByDomainAndKey(domain.getId(), activityFunctions.buildKey(userId)))
+                .deleteByDomainAndKey(domain.getId(), activityFunctions.buildKey(userId))
                 .doOnError(err ->
                         log.error("An unexpected error has occurred while deleting userActivity '{}'", err.getMessage(), err)
                 );
@@ -52,7 +52,7 @@ public class UserActivityManagementServiceImpl implements UserActivityManagement
 
     public Completable deleteByDomain(Domain domain) {
         return dataPlaneRegistry.getUserActivityRepository(domain)
-                .flatMapCompletable(repository -> repository.deleteByDomain(domain.getId()))
+                .deleteByDomain(domain.getId())
                 .doOnError(err ->
                         log.error("An unexpected error has occurred while deleting userActivity '{}'", err.getMessage(), err)
                 );

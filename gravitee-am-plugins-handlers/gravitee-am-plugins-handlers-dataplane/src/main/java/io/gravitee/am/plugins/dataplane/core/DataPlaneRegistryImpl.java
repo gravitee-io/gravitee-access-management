@@ -26,7 +26,6 @@ import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.dataplane.exceptions.IllegalDataPlaneIdException;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.service.AbstractService;
-import io.reactivex.rxjava3.core.Single;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -58,51 +57,49 @@ public class DataPlaneRegistryImpl extends AbstractService<DataPlaneRegistryImpl
     }
 
     @Override
-    public Single<DataPlaneProvider> getProvider(Domain domain) {
+    public DataPlaneProvider getProvider(Domain domain) {
         Objects.requireNonNull(domain, "Domain is required to provide DataPlane");
-        return Single.fromCallable(() -> {
-            var dataPlaneId = domain.getDataPlaneId();
-            if (!hasText(dataPlaneId)) {
-                log.warn("Domain '{}' has empty dataPlaneId, upgrader may have to be executed. Fallback to 'default'.", domain.getId());
-                dataPlaneId = DEFAULT_DATA_PLANE_ID;
-            }
+        var dataPlaneId = domain.getDataPlaneId();
+        if (!hasText(dataPlaneId)) {
+            log.warn("Domain '{}' has empty dataPlaneId, upgrader may have to be executed. Fallback to 'default'.", domain.getId());
+            dataPlaneId = DEFAULT_DATA_PLANE_ID;
+        }
 
-            final var provider = dataPlanProviders.get(dataPlaneId);
-            if (provider == null) {
-                throw new IllegalDataPlaneIdException(dataPlaneId);
-            }
-            return provider;
-        });
+        final var provider = dataPlanProviders.get(dataPlaneId);
+        if (provider == null) {
+            throw new IllegalDataPlaneIdException(dataPlaneId);
+        }
+        return provider;
     }
 
     @Override
-    public Single<CredentialRepository> getCredentialRepository(Domain domain) {
-        return getProvider(domain).map(DataPlaneProvider::getCredentialRepository);
+    public CredentialRepository getCredentialRepository(Domain domain) {
+        return getProvider(domain).getCredentialRepository();
     }
 
     @Override
-    public Single<DeviceRepository> getDeviceRepository(Domain domain) {
-        return getProvider(domain).map(DataPlaneProvider::getDeviceRepository);
+    public DeviceRepository getDeviceRepository(Domain domain) {
+        return getProvider(domain).getDeviceRepository();
     }
 
     @Override
-    public Single<GroupRepository> getGroupRepository(Domain domain) {
-        return getProvider(domain).map(DataPlaneProvider::getGroupRepository);
+    public GroupRepository getGroupRepository(Domain domain) {
+        return getProvider(domain).getGroupRepository();
     }
 
     @Override
-    public Single<ScopeApprovalRepository> getScopeApprovalRepository(Domain domain) {
-        return getProvider(domain).map(DataPlaneProvider::getScopeApprovalRepository);
+    public ScopeApprovalRepository getScopeApprovalRepository(Domain domain) {
+        return getProvider(domain).getScopeApprovalRepository();
     }
 
     @Override
-    public Single<UserActivityRepository> getUserActivityRepository(Domain domain) {
-        return getProvider(domain).map(DataPlaneProvider::getUserActivityRepository);
+    public UserActivityRepository getUserActivityRepository(Domain domain) {
+        return getProvider(domain).getUserActivityRepository();
     }
 
     @Override
-    public Single<UserRepository> getUserRepository(Domain domain) {
-        return getProvider(domain).map(DataPlaneProvider::getUserRepository);
+    public UserRepository getUserRepository(Domain domain) {
+        return getProvider(domain).getUserRepository();
     }
 
     @Override
