@@ -26,7 +26,6 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.common.event.impl.SimpleEvent;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.jupiter.api.Assertions;
@@ -59,7 +58,7 @@ class InMemoryGroupManagerTest {
 
     @BeforeEach
     void setUp() {
-        this.groupManager = new InMemoryGroupManager(domain, eventManager, Single.just(groupRepository).cache());
+        this.groupManager = new InMemoryGroupManager(domain, eventManager, groupRepository);
         Mockito.when(domain.getId()).thenReturn("id");
     }
 

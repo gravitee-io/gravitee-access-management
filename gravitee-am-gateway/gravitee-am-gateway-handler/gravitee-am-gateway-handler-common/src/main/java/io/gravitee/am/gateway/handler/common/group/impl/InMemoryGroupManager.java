@@ -28,7 +28,6 @@ import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.common.service.Service;
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Single;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,17 +48,16 @@ public class InMemoryGroupManager extends AbstractService implements Service, In
 
     EventManager eventManager;
 
-    Single<GroupRepository> cachedGroupRepository;
+    GroupRepository groupRepository;
 
     final ConcurrentMap<String, Group> groups = new ConcurrentHashMap<>();
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        cachedGroupRepository
-                .flatMapPublisher(groupRepository -> groupRepository.findAll(ReferenceType.DOMAIN, domain.getId()))
+        groupRepository.findAll(ReferenceType.DOMAIN, domain.getId())
                 .subscribe(
-                group -> groups.put(group.getId(), group),
-                error -> LOGGER.error("Unable to initialize groups for domain {}", domain.getName(), error)
+                        group -> groups.put(group.getId(), group),
+                        error -> LOGGER.error("Unable to initialize groups for domain {}", domain.getName(), error)
                 );
     }
 
@@ -87,8 +85,7 @@ public class InMemoryGroupManager extends AbstractService implements Service, In
     }
 
     private void deploy(String groupId) {
-        cachedGroupRepository
-                .flatMapMaybe(groupRepository -> groupRepository.findById(groupId))
+        groupRepository.findById(groupId)
                 .doOnComplete(() -> LOGGER.info("Deployed group id={}", groupId))
                 .subscribe(
                         group -> groups.put(groupId, group),
