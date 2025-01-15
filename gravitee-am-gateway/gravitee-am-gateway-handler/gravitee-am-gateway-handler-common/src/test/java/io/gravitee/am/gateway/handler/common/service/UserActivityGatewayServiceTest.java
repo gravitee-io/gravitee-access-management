@@ -68,7 +68,7 @@ public class UserActivityGatewayServiceTest {
                 0.07);
         userActivityRepository = Mockito.mock(UserActivityRepository.class);
         dataPlaneRegistry = Mockito.mock(DataPlaneRegistry.class);
-        when(dataPlaneRegistry.getUserActivityRepository(any())).thenReturn(Single.just(userActivityRepository));
+        when(dataPlaneRegistry.getUserActivityRepository(any())).thenReturn(userActivityRepository);
         userActivityService = new UserActivityGatewayServiceImpl(configuration, dataPlaneRegistry);
     }
 

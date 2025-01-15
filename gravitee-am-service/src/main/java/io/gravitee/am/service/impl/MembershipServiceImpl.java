@@ -359,7 +359,7 @@ public class MembershipServiceImpl implements MembershipService {
             return orgUserService.findById(ReferenceType.ORGANIZATION, organizationId, membership.getMemberId())
                     .ignoreElement();
         } else {
-            return orgGroupService.findById(ReferenceType.ORGANIZATION, organizationId, membership.getMemberId())
+            return orgGroupService.findById(organizationId, membership.getMemberId())
                     .ignoreElement();
         }
     }

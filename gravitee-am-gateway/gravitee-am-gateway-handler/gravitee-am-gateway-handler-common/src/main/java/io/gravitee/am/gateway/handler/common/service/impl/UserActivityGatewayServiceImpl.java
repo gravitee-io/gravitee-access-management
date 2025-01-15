@@ -65,8 +65,9 @@ public class UserActivityGatewayServiceImpl implements UserActivityGatewayServic
     }
 
     public Flowable<UserActivity> findByDomainAndTypeAndUserAndLimit(Domain domain, UserActivity.Type type, String userId, int limit) {
-        return dataPlaneRegistry.getUserActivityRepository(domain)
-                .flatMapPublisher(repository -> repository.findByDomainAndTypeAndKeyAndLimit(domain.getId(), type, activityFunctions.buildKey(userId), limit));
+        return dataPlaneRegistry
+                .getUserActivityRepository(domain)
+                .findByDomainAndTypeAndKeyAndLimit(domain.getId(), type, activityFunctions.buildKey(userId), limit);
     }
 
     public Completable save(
@@ -88,8 +89,9 @@ public class UserActivityGatewayServiceImpl implements UserActivityGatewayServic
                 .setCreatedAt(createdAt)
                 .setExpireAt(activityFunctions.getExpireAtDate(createdAt));
 
-        return dataPlaneRegistry.getUserActivityRepository(domain)
-                .flatMap(repository -> repository.create(activity))
+        return dataPlaneRegistry
+                .getUserActivityRepository(domain)
+                .create(activity)
                 .doOnSuccess(ua -> log.debug("UserActivity with id '{}' created", ua.getId()))
                 .doOnError(err ->
                         log.error("An unexpected error has occurred while saving UserActivity '{}'", err.getMessage(), err)
@@ -97,8 +99,9 @@ public class UserActivityGatewayServiceImpl implements UserActivityGatewayServic
     }
 
     public Completable deleteByDomainAndUser(Domain domain, String userId) {
-        return dataPlaneRegistry.getUserActivityRepository(domain)
-                .flatMapCompletable(repository -> repository.deleteByDomainAndKey(domain.getId(), activityFunctions.buildKey(userId)))
+        return dataPlaneRegistry
+                .getUserActivityRepository(domain)
+                .deleteByDomainAndKey(domain.getId(), activityFunctions.buildKey(userId))
                 .doOnError(err ->
                         log.error("An unexpected error has occurred while deleting userActivity '{}'", err.getMessage(), err)
                 );
