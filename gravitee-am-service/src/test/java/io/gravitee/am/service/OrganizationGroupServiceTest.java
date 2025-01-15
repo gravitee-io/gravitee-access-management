@@ -19,7 +19,6 @@ import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.GroupRepository;
 import io.gravitee.am.service.exception.GroupAlreadyExistsException;
@@ -69,9 +68,6 @@ public class OrganizationGroupServiceTest {
 
     @Mock
     private OrganizationUserService organizationUserService;
-
-    @Mock
-    private EventService eventService;
 
     private final static String ORGANIZATION = "org1";
 
@@ -160,7 +156,6 @@ public class OrganizationGroupServiceTest {
         when(newGroup.getName()).thenReturn("name");
         when(groupRepository.findByName(ReferenceType.ORGANIZATION, ORGANIZATION, newGroup.getName())).thenReturn(Maybe.empty());
         when(groupRepository.create(any(Group.class))).thenReturn(Single.just(group));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = groupService.create(ReferenceType.ORGANIZATION, ORGANIZATION, newGroup, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -209,7 +204,6 @@ public class OrganizationGroupServiceTest {
         when(groupRepository.findById(ReferenceType.ORGANIZATION, ORGANIZATION, "my-group")).thenReturn(Maybe.just(group));
         when(groupRepository.findByName(ReferenceType.ORGANIZATION, ORGANIZATION, updateGroup.getName())).thenReturn(Maybe.empty());
         when(groupRepository.update(any(Group.class))).thenReturn(Single.just(group));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = groupService.update(ORGANIZATION, "my-group", updateGroup).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -252,7 +246,6 @@ public class OrganizationGroupServiceTest {
         group.setReferenceType(ReferenceType.DOMAIN);
         when(groupRepository.findById(ReferenceType.ORGANIZATION, ORGANIZATION, "my-group")).thenReturn(Maybe.just(group));
         when(groupRepository.delete("my-group")).thenReturn(Completable.complete());
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = groupService.delete(ReferenceType.ORGANIZATION, ORGANIZATION, "my-group").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -267,7 +260,6 @@ public class OrganizationGroupServiceTest {
     public void shouldDelete_technicalException() {
         when(groupRepository.findById(ReferenceType.ORGANIZATION, ORGANIZATION, "my-group")).thenReturn(Maybe.just(new Group()));
         when(groupRepository.delete("my-group")).thenReturn(Completable.error(TechnicalException::new));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = new TestObserver();
         groupService.delete(ReferenceType.ORGANIZATION, ORGANIZATION, "my-group").subscribe(testObserver);

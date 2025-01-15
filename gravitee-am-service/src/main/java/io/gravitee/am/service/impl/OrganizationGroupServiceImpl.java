@@ -16,19 +16,14 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
-import io.gravitee.am.common.event.Action;
-import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.common.event.Event;
-import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.GroupRepository;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.OrganizationGroupService;
 import io.gravitee.am.service.OrganizationUserService;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -73,9 +68,6 @@ public class OrganizationGroupServiceImpl implements OrganizationGroupService {
 
     @Autowired
     private AuditService auditService;
-
-    @Autowired
-    private EventService eventService;
 
     @Override
     public Single<Page<Group>> findAll(ReferenceType referenceType, String referenceId, int page, int size) {
@@ -206,11 +198,6 @@ public class OrganizationGroupServiceImpl implements OrganizationGroupService {
                 })
                 .flatMap(this::setMembers)
                 .flatMap(group -> groupRepository.create(group))
-                // create event for sync process
-                .flatMap(group -> {
-                    Event event = new Event(Type.GROUP, new Payload(group.getId(), group.getReferenceType(), group.getReferenceId(), Action.CREATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(group));
-                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
@@ -249,11 +236,6 @@ public class OrganizationGroupServiceImpl implements OrganizationGroupService {
                     // set members and update
                     return setMembers(groupToUpdate)
                             .flatMap(group -> groupRepository.update(group))
-                            // create event for sync process
-                            .flatMap(group -> {
-                                Event event = new Event(Type.GROUP, new Payload(group.getId(), group.getReferenceType(), group.getReferenceId(), Action.UPDATE));
-                                return eventService.create(event).flatMap(__ -> Single.just(group));
-                            })
                             .doOnSuccess(group -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_UPDATED).oldValue(oldGroup).group(group)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_UPDATED).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
 
@@ -270,7 +252,6 @@ public class OrganizationGroupServiceImpl implements OrganizationGroupService {
 
     @Override
     public Single<Group> update(String domain, String id, UpdateGroup updateGroup, io.gravitee.am.identityprovider.api.User principal) {
-
         return update(ReferenceType.DOMAIN, domain, id, updateGroup, principal);
     }
 
@@ -280,7 +261,6 @@ public class OrganizationGroupServiceImpl implements OrganizationGroupService {
 
         return findById(referenceType, referenceId, groupId)
                 .flatMapCompletable(group -> groupRepository.delete(groupId)
-                        .andThen(Completable.fromSingle(eventService.create(new Event(Type.GROUP, new Payload(group.getId(), group.getReferenceType(), group.getReferenceId(), Action.DELETE)))))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).group(group)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).group(group).throwable(throwable)))
                 )
