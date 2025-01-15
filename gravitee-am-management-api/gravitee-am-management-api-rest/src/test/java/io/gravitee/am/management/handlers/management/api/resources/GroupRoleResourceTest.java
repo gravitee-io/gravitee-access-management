@@ -18,7 +18,6 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Group;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -48,7 +47,7 @@ public class GroupRoleResourceTest extends JerseySpringTest {
         mockGroup.setId("group-id-1");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(mockGroup)).when(domainGroupService).revokeRoles(eq(ReferenceType.DOMAIN), eq("domain-1"), eq(mockGroup.getId()), eq(Collections.singletonList("role-1")), any());
+        doReturn(Single.just(mockGroup)).when(domainGroupService).revokeRoles(any(), eq(mockGroup.getId()), eq(Collections.singletonList("role-1")), any());
 
         final Response response = target("domains")
                 .path(domainId)

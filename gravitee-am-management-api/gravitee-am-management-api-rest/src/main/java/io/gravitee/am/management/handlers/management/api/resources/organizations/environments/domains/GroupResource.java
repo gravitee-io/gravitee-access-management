@@ -16,14 +16,13 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.DomainGroupService;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.management.service.DomainService;
-import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.exception.GroupNotFoundException;
 import io.gravitee.am.service.model.UpdateGroup;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
@@ -81,18 +80,17 @@ public class GroupResource extends AbstractResource {
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("group") String group,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_GROUP, Acl.READ)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> domainGroupService.findById(group))
-                        .switchIfEmpty(Maybe.error(new GroupNotFoundException(group)))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_GROUP, Acl.READ)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapSingle(domain -> domainGroupService.findById(domain, group))
                         .flatMap(group1 -> {
                             if (group1.getReferenceType() == ReferenceType.DOMAIN
-                                    && !group1.getReferenceId().equalsIgnoreCase(domain)) {
+                                    && !group1.getReferenceId().equalsIgnoreCase(domainId)) {
                                 throw new BadRequestException("Group does not belong to domain");
                             }
                             return Maybe.just(group1);
@@ -117,16 +115,16 @@ public class GroupResource extends AbstractResource {
     public void updateGroup(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("group") String group,
             @Parameter(name = "group", required = true) @Valid @NotNull UpdateGroup updateGroup,
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_GROUP, Acl.UPDATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> domainGroupService.update(domain, group, updateGroup, authenticatedUser)))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_GROUP, Acl.UPDATE)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapSingle(domain -> domainGroupService.update(domain, group, updateGroup, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -143,15 +141,15 @@ public class GroupResource extends AbstractResource {
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("group") String group,
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_GROUP, Acl.DELETE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapCompletable(irrelevant -> domainGroupService.delete(ReferenceType.DOMAIN, domain, group, authenticatedUser)))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_GROUP, Acl.DELETE)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapCompletable(domain -> domainGroupService.delete(domain, group, authenticatedUser)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 

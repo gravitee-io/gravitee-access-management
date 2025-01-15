@@ -61,7 +61,7 @@ public class GroupsResourceTest extends JerseySpringTest {
         final Page<User> pagedUsers = new Page(groups, 0, 2);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(pagedUsers)).when(domainGroupService).findByDomain(domainId, 0, 10);
+        doReturn(Single.just(pagedUsers)).when(domainGroupService).findAll(mockDomain, 0, 10);
 
         final Response response = target("domains")
                 .path(domainId)
