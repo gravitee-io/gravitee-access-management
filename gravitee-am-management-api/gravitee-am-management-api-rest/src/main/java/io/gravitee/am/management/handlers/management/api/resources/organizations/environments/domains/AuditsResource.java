@@ -91,7 +91,7 @@ public class AuditsResource extends AbstractResource {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_AUDIT, Acl.LIST)
                 .andThen(auditService.search(domain, queryBuilder.build(), param.getPage(), param.getSize())
-                .flatMap(auditPage -> hasPermission(authenticatedUser, ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_AUDIT, Acl.READ)
+                .flatMap(auditPage -> hasPermission(authenticatedUser, ReferenceType.DOMAIN, domain, Permission.DOMAIN_AUDIT, Acl.READ)
                         .map(hasPermission -> {
                             if (hasPermission) {
                                 return auditPage;
