@@ -90,15 +90,15 @@ public class GroupsResource extends AbstractResource {
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("size") @DefaultValue(MAX_GROUPS_SIZE_PER_PAGE_STRING) int size,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_GROUP, Acl.LIST)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> domainGroupService.findByDomain(domain, page, Integer.min(size, MAX_GROUPS_SIZE_PER_PAGE)))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_GROUP, Acl.LIST)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapSingle(domain -> domainGroupService.findAll(domain, page, Integer.min(size, MAX_GROUPS_SIZE_PER_PAGE)))
                         .map(groupPage -> new Page<>(groupPage.getData().stream().map(this::filterGroupInfos).toList(), groupPage.getCurrentPage(), groupPage.getTotalCount())))
                 .subscribe(response::resume, response::resume);
     }
@@ -120,18 +120,18 @@ public class GroupsResource extends AbstractResource {
     public void create(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @Parameter(name = "group", required = true)
             @Valid @NotNull final NewGroup newGroup,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_GROUP, Acl.CREATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> domainGroupService.create(domain, newGroup, authenticatedUser))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_GROUP, Acl.CREATE)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapSingle(domain -> domainGroupService.create(domain, newGroup, authenticatedUser))
                         .map(group -> Response
-                                .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/groups/" + group.getId()))
+                                .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domainId + "/groups/" + group.getId()))
                                 .entity(group)
                                 .build()))
                 .subscribe(response::resume, response::resume);
