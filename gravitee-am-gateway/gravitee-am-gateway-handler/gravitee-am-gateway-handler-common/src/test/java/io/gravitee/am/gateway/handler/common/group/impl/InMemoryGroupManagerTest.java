@@ -18,21 +18,21 @@ package io.gravitee.am.gateway.handler.common.group.impl;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.GroupEvent;
+import io.gravitee.am.dataplane.api.repository.GroupRepository;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.repository.management.api.GroupRepository;
 import io.gravitee.common.event.impl.SimpleEvent;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -55,11 +55,11 @@ class InMemoryGroupManagerTest {
     @Mock
     GroupRepository groupRepository;
 
-    @InjectMocks
     private InMemoryGroupManager groupManager;
 
     @BeforeEach
     void setUp() {
+        this.groupManager = new InMemoryGroupManager(domain, eventManager, Single.just(groupRepository).cache());
         Mockito.when(domain.getId()).thenReturn("id");
     }
 

@@ -136,7 +136,7 @@ public class UserServiceTest {
     private Domain domain = new Domain();
 
     @Mock
-    private GroupService groupService;
+    private ScimGroupService groupService;
 
     @Mock
     private PasswordService passwordService;
