@@ -19,7 +19,6 @@ import io.gravitee.am.dataplane.api.repository.GroupRepository;
 import io.gravitee.am.gateway.handler.common.group.GroupManager;
 import io.gravitee.am.model.Group;
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Single;
 import lombok.AllArgsConstructor;
 
 import java.util.List;
@@ -27,15 +26,15 @@ import java.util.List;
 @AllArgsConstructor
 public class DefaultGroupManager implements GroupManager {
 
-    private Single<GroupRepository> cachedRepository;
+    private GroupRepository groupRepository;
 
     @Override
     public Flowable<Group> findByMember(String userId) {
-        return cachedRepository.flatMapPublisher(repository -> repository.findByMember(userId));
+        return groupRepository.findByMember(userId);
     }
 
     @Override
     public Flowable<Group> findByIds(List<String> ids) {
-        return cachedRepository.flatMapPublisher(repository -> repository.findByIdIn(ids));
+        return groupRepository.findByIdIn(ids);
     }
 }

@@ -47,6 +47,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -68,6 +69,9 @@ public class OrganizationGroupServiceTest {
 
     @Mock
     private OrganizationUserService organizationUserService;
+
+    @Mock
+    private AuditService auditService;
 
     private final static String ORGANIZATION = "org1";
 
@@ -103,9 +107,9 @@ public class OrganizationGroupServiceTest {
 
 
     @Test
-    public void shouldFindByDomain() {
+    public void shouldFindAll() {
         when(groupRepository.findAll(ReferenceType.ORGANIZATION, ORGANIZATION)).thenReturn(Flowable.just(new Group()));
-        TestObserver<List<Group>> testObserver = groupService.findByDomain(ORGANIZATION).toList().test();
+        TestObserver<List<Group>> testObserver = groupService.findAll(ORGANIZATION).toList().test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -114,20 +118,20 @@ public class OrganizationGroupServiceTest {
     }
 
     @Test
-    public void shouldFindByDomain_technicalException() {
+    public void shouldFindAll_technicalException() {
         when(groupRepository.findAll(ReferenceType.ORGANIZATION, ORGANIZATION)).thenReturn(Flowable.error(TechnicalException::new));
 
-        TestSubscriber testSubscriber = groupService.findByDomain(ORGANIZATION).test();
+        TestSubscriber testSubscriber = groupService.findAll(ORGANIZATION).test();
 
         testSubscriber.assertError(TechnicalManagementException.class);
         testSubscriber.assertNotComplete();
     }
 
     @Test
-    public void shouldFindByDomainPagination() {
+    public void shouldFindAllPagination() {
         Page pagedGroups = new Page(Collections.singleton(new Group()), 1, 1);
         when(groupRepository.findAll(ReferenceType.ORGANIZATION, ORGANIZATION, 1, 1)).thenReturn(Single.just(pagedGroups));
-        TestObserver<Page<Group>> testObserver = groupService.findByDomain(ORGANIZATION, 1, 1).test();
+        TestObserver<Page<Group>> testObserver = groupService.findAll(ORGANIZATION, 1, 1).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -136,11 +140,11 @@ public class OrganizationGroupServiceTest {
     }
 
     @Test
-    public void shouldFindByDomainPagination_technicalException() {
+    public void shouldFindAllPagination_technicalException() {
         when(groupRepository.findAll(ReferenceType.ORGANIZATION, ORGANIZATION, 1, 1)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
-        groupService.findByDomain(ORGANIZATION, 1, 1).subscribe(testObserver);
+        groupService.findAll(ORGANIZATION, 1, 1).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -150,14 +154,14 @@ public class OrganizationGroupServiceTest {
     public void shouldCreate() {
         NewGroup newGroup = Mockito.mock(NewGroup.class);
         Group group = new Group();
-        group.setReferenceType(ReferenceType.DOMAIN);
+        group.setReferenceType(ReferenceType.ORGANIZATION);
         group.setReferenceId(ORGANIZATION);
 
         when(newGroup.getName()).thenReturn("name");
         when(groupRepository.findByName(ReferenceType.ORGANIZATION, ORGANIZATION, newGroup.getName())).thenReturn(Maybe.empty());
         when(groupRepository.create(any(Group.class))).thenReturn(Single.just(group));
 
-        TestObserver testObserver = groupService.create(ReferenceType.ORGANIZATION, ORGANIZATION, newGroup, null).test();
+        TestObserver testObserver = groupService.create(ORGANIZATION, newGroup, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -174,7 +178,7 @@ public class OrganizationGroupServiceTest {
         when(groupRepository.create(any(Group.class))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
-        groupService.create(ReferenceType.ORGANIZATION, ORGANIZATION, newGroup, null).subscribe(testObserver);
+        groupService.create(ORGANIZATION, newGroup, null).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -187,7 +191,7 @@ public class OrganizationGroupServiceTest {
         when(groupRepository.findByName(ReferenceType.ORGANIZATION, ORGANIZATION, newGroup.getName())).thenReturn(Maybe.just(new Group()));
 
         TestObserver testObserver = new TestObserver();
-        groupService.create(ReferenceType.ORGANIZATION, ORGANIZATION, newGroup, null).subscribe(testObserver);
+        groupService.create(ORGANIZATION, newGroup, null).subscribe(testObserver);
 
         testObserver.assertError(GroupAlreadyExistsException.class);
         testObserver.assertNotComplete();
@@ -197,7 +201,7 @@ public class OrganizationGroupServiceTest {
     public void shouldUpdate() {
         UpdateGroup updateGroup = Mockito.mock(UpdateGroup.class);
         Group group = new Group();
-        group.setReferenceType(ReferenceType.DOMAIN);
+        group.setReferenceType(ReferenceType.ORGANIZATION);
         group.setReferenceId(ORGANIZATION);
 
         when(updateGroup.getName()).thenReturn("name");
@@ -205,7 +209,7 @@ public class OrganizationGroupServiceTest {
         when(groupRepository.findByName(ReferenceType.ORGANIZATION, ORGANIZATION, updateGroup.getName())).thenReturn(Maybe.empty());
         when(groupRepository.update(any(Group.class))).thenReturn(Single.just(group));
 
-        TestObserver testObserver = groupService.update(ORGANIZATION, "my-group", updateGroup).test();
+        TestObserver testObserver = groupService.update(ORGANIZATION, "my-group", updateGroup, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -219,9 +223,10 @@ public class OrganizationGroupServiceTest {
     public void shouldUpdate_technicalException() {
         UpdateGroup updateGroup = Mockito.mock(UpdateGroup.class);
         when(groupRepository.findById(ReferenceType.ORGANIZATION, ORGANIZATION, "my-group")).thenReturn(Maybe.just(new Group()));
+        lenient().when(groupRepository.findByName(ReferenceType.ORGANIZATION, ORGANIZATION, "my-group")).thenReturn(Maybe.just(new Group()));
 
         TestObserver testObserver = new TestObserver();
-        groupService.update(ORGANIZATION, "my-group", updateGroup).subscribe(testObserver);
+        groupService.update(ORGANIZATION, "my-group", updateGroup, null).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -233,7 +238,7 @@ public class OrganizationGroupServiceTest {
         when(groupRepository.findById(ReferenceType.ORGANIZATION, ORGANIZATION, "my-group")).thenReturn(Maybe.empty());
 
         TestObserver testObserver = new TestObserver();
-        groupService.update(ORGANIZATION, "my-group", updateGroup).subscribe(testObserver);
+        groupService.update(ORGANIZATION, "my-group", updateGroup, null).subscribe(testObserver);
 
         testObserver.assertError(GroupNotFoundException.class);
         testObserver.assertNotComplete();
@@ -243,11 +248,11 @@ public class OrganizationGroupServiceTest {
     public void shouldDelete() {
         Group group = new Group();
         group.setReferenceId(ORGANIZATION);
-        group.setReferenceType(ReferenceType.DOMAIN);
+        group.setReferenceType(ReferenceType.ORGANIZATION);
         when(groupRepository.findById(ReferenceType.ORGANIZATION, ORGANIZATION, "my-group")).thenReturn(Maybe.just(group));
         when(groupRepository.delete("my-group")).thenReturn(Completable.complete());
 
-        TestObserver testObserver = groupService.delete(ReferenceType.ORGANIZATION, ORGANIZATION, "my-group").test();
+        TestObserver testObserver = groupService.delete(ORGANIZATION, "my-group").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -262,7 +267,7 @@ public class OrganizationGroupServiceTest {
         when(groupRepository.delete("my-group")).thenReturn(Completable.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
-        groupService.delete(ReferenceType.ORGANIZATION, ORGANIZATION, "my-group").subscribe(testObserver);
+        groupService.delete(ORGANIZATION, "my-group").subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -273,7 +278,7 @@ public class OrganizationGroupServiceTest {
         when(groupRepository.findById(ReferenceType.ORGANIZATION, ORGANIZATION, "my-group")).thenReturn(Maybe.empty());
 
         TestObserver testObserver = new TestObserver();
-        groupService.delete(ReferenceType.ORGANIZATION, ORGANIZATION, "my-group").subscribe(testObserver);
+        groupService.delete(ORGANIZATION, "my-group").subscribe(testObserver);
 
         testObserver.assertError(GroupNotFoundException.class);
         testObserver.assertNotComplete();
@@ -284,13 +289,12 @@ public class OrganizationGroupServiceTest {
     @Test
     public void shouldFindMembersFromOrganizationUsers() {
         Group group = mock(Group.class);
-        when(group.getReferenceType()).thenReturn(ReferenceType.ORGANIZATION);
         when(group.getMembers()).thenReturn(Arrays.asList("userid"));
 
-        when(groupRepository.findById(eq(ReferenceType.DOMAIN), eq(ORGANIZATION), eq("group-id"))).thenReturn(Maybe.just(group));
+        when(groupRepository.findById(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION), eq("group-id"))).thenReturn(Maybe.just(group));
         when(organizationUserService.findByIdIn(any())).thenReturn(Flowable.just(new User()));
 
-        final TestObserver<Page<User>> observer = groupService.findMembers(ReferenceType.ORGANIZATION, ORGANIZATION, "group-id", 0, 0).test();
+        final TestObserver<Page<User>> observer = groupService.findMembers(ORGANIZATION, "group-id", 0, 0).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
 
         verify(organizationUserService).findByIdIn(any());

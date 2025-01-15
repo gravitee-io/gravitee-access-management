@@ -33,7 +33,6 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
@@ -42,7 +41,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -55,7 +53,15 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -71,9 +77,6 @@ public class ScimGroupServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private DataPlaneRegistry dataPlaneRegistry;
-
-    @Mock
     private GroupRepository groupRepository;
 
     @Mock
@@ -84,11 +87,6 @@ public class ScimGroupServiceTest {
 
     @Mock
     private AuditService auditService;
-
-    @Before
-    public void setUp() throws Exception {
-        when(dataPlaneRegistry.getGroupRepository(any())).thenReturn(Single.just(groupRepository));
-    }
 
     @Test
     public void shouldCreateGroup() {

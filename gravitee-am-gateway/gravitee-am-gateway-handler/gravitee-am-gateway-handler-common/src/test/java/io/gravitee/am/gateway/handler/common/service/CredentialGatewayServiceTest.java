@@ -83,7 +83,7 @@ public class CredentialGatewayServiceTest {
 
     @Before
     public void init() {
-        when(dataPlaneRegistry.getCredentialRepository(any())).thenReturn(Single.just(credentialRepository));
+        when(dataPlaneRegistry.getCredentialRepository(any())).thenReturn(credentialRepository);
         this.domain.setId(DOMAIN);
     }
 

@@ -68,7 +68,7 @@ public class GroupMemberResource extends AbstractResource {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.UPDATE)
-                .andThen(orgGroupService.findById(ReferenceType.ORGANIZATION, organizationId, group)
+                .andThen(orgGroupService.findById(organizationId, group)
                         .flatMap(group1 -> userService.findById(ReferenceType.ORGANIZATION, organizationId, userId)
                                 .flatMap(user -> {
                                     if (group1.getMembers() != null && group1.getMembers().contains(userId)) {
@@ -83,7 +83,7 @@ public class GroupMemberResource extends AbstractResource {
                                     updateGroup.setDescription(group1.getDescription());
                                     updateGroup.setRoles(group1.getRoles());
                                     updateGroup.setMembers(groupMembers);
-                                    return orgGroupService.update(ReferenceType.ORGANIZATION, organizationId, group, updateGroup, authenticatedUser);
+                                    return orgGroupService.update(organizationId, group, updateGroup, authenticatedUser);
                                 })))
                 .subscribe(response::resume, response::resume);
     }
@@ -104,7 +104,7 @@ public class GroupMemberResource extends AbstractResource {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.UPDATE)
-                .andThen(orgGroupService.findById(ReferenceType.ORGANIZATION, organizationId, group)
+                .andThen(orgGroupService.findById(organizationId, group)
                         .flatMap(group1 -> userService.findById(ReferenceType.ORGANIZATION, organizationId, userId)
                                 .flatMap(user -> {
                                     if (group1.getMembers() == null || !group1.getMembers().contains(userId)) {
@@ -119,7 +119,7 @@ public class GroupMemberResource extends AbstractResource {
                                     updateGroup.setDescription(group1.getDescription());
                                     updateGroup.setRoles(group1.getRoles());
                                     updateGroup.setMembers(groupMembers);
-                                    return orgGroupService.update(ReferenceType.ORGANIZATION, organizationId, group, updateGroup, authenticatedUser);
+                                    return orgGroupService.update(organizationId, group, updateGroup, authenticatedUser);
                                 })))
                 .subscribe(response::resume, response::resume);
     }

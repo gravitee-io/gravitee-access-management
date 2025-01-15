@@ -70,43 +70,32 @@ public class OrganizationGroupServiceImpl implements OrganizationGroupService {
     private AuditService auditService;
 
     @Override
-    public Single<Page<Group>> findAll(ReferenceType referenceType, String referenceId, int page, int size) {
-        LOGGER.debug("Find groups by {}: {}", referenceType, referenceId);
-        return groupRepository.findAll(referenceType, referenceId, page, size)
+    public Single<Page<Group>> findAll(String organizationId, int page, int size) {
+        LOGGER.debug("Find groups by {}: {}", ReferenceType.ORGANIZATION, organizationId);
+        return groupRepository.findAll(ReferenceType.ORGANIZATION, organizationId, page, size)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find groups by {} {}", referenceType, referenceId, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by %s %s", referenceType, referenceId), ex));
+                    LOGGER.error("An error occurs while trying to find groups by {} {}", ReferenceType.ORGANIZATION, organizationId, ex);
+                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by %s %s", ReferenceType.ORGANIZATION, organizationId), ex));
                 });
     }
 
     @Override
-    public Single<Page<Group>> findByDomain(String domain, int page, int size) {
-        return findAll(ReferenceType.DOMAIN, domain, page, size);
-    }
-
-    @Override
-    public Flowable<Group> findAll(ReferenceType referenceType, String referenceId) {
-        LOGGER.debug("Find groups by {}: {}", referenceType, referenceId);
-        return groupRepository.findAll(referenceType, referenceId)
+    public Flowable<Group> findAll(String organizationId) {
+        LOGGER.debug("Find groups by {}: {}", ReferenceType.ORGANIZATION, organizationId);
+        return groupRepository.findAll(ReferenceType.ORGANIZATION, organizationId)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find groups by {} {}", referenceType, referenceId, ex);
-                    return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by %s %s", referenceType, referenceId), ex));
+                    LOGGER.error("An error occurs while trying to find groups by {} {}", ReferenceType.ORGANIZATION, organizationId, ex);
+                    return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by %s %s", ReferenceType.ORGANIZATION, organizationId), ex));
                 });
     }
 
-    @Override
-    public Flowable<Group> findByDomain(String domain) {
-        return findAll(ReferenceType.DOMAIN, domain);
-    }
-
-
-    public Maybe<Group> findByName(ReferenceType referenceType, String referenceId, String groupName) {
-        LOGGER.debug("Find group by {} and name: {} {}", referenceType, referenceId, groupName);
-        return groupRepository.findByName(referenceType, referenceId, groupName)
+    public Maybe<Group> findByName(String organizationId, String groupName) {
+        LOGGER.debug("Find group by {} and name: {} {}", ReferenceType.ORGANIZATION, organizationId, groupName);
+        return groupRepository.findByName(ReferenceType.ORGANIZATION, organizationId, groupName)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a group using its name: {} for the {} {}", groupName, referenceType, referenceId, ex);
+                    LOGGER.error("An error occurs while trying to find a group using its name: {} for the {} {}", groupName, ReferenceType.ORGANIZATION, organizationId, ex);
                     return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a user using its name: %s for the %s %s", groupName, referenceType, referenceId), ex));
+                            String.format("An error occurs while trying to find a user using its name: %s for the %s %s", groupName, ReferenceType.ORGANIZATION, organizationId), ex));
                 });
     }
 
@@ -122,9 +111,9 @@ public class OrganizationGroupServiceImpl implements OrganizationGroupService {
     }
 
     @Override
-    public Single<Group> findById(ReferenceType referenceType, String referenceId, String id) {
+    public Single<Group> findById(String organizationId, String id) {
         LOGGER.debug("Find group by id : {}", id);
-        return groupRepository.findById(referenceType, referenceId, id)
+        return groupRepository.findById(ReferenceType.ORGANIZATION, organizationId, id)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a group using its id {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
@@ -145,9 +134,9 @@ public class OrganizationGroupServiceImpl implements OrganizationGroupService {
     }
 
     @Override
-    public Single<Page<User>> findMembers(ReferenceType referenceType, String referenceId, String groupId, int page, int size) {
+    public Single<Page<User>> findMembers(String organizationId, String groupId, int page, int size) {
         LOGGER.debug("Find members for group : {}", groupId);
-        return findById(referenceType, referenceId, groupId)
+        return findById(organizationId, groupId)
                 .flatMap(group -> {
                     if (group.getMembers() == null || group.getMembers().isEmpty()) {
                         return Single.just(new Page<>(null, page, 0));
@@ -174,18 +163,18 @@ public class OrganizationGroupServiceImpl implements OrganizationGroupService {
     }
 
     @Override
-    public Single<Group> create(ReferenceType referenceType, String referenceId, NewGroup newGroup, io.gravitee.am.identityprovider.api.User principal) {
-        LOGGER.debug("Create a new group {} for {} {}", newGroup.getName(), referenceType, referenceId);
+    public Single<Group> create(String organizationId, NewGroup newGroup, io.gravitee.am.identityprovider.api.User principal) {
+        LOGGER.debug("Create a new group {} for {} {}", newGroup.getName(), ReferenceType.ORGANIZATION, organizationId);
 
-        return findByName(referenceType, referenceId, newGroup.getName())
+        return findByName(organizationId, newGroup.getName())
                 .isEmpty()
                 .map(isEmpty -> {
                     if (isEmpty) {
                         String groupId = RandomString.generate();
                         Group group = new Group();
                         group.setId(groupId);
-                        group.setReferenceType(referenceType);
-                        group.setReferenceId(referenceId);
+                        group.setReferenceType(ReferenceType.ORGANIZATION);
+                        group.setReferenceId(organizationId);
                         group.setName(newGroup.getName());
                         group.setDescription(newGroup.getDescription());
                         group.setMembers(newGroup.getMembers());
@@ -207,16 +196,16 @@ public class OrganizationGroupServiceImpl implements OrganizationGroupService {
                     }
                 })
                 .doOnSuccess(group -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_CREATED).group(group)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_CREATED).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_CREATED).reference(new Reference(ReferenceType.ORGANIZATION, organizationId)).throwable(throwable)));
     }
 
     @Override
-    public Single<Group> update(ReferenceType referenceType, String referenceId, String id, UpdateGroup updateGroup, io.gravitee.am.identityprovider.api.User principal) {
-        LOGGER.debug("Update a group {} for {} {}", id, referenceType, referenceId);
+    public Single<Group> update(String organizationId, String id, UpdateGroup updateGroup, io.gravitee.am.identityprovider.api.User principal) {
+        LOGGER.debug("Update a group {} for {} {}", id, ReferenceType.ORGANIZATION, organizationId);
 
-        return findById(referenceType, referenceId, id)
+        return findById(organizationId, id)
                 // check uniqueness
-                .flatMap(existingGroup -> groupRepository.findByName(referenceType, referenceId, updateGroup.getName())
+                .flatMap(existingGroup -> groupRepository.findByName(ReferenceType.ORGANIZATION, organizationId, updateGroup.getName())
                         .map(Optional::of)
                         .defaultIfEmpty(Optional.empty())
                         .map(optionalGroup -> {
@@ -237,7 +226,7 @@ public class OrganizationGroupServiceImpl implements OrganizationGroupService {
                     return setMembers(groupToUpdate)
                             .flatMap(group -> groupRepository.update(group))
                             .doOnSuccess(group -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_UPDATED).oldValue(oldGroup).group(group)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_UPDATED).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_UPDATED).reference(new Reference(ReferenceType.ORGANIZATION, organizationId)).throwable(throwable)));
 
                 })
                 .onErrorResumeNext(ex -> {
@@ -251,15 +240,10 @@ public class OrganizationGroupServiceImpl implements OrganizationGroupService {
     }
 
     @Override
-    public Single<Group> update(String domain, String id, UpdateGroup updateGroup, io.gravitee.am.identityprovider.api.User principal) {
-        return update(ReferenceType.DOMAIN, domain, id, updateGroup, principal);
-    }
-
-    @Override
-    public Completable delete(ReferenceType referenceType, String referenceId, String groupId, io.gravitee.am.identityprovider.api.User principal) {
+    public Completable delete(String organizationId, String groupId, io.gravitee.am.identityprovider.api.User principal) {
         LOGGER.debug("Delete group {}", groupId);
 
-        return findById(referenceType, referenceId, groupId)
+        return findById(organizationId, groupId)
                 .flatMapCompletable(group -> groupRepository.delete(groupId)
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).group(group)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).group(group).throwable(throwable)))
