@@ -32,6 +32,7 @@ import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.OrganizationGroupService;
 import io.gravitee.am.service.OrganizationUserService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.node.api.notifier.NotifierService;
@@ -93,7 +94,7 @@ public class DomainNotificationServiceTest {
     private RoleService roleService;
 
     @Mock
-    private DomainGroupService domainGroupService;
+    private OrganizationGroupService organizationGroupService;
 
     @Mock
     private OrganizationUserService userService;
@@ -168,7 +169,7 @@ public class DomainNotificationServiceTest {
         Thread.sleep(1000); // wait subscription execution
 
         verify(notifierService).register(any(), any(), any());
-        verify(domainGroupService, never()).findMembers(any(), any(), any(), anyInt(), anyInt());
+        verify(organizationGroupService, never()).findMembers(any(), any(), any(), anyInt(), anyInt());
     }
 
     @Test
@@ -192,7 +193,7 @@ public class DomainNotificationServiceTest {
 
         verify(notifierService).register(argThat(def -> def.getType().equals(TYPE_UI_NOTIFIER)), any(), any());
         verify(notifierService).register(argThat(def -> def.getType().equals(TYPE_EMAIL_NOTIFIER)), any(), any());
-        verify(domainGroupService, never()).findMembers(any(), any(), any(), anyInt(), anyInt());
+        verify(organizationGroupService, never()).findMembers(any(), any(), any(), anyInt(), anyInt());
     }
 
     @Test
@@ -212,7 +213,7 @@ public class DomainNotificationServiceTest {
         singleUser.setId("single");
         singleUser.setEmail("single@acme.fr");
 
-        when(domainGroupService.findMembers(any(), any(), any(), anyInt(), anyInt())).thenReturn(
+        when(organizationGroupService.findMembers(any(), any(), any(), anyInt(), anyInt())).thenReturn(
                 Single.just(new Page<>(tenUsers, 0, 11)),
                 Single.just(new Page<>(Arrays.asList(singleUser), 1, 11)));
 
@@ -232,7 +233,7 @@ public class DomainNotificationServiceTest {
         member.setMemberType(MemberType.GROUP);
         member.setMemberId("groupId");
         when(membershipService.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any())).thenReturn(Flowable.just(member), Flowable.empty());
-        when(domainGroupService.findMembers(any(), any(), any(), anyInt(), anyInt())).thenReturn(Single.just(new Page<>(null, 0, 0)));
+        when(organizationGroupService.findMembers(any(), any(), any(), anyInt(), anyInt())).thenReturn(Single.just(new Page<>(null, 0, 0)));
 
         cut.registerCertificateExpiration(certificate);
 

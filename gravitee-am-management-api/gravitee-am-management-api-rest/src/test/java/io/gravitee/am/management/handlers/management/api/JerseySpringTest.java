@@ -68,6 +68,7 @@ import io.gravitee.am.service.FormService;
 import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.OrganizationGroupService;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.PasswordService;
@@ -211,6 +212,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected DomainGroupService domainGroupService;
+
+    @Autowired
+    protected OrganizationGroupService organizationGroupService;
 
     @Autowired
     protected ApplicationService applicationService;
@@ -480,8 +484,13 @@ public abstract class JerseySpringTest {
         }
 
         @Bean
-        public DomainGroupService groupService() {
+        public DomainGroupService domainGroupService() {
             return mock(DomainGroupService.class);
+        }
+
+        @Bean
+        public OrganizationGroupService organizationGroupService() {
+            return mock(OrganizationGroupService.class);
         }
 
         @Bean
