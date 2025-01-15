@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service;
+package io.gravitee.am.management.service;
 
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
@@ -32,7 +32,7 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface GroupService {
+public interface DomainGroupService {
 
     Single<Page<Group>> findAll(ReferenceType referenceType, String referenceId, int page, int size);
 
