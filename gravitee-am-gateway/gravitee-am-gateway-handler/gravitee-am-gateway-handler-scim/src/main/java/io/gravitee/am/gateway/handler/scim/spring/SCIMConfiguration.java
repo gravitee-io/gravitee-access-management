@@ -18,11 +18,11 @@ package io.gravitee.am.gateway.handler.scim.spring;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.scim.resources.bulk.BulkEndpointConfiguration;
 import io.gravitee.am.gateway.handler.scim.service.BulkService;
-import io.gravitee.am.gateway.handler.scim.service.GroupService;
+import io.gravitee.am.gateway.handler.scim.service.ScimGroupService;
 import io.gravitee.am.gateway.handler.scim.service.ServiceProviderConfigService;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.gateway.handler.scim.service.impl.BulkServiceImpl;
-import io.gravitee.am.gateway.handler.scim.service.impl.GroupServiceImpl;
+import io.gravitee.am.gateway.handler.scim.service.impl.ScimGroupServiceImpl;
 import io.gravitee.am.gateway.handler.scim.service.impl.ServiceProviderConfigServiceImpl;
 import io.gravitee.am.gateway.handler.scim.service.impl.UserServiceImpl;
 import io.gravitee.am.model.Domain;
@@ -45,8 +45,8 @@ public class SCIMConfiguration implements ProtocolConfiguration {
     }
 
     @Bean
-    public GroupService groupService() {
-        return new GroupServiceImpl();
+    public ScimGroupService groupService() {
+        return new ScimGroupServiceImpl();
     }
 
     @Bean

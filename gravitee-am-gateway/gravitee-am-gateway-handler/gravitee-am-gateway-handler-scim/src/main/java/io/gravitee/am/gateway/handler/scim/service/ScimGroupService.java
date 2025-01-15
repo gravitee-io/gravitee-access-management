@@ -28,7 +28,7 @@ import io.reactivex.rxjava3.core.Single;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface GroupService {
+public interface ScimGroupService {
 
     Single<ListResponse<Group>> list(Filter filter, int page, int size, String baseUrl);
 
