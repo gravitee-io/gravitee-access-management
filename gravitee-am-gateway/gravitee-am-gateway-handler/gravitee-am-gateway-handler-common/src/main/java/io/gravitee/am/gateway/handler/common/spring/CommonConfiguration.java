@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.spring;
 
+import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.gateway.handler.common.alert.AlertEventProcessor;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.audit.impl.GatewayAuditReporterManager;
@@ -39,7 +40,6 @@ import io.gravitee.am.gateway.handler.common.flow.FlowManager;
 import io.gravitee.am.gateway.handler.common.flow.impl.FlowManagerImpl;
 import io.gravitee.am.gateway.handler.common.group.GroupManager;
 import io.gravitee.am.gateway.handler.common.group.impl.DefaultGroupManager;
-import io.gravitee.am.gateway.handler.common.group.impl.InMemoryGroupManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenFacade;
@@ -91,6 +91,7 @@ import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import jakarta.annotation.PostConstruct;
+import lombok.val;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -309,12 +310,18 @@ public class CommonConfiguration {
         return new PasswordPolicyManagerImpl();
     }
     @Bean
-    public GroupManager groupManager(Environment environment) {
-        if (ConfigurationHelper.useInMemoryRoleAndGroupManager(environment)) {
-            return new InMemoryGroupManager();
-        } else {
-            return new DefaultGroupManager();
-        }
+    public GroupManager groupManager(Environment environment, EventManager eventManager, DataPlaneRegistry registry, Domain domain) {
+        final val cachedRepository = registry.getGroupRepository(domain).cache();
+        // FIXME: sync process can not be done anymore, need to convert as a classical cache.
+        //        Since the first implementation of the DataPlane split, groups are managed on the GW
+        //        as consequence Sync is not possible.
+        //        we may have to rethink the way users are linked to the group to keep track of the groups into the user profile
+        //        so the Group can be request only of the user profile has at least one group and group can be cached for a short living time
+        /*if (ConfigurationHelper.useInMemoryRoleAndGroupManager(environment)) {
+            return new InMemoryGroupManager(domain, eventManager, cachedRepository);
+        } else {*/
+            return new DefaultGroupManager(cachedRepository);
+        /*}*/
     }
 
     @Bean

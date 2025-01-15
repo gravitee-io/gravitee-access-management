@@ -21,18 +21,19 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import io.gravitee.am.common.scim.filter.AttributePath;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.scim.filter.Operator;
+import io.gravitee.am.dataplane.api.repository.GroupRepository;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
 import io.gravitee.am.gateway.handler.scim.model.Group;
 import io.gravitee.am.gateway.handler.scim.model.ListResponse;
 import io.gravitee.am.gateway.handler.scim.model.Member;
 import io.gravitee.am.gateway.handler.scim.model.Operation;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
-import io.gravitee.am.gateway.handler.scim.service.impl.GroupServiceImpl;
+import io.gravitee.am.gateway.handler.scim.service.impl.ScimGroupServiceImpl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.repository.management.api.GroupRepository;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
@@ -41,6 +42,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -60,13 +62,16 @@ import static org.mockito.Mockito.*;
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
-public class GroupServiceTest {
+public class ScimGroupServiceTest {
 
     @InjectMocks
-    private GroupService groupService = new GroupServiceImpl();
+    private ScimGroupService groupService = new ScimGroupServiceImpl();
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private DataPlaneRegistry dataPlaneRegistry;
 
     @Mock
     private GroupRepository groupRepository;
@@ -79,6 +84,11 @@ public class GroupServiceTest {
 
     @Mock
     private AuditService auditService;
+
+    @Before
+    public void setUp() throws Exception {
+        when(dataPlaneRegistry.getGroupRepository(any())).thenReturn(Single.just(groupRepository));
+    }
 
     @Test
     public void shouldCreateGroup() {
