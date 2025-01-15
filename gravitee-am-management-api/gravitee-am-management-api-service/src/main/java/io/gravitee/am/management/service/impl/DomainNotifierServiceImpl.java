@@ -18,6 +18,7 @@ package io.gravitee.am.management.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import io.gravitee.am.management.service.DomainNotifierService;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.impl.notifications.CertificateNotificationCondition;
 import io.gravitee.am.management.service.impl.notifications.CertificateResendNotificationCondition;
@@ -35,10 +36,9 @@ import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.EnvironmentService;
-import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.OrganizationGroupService;
 import io.gravitee.am.service.OrganizationUserService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -112,7 +112,7 @@ public class DomainNotifierServiceImpl implements DomainNotifierService, Initial
     private RoleService roleService;
 
     @Autowired
-    private DomainGroupService domainGroupService;
+    private OrganizationGroupService organizationGroupService;
 
     @Autowired
     private OrganizationUserService userService;
@@ -202,7 +202,7 @@ public class DomainNotifierServiceImpl implements DomainNotifierService, Initial
     }
 
     private Flowable<User> readUsersFromAnOrganizationGroup(String organizationId, String memberId, int pageIndex, int size) {
-        return domainGroupService.findMembers(ReferenceType.ORGANIZATION, organizationId, memberId, pageIndex, size)
+        return organizationGroupService.findMembers(ReferenceType.ORGANIZATION, organizationId, memberId, pageIndex, size)
                 .flatMapPublisher(page -> {
                     if (page.getTotalCount() == 0) {
                         return Flowable.empty();

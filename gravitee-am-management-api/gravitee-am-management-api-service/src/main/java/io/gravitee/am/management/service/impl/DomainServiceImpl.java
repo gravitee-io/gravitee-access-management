@@ -574,9 +574,9 @@ public class DomainServiceImpl implements DomainService {
                             // https://github.com/gravitee-io/issues/issues/6999
                             .andThen(userService.deleteByDomain(domain))
                             // delete groups
-                            .andThen(domainGroupService.findByDomain(domainId)
+                            .andThen(domainGroupService.findAll(domain)
                                     .flatMapCompletable(group ->
-                                            domainGroupService.delete(DOMAIN, domainId, group.getId()))
+                                            domainGroupService.delete(domain, group.getId(), principal))
                             )
                             // delete scopes
                             .andThen(scopeService.findByDomain(domainId, 0, Integer.MAX_VALUE)
