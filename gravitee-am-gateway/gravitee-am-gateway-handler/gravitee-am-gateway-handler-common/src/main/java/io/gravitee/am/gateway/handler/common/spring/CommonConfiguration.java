@@ -311,7 +311,7 @@ public class CommonConfiguration {
     }
     @Bean
     public GroupManager groupManager(Environment environment, EventManager eventManager, DataPlaneRegistry registry, Domain domain) {
-        final val cachedRepository = registry.getGroupRepository(domain).cache();
+        final val cachedRepository = registry.getGroupRepository(domain);
         // FIXME: sync process can not be done anymore, need to convert as a classical cache.
         //        Since the first implementation of the DataPlane split, groups are managed on the GW
         //        as consequence Sync is not possible.

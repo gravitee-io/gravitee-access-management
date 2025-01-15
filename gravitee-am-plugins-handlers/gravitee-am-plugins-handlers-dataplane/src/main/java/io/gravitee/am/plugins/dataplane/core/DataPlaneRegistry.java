@@ -26,7 +26,6 @@ import io.gravitee.am.dataplane.api.repository.ScopeApprovalRepository;
 import io.gravitee.am.dataplane.api.repository.UserActivityRepository;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.model.Domain;
-import io.reactivex.rxjava3.core.Single;
 
 import java.util.List;
 
@@ -39,17 +38,17 @@ import java.util.List;
 public interface DataPlaneRegistry {
     List<DataPlaneDescription> getDataPlanes();
 
-    Single<DataPlaneProvider> getProvider(Domain domain);
+    DataPlaneProvider getProvider(Domain domain);
 
-    Single<CredentialRepository> getCredentialRepository(Domain domain);
+    CredentialRepository getCredentialRepository(Domain domain);
 
-    Single<DeviceRepository> getDeviceRepository(Domain domain);
+    DeviceRepository getDeviceRepository(Domain domain);
 
-    Single<GroupRepository> getGroupRepository(Domain domain);
+    GroupRepository getGroupRepository(Domain domain);
 
-    Single<ScopeApprovalRepository> getScopeApprovalRepository(Domain domain);
+    ScopeApprovalRepository getScopeApprovalRepository(Domain domain);
 
-    Single<UserActivityRepository> getUserActivityRepository(Domain domain);
+    UserActivityRepository getUserActivityRepository(Domain domain);
 
-    Single<UserRepository> getUserRepository(Domain domain);
+    UserRepository getUserRepository(Domain domain);
 }

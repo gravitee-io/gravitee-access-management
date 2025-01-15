@@ -58,12 +58,13 @@ public class CredentialGatewayServiceImpl implements CredentialGatewayService {
     private UserService userService;
 
     //FIXME do we have to keep RefTyp & RefId into the repository signatures ?
+    //FIXME do we have to create a business Rule for the delete/update method to avoid logic duplication between mAPI and GW?
 
     @Override
     public Maybe<Credential> findById(Domain domain, String id) {
         log.debug("Find credential by ID: {}", id);
         return dataPlaneRegistry.getCredentialRepository(domain)
-                .flatMapMaybe(credentialRepository -> credentialRepository.findById(id))
+                .findById(id)
                 .onErrorResumeNext(ex -> {
                     log.error("An error occurs while trying to find a credential using its ID: {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
@@ -75,7 +76,7 @@ public class CredentialGatewayServiceImpl implements CredentialGatewayService {
     public Flowable<Credential> findByUserId(Domain domain, String userId) {
         log.debug("Find credentials by Domain {} and user id: {}", domain.getId(), userId);
         return dataPlaneRegistry.getCredentialRepository(domain)
-                .flatMapPublisher(credentialRepository -> credentialRepository.findByUserId(DOMAIN, domain.getId(), userId))
+                .findByUserId(DOMAIN, domain.getId(), userId)
                 .onErrorResumeNext(ex -> {
                     log.error("An error occurs while trying to find a credential using Domain {} and user id: {}", domain.getId(), userId, ex);
                     return Flowable.error(new TechnicalManagementException(
@@ -87,7 +88,7 @@ public class CredentialGatewayServiceImpl implements CredentialGatewayService {
     public Flowable<Credential> findByUsername(Domain domain, String username) {
         log.debug("Find credentials by Domain {} and username: {}", domain.getId(), username);
         return dataPlaneRegistry.getCredentialRepository(domain)
-                .flatMapPublisher(credentialRepository -> credentialRepository.findByUsername(DOMAIN, domain.getId(), username))
+                .findByUsername(DOMAIN, domain.getId(), username)
                 .onErrorResumeNext(ex -> {
                     log.error("An error occurs while trying to find a credential using Domain {} and username: {}", domain.getId(), username, ex);
                     return Flowable.error(new TechnicalManagementException(
@@ -99,7 +100,7 @@ public class CredentialGatewayServiceImpl implements CredentialGatewayService {
     public Flowable<Credential> findByUsername(Domain domain, String username, int limit) {
         log.debug("Find credentials by Domain {} and username: {}, returning {}", domain.getId(), username, limit);
         return dataPlaneRegistry.getCredentialRepository(domain)
-                .flatMapPublisher(credentialRepository -> credentialRepository.findByUsername(DOMAIN, domain.getId(), username, limit))
+                .findByUsername(DOMAIN, domain.getId(), username, limit)
                 .onErrorResumeNext(ex -> {
                     log.error("An error occurs while trying to find a credential using Domain {} and username: {} and limit: {}", domain.getId(), username, limit, ex);
                     return Flowable.error(new TechnicalManagementException(
@@ -111,7 +112,7 @@ public class CredentialGatewayServiceImpl implements CredentialGatewayService {
     public Flowable<Credential> findByCredentialId(Domain domain, String credentialId) {
         log.debug("Find credentials by Domain {} and credential ID: {}", domain.getId(), credentialId);
         return dataPlaneRegistry.getCredentialRepository(domain)
-                .flatMapPublisher(credentialRepository -> credentialRepository.findByCredentialId(DOMAIN, domain.getId(), credentialId))
+                .findByCredentialId(DOMAIN, domain.getId(), credentialId)
                 .onErrorResumeNext(ex -> {
                     log.error("An error occurs while trying to find a credential using Domain {} and credential ID: {}", domain.getId(), credentialId, ex);
                     return Flowable.error(new TechnicalManagementException(
@@ -123,7 +124,7 @@ public class CredentialGatewayServiceImpl implements CredentialGatewayService {
     public Single<Credential> create(Domain domain, Credential credential) {
         log.debug("Create a new credential {}", credential);
         return dataPlaneRegistry.getCredentialRepository(domain)
-                .flatMap(credentialRepository -> credentialRepository.create(credential))
+                .create(credential)
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
@@ -137,11 +138,10 @@ public class CredentialGatewayServiceImpl implements CredentialGatewayService {
     public Single<Credential> update(Domain domain, Credential credential) {
         log.debug("Update a credential {}", credential);
         return dataPlaneRegistry.getCredentialRepository(domain)
-                .flatMap(credentialRepository ->
-                        // FIXME: check if we really need to do a find here. Maybe useless if already call i higher method call
-                        credentialRepository.findById(credential.getId())
-                                .switchIfEmpty(Single.error(new CredentialNotFoundException(credential.getId())))
-                                .flatMap(__ -> credentialRepository.update(credential)))
+                // FIXME: check if we really need to do a find here. Maybe useless if already call i higher method call
+                .findById(credential.getId())
+                .switchIfEmpty(Single.error(new CredentialNotFoundException(credential.getId())))
+                .flatMap(__ -> dataPlaneRegistry.getCredentialRepository(domain).update(credential))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
@@ -155,24 +155,23 @@ public class CredentialGatewayServiceImpl implements CredentialGatewayService {
     public Single<Credential> update(Domain domain, String credentialId, Credential credential) {
         log.debug("Update a credential {}", credentialId);
         return dataPlaneRegistry.getCredentialRepository(domain)
-                .flatMap(credentialRepository ->
-                        credentialRepository.findByCredentialId(DOMAIN, domain.getId(), credentialId)
-                                // filter on userId to restrict the credential to the current user.
-                                // if credentialToUpdate has null userid, we are in the registration phase
-                                // we want to assign this credential to the user profile, so we accept it.
-                                .filter(credentialToUpdate -> credentialToUpdate.getUserId() == null || credentialToUpdate.getUserId().equals(credential.getUserId()))
-                                .flatMapSingle(credentialToUpdate -> {
-                                    // update only business values (i.e not set via the vert.x authenticator object)
-                                    credentialToUpdate.setUserId(credential.getUserId());
-                                    credentialToUpdate.setIpAddress(credential.getIpAddress());
-                                    credentialToUpdate.setUserAgent(credential.getUserAgent());
-                                    credentialToUpdate.setUpdatedAt(new Date());
-                                    credentialToUpdate.setAccessedAt(credentialToUpdate.getUpdatedAt());
-                                    credentialToUpdate.setLastCheckedAt(credential.getLastCheckedAt());
-                                    return credentialRepository.update(credentialToUpdate);
-                                })
-                                .firstElement()
-                                .switchIfEmpty(Single.error(() -> new CredentialNotFoundException(credentialId))));
+                .findByCredentialId(DOMAIN, domain.getId(), credentialId)
+                // filter on userId to restrict the credential to the current user.
+                // if credentialToUpdate has null userid, we are in the registration phase
+                // we want to assign this credential to the user profile, so we accept it.
+                .filter(credentialToUpdate -> credentialToUpdate.getUserId() == null || credentialToUpdate.getUserId().equals(credential.getUserId()))
+                .flatMapSingle(credentialToUpdate -> {
+                    // update only business values (i.e not set via the vert.x authenticator object)
+                    credentialToUpdate.setUserId(credential.getUserId());
+                    credentialToUpdate.setIpAddress(credential.getIpAddress());
+                    credentialToUpdate.setUserAgent(credential.getUserAgent());
+                    credentialToUpdate.setUpdatedAt(new Date());
+                    credentialToUpdate.setAccessedAt(credentialToUpdate.getUpdatedAt());
+                    credentialToUpdate.setLastCheckedAt(credential.getLastCheckedAt());
+                    return dataPlaneRegistry.getCredentialRepository(domain).update(credentialToUpdate);
+                })
+                .firstElement()
+                .switchIfEmpty(Single.error(() -> new CredentialNotFoundException(credentialId)));
     }
 
     @Override
@@ -184,51 +183,50 @@ public class CredentialGatewayServiceImpl implements CredentialGatewayService {
     public Completable delete(Domain domain, String id, boolean enforceFactorDelete) {
         log.debug("Delete credential {}", id);
         return dataPlaneRegistry.getCredentialRepository(domain)
-                .flatMapCompletable(credentialRepository -> credentialRepository.findById(id)
-                        .switchIfEmpty(Maybe.error(new CredentialNotFoundException(id)))
-                        .flatMapCompletable(credential -> {
-                            if (enforceFactorDelete) {
-                                return userService.findById(UserId.internal(credential.getUserId())).flatMapCompletable(user -> {
-                                    final List<EnrolledFactor> factors = user.getFactors();
-                                    if (factors == null || factors.isEmpty()) {
-                                        return credentialRepository.delete(id);
-                                    }
+                .findById(id)
+                .switchIfEmpty(Maybe.error(new CredentialNotFoundException(id)))
+                .flatMapCompletable(credential -> {
+                    if (enforceFactorDelete) {
+                        return userService.findById(UserId.internal(credential.getUserId())).flatMapCompletable(user -> {
+                            final List<EnrolledFactor> factors = user.getFactors();
+                            if (factors == null || factors.isEmpty()) {
+                                return dataPlaneRegistry.getCredentialRepository(domain).delete(id);
+                            }
 
-                                    final Optional<EnrolledFactor> fido2Factor = factors
-                                            .stream()
-                                            .filter(enrolledFactor -> enrolledFactor.getSecurity() != null)
-                                            .filter(enrolledFactor ->
-                                                    WEBAUTHN_CREDENTIAL.equals(enrolledFactor.getSecurity().getType()) &&
-                                                            enrolledFactor.getSecurity().getValue().equals(credential.getCredentialId())
-                                            )
-                                            .findFirst();
-                                    if (fido2Factor.isPresent()) {
-                                        CredentialCurrentlyUsedException exception = new CredentialCurrentlyUsedException(id, fido2Factor.get().getFactorId(), "Fido2 factor ");
-                                        return Completable.error(exception);
-                                    } else {
-                                        return credentialRepository.delete(id);
-                                    }
-                                });
+                            final Optional<EnrolledFactor> fido2Factor = factors
+                                    .stream()
+                                    .filter(enrolledFactor -> enrolledFactor.getSecurity() != null)
+                                    .filter(enrolledFactor ->
+                                            WEBAUTHN_CREDENTIAL.equals(enrolledFactor.getSecurity().getType()) &&
+                                                    enrolledFactor.getSecurity().getValue().equals(credential.getCredentialId())
+                                    )
+                                    .findFirst();
+                            if (fido2Factor.isPresent()) {
+                                CredentialCurrentlyUsedException exception = new CredentialCurrentlyUsedException(id, fido2Factor.get().getFactorId(), "Fido2 factor ");
+                                return Completable.error(exception);
                             } else {
-                                return credentialRepository.delete(id);
+                                return dataPlaneRegistry.getCredentialRepository(domain).delete(id);
                             }
-                        })
-                        .onErrorResumeNext(ex -> {
-                            if (ex instanceof AbstractManagementException) {
-                                return Completable.error(ex);
-                            }
-                            log.error("An error occurs while trying to delete credential: {}", id, ex);
-                            return Completable.error(new TechnicalManagementException(
-                                    String.format("An error occurs while trying to delete credential: %s", id), ex));
-                        })
-                );
+                        });
+                    } else {
+                        return dataPlaneRegistry.getCredentialRepository(domain).delete(id);
+                    }
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Completable.error(ex);
+                    }
+                    log.error("An error occurs while trying to delete credential: {}", id, ex);
+                    return Completable.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to delete credential: %s", id), ex));
+                });
     }
 
     @Override
     public Completable deleteByUserId(Domain domain, String userId) {
         log.debug("Delete credentials by domain {} and user id: {}", domain.getId(), userId);
         return dataPlaneRegistry.getCredentialRepository(domain)
-                .flatMapCompletable(credentialRepository -> credentialRepository.deleteByUserId(DOMAIN, domain.getId(), userId))
+                .deleteByUserId(DOMAIN, domain.getId(), userId)
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
@@ -243,7 +241,7 @@ public class CredentialGatewayServiceImpl implements CredentialGatewayService {
     public Completable deleteByDomain(Domain domain) {
         log.debug("Delete credentials by reference {}", domain.getId());
         return dataPlaneRegistry.getCredentialRepository(domain)
-                .flatMapCompletable(credentialRepository ->  credentialRepository.deleteByReference(DOMAIN, domain.getId()))
+                .deleteByReference(DOMAIN, domain.getId())
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);

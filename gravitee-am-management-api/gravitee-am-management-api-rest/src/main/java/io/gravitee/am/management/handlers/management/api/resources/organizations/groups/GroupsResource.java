@@ -86,7 +86,7 @@ public class GroupsResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.LIST)
-                .andThen(orgGroupService.findAll(ReferenceType.ORGANIZATION, organizationId, page, Integer.min(size, MAX_GROUPS_SIZE_PER_PAGE))
+                .andThen(orgGroupService.findAll(organizationId, page, Integer.min(size, MAX_GROUPS_SIZE_PER_PAGE))
                         .map(groupPage ->
                                 new GroupPage(groupPage.getData().stream().map(this::filterGroupInfos).collect(Collectors.toList()), groupPage.getCurrentPage(), groupPage.getTotalCount())))
                 .subscribe(response::resume, response::resume);
@@ -107,7 +107,7 @@ public class GroupsResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.CREATE)
-                .andThen(orgGroupService.create(ReferenceType.ORGANIZATION, organizationId, newGroup, authenticatedUser)
+                .andThen(orgGroupService.create(organizationId, newGroup, authenticatedUser)
                         .map(group -> Response.created(URI.create("/organizations/" + organizationId + "/groups/" + group.getId()))
                                 .entity(group).build()))
                 .subscribe(response::resume, response::resume);

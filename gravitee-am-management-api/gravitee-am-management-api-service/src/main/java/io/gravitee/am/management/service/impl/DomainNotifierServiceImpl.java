@@ -202,7 +202,7 @@ public class DomainNotifierServiceImpl implements DomainNotifierService, Initial
     }
 
     private Flowable<User> readUsersFromAnOrganizationGroup(String organizationId, String memberId, int pageIndex, int size) {
-        return organizationGroupService.findMembers(ReferenceType.ORGANIZATION, organizationId, memberId, pageIndex, size)
+        return organizationGroupService.findMembers(organizationId, memberId, pageIndex, size)
                 .flatMapPublisher(page -> {
                     if (page.getTotalCount() == 0) {
                         return Flowable.empty();
