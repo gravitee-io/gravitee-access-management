@@ -61,7 +61,7 @@ import io.gravitee.am.service.ExtensionGrantService;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.FormService;
-import io.gravitee.am.service.GroupService;
+import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordPolicyService;
@@ -194,7 +194,7 @@ public class DomainServiceImpl implements DomainService {
     private ScopeService scopeService;
 
     @Autowired
-    private GroupService groupService;
+    private DomainGroupService domainGroupService;
 
     @Autowired
     private EmailTemplateService emailTemplateService;
@@ -574,9 +574,9 @@ public class DomainServiceImpl implements DomainService {
                             // https://github.com/gravitee-io/issues/issues/6999
                             .andThen(userService.deleteByDomain(domain))
                             // delete groups
-                            .andThen(groupService.findByDomain(domainId)
+                            .andThen(domainGroupService.findByDomain(domainId)
                                     .flatMapCompletable(group ->
-                                            groupService.delete(DOMAIN, domainId, group.getId()))
+                                            domainGroupService.delete(DOMAIN, domainId, group.getId()))
                             )
                             // delete scopes
                             .andThen(scopeService.findByDomain(domainId, 0, Integer.MAX_VALUE)

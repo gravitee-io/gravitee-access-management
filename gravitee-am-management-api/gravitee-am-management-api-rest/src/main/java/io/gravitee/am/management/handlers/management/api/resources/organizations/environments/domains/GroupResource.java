@@ -21,7 +21,7 @@ import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.management.service.DomainService;
-import io.gravitee.am.service.GroupService;
+import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.GroupNotFoundException;
 import io.gravitee.am.service.model.UpdateGroup;
@@ -60,7 +60,7 @@ public class GroupResource extends AbstractResource {
     private ResourceContext resourceContext;
 
     @Autowired
-    private GroupService groupService;
+    private DomainGroupService domainGroupService;
 
     @Autowired
     private DomainService domainService;
@@ -88,7 +88,7 @@ public class GroupResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_GROUP, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> groupService.findById(group))
+                        .flatMap(irrelevant -> domainGroupService.findById(group))
                         .switchIfEmpty(Maybe.error(new GroupNotFoundException(group)))
                         .flatMap(group1 -> {
                             if (group1.getReferenceType() == ReferenceType.DOMAIN
@@ -126,7 +126,7 @@ public class GroupResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_GROUP, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> groupService.update(domain, group, updateGroup, authenticatedUser)))
+                        .flatMapSingle(irrelevant -> domainGroupService.update(domain, group, updateGroup, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -151,7 +151,7 @@ public class GroupResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_GROUP, Acl.DELETE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapCompletable(irrelevant -> groupService.delete(ReferenceType.DOMAIN, domain, group, authenticatedUser)))
+                        .flatMapCompletable(irrelevant -> domainGroupService.delete(ReferenceType.DOMAIN, domain, group, authenticatedUser)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 

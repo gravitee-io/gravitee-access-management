@@ -18,7 +18,7 @@ package io.gravitee.am.service.impl.user;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
-import io.gravitee.am.service.GroupService;
+import io.gravitee.am.service.OrganizationGroupService;
 import io.gravitee.am.service.RoleService;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
@@ -38,16 +38,16 @@ import java.util.Set;
 import static java.util.stream.Collectors.toSet;
 
 @ExtendWith(MockitoExtension.class)
-public class DefaultUserEnhancerTest {
+public class OrganizationUserEnhancerTest {
 
     @Mock
-    GroupService groupService;
+    OrganizationGroupService groupService;
 
     @Mock
     RoleService roleService;
 
     @InjectMocks
-    DomainUserEnhancer domainUserEnhancer;
+    OrganizationUserEnhancer organizationUserEnhancer;
 
     @Before
     public void setUp() throws Exception {
@@ -75,7 +75,7 @@ public class DefaultUserEnhancerTest {
         Mockito.when(roleService.findByIdIn(Mockito.anyList())).thenAnswer(a -> Single.just(roles(a.getArgument(0))));
 
         // when
-        TestObserver<User> observer = domainUserEnhancer.enhance(user).test();
+        TestObserver<User> observer = organizationUserEnhancer.enhance(user).test();
 
         // then
         observer.assertComplete();
@@ -115,7 +115,7 @@ public class DefaultUserEnhancerTest {
         Mockito.when(roleService.findByIdIn(Mockito.anyList())).thenAnswer(a -> Single.just(roles(a.getArgument(0))));
 
         // when
-        TestObserver<User> observer = domainUserEnhancer.enhance(user).test();
+        TestObserver<User> observer = organizationUserEnhancer.enhance(user).test();
 
         // then
         observer.assertComplete();
