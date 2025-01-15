@@ -88,7 +88,7 @@ public class DomainGroupServiceImpl implements DomainGroupService {
     public Single<Page<Group>> findAll(Domain domain, int page, int size) {
         LOGGER.debug("Find groups by domain: {}", domain.getId());
         return dataPlaneRegistry.getGroupRepository(domain)
-                .flatMap(repository -> repository.findAll(ReferenceType.DOMAIN, domain.getId(), page, size))
+                .findAll(ReferenceType.DOMAIN, domain.getId(), page, size)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find groups for domain {}", domain.getId(), ex);
                     return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users for domain %s", domain.getId()), ex));
@@ -99,7 +99,7 @@ public class DomainGroupServiceImpl implements DomainGroupService {
     public Flowable<Group> findAll(Domain domain) {
         LOGGER.debug("Find groups by domain: {}", domain.getId());
         return dataPlaneRegistry.getGroupRepository(domain)
-                .flatMapPublisher(repository -> repository.findAll(ReferenceType.DOMAIN, domain.getId()))
+                .findAll(ReferenceType.DOMAIN, domain.getId())
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find groups for domain {}", domain.getId(), ex);
                     return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find users for domain %s", domain.getId()), ex));
@@ -110,7 +110,7 @@ public class DomainGroupServiceImpl implements DomainGroupService {
     public Maybe<Group> findByName(Domain domain, String groupName) {
         LOGGER.debug("Find group by domain and name: {} {}", domain.getId(), groupName);
         return dataPlaneRegistry.getGroupRepository(domain)
-                .flatMapMaybe(groupRepository -> groupRepository.findByName(ReferenceType.DOMAIN, domain.getId(), groupName))
+                .findByName(ReferenceType.DOMAIN, domain.getId(), groupName)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a group using its name: {} for the domain {}", groupName, domain.getId(), ex);
                     return Maybe.error(new TechnicalManagementException(
@@ -122,7 +122,7 @@ public class DomainGroupServiceImpl implements DomainGroupService {
     public Single<Group> findById(Domain domain, String id) {
         LOGGER.debug("Find group by id : {}", id);
         return dataPlaneRegistry.getGroupRepository(domain)
-                .flatMapMaybe(groupRepository -> groupRepository.findById(ReferenceType.DOMAIN, domain.getId(), id))
+                .findById(ReferenceType.DOMAIN, domain.getId(), id)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a group using its id {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
@@ -153,7 +153,7 @@ public class DomainGroupServiceImpl implements DomainGroupService {
     public Flowable<Group> findByIdIn(Domain domain, List<String> ids) {
         LOGGER.debug("Find groups for ids : {}", ids);
         return dataPlaneRegistry.getGroupRepository(domain)
-                .flatMapPublisher(groupRepository -> groupRepository.findByIdIn(ids))
+                .findByIdIn(ids)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a group using ids {}", ids, ex);
                     return Flowable.error(new TechnicalManagementException(
@@ -185,7 +185,7 @@ public class DomainGroupServiceImpl implements DomainGroupService {
                     }
                 })
                 .flatMap(this::setMembers)
-                .flatMap(group -> dataPlaneRegistry.getGroupRepository(domain).flatMap(rep -> rep.create(group)))
+                .flatMap(group -> dataPlaneRegistry.getGroupRepository(domain).create(group))
                 // create event for sync process
                 .flatMap(group -> {
                     Event event = new Event(Type.GROUP, new Payload(group.getId(), group.getReferenceType(), group.getReferenceId(), Action.CREATE));
@@ -209,8 +209,7 @@ public class DomainGroupServiceImpl implements DomainGroupService {
 
         return findById(domain, id)
                 // check uniqueness
-                .flatMap(existingGroup -> dataPlaneRegistry.getGroupRepository(domain)
-                        .flatMapMaybe(repository -> repository.findByName(ReferenceType.DOMAIN, domain.getId(), updateGroup.getName()))
+                .flatMap(existingGroup -> dataPlaneRegistry.getGroupRepository(domain).findByName(ReferenceType.DOMAIN, domain.getId(), updateGroup.getName())
                         .map(Optional::of)
                         .defaultIfEmpty(Optional.empty())
                         .map(optionalGroup -> {
@@ -229,7 +228,7 @@ public class DomainGroupServiceImpl implements DomainGroupService {
 
                     // set members and update
                     return setMembers(groupToUpdate)
-                            .flatMap(group -> dataPlaneRegistry.getGroupRepository(domain).flatMap(repo -> repo.update(group)))
+                            .flatMap(group -> dataPlaneRegistry.getGroupRepository(domain).update(group))
                             // create event for sync process
                             .flatMap(group -> {
                                 Event event = new Event(Type.GROUP, new Payload(group.getId(), group.getReferenceType(), group.getReferenceId(), Action.UPDATE));
@@ -254,8 +253,7 @@ public class DomainGroupServiceImpl implements DomainGroupService {
         LOGGER.debug("Delete group {}", groupId);
 
         return findById(domain, groupId)
-                .flatMapCompletable(group -> dataPlaneRegistry.getGroupRepository(domain)
-                        .flatMapCompletable(groupRepository -> groupRepository.delete(groupId))
+                .flatMapCompletable(group -> dataPlaneRegistry.getGroupRepository(domain).delete(groupId)
                         .andThen(Completable.fromSingle(eventService.create(new Event(Type.GROUP, new Payload(group.getId(), group.getReferenceType(), group.getReferenceId(), Action.DELETE)))))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).group(group)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).group(group).throwable(throwable)))
@@ -295,7 +293,7 @@ public class DomainGroupServiceImpl implements DomainGroupService {
                     // check roles
                     return checkRoles(roles)
                             // and update the group
-                            .andThen(Single.defer(() -> dataPlaneRegistry.getGroupRepository(domain).flatMap(groupRepository -> groupRepository.update(groupToUpdate))
+                            .andThen(Single.defer(() -> dataPlaneRegistry.getGroupRepository(domain).update(groupToUpdate)
                                     .flatMap(group ->
                                             eventService.create(new Event(Type.GROUP, new Payload(group.getId(), group.getReferenceType(), group.getReferenceId(), Action.UPDATE)))
                                                     .flatMap(event -> Single.just(group)))))

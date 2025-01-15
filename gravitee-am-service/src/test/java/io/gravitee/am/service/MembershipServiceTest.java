@@ -178,7 +178,7 @@ public class MembershipServiceTest {
         group.setReferenceId(DOMAIN_ID);
         group.setReferenceType(ReferenceType.DOMAIN);
 
-        when(groupService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(group));
+        when(groupService.findById(ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(group));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
         when(membershipRepository.create(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
@@ -274,7 +274,7 @@ public class MembershipServiceTest {
         role.setReferenceType(ReferenceType.PLATFORM);
         role.setAssignableType(ReferenceType.DOMAIN);
 
-        when(groupService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(group));
+        when(groupService.findById(ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(group));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
 
@@ -299,7 +299,7 @@ public class MembershipServiceTest {
         role.setReferenceType(ReferenceType.DOMAIN);
         role.setAssignableType(ReferenceType.DOMAIN);
 
-        when(groupService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.error(new GroupNotFoundException("group-id")));
+        when(groupService.findById(ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.error(new GroupNotFoundException("group-id")));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
 

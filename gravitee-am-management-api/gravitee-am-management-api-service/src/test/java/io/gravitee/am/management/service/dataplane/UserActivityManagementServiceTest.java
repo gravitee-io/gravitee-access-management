@@ -23,7 +23,6 @@ import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.dataplane.user.activity.configuration.UserActivityConfiguration;
 import io.gravitee.am.service.dataplane.user.activity.configuration.UserActivityConfiguration.Algorithm;
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
@@ -59,7 +58,7 @@ public class UserActivityManagementServiceTest {
                 0.07);
         userActivityRepository = Mockito.mock(UserActivityRepository.class);
         dataPlaneRegistry = Mockito.mock(DataPlaneRegistry.class);
-        when(dataPlaneRegistry.getUserActivityRepository(any())).thenReturn(Single.just(userActivityRepository));
+        when(dataPlaneRegistry.getUserActivityRepository(any())).thenReturn(userActivityRepository);
         userActivityService = new UserActivityManagementServiceImpl(configuration, dataPlaneRegistry);
     }
 

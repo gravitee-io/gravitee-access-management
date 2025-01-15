@@ -106,7 +106,7 @@ public class DomainGroupServiceTest {
     @Before
     public void beforeClass() throws Exception {
         DOMAIN_ENTITY.setId("domain1");
-        when(dataPlaneRegistry.getGroupRepository(any())).thenReturn(Single.just(groupRepository));
+        when(dataPlaneRegistry.getGroupRepository(any())).thenReturn(groupRepository);
     }
 
     @Test
