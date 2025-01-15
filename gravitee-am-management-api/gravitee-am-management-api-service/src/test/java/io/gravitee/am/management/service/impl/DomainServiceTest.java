@@ -72,7 +72,7 @@ import io.gravitee.am.service.ExtensionGrantService;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.FormService;
-import io.gravitee.am.service.GroupService;
+import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordPolicyService;
@@ -250,7 +250,7 @@ public class DomainServiceTest {
     private ScopeService scopeService;
 
     @Mock
-    private GroupService groupService;
+    private DomainGroupService domainGroupService;
 
     @Mock
     private FormService formService;
@@ -1039,8 +1039,8 @@ public class DomainServiceTest {
         when(scopeService.findByDomain(DOMAIN_ID, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.singleton(scope), 0, 1)));
         when(scopeService.delete(SCOPE_ID, true)).thenReturn(complete());
         when(group.getId()).thenReturn(GROUP_ID);
-        when(groupService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(group));
-        when(groupService.delete(eq(DOMAIN), eq(DOMAIN_ID), anyString())).thenReturn(complete());
+        when(domainGroupService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(group));
+        when(domainGroupService.delete(eq(DOMAIN), eq(DOMAIN_ID), anyString())).thenReturn(complete());
         when(form.getId()).thenReturn(FORM_ID);
         when(formService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(form));
         when(formService.delete(eq(DOMAIN_ID), anyString())).thenReturn(complete());
@@ -1092,7 +1092,7 @@ public class DomainServiceTest {
         verify(userService, times(1)).deleteByDomain(any());
         verify(userActivityService, times(1)).deleteByDomain(any());
         verify(scopeService, times(1)).delete(SCOPE_ID, true);
-        verify(groupService, times(1)).delete(eq(DOMAIN), eq(DOMAIN_ID), eq(GROUP_ID));
+        verify(domainGroupService, times(1)).delete(eq(DOMAIN), eq(DOMAIN_ID), eq(GROUP_ID));
         verify(formService, times(1)).delete(eq(DOMAIN_ID), eq(FORM_ID));
         verify(emailTemplateService, times(1)).delete(EMAIL_ID);
         verify(reporterService, times(1)).delete(REPORTER_ID);
@@ -1118,7 +1118,7 @@ public class DomainServiceTest {
         when(scopeService.findByDomain(DOMAIN_ID, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.emptySet(), 0, 1)));
         when(userService.deleteByDomain(any())).thenReturn(complete());
         when(userActivityService.deleteByDomain(any())).thenReturn(complete());
-        when(groupService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
+        when(domainGroupService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(formService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(emailTemplateService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());
         when(reporterService.findByReference(Reference.domain(DOMAIN_ID))).thenReturn(Flowable.empty());

@@ -23,7 +23,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.management.service.DomainService;
-import io.gravitee.am.service.GroupService;
+import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Observable;
@@ -60,7 +60,7 @@ public class GroupMembersResource extends AbstractResource {
     private ResourceContext resourceContext;
 
     @Autowired
-    private GroupService groupService;
+    private DomainGroupService domainGroupService;
 
     @Autowired
     private DomainService domainService;
@@ -93,7 +93,7 @@ public class GroupMembersResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_GROUP, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Single.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> groupService.findMembers(ReferenceType.DOMAIN, domain, group, page, Integer.min(size, MAX_MEMBERS_SIZE_PER_PAGE)))
+                        .flatMap(irrelevant -> domainGroupService.findMembers(ReferenceType.DOMAIN, domain, group, page, Integer.min(size, MAX_MEMBERS_SIZE_PER_PAGE)))
                         .flatMap(pagedMembers -> {
                             if (pagedMembers.getData() == null) {
                                 return Single.just(pagedMembers);

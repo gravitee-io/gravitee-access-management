@@ -32,7 +32,6 @@ import io.gravitee.am.service.dataplane.CredentialCommonService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserNotFoundException;
-import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -42,7 +41,6 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -70,21 +68,12 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
     protected TokenService tokenService;
 
     @Autowired
-    @Qualifier("DomainUserEnhancer")
-    private UserEnhancer userEnhancer;
-
-    @Autowired
     @Lazy
     protected CredentialCommonService credentialService;
 
     @Override
     protected UserRepository getUserRepository() {
         return this.userRepository;
-    }
-
-    @Override
-    protected UserEnhancer getUserEnhancer() {
-        return userEnhancer;
     }
 
     @Override
