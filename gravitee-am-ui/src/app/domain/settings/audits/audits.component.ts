@@ -275,7 +275,7 @@ export class AuditsComponent implements OnInit {
         return row.outcome.message;
       }
     } else {
-      return row.type + ' success';
+      return row.type + ' ' + row.outcome.status;
     }
   }
 
