@@ -22,7 +22,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.management.service.DomainService;
-import io.gravitee.am.service.GroupService;
+import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.GroupNotFoundException;
@@ -65,7 +65,7 @@ public class GroupRolesResource extends AbstractResource {
     private DomainService domainService;
 
     @Autowired
-    private GroupService groupService;
+    private DomainGroupService domainGroupService;
 
     @Autowired
     private RoleService roleService;
@@ -93,7 +93,7 @@ public class GroupRolesResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_GROUP, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> groupService.findById(group))
+                        .flatMap(__ -> domainGroupService.findById(group))
                         .switchIfEmpty(Maybe.error(new GroupNotFoundException(group)))
                         .flatMapSingle(group1 -> {
                             if (group1.getRoles() == null || group1.getRoles().isEmpty()) {
@@ -130,7 +130,7 @@ public class GroupRolesResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_GROUP, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(domain1 -> groupService.assignRoles(ReferenceType.DOMAIN, domain, group, roles, authenticatedUser)))
+                        .flatMapSingle(domain1 -> domainGroupService.assignRoles(ReferenceType.DOMAIN, domain, group, roles, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 

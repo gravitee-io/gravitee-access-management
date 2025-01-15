@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.impl;
+package io.gravitee.am.management.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
@@ -29,10 +30,7 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.GroupRepository;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.CommonUserService;
 import io.gravitee.am.service.EventService;
-import io.gravitee.am.service.GroupService;
-import io.gravitee.am.service.OrganizationUserService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -65,9 +63,9 @@ import java.util.stream.Collectors;
  * @author GraviteeSource Team
  */
 @Component
-public class GroupServiceImpl implements GroupService {
+public class DomainGroupServiceImpl implements DomainGroupService {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(GroupServiceImpl.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(DomainGroupServiceImpl.class);
 
     @Lazy
     @Autowired
@@ -75,9 +73,6 @@ public class GroupServiceImpl implements GroupService {
 
     @Autowired
     private UserService userService;
-
-    @Autowired
-    private OrganizationUserService organizationUserService;
 
     @Autowired
     private AuditService auditService;
@@ -176,8 +171,7 @@ public class GroupServiceImpl implements GroupService {
                         final int startOffset = page * size;
                         final int endOffset = (page + 1) * size;
                         List<String> pagedMemberIds = sortedMembers.subList(Math.min(sortedMembers.size(), startOffset), Math.min(sortedMembers.size(), endOffset));
-                        CommonUserService service = (group.getReferenceType() == ReferenceType.ORGANIZATION ? organizationUserService : userService);
-                        return service.findByIdIn(pagedMemberIds).toList().map(users -> new Page<>(users, page, sortedMembers.size()));
+                        return userService.findByIdIn(pagedMemberIds).toList().map(users -> new Page<>(users, page, sortedMembers.size()));
                     }
                 });
     }
@@ -348,8 +342,7 @@ public class GroupServiceImpl implements GroupService {
     private Single<Group> setMembers(Group group) {
         List<String> userMembers = group.getMembers() != null ? group.getMembers().stream().filter(Objects::nonNull).distinct().collect(Collectors.toList()) : null;
         if (userMembers != null && !userMembers.isEmpty()) {
-            CommonUserService service = (group.getReferenceType() == ReferenceType.ORGANIZATION ? organizationUserService : userService);
-            return service.findByIdIn(userMembers)
+            return userService.findByIdIn(userMembers)
                     .map(User::getId)
                     .toList()
                     .map(userIds -> {

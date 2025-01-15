@@ -37,7 +37,7 @@ import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.EnvironmentService;
-import io.gravitee.am.service.GroupService;
+import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.OrganizationUserService;
 import io.gravitee.am.service.RoleService;
@@ -112,7 +112,7 @@ public class DomainNotifierServiceImpl implements DomainNotifierService, Initial
     private RoleService roleService;
 
     @Autowired
-    private GroupService groupService;
+    private DomainGroupService domainGroupService;
 
     @Autowired
     private OrganizationUserService userService;
@@ -202,7 +202,7 @@ public class DomainNotifierServiceImpl implements DomainNotifierService, Initial
     }
 
     private Flowable<User> readUsersFromAnOrganizationGroup(String organizationId, String memberId, int pageIndex, int size) {
-        return groupService.findMembers(ReferenceType.ORGANIZATION, organizationId, memberId, pageIndex, size)
+        return domainGroupService.findMembers(ReferenceType.ORGANIZATION, organizationId, memberId, pageIndex, size)
                 .flatMapPublisher(page -> {
                     if (page.getTotalCount() == 0) {
                         return Flowable.empty();
