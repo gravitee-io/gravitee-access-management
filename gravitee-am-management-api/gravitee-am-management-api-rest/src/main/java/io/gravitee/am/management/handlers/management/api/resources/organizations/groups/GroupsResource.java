@@ -18,11 +18,11 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains.GroupsResource.GroupPage;
+import io.gravitee.am.service.OrganizationGroupService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.model.NewGroup;
 import io.gravitee.common.http.MediaType;
 import io.swagger.v3.oas.annotations.Operation;
@@ -67,7 +67,7 @@ public class GroupsResource extends AbstractResource {
     private ResourceContext resourceContext;
 
     @Autowired
-    private GroupService groupService;
+    private OrganizationGroupService orgGroupService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -86,7 +86,7 @@ public class GroupsResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.LIST)
-                .andThen(groupService.findAll(ReferenceType.ORGANIZATION, organizationId, page, Integer.min(size, MAX_GROUPS_SIZE_PER_PAGE))
+                .andThen(orgGroupService.findAll(ReferenceType.ORGANIZATION, organizationId, page, Integer.min(size, MAX_GROUPS_SIZE_PER_PAGE))
                         .map(groupPage ->
                                 new GroupPage(groupPage.getData().stream().map(this::filterGroupInfos).collect(Collectors.toList()), groupPage.getCurrentPage(), groupPage.getTotalCount())))
                 .subscribe(response::resume, response::resume);
@@ -107,7 +107,7 @@ public class GroupsResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.CREATE)
-                .andThen(groupService.create(ReferenceType.ORGANIZATION, organizationId, newGroup, authenticatedUser)
+                .andThen(orgGroupService.create(ReferenceType.ORGANIZATION, organizationId, newGroup, authenticatedUser)
                         .map(group -> Response.created(URI.create("/organizations/" + organizationId + "/groups/" + group.getId()))
                                 .entity(group).build()))
                 .subscribe(response::resume, response::resume);

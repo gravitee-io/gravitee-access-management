@@ -42,6 +42,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -69,6 +70,7 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
     protected TokenService tokenService;
 
     @Autowired
+    @Qualifier("DomainUserEnhancer")
     private UserEnhancer userEnhancer;
 
     @Autowired

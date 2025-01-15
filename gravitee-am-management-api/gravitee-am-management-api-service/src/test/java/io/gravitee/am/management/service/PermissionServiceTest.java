@@ -29,8 +29,8 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.EnvironmentService;
-import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.OrganizationGroupService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.EnvironmentNotFoundException;
 import io.reactivex.rxjava3.core.Flowable;
@@ -88,7 +88,7 @@ public class PermissionServiceTest {
     private MembershipService membershipService;
 
     @Mock
-    private GroupService groupService;
+    private OrganizationGroupService orgGroupService;
 
     @Mock
     private RoleService roleService;
@@ -106,7 +106,7 @@ public class PermissionServiceTest {
 
     @Before
     public void before() {
-        cut = new PermissionService(membershipService, groupService, roleService, environmentService, domainService, applicationService);
+        cut = new PermissionService(membershipService, orgGroupService, roleService, environmentService, domainService, applicationService);
     }
 
     @Test
@@ -127,7 +127,7 @@ public class PermissionServiceTest {
         role.setAssignableType(ReferenceType.ORGANIZATION);
         role.setPermissionAcls(Permission.of(ORGANIZATION, READ));
 
-        when(groupService.findByMember(user.getId())).thenReturn(Flowable.empty());
+        when(orgGroupService.findByMember(user.getId())).thenReturn(Flowable.empty());
         when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), argThat(criteria -> criteria.getUserId().get().equals(user.getId())
                 && !criteria.getGroupIds().isPresent()
                 && criteria.isLogicalOR()))).thenReturn(Flowable.just(membership));
@@ -165,7 +165,7 @@ public class PermissionServiceTest {
         group.setReferenceId(ORGANIZATION_ID);
         group.setMembers(Arrays.asList(user.getId()));
 
-        when(groupService.findByMember(user.getId())).thenReturn(Flowable.just(group));
+        when(orgGroupService.findByMember(user.getId())).thenReturn(Flowable.just(group));
         when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), argThat(criteria -> criteria.getUserId().get().equals(user.getId())
                 && criteria.getGroupIds().get().equals(Arrays.asList(group.getId()))
                 && criteria.isLogicalOR()))).thenReturn(Flowable.just(membership));
@@ -185,7 +185,7 @@ public class PermissionServiceTest {
         DefaultUser user = new DefaultUser("user");
         user.setId(USER_ID);
 
-        when(groupService.findByMember(user.getId())).thenReturn(Flowable.empty());
+        when(orgGroupService.findByMember(user.getId())).thenReturn(Flowable.empty());
         when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.empty());
 
         TestObserver<Boolean> obs = cut.hasPermission(user, of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, Permission.ORGANIZATION, READ))
@@ -247,7 +247,7 @@ public class PermissionServiceTest {
 
         when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
         when(environmentService.findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID))).thenReturn(Single.just(environment));
-        when(groupService.findByMember(user.getId())).thenReturn(Flowable.empty());
+        when(orgGroupService.findByMember(user.getId())).thenReturn(Flowable.empty());
         when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(organizationMembership));
         when(membershipService.findByCriteria(eq(ReferenceType.ENVIRONMENT), eq(ENVIRONMENT_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(environmentMembership));
         when(membershipService.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(domainMembership));
@@ -302,7 +302,7 @@ public class PermissionServiceTest {
 
         when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
         when(environmentService.findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID))).thenReturn(Single.just(environment));
-        when(groupService.findByMember(user.getId())).thenReturn(Flowable.empty());
+        when(orgGroupService.findByMember(user.getId())).thenReturn(Flowable.empty());
         when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(organizationMembership));
         when(membershipService.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(domainMembership));
         when(roleService.findByIdIn(Arrays.asList(organizationMembership.getRoleId(), domainMembership.getRoleId()))).thenReturn(Single.just(new HashSet<>(Arrays.asList(organizationRole, domainRole))));
@@ -355,7 +355,7 @@ public class PermissionServiceTest {
 
         when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
         when(environmentService.findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID))).thenReturn(Single.just(environment));
-        when(groupService.findByMember(user.getId())).thenReturn(Flowable.empty());
+        when(orgGroupService.findByMember(user.getId())).thenReturn(Flowable.empty());
         when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(organizationMembership));
         when(membershipService.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(domainMembership));
         when(roleService.findByIdIn(Arrays.asList(organizationMembership.getRoleId(), domainMembership.getRoleId()))).thenReturn(Single.just(new HashSet<>(Arrays.asList(organizationRole, domainRole))));
@@ -396,7 +396,7 @@ public class PermissionServiceTest {
 
         when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
         when(environmentService.findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID))).thenReturn(Single.just(environment));
-        when(groupService.findByMember(user.getId())).thenReturn(Flowable.empty());
+        when(orgGroupService.findByMember(user.getId())).thenReturn(Flowable.empty());
         when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(membership));
         when(membershipService.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any(MembershipCriteria.class))).thenReturn(Flowable.empty());
         when(roleService.findByIdIn(Arrays.asList(membership.getRoleId()))).thenReturn(Single.just(new HashSet<>(Arrays.asList(role))));
@@ -428,7 +428,7 @@ public class PermissionServiceTest {
         role.setAssignableType(ReferenceType.ORGANIZATION);// The role is assignable to organization only by affected to an application.
         role.setPermissionAcls(Permission.of(APPLICATION, READ));
 
-        when(groupService.findByMember(user.getId())).thenReturn(Flowable.empty());
+        when(orgGroupService.findByMember(user.getId())).thenReturn(Flowable.empty());
         when(membershipService.findByCriteria(eq(ReferenceType.APPLICATION), eq(APPLICATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(membership));
         when(roleService.findByIdIn(Arrays.asList(membership.getRoleId()))).thenReturn(Single.just(new HashSet<>(Arrays.asList(role))));
 
@@ -486,7 +486,7 @@ public class PermissionServiceTest {
         group.setReferenceId(ORGANIZATION_ID);
         group.setMembers(Arrays.asList(user.getId()));
 
-        when(groupService.findByMember(user.getId())).thenReturn(Flowable.just(group));
+        when(orgGroupService.findByMember(user.getId())).thenReturn(Flowable.just(group));
         when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(organizationMembership, groupMembership));
         when(roleService.findByIdIn(Arrays.asList(organizationMembership.getRoleId(), groupMembership.getRoleId()))).thenReturn(Single.just(new HashSet<>(Arrays.asList(organizationRole, groupRole))));
 
@@ -534,7 +534,7 @@ public class PermissionServiceTest {
         group.setReferenceId(ORGANIZATION_ID);
         group.setMembers(Arrays.asList(user.getId()));
 
-        when(groupService.findByMember(user.getId())).thenReturn(Flowable.just(group));
+        when(orgGroupService.findByMember(user.getId())).thenReturn(Flowable.just(group));
         when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(organizationMembership, groupMembership));
         when(roleService.findByIdIn(Arrays.asList(organizationMembership.getRoleId(), groupMembership.getRoleId()))).thenReturn(Single.just(new HashSet<>(Arrays.asList(organizationRole, groupRole))));
 

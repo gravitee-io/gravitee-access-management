@@ -17,7 +17,7 @@ package io.gravitee.am.service.impl.user;
 
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Role;
-import io.gravitee.am.service.GroupService;
+import io.gravitee.am.service.OrganizationGroupService;
 import io.gravitee.am.service.RoleService;
 import io.reactivex.rxjava3.core.Flowable;
 import org.slf4j.Logger;
@@ -29,12 +29,12 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-@Qualifier("Default")
-public class DefaultUserEnhancer extends BaseUserEnhancer {
-    protected final Logger LOGGER = LoggerFactory.getLogger(DefaultUserEnhancer.class);
+@Qualifier("OrganizationUserEnhancer")
+public class OrganizationUserEnhancer extends BaseUserEnhancer {
+    protected final Logger LOGGER = LoggerFactory.getLogger(OrganizationUserEnhancer.class);
 
     @Autowired
-    private GroupService groupService;
+    private OrganizationGroupService groupService;
 
     @Autowired
     private RoleService roleService;
