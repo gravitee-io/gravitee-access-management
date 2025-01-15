@@ -470,6 +470,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
         return assignRoles0(referenceType, referenceId, userId, roles, principal, true);
     }
 
+    // FIXME this method is not well named, should be removeFactor and should include the factor filtering logic present into the UserFactoResource...
     @Override
     public Single<User> enrollFactors(String userId, List<EnrolledFactor> factors, io.gravitee.am.identityprovider.api.User principal) {
         return userService.findById(userId)
