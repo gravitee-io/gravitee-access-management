@@ -47,7 +47,7 @@ public class DefaultUserEnhancerTest {
     RoleService roleService;
 
     @InjectMocks
-    DefaultUserEnhancer defaultUserEnhancer;
+    DomainUserEnhancer domainUserEnhancer;
 
     @Before
     public void setUp() throws Exception {
@@ -75,7 +75,7 @@ public class DefaultUserEnhancerTest {
         Mockito.when(roleService.findByIdIn(Mockito.anyList())).thenAnswer(a -> Single.just(roles(a.getArgument(0))));
 
         // when
-        TestObserver<User> observer = defaultUserEnhancer.enhance(user).test();
+        TestObserver<User> observer = domainUserEnhancer.enhance(user).test();
 
         // then
         observer.assertComplete();
@@ -115,7 +115,7 @@ public class DefaultUserEnhancerTest {
         Mockito.when(roleService.findByIdIn(Mockito.anyList())).thenAnswer(a -> Single.just(roles(a.getArgument(0))));
 
         // when
-        TestObserver<User> observer = defaultUserEnhancer.enhance(user).test();
+        TestObserver<User> observer = domainUserEnhancer.enhance(user).test();
 
         // then
         observer.assertComplete();

@@ -16,12 +16,12 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.groups;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.service.OrganizationGroupService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Observable;
@@ -58,7 +58,7 @@ public class GroupMembersResource extends AbstractResource {
     private ResourceContext resourceContext;
 
     @Autowired
-    private GroupService groupService;
+    private OrganizationGroupService orgGroupService;
 
     @Autowired
     private IdentityProviderService identityProviderService;
@@ -80,7 +80,7 @@ public class GroupMembersResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.READ)
-                .andThen(groupService.findMembers(ReferenceType.ORGANIZATION, organizationId, group, page, Integer.min(size, MAX_MEMBERS_SIZE_PER_PAGE))
+                .andThen(orgGroupService.findMembers(ReferenceType.ORGANIZATION, organizationId, group, page, Integer.min(size, MAX_MEMBERS_SIZE_PER_PAGE))
                         .flatMap(pagedMembers -> {
                             if (pagedMembers.getData() == null) {
                                 return Single.just(pagedMembers);
