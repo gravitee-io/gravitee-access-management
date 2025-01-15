@@ -16,12 +16,12 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.groups;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.service.OrganizationGroupService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.model.UpdateGroup;
 import io.gravitee.common.http.MediaType;
 import io.swagger.v3.oas.annotations.Operation;
@@ -56,7 +56,7 @@ public class GroupResource extends AbstractResource {
     private ResourceContext resourceContext;
 
     @Autowired
-    private GroupService groupService;
+    private OrganizationGroupService orgGroupService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -74,7 +74,7 @@ public class GroupResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.READ)
-                .andThen(groupService.findById(ReferenceType.ORGANIZATION, organizationId, group))
+                .andThen(orgGroupService.findById(ReferenceType.ORGANIZATION, organizationId, group))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -97,7 +97,7 @@ public class GroupResource extends AbstractResource {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.UPDATE)
-                .andThen(groupService.update(ReferenceType.ORGANIZATION, organizationId, group, updateGroup, authenticatedUser))
+                .andThen(orgGroupService.update(ReferenceType.ORGANIZATION, organizationId, group, updateGroup, authenticatedUser))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -115,7 +115,7 @@ public class GroupResource extends AbstractResource {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.DELETE)
-                .andThen(groupService.delete(ReferenceType.ORGANIZATION, organizationId, group, authenticatedUser))
+                .andThen(orgGroupService.delete(ReferenceType.ORGANIZATION, organizationId, group, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 

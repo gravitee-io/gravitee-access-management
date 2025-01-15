@@ -75,7 +75,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<Organizatio
     private PasswordEncoder accountAccessTokenEncoder;
 
     @Autowired
-    @Qualifier("Default")
+    @Qualifier("OrganizationUserEnhancer")
     private UserEnhancer userEnhancer;
 
     @Value("${security.accountAccessTokens.limit:20}")
