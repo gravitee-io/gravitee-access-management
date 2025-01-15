@@ -46,7 +46,7 @@ public class GroupResourceTest extends JerseySpringTest {
         mockGroup.setReferenceId(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockGroup)).when(groupService).findById(groupId);
+        doReturn(Maybe.just(mockGroup)).when(domainGroupService).findById(groupId);
 
         final Response response = target("domains").path(domainId).path("groups").path(groupId).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -65,7 +65,7 @@ public class GroupResourceTest extends JerseySpringTest {
         final String groupId = "group-id";
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.empty()).when(groupService).findById(groupId);
+        doReturn(Maybe.empty()).when(domainGroupService).findById(groupId);
 
         final Response response = target("domains").path(domainId).path("groups").path(groupId).request().get();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());

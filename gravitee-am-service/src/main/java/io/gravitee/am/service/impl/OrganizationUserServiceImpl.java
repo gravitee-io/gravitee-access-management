@@ -74,21 +74,12 @@ public class OrganizationUserServiceImpl extends AbstractUserService<Organizatio
     @Autowired
     private PasswordEncoder accountAccessTokenEncoder;
 
-    @Autowired
-    @Qualifier("OrganizationUserEnhancer")
-    private UserEnhancer userEnhancer;
-
     @Value("${security.accountAccessTokens.limit:20}")
     private int tokensLimit = 20;
 
     @Override
     protected OrganizationUserRepository getUserRepository() {
         return this.userRepository;
-    }
-
-    @Override
-    protected UserEnhancer getUserEnhancer() {
-        return userEnhancer;
     }
 
     public Completable setRoles(io.gravitee.am.model.User user) {
