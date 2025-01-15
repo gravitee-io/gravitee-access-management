@@ -22,23 +22,18 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.GroupRepository;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.CommonUserService;
 import io.gravitee.am.service.EventService;
-import io.gravitee.am.service.GroupService;
+import io.gravitee.am.service.OrganizationGroupService;
 import io.gravitee.am.service.OrganizationUserService;
-import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.GroupAlreadyExistsException;
 import io.gravitee.am.service.exception.GroupNotFoundException;
-import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewGroup;
 import io.gravitee.am.service.model.UpdateGroup;
@@ -65,25 +60,19 @@ import java.util.stream.Collectors;
  * @author GraviteeSource Team
  */
 @Component
-public class GroupServiceImpl implements GroupService {
+public class OrganizationGroupServiceImpl implements OrganizationGroupService {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(GroupServiceImpl.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(OrganizationGroupServiceImpl.class);
 
     @Lazy
     @Autowired
     private GroupRepository groupRepository;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
     private OrganizationUserService organizationUserService;
 
     @Autowired
     private AuditService auditService;
-
-    @Autowired
-    private RoleService roleService;
 
     @Autowired
     private EventService eventService;
@@ -118,7 +107,7 @@ public class GroupServiceImpl implements GroupService {
         return findAll(ReferenceType.DOMAIN, domain);
     }
 
-    @Override
+
     public Maybe<Group> findByName(ReferenceType referenceType, String referenceId, String groupName) {
         LOGGER.debug("Find group by {} and name: {} {}", referenceType, referenceId, groupName);
         return groupRepository.findByName(referenceType, referenceId, groupName)
@@ -176,8 +165,7 @@ public class GroupServiceImpl implements GroupService {
                         final int startOffset = page * size;
                         final int endOffset = (page + 1) * size;
                         List<String> pagedMemberIds = sortedMembers.subList(Math.min(sortedMembers.size(), startOffset), Math.min(sortedMembers.size(), endOffset));
-                        CommonUserService service = (group.getReferenceType() == ReferenceType.ORGANIZATION ? organizationUserService : userService);
-                        return service.findByIdIn(pagedMemberIds).toList().map(users -> new Page<>(users, page, sortedMembers.size()));
+                        return organizationUserService.findByIdIn(pagedMemberIds).toList().map(users -> new Page<>(users, page, sortedMembers.size()));
                     }
                 });
     }
@@ -233,11 +221,6 @@ public class GroupServiceImpl implements GroupService {
                 })
                 .doOnSuccess(group -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_CREATED).group(group)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_CREATED).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
-    }
-
-    @Override
-    public Single<Group> create(String domain, NewGroup newGroup, io.gravitee.am.identityprovider.api.User principal) {
-        return create(ReferenceType.DOMAIN, domain, newGroup, principal);
     }
 
     @Override
@@ -311,45 +294,10 @@ public class GroupServiceImpl implements GroupService {
                 });
     }
 
-    @Override
-    public Single<Group> assignRoles(ReferenceType referenceType, String referenceId, String groupId, List<String> roles, io.gravitee.am.identityprovider.api.User principal) {
-        return assignRoles0(referenceType, referenceId, groupId, roles, principal, false);
-    }
-
-    @Override
-    public Single<Group> revokeRoles(ReferenceType referenceType, String referenceId, String groupId, List<String> roles, io.gravitee.am.identityprovider.api.User principal) {
-        return assignRoles0(referenceType, referenceId, groupId, roles, principal, true);
-    }
-
-    private Single<Group> assignRoles0(ReferenceType referenceType, String referenceId, String groupId, List<String> roles, io.gravitee.am.identityprovider.api.User principal, boolean revoke) {
-        return findById(referenceType, referenceId, groupId)
-                .flatMap(oldGroup -> {
-                    Group groupToUpdate = new Group(oldGroup);
-                    // remove existing roles from the group
-                    if (revoke) {
-                        if (groupToUpdate.getRoles() != null) {
-                            groupToUpdate.getRoles().removeAll(roles);
-                        }
-                    } else {
-                        groupToUpdate.setRoles(roles);
-                    }
-                    // check roles
-                    return checkRoles(roles)
-                            // and update the group
-                            .andThen(Single.defer(() -> groupRepository.update(groupToUpdate)
-                                    .flatMap(group ->
-                                            eventService.create(new Event(Type.GROUP, new Payload(group.getId(), group.getReferenceType(), group.getReferenceId(), Action.UPDATE)))
-                                                    .flatMap(event -> Single.just(group)))))
-                            .doOnSuccess(group -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_ROLES_ASSIGNED).oldValue(oldGroup).group(group)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_ROLES_ASSIGNED).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
-                });
-    }
-
     private Single<Group> setMembers(Group group) {
         List<String> userMembers = group.getMembers() != null ? group.getMembers().stream().filter(Objects::nonNull).distinct().collect(Collectors.toList()) : null;
         if (userMembers != null && !userMembers.isEmpty()) {
-            CommonUserService service = (group.getReferenceType() == ReferenceType.ORGANIZATION ? organizationUserService : userService);
-            return service.findByIdIn(userMembers)
+            return organizationUserService.findByIdIn(userMembers)
                     .map(User::getId)
                     .toList()
                     .map(userIds -> {
@@ -358,17 +306,5 @@ public class GroupServiceImpl implements GroupService {
                     });
         }
         return Single.just(group);
-    }
-
-    private Completable checkRoles(List<String> roles) {
-        return Completable.fromSingle(roleService.findByIdIn(roles)
-                .map(roles1 -> {
-                    if (roles1.size() != roles.size()) {
-                        // find difference between the two list
-                        roles.removeAll(roles1.stream().map(Role::getId).collect(Collectors.toList()));
-                        throw new RoleNotFoundException(String.join(",", roles));
-                    }
-                    return roles1;
-                }));
     }
 }
