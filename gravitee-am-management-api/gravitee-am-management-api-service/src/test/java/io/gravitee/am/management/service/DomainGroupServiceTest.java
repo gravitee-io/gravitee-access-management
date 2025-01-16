@@ -23,11 +23,9 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.OrganizationUserService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserService;
@@ -96,9 +94,6 @@ public class DomainGroupServiceTest {
 
     @Mock
     private RoleService roleService;
-
-    @Mock
-    private EventService eventService;
 
     private final static String DOMAIN = "domain1";
     private final static Domain DOMAIN_ENTITY = new Domain();
@@ -194,7 +189,6 @@ public class DomainGroupServiceTest {
         when(newGroup.getName()).thenReturn("name");
         when(groupRepository.findByName(ReferenceType.DOMAIN, DOMAIN, newGroup.getName())).thenReturn(Maybe.empty());
         when(groupRepository.create(any(Group.class))).thenReturn(Single.just(group));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = domainGroupService.create(DOMAIN_ENTITY, newGroup, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -243,7 +237,6 @@ public class DomainGroupServiceTest {
         when(groupRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-group")).thenReturn(Maybe.just(group));
         when(groupRepository.findByName(ReferenceType.DOMAIN, DOMAIN, updateGroup.getName())).thenReturn(Maybe.empty());
         when(groupRepository.update(any(Group.class))).thenReturn(Single.just(group));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = domainGroupService.update(DOMAIN_ENTITY, "my-group", updateGroup, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -287,7 +280,6 @@ public class DomainGroupServiceTest {
         group.setReferenceType(ReferenceType.DOMAIN);
         when(groupRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-group")).thenReturn(Maybe.just(group));
         when(groupRepository.delete("my-group")).thenReturn(Completable.complete());
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = domainGroupService.delete(DOMAIN_ENTITY, "my-group", null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -302,7 +294,6 @@ public class DomainGroupServiceTest {
     public void shouldDelete_technicalException() {
         when(groupRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-group")).thenReturn(Maybe.just(new Group()));
         when(groupRepository.delete("my-group")).thenReturn(Completable.error(TechnicalException::new));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = new TestObserver();
         domainGroupService.delete(DOMAIN_ENTITY, "my-group", null).subscribe(testObserver);
@@ -344,7 +335,6 @@ public class DomainGroupServiceTest {
         when(groupRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("group-id"))).thenReturn(Maybe.just(group));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
         when(groupRepository.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
-        when(eventService.create(Mockito.any())).thenAnswer(a -> Single.just(a.getArguments()[0]));
 
         TestObserver testObserver = domainGroupService.assignRoles(DOMAIN_ENTITY, group.getId(), rolesIds, null).test();
         testObserver.assertComplete();
@@ -396,7 +386,6 @@ public class DomainGroupServiceTest {
         when(groupRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("group-id"))).thenReturn(Maybe.just(group));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
         when(groupRepository.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
-        when(eventService.create(Mockito.any())).thenAnswer(a -> Single.just(a.getArguments()[0]));
 
         TestObserver testObserver = domainGroupService.revokeRoles(DOMAIN_ENTITY, group.getId(), rolesIds, null).test();
         testObserver.assertComplete();
