@@ -125,9 +125,7 @@ commands:
                 region: cloudfront
                 version: 2.22.35
             - aws-s3/sync:
-                arguments: |
-                  --endpoint-url https://cellar-c2.services.clever-cloud.com \
-                  --acl public-read
+                arguments: --endpoint-url https://cellar-c2.services.clever-cloud.com --acl public-read
                 from: ~/release/
                 to: "s3://gravitee-dry-releases-downloads/"
       - when:
@@ -138,9 +136,7 @@ commands:
                 region: cloudfront
                 version: 2.22.35
             - aws-s3/sync:
-                arguments: |
-                  --endpoint-url https://cellar-c2.services.clever-cloud.com \
-                  --acl public-read
+                arguments: --endpoint-url https://cellar-c2.services.clever-cloud.com --acl public-read
                 from: ~/release/
                 to: "s3://gravitee-releases-downloads/"
   restore-maven-job-cache:
