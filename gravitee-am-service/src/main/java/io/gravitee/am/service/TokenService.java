@@ -17,21 +17,13 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.User;
-import io.gravitee.am.service.model.TotalToken;
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface TokenService {
-
-    Single<TotalToken> findTotalTokensByDomain(String domain);
-
-    Single<TotalToken> findTotalTokensByApplication(Application application);
-
-    Single<TotalToken> findTotalTokens();
 
     Completable deleteByUser(User user);
 
