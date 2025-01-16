@@ -4,7 +4,8 @@ orbs:
   slack: circleci/slack@4.10.1
   keeper: gravitee-io/keeper@0.6.2
   gh: circleci/github-cli@2.2.0
-  aws-s3: circleci/aws-s3@3.0
+  aws-cli: circleci/aws-cli@5.1.2
+  aws-s3: circleci/aws-s3@4.1.0
   helm: circleci/helm@2.0.1
   aquasec: gravitee-io/aquasec@1.0.4
 
@@ -120,6 +121,9 @@ commands:
       - when:
           condition: << parameters.dry_run>>
           steps:
+            - aws-cli/setup:
+                region: cloudfront
+                version: 2.22.35
             - aws-s3/sync:
                 arguments: |
                   --endpoint-url https://cellar-c2.services.clever-cloud.com \
@@ -130,6 +134,9 @@ commands:
           condition:
             not: << pipeline.parameters.dry_run>>
           steps:
+            - aws-cli/setup:
+                region: cloudfront
+                version: 2.22.35
             - aws-s3/sync:
                 arguments: |
                   --endpoint-url https://cellar-c2.services.clever-cloud.com \
