@@ -16,8 +16,6 @@
 package io.gravitee.am.management.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
-import io.gravitee.am.common.event.Action;
-import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.model.Domain;
@@ -27,11 +25,8 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.common.event.Event;
-import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -80,9 +75,6 @@ public class DomainGroupServiceImpl implements DomainGroupService {
 
     @Autowired
     private RoleService roleService;
-
-    @Autowired
-    private EventService eventService;
 
     @Override
     public Single<Page<Group>> findAll(Domain domain, int page, int size) {
@@ -186,11 +178,6 @@ public class DomainGroupServiceImpl implements DomainGroupService {
                 })
                 .flatMap(this::setMembers)
                 .flatMap(group -> dataPlaneRegistry.getGroupRepository(domain).create(group))
-                // create event for sync process
-                .flatMap(group -> {
-                    Event event = new Event(Type.GROUP, new Payload(group.getId(), group.getReferenceType(), group.getReferenceId(), Action.CREATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(group));
-                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
@@ -229,11 +216,6 @@ public class DomainGroupServiceImpl implements DomainGroupService {
                     // set members and update
                     return setMembers(groupToUpdate)
                             .flatMap(group -> dataPlaneRegistry.getGroupRepository(domain).update(group))
-                            // create event for sync process
-                            .flatMap(group -> {
-                                Event event = new Event(Type.GROUP, new Payload(group.getId(), group.getReferenceType(), group.getReferenceId(), Action.UPDATE));
-                                return eventService.create(event).flatMap(__ -> Single.just(group));
-                            })
                             .doOnSuccess(group -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_UPDATED).oldValue(oldGroup).group(group)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_UPDATED).reference(Reference.domain(domain.getId())).throwable(throwable)));
 
@@ -254,7 +236,6 @@ public class DomainGroupServiceImpl implements DomainGroupService {
 
         return findById(domain, groupId)
                 .flatMapCompletable(group -> dataPlaneRegistry.getGroupRepository(domain).delete(groupId)
-                        .andThen(Completable.fromSingle(eventService.create(new Event(Type.GROUP, new Payload(group.getId(), group.getReferenceType(), group.getReferenceId(), Action.DELETE)))))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).group(group)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).group(group).throwable(throwable)))
                 )
@@ -293,10 +274,7 @@ public class DomainGroupServiceImpl implements DomainGroupService {
                     // check roles
                     return checkRoles(roles)
                             // and update the group
-                            .andThen(Single.defer(() -> dataPlaneRegistry.getGroupRepository(domain).update(groupToUpdate)
-                                    .flatMap(group ->
-                                            eventService.create(new Event(Type.GROUP, new Payload(group.getId(), group.getReferenceType(), group.getReferenceId(), Action.UPDATE)))
-                                                    .flatMap(event -> Single.just(group)))))
+                            .andThen(Single.defer(() -> dataPlaneRegistry.getGroupRepository(domain).update(groupToUpdate)))
                             .doOnSuccess(group -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_ROLES_ASSIGNED).oldValue(oldGroup).group(group)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_ROLES_ASSIGNED).reference(Reference.domain(domain.getId())).throwable(throwable)));
                 });
