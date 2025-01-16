@@ -22,17 +22,12 @@ import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
-import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.model.TotalToken;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,9 +45,6 @@ public class TokenServiceImpl implements TokenService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenServiceImpl.class);
 
-    @Autowired
-    private ApplicationService applicationService;
-
     @Lazy
     @Autowired
     private AccessTokenRepository accessTokenRepository;
@@ -62,63 +54,7 @@ public class TokenServiceImpl implements TokenService {
     private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
     private AuditService auditService;
-
-    @Override
-    public Single<TotalToken> findTotalTokensByDomain(String domain) {
-        LOGGER.debug("Find total tokens by domain: {}", domain);
-        return applicationService.findByDomain(domain)
-                .flatMapObservable(Observable::fromIterable)
-                .flatMapSingle(this::countByClientId)
-                .toList()
-                .flatMap(totalAccessTokens -> {
-                    TotalToken totalToken = new TotalToken();
-                    totalToken.setTotalAccessTokens(totalAccessTokens.stream().mapToLong(Long::longValue).sum());
-                    return Single.just(totalToken);
-                })
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find total tokens by domain: {}", domain, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find total tokens by domain: %s", domain), ex));
-                });
-    }
-
-    @Override
-    public Single<TotalToken> findTotalTokensByApplication(Application application) {
-        LOGGER.debug("Find total tokens by application : {}", application);
-        return countByClientId(application)
-                .map(totalAccessTokens -> {
-                    TotalToken totalToken = new TotalToken();
-                    totalToken.setTotalAccessTokens(totalAccessTokens);
-                    return totalToken;
-                })
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find total tokens by application: {}", application, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find total tokens by application: %s", application), ex));
-                });
-    }
-
-    @Override
-    public Single<TotalToken> findTotalTokens() {
-        LOGGER.debug("Find total tokens");
-        return applicationService.findAll()
-                .flatMapObservable(Observable::fromIterable)
-                .flatMapSingle(this::countByClientId)
-                .toList()
-                .flatMap(totalAccessTokens -> {
-                    TotalToken totalToken = new TotalToken();
-                    totalToken.setTotalAccessTokens(totalAccessTokens.stream().mapToLong(Long::longValue).sum());
-                    return Single.just(totalToken);
-                })
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find total tokens", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find total tokens", ex));
-                });
-    }
 
     @Override
     public Completable deleteByUser(User user) {
@@ -156,15 +92,5 @@ public class TokenServiceImpl implements TokenService {
                         .tokenActor(application.toClient())
                         .revoked("All tokens are revoked for client: " + clientId)
                         .throwable(error)));
-    }
-
-    private Single<Long> countByClientId(Application application) {
-        if (application.getSettings() == null) {
-            return Single.just(0L);
-        }
-        if (application.getSettings().getOauth() == null) {
-            return Single.just(0L);
-        }
-        return accessTokenRepository.countByClientId(application.getSettings().getOauth().getClientId());
     }
 }
