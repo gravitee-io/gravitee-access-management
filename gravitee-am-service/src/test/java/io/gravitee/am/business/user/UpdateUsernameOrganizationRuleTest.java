@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.business;
+package io.gravitee.am.business.user;
 
 
 import io.gravitee.am.common.factor.FactorDataKeys;
@@ -92,7 +92,7 @@ public class UpdateUsernameOrganizationRuleTest {
 
     @BeforeEach
     public void initRule() {
-        this.rule = new UpdateUsernameOrganizationRule(userValidator, commonUserService, auditService);
+        this.rule = new UpdateUsernameOrganizationRule(userValidator, commonUserService::findByUsernameAndSource, commonUserService::update, auditService);
     }
 
     @Test
