@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.management.service.impl;
 
-import io.gravitee.am.business.UpdateUsernameDomainRule;
+import io.gravitee.am.business.user.UpdateUsernameDomainRule;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
@@ -40,6 +40,7 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.ApplicationService;
@@ -112,8 +113,11 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
     @Autowired
     private DomainService domainService;
 
-    @Autowired
+    @Autowired // FIXME to remove
     private io.gravitee.am.service.UserService userService;
+
+    @Autowired
+    private DataPlaneRegistry dataPlaneRegistry;
 
     @Autowired
     protected TokenService tokenService;
@@ -622,15 +626,17 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
     }
 
     @Override
-    public Single<User> updateUsername(Domain domain, String id, String
-            username, io.gravitee.am.identityprovider.api.User principal) {
+    public Single<User> updateUsername(Domain domain, String id, String username, io.gravitee.am.identityprovider.api.User principal) {
+        final var repository = dataPlaneRegistry.getUserRepository(domain);
         return new UpdateUsernameDomainRule(userValidator,
-                getUserService(),
+                repository::findByUsernameAndSource,
+                repository::update,
                 auditService,
                 credentialService,
                 loginAttemptService)
                 .updateUsername(domain, username, principal,
-                        (User user) -> identityProviderManager.getUserProvider(user.getSource()).switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(user.getSource()))),
+                        (User user) -> identityProviderManager.getUserProvider(user.getSource())
+                                .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(user.getSource()))),
                         () -> getUserService().findById(DOMAIN, domain.getId(), id));
     }
 

@@ -15,11 +15,13 @@
  */
 package io.gravitee.am.gateway.handler.account.services.impl;
 
-import io.gravitee.am.business.UpdateUsernameDomainRule;
+import io.gravitee.am.business.user.RemoveFactorRule;
+import io.gravitee.am.business.user.UpdateUsernameDomainRule;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.gateway.handler.account.model.UpdateUsername;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
@@ -40,15 +42,14 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.reporter.api.audit.model.Audit;
-import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.ScopeApprovalService;
-import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.InvalidPasswordException;
 import io.gravitee.am.service.exception.InvalidUserException;
@@ -66,6 +67,7 @@ import io.reactivex.rxjava3.core.Single;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
@@ -81,14 +83,13 @@ import java.util.Optional;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AccountServiceImpl implements AccountService {
+public class AccountServiceImpl implements AccountService, InitializingBean {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AccountServiceImpl.class);
 
     @Autowired
     private Domain domain;
 
-    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -98,7 +99,7 @@ public class AccountServiceImpl implements AccountService {
     private UserValidator userValidator;
 
     @Autowired
-    private UserService userService;
+    private DataPlaneRegistry dataPlaneRegistry;
 
     @Autowired
     private io.gravitee.am.gateway.handler.root.service.user.UserService gatewayUserService;
@@ -130,13 +131,18 @@ public class AccountServiceImpl implements AccountService {
     private SubjectManager subjectManager;
 
     @Override
+    public void afterPropertiesSet() throws Exception {
+        this.userRepository = dataPlaneRegistry.getUserRepository(domain);
+    }
+
+    @Override
     public Maybe<User> getBySub(JWT token) {
         return subjectManager.findUserBySub(token);
     }
 
     @Override
     public Maybe<User> getByUserId(String userId) {
-        return userService.findById(userId);
+        return userRepository.findById(userId);
     }
 
     @Override
@@ -187,7 +193,8 @@ public class AccountServiceImpl implements AccountService {
             return Single.error(new InvalidUserException("Username is required") );
         }
         return new UpdateUsernameDomainRule(userValidator,
-                userService,
+                userRepository::findByUsernameAndSource,
+                userRepository::update,
                 auditService,
                 credentialService,
                 loginAttemptService).updateUsername(
@@ -237,8 +244,9 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Completable removeFactor(String userId, String factorId, io.gravitee.am.identityprovider.api.User principal) {
-        return userService.removeFactor(userId, factorId, principal);
+    public Completable removeFactor(User user, String factorId, io.gravitee.am.identityprovider.api.User principal) {
+        final var removeFactor = new RemoveFactorRule(userValidator, userRepository::update, auditService);
+        return removeFactor.execute(user, factorId, principal);
     }
 
     @Override
