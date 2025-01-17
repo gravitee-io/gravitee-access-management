@@ -73,6 +73,12 @@ export interface PatchClientRegistrationSettings {
      * @type {boolean}
      * @memberof PatchClientRegistrationSettings
      */
+    clientTemplateEnabled?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof PatchClientRegistrationSettings
+     */
     dynamicClientRegistrationEnabled?: boolean;
     /**
      * 
@@ -80,12 +86,6 @@ export interface PatchClientRegistrationSettings {
      * @memberof PatchClientRegistrationSettings
      */
     openDynamicClientRegistrationEnabled?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof PatchClientRegistrationSettings
-     */
-    clientTemplateEnabled?: boolean;
 }
 
 export function PatchClientRegistrationSettingsFromJSON(json: any): PatchClientRegistrationSettings {
@@ -104,9 +104,9 @@ export function PatchClientRegistrationSettingsFromJSONTyped(json: any, ignoreDi
         'defaultScopes': !exists(json, 'defaultScopes') ? undefined : json['defaultScopes'],
         'isAllowedScopesEnabled': !exists(json, 'isAllowedScopesEnabled') ? undefined : json['isAllowedScopesEnabled'],
         'allowedScopes': !exists(json, 'allowedScopes') ? undefined : json['allowedScopes'],
+        'clientTemplateEnabled': !exists(json, 'clientTemplateEnabled') ? undefined : json['clientTemplateEnabled'],
         'dynamicClientRegistrationEnabled': !exists(json, 'dynamicClientRegistrationEnabled') ? undefined : json['dynamicClientRegistrationEnabled'],
         'openDynamicClientRegistrationEnabled': !exists(json, 'openDynamicClientRegistrationEnabled') ? undefined : json['openDynamicClientRegistrationEnabled'],
-        'clientTemplateEnabled': !exists(json, 'clientTemplateEnabled') ? undefined : json['clientTemplateEnabled'],
     };
 }
 
@@ -125,9 +125,9 @@ export function PatchClientRegistrationSettingsToJSON(value?: PatchClientRegistr
         'defaultScopes': value.defaultScopes,
         'isAllowedScopesEnabled': value.isAllowedScopesEnabled,
         'allowedScopes': value.allowedScopes,
+        'clientTemplateEnabled': value.clientTemplateEnabled,
         'dynamicClientRegistrationEnabled': value.dynamicClientRegistrationEnabled,
         'openDynamicClientRegistrationEnabled': value.openDynamicClientRegistrationEnabled,
-        'clientTemplateEnabled': value.clientTemplateEnabled,
     };
 }
 

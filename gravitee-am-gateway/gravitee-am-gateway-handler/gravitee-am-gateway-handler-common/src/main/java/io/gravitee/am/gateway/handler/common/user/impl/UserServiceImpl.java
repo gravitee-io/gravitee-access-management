@@ -30,6 +30,7 @@ import io.gravitee.am.repository.management.api.CommonUserRepository.UpdateActio
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.reactivex.rxjava3.core.Maybe;
@@ -59,6 +60,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private AuditService auditService;
+
+    @Autowired
+    private UserEnhancer userEnhancer;
 
     @Override
     public Maybe<User> findById(String id) {
@@ -101,7 +105,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Single<User> enhance(User user) {
-        return userService.enhance(user);
+        return userEnhancer.enhance(user);
     }
 
     @Override

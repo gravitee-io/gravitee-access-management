@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
@@ -66,9 +67,11 @@ public interface UserService extends CommonUserService {
 
     Single<Map<Object, Object>> statistics(AnalyticsQuery query);
 
-    Completable deleteByDomain(String domainId);
+    Completable deleteByDomain(Domain domain);
 
     Completable removeFactor(String userId, String factorId, io.gravitee.am.identityprovider.api.User principal);
 
     Single<User> update(User user, UpdateActions updateActions);
+
+    Single<User> delete(Domain domain, String userId);
 }

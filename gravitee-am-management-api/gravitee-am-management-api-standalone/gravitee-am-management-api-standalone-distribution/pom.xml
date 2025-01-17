@@ -432,6 +432,13 @@
             <type>zip</type>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>io.gravitee.am.dataplane</groupId>
+            <artifactId>gravitee-am-dataplane-mongodb</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
 
         <dependency>
             <groupId>io.gravitee.am.resource.mock</groupId>
@@ -467,6 +474,12 @@
                         <configuration>
                             <outputDirectory>${basedir}/target/staging</outputDirectory>
                             <artifactItems>
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.dataplane</groupId>
+                                    <artifactId>gravitee-am-dataplane-mongodb</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
                                 <!-- Identity providers -->
                                 <artifactItem>
                                     <groupId>io.gravitee.am.identityprovider</groupId>

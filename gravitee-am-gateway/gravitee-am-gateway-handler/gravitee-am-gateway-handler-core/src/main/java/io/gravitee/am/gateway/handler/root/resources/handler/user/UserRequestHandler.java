@@ -36,8 +36,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
-import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
-import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
+import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveIp;
+import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveUserAgent;
 import static java.util.Optional.ofNullable;
 
 /**

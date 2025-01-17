@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.service.reporter.builder.gateway;
 
-import io.gravitee.am.service.impl.user.activity.utils.ConsentUtils;
+import io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.rxjava3.ext.web.RoutingContext;

@@ -16,11 +16,15 @@
 package io.gravitee.am.service.model;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public class NewDomain {
 
     @NotNull
@@ -28,21 +32,8 @@ public class NewDomain {
 
     private String description;
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    @NotNull
+    private String dataPlaneId;
 
     @Override
     public String toString() {

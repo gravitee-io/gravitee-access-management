@@ -25,7 +25,7 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Repository;
 
 import static com.mongodb.client.model.Filters.eq;
-
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
 @Repository
 public class MongoUpgraderRepository extends AbstractManagementMongoRepository implements UpgraderRepository {
     private MongoCollection<UpgradeRecordMongo> upgraderCollection;

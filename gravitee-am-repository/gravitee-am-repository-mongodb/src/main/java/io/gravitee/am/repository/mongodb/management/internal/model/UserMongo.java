@@ -37,7 +37,7 @@ import java.util.Objects;
 @Getter
 @Setter
 public class UserMongo extends Auditable {
-
+    // TODO [DP] class to remove
     @BsonId
     private String id;
     private String externalId;

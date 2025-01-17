@@ -26,8 +26,6 @@ import io.gravitee.am.repository.management.api.CommonUserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CommonUserService;
-import io.gravitee.am.service.CredentialService;
-import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.InvalidParameterException;
@@ -35,7 +33,6 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
-import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -74,16 +71,10 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
     private AuditService auditService;
 
     @Autowired
-    protected CredentialService credentialService;
-
-    @Autowired
     protected RoleService roleService;
 
-    @Autowired
-    protected GroupService groupService;
-
     protected abstract T getUserRepository();
-    protected abstract UserEnhancer getUserEnhancer();
+
     @Override
     public Flowable<User> findByIdIn(List<String> ids) {
         String userIds = String.join(",", ids);
@@ -291,31 +282,4 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a user", ex));
                 });
     }
-
-    @Override
-    public Single<User> delete(String userId) {
-        LOGGER.debug("Delete user {}", userId);
-
-        return getUserRepository().findById(userId)
-                .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
-                .flatMap(user -> credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())
-                            .flatMapCompletable(credential -> credentialService.delete(credential.getId(), false))
-                            .andThen(getUserRepository().delete(userId))
-                            .toSingleDefault(user))
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
-                    }
-
-                    LOGGER.error("An error occurs while trying to delete user: {}", userId, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to delete user: %s", userId), ex));
-                });
-    }
-
-    @Override
-    public Single<User> enhance(User user) {
-        return getUserEnhancer().enhance(user);
-    }
-
 }

@@ -23,6 +23,7 @@ import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
@@ -34,7 +35,6 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.Reference;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
@@ -48,7 +48,6 @@ import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.EnrolledFactorProperties;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.VerifyAttemptService;
@@ -139,7 +138,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
     private final ApplicationContext applicationContext;
     private final DeviceService deviceService;
     private final Domain domain;
-    private final CredentialService credentialService;
+    private final CredentialGatewayService credentialService;
     private final RateLimiterService rateLimiterService;
     private final VerifyAttemptService verifyAttemptService;
     private final EmailService emailService;
@@ -151,7 +150,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                                 DeviceService deviceService,
                                 ApplicationContext applicationContext,
                                 Domain domain,
-                                CredentialService credentialService,
+                                CredentialGatewayService credentialService,
                                 RateLimiterService rateLimiterService,
                                 VerifyAttemptService verifyAttemptService,
                                 EmailService emailService,
@@ -709,7 +708,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         credential.setUserAgent(RequestUtils.userAgent(request));
         credential.setIpAddress(RequestUtils.remoteAddress(request));
 
-        credentialService.update(ReferenceType.DOMAIN, domain.getId(), credentialId, credential)
+        credentialService.update(domain, credentialId, credential)
                 .subscribe(
                         updatedCredential -> handler.handle(Future.succeededFuture(updatedCredential)),
                         error -> handler.handle(Future.failedFuture(error))

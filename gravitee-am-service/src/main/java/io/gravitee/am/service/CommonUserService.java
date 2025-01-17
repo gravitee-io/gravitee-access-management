@@ -62,8 +62,4 @@ public interface CommonUserService {
     Single<User> update(ReferenceType referenceType, String referenceId, String id, UpdateUser updateUser);
 
     Single<User> update(User user);
-
-    Single<User> delete(String userId);
-
-    Single<User> enhance(User user);
 }

@@ -89,7 +89,4 @@ public abstract class BaseUserEnhancer implements UserEnhancer {
                     return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to enhance user %s", user.getId()), ex));
                 });
     }
-
-
-
 }

@@ -20,7 +20,7 @@ import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
-import io.gravitee.am.gateway.handler.scim.service.GroupService;
+import io.gravitee.am.gateway.handler.scim.service.ScimGroupService;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
@@ -42,7 +42,7 @@ import java.util.Collections;
 public class PatchGroupEndpointHandlerTest extends RxWebTestBase {
 
     @Mock
-    private GroupService groupService;
+    private ScimGroupService groupService;
 
     @Mock
     private ObjectMapper objectMapper;

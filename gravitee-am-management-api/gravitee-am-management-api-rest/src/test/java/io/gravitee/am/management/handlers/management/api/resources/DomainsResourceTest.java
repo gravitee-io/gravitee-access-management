@@ -76,10 +76,12 @@ public class DomainsResourceTest extends JerseySpringTest {
     public void shouldCreate() {
         NewDomain newDomain = new NewDomain();
         newDomain.setName("domain-name");
+        newDomain.setDataPlaneId("data-plane-id");
 
         Domain domain = new Domain();
         domain.setId("domain-id");
         domain.setName("domain-name");
+        domain.setDataPlaneId("data-plane-id");
 
         doReturn(Single.just(domain)).when(domainService).create(eq("DEFAULT"), eq("DEFAULT"), any(), any());
         doReturn(Single.just(new IdentityProvider())).when(defaultIdentityProviderService).create(domain.getId());

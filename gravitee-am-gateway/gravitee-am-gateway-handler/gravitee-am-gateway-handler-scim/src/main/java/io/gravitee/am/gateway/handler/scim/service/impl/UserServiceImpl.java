@@ -24,6 +24,7 @@ import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
@@ -33,7 +34,7 @@ import io.gravitee.am.gateway.handler.scim.model.ListResponse;
 import io.gravitee.am.gateway.handler.scim.model.Member;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.model.User;
-import io.gravitee.am.gateway.handler.scim.service.GroupService;
+import io.gravitee.am.gateway.handler.scim.service.ScimGroupService;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
@@ -50,7 +51,6 @@ import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.AbstractNotFoundException;
@@ -114,7 +114,7 @@ public class UserServiceImpl implements UserService {
     private UserRepository userRepository;
 
     @Autowired
-    private GroupService groupService;
+    private ScimGroupService groupService;
 
     @Autowired
     private RoleService roleService;
@@ -138,7 +138,7 @@ public class UserServiceImpl implements UserService {
     private AuditService auditService;
 
     @Autowired
-    private UserActivityService userActivityService;
+    private UserActivityGatewayService userActivityService;
 
     @Autowired
     private RateLimiterService rateLimiterService;
@@ -473,7 +473,7 @@ public class UserServiceImpl implements UserService {
                                         String.format("An error has occurred when trying to delete user: %s", userId), ex));
                             }
                         })
-                        .andThen(userActivityService.deleteByDomainAndUser(domain.getId(), userId))
+                        .andThen(userActivityService.deleteByDomainAndUser(domain, userId))
                         .andThen(rateLimiterService.deleteByUser(user))
                         .andThen(passwordHistoryService.deleteByUser(userId))
                         .andThen(verifyAttemptService.deleteByUser(user))

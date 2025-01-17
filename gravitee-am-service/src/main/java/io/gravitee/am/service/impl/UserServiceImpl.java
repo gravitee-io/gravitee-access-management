@@ -16,6 +16,7 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
@@ -27,10 +28,10 @@ import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.dataplane.CredentialCommonService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserNotFoundException;
-import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -67,16 +68,12 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
     protected TokenService tokenService;
 
     @Autowired
-    private UserEnhancer userEnhancer;
+    @Lazy
+    protected CredentialCommonService credentialService;
 
     @Override
     protected UserRepository getUserRepository() {
         return this.userRepository;
-    }
-
-    @Override
-    protected UserEnhancer getUserEnhancer() {
-        return userEnhancer;
     }
 
     @Override
@@ -174,8 +171,24 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
     }
 
     @Override
-    public Single<User> delete(String userId) {
-        return super.delete(userId)
+    public Single<User> delete(Domain domain, String userId) {
+        LOGGER.debug("Delete user {}", userId);
+
+        return getUserRepository().findById(userId)
+                .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
+                .flatMap(user -> credentialService.findByUserId(domain, user.getId())
+                        .flatMapCompletable(credential -> credentialService.delete(domain, userId, false))
+                        .andThen(getUserRepository().delete(userId))
+                        .toSingleDefault(user))
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+
+                    LOGGER.error("An error occurs while trying to delete user: {}", userId, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to delete user: %s", userId), ex));
+                })
                 .flatMap(user -> tokenService.deleteByUser((User) user).toSingleDefault(user));
     }
 
@@ -224,10 +237,10 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
     }
 
     @Override
-    public Completable deleteByDomain(String domain) {
+    public Completable deleteByDomain(Domain domain) {
         LOGGER.debug("Delete all users for domain {}", domain);
-        return credentialService.deleteByReference(ReferenceType.DOMAIN, domain)
-                .andThen(userRepository.deleteByReference(ReferenceType.DOMAIN, domain));
+        return credentialService.deleteByDomain(domain)
+                .andThen(userRepository.deleteByReference(ReferenceType.DOMAIN, domain.getId()));
     }
 
     @Override

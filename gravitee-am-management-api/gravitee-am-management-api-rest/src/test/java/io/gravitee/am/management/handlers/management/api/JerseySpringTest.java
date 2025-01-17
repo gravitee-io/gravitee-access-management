@@ -46,6 +46,8 @@ import io.gravitee.am.management.service.PolicyPluginService;
 import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.management.service.ResourcePluginService;
 import io.gravitee.am.management.service.TagService;
+import io.gravitee.am.management.service.dataplane.CredentialManagementService;
+import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
@@ -54,7 +56,6 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.BotDetectionService;
 import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.CertificateService;
-import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.DeviceIdentifierService;
 import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.EmailTemplateService;
@@ -64,9 +65,10 @@ import io.gravitee.am.service.ExtensionGrantService;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.FormService;
-import io.gravitee.am.service.GroupService;
+import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.OrganizationGroupService;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.PasswordService;
@@ -76,7 +78,6 @@ import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.validators.email.UserEmail;
@@ -144,7 +145,7 @@ public abstract class JerseySpringTest {
     protected io.gravitee.am.management.service.UserService userService;
 
     @Autowired
-    protected UserActivityService userActivityService;
+    protected UserActivityManagementService userActivityService;
 
     @Autowired
     protected ScopeService scopeService;
@@ -210,7 +211,10 @@ public abstract class JerseySpringTest {
     protected TagService tagService;
 
     @Autowired
-    protected GroupService groupService;
+    protected DomainGroupService domainGroupService;
+
+    @Autowired
+    protected OrganizationGroupService organizationGroupService;
 
     @Autowired
     protected ApplicationService applicationService;
@@ -234,7 +238,7 @@ public abstract class JerseySpringTest {
     protected EntrypointService entrypointService;
 
     @Autowired
-    protected CredentialService credentialService;
+    protected CredentialManagementService credentialService;
 
     @Autowired
     protected FlowService flowService;
@@ -347,8 +351,8 @@ public abstract class JerseySpringTest {
         }
 
         @Bean
-        public UserActivityService userActivityService() {
-            return mock(UserActivityService.class);
+        public UserActivityManagementService userActivityService() {
+            return mock(UserActivityManagementService.class);
         }
 
         @Bean
@@ -480,8 +484,13 @@ public abstract class JerseySpringTest {
         }
 
         @Bean
-        public GroupService groupService() {
-            return mock(GroupService.class);
+        public DomainGroupService domainGroupService() {
+            return mock(DomainGroupService.class);
+        }
+
+        @Bean
+        public OrganizationGroupService organizationGroupService() {
+            return mock(OrganizationGroupService.class);
         }
 
         @Bean
@@ -515,8 +524,8 @@ public abstract class JerseySpringTest {
         }
 
         @Bean
-        public CredentialService credentialService() {
-            return mock(CredentialService.class);
+        public CredentialManagementService credentialService() {
+            return mock(CredentialManagementService.class);
         }
 
         @Bean

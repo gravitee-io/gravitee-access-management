@@ -25,6 +25,7 @@ import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.scim.Schema;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
 import io.gravitee.am.gateway.handler.scim.model.GraviteeUser;
@@ -49,7 +50,6 @@ import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
@@ -129,7 +129,7 @@ public class UserServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private UserActivityService userActivityService;
+    private UserActivityGatewayService userActivityService;
 
     @Mock
     private IdentityProviderManager identityProviderManager;
@@ -138,7 +138,7 @@ public class UserServiceTest {
     private Domain domain = new Domain();
 
     @Mock
-    private GroupService groupService;
+    private ScimGroupService groupService;
 
     @Mock
     private PasswordService passwordService;
@@ -752,7 +752,7 @@ public class UserServiceTest {
         when(userRepository.findById(userId)).thenReturn(Maybe.just(endUser));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(userRepository.delete(userId)).thenReturn(complete());
-        when(userActivityService.deleteByDomainAndUser(domain.getId(), userId)).thenReturn(complete());
+        when(userActivityService.deleteByDomainAndUser(domain, userId)).thenReturn(complete());
         when(rateLimiterService.deleteByUser(any())).thenReturn(complete());
         when(passwordHistoryService.deleteByUser(userId)).thenReturn(complete());
         when(verifyAttemptService.deleteByUser(any())).thenReturn(complete());
@@ -781,7 +781,7 @@ public class UserServiceTest {
         when(userRepository.findById(userId)).thenReturn(Maybe.just(endUser));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
         when(userRepository.delete(userId)).thenReturn(complete());
-        when(userActivityService.deleteByDomainAndUser(domain.getId(), userId)).thenReturn(complete());
+        when(userActivityService.deleteByDomainAndUser(domain, userId)).thenReturn(complete());
         when(rateLimiterService.deleteByUser(any())).thenReturn(complete());
         when(passwordHistoryService.deleteByUser(any())).thenReturn(complete());
         when(verifyAttemptService.deleteByUser(any())).thenReturn(complete());

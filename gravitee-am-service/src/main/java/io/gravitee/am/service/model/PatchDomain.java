@@ -28,7 +28,9 @@ import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
 import io.gravitee.am.service.model.openid.PatchOIDCSettings;
 import io.gravitee.am.service.utils.SetterUtils;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.HashSet;
 import java.util.List;
@@ -39,6 +41,8 @@ import java.util.Set;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
+@Setter
+@Getter
 @NoArgsConstructor
 public class PatchDomain {
 
@@ -61,134 +65,7 @@ public class PatchDomain {
     private Optional<Boolean> master;
     private Optional<PatchSAMLSettings> saml;
     private Optional<CorsSettings> corsSettings;
-
-    public Optional<String> getName() {
-        return name;
-    }
-
-    public void setName(Optional<String> name) {
-        this.name = name;
-    }
-
-    public Optional<String> getDescription() {
-        return description;
-    }
-
-    public void setDescription(Optional<String> description) {
-        this.description = description;
-    }
-
-    public Optional<Boolean> getEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(Optional<Boolean> enabled) {
-        this.enabled = enabled;
-    }
-
-    public Optional<String> getPath() {
-        return path;
-    }
-
-    public void setPath(Optional<String> path) {
-        this.path = path;
-    }
-
-    public Optional<PatchOIDCSettings> getOidc() {
-        return oidc;
-    }
-
-    public void setOidc(Optional<PatchOIDCSettings> oidc) {
-        this.oidc = oidc;
-    }
-
-    public Optional<UMASettings> getUma() {
-        return uma;
-    }
-
-    public void setUma(Optional<UMASettings> uma) {
-        this.uma = uma;
-    }
-
-    public Optional<SCIMSettings> getScim() {
-        return scim;
-    }
-
-    public void setScim(Optional<SCIMSettings> scim) {
-        this.scim = scim;
-    }
-
-    public Optional<LoginSettings> getLoginSettings() {
-        return loginSettings;
-    }
-
-    public void setLoginSettings(Optional<LoginSettings> loginSettings) {
-        this.loginSettings = loginSettings;
-    }
-
-    public Optional<WebAuthnSettings> getWebAuthnSettings() {
-        return webAuthnSettings;
-    }
-
-    public void setWebAuthnSettings(Optional<WebAuthnSettings> webAuthnSettings) {
-        this.webAuthnSettings = webAuthnSettings;
-    }
-
-    public Optional<AccountSettings> getAccountSettings() {
-        return accountSettings;
-    }
-
-    public void setAccountSettings(Optional<AccountSettings> accountSettings) {
-        this.accountSettings = accountSettings;
-    }
-
-    public Optional<Set<String>> getTags() {
-        return tags;
-    }
-
-    public void setTags(Optional<Set<String>> tags) {
-        this.tags = tags;
-    }
-
-    public Optional<PatchPasswordSettings> getPasswordSettings() {
-        return passwordSettings;
-    }
-
-    public void setPasswordSettings(Optional<PatchPasswordSettings> passwordSettings) {
-        this.passwordSettings = passwordSettings;
-    }
-
-    public Optional<SelfServiceAccountManagementSettings> getSelfServiceAccountManagementSettings() {
-        return selfServiceAccountManagementSettings;
-    }
-
-    public void setSelfServiceAccountManagementSettings(Optional<SelfServiceAccountManagementSettings> selfServiceAccountManagementSettings) {
-        this.selfServiceAccountManagementSettings = selfServiceAccountManagementSettings;
-    }
-
-    public Optional<Boolean> getMaster() {
-        return master;
-    }
-
-    public void setMaster(Optional<Boolean> master) {
-        this.master = master;
-    }
-
-    public Optional<PatchSAMLSettings> getSaml() {
-        return saml;
-    }
-
-    public void setSaml(Optional<PatchSAMLSettings> saml) {
-        this.saml = saml;
-    }
-
-    public Optional<CorsSettings> getCorsSettings() {
-        return corsSettings;
-    }
-
-    public void setCorsSettings(Optional<CorsSettings> corsSettings) {
-        this.corsSettings = corsSettings;
-    }
+    private Optional<String> dataPlaneId;
 
     public Domain patch(Domain _toPatch) {
         // create new object for audit purpose (patch json result)
@@ -210,6 +87,7 @@ public class PatchDomain {
         SetterUtils.safeSet(toPatch::setTags, this.getTags());
         SetterUtils.safeSet(toPatch::setMaster, this.getMaster(), boolean.class);
         SetterUtils.safeSet(toPatch::setCorsSettings, this.getCorsSettings());
+        SetterUtils.safeSet(toPatch::setDataPlaneId, this.getDataPlaneId());
 
         if (this.getOidc() != null) {
             if (this.getOidc().isPresent()) {
@@ -289,27 +167,4 @@ public class PatchDomain {
         return requiredPermissions;
     }
 
-    public Optional<Boolean> getVhostMode() {
-        return vhostMode;
-    }
-
-    public void setVhostMode(Optional<Boolean> vhostMode) {
-        this.vhostMode = vhostMode;
-    }
-
-    public Optional<List<VirtualHost>> getVhosts() {
-        return vhosts;
-    }
-
-    public void setVhosts(Optional<List<VirtualHost>> vhosts) {
-        this.vhosts = vhosts;
-    }
-
-    public Optional<Boolean> getAlertEnabled() {
-        return alertEnabled;
-    }
-
-    public void setAlertEnabled(Optional<Boolean> alertEnabled) {
-        this.alertEnabled = alertEnabled;
-    }
 }

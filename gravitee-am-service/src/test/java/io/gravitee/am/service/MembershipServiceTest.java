@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.service.impl.MembershipServiceImpl;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Platform;
@@ -33,7 +34,6 @@ import io.gravitee.am.service.exception.InvalidRoleException;
 import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.exception.SinglePrimaryOwnerException;
 import io.gravitee.am.service.exception.UserNotFoundException;
-import io.gravitee.am.service.impl.MembershipServiceImpl;
 import io.gravitee.am.service.model.NewMembership;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -79,7 +79,7 @@ public class MembershipServiceTest {
     private EventService eventService;
 
     @Mock
-    private GroupService groupService;
+    private OrganizationGroupService groupService;
 
     @Mock
     private AuditService auditService;
@@ -178,7 +178,7 @@ public class MembershipServiceTest {
         group.setReferenceId(DOMAIN_ID);
         group.setReferenceType(ReferenceType.DOMAIN);
 
-        when(groupService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(group));
+        when(groupService.findById(ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(group));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
         when(membershipRepository.create(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
@@ -274,7 +274,7 @@ public class MembershipServiceTest {
         role.setReferenceType(ReferenceType.PLATFORM);
         role.setAssignableType(ReferenceType.DOMAIN);
 
-        when(groupService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(group));
+        when(groupService.findById(ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(group));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
 
@@ -299,7 +299,7 @@ public class MembershipServiceTest {
         role.setReferenceType(ReferenceType.DOMAIN);
         role.setAssignableType(ReferenceType.DOMAIN);
 
-        when(groupService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.error(new GroupNotFoundException("group-id")));
+        when(groupService.findById(ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.error(new GroupNotFoundException("group-id")));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
         when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
 

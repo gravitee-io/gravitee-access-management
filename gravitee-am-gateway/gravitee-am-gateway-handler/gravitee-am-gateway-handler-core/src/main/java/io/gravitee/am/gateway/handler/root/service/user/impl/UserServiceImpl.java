@@ -28,6 +28,7 @@ import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.gateway.handler.root.service.user.UserRegistrationIdpResolver;
@@ -53,7 +54,6 @@ import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.TokenService;
@@ -149,7 +149,7 @@ public class UserServiceImpl implements UserService {
     private LoginAttemptService loginAttemptService;
 
     @Autowired
-    private CredentialService credentialService;
+    private CredentialGatewayService credentialService;
 
     @Autowired
     private UserValidator userValidator;
@@ -452,7 +452,7 @@ public class UserServiceImpl implements UserService {
                 // delete passwordless devices
                 .flatMap(user1 -> {
                     if (accountSettings != null && accountSettings.isDeletePasswordlessDevicesAfterResetPassword()) {
-                        return credentialService.deleteByUserId(user1.getReferenceType(), user1.getReferenceId(), user1.getId())
+                        return credentialService.deleteByUserId(domain, user1.getId())
                                 .andThen(Single.just(user1));
                     }
                     return Single.just(user1);

@@ -208,7 +208,7 @@ public class UsersResource extends AbstractUsersResource {
                     bulkRequest.processOneByOne(NewUser.class, objectMapper, newUser -> userService.create(domain, newUser, authenticatedUser)
                             .map(BulkOperationResult::created));
             case DELETE ->
-                    bulkRequest.processOneByOne(String.class, objectMapper, id -> userService.delete(ReferenceType.DOMAIN, domain.getId(), id, authenticatedUser)
+                    bulkRequest.processOneByOne(String.class, objectMapper, id -> userService.delete(domain, id, authenticatedUser)
                             .map(User::getId)
                             .map(BulkOperationResult::ok)
                     );

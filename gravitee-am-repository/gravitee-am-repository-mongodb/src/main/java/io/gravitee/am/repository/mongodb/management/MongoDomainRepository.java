@@ -72,6 +72,9 @@ import java.util.stream.Collectors;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.in;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -211,6 +214,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setIdentities(domainMongo.getIdentities());
         domain.setMaster(domainMongo.isMaster());
         domain.setCorsSettings(domainMongo.getCorsSettings());
+        domain.setDataPlaneId(domainMongo.getDataPlaneId());
 
         return domain;
     }
@@ -248,7 +252,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setIdentities(domain.getIdentities());
         domainMongo.setMaster(domain.isMaster());
         domainMongo.setCorsSettings(domain.getCorsSettings());
-
+        domainMongo.setDataPlaneId(domain.getDataPlaneId());
         return domainMongo;
     }
 

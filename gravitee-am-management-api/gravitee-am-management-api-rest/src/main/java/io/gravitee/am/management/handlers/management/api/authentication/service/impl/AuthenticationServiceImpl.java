@@ -34,6 +34,7 @@ import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.OrganizationUserService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.AuthenticationAuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
@@ -41,6 +42,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 
@@ -66,6 +68,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Autowired
     private OrganizationUserService userService;
+
+    @Autowired
+    @Qualifier("OrganizationUserEnhancer")
+    private UserEnhancer userEnhancer;
 
     @Autowired
     private RoleService roleService;
@@ -130,7 +136,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         }
                         return Single.error(ex);
                     })
-                    .flatMap(userService::enhance)
+                    .flatMap(userEnhancer::enhance)
                     .doOnSuccess(user -> auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class)
                             .principal(authentication)
                             .reference(Reference.organization(organizationId))

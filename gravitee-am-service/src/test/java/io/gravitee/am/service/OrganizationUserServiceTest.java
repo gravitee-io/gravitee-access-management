@@ -54,7 +54,6 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
@@ -98,9 +97,6 @@ public class OrganizationUserServiceTest {
 
     @Mock
     private AccountAccessTokenRepository accessTokenRepository;
-
-    @Mock
-    private CredentialService credentialService;
 
     @Mock
     private AuditService auditService;
@@ -287,7 +283,6 @@ public class OrganizationUserServiceTest {
 
         when(userRepository.findById("my-user")).thenReturn(Maybe.just(user));
         when(userRepository.delete("my-user")).thenReturn(Completable.complete());
-        when(credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())).thenReturn(Flowable.empty());
         when(accessTokenRepository.deleteByUserId(any(), any(), any())).thenReturn(Completable.complete());
 
         TestObserver testObserver = userService.delete("my-user").test();
@@ -297,7 +292,6 @@ public class OrganizationUserServiceTest {
         testObserver.assertNoErrors();
 
         verify(userRepository, times(1)).delete("my-user");
-        verify(credentialService, never()).delete(anyString());
     }
 
     @Test
@@ -312,8 +306,6 @@ public class OrganizationUserServiceTest {
 
         when(userRepository.findById("my-user")).thenReturn(Maybe.just(user));
         when(userRepository.delete("my-user")).thenReturn(Completable.complete());
-        when(credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())).thenReturn(Flowable.just(credential));
-        when(credentialService.delete(credential.getId(), false)).thenReturn(Completable.complete());
         when(accessTokenRepository.deleteByUserId(any(), any(), any())).thenReturn(Completable.complete());
 
         TestObserver testObserver = userService.delete("my-user").test();
@@ -323,7 +315,6 @@ public class OrganizationUserServiceTest {
         testObserver.assertNoErrors();
 
         verify(userRepository, times(1)).delete("my-user");
-        verify(credentialService, times(1)).delete("credential-id", false);
     }
 
     @Test

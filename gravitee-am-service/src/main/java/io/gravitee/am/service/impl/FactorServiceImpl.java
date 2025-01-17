@@ -30,7 +30,6 @@ import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.FactorService;
-import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.FactorConfigurationException;
 import io.gravitee.am.service.exception.FactorNotFoundException;
@@ -90,9 +89,6 @@ public class FactorServiceImpl implements FactorService {
 
     @Autowired
     private AuditService auditService;
-
-    @Autowired
-    private UserService userService;
 
     @Override
     public Maybe<Factor> findById(String id) {

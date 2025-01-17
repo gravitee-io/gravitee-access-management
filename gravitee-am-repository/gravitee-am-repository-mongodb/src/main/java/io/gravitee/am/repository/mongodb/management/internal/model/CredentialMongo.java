@@ -25,7 +25,7 @@ import java.util.Date;
  * @author GraviteeSource Team
  */
 public class CredentialMongo extends Auditable {
-
+    // TODO [DP] class to remove
     private String id;
     private ReferenceType referenceType;
     private String referenceId;
