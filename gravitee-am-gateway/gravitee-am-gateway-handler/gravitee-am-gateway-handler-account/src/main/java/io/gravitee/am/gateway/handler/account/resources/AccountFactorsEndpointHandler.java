@@ -479,7 +479,7 @@ public class AccountFactorsEndpointHandler {
         final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
         final String factorId = routingContext.request().getParam(FACTOR_ID);
 
-        accountService.removeFactor(user.getId(), factorId, new DefaultUser(user))
+        accountService.removeFactor(user, factorId, new DefaultUser(user))
                 .subscribe(
                         () -> AccountResponseHandler.handleNoBodyResponse(routingContext),
                         routingContext::fail
@@ -561,7 +561,7 @@ public class AccountFactorsEndpointHandler {
         }
 
         Observable.fromIterable(recoveryCodes)
-                .flatMapCompletable(recoveryCode -> accountService.removeFactor(user.getId(), recoveryCode, new DefaultUser(user)))
+                .flatMapCompletable(recoveryCode -> accountService.removeFactor(user, recoveryCode, new DefaultUser(user)))
                 .subscribe(
                         () -> AccountResponseHandler.handleNoBodyResponse(routingContext),
                         routingContext::fail

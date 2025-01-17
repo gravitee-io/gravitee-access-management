@@ -148,20 +148,20 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
     }
 
     @Override
-    public Flowable<User> findAll(ReferenceType referenceType, String referenceId) {
-        return Flowable.fromPublisher(withMaxTime(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))))
+    public Flowable<User> findAll(Reference reference) {
+        return Flowable.fromPublisher(withMaxTime(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id())))))
                 .map(this::convert);
     }
 
     @Override
-    public Single<Page<User>> findAll(ReferenceType referenceType, String referenceId, int page, int size) {
-        Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)), countOptions())).first(0l);
-        Single<Set<User>> usersOperation = Observable.fromPublisher(withMaxTime(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
+    public Single<Page<User>> findAll(Reference reference, int page, int size) {
+        Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id())), countOptions())).first(0l);
+        Single<Set<User>> usersOperation = Observable.fromPublisher(withMaxTime(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id())))).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
         return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, page, count));
     }
 
     @Override
-    public Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size) {
+    public Single<Page<User>> search(Reference reference, String query, int page, int size) {
         Bson searchQuery = or(
                 new BasicDBObject(FIELD_USERNAME, query),
                 new BasicDBObject(FIELD_EMAIL, query),
@@ -185,8 +185,8 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
         }
 
         Bson mongoQuery = and(
-                eq(FIELD_REFERENCE_TYPE, referenceType.name()),
-                eq(FIELD_REFERENCE_ID, referenceId),
+                eq(FIELD_REFERENCE_TYPE, reference.type().name()),
+                eq(FIELD_REFERENCE_ID, reference.id()),
                 searchQuery);
 
         Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(mongoQuery, countOptions())).first(0l);
@@ -195,13 +195,13 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
     }
 
     @Override
-    public Single<Page<User>> search(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int page, int size) {
+    public Single<Page<User>> search(Reference reference, FilterCriteria criteria, int page, int size) {
         try {
             BasicDBObject searchQuery = BasicDBObject.parse(FilterCriteriaParser.parse(criteria));
 
             Bson mongoQuery = and(
-                    eq(FIELD_REFERENCE_TYPE, referenceType.name()),
-                    eq(FIELD_REFERENCE_ID, referenceId),
+                    eq(FIELD_REFERENCE_TYPE, reference.type().name()),
+                    eq(FIELD_REFERENCE_ID, reference.id()),
                     searchQuery);
 
             Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(mongoQuery, countOptions())).first(0l);
@@ -218,13 +218,13 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
     }
 
     @Override
-    public Flowable<User> search(ReferenceType referenceType, String referenceId, FilterCriteria criteria) {
+    public Flowable<User> search(Reference reference, FilterCriteria criteria) {
         try {
             BasicDBObject searchQuery = BasicDBObject.parse(FilterCriteriaParser.parse(criteria));
 
             Bson mongoQuery = and(
-                    eq(FIELD_REFERENCE_TYPE, referenceType.name()),
-                    eq(FIELD_REFERENCE_ID, referenceId),
+                    eq(FIELD_REFERENCE_TYPE, reference.type().name()),
+                    eq(FIELD_REFERENCE_ID, reference.id()),
                     searchQuery);
 
             return Flowable.fromPublisher(withMaxTime(usersCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_USERNAME, 1))).map(this::convert);
@@ -239,10 +239,10 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
     }
 
     @Override
-    public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source) {
+    public Maybe<User> findByUsernameAndSource(Reference reference, String username, String source) {
         return Observable.fromPublisher(withMaxTime(
                         usersCollection
-                                .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_USERNAME, username), eq(FIELD_SOURCE, source))))
+                                .find(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id()), eq(FIELD_USERNAME, username), eq(FIELD_SOURCE, source))))
                         .limit(1)
                         .first())
                 .firstElement()
@@ -251,10 +251,10 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
     }
 
     @Override
-    public Maybe<User> findByExternalIdAndSource(ReferenceType referenceType, String referenceId, String externalId, String source) {
+    public Maybe<User> findByExternalIdAndSource(Reference reference, String externalId, String source) {
         return Observable.fromPublisher(withMaxTime(
                         usersCollection
-                                .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_EXTERNAL_ID, externalId), eq(FIELD_SOURCE, source))))
+                                .find(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id()), eq(FIELD_EXTERNAL_ID, externalId), eq(FIELD_SOURCE, source))))
                         .limit(1)
                         .first())
                 .firstElement()
@@ -397,8 +397,8 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
     }
 
     @Override
-    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
-        return Completable.fromPublisher(usersCollection.deleteMany(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))));
+    public Completable deleteByReference(Reference reference) {
+        return Completable.fromPublisher(usersCollection.deleteMany(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id()))));
     }
 
     @Override
@@ -426,8 +426,8 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
     }
 
     @Override
-    public Single<Long> countByReference(ReferenceType referenceType, String referenceId) {
-        return Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)), countOptions())).first(0L);
+    public Single<Long> countByReference(Reference reference) {
+        return Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id())), countOptions())).first(0L);
     }
 
     @Override
@@ -446,26 +446,26 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
     }
 
     @Override
-    public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source, boolean includeLinkedIdentities) {
-        return findByUsernameAndSource(referenceType, referenceId, username, source)
-                .switchIfEmpty(includeLinkedIdentities ? findByIdentityUsernameAndProviderId(referenceType, referenceId, username, source) : Maybe.empty());
+    public Maybe<User> findByUsernameAndSource(Reference reference, String username, String source, boolean includeLinkedIdentities) {
+        return findByUsernameAndSource(reference, username, source)
+                .switchIfEmpty(includeLinkedIdentities ? findByIdentityUsernameAndProviderId(reference, username, source) : Maybe.empty());
     }
 
     @Override
-    public Single<Page<User>> findAllScim(ReferenceType referenceType, String referenceId, int startIndex, int count) {
-        Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)), countOptions())).first(0l);
-        Single<Set<User>> usersOperation = Observable.fromPublisher(withMaxTime(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(startIndex).limit(count)).map(this::convert).collect(LinkedHashSet::new, Set::add);
+    public Single<Page<User>> findAllScim(Reference reference, int startIndex, int count) {
+        Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id())), countOptions())).first(0l);
+        Single<Set<User>> usersOperation = Observable.fromPublisher(withMaxTime(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id())))).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(startIndex).limit(count)).map(this::convert).collect(LinkedHashSet::new, Set::add);
         return Single.zip(countOperation, usersOperation, (totalResults, users) -> new Page<>(users, count > 0 ? (startIndex/count) : 0, totalResults));
     }
 
     @Override
-    public Single<Page<User>> searchScim(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int startIndex, int count) {
+    public Single<Page<User>> searchScim(Reference reference, FilterCriteria criteria, int startIndex, int count) {
         try {
             BasicDBObject searchQuery = BasicDBObject.parse(FilterCriteriaParser.parse(criteria));
 
             Bson mongoQuery = and(
-                    eq(FIELD_REFERENCE_TYPE, referenceType.name()),
-                    eq(FIELD_REFERENCE_ID, referenceId),
+                    eq(FIELD_REFERENCE_TYPE, reference.type().name()),
+                    eq(FIELD_REFERENCE_ID, reference.id()),
                     searchQuery);
 
             Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(mongoQuery, countOptions())).first(0l);
@@ -481,8 +481,8 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
 
     }
 
-    private Maybe<User> findByIdentityUsernameAndProviderId(ReferenceType referenceType, String referenceId, String username, String providerId){
-        Bson query = and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_IDENTITIES_USERNAME, username), eq(FIELD_IDENTITIES_PROVIDER_ID, providerId));
+    private Maybe<User> findByIdentityUsernameAndProviderId(Reference reference, String username, String providerId){
+        Bson query = and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id()), eq(FIELD_IDENTITIES_USERNAME, username), eq(FIELD_IDENTITIES_PROVIDER_ID, providerId));
         return Observable.fromPublisher(withMaxTime(usersCollection.find(query))
                         .limit(1)
                         .first())

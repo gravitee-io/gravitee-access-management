@@ -16,7 +16,7 @@
 package io.gravitee.am.management.service.impl;
 
 import com.google.common.base.Strings;
-import io.gravitee.am.business.UpdateUsernameOrganizationRule;
+import io.gravitee.am.business.user.UpdateUsernameOrganizationRule;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.management.service.OrganizationUserService;
@@ -313,7 +313,8 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
     public Single<User> updateUsername(ReferenceType referenceType, String referenceId, String id, String
             username, io.gravitee.am.identityprovider.api.User principal) {
         return new UpdateUsernameOrganizationRule(userValidator,
-                getUserService(),
+                getUserService()::findByUsernameAndSource,
+                getUserService()::update,
                 auditService)
                 .updateUsername(username, principal,
                         (User user) -> identityProviderManager.getUserProvider(user.getSource()).switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(user.getSource()))),
