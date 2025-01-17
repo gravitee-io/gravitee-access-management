@@ -45,7 +45,12 @@ public interface CommonUserService {
     Single<Page<User>> search(ReferenceType referenceType, String referenceId, FilterCriteria filterCriteria, int page, int size);
     Flowable<User> search(ReferenceType referenceType, String referenceId, FilterCriteria filterCriteria);
 
-    Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source);
+    @Deprecated
+    default Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source) {
+        return findByUsernameAndSource(new Reference(referenceType, referenceId), username, source);
+    }
+
+    Maybe<User> findByUsernameAndSource(Reference reference, String username, String source);
 
     /** @deprecated prefer findById(Reference, UserId) for new code
      */

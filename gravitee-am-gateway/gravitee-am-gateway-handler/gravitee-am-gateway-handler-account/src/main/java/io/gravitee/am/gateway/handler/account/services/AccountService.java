@@ -55,7 +55,7 @@ public interface AccountService {
 
     Single<User> upsertFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal);
 
-    Completable removeFactor(String userId, String factorId, io.gravitee.am.identityprovider.api.User principal);
+    Completable removeFactor(User user, String factorId, io.gravitee.am.identityprovider.api.User principal);
 
     Single<List<Factor>> getFactors(String domain);
 
