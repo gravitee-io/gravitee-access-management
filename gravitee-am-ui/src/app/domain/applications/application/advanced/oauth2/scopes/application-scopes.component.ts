@@ -115,7 +115,7 @@ export class ApplicationScopesComponent implements OnInit {
     event.preventDefault();
     const applicationScopes = map(this.selectedScopes, (scope) => scope.key);
     const dialogRef = this.dialog.open(AddScopeComponent, {
-      width: '700px',
+      minWidth: '600px',
       data: { domainScopes: this.scopes, applicationScopes: applicationScopes },
     });
     dialogRef.afterClosed().subscribe((scopes) => {
