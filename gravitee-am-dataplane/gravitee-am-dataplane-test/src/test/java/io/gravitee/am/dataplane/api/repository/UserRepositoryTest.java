@@ -30,7 +30,6 @@ import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-import io.gravitee.am.repository.management.api.CommonUserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
@@ -82,7 +81,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         userRepository.create(user).blockingGet();
 
         // fetch users
-        TestSubscriber<User> testSubscriber = userRepository.findAll(ReferenceType.DOMAIN, "testDomain").test();
+        TestSubscriber<User> testSubscriber = userRepository.findAll(Reference.domain("testDomain")).test();
         testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
@@ -101,7 +100,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         userRepository.create(user).blockingGet();
 
         // fetch users
-        TestObserver<User> testObserver = userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, "testDomain", user.getUsername(), user.getSource()).test();
+        TestObserver<User> testObserver = userRepository.findByUsernameAndSource(Reference.domain("testDomain"), user.getUsername(), user.getSource()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -134,7 +133,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         userRepository.create(linkUser).blockingGet();
 
         // fetch users using linked identity provider id
-        TestObserver<User> testObserver = userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, "testDomain", identity.getUsername(), identity.getProviderId(), true).test();
+        TestObserver<User> testObserver = userRepository.findByUsernameAndSource(Reference.domain("testDomain"), identity.getUsername(), identity.getProviderId(), true).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -142,7 +141,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         testObserver.assertValue(u -> u.getUsername().equals(linkUser.getUsername()));
 
         // fetch users using direct source id
-        testObserver = userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, "testDomain", user.getUsername(), user.getSource(), true).test();
+        testObserver = userRepository.findByUsernameAndSource(Reference.domain("testDomain"), user.getUsername(), user.getSource(), true).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -160,7 +159,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         userRepository.create(user).blockingGet();
 
         // fetch users
-        TestObserver<Page<User>> testObserver = userRepository.findAll(ReferenceType.DOMAIN, user.getReferenceId(), 0, 10).test();
+        TestObserver<Page<User>> testObserver = userRepository.findAll(Reference.domain(user.getReferenceId()), 0, 10).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -168,7 +167,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         testObserver.assertValue(users -> users.getData().size() == 1);
 
         // fetch users
-        testObserver = userRepository.findAllScim(ReferenceType.DOMAIN, user.getReferenceId(), 0, 10).test();
+        testObserver = userRepository.findAllScim(Reference.domain(user.getReferenceId()), 0, 10).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -194,7 +193,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
 
         // fetch users multiple time to ensure order is constant
         for (int i = 0; i < 10; i++) {
-            TestObserver<Page<User>> testObserver = userRepository.findAll(ReferenceType.DOMAIN, REFID, 0, 10).test();
+            TestObserver<Page<User>> testObserver = userRepository.findAll(Reference.domain(REFID), 0, 10).test();
             testObserver.awaitDone(10, TimeUnit.SECONDS);
 
             testObserver.assertComplete();
@@ -206,7 +205,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
 
         // fetch users with size inferior to max result multiple time to ensure order is constant
         for (int i = 0; i < 10; i++) {
-            TestObserver<Page<User>> testFirstPageObserver = userRepository.findAll(ReferenceType.DOMAIN, REFID, 0, 2).test();
+            TestObserver<Page<User>> testFirstPageObserver = userRepository.findAll(Reference.domain(REFID), 0, 2).test();
             testFirstPageObserver.awaitDone(10, TimeUnit.SECONDS);
 
             testFirstPageObserver.assertComplete();
@@ -218,7 +217,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
 
         // fetch users with size inferior to max result multiple time to ensure order is constant
         for (int i = 0; i < 10; i++) {
-            TestObserver<Page<User>> testObserverNextPage = userRepository.findAll(ReferenceType.DOMAIN, REFID, 1, 2).test();
+            TestObserver<Page<User>> testObserverNextPage = userRepository.findAll(Reference.domain(REFID), 1, 2).test();
             testObserverNextPage.awaitDone(10, TimeUnit.SECONDS);
 
             testObserverNextPage.assertComplete();
@@ -302,7 +301,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         User userCreated = userRepository.create(user).blockingGet();
 
         // fetch user
-        TestObserver<User> testObserver = userRepository.findByExternalIdAndSource(userCreated.getReferenceType(), userCreated.getReferenceId(), userCreated.getExternalId(), userCreated.getSource()).test();
+        TestObserver<User> testObserver = userRepository.findByExternalIdAndSource(Reference.domain(userCreated.getReferenceId()), userCreated.getExternalId(), userCreated.getSource()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -335,7 +334,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         User userCreated = userRepository.create(user).blockingGet();
 
         // fetch user
-        TestObserver<User> testObserver = userRepository.findByExternalIdAndSource(userCreated.getReferenceType(), userCreated.getReferenceId(), userCreated.getExternalId()+"unknown", userCreated.getSource()).test();
+        TestObserver<User> testObserver = userRepository.findByExternalIdAndSource(Reference.domain(userCreated.getReferenceId()), userCreated.getExternalId()+"unknown", userCreated.getSource()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -375,7 +374,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         userUpdated.setRoles(Arrays.asList("updated_role"));
         userUpdated.setDynamicRoles(Arrays.asList("updated_dynamic_role"));
 
-        final CommonUserRepository.UpdateActions actions = CommonUserRepository.UpdateActions.build(userCreated, userUpdated);
+        final UserRepository.UpdateActions actions = UserRepository.UpdateActions.build(userCreated, userUpdated);
         Assert.assertTrue(actions.updateAddresses());
         Assert.assertTrue(actions.updateAttributes());
         Assert.assertTrue(actions.updateEntitlements());
@@ -450,7 +449,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         userUpdated.setDynamicRoles(Arrays.asList("updated_dynamic_role"));
 
         // compare with same object to consider addr, attr, roles... sa unchanged
-        final CommonUserRepository.UpdateActions actions = CommonUserRepository.UpdateActions.none();
+        final UserRepository.UpdateActions actions = UserRepository.UpdateActions.none();
         Assert.assertFalse(actions.updateAddresses());
         Assert.assertFalse(actions.updateAttributes());
         Assert.assertFalse(actions.updateEntitlements());
@@ -729,21 +728,21 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         user.setReferenceType(ReferenceType.DOMAIN);
         userRepository.create(user).blockingGet();
 
-        final long usersDomain1 = userRepository.findAll(ReferenceType.DOMAIN, DOMAIN_1).count().blockingGet();
+        final long usersDomain1 = userRepository.findAll(Reference.domain(DOMAIN_1)).count().blockingGet();
         Assert.assertEquals("Domain1 should have 2 users", 2, usersDomain1);
-        long usersDomain2 = userRepository.findAll(ReferenceType.DOMAIN, DOMAIN_2).count().blockingGet();
+        long usersDomain2 = userRepository.findAll(Reference.domain(DOMAIN_2)).count().blockingGet();
         Assert.assertEquals("Domain2 should have 1 users", 1, usersDomain2);
 
         // delete user
-        TestObserver testObserver1 = userRepository.deleteByReference(ReferenceType.DOMAIN, DOMAIN_1).test();
+        TestObserver testObserver1 = userRepository.deleteByReference(Reference.domain(DOMAIN_1)).test();
         testObserver1.awaitDone(10, TimeUnit.SECONDS);
 
         // fetch user
-        final TestSubscriber<User> find = userRepository.findAll(ReferenceType.DOMAIN, DOMAIN_1).test();
+        final TestSubscriber<User> find = userRepository.findAll(Reference.domain(DOMAIN_1)).test();
         find.awaitDone(10, TimeUnit.SECONDS);
         find.assertNoValues();
 
-        usersDomain2 = userRepository.findAll(ReferenceType.DOMAIN, DOMAIN_2).count().blockingGet();
+        usersDomain2 = userRepository.findAll(Reference.domain(DOMAIN_2)).count().blockingGet();
         Assert.assertEquals("Domain2 should have 1 users", 1, usersDomain2);
 
     }
@@ -821,7 +820,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         userRepository.create(user3).blockingGet();
 
         // fetch user (page 0)
-        TestObserver<Page<User>> testObserverP0 = userRepository.search(ReferenceType.DOMAIN, domain, "testUsername*", 0, 2).test();
+        TestObserver<Page<User>> testObserverP0 = userRepository.search(Reference.domain(domain), "testUsername*", 0, 2).test();
         testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
@@ -833,7 +832,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         });
 
         // fetch user (page 1)
-        TestObserver<Page<User>> testObserverP1 = userRepository.search(ReferenceType.DOMAIN, domain, "testUsername*", 1, 2).test();
+        TestObserver<Page<User>> testObserverP1 = userRepository.search(Reference.domain(domain), "testUsername*", 1, 2).test();
         testObserverP1.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP1.assertComplete();
@@ -886,7 +885,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         FilterCriteria criteria = new FilterCriteria();
         criteria.setOperator("and");
         criteria.setFilterComponents(Arrays.asList(criteriaDate, criteriaName));
-        TestObserver<Page<User>> testObserverP0 = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 0, 4).test();
+        TestObserver<Page<User>> testObserverP0 = userRepository.search(Reference.domain(domain), criteria, 0, 4).test();
         testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
@@ -894,7 +893,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         testObserverP0.assertValue(users -> users.getData().size() == 3);
 
         // fetch user (page 1)
-        TestObserver<Page<User>> testObserverP1 = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 1, 2).test();
+        TestObserver<Page<User>> testObserverP1 = userRepository.search(Reference.domain(domain), criteria, 1, 2).test();
         testObserverP1.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP1.assertComplete();
@@ -946,7 +945,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         FilterCriteria criteria = new FilterCriteria();
         criteria.setOperator("and");
         criteria.setFilterComponents(Arrays.asList(criteriaDate, criteriaName));
-        TestObserver<Page<User>> testObserverOffset0 = userRepository.searchScim(ReferenceType.DOMAIN, domain, criteria, 0, 4).test();
+        TestObserver<Page<User>> testObserverOffset0 = userRepository.searchScim(Reference.domain(domain), criteria, 0, 4).test();
         testObserverOffset0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverOffset0.assertComplete();
@@ -956,7 +955,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         final var allValues = testObserverOffset0.values().get(0).getData().stream().toList();
 
         // fetch user (offset 1)
-        TestObserver<Page<User>> testObserverOffset1 = userRepository.searchScim(ReferenceType.DOMAIN, domain, criteria, 1, 2).test();
+        TestObserver<Page<User>> testObserverOffset1 = userRepository.searchScim(Reference.domain(domain), criteria, 1, 2).test();
         testObserverOffset1.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverOffset1.assertComplete();
@@ -968,7 +967,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         testObserverOffset1.assertValue(users -> users.getData().stream().toList().get(1).getId().equals(allValues.get(2).getId()));
 
         // fetch user (offset 2)
-        TestObserver<Page<User>> testObserverOffset2 = userRepository.searchScim(ReferenceType.DOMAIN, domain, criteria, 2, 2).test();
+        TestObserver<Page<User>> testObserverOffset2 = userRepository.searchScim(Reference.domain(domain), criteria, 2, 2).test();
         testObserverOffset2.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverOffset2.assertComplete();
@@ -1001,7 +1000,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         criteria.setFilterValue(UTC_FORMATTER.format(LocalDateTime.now(UTC).minusSeconds(20)));
         criteria.setOperator("gt");
 
-        final TestObserver<Page<User>> observer = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 0, 1).test();
+        final TestObserver<Page<User>> observer = userRepository.search(Reference.domain(domain), criteria, 0, 1).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
@@ -1038,7 +1037,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         criteria.setFilterValue(UTC_FORMATTER.format(LocalDateTime.now(UTC).minusSeconds(20)));
         criteria.setOperator("gt");
 
-        final TestObserver<Page<User>> observer = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 0, 1).test();
+        final TestObserver<Page<User>> observer = userRepository.search(Reference.domain(domain), criteria, 0, 1).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
@@ -1074,7 +1073,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         criteria.setFilterValue(UTC_FORMATTER.format(LocalDateTime.now(UTC).minusSeconds(20)));
         criteria.setOperator("gt");
 
-        final TestObserver<Page<User>> observer = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 0, 1).test();
+        final TestObserver<Page<User>> observer = userRepository.search(Reference.domain(domain), criteria, 0, 1).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
@@ -1111,7 +1110,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         criteria.setFilterValue(UTC_FORMATTER.format(LocalDateTime.now(UTC).minusSeconds(20)));
         criteria.setOperator("gt");
 
-        TestObserver<Page<User>> observer = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 0, 1).test();
+        TestObserver<Page<User>> observer = userRepository.search(Reference.domain(domain), criteria, 0, 1).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
@@ -1147,7 +1146,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         criteria.setFilterValue(UTC_FORMATTER.format(LocalDateTime.now(UTC).minusSeconds(20)));
         criteria.setOperator("gt");
 
-        final TestObserver<Page<User>> observer = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 0, 1).test();
+        final TestObserver<Page<User>> observer = userRepository.search(Reference.domain(domain), criteria, 0, 1).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
@@ -1184,7 +1183,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         criteria.setFilterValue(UTC_FORMATTER.format(LocalDateTime.now(UTC).minusSeconds(20)));
         criteria.setOperator("gt");
 
-        final TestObserver<Page<User>> observer = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 0, 1).test();
+        final TestObserver<Page<User>> observer = userRepository.search(Reference.domain(domain), criteria, 0, 1).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
@@ -1224,7 +1223,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         criteria.setFilterValue("testUsername");
         criteria.setOperator("sw");
         criteria.setQuoteFilterValue(true);
-        TestObserver<Page<User>> testObserverP0 = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 0, 4).test();
+        TestObserver<Page<User>> testObserverP0 = userRepository.search(Reference.domain(domain), criteria, 0, 4).test();
         testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
@@ -1232,7 +1231,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         testObserverP0.assertValue(users -> users.getData().size() == 3);
 
         // fetch user (page 1)
-        TestObserver<Page<User>> testObserverP1 = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 1, 2).test();
+        TestObserver<Page<User>> testObserverP1 = userRepository.search(Reference.domain(domain), criteria, 1, 2).test();
         testObserverP1.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP1.assertComplete();
@@ -1268,7 +1267,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         criteria.setFilterValue("testUsername");
         criteria.setOperator("sw");
         criteria.setQuoteFilterValue(true);
-        final TestSubscriber<User> testObserverP0 = userRepository.search(ReferenceType.DOMAIN, domain, criteria).test();
+        final TestSubscriber<User> testObserverP0 = userRepository.search(Reference.domain(domain), criteria).test();
         testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
@@ -1306,7 +1305,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         criteria.setFilterValue("gname");
         criteria.setOperator("sw");
         criteria.setQuoteFilterValue(true);
-        TestObserver<Page<User>> testObserverP0 = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 0, 4).test();
+        TestObserver<Page<User>> testObserverP0 = userRepository.search(Reference.domain(domain), criteria, 0, 4).test();
         testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
@@ -1314,7 +1313,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         testObserverP0.assertValue(users -> users.getData().size() == 2);
 
         // fetch user (page 1)
-        TestObserver<Page<User>> testObserverP1 = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 1, 1).test();
+        TestObserver<Page<User>> testObserverP1 = userRepository.search(Reference.domain(domain), criteria, 1, 1).test();
         testObserverP1.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP1.assertComplete();
@@ -1344,7 +1343,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         criteria.setFilterValue("gname1");
         criteria.setOperator("eq");
         criteria.setQuoteFilterValue(true);
-        TestObserver<Page<User>> testObserverP0 = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 0, 4).test();
+        TestObserver<Page<User>> testObserverP0 = userRepository.search(Reference.domain(domain), criteria, 0, 4).test();
         testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
@@ -1376,7 +1375,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         criteria.setFilterValue("custom-value1");
         criteria.setOperator("eq");
         criteria.setQuoteFilterValue(true);
-        TestObserver<Page<User>> testObserverP0 = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 0, 4).test();
+        TestObserver<Page<User>> testObserverP0 = userRepository.search(Reference.domain(domain), criteria, 0, 4).test();
         testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
@@ -1405,7 +1404,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         criteria.setFilterName("additionalInformation." + CUSTOM_ADDITIONAL_FIELD);
         criteria.setFilterValue("");
         criteria.setOperator("pr");
-        TestObserver<Page<User>> testObserverP0 = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 0, 4).test();
+        TestObserver<Page<User>> testObserverP0 = userRepository.search(Reference.domain(domain), criteria, 0, 4).test();
         testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
@@ -1435,7 +1434,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         criteria.setFilterName("name.givenName");
         criteria.setFilterValue("");
         criteria.setOperator("pr");
-        TestObserver<Page<User>> testObserverP0 = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 0, 4).test();
+        TestObserver<Page<User>> testObserverP0 = userRepository.search(Reference.domain(domain), criteria, 0, 4).test();
         testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
@@ -1468,7 +1467,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         criteria.setFilterValue("gname1");
         criteria.setOperator("ne");
         criteria.setQuoteFilterValue(true);
-        TestObserver<Page<User>> testObserverP0 = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 0, 4).test();
+        TestObserver<Page<User>> testObserverP0 = userRepository.search(Reference.domain(domain), criteria, 0, 4).test();
         testObserverP0.awaitDone(10, TimeUnit.SECONDS);
 
         testObserverP0.assertComplete();
@@ -1552,7 +1551,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         userRepository.create(user2).blockingGet();
 
         // fetch user
-        TestObserver<Page<User>> testObserver = userRepository.search(ReferenceType.DOMAIN, domain, query, 0, 10).test();
+        TestObserver<Page<User>> testObserver = userRepository.search(Reference.domain(domain), query, 0, 10).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -1586,7 +1585,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         userRepository.create(user2).blockingGet();
 
         // fetch user
-        TestObserver<Page<User>> testObserver = userRepository.search(ReferenceType.DOMAIN, domain, query, 0, 10).test();
+        TestObserver<Page<User>> testObserver = userRepository.search(Reference.domain(domain), query, 0, 10).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
