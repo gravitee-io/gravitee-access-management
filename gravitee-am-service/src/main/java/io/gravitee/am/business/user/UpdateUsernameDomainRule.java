@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.business;
+package io.gravitee.am.business.user;
 
 
 import io.gravitee.am.common.audit.EventType;
@@ -23,10 +23,10 @@ import io.gravitee.am.common.utils.MovingFactorUtils;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.CommonUserService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.dataplane.CredentialCommonService;
 import io.gravitee.am.service.exception.InvalidUserException;
@@ -37,6 +37,7 @@ import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Function3;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -54,7 +55,8 @@ import java.util.function.Supplier;
 @AllArgsConstructor
 public class UpdateUsernameDomainRule {
     private UserValidator validator;
-    private CommonUserService userService;
+    private Function3<Reference, String, String, Maybe<User>> findUserByUsernameAndSource;
+    private Function<User, Single<User>> userUpdater;
     private AuditService auditService;
     private CredentialCommonService credentialService;
     private LoginAttemptService loginAttemptService;
@@ -62,18 +64,10 @@ public class UpdateUsernameDomainRule {
     public Single<User> updateUsername(Domain domain, String username, io.gravitee.am.identityprovider.api.User principal, Function<User, Single<UserProvider>> userProviderSupplier, Supplier<Single<User>> userSupplier) {
         final AtomicReference<String> oldUsername = new AtomicReference<>();
         return validator.validateUsername(username).andThen(Single.defer(() ->
-                userSupplier.get().flatMap(user -> userService
-                                .findByUsernameAndSource(user.getReferenceType(), user.getReferenceId(), username, user.getSource())
-                                //If the user is empty we throw a UserNotFoundException to allow the update
-                                .switchIfEmpty(Single.error(() -> new UserNotFoundException(user.getReferenceId(), username)))
+                userSupplier.get().flatMap(user -> findUserByUsernameAndSource.apply(new Reference(user.getReferenceType(), user.getReferenceId()), username, user.getSource())
                                 //If the user is not empty we throw a InvalidUserException to prevent username update
-                                .flatMap(existingUser -> Single.<User>error(new InvalidUserException(String.format("User with username [%s] and idp [%s] already exists", username, user.getSource()))))
-                                .onErrorResumeNext(ex -> {
-                                    if (ex instanceof UserNotFoundException) {
-                                        return Single.just(user);
-                                    }
-                                    return Single.error(ex);
-                                })
+                                .flatMap(existingUser -> Maybe.<User>error(new InvalidUserException(String.format("User with username [%s] and idp [%s] already exists", username, user.getSource()))))
+                                .switchIfEmpty(Single.just(user))
                         ).flatMap(user -> userProviderSupplier.apply(user).flatMap(userProvider -> userProvider.findByUsername(user.getUsername())
                                 .switchIfEmpty(Single.error(UserNotFoundException::new))
                                 .flatMap(idpUser -> userProvider.updateUsername(idpUser, username))
@@ -88,13 +82,14 @@ public class UpdateUsernameDomainRule {
                                     // since username can be changed.
                                     generateNewMovingFactorBasedOnUserId(user);
 
-                                    return userService.update(user).onErrorResumeNext(ex -> {
-                                        // In the case we cannot update on our side, we rollback the username on the iDP and these credentials
-                                        ((DefaultUser) idpUser).setUsername(oldUsername.get());
-                                        return userProvider.updateUsername(idpUser, idpUser.getUsername())
-                                                .flatMap(idpUser1 -> updateCredentialUsername(domain, idpUser1.getUsername(), oldUsername.get()))
-                                                .flatMap(rolledBackUser -> Single.error(ex));
-                                    });
+                                    return validator.validate(user).andThen(userUpdater.apply(user))
+                                            .onErrorResumeNext(ex -> {
+                                                // In the case we cannot update on our side, we roll back the username on the iDP and these credentials
+                                                ((DefaultUser) idpUser).setUsername(oldUsername.get());
+                                                return userProvider.updateUsername(idpUser, idpUser.getUsername())
+                                                        .flatMap(idpUser1 -> updateCredentialUsername(domain, idpUser1.getUsername(), oldUsername.get()))
+                                                        .flatMap(rolledBackUser -> Single.error(ex));
+                                            });
                                 })
                         ))
                         .doOnSuccess(user1 -> {
