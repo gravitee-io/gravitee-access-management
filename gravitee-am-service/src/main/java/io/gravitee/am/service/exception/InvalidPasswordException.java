@@ -45,35 +45,39 @@ public class InvalidPasswordException extends InvalidParameterException {
     }
 
     public static InvalidPasswordException of(PasswordSettingsStatus evaluation, PasswordPolicy policy, String errorKey) {
-        var message = new StringBuilder("The provided password does not meet the password policy requirements\n");
+        var message = new StringBuilder("The provided password does not meet the password policy requirements:");
         if (evaluation.getDefaultPolicy() == Boolean.FALSE) {
-            message.append("- Must match the default policy\n");
+            message.append("- Must match the regular expression configured by admin; ");
         }
         if (evaluation.getMinLength() == Boolean.FALSE) {
-            message.append("- Must have at least ").append(policy.getMinLength()).append(" characters\n");
+            message.append("- Must have at least ").append(policy.getMinLength()).append(" characters; ");
         }
         if (evaluation.getIncludeNumbers() == Boolean.FALSE) {
-            message.append("- Must contain a number\n");
+            message.append("- Must contain a number; ");
         }
         if (evaluation.getIncludeSpecialCharacters() == Boolean.FALSE) {
-            message.append("- Must contain a special character\n");
+            message.append("- Must contain a special character; ");
         }
         if (evaluation.getLettersInMixedCase() == Boolean.FALSE) {
-            message.append("- Must contain a lower- and upper-case letter\n");
+            message.append("- Must contain a lower- and upper-case letter; ");
         }
         if (evaluation.getMaxConsecutiveLetters() == Boolean.FALSE) {
-            message.append("- Can't have any character repeated ").append(policy.getMaxConsecutiveLetters()).append(" times in a row\n");
+            message.append("- Can't have any character repeated ").append(policy.getMaxConsecutiveLetters()).append(" times in a row; ");
         }
         if (evaluation.getExcludePasswordsInDictionary() == Boolean.FALSE) {
-            message.append("- Can't be a common password\n");
+            message.append("- Can't be a common password; ");
         }
         if (evaluation.getExcludeUserProfileInfoInPassword() == Boolean.FALSE) {
-            message.append("- Can't contain information from user's profile\n");
+            message.append("- Can't contain information from user's profile; ");
         }
         if (evaluation.getRecentPasswordsNotReused() == Boolean.FALSE) {
-            message.append("- Can't be a recent password\n");
+            message.append("- Can't be a recent password; ");
         }
-        return new InvalidPasswordException(message.toString(), errorKey);
+        String messageString = message.toString().trim();
+        if (messageString.endsWith(":")) {
+            messageString = messageString.substring(0, messageString.length() - 1) + ".";
+        }
+        return new InvalidPasswordException(messageString, errorKey);
     }
 
     public String getErrorKey() {
