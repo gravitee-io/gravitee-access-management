@@ -49,12 +49,12 @@ public final class SanitizeUtils {
         // if HTTP headers contains Content-Type == application/json
         // it means we except a json body content
         if (contentTypeHeaders.contains(MediaType.APPLICATION_JSON)) {
-            return credentials.replace("\"", "\\\\\"");
+            return credentials.replace("\"", "\\\"");
         }
 
         // if we can't rely on http headers, look into the body
         if (contentTypeHeaders.isEmpty() && requestBody != null && (requestBody.startsWith("{") || requestBody.startsWith("["))) {
-            return credentials.replace("\"", "\\\\\"");
+            return credentials.replace("\"", "\\\"");
         }
         return credentials;
     }
