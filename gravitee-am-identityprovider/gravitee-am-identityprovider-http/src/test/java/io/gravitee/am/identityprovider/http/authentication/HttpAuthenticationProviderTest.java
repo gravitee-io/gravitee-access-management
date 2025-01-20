@@ -82,12 +82,12 @@ public class HttpAuthenticationProviderTest {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
             @Override
             public Object getCredentials() {
-                return "johndoe";
+                return "johndoepassword\"";
             }
 
             @Override
             public Object getPrincipal() {
-                return "johndoepassword";
+                return "johndoe";
             }
 
             @Override
@@ -113,12 +113,12 @@ public class HttpAuthenticationProviderTest {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
             @Override
             public Object getCredentials() {
-                return "johndoe";
+                return "johndoepassword";
             }
 
             @Override
             public Object getPrincipal() {
-                return "johndoepassword";
+                return "johndoe";
             }
 
             @Override
