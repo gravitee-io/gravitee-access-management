@@ -20,6 +20,7 @@ package io.gravitee.am.business.user;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.common.utils.MovingFactorUtils;
+import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Domain;
@@ -38,12 +39,12 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Function3;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -52,19 +53,29 @@ import java.util.function.Supplier;
  * @author GraviteeSource Team
  */
 @Slf4j
-@AllArgsConstructor
-public class UpdateUsernameDomainRule {
-    private UserValidator validator;
+public class UpdateUsernameDomainRule extends UpdateUserRule {
     private Function3<Reference, String, String, Maybe<User>> findUserByUsernameAndSource;
-    private Function<User, Single<User>> userUpdater;
     private AuditService auditService;
     private CredentialCommonService credentialService;
     private LoginAttemptService loginAttemptService;
 
+    public UpdateUsernameDomainRule(UserValidator validator,
+                                    BiFunction<User, UserRepository.UpdateActions, Single<User>> userUpdater,
+                                    Function3<Reference, String, String, Maybe<User>> findUserByUsernameAndSource,
+                                    AuditService auditService,
+                                    CredentialCommonService credentialService,
+                                    LoginAttemptService loginAttemptService) {
+        super(validator, userUpdater);
+        this.findUserByUsernameAndSource = findUserByUsernameAndSource;
+        this.auditService = auditService;
+        this.credentialService = credentialService;
+        this.loginAttemptService = loginAttemptService;
+    }
+
     public Single<User> updateUsername(Domain domain, String username, io.gravitee.am.identityprovider.api.User principal, Function<User, Single<UserProvider>> userProviderSupplier, Supplier<Single<User>> userSupplier) {
         final AtomicReference<String> oldUsername = new AtomicReference<>();
         return validator.validateUsername(username).andThen(Single.defer(() ->
-                userSupplier.get().flatMap(user -> findUserByUsernameAndSource.apply(new Reference(user.getReferenceType(), user.getReferenceId()), username, user.getSource())
+                userSupplier.get().flatMap(user -> findUserByUsernameAndSource.apply(domain.asReference(), username, user.getSource())
                                 //If the user is not empty we throw a InvalidUserException to prevent username update
                                 .flatMap(existingUser -> Maybe.<User>error(new InvalidUserException(String.format("User with username [%s] and idp [%s] already exists", username, user.getSource()))))
                                 .switchIfEmpty(Single.just(user))
@@ -82,7 +93,7 @@ public class UpdateUsernameDomainRule {
                                     // since username can be changed.
                                     generateNewMovingFactorBasedOnUserId(user);
 
-                                    return validator.validate(user).andThen(userUpdater.apply(user))
+                                    return update(user)
                                             .onErrorResumeNext(ex -> {
                                                 // In the case we cannot update on our side, we roll back the username on the iDP and these credentials
                                                 ((DefaultUser) idpUser).setUsername(oldUsername.get());

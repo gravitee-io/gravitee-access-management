@@ -22,7 +22,7 @@ import io.gravitee.am.common.utils.MovingFactorUtils;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.factor.utils.SharedSecret;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
@@ -80,7 +80,7 @@ public class EnrollMfaPolicy {
         }
 
         try {
-            final UserService userService = context.getComponent(UserService.class);
+            final UserGatewayService userService = context.getComponent(UserGatewayService.class);
             final User user = (User) context.getAttribute(ConstantKeys.USER_CONTEXT_KEY);
             final Client client = (Client) context.getAttribute(ConstantKeys.CLIENT_CONTEXT_KEY);
             final FactorManager factorManager = context.getComponent(FactorManager.class);

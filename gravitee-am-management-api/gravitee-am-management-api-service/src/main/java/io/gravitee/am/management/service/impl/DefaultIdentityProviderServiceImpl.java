@@ -28,6 +28,7 @@ import io.gravitee.am.service.authentication.crypto.password.PasswordEncoderOpti
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.reactivex.rxjava3.core.Single;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -61,7 +62,8 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public DefaultIdentityProviderServiceImpl(IdentityProviderService identityProviderService, RepositoriesEnvironment environment) {
+    // FIXME: Lazy has to be introduced... looks like there is cyclic dep due to ApplicationService...
+    public DefaultIdentityProviderServiceImpl(@Lazy IdentityProviderService identityProviderService, RepositoriesEnvironment environment) {
         this.identityProviderService = identityProviderService;
         this.environment = environment;
     }

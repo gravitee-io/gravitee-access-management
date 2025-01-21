@@ -18,10 +18,13 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.management.handlers.management.api.model.AnalyticsParam;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.ApplicationAnalyticsService;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -38,6 +41,9 @@ public class ApplicationAnalyticsResource extends AbstractResource {
     @Autowired
     private ApplicationAnalyticsService applicationAnalyticsService;
 
+    @Autowired
+    private DomainService domainService;
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Find application analytics",
@@ -51,7 +57,7 @@ public class ApplicationAnalyticsResource extends AbstractResource {
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("application") String application,
             @BeanParam AnalyticsParam param,
             @Suspended final AsyncResponse response) {
@@ -59,7 +65,7 @@ public class ApplicationAnalyticsResource extends AbstractResource {
         param.validate();
 
         AnalyticsQuery query = new AnalyticsQuery();
-        query.setDomain(domain);
+        query.setDomain(domainId);
         query.setApplication(application);
         query.setType(param.getType());
         query.setField(param.getField());
@@ -68,8 +74,10 @@ public class ApplicationAnalyticsResource extends AbstractResource {
         query.setInterval(param.getInterval());
         query.setSize(param.getSize());
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION_ANALYTICS, Acl.READ)
-                .andThen(applicationAnalyticsService.execute(query))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.APPLICATION_ANALYTICS, Acl.READ)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Single.defer(() -> Single.error(new DomainNotFoundException(domainId))))
+                        .flatMap(domain -> applicationAnalyticsService.execute(domain, query)))
                 .subscribe(response::resume, response::resume);
     }
 }

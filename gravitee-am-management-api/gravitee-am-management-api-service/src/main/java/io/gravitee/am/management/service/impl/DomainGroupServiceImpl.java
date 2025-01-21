@@ -28,7 +28,6 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.GroupAlreadyExistsException;
 import io.gravitee.am.service.exception.GroupNotFoundException;
@@ -66,9 +65,6 @@ public class DomainGroupServiceImpl implements DomainGroupService {
     @Lazy
     @Autowired
     private DataPlaneRegistry dataPlaneRegistry;
-
-    @Autowired
-    private UserService userService;
 
     @Autowired
     private AuditService auditService;
@@ -136,7 +132,7 @@ public class DomainGroupServiceImpl implements DomainGroupService {
                         final int startOffset = page * size;
                         final int endOffset = (page + 1) * size;
                         List<String> pagedMemberIds = sortedMembers.subList(Math.min(sortedMembers.size(), startOffset), Math.min(sortedMembers.size(), endOffset));
-                        return userService.findByIdIn(pagedMemberIds).toList().map(users -> new Page<>(users, page, sortedMembers.size()));
+                        return dataPlaneRegistry.getUserRepository(domain).findByIdIn(pagedMemberIds).toList().map(users -> new Page<>(users, page, sortedMembers.size()));
                     }
                 });
     }
@@ -176,7 +172,7 @@ public class DomainGroupServiceImpl implements DomainGroupService {
                         throw new GroupAlreadyExistsException(newGroup.getName());
                     }
                 })
-                .flatMap(this::setMembers)
+                .flatMap(grp -> this.setMembers(domain, grp))
                 .flatMap(group -> dataPlaneRegistry.getGroupRepository(domain).create(group))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -214,7 +210,7 @@ public class DomainGroupServiceImpl implements DomainGroupService {
                     groupToUpdate.setUpdatedAt(new Date());
 
                     // set members and update
-                    return setMembers(groupToUpdate)
+                    return setMembers(domain, groupToUpdate)
                             .flatMap(group -> dataPlaneRegistry.getGroupRepository(domain).update(group))
                             .doOnSuccess(group -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_UPDATED).oldValue(oldGroup).group(group)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_UPDATED).reference(Reference.domain(domain.getId())).throwable(throwable)));
@@ -280,10 +276,10 @@ public class DomainGroupServiceImpl implements DomainGroupService {
                 });
     }
 
-    private Single<Group> setMembers(Group group) {
+    private Single<Group> setMembers(Domain domain, Group group) {
         List<String> userMembers = group.getMembers() != null ? group.getMembers().stream().filter(Objects::nonNull).distinct().collect(Collectors.toList()) : null;
         if (userMembers != null && !userMembers.isEmpty()) {
-            return userService.findByIdIn(userMembers)
+            return dataPlaneRegistry.getUserRepository(domain).findByIdIn(userMembers)
                     .map(User::getId)
                     .toList()
                     .map(userIds -> {

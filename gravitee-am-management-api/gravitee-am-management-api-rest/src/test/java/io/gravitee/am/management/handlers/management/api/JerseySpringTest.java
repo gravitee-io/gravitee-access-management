@@ -40,6 +40,7 @@ import io.gravitee.am.management.service.FactorPluginService;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.IdentityProviderPluginService;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
+import io.gravitee.am.management.service.ManagementUserService;
 import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.management.service.PermissionService;
 import io.gravitee.am.management.service.PolicyPluginService;
@@ -142,7 +143,7 @@ public abstract class JerseySpringTest {
     protected DomainService domainService;
 
     @Autowired
-    protected io.gravitee.am.management.service.UserService userService;
+    protected ManagementUserService userService;
 
     @Autowired
     protected UserActivityManagementService userActivityService;
@@ -341,12 +342,12 @@ public abstract class JerseySpringTest {
         }
 
         @Bean
-        public io.gravitee.am.management.service.UserService userService() {
-            return mock(io.gravitee.am.management.service.UserService.class);
+        public ManagementUserService userService() {
+            return mock(ManagementUserService.class);
         }
 
         @Bean
-        public io.gravitee.am.management.service.UserService managementUserService() {
+        public ManagementUserService managementUserService() {
             return mock();
         }
 
