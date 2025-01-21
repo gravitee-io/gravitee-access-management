@@ -205,7 +205,7 @@ public class PasswordPolicyResource extends AbstractDomainResource {
                                         .flatMap(u -> passwordHistoryService.passwordAlreadyUsed(ReferenceType.DOMAIN, domainId, request.userId(), request.password(), policy)
                                                 .map(historyResult -> {
                                                     var evaluationResult = passwordService.evaluate(request.password(), policy, u);
-                                                    return evaluationResult.toBuilder().recentPasswordsNotReused(historyResult).build();
+                                                    return evaluationResult.toBuilder().recentPasswordsNotReused(!historyResult).build();
                                                 }));
 
                             }
