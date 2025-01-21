@@ -29,7 +29,6 @@ import io.gravitee.am.management.handlers.management.api.schemas.BulkCreateOrgan
 import io.gravitee.am.management.handlers.management.api.schemas.BulkDeleteUser;
 import io.gravitee.am.management.handlers.management.api.schemas.BulkUpdateUser;
 import io.gravitee.am.management.handlers.management.api.spring.UserBulkConfiguration;
-import io.gravitee.am.management.service.CommonUserService;
 import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Organization;
@@ -178,7 +177,7 @@ public class OrganizationUsersResource extends AbstractResource {
         return executeSearchUsers(organizationUserService, referenceType, referenceId, query, filter, page, size);
     }
 
-    private Single<Page<User>> executeSearchUsers(CommonUserService service, ReferenceType referenceType, String referenceId, String query, String filter, int page, int size) {
+    private Single<Page<User>> executeSearchUsers(OrganizationUserService service, ReferenceType referenceType, String referenceId, String query, String filter, int page, int size) {
         if (query != null) {
             return service.search(referenceType, referenceId, query, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
         }

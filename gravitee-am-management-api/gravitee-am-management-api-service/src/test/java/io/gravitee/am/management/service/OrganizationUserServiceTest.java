@@ -589,7 +589,4 @@ public class OrganizationUserServiceTest {
                         updatedUser.getPassword() == null
         );
     }
-
-
-
 }

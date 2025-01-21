@@ -139,7 +139,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private AuditService auditService;
 
     @Autowired
-    private DomainReadService domainService;
+    private DomainReadService domainReadService;
 
     @Autowired
     private EventService eventService;
@@ -707,8 +707,8 @@ public class ApplicationServiceImpl implements ApplicationService {
             return Single.just(application);
         }
         return Observable.fromIterable(application.getIdentityProviders())
-                .flatMapSingle(appId -> identityProviderService.findById(appId.getIdentity())
-                        .map(__ -> Optional.of(appId))
+                .flatMapSingle(appIdP -> identityProviderService.findById(appIdP.getIdentity())
+                        .map(__ -> Optional.of(appIdP))
                         .defaultIfEmpty(Optional.empty())
                         .filter(Optional::isPresent)
                         .map(Optional::get)
@@ -795,7 +795,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private Single<Application> validateRedirectUris(Application application, boolean updateTypeOnly) {
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
 
-        return domainService.findById(application.getDomain())
+        return domainReadService.findById(application.getDomain())
                 .switchIfEmpty(Single.error(new DomainNotFoundException(application.getDomain())))
                 .flatMap(domain -> {
                     //check redirect_uri
@@ -939,7 +939,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private Single<Application> validatePostLogoutRedirectUris(Application application) {
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
 
-        return domainService.findById(application.getDomain())
+        return domainReadService.findById(application.getDomain())
                 .switchIfEmpty(Single.error(new DomainNotFoundException(application.getDomain())))
                 .flatMap(domain -> {
                     if (oAuthSettings.getPostLogoutRedirectUris() != null) {
@@ -982,7 +982,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private Single<Application> validateRequestUris(Application application) {
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
 
-        return domainService.findById(application.getDomain())
+        return domainReadService.findById(application.getDomain())
                 .switchIfEmpty(Single.error(new DomainNotFoundException(application.getDomain())))
                 .flatMap(domain -> {
                     if (oAuthSettings.getRequestUris() != null) {
