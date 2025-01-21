@@ -18,10 +18,9 @@ package io.gravitee.am.gateway.handler.common.webauthn;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.exception.UserNotFoundException;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import lombok.Getter;
 import org.slf4j.Logger;
@@ -61,7 +60,7 @@ public class WebAuthnCookieService implements InitializingBean {
     private CertificateManager certificateManager;
 
     @Autowired
-    private UserService userService;
+    private UserGatewayService userService;
 
     @Override
     public void afterPropertiesSet() throws Exception {

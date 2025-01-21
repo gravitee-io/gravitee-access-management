@@ -19,7 +19,7 @@ package io.gravitee.am.gateway.handler.manager.subject;
 
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.model.User;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -47,7 +47,7 @@ import static org.mockito.Mockito.when;
 public class SubjectManagerV1Test {
 
     @Mock
-    private UserService userService;
+    private UserGatewayService userService;
 
     private SubjectManager cut;
 

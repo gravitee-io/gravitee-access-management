@@ -33,7 +33,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Set;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 /**
@@ -102,8 +104,7 @@ public class UserServiceTest {
         final var userId = UserId.internal("userId");
         final String domainId = "domainId";
 
-        when(domain.getId()).thenReturn(domainId);
-        when(scopeApprovalService.revokeByUser(domainId, userId, null)).thenReturn(Completable.complete());
+        when(scopeApprovalService.revokeByUser(any(Domain.class), any(UserId.class), any())).thenReturn(Completable.complete());
 
        userService.revokeConsents(userId, null).test()
                .assertComplete()
@@ -116,8 +117,7 @@ public class UserServiceTest {
         final String userId = "userId";
         final String consentId = "consentId";
 
-        when(domain.getId()).thenReturn(domainId);
-        when(scopeApprovalService.revokeByConsent(domainId, UserId.internal(userId), consentId, null)).thenReturn(Completable.complete());
+        when(scopeApprovalService.revokeByConsent(any(Domain.class), any(UserId.class), eq(consentId), any())).thenReturn(Completable.complete());
 
         TestObserver testObserver = userService.revokeConsent(UserId.internal(userId), consentId, null).test();
 

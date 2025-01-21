@@ -25,7 +25,7 @@ import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
 import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationManagerImpl;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
@@ -91,7 +91,7 @@ public class UserAuthenticationManagerTest {
     private LoginAttemptService loginAttemptService;
 
     @Mock
-    private UserService userService;
+    private UserGatewayService userService;
 
     @Mock
     private PasswordService passwordService;

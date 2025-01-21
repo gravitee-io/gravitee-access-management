@@ -57,7 +57,7 @@ public class UserFactorsResourceTest extends JerseySpringTest {
         mockFactor.setName("OTP");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockUser)).when(userService).findById(mockUser.getId());
+        doReturn(Maybe.just(mockUser)).when(userService).findById(mockDomain, mockUser.getId());
         doReturn(Maybe.just(mockFactor)).when(factorService).findById(enrolledFactor.getFactorId());
 
         final Response response = target("domains")

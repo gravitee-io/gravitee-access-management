@@ -19,6 +19,7 @@ import io.gravitee.am.common.analytics.Field;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.management.service.ApplicationAnalyticsService;
 import io.gravitee.am.management.service.AuditService;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.analytics.AnalyticsCountResponse;
 import io.gravitee.am.model.analytics.AnalyticsGroupByResponse;
 import io.gravitee.am.model.analytics.AnalyticsHistogramResponse;
@@ -26,8 +27,8 @@ import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.analytics.AnalyticsResponse;
 import io.gravitee.am.model.analytics.Bucket;
 import io.gravitee.am.model.analytics.Timestamp;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
-import io.gravitee.am.service.UserService;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -43,18 +44,18 @@ public class ApplicationAnalyticsServiceImpl implements ApplicationAnalyticsServ
     private AuditService auditService;
 
     @Autowired
-    private UserService userService;
+    private DataPlaneRegistry dataPlaneRegistry;
 
     @Override
-    public Single<AnalyticsResponse> execute(AnalyticsQuery query) {
+    public Single<AnalyticsResponse> execute(Domain domain, AnalyticsQuery query) {
         return switch (query.getType()) {
             case DATE_HISTO -> executeDateHistogram(query);
-            case GROUP_BY -> executeGroupBy(query);
-            case COUNT -> executeCount(query);
+            case GROUP_BY -> executeGroupBy(domain, query);
+            case COUNT -> executeCount(domain, query);
         };
     }
 
-    private Single<AnalyticsResponse> executeGroupBy(AnalyticsQuery query) {
+    private Single<AnalyticsResponse> executeGroupBy(Domain domain, AnalyticsQuery query) {
         AuditReportableCriteria.Builder queryBuilder = new AuditReportableCriteria.Builder()
                 .types(Collections.singletonList(query.getField().toUpperCase()));
         queryBuilder.from(query.getFrom());
@@ -63,7 +64,7 @@ public class ApplicationAnalyticsServiceImpl implements ApplicationAnalyticsServ
         queryBuilder.accessPointId(query.getApplication());
 
         if (query.getField().equals(Field.USER_STATUS)) {
-            return userService.statistics(query).map(AnalyticsGroupByResponse::new);
+            return dataPlaneRegistry.getUserRepository(domain).statistics(query).map(AnalyticsGroupByResponse::new);
         } else {
             return Single.just(new AnalyticsResponse() {
             });
@@ -71,7 +72,7 @@ public class ApplicationAnalyticsServiceImpl implements ApplicationAnalyticsServ
     }
 
 
-    private Single<AnalyticsResponse> executeCount(AnalyticsQuery query) {
+    private Single<AnalyticsResponse> executeCount(Domain domain, AnalyticsQuery query) {
         AuditReportableCriteria.Builder queryBuilder = new AuditReportableCriteria.Builder()
                 .types(Collections.singletonList(query.getField().toUpperCase()));
         queryBuilder.from(query.getFrom());
@@ -80,7 +81,7 @@ public class ApplicationAnalyticsServiceImpl implements ApplicationAnalyticsServ
         queryBuilder.accessPointId(query.getApplication());
 
         if (query.getField().equals(Field.USER)) {
-            return userService.countByApplication(query.getDomain(), query.getApplication()).map(AnalyticsCountResponse::new);
+            return dataPlaneRegistry.getUserRepository(domain).countByApplication(query.getDomain(), query.getApplication()).map(AnalyticsCountResponse::new);
         } else {
             return auditService.aggregate(query.getDomain(), queryBuilder.build(), query.getType())
                     .map(values -> new AnalyticsCountResponse((Long) values.values().iterator().next()));

@@ -18,6 +18,7 @@ package io.gravitee.am.business.user;
 
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.service.AuditService;
@@ -26,10 +27,9 @@ import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
-import lombok.AllArgsConstructor;
 
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 /**
@@ -38,11 +38,15 @@ import java.util.stream.Collectors;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@AllArgsConstructor
-public class RemoveFactorRule {
-    private UserValidator validator;
-    private Function<User, Single<User>> userUpdater;
+public class RemoveFactorRule extends UpdateUserRule {
     private AuditService auditService;
+
+    public RemoveFactorRule(UserValidator validator,
+                            BiFunction<User, UserRepository.UpdateActions, Single<User>> userUpdater,
+                            AuditService auditService) {
+        super(validator, userUpdater);
+        this.auditService = auditService;
+    }
 
     public Completable execute(User user, String factorId, io.gravitee.am.identityprovider.api.User principal) {
         if (user.getFactors() == null) {
@@ -54,7 +58,7 @@ public class RemoveFactorRule {
                 .collect(Collectors.toList());
         User userToUpdate = new User(user);
         userToUpdate.setFactors(enrolledFactors);
-        return validator.validate(userToUpdate).andThen(userUpdater.apply(userToUpdate))
+        return update(userToUpdate)
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).user(user1).oldValue(user)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).user(userToUpdate).throwable(throwable)))
                 .ignoreElement();

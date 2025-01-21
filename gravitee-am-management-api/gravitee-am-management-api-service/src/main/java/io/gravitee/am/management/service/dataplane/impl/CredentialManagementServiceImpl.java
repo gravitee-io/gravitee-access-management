@@ -23,7 +23,6 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
-import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.CredentialCurrentlyUsedException;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
@@ -54,9 +53,6 @@ public class CredentialManagementServiceImpl implements CredentialManagementServ
     @Lazy
     @Autowired
     private DataPlaneRegistry dataPlaneRegistry;
-
-    @Autowired
-    private UserService userService;
 
     //FIXME do we have to keep RefTyp & RefId into the repository signatures ?
 
@@ -150,7 +146,8 @@ public class CredentialManagementServiceImpl implements CredentialManagementServ
                 .switchIfEmpty(Maybe.error(new CredentialNotFoundException(id)))
                 .flatMapCompletable(credential -> {
                     if (enforceFactorDelete) {
-                        return userService.findById(UserId.internal(credential.getUserId())).flatMapCompletable(user -> {
+                        return dataPlaneRegistry.getUserRepository(domain).findById(UserId.internal(credential.getUserId()))
+                                .flatMapCompletable(user -> {
                             final List<EnrolledFactor> factors = user.getFactors();
                             if (factors == null || factors.isEmpty()) {
                                 return dataPlaneRegistry.getCredentialRepository(domain).delete(id);

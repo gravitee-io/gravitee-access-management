@@ -36,6 +36,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.anyList;
 import static org.mockito.Mockito.anyString;
@@ -82,7 +83,6 @@ public class PermissionEndpointTest {
     @Before
     public void setUp() {
         when(context.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
-        when(domain.getId()).thenReturn(DOMAIN_ID);
         when(client.getId()).thenReturn(CLIENT_ID);
     }
 
@@ -133,7 +133,7 @@ public class PermissionEndpointTest {
         when(context.response()).thenReturn(response);
         when(response.putHeader(anyString(),anyString())).thenReturn(response);
         when(response.setStatusCode(anyInt())).thenReturn(response);
-        when(permissionTicketService.create(anyList(), eq(DOMAIN_ID), eq(CLIENT_ID))).thenReturn(Single.just(success));
+        when(permissionTicketService.create(anyList(), any(), eq(CLIENT_ID))).thenReturn(Single.just(success));
         endpoint.handle(context);
         verify(response, times(1)).putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
         verify(context.response(), times(1)).setStatusCode(intCaptor.capture());
@@ -151,7 +151,7 @@ public class PermissionEndpointTest {
         when(context.response()).thenReturn(response);
         when(response.putHeader(anyString(),anyString())).thenReturn(response);
         when(response.setStatusCode(anyInt())).thenReturn(response);
-        when(permissionTicketService.create(anyList(), eq(DOMAIN_ID), eq(CLIENT_ID))).thenReturn(Single.just(success));
+        when(permissionTicketService.create(anyList(), any(), eq(CLIENT_ID))).thenReturn(Single.just(success));
         endpoint.handle(context);
         verify(response, times(1)).putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
         verify(context.response(), times(1)).setStatusCode(intCaptor.capture());

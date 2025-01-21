@@ -95,7 +95,7 @@ public class GroupMemberResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(mockGroup)).when(domainGroupService).findById(mockDomain, mockGroup.getId());
-        doReturn(Maybe.empty()).when(userService).findById("member-1");
+        doReturn(Maybe.empty()).when(userService).findById(mockDomain, "member-1");
 
         final Response response = target("domains")
                 .path(domainId)
@@ -124,7 +124,7 @@ public class GroupMemberResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(mockGroup)).when(domainGroupService).findById(mockDomain, mockGroup.getId());
-        doReturn(Maybe.just(mockUser)).when(userService).findById(mockUser.getId());
+        doReturn(Maybe.just(mockUser)).when(userService).findById(mockDomain, mockUser.getId());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -153,7 +153,7 @@ public class GroupMemberResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(mockGroup)).when(domainGroupService).findById(mockDomain, mockGroup.getId());
         doReturn(Single.just(mockGroup)).when(domainGroupService).update(eq(mockDomain), eq(mockGroup.getId()), any(), any());
-        doReturn(Maybe.just(mockUser)).when(userService).findById(mockUser.getId());
+        doReturn(Maybe.just(mockUser)).when(userService).findById(mockDomain, mockUser.getId());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -223,7 +223,7 @@ public class GroupMemberResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(mockGroup)).when(domainGroupService).findById(mockDomain, mockGroup.getId());
-        doReturn(Maybe.empty()).when(userService).findById("member-1");
+        doReturn(Maybe.empty()).when(userService).findById(mockDomain, "member-1");
 
         final Response response = target("domains")
                 .path(domainId)
@@ -252,7 +252,7 @@ public class GroupMemberResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(mockGroup)).when(domainGroupService).findById(mockDomain, mockGroup.getId());
         doReturn(Single.just(mockGroup)).when(domainGroupService).update(eq(mockDomain), eq(mockGroup.getId()), any(), any());
-        doReturn(Maybe.just(mockUser)).when(userService).findById(mockUser.getId());
+        doReturn(Maybe.just(mockUser)).when(userService).findById(mockDomain, mockUser.getId());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -282,7 +282,7 @@ public class GroupMemberResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(mockGroup)).when(domainGroupService).findById(mockDomain, mockGroup.getId());
         doReturn(Single.just(mockGroup)).when(domainGroupService).update(eq(mockDomain), eq(mockGroup.getId()), any(), any());
-        doReturn(Maybe.just(mockUser)).when(userService).findById(mockUser.getId());
+        doReturn(Maybe.just(mockUser)).when(userService).findById(mockDomain, mockUser.getId());
 
         final Response response = target("domains")
                 .path(domainId)

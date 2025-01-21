@@ -24,7 +24,6 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
@@ -107,7 +106,7 @@ public class UpdateUsernameDomainRuleTest {
 
     @BeforeEach
     public void initRule() {
-        this.rule = new UpdateUsernameDomainRule(userValidator, userRepository::findByUsernameAndSource, userRepository::update, auditService, credentialService, loginAttemptService);
+        this.rule = new UpdateUsernameDomainRule(userValidator, userRepository::update, userRepository::findByUsernameAndSource, auditService, credentialService, loginAttemptService);
     }
 
     @Test
@@ -122,7 +121,7 @@ public class UpdateUsernameDomainRuleTest {
         user.setReferenceId(domain.getId());
         user.setReferenceType(DOMAIN);
 
-        when(userRepository.findByUsernameAndSource(Reference.domain(domain.getId()), NEW_USERNAME, user.getSource()))
+        when(userRepository.findByUsernameAndSource(any(), eq(NEW_USERNAME), eq(user.getSource())))
                 .thenReturn(Maybe.just(user));
 
         var observer = rule.updateUsername(domain, NEW_USERNAME, null, (User user1) -> Single.just(userProvider), () -> Single.just(user)).test();
@@ -145,7 +144,7 @@ public class UpdateUsernameDomainRuleTest {
         user.setReferenceId(domain.getId());
         user.setReferenceType(DOMAIN);
 
-        when(userRepository.findByUsernameAndSource(Reference.domain(domain.getId()), NEW_USERNAME, user.getSource()))
+        when(userRepository.findByUsernameAndSource(any(), eq(NEW_USERNAME), eq(user.getSource())))
                 .thenReturn(Maybe.empty());
 
         var observer = rule.updateUsername(domain, NEW_USERNAME, null, (User user1) -> Single.error(new UserProviderNotFoundException("")), () -> Single.just(user)).test();
@@ -168,7 +167,7 @@ public class UpdateUsernameDomainRuleTest {
         user.setReferenceId(domain.getId());
         user.setReferenceType(DOMAIN);
 
-        when(userRepository.findByUsernameAndSource(Reference.domain(domain.getId()), NEW_USERNAME, user.getSource()))
+        when(userRepository.findByUsernameAndSource(any(), eq(NEW_USERNAME), eq(user.getSource())))
                 .thenReturn(Maybe.empty());
         final UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.findByUsername(anyString())).thenReturn(Maybe.error(new UserNotFoundException("Could not find user")));
@@ -193,7 +192,7 @@ public class UpdateUsernameDomainRuleTest {
         user.setReferenceId(domain.getId());
         user.setReferenceType(DOMAIN);
 
-        when(userRepository.findByUsernameAndSource(Reference.domain(domain.getId()), NEW_USERNAME, user.getSource()))
+        when(userRepository.findByUsernameAndSource(any(), eq(NEW_USERNAME), eq(user.getSource())))
                 .thenReturn(Maybe.empty());
 
         final UserProvider userProvider = mock(UserProvider.class);
@@ -223,9 +222,9 @@ public class UpdateUsernameDomainRuleTest {
         user.setReferenceId(domain.getId());
         user.setReferenceType(DOMAIN);
 
-        when(userRepository.findByUsernameAndSource(Reference.domain(domain.getId()), NEW_USERNAME, user.getSource()))
+        when(userRepository.findByUsernameAndSource(any(), eq(NEW_USERNAME), eq(user.getSource())))
                 .thenReturn(Maybe.empty());
-        when(userRepository.update(user)).thenReturn(Single.error(new TechnicalManagementException("an unexpected error has occurred")));
+        when(userRepository.update(any(), any())).thenReturn(Single.error(new TechnicalManagementException("an unexpected error has occurred")));
 
         final UserProvider userProvider = mock(UserProvider.class);
 
@@ -248,7 +247,7 @@ public class UpdateUsernameDomainRuleTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(TechnicalManagementException.class);
 
-        verify(userRepository, times(1)).update(any());
+        verify(userRepository, times(1)).update(any(), any());
         verify(userProvider, times(2)).updateUsername(any(), anyString());
 
         verify(credentialService, times(2)).findByUsername(any(), eq(USERNAME));
@@ -268,9 +267,9 @@ public class UpdateUsernameDomainRuleTest {
         user.setReferenceId(domain.getId());
         user.setReferenceType(DOMAIN);
 
-        when(userRepository.findByUsernameAndSource(Reference.domain(domain.getId()), NEW_USERNAME, user.getSource()))
+        when(userRepository.findByUsernameAndSource(any(), eq(NEW_USERNAME), eq(user.getSource())))
                 .thenReturn(Maybe.empty());
-        when(userRepository.update(user)).thenReturn(Single.just(user));
+        when(userRepository.update(any(), any())).thenReturn(Single.just(user));
 
         final UserProvider userProvider = mock(UserProvider.class);
 
@@ -291,7 +290,7 @@ public class UpdateUsernameDomainRuleTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
 
-        verify(userRepository, times(1)).update(any());
+        verify(userRepository, times(1)).update(any(), any());
         verify(userProvider, times(1)).updateUsername(any(), anyString());
         verify(credentialService, times(1)).findByUsername(any(), eq(USERNAME));
         verify(credentialService, never()).update(any(), any());
@@ -311,9 +310,9 @@ public class UpdateUsernameDomainRuleTest {
         user.setReferenceId(domain.getId());
         user.setReferenceType(DOMAIN);
 
-        when(userRepository.findByUsernameAndSource(Reference.domain(domain.getId()), NEW_USERNAME, user.getSource()))
+        when(userRepository.findByUsernameAndSource(any(), eq(NEW_USERNAME), eq(user.getSource())))
                 .thenReturn(Maybe.empty());
-        when(userRepository.update(user)).thenReturn(Single.just(user));
+        when(userRepository.update(any(), any())).thenReturn(Single.just(user));
 
         final UserProvider userProvider = mock(UserProvider.class);
 
@@ -338,7 +337,7 @@ public class UpdateUsernameDomainRuleTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
 
-        verify(userRepository, times(1)).update(any());
+        verify(userRepository, times(1)).update(any(), any());
         verify(userProvider, times(1)).updateUsername(any(), anyString());
         verify(loginAttemptService, times(1)).reset(any());
         verify(credentialService, times(1)).findByUsername(any(), eq(USERNAME));
@@ -367,9 +366,9 @@ public class UpdateUsernameDomainRuleTest {
         user.setReferenceId(domain.getId());
         user.setReferenceType(DOMAIN);
 
-        when(userRepository.findByUsernameAndSource(Reference.domain(domain.getId()), NEW_USERNAME, user.getSource()))
+        when(userRepository.findByUsernameAndSource(any(), eq(NEW_USERNAME), eq(user.getSource())))
                 .thenReturn(Maybe.empty());
-        when(userRepository.update(user)).thenReturn(Single.just(user));
+        when(userRepository.update(any(), any())).thenReturn(Single.just(user));
 
         final UserProvider userProvider = mock(UserProvider.class);
 
@@ -389,7 +388,7 @@ public class UpdateUsernameDomainRuleTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
 
-        verify(userRepository, times(1)).update(any());
+        verify(userRepository, times(1)).update(any(), any());
         verify(userProvider, times(1)).updateUsername(any(), anyString());
         verify(loginAttemptService, times(1)).reset(any());
         verify(credentialService, times(1)).findByUsername(any(), eq(USERNAME));

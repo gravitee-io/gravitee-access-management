@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.scim.Schema;
+import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
@@ -33,18 +34,18 @@ import io.gravitee.am.gateway.handler.scim.model.ListResponse;
 import io.gravitee.am.gateway.handler.scim.model.Operation;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.model.User;
-import io.gravitee.am.gateway.handler.scim.service.impl.UserServiceImpl;
+import io.gravitee.am.gateway.handler.scim.service.impl.ProvisioningUserServiceImpl;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordHistory;
 import io.gravitee.am.model.PasswordPolicy;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
@@ -111,11 +112,11 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
-public class UserServiceTest {
+public class ProvisioningUserServiceTest {
 
     public static final String PASSWORD = "user-password";
     @InjectMocks
-    private UserService userService = new UserServiceImpl();
+    private ProvisioningUserService userService = new ProvisioningUserServiceImpl();
 
     @Spy
     private UserValidator userValidator = new UserValidatorImpl(
@@ -172,7 +173,7 @@ public class UserServiceTest {
     @Before
     public void setUp() {
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
-        when(userRepository.findByExternalIdAndSource(any(), any(), any(), any())).thenReturn(Maybe.empty());
+        when(userRepository.findByExternalIdAndSource(any(), any(), any())).thenReturn(Maybe.empty());
         domain.setId(DOMAIN_ID);
     }
 
@@ -187,7 +188,7 @@ public class UserServiceTest {
         final Page page = new Page(users, 0, users.size());
         final String domainID = "any-domain-id";
         when(domain.getId()).thenReturn(domainID);
-        when(userRepository.findAllScim(ReferenceType.DOMAIN, domainID, 0, 10)).thenReturn(Single.just(page));
+        when(userRepository.findAllScim(new Reference(ReferenceType.DOMAIN, domainID), 0, 10)).thenReturn(Single.just(page));
         when(groupService.findByMember(any())).thenReturn(Flowable.empty());
 
         TestObserver<ListResponse<io.gravitee.am.gateway.handler.scim.model.User>> observer = userService.list(null, 0, 10, "").test();
@@ -198,7 +199,7 @@ public class UserServiceTest {
                 listResp.getResources().stream().map(io.gravitee.am.gateway.handler.scim.model.User::getUserName).collect(Collectors.joining(","))
                         .equals(users.stream().map(io.gravitee.am.model.User::getUsername).collect(Collectors.joining(","))));
 
-        verify(userRepository, times(1)).findAllScim(ReferenceType.DOMAIN, domainID, 0, 10);
+        verify(userRepository, times(1)).findAllScim(new Reference(ReferenceType.DOMAIN, domainID), 0, 10);
     }
 
     @Test
@@ -209,7 +210,7 @@ public class UserServiceTest {
         when(newUser.getUserName()).thenReturn("username");
         when(newUser.getPassword()).thenReturn(null);
 
-        when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
 
@@ -234,7 +235,7 @@ public class UserServiceTest {
         when(newUser.getUserName()).thenReturn("username");
         when(newUser.getRoles()).thenReturn(Arrays.asList("role-wrong-1", "role-wrong-2"));
 
-        when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(roleService.findByIdIn(newUser.getRoles())).thenReturn(Single.just(Collections.emptySet()));
 
         TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
@@ -261,8 +262,8 @@ public class UserServiceTest {
         testObserver.assertError(UserInvalidException.class);
 
         verify(userRepository, never()).create(any());
-        verify(userRepository, never()).findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString());
-        verify(userRepository, never()).findByExternalIdAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString());
+        verify(userRepository, never()).findByUsernameAndSource(any(), anyString(), anyString());
+        verify(userRepository, never()).findByExternalIdAndSource(any(), anyString(), anyString());
     }
     @Test
     public void shouldNotCreateUserWhenUsernameAlreadyUsed() {
@@ -271,7 +272,7 @@ public class UserServiceTest {
         user.setExternalId(externalId);
         var pwd = UUID.randomUUID().toString();
 
-        when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.just(user));
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.just(user));
         when(passwordService.isValid(any(), any(), any())).thenReturn(true);
 
         User newUser = mock(User.class);
@@ -294,8 +295,8 @@ public class UserServiceTest {
         user.setExternalId(externalId);
         var pwd = UUID.randomUUID().toString();
 
-        when(userRepository.findByExternalIdAndSource(any(), any(), any(), any())).thenReturn(Maybe.just(user));
-        when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(userRepository.findByExternalIdAndSource(any(), any(), any())).thenReturn(Maybe.just(user));
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(passwordService.isValid(any(), any(), any())).thenReturn(true);
 
         User newUser = mock(User.class);
@@ -340,7 +341,7 @@ public class UserServiceTest {
         roles.add(role1);
         roles.add(role2);
 
-        when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(roleService.findByIdIn(newUser.getRoles())).thenReturn(Single.just(roles));
@@ -912,7 +913,7 @@ public class UserServiceTest {
         ai.put("lastPasswordReset", lastPasswordResetDate);
         when(newUser.getAdditionalInformation()).thenReturn(ai);
 
-        when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
 
