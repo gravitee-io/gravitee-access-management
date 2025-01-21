@@ -19,22 +19,25 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.BaseJsonNode;
+import io.gravitee.am.common.scim.parser.SCIMFilterParser;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkOperationResult;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkRequest;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkResponse;
 import io.gravitee.am.management.handlers.management.api.model.UserEntity;
-import io.gravitee.am.management.handlers.management.api.resources.AbstractUsersResource;
+import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.handlers.management.api.schemas.BulkCreateUser;
 import io.gravitee.am.management.handlers.management.api.schemas.BulkDeleteUser;
 import io.gravitee.am.management.handlers.management.api.schemas.BulkUpdateUser;
 import io.gravitee.am.management.handlers.management.api.spring.UserBulkConfiguration;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
+import io.gravitee.am.management.service.ManagementUserService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.TooManyOperationsException;
 import io.gravitee.am.service.model.NewUser;
@@ -51,6 +54,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -76,7 +80,7 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 @Tag(name = "user")
-public class UsersResource extends AbstractUsersResource {
+public class UsersResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
@@ -86,6 +90,12 @@ public class UsersResource extends AbstractUsersResource {
 
     @Autowired
     private IdentityProviderServiceProxy identityProviderService;
+
+    @Autowired
+    protected ManagementUserService userService;
+
+    @Autowired
+    protected DomainService domainService;
 
     @Autowired
     ObjectMapper objectMapper;
@@ -108,7 +118,7 @@ public class UsersResource extends AbstractUsersResource {
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @QueryParam("q") String query,
             @QueryParam("filter") String filter,
             @QueryParam("page") @DefaultValue("0") int page,
@@ -117,12 +127,12 @@ public class UsersResource extends AbstractUsersResource {
 
         io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.LIST)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Single.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> searchUsers(ReferenceType.DOMAIN, domain, query, filter, page, size))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.LIST)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)))
+                        .flatMap(domain -> searchUsers(domain, query, filter, page, size))
                         .flatMap(pagedUsers ->
-                                hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.READ)
+                                hasAnyPermission(authenticatedUser, organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.READ)
                                         .flatMap(hasPermission -> Observable.fromIterable(pagedUsers.getData())
                                                 .flatMapSingle(user -> filterUserInfos(hasPermission, user))
                                                 .toSortedList(Comparator.comparing(User::getUsername, Comparator.nullsLast(Comparator.naturalOrder())))
@@ -202,6 +212,24 @@ public class UsersResource extends AbstractUsersResource {
                 .subscribe(response::resume, response::resume);
     }
 
+    protected Single<Page<User>> searchUsers(Domain domain, String query, String filter, int page, int size) {
+        if (query != null) {
+            return userService.search(domain, query, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+        }
+        if (filter != null) {
+            return Single.defer(() -> {
+                FilterCriteria filterCriteria = FilterCriteria.convert(SCIMFilterParser.parse(filter));
+                return userService.search(domain, filterCriteria, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+            }).onErrorResumeNext(ex -> {
+                if (ex instanceof IllegalArgumentException) {
+                    return Single.error(new BadRequestException(ex.getMessage()));
+                }
+                return Single.error(ex);
+            });
+        }
+        return userService.findAll(domain, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+    }
+
     private Single<?> processBulkRequest(BulkRequest.Generic bulkRequest, Domain domain, io.gravitee.am.identityprovider.api.User authenticatedUser) {
         return switch (bulkRequest.action()) {
             case CREATE ->
@@ -213,7 +241,7 @@ public class UsersResource extends AbstractUsersResource {
                             .map(BulkOperationResult::ok)
                     );
             case UPDATE ->
-                    bulkRequest.processOneByOne(BulkUpdateUser.UpdateUserWithId.class, objectMapper, updated -> userService.update(ReferenceType.DOMAIN, domain.getId(), updated.getId(), updated, authenticatedUser)
+                    bulkRequest.processOneByOne(BulkUpdateUser.UpdateUserWithId.class, objectMapper, updated -> userService.update(domain, updated.getId(), updated, authenticatedUser)
                             .map(UserEntity::new)
                             .map(BulkOperationResult::ok)
                     );

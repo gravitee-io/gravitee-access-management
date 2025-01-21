@@ -21,7 +21,7 @@ import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
@@ -130,9 +130,9 @@ public class EnrollMfaPolicyTest {
         when(user.getFactors()).thenReturn(Collections.singletonList(enrolledFactor));
         when(executionContext.getAttribute(ConstantKeys.USER_CONTEXT_KEY)).thenReturn(user);
 
-        UserService userService = mock(UserService.class);
+        UserGatewayService userService = mock(UserGatewayService.class);
         when(userService.updateFactor(anyString(), any(), any())).thenReturn(Single.just(new User()));
-        when(executionContext.getComponent(UserService.class)).thenReturn(userService);
+        when(executionContext.getComponent(UserGatewayService.class)).thenReturn(userService);
 
         executePolicy(configuration, request, response, executionContext, policyChain);
         verify(policyChain, times(1)).doNext(request, response);
@@ -170,9 +170,9 @@ public class EnrollMfaPolicyTest {
         when(executionContext.getTemplateEngine()).thenReturn(templateEngine);
         when(templateEngine.getValue(configuration.getValue(), String.class)).thenReturn(newEmail);
 
-        UserService userService = mock(UserService.class);
+        UserGatewayService userService = mock(UserGatewayService.class);
         when(userService.updateFactor(anyString(), any(), any())).thenReturn(Single.just(new User()));
-        when(executionContext.getComponent(UserService.class)).thenReturn(userService);
+        when(executionContext.getComponent(UserGatewayService.class)).thenReturn(userService);
 
         executePolicy(configuration, request, response, executionContext, policyChain);
         verify(policyChain, times(1)).doNext(request, response);
@@ -209,8 +209,8 @@ public class EnrollMfaPolicyTest {
         when(executionContext.getTemplateEngine()).thenReturn(templateEngine);
         when(templateEngine.getValue(configuration.getValue(), String.class)).thenReturn(email);
 
-        UserService userService = mock(UserService.class);
-        when(executionContext.getComponent(UserService.class)).thenReturn(userService);
+        UserGatewayService userService = mock(UserGatewayService.class);
+        when(executionContext.getComponent(UserGatewayService.class)).thenReturn(userService);
 
         executePolicy(configuration, request, response, executionContext, policyChain);
         verify(policyChain, times(1)).doNext(request, response);
@@ -261,9 +261,9 @@ public class EnrollMfaPolicyTest {
         when(executionContext.getTemplateEngine()).thenReturn(templateEngine);
         when(templateEngine.getValue(configuration.getValue(), String.class)).thenReturn(null);
 
-        UserService userService = mock(UserService.class);
+        UserGatewayService userService = mock(UserGatewayService.class);
         when(userService.addFactor(anyString(), any(), any())).thenReturn(Single.just(new User()));
-        when(executionContext.getComponent(UserService.class)).thenReturn(userService);
+        when(executionContext.getComponent(UserGatewayService.class)).thenReturn(userService);
 
         executePolicy(configuration, request, response, executionContext, policyChain);
         verify(policyChain, times(1)).doNext(request, response);
@@ -292,9 +292,9 @@ public class EnrollMfaPolicyTest {
         when(executionContext.getTemplateEngine()).thenReturn(templateEngine);
         when(templateEngine.getValue(configuration.getValue(), String.class)).thenReturn(null);
 
-        UserService userService = mock(UserService.class);
+        UserGatewayService userService = mock(UserGatewayService.class);
         when(userService.addFactor(anyString(), any(), any())).thenReturn(Single.just(new User()));
-        when(executionContext.getComponent(UserService.class)).thenReturn(userService);
+        when(executionContext.getComponent(UserGatewayService.class)).thenReturn(userService);
 
         executePolicy(configuration, request, response, executionContext, policyChain);
         verify(policyChain, times(1)).doNext(request, response);
@@ -335,9 +335,9 @@ public class EnrollMfaPolicyTest {
         when(executionContext.getTemplateEngine()).thenReturn(templateEngine);
         when(templateEngine.getValue(configuration.getValue(), String.class)).thenReturn("0102030405");
 
-        UserService userService = mock(UserService.class);
+        UserGatewayService userService = mock(UserGatewayService.class);
         when(userService.addFactor(anyString(), any(), any())).thenReturn(Single.just(new User()));
-        when(executionContext.getComponent(UserService.class)).thenReturn(userService);
+        when(executionContext.getComponent(UserGatewayService.class)).thenReturn(userService);
 
         executePolicy(configuration, request, response, executionContext, policyChain);
         verify(policyChain, times(1)).doNext(request, response);

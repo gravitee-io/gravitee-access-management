@@ -20,11 +20,11 @@ import io.gravitee.am.gateway.handler.scim.resources.bulk.BulkEndpointConfigurat
 import io.gravitee.am.gateway.handler.scim.service.BulkService;
 import io.gravitee.am.gateway.handler.scim.service.ScimGroupService;
 import io.gravitee.am.gateway.handler.scim.service.ServiceProviderConfigService;
-import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
 import io.gravitee.am.gateway.handler.scim.service.impl.BulkServiceImpl;
 import io.gravitee.am.gateway.handler.scim.service.impl.ScimGroupServiceImpl;
 import io.gravitee.am.gateway.handler.scim.service.impl.ServiceProviderConfigServiceImpl;
-import io.gravitee.am.gateway.handler.scim.service.impl.UserServiceImpl;
+import io.gravitee.am.gateway.handler.scim.service.impl.ProvisioningUserServiceImpl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.authentication.crypto.password.Argon2IdPasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
@@ -40,8 +40,8 @@ import org.springframework.context.annotation.Configuration;
 public class SCIMConfiguration implements ProtocolConfiguration {
 
     @Bean
-    public UserService userService() {
-        return new UserServiceImpl();
+    public ProvisioningUserService userService() {
+        return new ProvisioningUserServiceImpl();
     }
 
     @Bean
@@ -50,7 +50,7 @@ public class SCIMConfiguration implements ProtocolConfiguration {
     }
 
     @Bean
-    public BulkService bulkService(UserService userService, Domain domain) {
+    public BulkService bulkService(ProvisioningUserService userService, Domain domain) {
         return new BulkServiceImpl(userService, domain);
     }
 

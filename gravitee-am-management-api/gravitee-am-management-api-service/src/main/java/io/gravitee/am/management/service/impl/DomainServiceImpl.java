@@ -26,6 +26,7 @@ import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
+import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
 import io.gravitee.am.model.CorsSettings;
@@ -61,7 +62,6 @@ import io.gravitee.am.service.ExtensionGrantService;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.FormService;
-import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordPolicyService;
@@ -71,7 +71,6 @@ import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.ThemeService;
-import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
@@ -187,9 +186,6 @@ public class DomainServiceImpl implements DomainService {
 
     @Autowired
     private RoleService roleService;
-
-    @Autowired
-    private UserService userService;
 
     @Autowired
     private ScopeService scopeService;
@@ -573,7 +569,7 @@ public class DomainServiceImpl implements DomainService {
                             // delete users
                             // do not delete one by one for memory consumption issue
                             // https://github.com/gravitee-io/issues/issues/6999
-                            .andThen(userService.deleteByDomain(domain))
+                            .andThen(dataPlaneRegistry.getUserRepository(domain).deleteByReference(domain.asReference()))
                             // delete groups
                             .andThen(domainGroupService.findAll(domain)
                                     .flatMapCompletable(group ->

@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.am.dataplane.api.repository.GroupRepository;
+import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.management.service.impl.DomainGroupServiceImpl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Group;
@@ -28,7 +29,6 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.OrganizationUserService;
 import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.GroupAlreadyExistsException;
 import io.gravitee.am.service.exception.GroupNotFoundException;
 import io.gravitee.am.service.exception.RoleNotFoundException;
@@ -84,7 +84,7 @@ public class DomainGroupServiceTest {
     private DataPlaneRegistry dataPlaneRegistry;
 
     @Mock
-    private UserService userService;
+    private UserRepository userRepository;
 
     @Mock
     private OrganizationUserService organizationUserService;
@@ -102,6 +102,7 @@ public class DomainGroupServiceTest {
     public void beforeClass() throws Exception {
         DOMAIN_ENTITY.setId("domain1");
         when(dataPlaneRegistry.getGroupRepository(any())).thenReturn(groupRepository);
+        when(dataPlaneRegistry.getUserRepository(any())).thenReturn(userRepository);
     }
 
     @Test
@@ -423,12 +424,12 @@ public class DomainGroupServiceTest {
         when(group.getMembers()).thenReturn(Arrays.asList("userid"));
 
         when(groupRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("group-id"))).thenReturn(Maybe.just(group));
-        when(userService.findByIdIn(any())).thenReturn(Flowable.just(new User()));
+        when(userRepository.findByIdIn(any())).thenReturn(Flowable.just(new User()));
 
         final TestObserver<Page<User>> observer = domainGroupService.findMembers(DOMAIN_ENTITY, "group-id", 0, 0).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
 
-        verify(userService).findByIdIn(any());
+        verify(userRepository).findByIdIn(any());
         verify(organizationUserService, never()).findByIdIn(any());
     }
 
@@ -439,7 +440,7 @@ public class DomainGroupServiceTest {
         when(group.getMembers()).thenReturn(userIds);
 
         when(groupRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("group-id"))).thenReturn(Maybe.just(group));
-        when(userService.findByIdIn(any())).thenReturn(Flowable.fromIterable(userIds.stream().map(userId -> {
+        when(userRepository.findByIdIn(any())).thenReturn(Flowable.fromIterable(userIds.stream().map(userId -> {
             final var user = new User();
             user.setId(userId);
             return user;
@@ -460,8 +461,8 @@ public class DomainGroupServiceTest {
         observer.assertValue(page -> page.getTotalCount() == userIds.size());
         observer.assertValue(page -> page.getCurrentPage() == 2);
 
-        verify(userService, times(2)).findByIdIn(argThat(memberIds -> memberIds.size() == 25));
-        verify(userService, times(1)).findByIdIn(argThat(memberIds -> memberIds.size() == 2));
+        verify(userRepository, times(2)).findByIdIn(argThat(memberIds -> memberIds.size() == 25));
+        verify(userRepository, times(1)).findByIdIn(argThat(memberIds -> memberIds.size() == 2));
         verify(organizationUserService, never()).findByIdIn(any());
     }
 }

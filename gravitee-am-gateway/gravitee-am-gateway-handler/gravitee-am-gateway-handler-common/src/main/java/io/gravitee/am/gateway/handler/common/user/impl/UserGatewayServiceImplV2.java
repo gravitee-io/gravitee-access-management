@@ -15,11 +15,13 @@
  */
 package io.gravitee.am.gateway.handler.common.user.impl;
 
+import io.gravitee.am.business.user.CreateUserRule;
+import io.gravitee.am.business.user.UpdateUserRule;
 import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.dataplane.api.repository.UserRepository.UpdateActions;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
-import io.gravitee.am.repository.management.api.CommonUserRepository.UpdateActions;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -34,7 +36,7 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 @Slf4j
-public class UserServiceImplV2 extends UserServiceImpl {
+public class UserGatewayServiceImplV2 extends UserGatewayServiceImpl {
 
     public static final String SEPARATOR = ":";
 
@@ -44,7 +46,7 @@ public class UserServiceImplV2 extends UserServiceImpl {
     @Override
     public Maybe<User> findByDomainAndExternalIdAndSource(String domain, String externalId, String source) {
         return userStore.getByInternalSub(generateInternalSubFrom(source, externalId))
-                .switchIfEmpty(Maybe.defer(() -> userService.findByExternalIdAndSource(ReferenceType.DOMAIN, domain, externalId, source)
+                .switchIfEmpty(Maybe.defer(() -> getUserRepository().findByExternalIdAndSource(Reference.domain(domain), externalId, source)
                         .onErrorResumeNext(error -> {
                             if (doesResilientModeEnabled(error)) {
                                 log.debug("Resilient mode enabled for domain {}, ignore connection error during find user by externalId", domain);
@@ -56,7 +58,7 @@ public class UserServiceImplV2 extends UserServiceImpl {
 
     @Override
     public Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source) {
-        return userService.findByDomainAndUsernameAndSource(domain, username, source).onErrorResumeNext(error -> {
+        return getUserRepository().findByUsernameAndSource(Reference.domain(domain), username, source).onErrorResumeNext(error -> {
             if (doesResilientModeEnabled(error)) {
                 log.debug("Resilient mode enabled for domain {}, ignore connection error during find user by username", domain);
                 return Maybe.empty();
@@ -67,7 +69,7 @@ public class UserServiceImplV2 extends UserServiceImpl {
 
     @Override
     public Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source, boolean includeLinkedIdentities) {
-        return userService.findByUsernameAndSource(ReferenceType.DOMAIN, domain, username, source, includeLinkedIdentities).onErrorResumeNext(error -> {
+        return getUserRepository().findByUsernameAndSource(Reference.domain(domain), username, source, includeLinkedIdentities).onErrorResumeNext(error -> {
             if (doesResilientModeEnabled(error)) {
                 log.debug("Resilient mode enabled for domain {}, ignore connection error during find user by username", domain);
                 return Maybe.empty();
@@ -78,19 +80,20 @@ public class UserServiceImplV2 extends UserServiceImpl {
 
     @Override
     public Single<List<User>> findByDomainAndCriteria(String domain, FilterCriteria criteria) {
-        return userService.search(ReferenceType.DOMAIN, domain, criteria).toList();
+        return getUserRepository().search(Reference.domain(domain), criteria).toList();
     }
 
     @Override
     public Single<User> create(User user) {
-        return userService.create(user)
+        return new CreateUserRule(getUserValidator(), getUserRepository()::create)
+                .create(user)
                 .flatMap(persistedUser -> userStore.add(persistedUser).switchIfEmpty(Single.just(user)))
                 .onErrorResumeNext(throwable -> cacheUserOnError(user, throwable));
     }
 
     @Override
     public Single<User> update(User user, UpdateActions updateActions) {
-        return userService.update(user, updateActions)
+        return new UpdateUserRule(getUserValidator(), getUserRepository()::update).update(user, updateActions)
                 .flatMap(persistedUser -> userStore.add(persistedUser).switchIfEmpty(Single.just(user)))
                 .onErrorResumeNext(throwable -> cacheUserOnError(user, throwable));
     }

@@ -189,6 +189,14 @@ public class Domain implements Resource {
     public Domain() {
     }
 
+    /**
+     * For testing purpose only
+     * @param id
+     */
+    public Domain(String id) {
+        this.id = id;
+    }
+
     public Domain(Domain other) {
         this.id = other.id;
         this.hrid = other.hrid;
@@ -519,4 +527,7 @@ public class Domain implements Resource {
         return id.hashCode();
     }
 
+    public final Reference asReference() {
+        return Reference.domain(this.getId());
+    }
 }

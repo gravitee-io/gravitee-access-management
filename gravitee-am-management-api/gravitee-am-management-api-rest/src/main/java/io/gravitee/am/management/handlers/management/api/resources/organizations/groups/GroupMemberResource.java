@@ -16,11 +16,11 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.groups;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.service.OrganizationGroupService;
-import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.service.OrganizationGroupService;
 import io.gravitee.am.service.exception.MemberAlreadyExistsException;
 import io.gravitee.am.service.exception.MemberNotFoundException;
 import io.gravitee.am.service.model.UpdateGroup;
@@ -50,7 +50,7 @@ public class GroupMemberResource extends AbstractResource {
     private OrganizationGroupService orgGroupService;
 
     @Autowired
-    private UserService userService;
+    private OrganizationUserService userService;
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)

@@ -17,16 +17,10 @@
 package io.gravitee.am.business.user;
 
 
-import io.gravitee.am.common.factor.FactorDataKeys;
-import io.gravitee.am.common.utils.MovingFactorUtils;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Credential;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
-import io.gravitee.am.model.factor.EnrolledFactor;
-import io.gravitee.am.model.factor.EnrolledFactorSecurity;
-import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -46,14 +40,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static io.gravitee.am.model.ReferenceType.DOMAIN;
+import static io.gravitee.am.model.ReferenceType.ORGANIZATION;
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_LAX_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_STRICT_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.USERNAME_PATTERN;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -67,13 +60,13 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class UpdateUsernameOrganizationRuleTest {
 
-    public static final String DOMAIN_ID = "domain#1";
+    public static final String ORG_ID = "org#1";
     public static final String PASSWORD = "password";
     public static final String NEW_USERNAME = "newUsername";
     public static final String USERNAME = "username";
 
     @Mock
-    private io.gravitee.am.service.UserService commonUserService;
+    private io.gravitee.am.service.OrganizationUserService commonUserService;
 
     @Mock
     private AuditService auditService;
@@ -97,17 +90,14 @@ public class UpdateUsernameOrganizationRuleTest {
 
     @Test
     void must_not_reset_username_with_existing_username() {
-        Domain domain = new Domain();
-        domain.setId("domain");
-
         User user = new User();
         user.setId("user-id");
         user.setSource("idp-id");
         user.setUsername(USERNAME);
-        user.setReferenceId(domain.getId());
-        user.setReferenceType(DOMAIN);
+        user.setReferenceId(ORG_ID);
+        user.setReferenceType(ORGANIZATION);
 
-        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
+        when(commonUserService.findByUsernameAndSource(any(), eq(NEW_USERNAME), eq(user.getSource())))
                 .thenReturn(Maybe.just(user));
 
         var observer = rule.updateUsername(NEW_USERNAME, null, (User user1) -> Single.just(userProvider), () -> Single.just(user)).test();
@@ -120,17 +110,14 @@ public class UpdateUsernameOrganizationRuleTest {
 
     @Test
     void must_not_reset_username_user_provider_does_not_exist() {
-        Domain domain = new Domain();
-        domain.setId("domain");
-
         User user = new User();
         user.setId("user-id");
         user.setSource("idp-id");
         user.setUsername(USERNAME);
-        user.setReferenceId(domain.getId());
-        user.setReferenceType(DOMAIN);
+        user.setReferenceId(ORG_ID);
+        user.setReferenceType(ORGANIZATION);
 
-        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
+        when(commonUserService.findByUsernameAndSource(any(), eq(NEW_USERNAME), eq(user.getSource())))
                 .thenReturn(Maybe.empty());
 
         var observer = rule.updateUsername(NEW_USERNAME, null, (User user1) -> Single.error(new UserProviderNotFoundException("")), () -> Single.just(user)).test();
@@ -143,17 +130,14 @@ public class UpdateUsernameOrganizationRuleTest {
 
     @Test
     void must_not_reset_username_does_not_exist() {
-        Domain domain = new Domain();
-        domain.setId("domain");
-
         User user = new User();
         user.setId("user-id");
         user.setSource("idp-id");
         user.setUsername(USERNAME);
-        user.setReferenceId(domain.getId());
-        user.setReferenceType(DOMAIN);
+        user.setReferenceId(ORG_ID);
+        user.setReferenceType(ORGANIZATION);
 
-        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
+        when(commonUserService.findByUsernameAndSource(any(), eq(NEW_USERNAME), eq(user.getSource())))
                 .thenReturn(Maybe.empty());
         final UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.findByUsername(anyString())).thenReturn(Maybe.error(new UserNotFoundException("Could not find user")));
@@ -168,17 +152,14 @@ public class UpdateUsernameOrganizationRuleTest {
 
     @Test
     void must_not_reset_username_error_when_updating() {
-        Domain domain = new Domain();
-        domain.setId("domain");
-
         User user = new User();
         user.setId("user-id");
         user.setSource("idp-id");
         user.setUsername(USERNAME);
-        user.setReferenceId(domain.getId());
-        user.setReferenceType(DOMAIN);
+        user.setReferenceId(ORG_ID);
+        user.setReferenceType(ORGANIZATION);
 
-        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
+        when(commonUserService.findByUsernameAndSource(any(), eq(NEW_USERNAME), eq(user.getSource())))
                 .thenReturn(Maybe.empty());
 
         final UserProvider userProvider = mock(UserProvider.class);
@@ -197,18 +178,15 @@ public class UpdateUsernameOrganizationRuleTest {
 
     @Test
     void must_rollback_username_if_userService_fails() {
-        Domain domain = new Domain();
-        domain.setId("domain");
-
         User user = new User();
         user.setId("user-id");
         user.setSource("idp-id");
         user.setUsername(USERNAME);
         user.setFactors(List.of());
-        user.setReferenceId(domain.getId());
-        user.setReferenceType(DOMAIN);
+        user.setReferenceId(ORG_ID);
+        user.setReferenceType(ORGANIZATION);
 
-        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
+        when(commonUserService.findByUsernameAndSource(any(), eq(NEW_USERNAME), eq(user.getSource())))
                 .thenReturn(Maybe.empty());
         when(commonUserService.update(user)).thenReturn(Single.error(new TechnicalManagementException("an unexpected error has occurred")));
 
@@ -236,18 +214,15 @@ public class UpdateUsernameOrganizationRuleTest {
 
     @Test
     void must_reset_username() {
-        Domain domain = new Domain();
-        domain.setId("domain");
-
         User user = new User();
         user.setId("user-id");
         user.setSource("idp-id");
         user.setUsername(USERNAME);
         user.setFactors(List.of());
-        user.setReferenceId(domain.getId());
-        user.setReferenceType(DOMAIN);
+        user.setReferenceId(ORG_ID);
+        user.setReferenceType(ORGANIZATION);
 
-        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
+        when(commonUserService.findByUsernameAndSource(any(), eq(NEW_USERNAME), eq(user.getSource())))
                 .thenReturn(Maybe.empty());
         when(commonUserService.update(user)).thenReturn(Single.just(user));
 
@@ -268,99 +243,5 @@ public class UpdateUsernameOrganizationRuleTest {
 
         verify(commonUserService, times(1)).update(any());
         verify(userProvider, times(1)).updateUsername(any(), anyString());
-    }
-
-    @Test
-    void must_update_user_webauth_credential() {
-        Domain domain = new Domain();
-        domain.setId("domain");
-
-        User user = new User();
-        user.setId("user-id");
-        user.setSource("idp-id");
-        user.setUsername(USERNAME);
-        user.setFactors(List.of());
-        user.setReferenceId(domain.getId());
-        user.setReferenceType(DOMAIN);
-
-        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
-                .thenReturn(Maybe.empty());
-        when(commonUserService.update(user)).thenReturn(Single.just(user));
-
-        final UserProvider userProvider = mock(UserProvider.class);
-
-        final var defaultUser = new DefaultUser(user.getUsername());
-        defaultUser.setId("idp-user-id");
-        final var idpUserUpdated = new DefaultUser(NEW_USERNAME);
-        defaultUser.setId("idp-user-id");
-
-        when(userProvider.findByUsername(anyString())).thenReturn(Maybe.just(defaultUser));
-        when(userProvider.updateUsername(any(), anyString())).thenReturn(Single.just(idpUserUpdated));
-
-        var credential = new Credential();
-        credential.setUsername(user.getUsername());
-
-        var observer = rule.updateUsername(NEW_USERNAME, null, (User user1) -> Single.just(userProvider), () -> Single.just(user)).test();
-
-        observer.awaitDone(10, TimeUnit.SECONDS);
-        observer.assertComplete();
-
-        verify(commonUserService, times(1)).update(any());
-        verify(userProvider, times(1)).updateUsername(any(), anyString());
-    }
-
-    @Test
-    void must_update_user_moving_factor() {
-        var domain = new Domain();
-        domain.setId("domain");
-
-        var enrolledFactor = new EnrolledFactor();
-        enrolledFactor.setFactorId("xxx-xxx-xxx");
-        enrolledFactor.setStatus(FactorStatus.ACTIVATED);
-
-        var enrolledFactorSecurity = new EnrolledFactorSecurity();
-        enrolledFactorSecurity.putData(FactorDataKeys.KEY_MOVING_FACTOR, MovingFactorUtils.generateInitialMovingFactor("user-id"));
-
-        enrolledFactor.setSecurity(enrolledFactorSecurity);
-
-        var user = new User();
-        user.setId("user-id");
-        user.setSource("idp-id");
-        user.setUsername(USERNAME);
-        user.setFactors(List.of(enrolledFactor));
-        user.setReferenceId(domain.getId());
-        user.setReferenceType(DOMAIN);
-
-        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
-                .thenReturn(Maybe.empty());
-        when(commonUserService.update(user)).thenReturn(Single.just(user));
-
-        final UserProvider userProvider = mock(UserProvider.class);
-
-        final var defaultUser = new DefaultUser(user.getUsername());
-        defaultUser.setId("idp-user-id");
-        final var idpUserUpdated = new DefaultUser(NEW_USERNAME);
-        defaultUser.setId("idp-user-id");
-
-        when(userProvider.findByUsername(anyString())).thenReturn(Maybe.just(defaultUser));
-        when(userProvider.updateUsername(any(), anyString())).thenReturn(Single.just(idpUserUpdated));
-
-        var observer = rule.updateUsername(NEW_USERNAME, null, (User user1) -> Single.just(userProvider), () -> Single.just(user)).test();
-
-        observer.awaitDone(10, TimeUnit.SECONDS);
-        observer.assertComplete();
-
-        verify(commonUserService, times(1)).update(any());
-        verify(userProvider, times(1)).updateUsername(any(), anyString());
-
-        assertEquals(1, user.getFactors().size());
-        assertNotEquals(
-                MovingFactorUtils.generateInitialMovingFactor(user.getUsername()),
-                user.getFactors().get(0).getSecurity().getAdditionalData().get(FactorDataKeys.KEY_MOVING_FACTOR)
-        );
-        assertEquals(
-                MovingFactorUtils.generateInitialMovingFactor(user.getId()),
-                user.getFactors().get(0).getSecurity().getAdditionalData().get(FactorDataKeys.KEY_MOVING_FACTOR)
-        );
     }
 }

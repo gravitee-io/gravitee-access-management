@@ -478,7 +478,6 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
             logger.error("An error has occurred while searching users with criteria {}", criteria, ex);
             return Single.error(new TechnicalException("An error has occurred while searching users with filter criteria", ex));
         }
-
     }
 
     private Maybe<User> findByIdentityUsernameAndProviderId(Reference reference, String username, String providerId){
