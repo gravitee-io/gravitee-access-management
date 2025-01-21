@@ -19,7 +19,7 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.model.User;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -53,7 +53,7 @@ public class WebAuthnCookieServiceTest {
     private JWTService jwtService;
 
     @Mock
-    private UserService userService;
+    private UserGatewayService userService;
 
     @Mock
     private CertificateManager certificateManager;

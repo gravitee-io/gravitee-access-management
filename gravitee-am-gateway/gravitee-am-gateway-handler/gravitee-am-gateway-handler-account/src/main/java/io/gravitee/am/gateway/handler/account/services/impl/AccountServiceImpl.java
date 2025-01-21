@@ -193,8 +193,8 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
             return Single.error(new InvalidUserException("Username is required") );
         }
         return new UpdateUsernameDomainRule(userValidator,
-                userRepository::findByUsernameAndSource,
                 userRepository::update,
+                userRepository::findByUsernameAndSource,
                 auditService,
                 credentialService,
                 loginAttemptService).updateUsername(
@@ -313,7 +313,7 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
 
     @Override
     public Completable removeConsent(UserId userId, String consentId, io.gravitee.am.identityprovider.api.User principal) {
-        return scopeApprovalService.revokeByConsent(domain.getId(), userId, consentId, principal);
+        return scopeApprovalService.revokeByConsent(domain, userId, consentId, principal);
     }
 
     private io.gravitee.am.identityprovider.api.User convert(io.gravitee.am.model.User user) {

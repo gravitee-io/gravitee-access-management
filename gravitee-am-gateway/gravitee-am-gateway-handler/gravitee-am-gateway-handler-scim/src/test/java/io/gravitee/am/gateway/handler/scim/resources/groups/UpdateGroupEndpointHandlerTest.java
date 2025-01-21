@@ -25,7 +25,7 @@ import io.gravitee.am.gateway.handler.scim.model.Group;
 import io.gravitee.am.gateway.handler.scim.model.Meta;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
 import io.gravitee.am.gateway.handler.scim.service.ScimGroupService;
-import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
 import io.gravitee.am.service.exception.InvalidGroupException;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -60,7 +60,7 @@ public class UpdateGroupEndpointHandlerTest extends RxWebTestBase {
     private ObjectWriter objectWriter;
 
     @Mock
-    private UserService userService;
+    private ProvisioningUserService userService;
 
     @Mock
     private SubjectManager subjectManager;

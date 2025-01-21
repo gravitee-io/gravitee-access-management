@@ -16,13 +16,12 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.ManagementUserService;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -67,7 +66,7 @@ public class UserRolesResource extends AbstractResource {
     private DomainService domainService;
 
     @Autowired
-    private UserService userService;
+    private ManagementUserService userService;
 
     @Autowired
     private RoleService roleService;
@@ -86,15 +85,15 @@ public class UserRolesResource extends AbstractResource {
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("user") String user,
             @QueryParam(value = "dynamic") @DefaultValue(value = "false") boolean dynamic,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.READ)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> userService.findById(user))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.READ)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMap(domain -> userService.findById(domain, user))
                         .switchIfEmpty(Maybe.error(new UserNotFoundException(user)))
                         .flatMapSingle(endUser -> {
                             var roles = dynamic ? endUser.getDynamicRoles() : endUser.getRoles();
@@ -121,16 +120,16 @@ public class UserRolesResource extends AbstractResource {
     public void assign(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("user") String user,
             @Valid @NotNull final List<String> roles,
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.UPDATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(endUser -> userService.assignRoles(ReferenceType.DOMAIN, domain, user, roles, authenticatedUser)))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.UPDATE)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapSingle(domain -> userService.assignRoles(domain, user, roles, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 

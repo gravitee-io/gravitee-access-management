@@ -23,7 +23,7 @@ import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequ
 import io.gravitee.am.gateway.handler.scim.business.PatchUserAction;
 import io.gravitee.am.gateway.handler.scim.business.UpdateUserAction;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
-import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -45,7 +45,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
  */
 public class UserEndpoint extends AbstractUserEndpoint {
 
-    public UserEndpoint(Domain domain, UserService userService, ObjectMapper objectMapper, SubjectManager subjectManager) {
+    public UserEndpoint(Domain domain, ProvisioningUserService userService, ObjectMapper objectMapper, SubjectManager subjectManager) {
         super(domain, userService, objectMapper, subjectManager);
     }
 

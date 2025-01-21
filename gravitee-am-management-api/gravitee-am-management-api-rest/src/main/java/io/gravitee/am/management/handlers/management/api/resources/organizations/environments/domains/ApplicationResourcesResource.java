@@ -87,18 +87,18 @@ public class ApplicationResourcesResource extends AbstractResource {
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("application") String application,
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("size") @DefaultValue(MAX_RESOURCES_SIZE_PER_PAGE_STRING) int size,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_RESOURCE, Acl.LIST)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> applicationService.findById(application))
+        checkAnyPermission(organizationId, environmentId, domainId, application, Permission.APPLICATION_RESOURCE, Acl.LIST)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapSingle(domain -> applicationService.findById(application)
                         .switchIfEmpty(Single.error(new ApplicationNotFoundException(application)))
-                        .flatMap(application1 -> resourceService.findByDomainAndClient(domain, application1.getId(), page, Integer.min(MAX_RESOURCES_SIZE_PER_PAGE, size)))
+                        .flatMap(application1 -> resourceService.findByDomainAndClient(domainId, application1.getId(), page, Integer.min(MAX_RESOURCES_SIZE_PER_PAGE, size)))
                         .flatMap(pagedResources -> Observable.fromIterable(pagedResources.getData())
                                 .flatMapSingle(r -> resourceService.countAccessPolicyByResource(r.getId())
                                         .map(policies -> {
@@ -107,8 +107,8 @@ public class ApplicationResourcesResource extends AbstractResource {
                                             return resourceEntity;
                                         }))
                                 .toList()
-                                .zipWith(resourceService.getMetadata((List<Resource>) pagedResources.getData()), (v1, v2) ->
-                                        new Page<>(Collections.singletonList(new ResourceListItem(v1, v2)), page, pagedResources.getTotalCount())))
+                                .zipWith(resourceService.getMetadata(domain, (List<Resource>) pagedResources.getData()), (v1, v2) ->
+                                        new Page<>(Collections.singletonList(new ResourceListItem(v1, v2)), page, pagedResources.getTotalCount()))))
                 )
                 .subscribe(response::resume, response::resume);
     }

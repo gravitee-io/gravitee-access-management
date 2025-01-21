@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
@@ -40,13 +41,13 @@ public interface ScopeApprovalService {
 
     Single<List<ScopeApproval>> saveConsent(String domain, Client client, List<ScopeApproval> approvals, User principal);
 
-    Completable revokeByConsent(String domain, UserId userId, String consentId, User principal);
+    Completable revokeByConsent(Domain domain, UserId userId, String consentId, User principal);
 
-    Completable revokeByUser(String domain, UserId userId, User principal);
+    Completable revokeByUser(Domain domain, UserId userId, User principal);
 
-    Completable revokeByUserAndClient(String domain, UserId userId, String clientId, User principal);
+    Completable revokeByUserAndClient(Domain domain, UserId userId, String clientId, User principal);
 
-    default Completable revokeByConsent(String domain, UserId userId, String consentId) {
+    default Completable revokeByConsent(Domain domain, UserId userId, String consentId) {
         return revokeByConsent(domain, userId, consentId, null);
     }
 }

@@ -59,7 +59,7 @@ public class UserRolesResourceTest extends JerseySpringTest {
         mockUser.setId("user-id-1");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockUser)).when(userService).findById(mockUser.getId());
+        doReturn(Maybe.just(mockUser)).when(userService).findById(mockDomain, mockUser.getId());
 
         final ScopeApproval scopeApproval = new ScopeApproval();
         scopeApproval.setClientId("clientId");

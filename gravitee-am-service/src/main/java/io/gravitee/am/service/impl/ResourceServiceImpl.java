@@ -16,17 +16,18 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.model.uma.policy.AccessPolicy;
 import io.gravitee.am.model.uma.policy.AccessPolicyType;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.AccessPolicyRepository;
 import io.gravitee.am.repository.management.api.ResourceRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.ScopeService;
-import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.AccessPolicyNotFoundException;
 import io.gravitee.am.service.exception.MalformedIconUriException;
@@ -75,7 +76,7 @@ public class ResourceServiceImpl implements ResourceService {
     private ScopeService scopeService;
 
     @Autowired
-    private UserService userService;
+    private DataPlaneRegistry dataPlaneRegistry;
 
     @Autowired
     private ApplicationService applicationService;
@@ -115,9 +116,9 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public Flowable<Resource> findByDomainAndClientAndResources(String domain, String client, List<String> resourceIds) {
+    public Flowable<Resource> findByDomainAndClientAndResources(Domain domain, String client, List<String> resourceIds) {
         log.debug("Getting resource {} for  client {} and resources {}", resourceIds, client, resourceIds);
-        return repository.findByDomainAndClientAndResources(domain, client, resourceIds);
+        return repository.findByDomainAndClientAndResources(domain.getId(), client, resourceIds);
     }
 
     @Override
@@ -127,21 +128,21 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public Maybe<Resource> findByDomainAndClientResource(String domain, String client, String resourceId) {
+    public Maybe<Resource> findByDomainAndClientResource(Domain domain, String client, String resourceId) {
         log.debug("Getting resource by domain {} client {} and resource {}", domain, client, resourceId);
         return this.findByDomainAndClientAndResources(domain, client, Arrays.asList(resourceId))
                 .firstElement();
     }
 
     @Override
-    public Single<Map<String, Map<String, Object>>> getMetadata(List<Resource> resources) {
+    public Single<Map<String, Map<String, Object>>> getMetadata(Domain domain, List<Resource> resources) {
         if (resources == null || resources.isEmpty()) {
             return Single.just(Collections.emptyMap());
         }
 
         List<String> userIds = resources.stream().filter(resource -> resource.getUserId() != null).map(Resource::getUserId).distinct().collect(Collectors.toList());
         List<String> appIds = resources.stream().filter(resource -> resource.getClientId() != null).map(Resource::getClientId).distinct().collect(Collectors.toList());
-        return Single.zip(userService.findByIdIn(userIds).toMap(User::getId, this::filter),
+        return Single.zip(dataPlaneRegistry.getUserRepository(domain).findByIdIn(userIds).toMap(User::getId, this::filter),
                 applicationService.findByIdIn(appIds).toMap(Application::getId, this::filter), (users, apps) -> {
             Map<String, Map<String, Object>> metadata = new HashMap<>();
             metadata.put("users", (Map) users);

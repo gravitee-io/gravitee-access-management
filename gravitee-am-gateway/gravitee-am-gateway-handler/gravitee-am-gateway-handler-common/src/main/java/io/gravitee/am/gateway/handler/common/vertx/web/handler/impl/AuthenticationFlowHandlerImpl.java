@@ -21,7 +21,7 @@ import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.RedirectHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChainHandler;
@@ -77,7 +77,7 @@ public class AuthenticationFlowHandlerImpl implements AuthenticationFlowHandler 
     private JWTService jwtService;
 
     @Autowired
-    private UserService userService;
+    private UserGatewayService userService;
 
     @Autowired
     private CertificateManager certificateManager;

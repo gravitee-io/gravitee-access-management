@@ -25,7 +25,7 @@ import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.model.Group;
 import io.gravitee.am.gateway.handler.scim.service.ScimGroupService;
-import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
@@ -45,7 +45,7 @@ public class GroupsEndpoint extends AbstractGroupEndpoint {
     private static final int MAX_ITEMS_PER_PAGE = 100;
     private static final int DEFAULT_START_INDEX = 1;
 
-    public GroupsEndpoint(ScimGroupService groupService, ObjectMapper objectMapper, UserService userService, SubjectManager subjectManager) {
+    public GroupsEndpoint(ScimGroupService groupService, ObjectMapper objectMapper, ProvisioningUserService userService, SubjectManager subjectManager) {
         super(groupService, objectMapper, userService, subjectManager);
     }
 

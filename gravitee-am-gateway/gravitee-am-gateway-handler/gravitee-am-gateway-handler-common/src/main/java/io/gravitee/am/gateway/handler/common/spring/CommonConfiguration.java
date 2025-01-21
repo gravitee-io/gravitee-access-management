@@ -60,12 +60,12 @@ import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.common.service.impl.CredentialGatewayServiceImpl;
 import io.gravitee.am.gateway.handler.common.service.impl.UserActivityGatewayServiceImpl;
 import io.gravitee.am.gateway.handler.common.spring.web.WebConfiguration;
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.common.user.UserStore;
 import io.gravitee.am.gateway.handler.common.user.impl.NoUserStore;
 import io.gravitee.am.gateway.handler.common.user.impl.UserEnhancerFacade;
-import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImpl;
-import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImplV2;
+import io.gravitee.am.gateway.handler.common.user.impl.UserGatewayServiceImpl;
+import io.gravitee.am.gateway.handler.common.user.impl.UserGatewayServiceImplV2;
 import io.gravitee.am.gateway.handler.common.user.impl.UserStoreImpl;
 import io.gravitee.am.gateway.handler.common.user.impl.UserStoreImplV2;
 import io.gravitee.am.gateway.handler.common.utils.ConfigurationHelper;
@@ -255,11 +255,11 @@ public class CommonConfiguration {
     }
 
     @Bean
-    public UserService userService(Domain domain) {
+    public UserGatewayService userService(Domain domain) {
         if (domain.getVersion() == DomainVersion.V1_0) {
-            return new UserServiceImpl();
+            return new UserGatewayServiceImpl();
         }
-        return new UserServiceImplV2();
+        return new UserGatewayServiceImplV2();
     }
 
     @Bean

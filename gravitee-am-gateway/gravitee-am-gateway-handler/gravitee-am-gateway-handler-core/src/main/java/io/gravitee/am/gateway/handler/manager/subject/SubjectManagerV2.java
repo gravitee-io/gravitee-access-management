@@ -20,13 +20,12 @@ import io.gravitee.am.common.exception.jwt.InvalidGISException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
-import io.gravitee.am.gateway.handler.common.user.UserService;
-import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImplV2;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
+import io.gravitee.am.gateway.handler.common.user.impl.UserGatewayServiceImplV2;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
-import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +34,7 @@ import org.springframework.util.StringUtils;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
-import static io.gravitee.am.gateway.handler.common.user.impl.UserServiceImplV2.SEPARATOR;
+import static io.gravitee.am.gateway.handler.common.user.impl.UserGatewayServiceImplV2.SEPARATOR;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -45,7 +44,7 @@ import static io.gravitee.am.gateway.handler.common.user.impl.UserServiceImplV2.
 @AllArgsConstructor
 public class SubjectManagerV2 implements SubjectManager {
 
-    private UserService userService;
+    private UserGatewayService userService;
 
     private ClientManager clientManager;
 
@@ -58,7 +57,7 @@ public class SubjectManagerV2 implements SubjectManager {
 
     @Override
     public String generateInternalSubFrom(UserId user) {
-        return UserServiceImplV2.generateInternalSubFrom(user.source(), user.externalId());
+        return UserGatewayServiceImplV2.generateInternalSubFrom(user.source(), user.externalId());
     }
 
     @Override

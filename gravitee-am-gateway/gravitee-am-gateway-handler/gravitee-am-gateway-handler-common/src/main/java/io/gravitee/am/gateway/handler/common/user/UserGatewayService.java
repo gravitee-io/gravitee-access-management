@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.common.user;
 
+import io.gravitee.am.dataplane.api.repository.UserRepository.UpdateActions;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
-import io.gravitee.am.repository.management.api.CommonUserRepository.UpdateActions;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -28,7 +28,7 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UserService {
+public interface UserGatewayService {
 
     /**
      * Find a user by its technical id
